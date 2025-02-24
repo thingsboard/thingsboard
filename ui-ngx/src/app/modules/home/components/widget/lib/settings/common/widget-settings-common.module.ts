@@ -164,6 +164,25 @@ import {
 import {
   WidgetButtonToggleCustomStylePanelComponent
 } from '@home/components/widget/lib/settings/common/button/widget-button-toggle-custom-style-panel.component';
+import {
+  DynamicFormPropertiesComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-properties.component';
+import {
+  DynamicFormPropertyRowComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-row.component';
+import {
+  DynamicFormPropertyPanelComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-panel.component';
+import { DynamicFormComponent } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form.component';
+import {
+  DynamicFormSelectItemsComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-select-items.component';
+import {
+  DynamicFormSelectItemRowComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-select-item-row.component';
+import {
+  DynamicFormArrayComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-array.component';
 
 @NgModule({
   declarations: [
@@ -226,7 +245,14 @@ import {
     DataKeyInputComponent,
     EntityAliasInputComponent,
     AdvancedRangeComponent,
-    GradientComponent
+    GradientComponent,
+    DynamicFormPropertiesComponent,
+    DynamicFormPropertyRowComponent,
+    DynamicFormPropertyPanelComponent,
+    DynamicFormSelectItemsComponent,
+    DynamicFormSelectItemRowComponent,
+    DynamicFormComponent,
+    DynamicFormArrayComponent
   ],
   imports: [
     CommonModule,
@@ -293,7 +319,14 @@ import {
     DataKeyInputComponent,
     EntityAliasInputComponent,
     AdvancedRangeComponent,
-    GradientComponent
+    GradientComponent,
+    DynamicFormPropertiesComponent,
+    DynamicFormPropertyRowComponent,
+    DynamicFormPropertyPanelComponent,
+    DynamicFormSelectItemsComponent,
+    DynamicFormSelectItemRowComponent,
+    DynamicFormComponent,
+    DynamicFormArrayComponent
   ],
   providers: [
     ColorSettingsComponentService,

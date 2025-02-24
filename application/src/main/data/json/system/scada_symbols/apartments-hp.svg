@@ -1,0 +1,344 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="400" height="400" fill="none" version="1.1" viewBox="0 0 400 400"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Apartments",
+  "description": "Apartments with various states.",
+  "searchTags": [
+    "power",
+    "energy",
+    "consumer"
+  ],
+  "widgetSizeX": 2,
+  "widgetSizeY": 2,
+  "tags": [
+    {
+      "tag": "background",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.running) {\n    color = ctx.properties.runningColor;\n}\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "critical",
+      "stateRenderFunction": "element.attr({fill: ctx.properties.criticalColor});\nif (ctx.values.critical) {\n    element.show();\n} else {\n    element.hide();\n}\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n\n",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'criticalClick');"
+        }
+      }
+    },
+    {
+      "tag": "warning",
+      "stateRenderFunction": "element.attr({fill: ctx.properties.warningColor});\nvar warning = ctx.values.warning && !(ctx.values.warning && ctx.values.critical)\nif (warning) {\n    element.show();\n} else {\n    element.hide();\n}\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = warning && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'warningClick');"
+        }
+      }
+    }
+  ],
+  "behavior": [
+    {
+      "id": "running",
+      "name": "{i18n:scada.symbol.running}",
+      "hint": "{i18n:scada.symbol.running-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.running}",
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "running"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warning",
+      "name": "{i18n:scada.symbol.warning}",
+      "hint": "{i18n:scada.symbol.warning-state-hint}",
+      "group": "{i18n:scada.symbol.warning-state}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.warning}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warningClick",
+      "name": "{i18n:scada.symbol.warning-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.warning-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    },
+    {
+      "id": "critical",
+      "name": "{i18n:scada.symbol.critical}",
+      "hint": "{i18n:scada.symbol.critical-state-hint}",
+      "group": "{i18n:scada.symbol.critical-state}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.critical}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "criticalClick",
+      "name": "{i18n:scada.symbol.critical-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.critical-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    },
+    {
+      "id": "criticalAnimation",
+      "name": "{i18n:scada.symbol.warning-critical-state-animation}",
+      "hint": "{i18n:scada.symbol.warning-critical-state-animation-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.animation}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "runningColor",
+      "name": "{i18n:scada.symbol.colors}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": "{i18n:scada.symbol.running}",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "stoppedColor",
+      "name": "{i18n:scada.symbol.colors}",
+      "type": "color",
+      "default": "#666666",
+      "required": null,
+      "subLabel": "{i18n:scada.symbol.stopped}",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "warningColor",
+      "name": "{i18n:scada.symbol.alarm-colors}",
+      "type": "color",
+      "default": "#FAA405",
+      "required": null,
+      "subLabel": "{i18n:scada.symbol.warning}",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "criticalColor",
+      "name": "{i18n:scada.symbol.alarm-colors}",
+      "type": "color",
+      "default": "#D12730",
+      "required": null,
+      "subLabel": "{i18n:scada.symbol.critical}",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<path d="m25 106c0-2.761 2.2386-5 5-5h210c2.761 0 5 2.239 5 5v266c0 2.761-2.239 5-5 5h-210c-2.7614 0-5-2.239-5-5v-266z" fill="#fff" stroke="#1A1A1A" stroke-width="2" tb:tag="background"/><rect x="143" y="146" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="143" y="254" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="143" y="200" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="143" y="308" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><path d="m155 6c0-2.7614 2.239-5 5-5h210c2.761 0 5 2.2386 5 5v366c0 2.761-2.239 5-5 5h-210c-2.761 0-5-2.239-5-5v-366z" fill="#fff" stroke="#1A1A1A" stroke-width="2" tb:tag="background"/><rect x="269" y="57" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="269" y="165" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="269" y="111" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="269" y="219" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="175" y="57" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="175" y="165" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="175" y="111" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="175" y="219" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="216" y="286" width="98" height="91" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="49" y="146" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="49" y="254" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="49" y="200" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="49" y="308" width="86" height="36" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="1" y="377" width="398" height="22" rx="5" fill="#fff" stroke="#1A1A1A" stroke-width="2" tb:tag="background"/><path d="m134.53 0s-134.53 0-134.53 67v328.36c0 2.6512 3.5818 4.6403 8 4.6403h384c4.418 0 8-1.9892 8-4.6403v-328.36c0-67-132.14-67-132.14-67h-67.86zm134.14 81.2c-2.5774 0-4.6666 1.2536-4.6666 2.8v300.4c0 1.5464 2.0894 2.8 4.6666 2.8h29.332c2.5774 0 4.6666-1.2536 4.6666-2.8v-300.4c0-1.5464-2.0894-2.8-4.6666-2.8z" fill-opacity="0" style="stroke-width:1.4784" tb:tag="clickArea"/><g transform="translate(0,316)" fill="#d12730" style="display: none;" tb:tag="critical">
+  <rect width="84" height="84" rx="4" fill="#fff" style=""/>
+  <rect width="84" height="84" rx="4" style=""/>
+  <rect x="2" y="2" width="80" height="80" rx="2" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>
+  <path d="m44.559 27.562-0.4688 20.059h-4.0234l-0.4883-20.059zm-5.1172 26.211c0-0.7161 0.2344-1.3151 0.7031-1.7968 0.4818-0.4948 1.1459-0.7422 1.9922-0.7422 0.8334 0 1.4909 0.2474 1.9727 0.7422 0.4817 0.4817 0.7226 1.0807 0.7226 1.7968 0 0.6901-0.2409 1.2826-0.7226 1.7774-0.4818 0.4818-1.1393 0.7226-1.9727 0.7226-0.8463 0-1.5104-0.2408-1.9922-0.7226-0.4687-0.4948-0.7031-1.0873-0.7031-1.7774z" fill="#000" fill-opacity=".87" style=""/>
+ </g><g transform="translate(0 320.94)" fill="#faa405" style="display: none;" tb:tag="warning">
+  <path d="m35.955 2.2112c1.4741-2.9482 5.6813-2.9482 7.1554 0l35.528 71.056c1.3298 2.6596-0.6042 5.7889-3.5777 5.7889h-71.056c-2.9735 0-4.9075-3.1292-3.5777-5.7889z" fill="#fff" style=""/>
+  <path d="m35.955 2.2112c1.4741-2.9482 5.6813-2.9482 7.1554 0l35.528 71.056c1.3298 2.6596-0.6042 5.7889-3.5777 5.7889h-71.056c-2.9735 0-4.9075-3.1292-3.5777-5.7889z" style=""/>
+  <path d="m37.72 3.1061c0.7371-1.4741 2.8407-1.4741 3.5778-1e-5l35.528 71.056c0.6649 1.3298-0.3021 2.8944-1.7888 2.8944h-71.056c-1.4868 0-2.4538-1.5646-1.7889-2.8944z" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>
+  <path d="m42.092 32.618-0.4688 20.059h-4.0234l-0.4883-20.059zm-5.1172 26.211c0-0.7161 0.2344-1.3151 0.7031-1.7968 0.4818-0.4948 1.1459-0.7422 1.9922-0.7422 0.8334 0 1.4909 0.2474 1.9727 0.7422 0.4817 0.4817 0.7226 1.0807 0.7226 1.7968 0 0.6901-0.2409 1.2826-0.7226 1.7774-0.4818 0.4818-1.1393 0.7226-1.9727 0.7226-0.8463 0-1.5104-0.2408-1.9922-0.7226-0.4687-0.4948-0.7031-1.0873-0.7031-1.7774z" fill="#000" fill-opacity=".87" style=""/>
+ </g>
+</svg>

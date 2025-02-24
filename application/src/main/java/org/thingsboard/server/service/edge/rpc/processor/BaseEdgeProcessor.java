@@ -120,7 +120,7 @@ public abstract class BaseEdgeProcessor {
     private boolean doSaveIfEdgeIsOffline(EdgeEventType type, EdgeEventActionType action) {
         return switch (action) {
             case TIMESERIES_UPDATED, ALARM_ACK, ALARM_CLEAR, ALARM_ASSIGNED, ALARM_UNASSIGNED, ADDED_COMMENT,
-                 UPDATED_COMMENT -> true;
+                 UPDATED_COMMENT, DELETED -> true;
             default -> switch (type) {
                 case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, USER, CUSTOMER, TENANT, TENANT_PROFILE,
                      WIDGETS_BUNDLE, WIDGET_TYPE, ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, NOTIFICATION_TEMPLATE, NOTIFICATION_TARGET,
@@ -343,7 +343,14 @@ public abstract class BaseEdgeProcessor {
 
     protected void pushEntityEventToRuleEngine(TenantId tenantId, EntityId entityId, CustomerId customerId,
                                                TbMsgType msgType, String msgData, TbMsgMetaData metaData) {
-        TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, msgData);
+        TbMsg tbMsg = TbMsg.newMsg()
+                .type(msgType)
+                .originator(entityId)
+                .customerId(customerId)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(msgData)
+                .build();
         edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, entityId, tbMsg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {

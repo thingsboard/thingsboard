@@ -192,7 +192,8 @@
                        (click)="$event.stopPropagation();"></a>
                   </ng-template>
                   <ng-template [ngSwitchCase]="'entityChips'">
-                    <tb-entity-chips [entity]="entity" [key]="column.key"></tb-entity-chips>
+                    <tb-entity-chips [entity]="entity" [key]="column.key"
+                                     [detailsPagePrefixUrl]="column.entityURL ? column.entityURL(entity) : ''"></tb-entity-chips>
                   </ng-template>
                   <ng-template #defaultContent ngSwitchDefault>
                     <span [innerHTML]="cellContent(entity, column, row)"></span>

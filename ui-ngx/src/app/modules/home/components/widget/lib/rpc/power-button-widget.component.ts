@@ -18,7 +18,8 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ElementRef, NgZone,
+  ElementRef,
+  NgZone,
   OnDestroy,
   OnInit,
   Renderer2,
@@ -38,6 +39,7 @@ import {
   PowerButtonWidgetSettings
 } from '@home/components/widget/lib/rpc/power-button-widget.models';
 import { SVG, Svg } from '@svgdotjs/svg.js';
+import { MatIconRegistry } from '@angular/material/icon';
 
 @Component({
   selector: 'tb-power-button-widget',
@@ -72,6 +74,7 @@ export class PowerButtonWidgetComponent extends
   constructor(protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
               private renderer: Renderer2,
+              private iconRegistry: MatIconRegistry,
               protected cd: ChangeDetectorRef,
               protected zone: NgZone) {
     super(cd);
@@ -180,7 +183,7 @@ export class PowerButtonWidgetComponent extends
     this.renderer.setStyle(this.svgShape.node, 'user-select', 'none');
 
     this.zone.run(() => {
-      this.powerButtonSvgShape = PowerButtonShape.fromSettings(this.ctx, this.svgShape,
+      this.powerButtonSvgShape = PowerButtonShape.fromSettings(this.ctx, this.svgShape, this.iconRegistry,
         this.settings, this.value, this.disabledState, () => this.onClick());
     });
 

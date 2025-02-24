@@ -41,7 +41,6 @@ import java.util.concurrent.ExecutionException;
         configClazz = TbNotificationNodeConfiguration.class,
         nodeDescription = "Sends notification to targets using the template",
         nodeDetails = "Will send notification to the specified targets using the template",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbExternalNodeNotificationConfig",
         icon = "notifications"
 )
@@ -82,7 +81,9 @@ public class TbNotificationNode extends TbAbstractExternalNode {
             public void onSuccess(NotificationRequestStats stats) {
                 TbMsgMetaData metaData = tbMsg.getMetaData().copy();
                 metaData.putValue("notificationRequestResult", JacksonUtil.toString(stats));
-                tellSuccess(ctx, TbMsg.transformMsgMetadata(tbMsg, metaData));
+                tellSuccess(ctx, tbMsg.transform()
+                        .metaData(metaData)
+                        .build());
             }
 
             @Override

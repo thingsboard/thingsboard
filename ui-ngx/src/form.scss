@@ -54,6 +54,16 @@
       padding: 12px;
       gap: 8px;
     }
+    &.no-padding-right {
+      padding-right: 0;
+      .mat-expansion-panel {
+        &.tb-settings {
+          > .mat-expansion-panel-header {
+            padding-right: 16px;
+          }
+        }
+      }
+    }
     &.no-padding-bottom {
       padding-bottom: 0;
     }
@@ -213,7 +223,7 @@
     }
     .mat-divider-vertical {
       height: 56px;
-      margin-top: -7px;
+      margin-top: -9px;
       margin-bottom: -7px;
     }
     .mat-mdc-form-field, tb-unit-input {
@@ -387,6 +397,9 @@
           .mdc-notched-outline__leading, .mdc-notched-outline__trailing, .mdc-notched-outline__notch {
             border-color: rgba(0, 0, 0, 0.12);
           }
+        }
+        .mdc-notched-outline__notch {
+          border-left: none;
         }
         .mdc-floating-label {
           top: 20px;

@@ -94,6 +94,7 @@ import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -109,7 +110,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.amazonaws.util.StringUtils.UTF8;
 import static io.netty.handler.codec.mqtt.MqttMessageType.CONNECT;
 import static io.netty.handler.codec.mqtt.MqttMessageType.PINGRESP;
 import static io.netty.handler.codec.mqtt.MqttMessageType.SUBACK;
@@ -606,7 +606,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void getOtaPackageCallback(ChannelHandlerContext ctx, MqttPublishMessage mqttMsg, int msgId, Matcher fwMatcher, OtaPackageType type) {
-        String payload = mqttMsg.content().toString(UTF8);
+        String payload = mqttMsg.content().toString(StandardCharsets.UTF_8);
         int chunkSize = StringUtils.isNotEmpty(payload) ? Integer.parseInt(payload) : 0;
         String requestId = fwMatcher.group("requestId");
         int chunk = Integer.parseInt(fwMatcher.group("chunk"));

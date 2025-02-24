@@ -106,9 +106,11 @@
       </tb-scada-symbol-metadata-behaviors>
     </div>
     <div [class.!hidden]="selectedOption !== 'properties'" class="mat-content overflow-hidden">
-      <tb-scada-symbol-metadata-properties
+      <tb-dynamic-form-properties
+        importExport
+        [exportFileName]="(modelValue?.title || 'scada-symbol') + '-properties'"
         formControlName="properties">
-      </tb-scada-symbol-metadata-properties>
+      </tb-dynamic-form-properties>
     </div>
   </div>
 </div>

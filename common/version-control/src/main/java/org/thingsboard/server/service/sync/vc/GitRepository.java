@@ -450,7 +450,7 @@ public class GitRepository {
         }
         ObjectId result = git.getRepository().resolve(rev);
         if (result == null) {
-            throw new IllegalArgumentException("Failed to parse git revision string: \"" + rev + "\"");
+            throw new IllegalArgumentException("Failed to resolve '" + rev + "'");
         }
         return result;
     }

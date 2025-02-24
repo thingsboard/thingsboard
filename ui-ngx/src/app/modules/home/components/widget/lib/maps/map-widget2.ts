@@ -19,23 +19,18 @@ import LeafletMap from './leaflet-map';
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import { getDefCenterPosition, parseWithTranslation } from './common-maps-utils';
-import {
-  Datasource,
-  DatasourceData,
-  FormattedData,
-  JsonSettingsSchema,
-  WidgetActionDescriptor
-} from '@shared/models/widget.models';
+import { Datasource, DatasourceData, FormattedData, WidgetActionDescriptor } from '@shared/models/widget.models';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { providerClass } from '@home/components/widget/lib/maps/providers/public-api';
-import { isDefined, isDefinedAndNotNull, parseFunction, parseTbFunction } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, parseTbFunction } from '@core/utils';
 import L from 'leaflet';
 import { firstValueFrom, forkJoin, from, Observable, of } from 'rxjs';
 import { AttributeService } from '@core/http/attribute.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
@@ -113,7 +108,7 @@ export class MapWidgetController implements MapWidgetInterface {
 
     map: LeafletMap;
     provider: MapProviders;
-    schema: JsonSettingsSchema;
+    form: FormProperty[];
     data: DatasourceData[];
     settings: WidgetUnitedMapSettings;
     pageLink: EntityDataPageLink;

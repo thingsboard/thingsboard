@@ -87,6 +87,7 @@ import {
   ExportResourceDialogData,
   ExportResourceDialogDialogResult
 } from '@shared/import-export/export-resource-dialog.component';
+import { FormProperty, propertyValid } from '@shared/models/dynamic-form.models';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
@@ -117,6 +118,27 @@ export class ImportExportService {
               private itembuffer: ItemBufferService,
               private dialog: MatDialog) {
 
+  }
+
+  public exportFormProperties(properties: FormProperty[], fileName: string) {
+    this.exportToPc(properties, fileName);
+  }
+
+  public importFormProperties(): Observable<FormProperty[]> {
+    return this.openImportDialog('dynamic-form.import-form',
+      'dynamic-form.json-file', true, 'dynamic-form.json-content').pipe(
+      map((properties: FormProperty[]) => {
+        if (!this.validateImportedFormProperties(properties)) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('dynamic-form.invalid-form-json-file-error'),
+              type: 'error'}));
+          throw new Error('Invalid form JSON file');
+        } else {
+          return properties;
+        }
+      }),
+      catchError(() => of(null))
+    );
   }
 
   public exportImage(type: ImageResourceType, key: string) {
@@ -790,7 +812,7 @@ export class ImportExportService {
   private processCSVCell(cellData: any): any {
     if (isString(cellData)) {
       let result = cellData.replace(/"/g, '""');
-      if (result.search(/([",\n])/g) >= 0) {
+      if (result.search(/([",;\n])/g) >= 0) {
         result = `"${result}"`;
       }
       return result;
@@ -925,6 +947,14 @@ export class ImportExportService {
     this.store.dispatch(new ActionNotificationShow(
       {message: this.translate.instant(errorDetailsMessageId, {error: message}),
         type: 'error'}));
+  }
+
+  private validateImportedFormProperties(properties: FormProperty[]): boolean {
+    if (!properties.length) {
+      return false;
+    } else {
+      return !properties.some(p => !propertyValid(p));
+    }
   }
 
   private validateImportedImage(image: ImageExportData): boolean {
@@ -1105,14 +1135,17 @@ export class ImportExportService {
     };
   }
 
-  private openImportDialog(importTitle: string, importFileLabel: string): Observable<any> {
+  private openImportDialog(importTitle: string, importFileLabel: string,
+                           enableImportFromContent = false, importContentLabel?: string): Observable<any> {
     return this.dialog.open<ImportDialogComponent, ImportDialogData,
       any>(ImportDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         importTitle,
-        importFileLabel
+        importFileLabel,
+        enableImportFromContent,
+        importContentLabel
       }
     }).afterClosed().pipe(
       map((importedData) => {

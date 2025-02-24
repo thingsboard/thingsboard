@@ -188,52 +188,37 @@
           </div>
           <div #topRightPanel class="tb-split tb-content">
             <mat-tab-group mat-stretch-tabs="false" dynamicHeight="true" style="width: 100%; height: 100%;">
-              <mat-tab label="{{ 'widget.settings-schema' | translate }}">
-                <div class="tb-resize-container" tb-fullscreen [fullscreen]="jsonSettingsFullscreen">
-                  <div class="tb-editor-area-title-panel">
-                    <button mat-button (click)="beautifyJson()">
-                      {{ 'widget.tidy' | translate }}
-                    </button>
-                    <button mat-icon-button class="tb-mat-32"
-                            (click)="jsonSettingsFullscreen = !jsonSettingsFullscreen"
-                            matTooltip="{{(jsonSettingsFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-                            matTooltipPosition="above">
-                      <mat-icon>{{ jsonSettingsFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-                    </button>
-                  </div>
-                  <div #settingsJsonInput></div>
+              <mat-tab label="{{ 'widget.settings-form' | translate }}">
+                <div class="tb-resize-container" style="background-color: #fff;">
+                  <tb-dynamic-form-properties
+                    importExport
+                    [exportFileName]="(widget.widgetName || 'widget') + '-settings-form'"
+                    [(ngModel)]="widget.settingsForm"
+                    (ngModelChange)="settingsFormUpdated()"
+                    noBorder fillHeight>
+                  </tb-dynamic-form-properties>
                 </div>
               </mat-tab>
-              <mat-tab label="{{ 'widget.datakey-settings-schema' | translate }}">
-                <div class="tb-resize-container" tb-fullscreen [fullscreen]="jsonDataKeySettingsFullscreen">
-                  <div class="tb-editor-area-title-panel">
-                    <button mat-button (click)="beautifyDataKeyJson()">
-                      {{ 'widget.tidy' | translate }}
-                    </button>
-                    <button mat-icon-button class="tb-mat-32"
-                            (click)="jsonDataKeySettingsFullscreen = !jsonDataKeySettingsFullscreen"
-                            matTooltip="{{(jsonDataKeySettingsFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-                            matTooltipPosition="above">
-                      <mat-icon>{{ jsonDataKeySettingsFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-                    </button>
-                  </div>
-                  <div #dataKeySettingsJsonInput></div>
+              <mat-tab label="{{ 'widget.data-key-settings-form' | translate }}">
+                <div class="tb-resize-container" style="background-color: #fff;">
+                  <tb-dynamic-form-properties
+                    importExport
+                    [exportFileName]="(widget.widgetName || 'widget') + '-data-key-settings-form'"
+                    [(ngModel)]="widget.dataKeySettingsForm"
+                    (ngModelChange)="dataKeySettingsFormUpdated()"
+                    noBorder fillHeight>
+                  </tb-dynamic-form-properties>
                 </div>
               </mat-tab>
-              <mat-tab [aria-labelledby]="widget.type !== widgetTypes.timeseries ? 'hidden': ''" label="{{ 'widget.latest-datakey-settings-schema' | translate }}">
-                <div class="tb-resize-container" tb-fullscreen [fullscreen]="jsonLatestDataKeySettingsFullscreen">
-                  <div class="tb-editor-area-title-panel">
-                    <button mat-button (click)="beautifyLatestDataKeyJson()">
-                      {{ 'widget.tidy' | translate }}
-                    </button>
-                    <button mat-icon-button class="tb-mat-32"
-                            (click)="jsonLatestDataKeySettingsFullscreen = !jsonLatestDataKeySettingsFullscreen"
-                            matTooltip="{{(jsonLatestDataKeySettingsFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-                            matTooltipPosition="above">
-                      <mat-icon>{{ jsonLatestDataKeySettingsFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-                    </button>
-                  </div>
-                  <div #latestDataKeySettingsJsonInput></div>
+              <mat-tab [aria-labelledby]="widget.type !== widgetTypes.timeseries ? 'hidden': ''" label="{{ 'widget.latest-data-key-settings-form' | translate }}">
+                <div class="tb-resize-container" style="background-color: #fff;">
+                  <tb-dynamic-form-properties
+                    importExport
+                    [exportFileName]="(widget.widgetName || 'widget') + '-latest-data-key-settings-form'"
+                    [(ngModel)]="widget.latestDataKeySettingsForm"
+                    (ngModelChange)="latestDataKeySettingsFormUpdated()"
+                    noBorder fillHeight>
+                  </tb-dynamic-form-properties>
                 </div>
               </mat-tab>
               <mat-tab label="{{ 'widget.widget-settings' | translate }}">

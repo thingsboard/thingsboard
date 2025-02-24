@@ -99,8 +99,6 @@
               "node_modules/jquery.terminal/css/jquery.terminal.min.css",
               "node_modules/tooltipster/dist/css/tooltipster.bundle.min.css",
               "node_modules/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css",
-              "src/app/shared/components/json-form/react/json-form.scss",
-              "node_modules/rc-select/assets/index.less",
               "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
               "node_modules/leaflet/dist/leaflet.css",
               "src/app/modules/home/components/widget/lib/maps/markers.scss",
@@ -181,7 +179,8 @@
           "builder": "@angular-builders/custom-esbuild:dev-server",
           "options": {
             "buildTarget": "thingsboard:build",
-            "proxyConfig": "proxy.conf.js"
+            "proxyConfig": "proxy.conf.js",
+            "middlewares": ["./esbuild/tb-html-fallback-middleware.ts"]
           },
           "configurations": {
             "production": {

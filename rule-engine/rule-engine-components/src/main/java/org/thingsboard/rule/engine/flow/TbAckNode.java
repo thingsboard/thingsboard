@@ -33,7 +33,6 @@ import org.thingsboard.server.common.msg.TbMsg;
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Acknowledges the incoming message",
         nodeDetails = "After acknowledgement, the message is pushed to related rule nodes. Useful if you don't care what happens to this message next.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig"
 )
 public class TbAckNode implements TbNode {
