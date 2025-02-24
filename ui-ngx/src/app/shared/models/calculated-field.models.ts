@@ -375,6 +375,7 @@ const calculatedFieldRollingArgumentValueHighlightRules: AceHighlightRules = {
 
 const calculatedFieldTimeWindowArgumentValueHighlightRules: AceHighlightRules = {
   calculatedFieldRollingArgumentTimeWindow: [
+    dotOperatorHighlightRule,
     {
       token: 'tb.calculated-field-start-ts',
       regex: /startTs/,
@@ -389,6 +390,7 @@ const calculatedFieldTimeWindowArgumentValueHighlightRules: AceHighlightRules = 
       token: 'tb.calculated-field-limit',
       regex: /limit/,
       next: 'no_regex'
-    }
+    },
+    endGroupHighlightRule
   ]
 }
