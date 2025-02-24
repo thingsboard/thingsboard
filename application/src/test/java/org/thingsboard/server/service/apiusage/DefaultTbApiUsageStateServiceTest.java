@@ -19,7 +19,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
@@ -76,10 +79,10 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
                 .setCustomerIdLSB(0)
                 .setServiceId("testService");
 
-                warningMsgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
-                        .setKey(ApiUsageRecordKey.STORAGE_DP_COUNT.name())
-                        .setValue(VALUE_WARNING)
-                        .build());
+        warningMsgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
+                .setKey(ApiUsageRecordKey.STORAGE_DP_COUNT.name())
+                .setValue(VALUE_WARNING)
+                .build());
 
         TransportProtos.ToUsageStatsServiceMsg warningStatsMsg = warningMsgBuilder.build();
         TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> warningMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), warningStatsMsg);
@@ -94,10 +97,10 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
                 .setCustomerIdLSB(0)
                 .setServiceId("testService");
 
-                disableMsgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
-                        .setKey(ApiUsageRecordKey.STORAGE_DP_COUNT.name())
-                        .setValue(VALUE_DISABLE)
-                        .build());
+        disableMsgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
+                .setKey(ApiUsageRecordKey.STORAGE_DP_COUNT.name())
+                .setValue(VALUE_DISABLE)
+                .build());
 
         TransportProtos.ToUsageStatsServiceMsg disableStatsMsg = disableMsgBuilder.build();
         TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> disableMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), disableStatsMsg);
