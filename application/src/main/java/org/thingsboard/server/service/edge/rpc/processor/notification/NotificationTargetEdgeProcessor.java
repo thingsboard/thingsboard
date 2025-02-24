@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor.ota;
+package org.thingsboard.server.service.edge.rpc.processor.notification;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.NotificationTargetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
@@ -32,37 +34,41 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @Slf4j
 @Component
 @TbCoreComponent
-public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
+public class NotificationTargetEdgeProcessor extends BaseEdgeProcessor {
+
+    @Autowired
+    private NotificationTargetService notificationTargetService;
 
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
-        OtaPackageId otaPackageId = new OtaPackageId(edgeEvent.getEntityId());
+        NotificationTargetId notificationTargetId = new NotificationTargetId(edgeEvent.getEntityId());
+        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                OtaPackage otaPackage = edgeCtx.getOtaPackageService().findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
-                if (otaPackage != null) {
+                NotificationTarget notificationTarget = notificationTargetService.findNotificationTargetById(edgeEvent.getTenantId(), notificationTargetId);
+                if (notificationTarget != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    OtaPackageUpdateMsg otaPackageUpdateMsg = EdgeMsgConstructorUtils.constructOtaPackageUpdatedMsg(msgType, otaPackage);
-                    return DownlinkMsg.newBuilder()
+                    NotificationTargetUpdateMsg notificationTargetUpdateMsg = EdgeMsgConstructorUtils.constructNotificationTargetUpdateMsg(msgType, notificationTarget);
+                    downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
+                            .addNotificationTargetUpdateMsg(notificationTargetUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                OtaPackageUpdateMsg otaPackageUpdateMsg = EdgeMsgConstructorUtils.constructOtaPackageDeleteMsg(otaPackageId);
-                return DownlinkMsg.newBuilder()
+                NotificationTargetUpdateMsg notificationTargetUpdateMsg = EdgeMsgConstructorUtils.constructNotificationTargetDeleteMsg(notificationTargetId);
+                downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
+                        .addNotificationTargetUpdateMsg(notificationTargetUpdateMsg)
                         .build();
             }
         }
-        return null;
+        return downlinkMsg;
     }
 
     @Override
     public EdgeEventType getEdgeEventType() {
-        return EdgeEventType.OTA_PACKAGE;
+        return EdgeEventType.NOTIFICATION_TARGET;
     }
 
 }
