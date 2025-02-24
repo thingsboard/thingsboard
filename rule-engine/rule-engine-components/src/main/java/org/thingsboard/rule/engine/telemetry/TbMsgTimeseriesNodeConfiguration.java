@@ -83,12 +83,18 @@ public class TbMsgTimeseriesNodeConfiguration implements NodeConfiguration<TbMsg
 
         }
 
-        record Advanced(ProcessingStrategy timeseries, ProcessingStrategy latest, ProcessingStrategy webSockets) implements ProcessingSettings {
+        record Advanced(
+                ProcessingStrategy timeseries,
+                ProcessingStrategy latest,
+                ProcessingStrategy webSockets,
+                ProcessingStrategy calculatedFields
+        ) implements ProcessingSettings {
 
             public Advanced {
                 Objects.requireNonNull(timeseries);
                 Objects.requireNonNull(latest);
                 Objects.requireNonNull(webSockets);
+                Objects.requireNonNull(calculatedFields);
             }
 
         }

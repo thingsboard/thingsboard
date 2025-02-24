@@ -27,30 +27,31 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AdvancedProcessingStrategy } from '@home/components/rule-node/action/timeseries-config.models';
 
 @Component({
-  selector: 'tb-advanced-persistence-settings',
-  templateUrl: './advanced-persistence-setting.component.html',
+  selector: 'tb-advanced-processing-settings',
+  templateUrl: './advanced-processing-setting.component.html',
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AdvancedPersistenceSettingComponent),
+    useExisting: forwardRef(() => AdvancedProcessingSettingComponent),
     multi: true
   },{
     provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => AdvancedPersistenceSettingComponent),
+    useExisting: forwardRef(() => AdvancedProcessingSettingComponent),
     multi: true
   }]
 })
-export class AdvancedPersistenceSettingComponent implements ControlValueAccessor, Validator {
+export class AdvancedProcessingSettingComponent implements ControlValueAccessor, Validator {
 
-  persistenceForm = this.fb.group({
+  processingForm = this.fb.group({
     timeseries: [null],
     latest: [null],
-    webSockets: [null]
+    webSockets: [null],
+    calculatedFields: [null]
   });
 
   private propagateChange: (value: any) => void = () => {};
 
   constructor(private fb: FormBuilder) {
-    this.persistenceForm.valueChanges.pipe(
+    this.processingForm.valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe(value => this.propagateChange(value));
   }
@@ -64,19 +65,19 @@ export class AdvancedPersistenceSettingComponent implements ControlValueAccessor
 
   setDisabledState(isDisabled: boolean) {
     if (isDisabled) {
-      this.persistenceForm.disable({emitEvent: false});
+      this.processingForm.disable({emitEvent: false});
     } else {
-      this.persistenceForm.enable({emitEvent: false});
+      this.processingForm.enable({emitEvent: false});
     }
   }
 
   validate(): ValidationErrors | null {
-    return this.persistenceForm.valid ? null : {
-      persistenceForm: false
+    return this.processingForm.valid ? null : {
+      processingForm: false
     };
   }
 
   writeValue(value: AdvancedProcessingStrategy) {
-    this.persistenceForm.patchValue(value, {emitEvent: false});
+    this.processingForm.patchValue(value, {emitEvent: false});
   }
 }

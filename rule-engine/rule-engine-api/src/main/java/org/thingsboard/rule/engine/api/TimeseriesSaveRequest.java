@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.thingsboard.common.util.NoOpFutureCallback;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,6 +32,8 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 
 import java.util.List;
 import java.util.UUID;
+
+import static java.util.Objects.requireNonNullElse;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -47,12 +50,12 @@ public class TimeseriesSaveRequest {
     private final TbMsgType tbMsgType;
     private final FutureCallback<Void> callback;
 
-    public record Strategy(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {
+    public record Strategy(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate, boolean processCalculatedFields) {
 
-        public static final Strategy SAVE_ALL = new Strategy(true, true, true);
-        public static final Strategy WS_ONLY = new Strategy(false, false, true);
-        public static final Strategy LATEST_AND_WS = new Strategy(false, true, true);
-        public static final Strategy SKIP_ALL = new Strategy(false, false, false);
+        public static final Strategy PROCESS_ALL = new Strategy(true, true, true, true);
+        public static final Strategy WS_ONLY = new Strategy(false, false, true, false);
+        public static final Strategy LATEST_AND_WS = new Strategy(false, true, true, false);
+        public static final Strategy SKIP_ALL = new Strategy(false, false, false, false);
 
     }
 
@@ -67,7 +70,7 @@ public class TimeseriesSaveRequest {
         private EntityId entityId;
         private List<TsKvEntry> entries;
         private long ttl;
-        private Strategy strategy = Strategy.SAVE_ALL;
+        private Strategy strategy = Strategy.PROCESS_ALL;
         private List<CalculatedFieldId> previousCalculatedFieldIds;
         private UUID tbMsgId;
         private TbMsgType tbMsgType;
@@ -148,7 +151,10 @@ public class TimeseriesSaveRequest {
         }
 
         public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, strategy, previousCalculatedFieldIds, tbMsgId, tbMsgType, callback);
+            return new TimeseriesSaveRequest(
+                    tenantId, customerId, entityId, entries, ttl, strategy,
+                    previousCalculatedFieldIds, tbMsgId, tbMsgType, requireNonNullElse(callback, NoOpFutureCallback.instance())
+            );
         }
 
     }

@@ -15,17 +15,17 @@
     limitations under the License.
 
 -->
-<section [formGroup]="persistenceSettingRowForm" class="tb-form-panel stroked no-gap no-padding-bottom">
+<section [formGroup]="processingSettingRowForm" class="tb-form-panel stroked no-gap no-padding-bottom">
   <div class="tb-form-panel-title mb-4">{{ title }}</div>
   <mat-form-field>
     <mat-label translate>rule-node-config.save-time-series.strategy</mat-label>
     <mat-select formControlName="type">
-      @for (strategy of persistenceStrategies; track strategy) {
-        <mat-option [value]="strategy">{{ PersistenceTypeTranslationMap.get(strategy) | translate }}</mat-option>
+      @for (strategy of processingStrategies; track strategy) {
+        <mat-option [value]="strategy">{{ ProcessingTypeTranslationMap.get(strategy) | translate }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
-  @if(persistenceSettingRowForm.get('type').value === PersistenceType.DEDUPLICATE) {
+  @if (processingSettingRowForm.get('type').value === ProcessingType.DEDUPLICATE) {
     <tb-time-unit-input
       required
       labelText="{{ 'rule-node-config.save-time-series.deduplication-interval' | translate }}"
