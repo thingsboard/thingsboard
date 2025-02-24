@@ -500,6 +500,15 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         attributesNode.put("test_attr", originalValue);
         doPost("/api/plugins/telemetry/DEVICE/" + device.getId() + "/attributes/SERVER_SCOPE", attributesNode);
 
+        // Wait before device attributes saved to database
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    String urlTemplate = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/keys/attributes/" + DataConstants.SERVER_SCOPE;
+                    List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});
+                    return actualKeys != null && !actualKeys.isEmpty() && actualKeys.contains("test_attr");
+                });
+
         JsonObject attributesData = new JsonObject();
         // incorrect msg, will not be saved, because of ts is lower than for already existing
         String attributesKey = "test_attr";

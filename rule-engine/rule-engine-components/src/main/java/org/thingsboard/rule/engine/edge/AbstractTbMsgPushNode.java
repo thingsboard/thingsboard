@@ -54,8 +54,6 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
 
     protected T config;
 
-    private static final String SCOPE = "scope";
-
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, getConfigClazz());
@@ -90,7 +88,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                 case ATTRIBUTES_UPDATED, POST_ATTRIBUTES -> {
                     entityBody.put("kv", dataJson);
                     entityBody.put("ts", msg.getMetaDataTs());
-                    entityBody.put(SCOPE, getScope(metadata));
+                    entityBody.put(DataConstants.SCOPE, getScope(metadata));
                     if (EdgeEventActionType.POST_ATTRIBUTES.equals(actionType)) {
                         entityBody.put("isPostAttributes", true);
                     }
@@ -99,7 +97,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                     List<String> keys = JacksonUtil.convertValue(dataJson.get("attributes"), new TypeReference<>() {
                     });
                     entityBody.put("keys", keys);
-                    entityBody.put(SCOPE, getScope(metadata));
+                    entityBody.put(DataConstants.SCOPE, getScope(metadata));
                 }
                 case TIMESERIES_UPDATED -> {
                     entityBody.put("data", dataJson);
@@ -146,7 +144,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     }
 
     protected String getScope(Map<String, String> metadata) {
-        String scope = metadata.get(SCOPE);
+        String scope = metadata.get(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = config.getScope();
         }
@@ -164,7 +162,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         } else if (msg.isTypeOf(ATTRIBUTES_DELETED)) {
             actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
         } else if (msg.isTypeOneOf(CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT)) {
-            String scope = msg.getMetaData().getValue(SCOPE);
+            String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
             actionType = StringUtils.isEmpty(scope) ?
                     EdgeEventActionType.TIMESERIES_UPDATED : EdgeEventActionType.ATTRIBUTES_UPDATED;
         } else {
