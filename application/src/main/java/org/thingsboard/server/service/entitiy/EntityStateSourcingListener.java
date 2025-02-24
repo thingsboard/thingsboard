@@ -72,6 +72,11 @@ public class EntityStateSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(SaveEntityEvent<?> event) {
+        if (Boolean.FALSE.equals(event.getBroadcastEvent())) {
+            log.trace("Ignoring event {}", event);
+            return;
+        }
+
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
         if (entityId == null) {

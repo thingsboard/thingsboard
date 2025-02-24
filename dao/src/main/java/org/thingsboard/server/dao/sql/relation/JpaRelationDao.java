@@ -127,6 +127,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                         typeGroup.name()));
     }
 
+
     @Override
     public ListenableFuture<Boolean> checkRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         return service.submit(() -> checkRelation(tenantId, from, to, relationType, typeGroup));

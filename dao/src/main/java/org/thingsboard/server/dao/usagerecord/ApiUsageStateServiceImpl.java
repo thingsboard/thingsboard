@@ -113,6 +113,14 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
         ApiUsageState saved = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
 
+        eventPublisher.publishEvent(SaveEntityEvent.builder()
+                .tenantId(saved.getTenantId())
+                .entityId(saved.getId())
+                .entity(saved)
+                .created(true)
+                .broadcastEvent(false)
+                .build());
+
         List<TsKvEntry> apiUsageStates = new ArrayList<>();
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.TRANSPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
