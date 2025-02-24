@@ -16,8 +16,10 @@
 package org.thingsboard.server.transport.mqtt.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -115,6 +117,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     private final ConcurrentMap<String, T> devices;
     private final ConcurrentMap<String, ListenableFuture<T>> deviceFutures;
     protected final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
+    @Getter
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
     protected final GatewayMetricsService gatewayMetricsService;
@@ -124,6 +127,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     private boolean overwriteDevicesActivity = false;
 
     public AbstractGatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId, boolean overwriteDevicesActivity) {
+        log.debug("[{}] Gateway connect [{}] session [{}]", deviceSessionCtx.getTenantId(), deviceSessionCtx.getDeviceId(), sessionId);
         this.context = deviceSessionCtx.getContext();
         this.transportService = context.getTransportService();
         this.deviceSessionCtx = deviceSessionCtx;
@@ -195,7 +199,27 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     public void onDevicesDisconnect() {
-        devices.forEach(this::deregisterSession);
+        log.debug("[{}] Gateway disconnect [{}]", gateway.getTenantId(), gateway.getDeviceId());
+        try {
+            deviceFutures.forEach((name, future) -> {
+                Futures.addCallback(future, new FutureCallback<T>() {
+                    @Override
+                    public void onSuccess(T result) {
+                        log.debug("[{}] Gateway disconnect [{}] device deregister callback [{}]", gateway.getTenantId(), gateway.getDeviceId(), name);
+                        deregisterSession(name, result);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+
+                    }
+                }, MoreExecutors.directExecutor());
+            });
+
+            devices.forEach(this::deregisterSession);
+        } catch (Exception e) {
+            log.error("Gateway disconnect failure", e);
+        }
     }
 
     public void onDeviceDeleted(String deviceName) {
