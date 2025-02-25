@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     private final TbQueueAdmin edgeEventAdmin;
 
     private final AtomicLong consumerCount = new AtomicLong();
+    private final AtomicLong edgeConsumerCount = new AtomicLong();
 
     public KafkaMonolithQueueFactory(TopicService topicService, TbKafkaSettings kafkaSettings,
                                      TbServiceInfoProvider serviceInfoProvider,
@@ -472,7 +473,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(topicService.buildTopicName("tb_edge_event.notifications." + tenantId + "." + edgeId));
-        consumerBuilder.clientId("monolith-to-edge-event-consumer" + serviceInfoProvider.getServiceId());
+        consumerBuilder.clientId("monolith-to-edge-event-consumer-" + serviceInfoProvider.getServiceId() + "-" + edgeConsumerCount.incrementAndGet());
         consumerBuilder.groupId(topicService.buildTopicName("monolith-edge-event-consumer"));
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToEdgeEventNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(edgeEventAdmin);

@@ -40,7 +40,7 @@
       "configuration": {
         "defaultTTL": 0,
         "useServerTs": false,
-        "persistenceSettings": {
+        "processingSettings": {
           "type": "ON_EVERY_MESSAGE"
         }
       },

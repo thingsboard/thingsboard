@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
-import org.thingsboard.rule.engine.telemetry.strategy.PersistenceStrategy;
+import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -110,7 +110,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void verifyDefaultConfig() {
         assertThat(config.getDefaultTTL()).isEqualTo(0L);
-        assertThat(config.getPersistenceSettings()).isInstanceOf(TbMsgTimeseriesNodeConfiguration.PersistenceSettings.OnEveryMessage.class);
+        assertThat(config.getProcessingSettings()).isInstanceOf(TbMsgTimeseriesNodeConfiguration.ProcessingSettings.OnEveryMessage.class);
         assertThat(config.isUseServerTs()).isFalse();
     }
 
@@ -124,14 +124,14 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenPersistenceSettingsAreNull_whenValidatingConstraints_thenThrowsException() {
+    public void givenProcessingSettingsAreNull_whenValidatingConstraints_thenThrowsException() {
         // GIVEN
-        config.setPersistenceSettings(null);
+        config.setProcessingSettings(null);
 
         // WHEN-THEN
         assertThatThrownBy(() -> ConstraintValidator.validateFields(config))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessage("Validation error: persistenceSettings must not be null");
+                .hasMessage("Validation error: processingSettings must not be null");
     }
 
     @ParameterizedTest
@@ -216,15 +216,15 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenSkipLatestPersistenceSettingsAndTtlFromConfig_whenOnMsg_thenSaveTimeseriesUsingTtlFromConfig() throws TbNodeException {
+    public void givenSkipLatestProcessingSettingsAndTtlFromConfig_whenOnMsg_thenSaveTimeseriesUsingTtlFromConfig() throws TbNodeException {
         // GIVEN
         config.setDefaultTTL(10L);
 
-        var timeseriesStrategy = PersistenceStrategy.onEveryMessage();
-        var latestStrategy = PersistenceStrategy.skip();
-        var webSockets = PersistenceStrategy.onEveryMessage();
-        var persistenceSettings = new TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Advanced(timeseriesStrategy, latestStrategy, webSockets);
-        config.setPersistenceSettings(persistenceSettings);
+        var timeseriesStrategy = ProcessingStrategy.onEveryMessage();
+        var latestStrategy = ProcessingStrategy.skip();
+        var webSockets = ProcessingStrategy.onEveryMessage();
+        var processingSettings = new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(timeseriesStrategy, latestStrategy, webSockets);
+        config.setProcessingSettings(processingSettings);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -333,9 +333,9 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenOnEveryMessagePersistenceSettingsAndSameMessageTwoTimes_whenOnMsg_thenPersistSameMessageTwoTimes() throws TbNodeException {
+    public void givenOnEveryMessageProcessingSettingsAndSameMessageTwoTimes_whenOnMsg_thenPersistSameMessageTwoTimes() throws TbNodeException {
         // GIVEN
-        config.setPersistenceSettings(new TbMsgTimeseriesNodeConfiguration.PersistenceSettings.OnEveryMessage());
+        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.OnEveryMessage());
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -368,9 +368,9 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenDeduplicatePersistenceSettingsAndSameMessageTwoTimes_whenOnMsg_thenPersistThisMessageOnlyFirstTime() throws TbNodeException {
+    public void givenDeduplicateProcessingSettingsAndSameMessageTwoTimes_whenOnMsg_thenPersistThisMessageOnlyFirstTime() throws TbNodeException {
         // GIVEN
-        config.setPersistenceSettings(new TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Deduplicate(10));
+        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Deduplicate(10));
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -403,9 +403,9 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenWebsocketsOnlyPersistenceSettingsAndSameMessageTwoTimes_whenOnMsg_thenSendsOnlyWsUpdateTwoTimes() throws TbNodeException {
+    public void givenWebSocketsOnlyProcessingSettingsAndSameMessageTwoTimes_whenOnMsg_thenSendsOnlyWsUpdateTwoTimes() throws TbNodeException {
         // GIVEN
-        config.setPersistenceSettings(new TbMsgTimeseriesNodeConfiguration.PersistenceSettings.WebSocketsOnly());
+        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.WebSocketsOnly());
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -438,12 +438,12 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenAdvancedPersistenceSettingsWithOnEveryMessageStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenPersistSameMessageTwoTimes() throws TbNodeException {
+    public void givenAdvancedProcessingSettingsWithOnEveryMessageStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenPersistSameMessageTwoTimes() throws TbNodeException {
         // GIVEN
-        config.setPersistenceSettings(new TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Advanced(
-                PersistenceStrategy.onEveryMessage(),
-                PersistenceStrategy.onEveryMessage(),
-                PersistenceStrategy.onEveryMessage()
+        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(
+                ProcessingStrategy.onEveryMessage(),
+                ProcessingStrategy.onEveryMessage(),
+                ProcessingStrategy.onEveryMessage()
         ));
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -477,12 +477,12 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenAdvancedPersistenceSettingsWithDifferentDeduplicateStrategyForEachAction_whenOnMsg_thenEvaluatesStrategiesForEachActionsIndependently() throws TbNodeException {
+    public void givenAdvancedProcessingSettingsWithDifferentDeduplicateStrategyForEachAction_whenOnMsg_thenEvaluatesStrategiesForEachActionsIndependently() throws TbNodeException {
         // GIVEN
-        config.setPersistenceSettings(new TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Advanced(
-                PersistenceStrategy.deduplicate(1),
-                PersistenceStrategy.deduplicate(2),
-                PersistenceStrategy.deduplicate(3)
+        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(
+                ProcessingStrategy.deduplicate(1),
+                ProcessingStrategy.deduplicate(2),
+                ProcessingStrategy.deduplicate(3)
         ));
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -528,12 +528,12 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenAdvancedPersistenceSettingsWithSkipStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenSkipsSameMessageTwoTimes() throws TbNodeException {
+    public void givenAdvancedProcessingSettingsWithSkipStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenSkipsSameMessageTwoTimes() throws TbNodeException {
         // GIVEN
-        config.setPersistenceSettings(new TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Advanced(
-                PersistenceStrategy.skip(),
-                PersistenceStrategy.skip(),
-                PersistenceStrategy.skip()
+        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(
+                ProcessingStrategy.skip(),
+                ProcessingStrategy.skip(),
+                ProcessingStrategy.skip()
         ));
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -577,7 +577,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                                 {
                                     "defaultTTL": 0,
                                     "useServerTs": false,
-                                    "persistenceSettings": {
+                                    "processingSettings": {
                                         "type": "ON_EVERY_MESSAGE"
                                     }
                                 }"""),
@@ -591,7 +591,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                                 {
                                     "defaultTTL": 0,
                                     "useServerTs": false,
-                                    "persistenceSettings": {
+                                    "processingSettings": {
                                         "type": "ON_EVERY_MESSAGE"
                                     }
                                 }"""),
@@ -606,7 +606,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                                 {
                                     "defaultTTL": 0,
                                     "useServerTs": false,
-                                    "persistenceSettings": {
+                                    "processingSettings": {
                                         "type": "ON_EVERY_MESSAGE"
                                     }
                                 }"""),
@@ -621,7 +621,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                                 {
                                     "defaultTTL": 0,
                                     "useServerTs": false,
-                                    "persistenceSettings": {
+                                    "processingSettings": {
                                         "type": "ADVANCED",
                                         "timeseries": {
                                             "type": "ON_EVERY_MESSAGE"

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,22 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Type;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,6 +63,10 @@ public class WidgetTypeInfoEntity extends AbstractWidgetTypeEntity<WidgetTypeInf
     @Column(name = ModelConstants.WIDGET_TYPE_WIDGET_TYPE_PROPERTY)
     private String widgetType;
 
+    @Convert(converter = JsonConverter.class)
+    @Column(name = ModelConstants.WIDGET_BUNDLES_PROPERTY)
+    private JsonNode bundles;
+
     public WidgetTypeInfoEntity() {
         super();
     }
@@ -70,6 +79,7 @@ public class WidgetTypeInfoEntity extends AbstractWidgetTypeEntity<WidgetTypeInf
         widgetTypeInfo.setDescription(description);
         widgetTypeInfo.setTags(tags);
         widgetTypeInfo.setWidgetType(widgetType);
+        widgetTypeInfo.setBundles(JacksonUtil.convertValue(bundles, new TypeReference<>() {}));
         return widgetTypeInfo;
     }
 
