@@ -17,14 +17,14 @@
 version: '3.0'
 
 services:
-  edqs-1:
+  tb-edqs-1:
     restart: always
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
     env_file:
       - edqs.env
     depends_on:
       - zookeeper
-  edqs-2:
+  tb-edqs-2:
     restart: always
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
     env_file:

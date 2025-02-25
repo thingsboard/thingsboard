@@ -53,7 +53,6 @@ import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustom
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultTenantAdmin;
 
-@DisableUIListeners
 public class EdqsEntityDataQueryTest extends AbstractContainerTest {
 
     private TenantId tenantId;
