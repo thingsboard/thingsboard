@@ -15,16 +15,12 @@
  */
 package org.thingsboard.server.dao.sql.query;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsMsg;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
-import org.thingsboard.server.common.data.edqs.query.EdqsRequest;
-import org.thingsboard.server.common.data.edqs.query.EdqsResponse;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
@@ -32,16 +28,6 @@ import org.thingsboard.server.common.msg.edqs.EdqsService;
 @Service
 @ConditionalOnMissingBean(value = EdqsService.class, ignored = DummyEdqsService.class)
 public class DummyEdqsService implements EdqsService {
-
-    @Override
-    public ListenableFuture<EdqsResponse> processRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isApiEnabled() {
-        return false;
-    }
 
     @Override
     public void onUpdate(TenantId tenantId, EntityId entityId, Object entity) {}
