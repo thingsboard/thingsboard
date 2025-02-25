@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -584,7 +584,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 edgeState.put(ACTIVITY_STATE, false);
                 edgeState.put(LAST_DISCONNECT_TIME, ts);
             }
-            ctx.getNotificationRuleProcessor().process(EdgeConnectionTrigger.builder()
+            ctx.getRuleProcessor().process(EdgeConnectionTrigger.builder()
                     .tenantId(tenantId)
                     .customerId(edge.getCustomerId())
                     .edgeId(edgeId)
