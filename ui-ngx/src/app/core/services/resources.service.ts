@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import { forkJoin, from, Observable, ReplaySubject, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
-import { isObject } from '@core/utils';
+import { camelCase, isObject } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { select, Store } from '@ngrx/store';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
@@ -50,6 +50,8 @@ export interface ModulesWithComponents {
   modules: ModuleInfo[];
   standaloneComponents: ɵComponentDef<any>[];
 }
+
+export type ComponentsSelectorMap<T> = Record<string, Type<T>>;
 
 export const flatModulesWithComponents = (modulesWithComponentsList: ModulesWithComponents[]): ModulesWithComponents => {
   const modulesWithComponents: ModulesWithComponents = {
@@ -90,6 +92,17 @@ export const componentTypeBySelector = (modulesWithComponents: ModulesWithCompon
 
 const matchesSelector = (selectors: ɵCssSelectorList, selector: string) =>
   selectors.some(s => s.some(s1 => typeof s1 === 'string' && s1 === selector));
+
+const extractSelectorFromComponent = (comp: ɵComponentDef<any>): string => {
+  for (const selectors of comp.selectors) {
+    for (const selector of selectors) {
+      if (typeof selector === 'string') {
+        return selector;
+      }
+    }
+  }
+  return null;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -252,6 +265,30 @@ export class ResourcesService {
     );
   }
 
+  public extractComponentsFromModule<T>(module: any, instanceFilter?: any, isCamelCaseSelector = false): ComponentsSelectorMap<T> {
+    const modulesWithComponents = this.extractModulesWithComponents(module);
+    const componentMap: ComponentsSelectorMap<T> = {};
+
+    const processComponents = (components: Array<ɵComponentDef<T>>) => {
+      components.forEach(item => {
+        if (instanceFilter && !(item.type.prototype instanceof instanceFilter)) {
+          return;
+        }
+        let selector = extractSelectorFromComponent(item);
+        if (isCamelCaseSelector) {
+          selector = camelCase(selector);
+        }
+        componentMap[selector] = item.type;
+      });
+    };
+
+    processComponents(modulesWithComponents.standaloneComponents);
+
+    modulesWithComponents.modules.forEach(module => {
+      processComponents(module.components);
+    })
+    return componentMap;
+  }
 
   private extractModulesWithComponents(module: any,
                                        modulesWithComponents: ModulesWithComponents = {
@@ -284,7 +321,7 @@ export class ResourcesService {
               modulesWithComponents.standaloneComponents.push(component);
             }
           } else {
-            this.extractModulesWithComponents(module, modulesWithComponents, visitedModules);
+            this.extractModulesWithComponents(element, modulesWithComponents, visitedModules);
           }
         }
       } else if (ɵNG_COMP_DEF in module) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -26,6 +27,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Slf4j
@@ -36,58 +38,68 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
     protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, CustomerId customerId) {
         boolean created = false;
-        Dashboard dashboard = constructDashboardFromUpdateMsg(tenantId, dashboardId, dashboardUpdateMsg);
+        Dashboard dashboard = JacksonUtil.fromString(dashboardUpdateMsg.getEntity(), Dashboard.class, true);
         if (dashboard == null) {
             throw new RuntimeException("[{" + tenantId + "}] dashboardUpdateMsg {" + dashboardUpdateMsg + "} cannot be converted to dashboard");
         }
-        Set<ShortCustomerInfo> assignedCustomers = null;
+        Set<ShortCustomerInfo> newAssignedCustomers = new HashSet<>();
+        if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
+            newAssignedCustomers.addAll(dashboard.getAssignedCustomers());
+        }
         Dashboard dashboardById = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
         if (dashboardById == null) {
             created = true;
             dashboard.setId(null);
+            dashboard.setAssignedCustomers(null);
         } else {
             dashboard.setId(dashboardId);
-            assignedCustomers = filterNonExistingCustomers(tenantId, dashboardById.getAssignedCustomers());
+            dashboard.setAssignedCustomers(dashboardById.getAssignedCustomers());
         }
 
         dashboardValidator.validate(dashboard, Dashboard::getTenantId);
         if (created) {
             dashboard.setId(dashboardId);
         }
-        Set<ShortCustomerInfo> msgAssignedCustomers = filterNonExistingCustomers(tenantId, dashboard.getAssignedCustomers());
-        if (msgAssignedCustomers != null) {
-            if (assignedCustomers == null) {
-                assignedCustomers = msgAssignedCustomers;
-            } else {
-                assignedCustomers.addAll(msgAssignedCustomers);
-            }
-        }
-        dashboard.setAssignedCustomers(assignedCustomers);
+
         Dashboard savedDashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
-        if (msgAssignedCustomers != null && !msgAssignedCustomers.isEmpty()) {
-            for (ShortCustomerInfo assignedCustomer : msgAssignedCustomers) {
-                if (assignedCustomer.getCustomerId().equals(customerId)) {
-                    edgeCtx.getDashboardService().assignDashboardToCustomer(tenantId, savedDashboard.getId(), assignedCustomer.getCustomerId());
-                }
-            }
-        } else {
-            unassignCustomersFromDashboard(tenantId, savedDashboard, customerId);
-        }
+
+        updateDashboardAssignments(tenantId, dashboardById, savedDashboard, newAssignedCustomers);
+
         return created;
     }
 
-    private void unassignCustomersFromDashboard(TenantId tenantId, Dashboard dashboard, CustomerId customerId) {
-        if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
-            for (ShortCustomerInfo assignedCustomer : dashboard.getAssignedCustomers()) {
-                if (assignedCustomer.getCustomerId().equals(customerId)) {
-                    edgeCtx.getDashboardService().unassignDashboardFromCustomer(tenantId, dashboard.getId(), assignedCustomer.getCustomerId());
-                }
+    private void updateDashboardAssignments(TenantId tenantId, Dashboard dashboardById, Dashboard savedDashboard, Set<ShortCustomerInfo> newAssignedCustomers) {
+        Set<ShortCustomerInfo> currentAssignedCustomers = new HashSet<>();
+        if (dashboardById != null) {
+            if (dashboardById.getAssignedCustomers() != null) {
+                currentAssignedCustomers.addAll(dashboardById.getAssignedCustomers());
             }
+        }
+
+        newAssignedCustomers = filterNonExistingCustomers(tenantId, currentAssignedCustomers, newAssignedCustomers);
+
+        Set<CustomerId> addedCustomerIds = new HashSet<>();
+        Set<CustomerId> removedCustomerIds = new HashSet<>();
+        for (ShortCustomerInfo newAssignedCustomer : newAssignedCustomers) {
+            if (!savedDashboard.isAssignedToCustomer(newAssignedCustomer.getCustomerId())) {
+                addedCustomerIds.add(newAssignedCustomer.getCustomerId());
+            }
+        }
+
+        for (ShortCustomerInfo currentAssignedCustomer : currentAssignedCustomers) {
+            if (!newAssignedCustomers.contains(currentAssignedCustomer)) {
+                removedCustomerIds.add(currentAssignedCustomer.getCustomerId());
+            }
+        }
+
+        for (CustomerId customerIdToAdd : addedCustomerIds) {
+            edgeCtx.getDashboardService().assignDashboardToCustomer(tenantId, savedDashboard.getId(), customerIdToAdd);
+        }
+        for (CustomerId customerIdToRemove : removedCustomerIds) {
+            edgeCtx.getDashboardService().unassignDashboardFromCustomer(tenantId, savedDashboard.getId(), customerIdToRemove);
         }
     }
 
-    protected abstract Dashboard constructDashboardFromUpdateMsg(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg);
-
-    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers);
+    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers);
 
 }

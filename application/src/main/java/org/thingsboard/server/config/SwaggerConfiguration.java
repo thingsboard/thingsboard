@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class SwaggerConfiguration {
 
     public static final String LOGIN_ENDPOINT = "/api/auth/login";
+    public static final String REFRESH_TOKEN_ENDPOINT = "/api/auth/token";
 
     private static final ApiResponses loginResponses = loginResponses();
     private static final ApiResponses defaultErrorResponses = defaultErrorResponses(false);
@@ -150,6 +151,7 @@ public class SwaggerConfiguration {
                 .info(info);
         addDefaultSchemas(openApi);
         addLoginOperation(openApi);
+        addRefreshTokenOperation(openApi);
         return openApi;
     }
 
@@ -208,6 +210,29 @@ public class SwaggerConfiguration {
         operation.addTagsItem("login-endpoint");
         var pathItem = new PathItem().post(operation);
         openAPI.path(LOGIN_ENDPOINT, pathItem);
+    }
+
+    private void addRefreshTokenOperation(OpenAPI openAPI) {
+        var operation = new Operation();
+        operation.summary("Refresh user JWT token data");
+        operation.description("""
+            Method to refresh JWT token. Provide a valid refresh token to get a new JWT token.
+            
+            The response contains a new token that can be used for authorization.
+            
+            `X-Authorization: Bearer $JWT_TOKEN_VALUE`""");
+
+        var requestBody = new RequestBody().description("Refresh token request")
+                .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
+                        new MediaType().schema(new Schema<JsonNode>().addProperty("refreshToken", new Schema<>().type("string")))));
+
+        operation.requestBody(requestBody);
+
+        operation.responses(loginResponses);
+
+        operation.addTagsItem("login-endpoint");
+        var pathItem = new PathItem().post(operation);
+        openAPI.path(REFRESH_TOKEN_ENDPOINT, pathItem);
     }
 
     @Bean
