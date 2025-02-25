@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -397,6 +397,9 @@
           .mdc-notched-outline__leading, .mdc-notched-outline__trailing, .mdc-notched-outline__notch {
             border-color: rgba(0, 0, 0, 0.12);
           }
+        }
+        .mdc-notched-outline__notch {
+          border-left: none;
         }
         .mdc-floating-label {
           top: 20px;
