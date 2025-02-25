@@ -39,6 +39,8 @@ import java.util.UUID;
 
 import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_ACK;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_CLEAR;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.CONNECT_EVENT;
@@ -78,6 +80,9 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     protected S buildEvent(TbMsg msg, TbContext ctx) {
         if (msg.isTypeOf(ALARM)) {
             EdgeEventActionType actionType = getAlarmActionType(msg);
+            return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
+        } else if (msg.isTypeOneOf(ALARM_ACK, ALARM_CLEAR)) {
+            EdgeEventActionType actionType = EdgeEventActionType.valueOf(msg.getType());
             return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
         } else {
             Map<String, String> metadata = msg.getMetaData().getData();
@@ -165,6 +170,8 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
             actionType = StringUtils.isEmpty(scope) ?
                     EdgeEventActionType.TIMESERIES_UPDATED : EdgeEventActionType.ATTRIBUTES_UPDATED;
+        } else if (msg.isTypeOneOf(ALARM_ACK, ALARM_CLEAR)) {
+            actionType = EdgeEventActionType.valueOf(msg.getType());
         } else {
             String type = msg.getType();
             log.warn("Unsupported msg type [{}]", type);
@@ -175,7 +182,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
 
     protected boolean isSupportedMsgType(TbMsg msg) {
         return msg.isTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED, TIMESERIES_UPDATED,
-                ALARM, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT, TO_SERVER_RPC_REQUEST);
+                ALARM, ALARM_ACK, ALARM_CLEAR, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT, TO_SERVER_RPC_REQUEST);
     }
 
 }
