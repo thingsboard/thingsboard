@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,9 +55,9 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.edqs.util.EdqsConverter;
 import org.thingsboard.server.edqs.processor.EdqsProducer;
 import org.thingsboard.server.edqs.state.EdqsPartitionService;
+import org.thingsboard.server.edqs.util.EdqsConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.EdqsEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.EdqsRequestMsg;
@@ -103,7 +103,7 @@ public class DefaultEdqsService implements EdqsService {
     private EdqsProducer eventsProducer;
     private TbQueueRequestTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> requestTemplate;
     private ExecutorService executor;
-    private DistributedLock<EdqsSyncState> syncLock;
+    private DistributedLock syncLock;
 
     @PostConstruct
     private void init() {
@@ -313,14 +313,14 @@ public class DefaultEdqsService implements EdqsService {
                 .flatMap(KvEntry::getJsonValue)
                 .map(value -> JacksonUtil.fromString(value, EdqsSyncState.class))
                 .orElse(null);
-        log.info("getSyncState = {}", state);
+        log.info("EDQS sync state: {}", state);
         return state;
     }
 
     @SneakyThrows
     private void saveSyncState(EdqsSyncStatus status) {
         EdqsSyncState state = new EdqsSyncState(status);
-        log.info("saveSyncState {}", state);
+        log.info("New EDQS sync state: {}", state);
         attributesService.save(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, AttributeScope.SERVER_SCOPE, new BaseAttributeKvEntry(
                 new JsonDataEntry("edqsSyncState", JacksonUtil.toString(state)),
                 System.currentTimeMillis())).get(30, TimeUnit.SECONDS);

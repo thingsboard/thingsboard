@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,12 @@ public class ZkDistributedLockService implements DistributedLockService {
     private final ZkDiscoveryService zkDiscoveryService;
 
     @Override
-    public <I> DistributedLock<I> getLock(String key) {
-        return new ZkDistributedLock<>(key);
+    public DistributedLock getLock(String key) {
+        return new ZkDistributedLock(key);
     }
 
     @RequiredArgsConstructor
-    private class ZkDistributedLock<I> implements DistributedLock<I> {
+    private class ZkDistributedLock implements DistributedLock {
 
         private final InterProcessLock interProcessLock;
 

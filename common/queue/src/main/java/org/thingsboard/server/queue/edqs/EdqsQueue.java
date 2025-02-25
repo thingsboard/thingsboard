@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ public enum EdqsQueue {
     STATE("edqs.state", true, true);
 
     private final String topic;
-    private final boolean readFromBeginning; // read from the beginning of the topic, instead of the latest committed offset
-    private final boolean stopWhenRead; // stop consuming when reached an empty msg pack
+    private final boolean readFromBeginning;
+    private final boolean stopWhenRead;
 
     EdqsQueue(String topic, boolean readFromBeginning, boolean stopWhenRead) {
         this.topic = topic;

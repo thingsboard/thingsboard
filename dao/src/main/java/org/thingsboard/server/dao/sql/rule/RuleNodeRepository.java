@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,5 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
     @Modifying
     @Query("DELETE FROM RuleNodeEntity e where e.id in :ids")
     void deleteByIdIn(@Param("ids") List<UUID> ids);
-
-    @Query("SELECT n FROM RuleNodeEntity n WHERE n.ruleChainId IN (SELECT rc.id FROM RuleChainEntity rc WHERE rc.tenantId = :tenantId)")
-    Page<RuleNodeEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
 }

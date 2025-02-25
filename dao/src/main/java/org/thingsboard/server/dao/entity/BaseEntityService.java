@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityCountQuery(query);
 
-        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) { // TODO: separate boolean param whether to use in dashboards; but sync to edqs - always
+        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityCountQuery(query)
                     .build();
@@ -112,7 +112,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityDataQuery(query);
 
-        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) { // TODO: separate boolean param whether to use in dashboards; but sync to edqs - always
+        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityDataQuery(query)
                     .build();
@@ -135,7 +135,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         return new PageData<>(result, entityDataByQuery.getTotalPages(), entityDataByQuery.getTotalElements(), entityDataByQuery.hasNext());
     }
 
-    private boolean validForEdqs(EntityCountQuery query) {
+    private boolean validForEdqs(EntityCountQuery query) { // for compatibility with PE
         return true;
     }
 

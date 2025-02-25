@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,11 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     @Override
     public boolean existsByTenantIdAndId(TenantId tenantId, UUID widgetTypeId) {
         return widgetTypeRepository.existsByTenantIdAndId(tenantId.getId(), widgetTypeId);
+    }
+
+    @Override
+    public WidgetTypeInfo findWidgetTypeInfoById(TenantId tenantId, UUID widgetTypeId) {
+        return DaoUtil.getData(widgetTypeInfoRepository.findById(widgetTypeId));
     }
 
     @Override

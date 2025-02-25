@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -281,7 +281,7 @@ public class CachedAttributesService implements AttributesService {
             String key = deleted.getValue();
             if (scope != null && key != null) {
                 cache.evict(new AttributeCacheKey(scope, entityId, key));
-                // FIXME: version is Long.MAX_VALUE because we expect that the entity is deleted and there won't be any attributes after this
+                // using version as Long.MAX_VALUE because we expect that the entity is deleted and there won't be any attributes after this
                 edqsService.onDelete(tenantId, ObjectType.ATTRIBUTE_KV, new AttributeKv(entityId, scope, key, Long.MAX_VALUE));
             }
         });

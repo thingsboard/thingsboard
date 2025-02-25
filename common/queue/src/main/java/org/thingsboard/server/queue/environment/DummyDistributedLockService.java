@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class DummyDistributedLockService implements DistributedLockService {
 
     @Override
-    public <I> DistributedLock<I> getLock(String key) {
-        return new DummyDistributedLock<>();
+    public DistributedLock getLock(String key) {
+        return new DummyDistributedLock();
     }
 
     @RequiredArgsConstructor
-    private static class DummyDistributedLock<I> implements DistributedLock<I> {
+    private static class DummyDistributedLock implements DistributedLock {
 
         private final ReentrantLock lock = new ReentrantLock();
 

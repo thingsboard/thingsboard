@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,19 @@ import java.util.Map;
 @SuppressWarnings({"unchecked"})
 public class EntityDaoRegistry {
 
-    private final Map<EntityType, Dao<?>> entityDaos = new EnumMap<>(EntityType.class);
+    private final Map<EntityType, Dao<?>> daos = new EnumMap<>(EntityType.class);
 
-    private EntityDaoRegistry(List<Dao<?>> entityDaos) {
-        entityDaos.forEach(dao -> {
-            if (dao.getEntityType() != null) {
-                this.entityDaos.put(dao.getEntityType(), dao);
+    private EntityDaoRegistry(List<Dao<?>> daos) {
+        daos.forEach(dao -> {
+            EntityType entityType = dao.getEntityType();
+            if (entityType != null) {
+                this.daos.put(entityType, dao);
             }
         });
     }
 
     public <T> Dao<T> getDao(EntityType entityType) {
-        Dao<T> dao = (Dao<T>) entityDaos.get(entityType);
+        Dao<T> dao = (Dao<T>) daos.get(entityType);
         if (dao == null) {
             throw new IllegalArgumentException("Missing dao for entity type " + entityType);
         }
