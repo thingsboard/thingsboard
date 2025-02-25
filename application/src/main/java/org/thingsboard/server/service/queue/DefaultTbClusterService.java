@@ -697,7 +697,6 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onAssetUpdated(Asset entity, Asset old) {
         var created = old == null;
-        broadcastEntityChangeToTransport(entity.getTenantId(), entity.getId(), entity, null);
         if (old != null) {
             boolean assetTypeChanged = !entity.getAssetProfileId().equals(old.getAssetProfileId());
             if (assetTypeChanged) {
