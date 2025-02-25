@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
-         [class.!hidden]="disabled && selectEntityFormGroup.get('entity').value">
-  <a *ngIf="selectEntityFormGroup.get('entity').value && disabled" aria-label="Open device profile" [routerLink]=entityURL>
+         [class.!hidden]="showEntityLink">
+  <a *ngIf="showEntityLink" aria-label="Open entity details page" [routerLink]=entityURL>
     {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
   </a>
   <button *ngIf="selectEntityFormGroup.get('entity').value && !disabled"
@@ -69,7 +69,7 @@
         </div>
         <ng-template #searchNotEmpty>
           <span>
-              {{ translate.get(noEntitiesMatchingText, {entity: searchText}) | async }}
+              {{ noEntitiesMatchingText | translate: {entity: searchText} }}
           </span>
         </ng-template>
       </div>

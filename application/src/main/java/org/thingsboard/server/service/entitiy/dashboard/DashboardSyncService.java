@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.service.entitiy.dashboard;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.sync.GitSyncService;
 import org.thingsboard.server.service.sync.vc.GitRepository.FileType;
 import org.thingsboard.server.service.sync.vc.GitRepository.RepoFile;
@@ -51,10 +53,11 @@ public class DashboardSyncService {
     private final ImageService imageService;
     private final WidgetsBundleService widgetsBundleService;
     private final PartitionService partitionService;
+    private final ProjectInfo projectInfo;
 
     @Value("${transport.gateway.dashboard.sync.repository_url:}")
     private String repoUrl;
-    @Value("${transport.gateway.dashboard.sync.branch:main}")
+    @Value("${transport.gateway.dashboard.sync.branch:}")
     private String branch;
     @Value("${transport.gateway.dashboard.sync.fetch_frequency:24}")
     private int fetchFrequencyHours;
@@ -64,6 +67,9 @@ public class DashboardSyncService {
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void init() throws Exception {
+        if (StringUtils.isBlank(branch)) {
+            branch = "release/" + projectInfo.getProjectVersion();
+        }
         gitSyncService.registerSync(REPO_KEY, repoUrl, branch, TimeUnit.HOURS.toMillis(fetchFrequencyHours), this::update);
     }
 
