@@ -34,42 +34,42 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-advanced-persistence-setting-row',
-  templateUrl: './advanced-persistence-setting-row.component.html',
+  selector: 'tb-advanced-processing-setting-row',
+  templateUrl: './advanced-processing-setting-row.component.html',
   providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AdvancedPersistenceSettingRowComponent),
+    useExisting: forwardRef(() => AdvancedProcessingSettingRowComponent),
     multi: true
   },{
     provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => AdvancedPersistenceSettingRowComponent),
+    useExisting: forwardRef(() => AdvancedProcessingSettingRowComponent),
     multi: true
   }]
 })
-export class AdvancedPersistenceSettingRowComponent implements ControlValueAccessor, Validator {
+export class AdvancedProcessingSettingRowComponent implements ControlValueAccessor, Validator {
 
   @Input()
   title: string;
 
-  persistenceSettingRowForm = this.fb.group({
+  processingSettingRowForm = this.fb.group({
     type: [defaultAdvancedProcessingConfig.type],
     deduplicationIntervalSecs: [{value: 60, disabled: true}]
   });
 
-  PersistenceType = ProcessingType;
-  persistenceStrategies = [ProcessingType.ON_EVERY_MESSAGE, ProcessingType.DEDUPLICATE, ProcessingType.SKIP];
-  PersistenceTypeTranslationMap = ProcessingTypeTranslationMap;
+  ProcessingType = ProcessingType;
+  processingStrategies = [ProcessingType.ON_EVERY_MESSAGE, ProcessingType.DEDUPLICATE, ProcessingType.SKIP];
+  ProcessingTypeTranslationMap = ProcessingTypeTranslationMap;
 
   maxDeduplicateTime = maxDeduplicateTimeSecs;
 
   private propagateChange: (value: any) => void = () => {};
 
   constructor(private fb: FormBuilder) {
-    this.persistenceSettingRowForm.get('type').valueChanges.pipe(
+    this.processingSettingRowForm.get('type').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe(() => this.updatedValidation());
 
-    this.persistenceSettingRowForm.valueChanges.pipe(
+    this.processingSettingRowForm.valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((value) => this.propagateChange(value));
   }
@@ -83,32 +83,32 @@ export class AdvancedPersistenceSettingRowComponent implements ControlValueAcces
 
   setDisabledState(isDisabled: boolean) {
     if (isDisabled) {
-      this.persistenceSettingRowForm.disable({emitEvent: false});
+      this.processingSettingRowForm.disable({emitEvent: false});
     } else {
-      this.persistenceSettingRowForm.enable({emitEvent: false});
+      this.processingSettingRowForm.enable({emitEvent: false});
       this.updatedValidation();
     }
   }
 
   validate(): ValidationErrors | null {
-    return this.persistenceSettingRowForm.valid ? null : {
-      persistenceSettingRow: false
+    return this.processingSettingRowForm.valid ? null : {
+      processingSettingRow: false
     };
   }
 
   writeValue(value: AdvancedProcessingConfig) {
     if (isDefinedAndNotNull(value)) {
-      this.persistenceSettingRowForm.patchValue(value, {emitEvent: false});
+      this.processingSettingRowForm.patchValue(value, {emitEvent: false});
     } else {
-      this.persistenceSettingRowForm.patchValue(defaultAdvancedProcessingConfig);
+      this.processingSettingRowForm.patchValue(defaultAdvancedProcessingConfig);
     }
   }
 
   private updatedValidation() {
-    if (this.persistenceSettingRowForm.get('type').value === ProcessingType.DEDUPLICATE) {
-      this.persistenceSettingRowForm.get('deduplicationIntervalSecs').enable({emitEvent: false});
+    if (this.processingSettingRowForm.get('type').value === ProcessingType.DEDUPLICATE) {
+      this.processingSettingRowForm.get('deduplicationIntervalSecs').enable({emitEvent: false});
     } else {
-      this.persistenceSettingRowForm.get('deduplicationIntervalSecs').disable({emitEvent: false})
+      this.processingSettingRowForm.get('deduplicationIntervalSecs').disable({emitEvent: false})
     }
   }
 }
