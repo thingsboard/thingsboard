@@ -252,7 +252,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 .put("hasBasicMode", true)
                 .put("basicModeDirective", "tb-scada-symbol-basic-config")
                 .put("resource", link));
-        WidgetType savedWidgetType= doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
+        WidgetType savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
 
         var deleteResponse = doDelete("/api/resource/" + savedResource.getUuidId() + "?force=false")
                 .andExpect(status().isBadRequest())
@@ -268,7 +268,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
         Assert.assertNotNull(referenceValues);
 
-        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<WidgetTypeInfo>>>(){});
+        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<WidgetTypeInfo>>>() {
+        });
         Assert.assertNotNull(widgetTypeInfos);
         Assert.assertFalse(widgetTypeInfos.isEmpty());
         Assert.assertEquals(1, widgetTypeInfos.size());
@@ -290,7 +291,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setTenantId(savedTenant.getId());
         resource.setEncodedData(TEST_DATA);
         resource.setResourceKey(JS_TEST_FILE_NAME);
-        TbResource savedResource = save(resource);
+        TbResourceInfo savedResource = save(resource);
 
         var link = resource.getLink();
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
@@ -318,7 +319,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertTrue(isSuccess);
 
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
-        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<WidgetTypeInfo>>>(){});
+        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<WidgetTypeInfo>>>() {
+        });
         Assert.assertNull(widgetTypeInfos);
     }
 
@@ -331,7 +333,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setTenantId(savedTenant.getId());
         resource.setEncodedData(TEST_DATA);
         resource.setResourceKey(JS_TEST_FILE_NAME);
-        TbResource savedResource = save(resource);
+        TbResourceInfo savedResource = save(resource);
 
         var link = resource.getLink();
         Dashboard dashboard = new Dashboard();
@@ -362,7 +364,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
         Assert.assertNotNull(referenceValues);
 
-        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<DashboardInfo>>>(){});
+        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<DashboardInfo>>>() {
+        });
         Assert.assertNotNull(dashboardInfos);
         Assert.assertFalse(dashboardInfos.isEmpty());
         Assert.assertEquals(1, dashboardInfos.size());
@@ -413,7 +416,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertTrue(isSuccess);
 
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
-        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<DashboardInfo>>>(){});
+        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<DashboardInfo>>>() {
+        });
         Assert.assertNull(dashboardInfos);
     }
 
@@ -847,7 +851,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         List<TbResourceInfo> resources = loadLwm2mResources();
 
         List<LwM2mObject> objects =
-                doGetTyped("/api/resource/lwm2m/page?pageSize=100&page=0", new TypeReference<>() {});
+                doGetTyped("/api/resource/lwm2m/page?pageSize=100&page=0", new TypeReference<>() {
+                });
         Assert.assertNotNull(objects);
         Assert.assertEquals(resources.size(), objects.size());
 
@@ -861,7 +866,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         List<TbResourceInfo> resources = loadLwm2mResources();
 
         List<LwM2mObject> objects =
-                doGetTyped("/api/resource/lwm2m?sortProperty=id&sortOrder=ASC&objectIds=3_1.2,5_1.2,19_1.1", new TypeReference<>() {});
+                doGetTyped("/api/resource/lwm2m?sortProperty=id&sortOrder=ASC&objectIds=3_1.2,5_1.2,19_1.1", new TypeReference<>() {
+                });
         Assert.assertNotNull(objects);
         Assert.assertEquals(3, objects.size());
 

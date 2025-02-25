@@ -400,7 +400,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
     @Test
     public void testDeleteResource() throws Exception {
         TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.JKS);
+        resource.setResourceType(ResourceType.JS_MODULE);
         resource.setTitle("My resource");
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData(TEST_DATA);
@@ -421,7 +421,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName(JS_FILE_NAME);
         resource.setTenantId(savedTenant.getId());
         resource.setData(TEST_DATA);
-        TbResource savedResource = tbResourceService.save(resource);
+        TbResourceInfo savedResource = tbResourceService.save(resource);
         TbResource foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNotNull(foundResource);
         String link = DataConstants.TB_RESOURCE_PREFIX + resource.getLink();
@@ -443,7 +443,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetTypeDetails);
         WidgetTypeDetails foundWidgetType = widgetTypeService.findWidgetTypeDetailsById(savedTenant.getId(), savedWidgetType.getId());
-        String resourceLink =  foundWidgetType.getDescriptor().get("resource").asText();
+        String resourceLink = foundWidgetType.getDescriptor().get("resource").asText();
         Assertions.assertNotNull(resourceLink);
         Assert.assertEquals(resourceLink, link);
 
@@ -459,9 +459,9 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assert.assertNotNull(foundWidgetTypeInfo);
         Assert.assertEquals(widgetTypeInfo, foundWidgetTypeInfo);
 
-        foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
+        TbResourceInfo foundResourceInfo = resourceService.findResourceInfoById(savedTenant.getId(), savedResource.getId());
         Assert.assertNotNull(foundResource);
-        Assert.assertEquals(savedResource, foundResource);
+        Assert.assertEquals(savedResource, foundResourceInfo);
     }
 
     @Test
@@ -472,7 +472,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName(JS_FILE_NAME);
         resource.setTenantId(savedTenant.getId());
         resource.setData(TEST_DATA);
-        TbResource savedResource = tbResourceService.save(resource);
+        TbResourceInfo savedResource = tbResourceService.save(resource);
         TbResource foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNotNull(foundResource);
         String link = DataConstants.TB_RESOURCE_PREFIX + resource.getLink();
@@ -495,7 +495,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetTypeDetails);
         WidgetTypeDetails foundWidgetType = widgetTypeService.findWidgetTypeDetailsById(savedTenant.getId(), savedWidgetType.getId());
-        String resourceLink =  foundWidgetType.getDescriptor().get("resource").asText();
+        String resourceLink = foundWidgetType.getDescriptor().get("resource").asText();
         Assertions.assertNotNull(resourceLink);
         Assert.assertEquals(resourceLink, link);
 
@@ -516,7 +516,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName(JS_FILE_NAME);
         resource.setTenantId(savedTenant.getId());
         resource.setData(TEST_DATA);
-        TbResource savedResource = tbResourceService.save(resource);
+        TbResourceInfo savedResource = tbResourceService.save(resource);
         TbResource foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNotNull(foundResource);
         String link = DataConstants.TB_RESOURCE_PREFIX + resource.getLink();
@@ -536,7 +536,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
         Dashboard foundDashboard = dashboardService.findDashboardById(savedTenant.getId(), savedDashboard.getId());
-        String resourceLink =  foundDashboard.getConfiguration().get("someResource").asText();
+        String resourceLink = foundDashboard.getConfiguration().get("someResource").asText();
         Assertions.assertNotNull(resourceLink);
         Assert.assertEquals(resourceLink, link);
 
@@ -565,7 +565,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         resource.setFileName(JS_FILE_NAME);
         resource.setTenantId(savedTenant.getId());
         resource.setData(TEST_DATA);
-        TbResource savedResource = tbResourceService.save(resource);
+        TbResourceInfo savedResource = tbResourceService.save(resource);
         TbResource foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNotNull(foundResource);
         String link = DataConstants.TB_RESOURCE_PREFIX + resource.getLink();
@@ -585,7 +585,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
         Dashboard foundDashboard = dashboardService.findDashboardById(savedTenant.getId(), savedDashboard.getId());
-        String resourceLink =  foundDashboard.getConfiguration().get("someResource").asText();
+        String resourceLink = foundDashboard.getConfiguration().get("someResource").asText();
         Assertions.assertNotNull(resourceLink);
         Assert.assertEquals(resourceLink, link);
 
@@ -597,23 +597,6 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNull(foundResource);
     }
-
-    @Test
-    public void testDeleteResourceWithoutReferences() throws Exception {
-        TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.JS_MODULE);
-        resource.setTitle("My resource");
-        resource.setFileName(JS_FILE_NAME);
-        resource.setData(TEST_DATA);
-        TbResource savedResource = tbResourceService.save(resource);
-
-        TbResource foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
-        Assert.assertNotNull(foundResource);
-        tbResourceService.delete(savedResource, true, null);
-        foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
-        Assert.assertNull(foundResource);
-    }
-
 
     @Test
     public void testFindTenantResourcesByTenantId() throws Exception {

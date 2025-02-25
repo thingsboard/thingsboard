@@ -40,7 +40,7 @@ public interface TbResourceService {
 
     void delete(TbResourceInfo entity, User user);
 
-    TbResourceDeleteResult delete(TbResource entity, boolean force, User user);
+    TbResourceDeleteResult delete(TbResourceInfo entity, boolean force, User user);
 
     List<LwM2mObject> findLwM2mObject(TenantId tenantId,
                                       String sortOrder,
