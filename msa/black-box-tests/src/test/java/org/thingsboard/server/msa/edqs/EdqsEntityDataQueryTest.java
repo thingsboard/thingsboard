@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultCustom
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultTenantAdmin;
 
+@DisableUIListeners
 public class EdqsEntityDataQueryTest extends AbstractContainerTest {
 
     private TenantId tenantId;
@@ -70,7 +71,7 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
     @BeforeClass
     public void beforeClass() throws Exception {
         testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
-        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> testRestClient.isEdqsApiEnabled());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> testRestClient.isEdqsApiEnabled());
 
         tenantId = testRestClient.postTenant(EntityPrototypes.defaultTenantPrototype("Tenant")).getId();
         tenantAdminId = testRestClient.createUserAndLogin(defaultTenantAdmin(tenantId, "tenantAdmin@thingsboard.org"), "tenant");
@@ -97,6 +98,7 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
 
     @AfterClass
     public void afterClass() {
+        testRestClient.resetToken();
         testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
         testRestClient.deleteTenant(tenantId);
         testRestClient.deleteTenant(tenantId2);
@@ -111,13 +113,14 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
                 .atMost(30, TimeUnit.SECONDS)
                 .until(() -> testRestClient.postCountDataQuery(query).compareTo(97L * 2) >= 0);
 
-        testRestClient.getUserToken(tenantAdminId.getId().toString());
+        testRestClient.getAndSetUserToken(tenantAdminId.getId().toString());
         await("Waiting for total device count")
                 .atMost(30, TimeUnit.SECONDS)
                 .until(() -> testRestClient.postCountDataQuery(query).equals(97L));
 
+        testRestClient.resetToken();
         testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
-        testRestClient.getUserToken(tenant2AdminId.getId().toString());
+        testRestClient.getAndSetUserToken(tenant2AdminId.getId().toString());
         await("Waiting for total device count")
                 .atMost(30, TimeUnit.SECONDS)
                 .until(() -> testRestClient.postCountDataQuery(query).equals(97L));
@@ -126,16 +129,17 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
     @Test
     public void testRetrieveTenantDevicesByDeviceTypeFilter() {
         // login tenant admin
-        testRestClient.getUserToken(tenantAdminId.getId().toString());
+        testRestClient.getAndSetUserToken(tenantAdminId.getId().toString());
         checkUserDevices(tenantDevices);
 
         // login customer user
-        testRestClient.getUserToken(customerUserId.getId().toString());
+        testRestClient.getAndSetUserToken(customerUserId.getId().toString());
         checkUserDevices(tenantDevices.subList(0, 12));
 
         // login other tenant admin
+        testRestClient.resetToken();
         testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
-        testRestClient.getUserToken(tenant2AdminId.getId().toString());
+        testRestClient.getAndSetUserToken(tenant2AdminId.getId().toString());
         checkUserDevices(tenant2Devices);
     }
 

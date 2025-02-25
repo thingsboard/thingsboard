@@ -28,7 +28,6 @@ import io.restassured.internal.ValidatableResponseImpl;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -112,6 +111,11 @@ public class TestRestClient {
         token = jsonPath.get("token");
         refreshToken = jsonPath.get("refreshToken");
         requestSpec.header(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
+    }
+
+    public void resetToken() {
+        token = null;
+        refreshToken = null;
     }
 
     public Tenant postTenant(Tenant tenant) {
@@ -494,11 +498,11 @@ public class TestRestClient {
 
     public UserId createUserAndLogin(User user, String password) {
         UserId userId = postUser(user).getId();
-        getUserToken(userId.getId().toString());
+        getAndSetUserToken(userId.getId().toString());
         return userId;
     }
 
-    public void getUserToken(String id) {
+    public void getAndSetUserToken(String id) {
         ObjectNode tokenInfo = given().spec(requestSpec)
                 .get("/api/user/" + id + "/token")
                 .then()
