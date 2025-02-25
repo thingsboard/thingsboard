@@ -192,6 +192,7 @@ export interface WidgetTypeParameters {
   dataKeySettingsFunction?: DataKeySettingsFunction;
   displayRpcMessageToast?: boolean;
   targetDeviceOptional?: boolean;
+  additionalWidgetActionTypes?: WidgetActionType[];
 }
 
 export interface WidgetControllerDescriptor {
@@ -575,7 +576,8 @@ export enum WidgetActionType {
   custom = 'custom',
   customPretty = 'customPretty',
   mobileAction = 'mobileAction',
-  openURL = 'openURL'
+  openURL = 'openURL',
+  placeMapItem = 'placeMapItem'
 }
 
 export enum WidgetMobileActionType {
@@ -589,7 +591,15 @@ export enum WidgetMobileActionType {
   takeScreenshot = 'takeScreenshot'
 }
 
-export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
+export enum MapItemType {
+  marker = 'marker',
+  polygon = 'polygon',
+  rectangle = 'rectangle',
+  circle = 'circle'
+}
+
+export const widgetActionTypes = Object.keys(WidgetActionType)
+  .filter(value => value !== WidgetActionType.placeMapItem) as WidgetActionType[];
 
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   [
@@ -600,7 +610,8 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.custom, 'widget-action.custom' ],
     [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ],
     [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ],
-    [ WidgetActionType.openURL, 'widget-action.open-URL' ]
+    [ WidgetActionType.openURL, 'widget-action.open-URL' ],
+    [ WidgetActionType.placeMapItem, 'widget-action.place-map-item' ],
   ]
 );
 
@@ -616,6 +627,15 @@ export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionTy
     [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ]
   ]
 );
+
+export const mapItemTypeTranslationMap = new Map<MapItemType, string>(
+  [
+    [ MapItemType.marker, 'widget-action.map-item.marker' ],
+    [ MapItemType.polygon, 'widget-action.map-item.polygon' ],
+    [ MapItemType.rectangle, 'widget-action.map-item.rectangle' ],
+    [ MapItemType.circle, 'widget-action.map-item.circle' ],
+  ]
+)
 
 export interface MobileLaunchResult {
   launched: boolean;
@@ -714,6 +734,7 @@ export interface WidgetAction extends CustomActionDescriptor {
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
   url?: string;
+  mapItemType?: MapItemType;
 }
 
 export interface WidgetActionDescriptor extends WidgetAction {

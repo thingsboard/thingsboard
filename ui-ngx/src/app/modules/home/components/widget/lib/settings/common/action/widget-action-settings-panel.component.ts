@@ -17,7 +17,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { WidgetAction, widgetType } from '@shared/models/widget.models';
+import { WidgetAction, WidgetActionType, widgetType } from '@shared/models/widget.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
@@ -52,6 +52,9 @@ export class WidgetActionSettingsPanelComponent implements OnInit {
 
   @Input()
   applyTitle = this.translate.instant('action.apply');
+
+  @Input()
+  additionalWidgetActionTypes: WidgetActionType[];
 
   @Output()
   widgetActionApplied = new EventEmitter<WidgetAction>();

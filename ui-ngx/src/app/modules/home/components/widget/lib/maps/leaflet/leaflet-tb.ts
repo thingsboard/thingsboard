@@ -15,10 +15,14 @@
 ///
 
 import L, { TB } from 'leaflet';
-import {  guid } from '@core/utils';
+import { guid, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
+import { MatIconRegistry } from '@angular/material/icon';
+import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
+import { catchError, take } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 L.MarkerCluster = L.MarkerCluster.mergeOptions({ pmIgnore: true });
 
@@ -278,32 +282,105 @@ class GroupsControl extends SidebarPaneControl<TB.GroupsControlOptions> {
 
 class TopToolbarButton {
   private readonly button: JQuery<HTMLElement>;
-  private _onClick: (e: MouseEvent) => void;
+  private active = false;
+  private disabled = false;
+  private _onClick: (e: MouseEvent, button: TopToolbarButton) => void;
 
-  constructor(private readonly options: TB.TopToolbarButtonOptions) {
+  constructor(private readonly options: TB.TopToolbarButtonOptions,
+              private readonly iconRegistry: MatIconRegistry) {
     const iconElement = $('<div class="tb-control-button-icon"></div>');
+    const setIcon = isNotEmptyStr(this.options.icon);
+    const setTitle = isNotEmptyStr(this.options.title);
     this.button = $("<a>")
     .attr('class', 'tb-control-button tb-control-text-button')
     .attr('href', '#')
     .attr('role', 'button');
-    this.button.append(iconElement);
-    this.button.append(`<div class="tb-control-text">${this.options.title}</div>`);
-    this.loadIcon(iconElement);
+    if (setIcon) {
+      this.button.append(iconElement);
+      this.loadIcon(iconElement);
+    }
+    if (setTitle) {
+      this.button.append(`<div class="tb-control-text">${this.options.title}</div>`);
+    }
+    this.button.css('--tb-map-control-color', this.options.color);
+    this.button.css('--tb-map-control-active-color', this.options.color);
+    this.button.css('--tb-map-control-hover-background-color', this.options.color);
+    if (setIcon && !setTitle) {
+      this.button.css('padding', 0);
+    } else if (!setIcon && setTitle) {
+      this.button.css('padding-left', '14px');
+    }
     this.button.on('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
       if (this._onClick) {
-        this._onClick(e.originalEvent);
+        this._onClick(e.originalEvent, this);
       }
     });
   }
 
-  onClick(onClick: (e: MouseEvent) => void): void {
+  onClick(onClick: (e: MouseEvent, button: TopToolbarButton) => void): void {
    this._onClick = onClick;
   }
 
   private loadIcon(iconElement: JQuery<HTMLElement>) {
-    // this.options.icon
+    iconElement.addClass(this.iconRegistry.getDefaultFontSetClass());
+
+    if (!isSvgIcon(this.options.icon)) {
+      iconElement.addClass('material-icon-font');
+      iconElement.text(this.options.icon);
+      return;
+    }
+
+    const [namespace, iconName] = splitIconName(this.options.icon);
+    this.iconRegistry
+      .getNamedSvgIcon(iconName, namespace)
+      .pipe(
+        take(1),
+        catchError((err: Error) => {
+          console.log(`Error retrieving icon ${namespace}:${iconName}! ${err.message}`)
+          return of(null);
+        })
+      )
+      .subscribe({
+        next: (svg) => {
+          iconElement.append(svg);
+          svg.style.height = '24px';
+          svg.style.width = '24px';
+        }
+      });
+  }
+
+  setActive(active: boolean): void {
+    if (this.active !== active) {
+      this.active = active;
+      if (this.active) {
+        L.DomUtil.addClass(this.button[0], 'active');
+      } else {
+        L.DomUtil.removeClass(this.button[0], 'active');
+      }
+    }
+  }
+
+  isActive(): boolean {
+    return this.active;
+  }
+
+  setDisabled(disabled: boolean): void {
+    if (this.disabled !== disabled) {
+      this.disabled = disabled;
+      if (this.disabled) {
+        L.DomUtil.addClass(this.button[0], 'leaflet-disabled');
+        this.button[0].setAttribute('aria-disabled', 'true');
+      } else {
+        L.DomUtil.removeClass(this.button[0], 'leaflet-disabled');
+        this.button[0].setAttribute('aria-disabled', 'false');
+      }
+    }
+  }
+
+  isDisabled(): boolean {
+    return this.disabled;
   }
 
   getButtonElement(): JQuery<HTMLElement> {
@@ -382,19 +459,29 @@ class ToolbarButton {
 class TopToolbarControl {
 
   private readonly toolbarElement: JQuery<HTMLElement>;
+  private buttons: Array<TopToolbarButton> = [];
 
   constructor(private readonly options: TB.TopToolbarControlOptions) {
-    const controlContainer = $('.leaflet-control-container', options.mapElement);
+    const controlContainer = $('.leaflet-control-container', this.options.mapElement);
     this.toolbarElement = $('<div class="tb-map-top-toolbar leaflet-top"></div>');
     this.toolbarElement.appendTo(controlContainer);
   }
 
   toolbarButton(options: TB.TopToolbarButtonOptions): TopToolbarButton {
-    const button = new TopToolbarButton(options);
+    const button = new TopToolbarButton(options, this.options.iconRegistry);
     const buttonContainer = $('<div class="leaflet-bar leaflet-control"></div>');
     button.getButtonElement().appendTo(buttonContainer);
     buttonContainer.appendTo(this.toolbarElement);
+    this.buttons.push(button);
     return button;
+  }
+
+  setDisabled(disabled: boolean): void {
+    this.buttons.forEach(button => {
+      if (!button.isActive()) {
+        button.setDisabled(disabled);
+      }
+    });
   }
 }
 

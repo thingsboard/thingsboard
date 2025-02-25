@@ -37,30 +37,34 @@
         border: 1px solid rgba(0,0,0,0.38);
         border-radius: 15px;
         box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.32);
-        background: #fff;
+        background-color: #fff;
         position: relative;
         a {
-          color: rgba(0, 0, 0, 0.54);
+          color: var(--tb-map-control-color, rgba(0, 0, 0, 0.54));
           border-bottom: none;
           position: relative;
-          background: transparent;
+          background-color: transparent;
           &.leaflet-disabled {
             pointer-events: none;
-            color: rgba(0, 0, 0, 0.18);
-            > div {
-              background: rgba(0, 0, 0, 0.18);
+            color: var(--tb-map-control-disable-color, rgba(0, 0, 0, 0.18));
+            > div:not(.material-icon-font):not(.tb-control-text) {
+              background-color: var(--tb-map-control-disable-color, rgba(0, 0, 0, 0.18));
+              svg {
+                fill: var(--tb-map-control-disable-color, rgba(0, 0, 0, 0.18));
+              }
             }
           }
           &:not(.leaflet-disabled) {
             &:hover, &.active {
               border-bottom: none;
-              color: $tb-primary-color; // primary color
+              color: var(--tb-map-control-active-color, $tb-primary-color); // primary color
               &:before {
                 content: "";
                 position: absolute;
                 inset: 0;
                 border-radius: 50%;
-                background-color: rgba(0, 105, 92, 0.10);
+                background-color: var(--tb-map-control-hover-background-color, rgba(0, 105, 92));
+                opacity: 0.1;
               }
             }
           }
@@ -93,11 +97,17 @@
                   border-radius: 15px;
                 }
                 > div:not(.tb-control-text):not(.tb-close) {
-                  background: $tb-primary-color; // primary color
+                  background-color: var(--tb-map-control-active-color, $tb-primary-color);
+                  svg {
+                    fill: var(--tb-map-control-active-color, $tb-primary-color);
+                  }
                 }
               }
-              > div {
-                background: rgba(0, 0, 0, 0.54);
+              > div:not(.material-icon-font):not(.tb-control-text) {
+                background-color: var(--tb-map-control-color, rgba(0, 0, 0, 0.54));
+                svg {
+                  fill: var(--tb-map-control-color, rgba(0, 0, 0, 0.54));
+                }
               }
             }
             > div {
@@ -141,7 +151,7 @@
           }
         }
       }
-      .tb-map-bottom-toolbar, .tb-map-top-toolbar {
+      .tb-map-bottom-toolbar {
         left: 0;
         right: 0;
         display: flex;
@@ -150,6 +160,25 @@
         .leaflet-bar {
           display: flex;
           flex-direction: row;
+        }
+      }
+
+      .tb-map-top-toolbar {
+        left: 52px;
+        right: 52px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+        .leaflet-control {
+          margin-top: 0;
+        }
+        a.tb-control-button {
+          .tb-control-button-icon {
+            background-clip: text;
+          }
         }
       }
     }

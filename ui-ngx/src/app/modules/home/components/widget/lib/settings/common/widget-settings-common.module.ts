@@ -236,6 +236,12 @@ import {
 import {
   MapTooltipTagActionsComponent
 } from '@home/components/widget/lib/settings/common/map/map-tooltip-tag-actions.component';
+import {
+  MapActionButtonsSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/map-action-buttons-settings.component';
+import {
+  MapActionButtonRowComponent
+} from '@home/components/widget/lib/settings/common/map/map-action-button-row.component';
 
 @NgModule({
   declarations: [
@@ -313,6 +319,8 @@ import {
     DataLayerColorSettingsComponent,
     DataLayerColorSettingsPanelComponent,
     MapTooltipTagActionsComponent,
+    MapActionButtonsSettingsComponent,
+    MapActionButtonRowComponent,
     DataLayerPatternSettingsComponent,
     MarkerShapeSettingsComponent,
     MarkerShapesComponent,

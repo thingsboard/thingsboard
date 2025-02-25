@@ -43,6 +43,7 @@ import {
   CellClickColumnInfo,
   defaultWidgetAction,
   WidgetActionSource,
+  WidgetActionType,
   widgetType
 } from '@shared/models/widget.models';
 import { takeUntil } from 'rxjs/operators';
@@ -58,6 +59,7 @@ export interface WidgetActionDialogData {
   actionsData: WidgetActionsData;
   action?: WidgetActionDescriptorInfo;
   widgetType: widgetType;
+  additionalWidgetActionTypes?: WidgetActionType[];
 }
 
 @Component({

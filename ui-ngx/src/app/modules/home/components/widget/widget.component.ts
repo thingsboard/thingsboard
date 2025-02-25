@@ -1149,6 +1149,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           )
         }
         break;
+      case WidgetActionType.placeMapItem:
       case WidgetActionType.customPretty:
         const customPrettyFunction = descriptor.customFunction;
         const customHtml = descriptor.customHtml;

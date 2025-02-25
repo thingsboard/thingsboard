@@ -46,7 +46,7 @@ import {
   WidgetActionsDatasource
 } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { WidgetActionDescriptor, WidgetActionSource, widgetType } from '@shared/models/widget.models';
+import { WidgetActionDescriptor, WidgetActionSource, WidgetActionType, widgetType } from '@shared/models/widget.models';
 import {
   WidgetActionDialogComponent,
   WidgetActionDialogData
@@ -76,6 +76,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   @Input() callbacks: WidgetActionCallbacks;
 
   @Input() actionSources: {[actionSourceId: string]: WidgetActionSource};
+
+  @Input() additionalWidgetActionTypes: WidgetActionType[];
 
   innerValue: WidgetActionsData;
 
@@ -236,7 +238,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
         callbacks: this.callbacks,
         actionsData,
         action: deepClone(action),
-        widgetType: this.widgetType
+        widgetType: this.widgetType,
+        additionalWidgetActionTypes: this.additionalWidgetActionTypes
       }
     }).afterClosed().subscribe(
       (res) => {

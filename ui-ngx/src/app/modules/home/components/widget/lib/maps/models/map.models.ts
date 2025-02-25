@@ -525,6 +525,13 @@ export const mapZoomActionTranslationMap = new Map<MapZoomAction, string>(
   ]
 );
 
+export interface MapActionButtonSettings {
+  label?: string;
+  icon?: string;
+  color: string;
+  action: WidgetAction;
+}
+
 export interface BaseMapSettings {
   mapType: MapType;
   markers: MarkersDataLayerSettings[];
@@ -539,6 +546,7 @@ export interface BaseMapSettings {
   defaultZoomLevel: number;
   minZoomLevel: number;
   mapPageSize: number;
+  mapActionButtons: MapActionButtonSettings[];
 }
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
@@ -557,8 +565,18 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   defaultCenterPosition: '0,0',
   defaultZoomLevel: null,
   minZoomLevel: 16,
-  mapPageSize: DEFAULT_MAP_PAGE_SIZE
+  mapPageSize: DEFAULT_MAP_PAGE_SIZE,
+  mapActionButtons: []
 };
+
+export const defaultMapActionButtonSettings: MapActionButtonSettings = {
+  label: '',
+  icon: 'add',
+  color: '#0000008a',
+  action: {
+    type: WidgetActionType.doNothing
+  }
+}
 
 export enum MapProvider {
   openstreet = 'openstreet',
@@ -890,6 +908,11 @@ export interface MarkerImageInfo {
 export interface MarkerIconInfo {
   icon: L.Icon<L.BaseIconOptions>;
   size: [number, number];
+}
+
+export interface CustomActionData {
+  button: L.TB.TopToolbarButton;
+  action: WidgetAction;
 }
 
 export type MapStringFunction = (data: FormattedData<TbMapDatasource>,

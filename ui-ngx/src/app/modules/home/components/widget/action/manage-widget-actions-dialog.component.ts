@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { widgetType } from '@shared/models/widget.models';
+import { WidgetActionType, widgetType } from '@shared/models/widget.models';
 import {
   WidgetActionCallbacks,
   WidgetActionsData
@@ -32,6 +32,7 @@ export interface ManageWidgetActionsDialogData {
   actionsData: WidgetActionsData;
   callbacks: WidgetActionCallbacks;
   widgetType: widgetType;
+  additionalWidgetActionTypes?: WidgetActionType[];
 }
 
 @Component({

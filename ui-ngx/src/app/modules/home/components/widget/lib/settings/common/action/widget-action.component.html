@@ -258,7 +258,21 @@
           helpId="widget/action/custom_action_fn"
       ></tb-js-func>
     </ng-template>
-    <ng-template [ngSwitchCase]="widgetActionType.customPretty">
+    <ng-template [ngSwitchCase]="widgetActionType.placeMapItem">
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'widget-action.map-item-type' | translate }}</div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-select placeholder="{{ 'widget-config.set' | translate }}" formControlName="mapItemType">
+            @for(type of mapItemTypes; track type) {
+              <mat-option [value]="type">{{ mapItemTypeTranslationMap.get(type) | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.customPretty
+                                  || widgetActionFormGroup.get('type').value === widgetActionType.placeMapItem
+                                  ? widgetActionFormGroup.get('type').value : ''">
       <tb-custom-action-pretty-editor
           formControlName="customAction">
       </tb-custom-action-pretty-editor>
