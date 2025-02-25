@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -60,6 +61,10 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
     }
 
     public double max() {
+        if (values.isEmpty()) {
+            return 0;
+        }
+
         double max = Double.MIN_VALUE;
         for (TbelCfTsDoubleVal value : values) {
             double val = value.getValue();
@@ -71,6 +76,120 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
             }
         }
         return max;
+    }
+
+    public double min() {
+        if (values.isEmpty()) {
+            return 0;
+        }
+
+        double min = Double.MAX_VALUE;
+        for (TbelCfTsDoubleVal value : values) {
+            double val = value.getValue();
+            if (Double.isNaN(val)) {
+                return Double.NaN;
+            }
+            if (min > val) {
+                min = val;
+            }
+        }
+        return min;
+    }
+
+    public double mean() {
+        if (values.isEmpty()) {
+            return 0;
+        }
+
+        double sum = sum();
+        return Double.isNaN(sum) ? Double.NaN : sum / values.size();
+    }
+
+    public double std() {
+        if (values.isEmpty()) {
+            return 0;
+        }
+
+        double mean = mean();
+        if (Double.isNaN(mean)) {
+            return Double.NaN;
+        }
+
+        double sum = 0;
+        for (TbelCfTsDoubleVal value : values) {
+            double val = value.getValue();
+            if (Double.isNaN(val)) {
+                return Double.NaN;
+            }
+            sum += Math.pow(val - mean, 2);
+        }
+        return Math.sqrt(sum / values.size());
+    }
+
+    public double median() {
+        if (values.isEmpty()) {
+            return 0;
+        }
+
+        List<Double> sortedValues = new ArrayList<>();
+        for (TbelCfTsDoubleVal value : values) {
+            double val = value.getValue();
+            if (Double.isNaN(val)) {
+                return Double.NaN;
+            }
+            sortedValues.add(val);
+        }
+        Collections.sort(sortedValues);
+
+        int size = sortedValues.size();
+        return (size % 2 == 1)
+                ? sortedValues.get(size / 2)
+                : (sortedValues.get(size / 2 - 1) + sortedValues.get(size / 2)) / 2.0;
+    }
+
+    public double count() {
+        return hasNaN() ? Double.NaN : values.size();
+    }
+
+    public double last() {
+        if (values.isEmpty()) {
+            return 0;
+        }
+
+        return hasNaN() ? Double.NaN : values.get(values.size() - 1).getValue();
+    }
+
+    public double first() {
+        if (values.isEmpty()) {
+            return 0;
+        }
+
+        return hasNaN() ? Double.NaN : values.get(0).getValue();
+    }
+
+    public double sum() {
+        if (values.isEmpty()) {
+            return 0;
+        }
+
+        double sum = 0;
+        for (TbelCfTsDoubleVal value : values) {
+            double val = value.getValue();
+            if (Double.isNaN(val)) {
+                return Double.NaN;
+            }
+            sum += val;
+        }
+        return sum;
+    }
+
+    private boolean hasNaN() {
+        for (TbelCfTsDoubleVal value : values) {
+            if (Double.isNaN(value.getValue())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @JsonIgnore
