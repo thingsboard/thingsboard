@@ -44,7 +44,7 @@ public enum LimitedApi {
     TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE("transport messages per gateway device", false),
     EMAILS("emails sending", true),
     WS_SUBSCRIPTIONS("WS subscriptions", false),
-    CALCULATED_FIELD_DEBUG_EVENTS(DefaultTenantProfileConfiguration::getCalculatedFieldDebugEventsRateLimit, "calculated field debug events", true);
+    CALCULATED_FIELD_DEBUG_EVENTS("calculated field debug events", true);
 
     private Function<DefaultTenantProfileConfiguration, String> configExtractor;
     @Getter
