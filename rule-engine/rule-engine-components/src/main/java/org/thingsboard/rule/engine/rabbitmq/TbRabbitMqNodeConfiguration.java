@@ -44,7 +44,6 @@ public class TbRabbitMqNodeConfiguration implements NodeConfiguration<TbRabbitMq
         configuration.setExchangeNamePattern("");
         configuration.setRoutingKeyPattern("");
         configuration.setMessageProperties(null);
-        configuration.setHost(ConnectionFactory.DEFAULT_HOST);
         configuration.setPort(ConnectionFactory.DEFAULT_AMQP_PORT);
         configuration.setVirtualHost(ConnectionFactory.DEFAULT_VHOST);
         configuration.setUsername(ConnectionFactory.DEFAULT_USER);

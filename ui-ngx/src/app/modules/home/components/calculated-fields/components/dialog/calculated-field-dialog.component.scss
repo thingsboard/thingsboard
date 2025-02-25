@@ -19,6 +19,19 @@
     width: 869px;
     max-width: 100%;
   }
+
+  .script-lang-chip {
+    line-height: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    border-radius: 100px;
+    width: 70px;
+    display: flex;
+    justify-content: center;
+    margin-top: 2px;
+    margin-right: 4px;
+  }
 }
 
 :host ::ng-deep {

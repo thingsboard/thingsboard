@@ -93,17 +93,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         this.ctx = ctx;
     }
 
-    public void onFieldInitMsg(CalculatedFieldInitMsg msg) {
+    public void onFieldInitMsg(CalculatedFieldInitMsg msg) throws CalculatedFieldException {
         log.info("[{}] Processing CF init message.", msg.getCf().getId());
         var cf = msg.getCf();
         var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
         try {
             cfCtx.init();
         } catch (Exception e) {
-            log.debug("[{}] Failed to initialize CF context.", cf.getId(), e);
-            if (DebugModeUtil.isDebugAllAvailable(cf)) {
-                systemContext.persistCalculatedFieldDebugEvent(cf.getTenantId(), cf.getId(), cf.getEntityId(), null, null, null, null, e.getMessage());
-            }
+            throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
         }
         calculatedFields.put(cf.getId(), cfCtx);
         // We use copy on write lists to safely pass the reference to another actor for the iteration.
@@ -134,7 +131,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
     }
 
-    public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) {
+    public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {
         log.info("Processing entity lifecycle event: [{}] for entity: [{}]", msg.getData().getEvent(), msg.getData().getEntityId());
         var entityType = msg.getData().getEntityId().getEntityType();
         var event = msg.getData().getEvent();
@@ -219,7 +216,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
     }
 
-    private void onCfCreated(ComponentLifecycleMsg msg, TbCallback callback) {
+    private void onCfCreated(ComponentLifecycleMsg msg, TbCallback callback) throws CalculatedFieldException {
         var cfId = new CalculatedFieldId(msg.getEntityId().getId());
         if (calculatedFields.containsKey(cfId)) {
             log.warn("[{}] CF was already initialized [{}]", tenantId, cfId);
@@ -234,10 +231,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 try {
                     cfCtx.init();
                 } catch (Exception e) {
-                    log.debug("[{}] Failed to initialize CF context.", cf.getId(), e);
-                    if (DebugModeUtil.isDebugAllAvailable(cf)) {
-                        systemContext.persistCalculatedFieldDebugEvent(cf.getTenantId(), cf.getId(), cf.getEntityId(), null, null, null, null, e.getMessage());
-                    }
+                    throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
                 }
                 calculatedFields.put(cf.getId(), cfCtx);
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
@@ -249,7 +243,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
     }
 
-    private void onCfUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
+    private void onCfUpdated(ComponentLifecycleMsg msg, TbCallback callback) throws CalculatedFieldException {
         var cfId = new CalculatedFieldId(msg.getEntityId().getId());
         var oldCfCtx = calculatedFields.get(cfId);
         if (oldCfCtx == null) {
@@ -264,9 +258,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 try {
                     newCfCtx.init();
                 } catch (Exception e) {
-                    if (DebugModeUtil.isDebugAllAvailable(newCf)) {
-                        systemContext.persistCalculatedFieldDebugEvent(newCf.getTenantId(), newCf.getId(), newCf.getEntityId(), null, null, null, null, e.getMessage());
-                    }
+                    throw CalculatedFieldException.builder().ctx(newCfCtx).eventEntity(newCfCtx.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
                 }
                 calculatedFields.put(newCf.getId(), newCfCtx);
                 List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());

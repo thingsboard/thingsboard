@@ -110,14 +110,14 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
       minWidth: 'min(700px, 100%)',
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        jsonValue: group.value,
+        jsonValue: this.argumentsTypeMap.get(group.get('argumentName').value) === ArgumentType.Rolling ? group.value.rollingJson : group.value,
         required: true,
         fillHeight: true
       }
     }).afterClosed()
       .pipe(filter(Boolean))
       .subscribe(result => this.argumentsTypeMap.get(group.get('argumentName').value) === ArgumentType.Rolling
-        ? group.patchValue({ timeWindow: (result as CalculatedFieldRollingTelemetryArgumentValue).timeWindow, values: (result as CalculatedFieldRollingTelemetryArgumentValue).values })
+        ? group.get('rollingJson').patchValue({ values: (result as CalculatedFieldRollingTelemetryArgumentValue).values, timeWindow: (result as CalculatedFieldRollingTelemetryArgumentValue).timeWindow })
         : group.patchValue({ ts: (result as CalculatedFieldSingleArgumentValue).ts, value: (result as CalculatedFieldSingleArgumentValue).value }) );
   }
 
@@ -131,16 +131,15 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
 
   private getRollingArgumentFormGroup({ argumentName, timeWindow, values }: CalculatedFieldRollingTelemetryArgumentValue): FormGroup {
     return this.fb.group({
-      timeWindow: [timeWindow ?? {}],
       argumentName: [{ value: argumentName, disabled: true }],
-      values: [values]
+      rollingJson: [{ values: values ?? [], timeWindow: timeWindow ?? {} }]
     }) as FormGroup;
   }
 
   private getValue(): CalculatedFieldEventArguments {
     return this.argumentsFormArray.getRawValue().reduce((acc, rowItem) => {
-      const { argumentName, ...value } = rowItem;
-      acc[argumentName] = value;
+      const { argumentName, rollingJson = {}, ...value } = rowItem;
+      acc[argumentName] = { ...rollingJson, ...value };
       return acc;
     }, {});
   }

@@ -54,18 +54,21 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
     @Override
     public void restore(Set<TopicPartitionInfo> partitions) {
         if (this.partitions == null) {
-            this.partitions = partitions;
-        } else {
-            return;
+            cfRocksDb.forEach((key, value) -> {
+                try {
+                    processRestoredState(CalculatedFieldStateProto.parseFrom(value));
+                } catch (InvalidProtocolBufferException e) {
+                    log.error("[{}] Failed to process restored state", key, e);
+                }
+            });
         }
 
-        cfRocksDb.forEach((key, value) -> {
-            try {
-                processRestoredState(CalculatedFieldStateProto.parseFrom(value));
-            } catch (InvalidProtocolBufferException e) {
-                log.error("[{}] Failed to process restored state", key, e);
-            }
-        });
+        eventConsumer.update(partitions);
+        this.partitions = partitions;
+    }
+
+    @Override
+    public void stop() {
     }
 
 }

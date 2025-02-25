@@ -963,7 +963,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 unSubResults.add((short) MqttReasonCodes.UnsubAck.NO_SUBSCRIPTION_EXISTED.byteValue());
             }
         }
-        if (!activityReported) {
+        if (!activityReported && !deviceSessionCtx.isProvisionOnly()) {
             transportService.recordActivity(deviceSessionCtx.getSessionInfo());
         }
         ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(), unSubResults));

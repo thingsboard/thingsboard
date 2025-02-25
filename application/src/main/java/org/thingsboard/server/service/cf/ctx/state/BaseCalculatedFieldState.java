@@ -31,7 +31,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     protected List<String> requiredArguments;
     protected Map<String, ArgumentEntry> arguments;
-    protected boolean stateTooLarge;
+    protected boolean sizeExceedsLimit;
 
     public BaseCalculatedFieldState(List<String> requiredArguments) {
         this.requiredArguments = requiredArguments;
@@ -75,9 +75,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     @Override
     public void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize) {
-        if (!stateTooLarge && maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
+        if (!sizeExceedsLimit && maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
             arguments.clear();
-            setStateTooLarge(true);
+            sizeExceedsLimit = true;
         }
     }
 

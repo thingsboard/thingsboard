@@ -162,13 +162,13 @@
           <tb-timeinterval
             subscriptSizing="dynamic"
             appearance="outline"
-            class="flex-1"
+            class="time-interval-field flex-1"
             formControlName="timeWindow"
           />
         </div>
-        <div class="tb-form-row">
+        <div class="tb-form-row limit-field-row">
           <div class="fixed-title-width">{{ 'calculated-fields.limit' | translate }}</div>
-          <tb-datapoints-limit class="flex-1" formControlName="limit"/>
+          <tb-datapoints-limit class="w-full flex-1" formControlName="limit"/>
         </div>
       }
     </div>

@@ -21,6 +21,8 @@ import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
 import { MobileAppBundleId } from '@shared/models/id/mobile-app-bundle-id';
 import { deepClone, isNotEmptyStr } from '@core/utils';
 
+export const WEB_URL_REGEX = /^(https?:\/\/)?(localhost|([\p{L}\p{M}\w-]+\.)+[\p{L}\p{M}\w-]+)(:\d+)?(\/[\w\-._~:/?#[\]@!$&'()*+,;=%\p{L}\p{N}]*)?$/u;
+
 export interface QrCodeSettings extends HasTenantId {
   useDefaultApp: boolean;
   mobileAppBundleId: MobileAppBundleId

@@ -776,7 +776,7 @@
     }
   ]
 }]]></tb:metadata>
-<text x="206.16602" y="43.234375" fill="#000000" font-family="Roboto" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">Outdoor</tspan></text><text x="195.21875" y="784.75" fill="#000000" font-family="Roboto" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="units" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">°C</tspan></text><g stroke="#000" tb:tag="scale">
+<text x="206.16602" y="43.234375" fill="#000000" font-family="Roboto" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">Outdoor</tspan></text><text x="195.21875" y="770" fill="#000000" font-family="Roboto" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="units" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">°C</tspan></text><g stroke="#000" tb:tag="scale">
   <rect x="176.5" y="83" width="41" height="652" fill="#c8dff7" tb:tag="scaleBackground"/>
   <rect transform="scale(1,-1)" x="176.5" y="-735" width="41" height="164" fill="#ebebeb" tb:tag="lowWarningScale"/>
   <rect x="176.5" y="83.5" width="41" height="164" fill="#ebebeb" tb:tag="highWarningScale"/>

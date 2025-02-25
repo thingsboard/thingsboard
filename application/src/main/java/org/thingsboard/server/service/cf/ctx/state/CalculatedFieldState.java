@@ -51,7 +51,12 @@ public interface CalculatedFieldState {
     @JsonIgnore
     boolean isReady();
 
-    boolean isStateTooLarge();
+    boolean isSizeExceedsLimit();
+
+    @JsonIgnore
+    default boolean isSizeOk() {
+        return !isSizeExceedsLimit();
+    }
 
     void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize);
 

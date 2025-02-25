@@ -44,6 +44,7 @@ import {
   CalculatedFieldTestScriptDialogData,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
+  CalculatedFieldTypeTranslations,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -112,7 +113,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     expressionColumn.sortable = false;
 
     this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
-    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '50px'));
+    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '50px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type))));
     this.columns.push(expressionColumn);
 
     this.cellActionDescriptors.push(

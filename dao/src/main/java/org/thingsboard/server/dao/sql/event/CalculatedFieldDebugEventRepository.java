@@ -64,7 +64,7 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
                     "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
             ,
-            countQuery = "SELECT count(*) FROM rule_node_debug_event e WHERE " +
+            countQuery = "SELECT count(*) FROM cf_debug_event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +

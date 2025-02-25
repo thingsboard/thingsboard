@@ -70,7 +70,7 @@ public class CalculatedFieldCtx {
     private boolean initialized;
 
     private long maxDataPointsPerRollingArg;
-    private long maxStateSizeInKBytes;
+    private long maxStateSize;
 
     public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService, ApiLimitService apiLimitService) {
         this.calculatedField = calculatedField;
@@ -103,7 +103,7 @@ public class CalculatedFieldCtx {
         this.tbelInvokeService = tbelInvokeService;
 
         this.maxDataPointsPerRollingArg = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
-        this.maxStateSizeInKBytes = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes);
+        this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
     }
 
     public void init() {
@@ -222,6 +222,10 @@ public class CalculatedFieldCtx {
         boolean typeChanged = !cfType.equals(other.cfType);
         boolean argumentsChanged = !arguments.equals(other.arguments);
         return typeChanged || argumentsChanged;
+    }
+
+    public String getSizeExceedsLimitMessage() {
+        return "Failed to init CF state. State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
     }
 
 }

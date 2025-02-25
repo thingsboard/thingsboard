@@ -190,7 +190,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   private fetchListObjects = (searchText: string): Observable<Array<ObjectLwM2M>> =>  {
     this.searchText = searchText;
     const pageLink = new PageLink(PAGE_SIZE_LIMIT, 0, this.searchText, {
-      property: 'id',
+      property: 'resourceKey',
       direction: Direction.ASC
     });
     return this.deviceProfileService.getLwm2mObjectsPage(pageLink);

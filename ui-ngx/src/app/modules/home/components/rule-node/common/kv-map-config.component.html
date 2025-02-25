@@ -1,0 +1,72 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="kvListFormGroup" class="tb-form-panel stroked">
+  <div class="tb-form-row no-padding no-border space-between">
+    <div class="tb-form-panel-title">{{ labelText }}</div>
+    <div class="tb-form-panel-hint tb-error" translate *ngIf="kvListFormGroup.hasError('kvMapRequired')">
+      {{ requiredText }}
+    </div>
+    <div class="tb-form-panel-hint tb-error" translate *ngIf="kvListFormGroup.hasError('required')">
+      rule-node-config.map-fields-required
+    </div>
+    <div class="tb-form-panel-hint tb-error" translate *ngIf="kvListFormGroup.hasError('uniqueKeyValuePair')">
+      {{ 'rule-node-config.key-val.unique-key-value-pair-error' | translate:
+            {
+              valText: valText,
+              keyText: keyText
+            } }}
+    </div>
+  </div>
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-table">
+      <div class="tb-form-table-header">
+        <div class="tb-form-table-header-cell field-space">{{ keyText }}</div>
+        <div class="tb-form-table-header-cell field-space">{{ valText }}</div>
+        <div class="tb-form-table-header-cell actions-header"></div>
+      </div>
+      <div class="tb-form-table-body">
+        <div class="tb-form-table-row"
+             *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index;">
+          <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
+            <input [placeholder]="keyText+'*'" [formControl]="keyValControl.get('key')" matInput/>
+          </mat-form-field>
+          <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
+            <input [placeholder]="valText+'*'" [formControl]="keyValControl.get('value')" matInput/>
+          </mat-form-field>
+          <div class="tb-form-table-row-cell-buttons">
+            <button [class.tb-hidden]="keyValsFormArray().controls.length === 1"
+                    type="button"
+                    mat-icon-button
+                    (click)="removeKeyVal($index)"
+                    [disabled]="disabled"
+                    matTooltip="{{ 'rule-node-config.key-val.remove-mapping-entry' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <button type="button" mat-stroked-button color="primary" (click)="addKeyVal()">
+      {{ 'rule-node-config.key-val.add-mapping-entry' | translate }}
+    </button>
+  </div>
+  <tb-example-hint [hintText]="hintText" [popupHelpLink]="popupHelpLink" *ngIf="popupHelpLink || hintText"></tb-example-hint>
+</section>
