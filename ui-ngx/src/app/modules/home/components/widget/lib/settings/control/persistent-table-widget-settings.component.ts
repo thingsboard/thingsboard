@@ -27,6 +27,7 @@ import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { map, mergeMap, share, startWith } from 'rxjs/operators';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { buildPageStepSizeValues, isDefinedAndNotNull } from '@core/utils';
 
 interface DisplayColumn {
   name: string;
@@ -56,6 +57,8 @@ export class PersistentTableWidgetSettingsComponent extends WidgetSettingsCompon
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
   persistentTableWidgetSettingsForm: UntypedFormGroup;
+
+  pageStepSizeValues = [];
 
   filteredDisplayColumns: Observable<Array<DisplayColumn>>;
 
@@ -94,6 +97,8 @@ export class PersistentTableWidgetSettingsComponent extends WidgetSettingsCompon
 
       displayPagination: true,
       defaultPageSize: 10,
+      pageStepSize: null,
+      pageStepCount: 3,
 
       defaultSortOrder: '-createdTime',
       displayColumns: ['rpcId', 'messageType', 'status', 'method', 'createdTime', 'expirationTime']
@@ -110,9 +115,19 @@ export class PersistentTableWidgetSettingsComponent extends WidgetSettingsCompon
       displayDetails: [settings.displayDetails, []],
       displayPagination: [settings.displayPagination, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],
+      pageStepCount: [isDefinedAndNotNull(settings.pageStepCount) ? settings.pageStepCount : 3,
+        [Validators.min(1), Validators.max(100), Validators.required, Validators.pattern(/^\d*$/)]],
+      pageStepSize: [isDefinedAndNotNull(settings.pageStepSize) ? settings.pageStepSize : settings.defaultPageSize,
+        [Validators.min(1), Validators.required, Validators.pattern(/^\d*$/)]],
       defaultSortOrder: [settings.defaultSortOrder, []],
       displayColumns: [settings.displayColumns, [Validators.required]]
     });
+    buildPageStepSizeValues(this.persistentTableWidgetSettingsForm, this.pageStepSizeValues);
+  }
+
+  public onPaginationSettingsChange(): void {
+    this.persistentTableWidgetSettingsForm.get('defaultPageSize').reset();
+    buildPageStepSizeValues(this.persistentTableWidgetSettingsForm, this.pageStepSizeValues);
   }
 
   public validateSettings(): boolean {
@@ -129,10 +144,16 @@ export class PersistentTableWidgetSettingsComponent extends WidgetSettingsCompon
     const displayPagination: boolean = this.persistentTableWidgetSettingsForm.get('displayPagination').value;
     if (displayPagination) {
       this.persistentTableWidgetSettingsForm.get('defaultPageSize').enable();
+      this.persistentTableWidgetSettingsForm.get('pageStepCount').enable();
+      this.persistentTableWidgetSettingsForm.get('pageStepSize').enable();
     } else {
       this.persistentTableWidgetSettingsForm.get('defaultPageSize').disable();
+      this.persistentTableWidgetSettingsForm.get('pageStepCount').disable();
+      this.persistentTableWidgetSettingsForm.get('pageStepSize').disable();
     }
     this.persistentTableWidgetSettingsForm.get('defaultPageSize').updateValueAndValidity({emitEvent});
+    this.persistentTableWidgetSettingsForm.get('pageStepCount').updateValueAndValidity({emitEvent});
+    this.persistentTableWidgetSettingsForm.get('pageStepSize').updateValueAndValidity({emitEvent});
   }
 
   private fetchColumns(searchText?: string): Observable<Array<DisplayColumn>> {

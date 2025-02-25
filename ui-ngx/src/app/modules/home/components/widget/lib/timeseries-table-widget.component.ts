@@ -173,7 +173,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public enableStickyHeader = true;
   public enableStickyAction = true;
   public showCellActionsMenu = true;
-  public pageSizeOptions;
+  public pageSizeOptions = [];
   public textSearchMode = false;
   public hidePageSize = false;
   public sources: TimeseriesTableSource[];
@@ -192,7 +192,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private latestData: Array<DatasourceData>;
   private datasources: Array<Datasource>;
 
-  private defaultPageSize = 10;
+  private defaultPageSize;
   private defaultSortOrder = '-0';
   private hideEmptyLines = false;
   public showTimestamp = true;
@@ -352,10 +352,26 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'rowData, ctx');
 
     const pageSize = this.settings.defaultPageSize;
+    let pageStepSize = this.settings.pageStepSize;
+    let pageStepCount = this.settings.pageStepCount;
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
+    if (isDefinedAndNotNull(pageStepSize) && isDefinedAndNotNull(pageStepCount)) {
+      if (!this.defaultPageSize) {
+        this.defaultPageSize = pageStepSize;
+      }
+    } else {
+      if (!this.defaultPageSize) {
+        this.defaultPageSize = 10;
+      }
+      pageStepSize = this.defaultPageSize;
+      pageStepCount = 3;
+    }
+
+    for (let i = 1; i <= pageStepCount; i++) {
+      this.pageSizeOptions.push(pageStepSize * i);
+    }
 
     this.noDataDisplayMessageText =
       noDataMessage(this.widgetConfig.noDataDisplayMessage, 'widget.no-data-found', this.utils, this.translate);

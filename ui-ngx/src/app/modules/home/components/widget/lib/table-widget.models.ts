@@ -47,6 +47,8 @@ export interface TableWidgetSettings {
   enableStickyHeader: boolean;
   displayPagination: boolean;
   defaultPageSize: number;
+  pageStepSize: number;
+  pageStepCount: number;
   useRowStyleFunction: boolean;
   rowStyleFunction?: TbFunction;
   reserveSpaceForHiddenAction?: boolean;

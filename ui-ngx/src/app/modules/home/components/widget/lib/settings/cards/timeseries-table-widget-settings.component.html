@@ -62,11 +62,29 @@
       {{ 'widgets.table.display-pagination' | translate }}
     </mat-slide-toggle>
     <div class="tb-form-row space-between column-xs">
-      <div translate>widgets.table.default-page-size</div>
+      <div translate>widgets.table.page-step-size</div>
       <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-        <input matInput formControlName="defaultPageSize" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        <input matInput formControlName="pageStepSize" type="number" min="1" step="1" required
+               (change)="onPaginationSettingsChange()"
+               placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.table.page-step-count</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
+               (change)="onPaginationSettingsChange()"
+               placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <mat-form-field class="flex-1" subscriptSizing="dynamic">
+      <mat-label translate>widgets.table.default-page-size</mat-label>
+      <mat-select formControlName="defaultPageSize">
+        <mat-option *ngFor="let size of pageStepSizeValues" [value]="size">
+          {{ size }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.table.table-tabs</div>

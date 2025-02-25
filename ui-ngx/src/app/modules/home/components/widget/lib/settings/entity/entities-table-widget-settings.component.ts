@@ -19,6 +19,7 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { buildPageStepSizeValues, isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-entities-table-widget-settings',
@@ -28,6 +29,7 @@ import { AppState } from '@core/core.state';
 export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponent {
 
   entitiesTableWidgetSettingsForm: UntypedFormGroup;
+  pageStepSizeValues = [];
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
@@ -54,6 +56,8 @@ export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponen
       displayEntityType: true,
       displayPagination: true,
       defaultPageSize: 10,
+      pageStepSize: null,
+      pageStepCount: 3,
       defaultSortOrder: 'entityName',
       useRowStyleFunction: false,
       rowStyleFunction: ''
@@ -76,10 +80,20 @@ export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponen
       displayEntityType: [settings.displayEntityType, []],
       displayPagination: [settings.displayPagination, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],
+      pageStepCount: [isDefinedAndNotNull(settings.pageStepCount) ? settings.pageStepCount : 3,
+        [Validators.min(1), Validators.max(100), Validators.required, Validators.pattern(/^\d*$/)]],
+      pageStepSize: [isDefinedAndNotNull(settings.pageStepSize) ? settings.pageStepSize : settings.defaultPageSize,
+        [Validators.min(1), Validators.required, Validators.pattern(/^\d*$/)]],
       defaultSortOrder: [settings.defaultSortOrder, []],
       useRowStyleFunction: [settings.useRowStyleFunction, []],
       rowStyleFunction: [settings.rowStyleFunction, [Validators.required]]
     });
+    buildPageStepSizeValues(this.entitiesTableWidgetSettingsForm, this.pageStepSizeValues);
+  }
+
+  public onPaginationSettingsChange(): void {
+    this.entitiesTableWidgetSettingsForm.get('defaultPageSize').reset();
+    buildPageStepSizeValues(this.entitiesTableWidgetSettingsForm, this.pageStepSizeValues);
   }
 
   protected validatorTriggers(): string[] {
@@ -98,8 +112,12 @@ export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponen
     }
     if (displayPagination) {
       this.entitiesTableWidgetSettingsForm.get('defaultPageSize').enable();
+      this.entitiesTableWidgetSettingsForm.get('pageStepCount').enable();
+      this.entitiesTableWidgetSettingsForm.get('pageStepSize').enable();
     } else {
       this.entitiesTableWidgetSettingsForm.get('defaultPageSize').disable();
+      this.entitiesTableWidgetSettingsForm.get('pageStepCount').disable();
+      this.entitiesTableWidgetSettingsForm.get('pageStepSize').disable();
     }
     if (displayEntityName) {
       this.entitiesTableWidgetSettingsForm.get('entityNameColumnTitle').enable();
@@ -113,6 +131,8 @@ export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponen
     }
     this.entitiesTableWidgetSettingsForm.get('rowStyleFunction').updateValueAndValidity({emitEvent});
     this.entitiesTableWidgetSettingsForm.get('defaultPageSize').updateValueAndValidity({emitEvent});
+    this.entitiesTableWidgetSettingsForm.get('pageStepCount').updateValueAndValidity({emitEvent});
+    this.entitiesTableWidgetSettingsForm.get('pageStepSize').updateValueAndValidity({emitEvent});
     this.entitiesTableWidgetSettingsForm.get('entityNameColumnTitle').updateValueAndValidity({emitEvent});
     this.entitiesTableWidgetSettingsForm.get('entityLabelColumnTitle').updateValueAndValidity({emitEvent});
   }

@@ -31,6 +31,7 @@ import {
   isNotEmptyTbFunction,
   TbFunction
 } from '@shared/models/js-function.models';
+import { UntypedFormGroup } from '@angular/forms';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -926,3 +927,15 @@ export const unwrapModule = (module: any) : any => {
     return module;
   }
 };
+
+export function buildPageStepSizeValues(formGroup: UntypedFormGroup, pageSteps: Array<number>): void {
+  const pageStepCount = formGroup.get('pageStepCount')?.value;
+  const pageStepSize = formGroup.get('pageStepSize')?.value;
+  pageSteps.length = 0;
+  if (isDefinedAndNotNull(pageStepCount) && pageStepCount > 0 && pageStepCount <= 100 &&
+    isDefinedAndNotNull(pageStepSize) && pageStepSize > 0) {
+    for (let i = 1; i <= pageStepCount; i++) {
+      pageSteps.push(pageStepSize * i);
+    }
+  }
+}

@@ -8111,6 +8111,8 @@
             "display-timestamp": "Timestamp",
             "display-pagination": "Display pagination",
             "default-page-size": "Default page size",
+            "page-step-count": "Number of steps",
+            "page-step-size": "Page size increment",
             "use-entity-label-tab-name": "Use entity label in tab name",
             "hide-empty-lines": "Hide empty lines",
             "row-style": "Row style",

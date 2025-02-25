@@ -185,7 +185,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public enableStickyHeader = true;
   public enableStickyAction = false;
   public showCellActionsMenu = true;
-  public pageSizeOptions;
+  public pageSizeOptions = [];
   public pageLink: AlarmDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
@@ -213,7 +213,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private allowClear = true;
   public allowAssign = true;
 
-  private defaultPageSize = 10;
+  private defaultPageSize;
   private defaultSortOrder = '-' + alarmFields.createdTime.value;
 
   private contentsInfo: {[key: string]: CellContentInfo} = {};
@@ -392,10 +392,26 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'alarm, ctx');
 
     const pageSize = this.settings.defaultPageSize;
+    let pageStepSize = this.settings.pageStepSize;
+    let pageStepCount = this.settings.pageStepCount;
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
+    if (isDefinedAndNotNull(pageStepSize) && isDefinedAndNotNull(pageStepCount)) {
+      if (!this.defaultPageSize) {
+        this.defaultPageSize = pageStepSize;
+      }
+    } else {
+      if (!this.defaultPageSize) {
+        this.defaultPageSize = 10;
+      }
+      pageStepSize = this.defaultPageSize;
+      pageStepCount = 3;
+    }
+
+    for (let i = 1; i <= pageStepCount; i++) {
+      this.pageSizeOptions.push(pageStepSize * i);
+    }
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : 1024;
 
     const alarmFilter = this.entityService.resolveAlarmFilter(this.widgetConfig.alarmFilterConfig, false);
