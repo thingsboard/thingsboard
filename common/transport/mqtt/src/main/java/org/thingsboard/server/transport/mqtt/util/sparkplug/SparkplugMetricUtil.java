@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
+import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric;
+import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric.Builder;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -144,13 +146,20 @@ public class SparkplugMetricUtil {
             return Optional.empty();
         }
     }
+    public static SparkplugBProto.Payload.Metric createMetric(Object value, long ts, String key, MetricDataType metricDataType, Long alias) throws ThingsboardException {
+        Builder metric = Metric.newBuilder();
+        metric.setTimestamp(ts)
+                .setDatatype(metricDataType.toIntValue());
+        if (alias >= 0) {
+            metric.setAlias(alias);
+        }
+        if (StringUtils.isNotBlank(key)) {
+            metric.setName(key);
+        }
+        return addToMetricValue(value, metric.build(), metricDataType);
+    }
 
-    public static SparkplugBProto.Payload.Metric createMetric(Object value, long ts, String key, MetricDataType metricDataType) throws ThingsboardException {
-        SparkplugBProto.Payload.Metric metric = SparkplugBProto.Payload.Metric.newBuilder()
-                .setTimestamp(ts)
-                .setName(key)
-                .setDatatype(metricDataType.toIntValue())
-                .build();
+    public static SparkplugBProto.Payload.Metric addToMetricValue(Object value, SparkplugBProto.Payload.Metric metric, MetricDataType metricDataType) throws ThingsboardException {
         switch (metricDataType) {
             case Int8:      //  (byte)
                 return metric.toBuilder().setIntValue(((Byte) value).intValue()).build();

@@ -80,7 +80,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
     protected void processClientWithCorrectNodeAccessTokenNameSpaceInvalid_Test() throws Exception {
         long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
         long value = bdSeq = 0;
-        MqttException actualException = Assert.assertThrows(MqttException.class, () -> clientMqttV5ConnectWithNDEATH(ts, value, "spBv1.2"));
+        MqttException actualException = Assert.assertThrows(MqttException.class, () -> clientMqttV5ConnectWithNDEATH(ts, value, -1L,"spBv1.2"));
         String expectedMessage = "Server unavailable.";
         int expectedReasonCode = 136;
         Assert.assertEquals(expectedMessage, actualException.getMessage());

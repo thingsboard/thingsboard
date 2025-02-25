@@ -47,6 +47,15 @@ public class MqttV5RpcSparkplugTest  extends AbstractMqttV5RpcSparkplugTest {
     public void testClientDeviceWithCorrectAccessTokenPublish_TwoWayRpc_Success() throws Exception {
         processClientDeviceWithCorrectAccessTokenPublish_TwoWayRpc_Success();
     }
+    @Test
+    public void testClientDeviceWithCorrectAccessTokenPublishWithAlias_TwoWayRpc_Success() throws Exception {
+        processClientDeviceWithCorrectAccessTokenPublishWithAlias_TwoWayRpc_Success();
+    }
+
+    @Test
+    public void testClientNodeWithCorrectAccessTokenPublishWithAliasWithoutMetricName_TwoWayRpc_BAD_REQUEST_PARAMS() throws Exception {
+        processClientNodeWithCorrectAccessTokenPublishWithAliasWithoutMetricName_TwoWayRpc_BAD_REQUEST_PARAMS();
+    }
 
     @Test
     public void testClientNodeWithCorrectAccessTokenPublish_TwoWayRpc_InvalidTypeMessage_INVALID_ARGUMENTS() throws Exception {

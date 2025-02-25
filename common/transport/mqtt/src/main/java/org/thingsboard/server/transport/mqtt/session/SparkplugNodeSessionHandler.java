@@ -24,6 +24,7 @@ import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.adaptor.ProtoConverter;
@@ -47,12 +48,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DBIRTH;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NBIRTH;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.parseMessageType;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.SPARKPLUG_BD_SEQUENCE_NUMBER_KEY;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.SPARKPLUG_SEQUENCE_NUMBER_KEY;
@@ -73,6 +72,8 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
     private final SparkplugTopic sparkplugTopicNode;
     @Getter
     private final Map<String, SparkplugBProto.Payload.Metric> nodeBirthMetrics;
+    @Getter
+    private final Map<Long, String> nodeAlias;
     private final MqttTransportHandler parent;
 
     public SparkplugNodeSessionHandler(MqttTransportHandler parent, DeviceSessionCtx deviceSessionCtx, UUID sessionId,
@@ -81,11 +82,20 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         this.parent = parent;
         this.sparkplugTopicNode = sparkplugTopicNode;
         this.nodeBirthMetrics = new ConcurrentHashMap<>();
+        this.nodeAlias = new ConcurrentHashMap<>();
     }
 
-    public void setNodeBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
-        this.nodeBirthMetrics.putAll(metrics.stream()
-                .collect(Collectors.toMap(SparkplugBProto.Payload.Metric::getName, metric -> metric)));
+    public void setNodeBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) throws AdaptorException {
+        for (var metric : metrics) {
+            if (metric.hasName()) {
+                this.nodeBirthMetrics.put(metric.getName(), metric);
+            } else {
+                throw new AdaptorException("The metric name of edgeNode: '" + this.sparkplugTopicNode.getEdgeNodeId() + "' must not be empty or null! Metric: [" + metric + "]");
+            }
+            if (metric.hasAlias() && this.nodeAlias.putIfAbsent(metric.getAlias(), metric.getName()) != null) {
+                throw new AdaptorException("The alias '" + metric.getAlias() + "' already exists in edgeNode: '" + this.sparkplugTopicNode.getEdgeNodeId() + "'");
+            }
+        }
     }
 
 
@@ -113,7 +123,11 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
                 if (topic.isType(DBIRTH)) {
                     sendSparkplugStateOnTelemetry(ctx.getSessionInfo(), deviceName, ONLINE,
                             sparkplugBProto.getTimestamp());
-                    ctx.setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
+                    try {
+                        ctx.setDeviceBirthMetrics(sparkplugBProto.getMetricsList());
+                    } catch (IllegalArgumentException | DuplicateKeyException e) {
+                            throw new RuntimeException(e);
+                    }
                 }
                 return ctx;
             }, MoreExecutors.directExecutor());
@@ -203,17 +217,39 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         }
     }
 
+    /**
+     * Sparkplug 3.0.0 -> 6.4.6. Metric
+     * https://sparkplug.eclipse.org/specification/version/3.0/documents/sparkplug-specification-3.0.0.pdf#%5B%7B%22num%22%3A339%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C0%2C455.52%2Cnull%5D
+     * [tck-id-payloads-name-requirement] The name MUST be included with every metric unless aliases are being used. ◦ All UTF-8 characters are allowed in the metric name. However, special characters including but not limited to the following are discouraged: . , \ @ # $ % ^ & * ( ) [ ] { } | ! ` ~ : ; ' " < > ?. This is because many Sparkplug Host Applications may have issues handling them.
+     * • alias (are optional and not required):
+     * - This is an unsigned 64-bit integer representing an optional alias for a Sparkplug B payload.
+     * - If aliases are used, the following rules apply:
+     * --  [tck-id-payloads-alias-uniqueness] If supplied in an NBIRTH or BIRTH it MUST be a unique number across this Edge Node’s entire set of metrics.
+     * --  no two metrics for the same Edge Node can have the same alias.
+     * --  [tck-id-payloads-alias-birth-requirement] NBIRTH and DBIRTH messages MUST include both a metric name and alias.
+     * --  [tck-id-payloads-alias-data-cmd-requirement] NDATA, DDATA, NCMD, and DCMD messages MUST only include an alias and the metric name MUST be excluded.
+     * @param sparkplugBProto
+     * @param attributesMetricNames
+     * @param topicTypeName
+     * @return
+     * @throws AdaptorException
+     */
     private List<TransportProtos.PostTelemetryMsg> convertToPostTelemetry(SparkplugBProto.Payload
                                                                                   sparkplugBProto, Set<String> attributesMetricNames, String topicTypeName) throws AdaptorException {
         try {
             List<TransportProtos.PostTelemetryMsg> msgs = new ArrayList<>();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
-                if (attributesMetricNames == null || !matches(attributesMetricNames, protoMetric)) {
-                    long ts = protoMetric.getTimestamp();
-                    String key = SPARKPLUG_BD_SEQUENCE_NUMBER_KEY.equals(protoMetric.getName()) ?
-                            topicTypeName + " " + protoMetric.getName() : protoMetric.getName();
-                    Optional<TransportProtos.KeyValueProto> keyValueProtoOpt = fromSparkplugBMetricToKeyValueProto(key, protoMetric);
-                    keyValueProtoOpt.ifPresent(kvProto -> msgs.add(postTelemetryMsgCreated(kvProto, ts)));
+                String metricName = protoMetric.hasName() ? protoMetric.getName() :  protoMetric.hasAlias() ? this.nodeAlias.get(protoMetric.getAlias()) : null;
+                if (metricName == null) {
+                    throw new ThingsboardException("Metric without metricName and alias.", ThingsboardErrorCode.INVALID_ARGUMENTS);
+                } else {
+                    if (attributesMetricNames == null || !matches(attributesMetricNames, metricName)) {
+                        long ts = protoMetric.getTimestamp();
+                        String key = SPARKPLUG_BD_SEQUENCE_NUMBER_KEY.equals(protoMetric.getName()) ?
+                                topicTypeName + " " + protoMetric.getName() : protoMetric.getName();
+                        Optional<TransportProtos.KeyValueProto> keyValueProtoOpt = fromSparkplugBMetricToKeyValueProto(key, protoMetric);
+                        keyValueProtoOpt.ifPresent(kvProto -> msgs.add(postTelemetryMsgCreated(kvProto, ts)));
+                    }
                 }
             }
 
@@ -237,13 +273,18 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         try {
             List<TransportApiProtos.AttributesMsg> msgs = new ArrayList<>();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
-                if (matches(attributesMetricNames, protoMetric)) {
-                    TransportApiProtos.AttributesMsg.Builder deviceAttributesMsgBuilder = TransportApiProtos.AttributesMsg.newBuilder();
-                    Optional<TransportProtos.PostAttributeMsg> msgOpt = getPostAttributeMsg(protoMetric);
-                    if (msgOpt.isPresent()) {
-                        deviceAttributesMsgBuilder.setDeviceName(deviceName);
-                        deviceAttributesMsgBuilder.setMsg(msgOpt.get());
-                        msgs.add(deviceAttributesMsgBuilder.build());
+                String metricName = protoMetric.hasName() ? protoMetric.getName() :  protoMetric.hasAlias() ? this.nodeAlias.get(protoMetric.getAlias()) : null;
+                if (metricName == null) {
+                    throw new ThingsboardException("Metric without metricName and alias.", ThingsboardErrorCode.INVALID_ARGUMENTS);
+                } else {
+                    if (matches(attributesMetricNames, metricName)) {
+                        TransportApiProtos.AttributesMsg.Builder deviceAttributesMsgBuilder = TransportApiProtos.AttributesMsg.newBuilder();
+                        Optional<TransportProtos.PostAttributeMsg> msgOpt = getPostAttributeMsg(protoMetric);
+                        if (msgOpt.isPresent()) {
+                            deviceAttributesMsgBuilder.setDeviceName(deviceName);
+                            deviceAttributesMsgBuilder.setMsg(msgOpt.get());
+                            msgs.add(deviceAttributesMsgBuilder.build());
+                        }
                     }
                 }
             }
@@ -254,8 +295,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         }
     }
 
-    private boolean matches(Set<String> attributesMetricNames, SparkplugBProto.Payload.Metric protoMetric) {
-        String metricName = protoMetric.getName();
+    private boolean matches(Set<String> attributesMetricNames, String metricName) {
         for (String attributeMetricFilter : attributesMetricNames) {
             if (metricName.equals(attributeMetricFilter) ||
                     (attributeMetricFilter.endsWith("*") && metricName.startsWith(
@@ -288,7 +328,9 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
             if (value.isPresent()) {
                 SparkplugBProto.Payload.Builder cmdPayload = SparkplugBProto.Payload.newBuilder()
                         .setTimestamp(ts);
-                cmdPayload.addMetrics(createMetric(value.get(), ts, tsKvProto.getKv().getKey(), metricDataType));
+                String metricName = tsKvProto.getKv().getKey();
+                Long alias = metricBirth.hasAlias() ? metricBirth.getAlias() : -1;
+                cmdPayload.addMetrics(createMetric(value.get(), ts, alias == -1 ? metricName : null, metricDataType, alias));
                 byte[] payloadInBytes = cmdPayload.build().toByteArray();
                 return Optional.of(getPayloadAdaptor().createMqttPublishMsg(deviceSessionCtx, sparkplugTopic, payloadInBytes));
             } else {

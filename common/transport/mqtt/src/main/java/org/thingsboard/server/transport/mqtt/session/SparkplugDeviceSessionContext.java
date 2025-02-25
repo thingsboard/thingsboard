@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt.session;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DCMD;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.getTsKvProto;
@@ -57,9 +57,17 @@ public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionC
         return deviceBirthMetrics;
     }
 
-    public void setDeviceBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
-        this.deviceBirthMetrics.putAll(metrics.stream()
-                .collect(Collectors.toMap(SparkplugBProto.Payload.Metric::getName, metric -> metric)));
+    public void setDeviceBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics)  {
+        for (var metric : metrics) {
+            if (metric.hasName()) {
+                this.deviceBirthMetrics.put(metric.getName(), metric);
+            } else {
+                throw new IllegalArgumentException("The metric name of device: '" + this.getDeviceInfo().getDeviceName() + "' must not be empty or null! Metric: [" + metric + "]");
+            }
+            if (metric.hasAlias() && this.parent.getNodeAlias().putIfAbsent(metric.getAlias(), metric.getName()) != null) {
+                throw new DuplicateKeyException("The alias '" + metric.getAlias() + "' already exists in device: '" + this.getDeviceInfo().getDeviceName() + "'");
+            }
+        }
     }
 
 

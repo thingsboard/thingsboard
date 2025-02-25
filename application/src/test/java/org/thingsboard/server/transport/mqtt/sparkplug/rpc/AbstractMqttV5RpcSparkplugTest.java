@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.transport.mqtt.sparkplug.rpc;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.paho.mqttv5.common.MqttException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
@@ -72,6 +72,36 @@ public abstract class AbstractMqttV5RpcSparkplugTest  extends AbstractMqttV5Clie
         Assert.assertEquals(expected, actual);
         Assert.assertEquals(metricBirthName_Int32, mqttCallback.getMessageArrivedMetrics().get(0).getName());
         Assert.assertTrue(metricBirthValue_Int32 == mqttCallback.getMessageArrivedMetrics().get(0).getIntValue());
+    }
+
+    @Test
+    public void processClientDeviceWithCorrectAccessTokenPublishWithAlias_TwoWayRpc_Success() throws Exception {
+        long ts = calendar.getTimeInMillis();
+        List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHWithAliasCreatedDevices(ts);
+        awaitForDeviceActorToReceiveSubscription(devices.get(0).getId(), FeatureType.RPC, 1);
+        String expected = "{\"result\":\"Success: " + DCMD.name() + "\"}";
+        String actual = sendRPCSparkplug(DCMD.name() , sparkplugRpcRequest, devices.get(0));
+        await(alias + DCMD.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    return mqttCallback.getMessageArrivedMetrics().size() == 1;
+                });
+        Assert.assertEquals(expected, actual);
+        Assert.assertFalse(mqttCallback.getMessageArrivedMetrics().get(0).hasName());
+        Assert.assertTrue(mqttCallback.getMessageArrivedMetrics().get(0).hasAlias());
+        Assert.assertTrue(2L == mqttCallback.getMessageArrivedMetrics().get(0).getAlias());
+        Assert.assertTrue(metricBirthValue_Int32 == mqttCallback.getMessageArrivedMetrics().get(0).getIntValue());
+    }
+
+    @Test
+    public void processClientNodeWithCorrectAccessTokenPublishWithAliasWithoutMetricName_TwoWayRpc_BAD_REQUEST_PARAMS() throws Exception {
+        long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
+        long value = bdSeq = 0;
+        MqttException actualException = Assert.assertThrows(MqttException.class, () -> clientMqttV5ConnectWithNDEATH(ts, value, "",4L));
+        String expectedMessage = "Server unavailable.";
+        int expectedReasonCode = 136;
+        Assert.assertEquals(expectedMessage, actualException.getMessage());
+        Assert.assertEquals(expectedReasonCode, actualException.getReasonCode());
     }
 
     @Test
