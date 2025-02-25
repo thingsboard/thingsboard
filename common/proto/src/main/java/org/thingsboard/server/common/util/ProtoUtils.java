@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.Device;
@@ -88,6 +89,7 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceDeleteMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ApiUsageRecordKeyProto;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -397,6 +399,39 @@ public class ProtoUtils {
         }
 
         return builder.build();
+    }
+
+    public static ApiUsageRecordKeyProto toProto(ApiUsageRecordKey apiUsageRecordKey) {
+        return switch (apiUsageRecordKey) {
+            case TRANSPORT_MSG_COUNT -> ApiUsageRecordKeyProto.TRANSPORT_MSG_COUNT;
+            case TRANSPORT_DP_COUNT -> ApiUsageRecordKeyProto.TRANSPORT_DP_COUNT;
+            case STORAGE_DP_COUNT -> ApiUsageRecordKeyProto.STORAGE_DP_COUNT;
+            case RE_EXEC_COUNT -> ApiUsageRecordKeyProto.RE_EXEC_COUNT;
+            case JS_EXEC_COUNT -> ApiUsageRecordKeyProto.JS_EXEC_COUNT;
+            case TBEL_EXEC_COUNT -> ApiUsageRecordKeyProto.TBEL_EXEC_COUNT;
+            case EMAIL_EXEC_COUNT -> ApiUsageRecordKeyProto.EMAIL_EXEC_COUNT;
+            case SMS_EXEC_COUNT -> ApiUsageRecordKeyProto.SMS_EXEC_COUNT;
+            case CREATED_ALARMS_COUNT -> ApiUsageRecordKeyProto.CREATED_ALARMS_COUNT;
+            case ACTIVE_DEVICES -> ApiUsageRecordKeyProto.ACTIVE_DEVICES;
+            case INACTIVE_DEVICES -> ApiUsageRecordKeyProto.INACTIVE_DEVICES;
+        };
+    }
+
+    public static ApiUsageRecordKey fromProto(ApiUsageRecordKeyProto proto) {
+        return switch (proto) {
+            case UNRECOGNIZED -> null;
+            case TRANSPORT_MSG_COUNT -> ApiUsageRecordKey.TRANSPORT_MSG_COUNT;
+            case TRANSPORT_DP_COUNT -> ApiUsageRecordKey.TRANSPORT_DP_COUNT;
+            case STORAGE_DP_COUNT -> ApiUsageRecordKey.STORAGE_DP_COUNT;
+            case RE_EXEC_COUNT -> ApiUsageRecordKey.RE_EXEC_COUNT;
+            case JS_EXEC_COUNT -> ApiUsageRecordKey.JS_EXEC_COUNT;
+            case TBEL_EXEC_COUNT -> ApiUsageRecordKey.TBEL_EXEC_COUNT;
+            case EMAIL_EXEC_COUNT -> ApiUsageRecordKey.EMAIL_EXEC_COUNT;
+            case SMS_EXEC_COUNT -> ApiUsageRecordKey.SMS_EXEC_COUNT;
+            case CREATED_ALARMS_COUNT -> ApiUsageRecordKey.CREATED_ALARMS_COUNT;
+            case ACTIVE_DEVICES -> ApiUsageRecordKey.ACTIVE_DEVICES;
+            case INACTIVE_DEVICES -> ApiUsageRecordKey.INACTIVE_DEVICES;
+        };
     }
 
     private static ToDeviceActorNotificationMsg fromProto(TransportProtos.DeviceAttributesEventMsgProto proto) {

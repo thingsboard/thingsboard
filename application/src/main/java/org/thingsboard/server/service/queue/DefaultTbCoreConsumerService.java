@@ -74,7 +74,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdatePr
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsgPack;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -150,7 +150,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final TbCoreConsumerStats stats;
 
     private MainQueueConsumerManager<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig> mainConsumer;
-    private QueueConsumerManager<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
+    private QueueConsumerManager<TbProtoQueueMsg<ToUsageStatsServiceMsgPack>> usageStatsConsumer;
     private QueueConsumerManager<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
 
     private volatile ListeningExecutorService deviceActivityEventsExecutor;
@@ -207,7 +207,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
                 .build();
-        this.usageStatsConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToUsageStatsServiceMsg>>builder()
+        this.usageStatsConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToUsageStatsServiceMsgPack>>builder()
                 .name("TB Usage Stats")
                 .msgPackProcessor(this::processUsageStatsMsg)
                 .pollInterval(pollInterval)
@@ -402,11 +402,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         }
     }
 
-    private void processUsageStatsMsg(List<TbProtoQueueMsg<ToUsageStatsServiceMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> consumer) throws Exception {
-        ConcurrentMap<UUID, TbProtoQueueMsg<ToUsageStatsServiceMsg>> pendingMap = msgs.stream().collect(
+    private void processUsageStatsMsg(List<TbProtoQueueMsg<ToUsageStatsServiceMsgPack>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsgPack>> consumer) throws Exception {
+        ConcurrentMap<UUID, TbProtoQueueMsg<ToUsageStatsServiceMsgPack>> pendingMap = msgs.stream().collect(
                 Collectors.toConcurrentMap(s -> UUID.randomUUID(), Function.identity()));
         CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
-        TbPackProcessingContext<TbProtoQueueMsg<ToUsageStatsServiceMsg>> ctx = new TbPackProcessingContext<>(
+        TbPackProcessingContext<TbProtoQueueMsg<ToUsageStatsServiceMsgPack>> ctx = new TbPackProcessingContext<>(
                 processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
         pendingMap.forEach((id, msg) -> {
             log.trace("[{}] Creating usage stats callback for message: {}", id, msg.getValue());
@@ -453,7 +453,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         consumer.commit();
     }
 
-    private void handleUsageStats(TbProtoQueueMsg<ToUsageStatsServiceMsg> msg, TbCallback callback) {
+    private void handleUsageStats(TbProtoQueueMsg<ToUsageStatsServiceMsgPack> msg, TbCallback callback) {
         statsService.process(msg, callback);
     }
 

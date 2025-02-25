@@ -28,7 +28,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateSer
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsgPack;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
@@ -91,7 +91,7 @@ public interface TbCoreQueueFactory extends TbUsageStatsClientQueueFactory, Hous
      *
      * @return
      */
-    TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<ToUsageStatsServiceMsgPack>> createToUsageStatsServiceMsgConsumer();
 
     /**
      * Used to consume messages about firmware update notifications by TB Core Service

@@ -24,7 +24,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperService
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsgPack;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -74,7 +74,7 @@ public interface TbQueueProducerProvider {
      *
      * @return
      */
-    TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer();
+    TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsgPack>> getTbUsageStatsMsgProducer();
 
      /**
      * Used to push messages to other instances of TB Core Service
