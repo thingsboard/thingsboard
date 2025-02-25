@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.msg.edqs.EdqsApiService;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -61,6 +62,8 @@ public class EntityQueryController extends BaseController {
     private EntityQueryService entityQueryService;
     @Autowired
     private EdqsService edqsService;
+    @Autowired
+    private EdqsApiService edqsApiService;
 
     private static final int MAX_PAGE_SIZE = 100;
 
@@ -148,7 +151,7 @@ public class EntityQueryController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping("/edqs/enabled")
     public boolean isEdqsApiEnabled() {
-        return edqsService.isApiEnabled();
+        return edqsApiService.isEnabled();
     }
 
 }
