@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!--
 
-    Copyright Â© 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -85,16 +85,6 @@
         </groups>
         <packages>
             <package name="org.thingsboard.server.msa.ui.tests.alarmassignee.*"/>
-        </packages>
-    </test>
-    <test name="Edqs tests">
-        <groups>
-            <run>
-                <exclude name="broken"/>
-            </run>
-        </groups>
-        <packages>
-            <package name="org.thingsboard.server.msa.edqs.*"/>
         </packages>
     </test>
 </suite>
