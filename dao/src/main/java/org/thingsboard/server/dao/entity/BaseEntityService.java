@@ -45,7 +45,7 @@ import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
-import org.thingsboard.server.common.msg.edqs.EdqsService;
+import org.thingsboard.server.common.msg.edqs.EdqsApiService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.ArrayList;
@@ -85,8 +85,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Lazy
     EntityServiceRegistry entityServiceRegistry;
 
-    @Autowired @Lazy
-    private EdqsService edqsService;
+    @Autowired
+    private EdqsApiService edqsApiService;
 
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
@@ -95,7 +95,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityCountQuery(query);
 
-        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
+        if (edqsApiService.isEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityCountQuery(query)
                     .build();
@@ -112,7 +112,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityDataQuery(query);
 
-        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
+        if (edqsApiService.isEnabled() && validForEdqs(query)  && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityDataQuery(query)
                     .build();
@@ -143,7 +143,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         EdqsResponse response;
         try {
             log.debug("[{}] Sending request to EDQS: {}", tenantId, request);
-            response = edqsService.processRequest(tenantId, customerId, request).get();
+            response = edqsApiService.processRequest(tenantId, customerId, request).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

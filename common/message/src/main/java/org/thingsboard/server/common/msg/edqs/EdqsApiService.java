@@ -15,25 +15,20 @@
  */
 package org.thingsboard.server.common.msg.edqs;
 
-import org.thingsboard.server.common.data.ObjectType;
-import org.thingsboard.server.common.data.edqs.EdqsObject;
-import org.thingsboard.server.common.data.edqs.ToCoreEdqsMsg;
-import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
-import org.thingsboard.server.common.data.id.EntityId;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.edqs.query.EdqsRequest;
+import org.thingsboard.server.common.data.edqs.query.EdqsResponse;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface EdqsService {
+public interface EdqsApiService {
 
-    void onUpdate(TenantId tenantId, EntityId entityId, Object entity);
+    ListenableFuture<EdqsResponse> processRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request);
 
-    void onUpdate(TenantId tenantId, ObjectType objectType, EdqsObject object);
+    boolean isEnabled();
 
-    void onDelete(TenantId tenantId, EntityId entityId);
+    void setEnabled(boolean enabled);
 
-    void onDelete(TenantId tenantId, ObjectType objectType, EdqsObject object);
-
-    void processSystemRequest(ToCoreEdqsRequest request);
-
-    void processSystemMsg(ToCoreEdqsMsg request);
+    boolean isSupported();
 
 }

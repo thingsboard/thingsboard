@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.service.edqs;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -28,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -44,30 +40,24 @@ import org.thingsboard.server.common.data.edqs.EdqsSyncRequest;
 import org.thingsboard.server.common.data.edqs.Entity;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsMsg;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
-import org.thingsboard.server.common.data.edqs.query.EdqsRequest;
-import org.thingsboard.server.common.data.edqs.query.EdqsResponse;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.msg.edqs.EdqsApiService;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.edqs.processor.EdqsProducer;
 import org.thingsboard.server.edqs.state.EdqsPartitionService;
 import org.thingsboard.server.edqs.util.EdqsConverter;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.EdqsEventMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.EdqsRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsCoreServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
-import org.thingsboard.server.queue.TbQueueRequestTemplate;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.HashPartitionService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.environment.DistributedLock;
@@ -75,7 +65,6 @@ import org.thingsboard.server.queue.environment.DistributedLockService;
 import org.thingsboard.server.queue.provider.EdqsClientQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -88,20 +77,18 @@ public class DefaultEdqsService implements EdqsService {
     private final EdqsClientQueueFactory queueFactory;
     private final EdqsConverter edqsConverter;
     private final EdqsSyncService edqsSyncService;
+    private final EdqsApiService edqsApiService;
     private final DistributedLockService distributedLockService;
     private final AttributesService attributesService;
     private final EdqsPartitionService edqsPartitionService;
     private final TopicService topicService;
+    private final TbServiceInfoProvider serviceInfoProvider;
     @Autowired @Lazy
     private TbClusterService clusterService;
     @Autowired @Lazy
     private HashPartitionService hashPartitionService;
 
-    @Value("${queue.edqs.api_enabled:false}")
-    private Boolean apiEnabled;
-
     private EdqsProducer eventsProducer;
-    private TbQueueRequestTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> requestTemplate;
     private ExecutorService executor;
     private DistributedLock syncLock;
 
@@ -114,17 +101,14 @@ public class DefaultEdqsService implements EdqsService {
                 .topicService(topicService)
                 .producer(queueFactory.createEdqsMsgProducer(EdqsQueue.EVENTS))
                 .build();
-        if (apiEnabled) {
-            apiEnabled = null;
-        }
-
-        requestTemplate = queueFactory.createEdqsRequestTemplate();
-        requestTemplate.init();
         syncLock = distributedLockService.getLock("edqs_sync");
     }
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void onStartUp() {
+        if (!serviceInfoProvider.isService(ServiceType.TB_CORE)) {
+            return;
+        }
         executor.submit(() -> {
             try {
                 EdqsSyncState syncState = getSyncState();
@@ -134,13 +118,9 @@ public class DefaultEdqsService implements EdqsService {
                                 .syncRequest(new EdqsSyncRequest())
                                 .build());
                     }
-                } else { // only if topic/RocksDB is not empty and sync is finished
-                    if (apiEnabled == null) {
-                        log.info("EDQS is already synced, enabling API");
-                        apiEnabled = true;
-                    } else {
-                        log.info("EDQS is already synced");
-                    }
+                } else if (edqsApiService.isSupported()) {
+                    // only if topic/RocksDB is not empty and sync is finished
+                    edqsApiService.setEnabled(true);
                 }
             } catch (Throwable e) {
                 log.error("Failed to start EDQS service", e);
@@ -163,7 +143,7 @@ public class DefaultEdqsService implements EdqsService {
             log.info("Processing system msg {}", msg);
             try {
                 if (msg.getApiEnabled() != null) {
-                    apiEnabled = msg.getApiEnabled();
+                    edqsApiService.setEnabled(msg.getApiEnabled());
                 }
 
                 if (msg.getSyncRequest() != null) {
@@ -177,9 +157,9 @@ public class DefaultEdqsService implements EdqsService {
 
                         saveSyncState(EdqsSyncStatus.STARTED);
                         edqsSyncService.sync();
-
                         saveSyncState(EdqsSyncStatus.FINISHED);
-                        if (apiEnabled == null) {
+
+                        if (edqsApiService.isSupported()) {
                             broadcast(ToCoreEdqsMsg.builder()
                                     .apiEnabled(Boolean.TRUE)
                                     .build());
@@ -229,30 +209,6 @@ public class DefaultEdqsService implements EdqsService {
         processEvent(tenantId, objectType, EdqsEventType.DELETED, object);
     }
 
-    @Override
-    public ListenableFuture<EdqsResponse> processRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request) {
-        var requestMsg = newEdqsMsg(tenantId)
-                .setRequestMsg(EdqsRequestMsg.newBuilder()
-                        .setValue(JacksonUtil.toString(request))
-                        .build());
-        if (customerId != null && !customerId.isNullUid()) {
-            requestMsg.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-            requestMsg.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
-        }
-
-        Integer partition = edqsPartitionService.resolvePartition(tenantId);
-        ListenableFuture<TbProtoQueueMsg<FromEdqsMsg>> resultFuture = requestTemplate.send(new TbProtoQueueMsg<>(UUID.randomUUID(), requestMsg.build()), partition);
-        return Futures.transform(resultFuture, msg -> {
-            TransportProtos.EdqsResponseMsg responseMsg = msg.getValue().getResponseMsg();
-            return JacksonUtil.fromString(responseMsg.getValue(), EdqsResponse.class);
-        }, MoreExecutors.directExecutor());
-    }
-
-    @Override
-    public boolean isApiEnabled() {
-        return Boolean.TRUE.equals(apiEnabled);
-    }
-
     protected void processEvent(TenantId tenantId, ObjectType objectType, EdqsEventType eventType, EdqsObject object) {
         executor.submit(() -> {
             try {
@@ -266,7 +222,10 @@ public class DefaultEdqsService implements EdqsService {
                 if (version != null) {
                     eventMsg.setVersion(version);
                 }
-                eventsProducer.send(tenantId, objectType, key, newEdqsMsg(tenantId)
+                eventsProducer.send(tenantId, objectType, key, ToEdqsMsg.newBuilder()
+                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                        .setTs(System.currentTimeMillis())
                         .setEventMsg(eventMsg)
                         .build());
             } catch (Throwable e) {
@@ -293,20 +252,6 @@ public class DefaultEdqsService implements EdqsService {
                 .build());
     }
 
-    private static ToEdqsMsg.Builder newEdqsMsg(TenantId tenantId) {
-        return ToEdqsMsg.newBuilder()
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setTs(System.currentTimeMillis());
-    }
-
-    @PreDestroy
-    private void preDestroy() {
-        executor.shutdown();
-        eventsProducer.stop();
-        requestTemplate.stop();
-    }
-
     @SneakyThrows
     private EdqsSyncState getSyncState() {
         EdqsSyncState state = attributesService.find(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, AttributeScope.SERVER_SCOPE, "edqsSyncState").get(30, TimeUnit.SECONDS)
@@ -324,6 +269,12 @@ public class DefaultEdqsService implements EdqsService {
         attributesService.save(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID, AttributeScope.SERVER_SCOPE, new BaseAttributeKvEntry(
                 new JsonDataEntry("edqsSyncState", JacksonUtil.toString(state)),
                 System.currentTimeMillis())).get(30, TimeUnit.SECONDS);
+    }
+
+    @PreDestroy
+    private void stop() {
+        executor.shutdown();
+        eventsProducer.stop();
     }
 
     @Data

@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
-import org.thingsboard.server.common.msg.edqs.EdqsService;
+import org.thingsboard.server.common.msg.edqs.EdqsApiService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edqs.util.EdqsRocksDb;
 
@@ -56,14 +56,14 @@ import static org.awaitility.Awaitility.await;
 public class EdqsEntityServiceTest extends EntityServiceTest {
 
     @Autowired
-    private EdqsService edqsService;
+    private EdqsApiService edqsApiService;
 
     @MockBean
     private EdqsRocksDb edqsRocksDb;
 
     @Before
     public void beforeEach() {
-        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> edqsService.isApiEnabled());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> edqsApiService.isEnabled());
     }
 
     // sql implementation has a bug with data duplication, edqs implementation returns correct value
