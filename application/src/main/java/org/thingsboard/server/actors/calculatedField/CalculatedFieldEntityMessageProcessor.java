@@ -194,8 +194,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
             }
         } catch (Exception e) {
-            if (e instanceof CalculatedFieldException) {
-                throw (CalculatedFieldException) e;
+            if (e instanceof CalculatedFieldException cfe) {
+                throw cfe;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }

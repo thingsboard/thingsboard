@@ -119,7 +119,7 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
             cleanupExpiredRecords();
         } catch (Exception e) {
             tsRecords.put(ts, Double.NaN);
-            log.warn("Invalid value '{}' for time series rolling arguments. Only numeric values are supported.", value.getValue());
+            log.debug("Invalid value '{}' for time series rolling arguments. Only numeric values are supported.", value.getValue());
         }
     }
 
