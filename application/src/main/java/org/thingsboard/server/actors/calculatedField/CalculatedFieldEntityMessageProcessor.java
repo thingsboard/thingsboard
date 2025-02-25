@@ -24,11 +24,13 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -164,7 +166,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             if (cfIds.contains(ctx.getCfId())) {
                 callback.onSuccess(CALLBACKS_PER_CF);
             } else {
-                if (proto.getTsDataCount() > 0) {
+                if (proto.getRemovedTsKeysCount() > 0) {
+                    processArgumentValuesUpdate(ctx, cfIds, callback, mapDeletedAttributesToDefault(ctx, msg.getEntityId(), proto.getScope(), proto.getRemovedTsKeysList()), toTbMsgId(proto), toTbMsgType(proto));
+                } else if (proto.getRemovedAttrKeysCount() > 0) {
+                    processArgumentValuesUpdate(ctx, cfIds, callback, mapDeletedAttributesToDefault(ctx, msg.getEntityId(), proto.getScope(), proto.getRemovedAttrKeysList()), toTbMsgId(proto), toTbMsgType(proto));
+                } else if (proto.getTsDataCount() > 0) {
                     processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getTsDataList()), toTbMsgId(proto), toTbMsgType(proto));
                 } else if (proto.getAttrDataCount() > 0) {
                     processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getScope(), proto.getAttrDataList()), toTbMsgId(proto), toTbMsgType(proto));
@@ -182,7 +188,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             if (cfIds.contains(ctx.getCfId())) {
                 callback.onSuccess(CALLBACKS_PER_CF);
             } else {
-                if (proto.getTsDataCount() > 0) {
+                if (proto.getRemovedTsKeysCount() > 0) {
+                    processRemovedTelemetry(ctx, proto, cfIdList, callback);
+                } else if (proto.getRemovedAttrKeysCount() > 0) {
+                    processRemovedAttributes(ctx, proto, cfIdList, callback);
+                } else if (proto.getTsDataCount() > 0) {
                     processTelemetry(ctx, proto, cfIdList, callback);
                 } else if (proto.getAttrDataCount() > 0) {
                     processAttributes(ctx, proto, cfIdList, callback);
@@ -191,23 +201,43 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
             }
         } catch (Exception e) {
+            if (e instanceof CalculatedFieldException) {
+                throw (CalculatedFieldException) e;
+            }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
     }
 
-    @SneakyThrows
-    private void processTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) {
+    private void processRemovedTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
+        // reinit cf (consider fetching only removed ts)
+        log.info("Force reinitialization of CF: [{}].", ctx.getCfId());
+        states.remove(ctx.getCfId());
+        try {
+            var state = getOrInitState(ctx);
+            if (state.isSizeOk()) {
+                processStateIfReady(ctx, Collections.singletonList(ctx.getCfId()), state, null, null, callback);
+            } else {
+                throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
+            }
+        } catch (Exception e) {
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
+        }
+    }
+
+    private void processRemovedAttributes(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
+        processArgumentValuesUpdate(ctx, cfIdList, callback, mapDeletedAttributesToDefault(ctx, proto.getScope(), proto.getRemovedAttrKeysList()), toTbMsgId(proto), toTbMsgType(proto));
+    }
+
+    private void processTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
         processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getTsDataList()), toTbMsgId(proto), toTbMsgType(proto));
     }
 
-    @SneakyThrows
-    private void processAttributes(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) {
+    private void processAttributes(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
         processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getScope(), proto.getAttrDataList()), toTbMsgId(proto), toTbMsgType(proto));
     }
 
-    @SneakyThrows
     private void processArgumentValuesUpdate(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback,
-                                             Map<String, ArgumentEntry> newArgValues, UUID tbMsgId, TbMsgType tbMsgType) {
+                                             Map<String, ArgumentEntry> newArgValues, UUID tbMsgId, TbMsgType tbMsgType) throws CalculatedFieldException {
         if (newArgValues.isEmpty()) {
             log.info("[{}] No new argument values to process for CF.", ctx.getCfId());
             callback.onSuccess(CALLBACKS_PER_CF);
@@ -343,6 +373,35 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             String argName = argNames.get(key);
             if (argName != null) {
                 arguments.put(argName, new SingleValueArgumentEntry(item));
+            }
+        }
+        return arguments;
+    }
+
+    private Map<String, ArgumentEntry> mapDeletedAttributesToDefault(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<String> removedAttrKeys) {
+        var argNames = ctx.getLinkedEntityArguments().get(entityId);
+        if (argNames.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return mapToArgumentsDefaultValue(argNames, ctx.getArguments(), scope, removedAttrKeys);
+    }
+
+    private Map<String, ArgumentEntry> mapDeletedAttributesToDefault(CalculatedFieldCtx ctx, AttributeScopeProto scope, List<String> removedAttrKeys) {
+        return mapToArgumentsDefaultValue(ctx.getMainEntityArguments(), ctx.getArguments(), scope, removedAttrKeys);
+    }
+
+    private static Map<String, ArgumentEntry> mapToArgumentsDefaultValue(Map<ReferencedEntityKey, String> argNames, Map<String, Argument> configArguments, AttributeScopeProto scope, List<String> removedAttrKeys) {
+        Map<String, ArgumentEntry> arguments = new HashMap<>();
+        for (String removedKey : removedAttrKeys) {
+            ReferencedEntityKey key = new ReferencedEntityKey(removedKey, ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
+            String argName = argNames.get(key);
+            if (argName != null) {
+                Argument argument = configArguments.get(argName);
+                String defaultValue = (argument != null) ? argument.getDefaultValue() : null;
+                arguments.put(argName, (defaultValue != null)
+                        ? new SingleValueArgumentEntry(System.currentTimeMillis(), new StringDataEntry(removedKey, defaultValue), null)
+                        : new SingleValueArgumentEntry());
+
             }
         }
         return arguments;

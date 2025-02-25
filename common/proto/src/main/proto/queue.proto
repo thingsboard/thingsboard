@@ -783,9 +783,11 @@ message CalculatedFieldTelemetryMsgProto {
   repeated TsKvProto tsData = 9;
   AttributeScopeProto scope = 10;
   repeated AttributeValueProto attrData = 11;
-  int64 tbMsgIdMSB = 12;
-  int64 tbMsgIdLSB = 13;
-  string tbMsgType = 14;
+  repeated string removedTsKeys = 12;
+  repeated string removedAttrKeys = 13;
+  int64 tbMsgIdMSB = 14;
+  int64 tbMsgIdLSB = 15;
+  string tbMsgType = 16;
 }
 
 message CalculatedFieldLinkedTelemetryMsgProto {

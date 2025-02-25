@@ -151,8 +151,26 @@ public class CalculatedFieldCtx {
         }
     }
 
+    public boolean matchesKeys(List<String> keys, AttributeScope scope) {
+        return matchesAttributesKeys(mainEntityArguments, keys, scope);
+    }
+
+    public boolean matchesKeys(List<String> keys) {
+        return matchesTimeSeriesKeys(mainEntityArguments, keys);
+    }
+
     public boolean matches(List<AttributeKvEntry> values, AttributeScope scope) {
         return matchesAttributes(mainEntityArguments, values, scope);
+    }
+
+    public boolean linkMatchesAttrKeys(EntityId entityId, List<String> keys, AttributeScope scope) {
+        var map = linkedEntityArguments.get(entityId);
+        return map != null && matchesAttributesKeys(map, keys, scope);
+    }
+
+    public boolean linkMatchesTsKeys(EntityId entityId, List<String> keys) {
+        var map = linkedEntityArguments.get(entityId);
+        return map != null && matchesTimeSeriesKeys(map, keys);
     }
 
     public boolean linkMatches(EntityId entityId, List<AttributeKvEntry> values, AttributeScope scope) {
@@ -179,6 +197,16 @@ public class CalculatedFieldCtx {
         return false;
     }
 
+    private boolean matchesAttributesKeys(Map<ReferencedEntityKey, String> argMap, List<String> keys, AttributeScope scope) {
+        for (String key : keys) {
+            ReferencedEntityKey attrKey = new ReferencedEntityKey(key, ArgumentType.ATTRIBUTE, scope);
+            if (argMap.containsKey(attrKey)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean matchesTimeSeries(Map<ReferencedEntityKey, String> argMap, List<TsKvEntry> values) {
         for (TsKvEntry tsKv : values) {
             ReferencedEntityKey latestKey = new ReferencedEntityKey(tsKv.getKey(), ArgumentType.TS_LATEST, null);
@@ -193,8 +221,26 @@ public class CalculatedFieldCtx {
         return false;
     }
 
+    private boolean matchesTimeSeriesKeys(Map<ReferencedEntityKey, String> argMap, List<String> keys) {
+        for (String key : keys) {
+            ReferencedEntityKey latestKey = new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null);
+            if (argMap.containsKey(latestKey)) {
+                return true;
+            }
+            ReferencedEntityKey rollingKey = new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null);
+            if (argMap.containsKey(rollingKey)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean linkMatches(EntityId entityId, CalculatedFieldTelemetryMsgProto proto) {
-        if (!proto.getTsDataList().isEmpty()) {
+        if (!proto.getRemovedTsKeysList().isEmpty()) {
+            return linkMatchesTsKeys(entityId, proto.getRemovedTsKeysList());
+        } else if (!proto.getRemovedAttrKeysList().isEmpty()) {
+            return linkMatchesAttrKeys(entityId, proto.getRemovedAttrKeysList(), AttributeScope.valueOf(proto.getScope().name()));
+        } else if (!proto.getTsDataList().isEmpty()) {
             List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
                     .map(ProtoUtils::fromProto)
                     .toList();

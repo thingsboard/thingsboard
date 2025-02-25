@@ -186,7 +186,9 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void deleteAttributesInternal(AttributesDeleteRequest request) {
         ListenableFuture<List<String>> deleteFuture = attrService.removeAll(request.getTenantId(), request.getEntityId(), request.getScope(), request.getKeys());
-        addMainCallback(deleteFuture, request.getCallback());
+        DonAsynchron.withCallback(deleteFuture, result -> {
+            calculatedFieldQueueService.pushRequestToQueue(request, result, request.getCallback());
+        }, safeCallback(request.getCallback()), tsCallBackExecutor);
         addWsCallback(deleteFuture, success -> onAttributesDelete(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getKeys(), request.isNotifyDevice()));
     }
 
@@ -206,7 +208,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                 deleteFuture = tsService.remove(request.getTenantId(), request.getEntityId(), request.getDeleteHistoryQueries());
                 addWsCallback(deleteFuture, result -> onTimeSeriesDelete(request.getTenantId(), request.getEntityId(), request.getKeys(), result));
             }
-            addMainCallback(deleteFuture, __ -> request.getCallback().onSuccess(request.getKeys()), request.getCallback()::onFailure);
+            DonAsynchron.withCallback(deleteFuture, result -> {
+                calculatedFieldQueueService.pushRequestToQueue(request, request.getKeys(), getCalculatedFieldCallback(request.getCallback(), request.getKeys()));
+            }, safeCallback(getCalculatedFieldCallback(request.getCallback(), request.getKeys())), tsCallBackExecutor);
+//            addMainCallback(deleteFuture, __ -> request.getCallback().onSuccess(request.getKeys()), request.getCallback()::onFailure);
         } else {
             ListenableFuture<List<String>> deleteFuture = tsService.removeAllLatest(request.getTenantId(), request.getEntityId());
             addMainCallback(deleteFuture, request.getCallback()::onSuccess, request.getCallback()::onFailure);
@@ -334,6 +339,20 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
             @Override
             public void onFailure(Throwable t) {
+            }
+        };
+    }
+
+    private FutureCallback<Void> getCalculatedFieldCallback(FutureCallback<List<String>> originalCallback, List<String> keys) {
+        return new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                originalCallback.onSuccess(keys);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                originalCallback.onFailure(t);
             }
         };
     }
