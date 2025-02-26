@@ -144,10 +144,18 @@ public interface TbContext {
 
     /**
      * Puts new message to queue for processing by the Root Rule Chain
+     * WARNING: message is put to the Main queue. To specify other queue name - use {@link #enqueue(TbMsg, String, Runnable, Consumer)}
      *
      * @param msg - message
      */
     void enqueue(TbMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure);
+
+    /**
+     * Puts new message to custom queue for processing
+     *
+     * @param msg - message
+     */
+    void enqueue(TbMsg msg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     /**
      * Sends message to the nested rule chain.
@@ -166,13 +174,6 @@ public interface TbContext {
      * @param relationType - the relation type that will be used to route messages in the caller rule chain
      */
     void output(TbMsg msg, String relationType);
-
-    /**
-     * Puts new message to custom queue for processing
-     *
-     * @param msg - message
-     */
-    void enqueue(TbMsg msg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     void enqueueForTellFailure(TbMsg msg, String failureMessage);
 
