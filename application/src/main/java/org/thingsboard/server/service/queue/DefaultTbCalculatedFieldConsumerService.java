@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -45,6 +43,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -52,9 +51,9 @@ import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldCache;
+import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
@@ -80,16 +79,15 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     private long pollInterval;
     @Value("${queue.calculated_fields.pack_processing_timeout:60000}")
     private long packProcessingTimeout;
-    @Value("${queue.calculated_fields.consumer_per_partition:true}")
-    private boolean consumerPerPartition;
     @Value("${queue.calculated_fields.pool_size:8}")
     private int poolSize;
 
     private final TbRuleEngineQueueFactory queueFactory;
+    private final CalculatedFieldStateService stateService;
 
-    private MainQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>, CalculatedFieldQueueConfig> mainConsumer;
+    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer;
 
-    private volatile ListeningExecutorService calculatedFieldsExecutor;
+    private ListeningExecutorService calculatedFieldsExecutor;
 
     public DefaultTbCalculatedFieldConsumerService(TbRuleEngineQueueFactory tbQueueFactory,
                                                    ActorSystemContext actorContext,
@@ -100,10 +98,12 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
                                                    PartitionService partitionService,
                                                    ApplicationEventPublisher eventPublisher,
                                                    JwtSettingsService jwtSettingsService,
-                                                   CalculatedFieldCache calculatedFieldCache) {
+                                                   CalculatedFieldCache calculatedFieldCache,
+                                                   CalculatedFieldStateService stateService) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.queueFactory = tbQueueFactory;
+        this.stateService = stateService;
     }
 
     @PostConstruct
@@ -111,15 +111,17 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
         super.init("tb-cf");
         this.calculatedFieldsExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(poolSize, "tb-cf-executor")); // TODO: multiple threads.
 
-        this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>, CalculatedFieldQueueConfig>builder()
-                .queueKey(new QueueKey(ServiceType.TB_RULE_ENGINE))
-                .config(CalculatedFieldQueueConfig.of(consumerPerPartition, (int) pollInterval))
+        this.eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
+                .queueKey(QueueKey.CF)
+                .topic(partitionService.getTopic(QueueKey.CF))
+                .pollInterval(pollInterval)
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator((config, partitionId) -> queueFactory.createToCalculatedFieldMsgConsumer())
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
                 .build();
+        stateService.init(eventConsumer);
     }
 
     @PreDestroy
@@ -137,26 +139,28 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        var partitions = event.getCalculatedFieldsPartitions();
-        log.info("Subscribing to partitions: {}", partitions);
-        // TODO: @vklimov - before update of the main consumer, we should read the state topics and use
-        // CalculatedFieldStateService (KafkaCalculatedFieldStateService) to restore the states for entities that belong to new partitions.
-        // Cleanup entities that do not belong to current partition;
-        mainConsumer.update(event.getCalculatedFieldsPartitions());
-        // Cleanup old entities after corresponding consumers are stopped.
-        // Any periodic tasks need to check that the entity is still managed by the current server before processing.
-        actorContext.tell(new CalculatedFieldPartitionChangeMsg(partitionsToBooleanIndexArray(partitions)));
+        var partitions = event.getCfPartitions();
+        try {
+            stateService.restore(partitions);
+            // eventConsumer's partitions will be updated by stateService
+
+            // Cleanup old entities after corresponding consumers are stopped.
+            // Any periodic tasks need to check that the entity is still managed by the current server before processing.
+            actorContext.tell(new CalculatedFieldPartitionChangeMsg(partitionsToBooleanIndexArray(partitions)));
+        } catch (Throwable t) {
+            log.error("Failed to process partition change event: {}", event, t);
+        }
     }
 
     private boolean[] partitionsToBooleanIndexArray(Set<TopicPartitionInfo> partitions) {
         boolean[] myPartitions = new boolean[partitionService.getTotalCalculatedFieldPartitions()];
-        for(var tpi : partitions) {
+        for (var tpi : partitions) {
             tpi.getPartition().ifPresent(partition -> myPartitions[partition] = true);
         }
         return myPartitions;
     }
 
-    private void processMsgs(List<TbProtoQueueMsg<ToCalculatedFieldMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> consumer, CalculatedFieldQueueConfig config) throws Exception {
+    private void processMsgs(List<TbProtoQueueMsg<ToCalculatedFieldMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> consumer, QueueConfig config) throws Exception {
         List<IdMsgPair<ToCalculatedFieldMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
         ConcurrentMap<UUID, TbProtoQueueMsg<ToCalculatedFieldMsg>> pendingMap = orderedMsgList.stream().collect(
                 Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
@@ -193,9 +197,10 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
                 packSubmitFuture.cancel(true);
                 log.info("Timeout to process message: {}", pendingMsgHolder.getMsg());
             }
-            if (log.isDebugEnabled()) {
-                ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
-            }
+//            if (log.isDebugEnabled()) {
+//                ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
+//            }
+            ctx.getAckMap().forEach((id, msg) -> log.warn("[{}] Timeout to process message: {}", id, msg.getValue())); // TODO: replace with commented above after testing
             ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
         }
         consumer.commit();
@@ -263,14 +268,9 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     @Override
     protected void stopConsumers() {
         super.stopConsumers();
-        mainConsumer.stop();
-        mainConsumer.awaitStop();
-    }
-
-    @Data(staticConstructor = "of")
-    public static class CalculatedFieldQueueConfig implements QueueConfig {
-        private final boolean consumerPerPartition;
-        private final int pollInterval;
+        eventConsumer.stop();
+        eventConsumer.awaitStop();
+        stateService.stop();
     }
 
 }

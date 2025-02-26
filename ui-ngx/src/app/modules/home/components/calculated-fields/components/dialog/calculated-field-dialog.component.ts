@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, Inject } from '@angular/core';
+import { Component, DestroyRef, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -28,6 +28,7 @@ import {
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
   getCalculatedFieldArgumentsEditorCompleter,
+  getCalculatedFieldArgumentsHighlights,
   OutputType,
   OutputTypeTranslations
 } from '@shared/models/calculated-field.models';
@@ -37,13 +38,14 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
+import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 
 @Component({
   selector: 'tb-calculated-field-dialog',
   templateUrl: './calculated-field-dialog.component.html',
   styleUrls: ['./calculated-field-dialog.component.scss'],
 })
-export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> implements AfterViewInit {
+export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> {
 
   fieldFormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex), Validators.maxLength(255)]],
@@ -73,6 +75,12 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       map(argumentsObj => getCalculatedFieldArgumentsEditorCompleter(argumentsObj))
     );
 
+  argumentsHighlightRules$ = this.configFormGroup.get('arguments').valueChanges
+    .pipe(
+      startWith(this.data.value?.configuration?.arguments ?? {}),
+      map(argumentsObj => getCalculatedFieldArgumentsHighlights(argumentsObj))
+    );
+
   additionalDebugActionConfig = this.data.value?.id ? {
     ...this.data.additionalDebugActionConfig,
     action: () => this.data.additionalDebugActionConfig.action({ id: this.data.value.id, ...this.fromGroupValue }),
@@ -92,8 +100,11 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldDialogData,
               protected dialogRef: MatDialogRef<CalculatedFieldDialogComponent, CalculatedField>,
+              private calculatedFieldsService: CalculatedFieldsService,
+              private destroyRef: DestroyRef,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
+    this.observeIsLoading();
     this.applyDialogData();
     this.observeTypeChanges();
   }
@@ -112,19 +123,15 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     return { configuration: { ...restConfig, type, expression: configuration['expression'+type] }, ...rest, type } as CalculatedField;
   }
 
-  ngAfterViewInit(): void {
-    if (this.data.isDirty) {
-      this.fieldFormGroup.markAsDirty();
-    }
-  }
-
   cancel(): void {
     this.dialogRef.close(null);
   }
 
   add(): void {
     if (this.fieldFormGroup.valid) {
-      this.dialogRef.close(this.fromGroupValue);
+      this.calculatedFieldsService.saveCalculatedField({ entityId: this.data.entityId, ...(this.data.value ?? {}),  ...this.fromGroupValue})
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(calculatedField => this.dialogRef.close(calculatedField));
     }
   }
 
@@ -168,5 +175,20 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       this.configFormGroup.get('expressionSIMPLE').disable({emitEvent: false});
       this.configFormGroup.get('expressionSCRIPT').enable({emitEvent: false});
     }
+  }
+
+  private observeIsLoading(): void {
+    this.isLoading$.pipe(takeUntilDestroyed()).subscribe(loading => {
+      if (loading) {
+        this.fieldFormGroup.disable({emitEvent: false});
+      } else {
+        this.fieldFormGroup.enable({emitEvent: false});
+        this.toggleScopeByOutputType(this.outputFormGroup.get('type').value);
+        this.toggleKeyByCalculatedFieldType(this.fieldFormGroup.get('type').value);
+        if (this.data.isDirty) {
+          this.fieldFormGroup.markAsDirty();
+        }
+      }
+    });
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,16 @@
  */
 package org.thingsboard.server.service.cf;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
-
-import java.util.Map;
 
 @Data
 public final class CalculatedFieldResult {
 
     private final OutputType type;
     private final AttributeScope scope;
-    private final Map<String, Object> resultMap;
+    private final JsonNode result;
 
-    public CalculatedFieldResult(OutputType type, AttributeScope scope, Map<String, Object> resultMap) {
-        this.type = type;
-        this.scope = scope;
-        this.resultMap = resultMap == null ? Map.of() : Map.copyOf(resultMap);
-    }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
-
 @ToString(callSuper = true)
 public class PartitionChangeEvent extends TbApplicationEvent {
 
@@ -55,8 +53,8 @@ public class PartitionChangeEvent extends TbApplicationEvent {
         return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_CORE, DataConstants.EDGE_QUEUE_NAME);
     }
 
-    public Set<TopicPartitionInfo> getCalculatedFieldsPartitions() {
-        return partitionsMap.getOrDefault(CALCULATED_FIELD_QUEUE_KEY, Collections.emptySet());
+    public Set<TopicPartitionInfo> getCfPartitions() {
+        return partitionsMap.getOrDefault(QueueKey.CF, Collections.emptySet());
     }
 
     private Set<TopicPartitionInfo> getPartitionsByServiceTypeAndQueueName(ServiceType serviceType, String queueName) {

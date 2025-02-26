@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 :host {
   .dialog-container {
     width: 869px;
     max-width: 100%;
+  }
+
+  .script-lang-chip {
+    line-height: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    border-radius: 100px;
+    width: 70px;
+    display: flex;
+    justify-content: center;
+    margin-top: 2px;
+    margin-right: 4px;
+  }
+}
+
+:host ::ng-deep {
+  .expression-edit {
+    .ace_tb {
+      &.ace_calculated-field {
+        &-key {
+          color: #C52F00;
+        }
+        &-ts, &-time-window, &-values, &-value {
+          color: #7214D0;
+        }
+        &-start-ts, &-end-ts, &-limit {
+          color: #185F2A;
+        }
+      }
+    }
   }
 }

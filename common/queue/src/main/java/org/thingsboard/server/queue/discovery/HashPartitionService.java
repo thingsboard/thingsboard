@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.*;
+import static org.thingsboard.server.common.data.DataConstants.EDGE_QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
 
 @Service
 @Slf4j
@@ -61,9 +62,9 @@ public class HashPartitionService implements PartitionService {
     private String coreTopic;
     @Value("${queue.core.partitions:10}")
     private Integer corePartitions;
-    @Value("${queue.calculated_fields.event_topic}")
+    @Value("${queue.calculated_fields.event_topic:tb_cf_event}")
     private String cfEventTopic;
-    @Value("${queue.calculated_fields.state_topic}")
+    @Value("${queue.calculated_fields.state_topic:tb_cf_state}")
     private String cfStateTopic;
     @Value("${queue.calculated_fields.partitions:10}")
     private Integer cfPartitions;
@@ -77,8 +78,6 @@ public class HashPartitionService implements PartitionService {
     private Integer edgePartitions;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
-
-    public static final QueueKey CALCULATED_FIELD_QUEUE_KEY = new QueueKey(ServiceType.TB_RULE_ENGINE).withQueueName(CF_QUEUE_NAME);
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
@@ -120,8 +119,10 @@ public class HashPartitionService implements PartitionService {
         partitionSizesMap.put(coreKey, corePartitions);
         partitionTopicsMap.put(coreKey, coreTopic);
 
-        partitionSizesMap.put(CALCULATED_FIELD_QUEUE_KEY, cfPartitions);
-        partitionTopicsMap.put(CALCULATED_FIELD_QUEUE_KEY, cfEventTopic);
+        partitionSizesMap.put(QueueKey.CF, cfPartitions);
+        partitionTopicsMap.put(QueueKey.CF, cfEventTopic);
+        partitionSizesMap.put(QueueKey.CF_STATES, cfPartitions);
+        partitionTopicsMap.put(QueueKey.CF_STATES, cfStateTopic);
 
         QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
         partitionSizesMap.put(vcKey, vcPartitions);
@@ -146,6 +147,11 @@ public class HashPartitionService implements PartitionService {
     @Override
     public List<Integer> getMyPartitions(QueueKey queueKey) {
         return myPartitions.get(queueKey);
+    }
+
+    @Override
+    public String getTopic(QueueKey queueKey) {
+        return partitionTopicsMap.get(queueKey);
     }
 
     private void doInitRuleEnginePartitions() {
@@ -429,12 +435,9 @@ public class HashPartitionService implements PartitionService {
             }
         });
         if (!changedPartitionsMap.isEmpty()) {
-            Map<ServiceType, Map<QueueKey, Set<TopicPartitionInfo>>> partitionsByServiceType = new HashMap<>();
-            changedPartitionsMap.forEach((queueKey, partitions) -> {
-                partitionsByServiceType.computeIfAbsent(queueKey.getType(), serviceType -> new HashMap<>())
-                        .put(queueKey, partitions);
-            });
-            partitionsByServiceType.forEach(this::publishPartitionChangeEvent);
+            changedPartitionsMap.entrySet().stream()
+                    .collect(Collectors.groupingBy(entry -> entry.getKey().getType(), Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                    .forEach(this::publishPartitionChangeEvent);
         }
 
         if (currentOtherServices == null) {
@@ -507,7 +510,6 @@ public class HashPartitionService implements PartitionService {
         }
         return result;
     }
-
 
     @Override
     public int resolvePartitionIndex(UUID entityId, int partitions) {

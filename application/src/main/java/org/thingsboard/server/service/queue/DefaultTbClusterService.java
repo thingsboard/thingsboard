@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
@@ -111,7 +112,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.util.ProtoUtils.toProto;
-import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
 
 @Service
 @Slf4j
@@ -358,7 +358,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushMsgToCalculatedFields(TenantId tenantId, EntityId entityId, ToCalculatedFieldMsg msg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF, entityId);
         pushMsgToCalculatedFields(tpi, UUID.randomUUID(), msg, callback);
     }
 
@@ -371,7 +371,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToCalculatedFields(TenantId tenantId, EntityId entityId, ToCalculatedFieldNotificationMsg msg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF, entityId);
         producerProvider.getCalculatedFieldsNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
         toRuleEngineNfs.incrementAndGet();
     }
@@ -792,8 +792,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private void pushDeviceUpdateMessage(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
         log.trace("{} Going to send edge update notification for device actor, device id {}, edge id {}", tenantId, entityId, edgeId);
         switch (action) {
-            case ASSIGNED_TO_EDGE ->
-                    pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
+            case ASSIGNED_TO_EDGE -> pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
             case UNASSIGNED_FROM_EDGE -> {
                 EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
                 pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -138,6 +138,28 @@
               {{ getErrorMessageText(key.settings, 'required') }}
             </mat-error>
           </mat-form-field>
+
+          <div *ngIf="key.settings.dataKeyValueType === 'radio'">
+            <mat-label>{{key.label}}</mat-label>
+            <mat-radio-group
+              [style]="{'display': 'grid', 'grid-template-columns': 'repeat(' + key.settings.radioColumns + ', 1fr)', 'column-gap': '5px', 'row-gap': '5px'}"
+              [labelPosition]="key.settings.radioLabelPosition"
+              (change)="inputChanged(source, key)"
+              formControlName="{{key.formId}}">
+                <mat-radio-button
+                  [style]="radioButtonSelectedColor(key.settings.radioColor)"
+                  [disabled]="key.settings.isEditable === 'readonly'"
+                  *ngFor="let option of key.settings.selectOptions"
+                  [value]="option.value">
+                  <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
+                    <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
+                  </ng-container>
+                  <span class="label-wrapper">
+                    {{ getCustomTranslationText(option.label ? option.label : option.value) }}
+                  </span>
+                </mat-radio-button>
+            </mat-radio-group>
+          </div>
           <mat-form-field *ngIf="key.settings.dataKeyValueType === 'color'"
                           class="color-input" [appearance]="key.settings.appearance" [subscriptSizing]="key.settings.subscriptSizing"
                           (click)="colorInput.openColorPickerPopup($event)">

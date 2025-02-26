@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import { Injectable, Type } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -24,7 +24,10 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import {
   BaseWidgetType,
   DeprecatedFilter,
-  fullWidgetTypeFqn, migrateWidgetTypeToDynamicForms,
+  fullWidgetTypeFqn,
+  IWidgetSettingsComponent,
+  migrateWidgetTypeToDynamicForms,
+  WidgetSettingsComponent,
   WidgetType,
   widgetType,
   WidgetTypeDetails,
@@ -36,6 +39,11 @@ import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActivationEnd, Router } from '@angular/router';
+import {
+  BasicWidgetConfigComponent,
+  IBasicWidgetConfigComponent
+} from '@home/components/widget/config/widget-config.component.models';
+import { ResourcesService } from '@core/services/resources.service';
 
 @Injectable({
   providedIn: 'root'
@@ -50,9 +58,13 @@ export class WidgetService {
 
   private loadWidgetsBundleCacheSubject: ReplaySubject<void>;
 
+  private basicWidgetSettingsComponentsMap: { [key: string]: Type<IBasicWidgetConfigComponent> } = {};
+  private widgetSettingsComponentsMap: { [key: string]: Type<IWidgetSettingsComponent> } = {};
+
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private resourcesService: ResourcesService,
   ) {
     this.router.events.pipe(filter(event => event instanceof ActivationEnd)).subscribe(
       () => {
@@ -285,6 +297,30 @@ export class WidgetService {
 
   public putWidgetInfoToCache(widgetInfo: WidgetInfo) {
     this.widgetsInfoInMemoryCache.set(widgetInfo.fullFqn, widgetInfo);
+  }
+
+  public registerBasicWidgetConfigComponents(module: any) {
+    Object.assign(this.basicWidgetSettingsComponentsMap, this.resourcesService.extractComponentsFromModule<IBasicWidgetConfigComponent>(module, BasicWidgetConfigComponent));
+  }
+
+  public getBasicWidgetSettingsComponentBySelector(selector: string): Type<IBasicWidgetConfigComponent> {
+    return this.basicWidgetSettingsComponentsMap[selector];
+  }
+
+  public putBasicWidgetSettingsComponentToMap(selector: string, compType: Type<IBasicWidgetConfigComponent>) {
+    this.basicWidgetSettingsComponentsMap[selector] = compType;
+  }
+
+  public registerWidgetSettingsComponents(module: any) {
+    Object.assign(this.widgetSettingsComponentsMap, this.resourcesService.extractComponentsFromModule<IWidgetSettingsComponent>(module, WidgetSettingsComponent));
+  }
+
+  public getWidgetSettingsComponentTypeBySelector(selector: string): Type<IWidgetSettingsComponent> {
+    return this.widgetSettingsComponentsMap[selector];
+  }
+
+  public putWidgetSettingsComponentToMap(selector: string, compType: Type<IWidgetSettingsComponent>) {
+    this.widgetSettingsComponentsMap[selector] = compType;
   }
 
   private widgetTypeUpdated(updatedWidgetType: BaseWidgetType): void {

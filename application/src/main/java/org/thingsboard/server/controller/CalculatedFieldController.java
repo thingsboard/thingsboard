@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
@@ -46,10 +51,12 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldScriptEngine;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -84,14 +91,24 @@ public class CalculatedFieldController extends BaseController {
     private static final String TEST_SCRIPT_EXPRESSION = "Execute the Script expression and return the result. The format of request: \n\n"
             + MARKDOWN_CODE_BLOCK_START
             + "{\n" +
-            "  \"expression\": \"var temp = 0; foreach(element: temperature.entrySet()) { temp += element.getValue(); } var avgTemperature = temp / temperature.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity; return { \\\"adjustedTemperature\\\": adjustedTemperature };\",\n" +
+            "  \"expression\": \"var temp = 0; foreach(element: temperature.values) {temp += element.value;} var avgTemperature = temp / temperature.values.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity.value; return {\\\"adjustedTemperature\\\": adjustedTemperature};\",\n" +
             "  \"arguments\": {\n" +
             "    \"temperature\": {\n" +
-            "      \"14327856345\": 22.4,\n" +
-            "      \"14327857298\": 21.9,\n" +
-            "      \"14327857510\": 22.0\n" +
+            "      \"type\": \"TS_ROLLING\",\n" +
+            "      \"timeWindow\": {\n" +
+            "        \"startTs\": 1739775630002,\n" +
+            "        \"endTs\": 65432211,\n" +
+            "        \"limit\": 5\n" +
+            "      },\n" +
+            "      \"values\": [\n" +
+            "        { \"ts\": 1739775639851, \"value\": 23 },\n" +
+            "        { \"ts\": 1739775664561, \"value\": 43 },\n" +
+            "        { \"ts\": 1739775713079, \"value\": 15 },\n" +
+            "        { \"ts\": 1739775999522, \"value\": 34 },\n" +
+            "        { \"ts\": 1739776228452, \"value\": 22 }\n" +
+            "      ]\n" +
             "    },\n" +
-            "    \"humidity\": 42\n" +
+            "    \"humidity\": { \"type\": \"SINGLE_VALUE\", \"ts\": 1739776478057, \"value\": 23 }\n" +
             "  }\n" +
             "}"
             + MARKDOWN_CODE_BLOCK_END
@@ -111,6 +128,7 @@ public class CalculatedFieldController extends BaseController {
                                                @RequestBody CalculatedField calculatedField) throws Exception {
         calculatedField.setTenantId(getTenantId());
         checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
+        checkReferencedEntities(calculatedField.getConfiguration(), getCurrentUser());
         return tbCalculatedFieldService.save(calculatedField, getCurrentUser());
     }
 
@@ -172,8 +190,8 @@ public class CalculatedFieldController extends BaseController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Test calculated field TBEL expression.")
             @RequestBody JsonNode inputParams) {
         String expression = inputParams.get("expression").asText();
-        Map<String, Object> arguments = Objects.requireNonNullElse(
-                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<Map<String, Object>>() {
+        Map<String, TbelCfArg> arguments = Objects.requireNonNullElse(
+                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<Map<String, TbelCfArg>>() {
                 }),
                 Collections.emptyMap()
         );
@@ -209,6 +227,18 @@ public class CalculatedFieldController extends BaseController {
         result.put("output", output);
         result.put("error", errorText);
         return result;
+    }
+
+    private <E extends HasId<I> & HasTenantId, I extends EntityId> void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig, SecurityUser user) throws ThingsboardException {
+        List<EntityId> referencedEntityIds = calculatedFieldConfig.getReferencedEntities();
+        for (EntityId referencedEntityId : referencedEntityIds) {
+            EntityType entityType = referencedEntityId.getEntityType();
+            switch (entityType) {
+                case TENANT, CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
+                default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
+            }
+        }
+
     }
 
 }

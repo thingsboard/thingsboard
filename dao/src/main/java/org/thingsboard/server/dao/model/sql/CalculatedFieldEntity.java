@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
@@ -52,7 +52,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.DEBUG_SETTINGS;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = CALCULATED_FIELD_TABLE_NAME)
-public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implements BaseEntity<CalculatedField> {
+public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> implements BaseEntity<CalculatedField> {
 
     @Column(name = CALCULATED_FIELD_TENANT_ID_COLUMN)
     private UUID tenantId;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
-import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
@@ -31,12 +30,12 @@ import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
  * Created by ashvayka on 15.03.18.
  */
 @Slf4j
-public class CalculatedFieldManagerActor extends ContextAwareActor {
+public class CalculatedFieldManagerActor extends AbstractCalculatedFieldActor {
 
     private final CalculatedFieldManagerMessageProcessor processor;
 
     public CalculatedFieldManagerActor(ActorSystemContext systemContext, TenantId tenantId) {
-        super(systemContext);
+        super(systemContext, tenantId);
         this.processor = new CalculatedFieldManagerMessageProcessor(systemContext, tenantId);
     }
 
@@ -54,7 +53,7 @@ public class CalculatedFieldManagerActor extends ContextAwareActor {
     }
 
     @Override
-    protected boolean doProcess(TbActorMsg msg) {
+    protected boolean doProcessCfMsg(ToCalculatedFieldSystemMsg msg) throws CalculatedFieldException {
         switch (msg.getMsgType()) {
             case CF_PARTITIONS_CHANGE_MSG:
                 processor.onPartitionChange((CalculatedFieldPartitionChangeMsg) msg);
@@ -82,4 +81,10 @@ public class CalculatedFieldManagerActor extends ContextAwareActor {
         }
         return true;
     }
+
+    @Override
+    void logProcessingException(Exception e) {
+        log.warn("[{}] Processing failure", tenantId, e);
+    }
+
 }

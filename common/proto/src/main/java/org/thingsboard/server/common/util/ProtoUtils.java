@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -148,9 +149,13 @@ public class ProtoUtils {
         var builder = ComponentLifecycleMsg.builder()
                 .tenantId(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())))
                 .entityId(entityId)
-                .event(ComponentLifecycleEvent.values()[proto.getEventValue()])
-                .name(proto.hasName() ? proto.getName() : null)
-                .oldName(proto.hasOldName() ? proto.getOldName() : null);
+                .event(ComponentLifecycleEvent.values()[proto.getEventValue()]);
+        if (!StringUtils.isEmpty(proto.getName())) {
+            builder.name(proto.getName());
+        }
+        if (!StringUtils.isEmpty(proto.getOldName())) {
+            builder.oldName(proto.getOldName());
+        }
         if (proto.getProfileIdMSB() != 0 || proto.getProfileIdLSB() != 0) {
             var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
             builder.profileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getProfileIdMSB(), proto.getProfileIdLSB())));

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -23,9 +25,23 @@ public class TbelCfSingleValueArg implements TbelCfArg {
     private final long ts;
     private final Object value;
 
+    @JsonCreator
+    public TbelCfSingleValueArg(
+            @JsonProperty("ts") long ts,
+            @JsonProperty("value") Object value
+    ) {
+        this.ts = ts;
+        this.value = value;
+    }
+
     @Override
     public long memorySize() {
         return 8L; // TODO;
+    }
+
+    @Override
+    public String getType() {
+        return "SINGLE_VALUE";
     }
 
 }

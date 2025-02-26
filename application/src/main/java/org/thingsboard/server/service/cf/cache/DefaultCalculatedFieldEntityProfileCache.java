@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
@@ -30,7 +30,6 @@ import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -49,7 +48,7 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        myPartitions = event.getCalculatedFieldsPartitions().stream()
+        myPartitions = event.getCfPartitions().stream()
                 .filter(TopicPartitionInfo::isMyPartition)
                 .map(tpi -> tpi.getPartition().orElse(UNKNOWN)).collect(Collectors.toList());
         //Naive approach that need to be improved.
@@ -58,7 +57,7 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     public void add(TenantId tenantId, EntityId profileId, EntityId entityId) {
-        var tpi = partitionService.resolve(HashPartitionService.CALCULATED_FIELD_QUEUE_KEY, entityId);
+        var tpi = partitionService.resolve(QueueKey.CF, entityId);
         var partition = tpi.getPartition().orElse(UNKNOWN);
         tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache())
                 .add(profileId, entityId, partition, tpi.isMyPartition());
@@ -66,7 +65,7 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     public void update(TenantId tenantId, EntityId oldProfileId, EntityId newProfileId, EntityId entityId) {
-        var tpi = partitionService.resolve(HashPartitionService.CALCULATED_FIELD_QUEUE_KEY, entityId);
+        var tpi = partitionService.resolve(QueueKey.CF, entityId);
         var partition = tpi.getPartition().orElse(UNKNOWN);
         var cache = tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache());
         //TODO: make this method atomic;
@@ -87,7 +86,7 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     public int getEntityIdPartition(TenantId tenantId, EntityId entityId) {
-        var tpi = partitionService.resolve(HashPartitionService.CALCULATED_FIELD_QUEUE_KEY, entityId);
+        var tpi = partitionService.resolve(QueueKey.CF, entityId);
         return tpi.getPartition().orElse(UNKNOWN);
     }
 

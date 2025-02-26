@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.service.apiusage;
 
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -92,15 +90,7 @@ import java.util.stream.Collectors;
 public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService<EntityId> implements TbApiUsageStateService {
 
     public static final String HOURLY = "Hourly";
-    public static final FutureCallback<Void> VOID_CALLBACK = new FutureCallback<Void>() {
-        @Override
-        public void onSuccess(@Nullable Void result) {
-        }
 
-        @Override
-        public void onFailure(Throwable t) {
-        }
-    };
     private final PartitionService partitionService;
     private final TenantService tenantService;
     private final TimeseriesService tsService;
@@ -219,7 +209,6 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 .tenantId(tenantId)
                 .entityId(usageState.getApiUsageState().getId())
                 .entries(updatedEntries)
-                .callback(VOID_CALLBACK)
                 .build());
         if (!result.isEmpty()) {
             persistAndNotify(usageState, result);
@@ -331,7 +320,6 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                     .tenantId(tenantId)
                     .entityId(id)
                     .entries(profileThresholds)
-                    .callback(VOID_CALLBACK)
                     .build());
         }
     }
@@ -363,7 +351,6 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 .tenantId(state.getTenantId())
                 .entityId(state.getApiUsageState().getId())
                 .entries(stateTelemetry)
-                .callback(VOID_CALLBACK)
                 .build());
 
         if (state.getEntityType() == EntityType.TENANT && !state.getEntityId().equals(TenantId.SYS_TENANT_ID)) {
@@ -456,7 +443,6 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 .tenantId(state.getTenantId())
                 .entityId(state.getApiUsageState().getId())
                 .entries(counts)
-                .callback(VOID_CALLBACK)
                 .build());
     }
 

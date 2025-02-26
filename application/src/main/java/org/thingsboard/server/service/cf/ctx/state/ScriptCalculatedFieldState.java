@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -22,18 +23,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.script.api.tbel.TbelCfArg;
-import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
-import org.thingsboard.script.api.tbel.TbelCfTsDoubleVal;
-import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 @Data
 @Slf4j
@@ -55,21 +49,11 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        arguments.forEach((key, argumentEntry) -> {
-            if (argumentEntry instanceof TsRollingArgumentEntry tsRollingEntry) {
-                Argument argument = ctx.getArguments().get(key);
-                TreeMap<Long, Double> tsRecords = tsRollingEntry.getTsRecords();
-                if (tsRecords.size() > argument.getLimit()) {
-                    tsRecords.pollFirstEntry();
-                }
-                tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - argument.getTimeWindow());
-            }
-        });
         Object[] args = ctx.getArgNames().stream()
                 .map(this::toTbelArgument)
                 .toArray();
 
-        ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
+        ListenableFuture<JsonNode> resultFuture = ctx.getCalculatedFieldScriptEngine().executeJsonAsync(args);
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,
                 result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),

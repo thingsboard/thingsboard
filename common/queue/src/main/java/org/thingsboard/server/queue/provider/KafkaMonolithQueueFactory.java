@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,8 +100,10 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     private final TbQueueAdmin edgeAdmin;
     private final TbQueueAdmin edgeEventAdmin;
     private final TbQueueAdmin cfAdmin;
+    private final TbQueueAdmin cfStateAdmin;
 
     private final AtomicLong consumerCount = new AtomicLong();
+    private final AtomicLong edgeConsumerCount = new AtomicLong();
 
     public KafkaMonolithQueueFactory(TopicService topicService, TbKafkaSettings kafkaSettings,
                                      TbServiceInfoProvider serviceInfoProvider,
@@ -142,6 +144,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         this.edgeAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeConfigs());
         this.edgeEventAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
         this.cfAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCalculatedFieldConfigs());
+        this.cfStateAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCalculatedFieldStateConfigs());
     }
 
     @Override
@@ -481,7 +484,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(topicService.buildTopicName("tb_edge_event.notifications." + tenantId + "." + edgeId));
-        consumerBuilder.clientId("monolith-to-edge-event-consumer" + serviceInfoProvider.getServiceId());
+        consumerBuilder.clientId("monolith-to-edge-event-consumer-" + serviceInfoProvider.getServiceId() + "-" + edgeConsumerCount.incrementAndGet());
         consumerBuilder.groupId(topicService.buildTopicName("monolith-edge-event-consumer"));
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToEdgeEventNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(edgeEventAdmin);
@@ -547,25 +550,27 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateConsumer() {
-        TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<CalculatedFieldStateProto>> consumerBuilder = TbKafkaConsumerTemplate.builder();
-        consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(topicService.buildTopicName(calculatedFieldSettings.getStateTopic()));
-        consumerBuilder.clientId("monolith-calculated-field-state-consumer-" + serviceInfoProvider.getServiceId() + "-" + consumerCount.incrementAndGet());
-        consumerBuilder.groupId(topicService.buildTopicName("monolith-calculated-field-state-consumer"));
-        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), CalculatedFieldStateProto.parseFrom(msg.getData()), msg.getHeaders()));
-        consumerBuilder.admin(cfAdmin);
-        consumerBuilder.statsService(consumerStatsService);
-        return consumerBuilder.build();
+        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<CalculatedFieldStateProto>>builder()
+                .settings(kafkaSettings)
+                .topic(topicService.buildTopicName(calculatedFieldSettings.getStateTopic()))
+                .readFromBeginning(true)
+                .stopWhenRead(true)
+                .clientId("monolith-calculated-field-state-consumer-" + serviceInfoProvider.getServiceId() + "-" + consumerCount.incrementAndGet())
+                .groupId(topicService.buildTopicName("monolith-calculated-field-state-consumer"))
+                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), msg.getData() != null ? CalculatedFieldStateProto.parseFrom(msg.getData()) : null, msg.getHeaders()))
+                .admin(cfStateAdmin)
+                .statsService(consumerStatsService)
+                .build();
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateProducer() {
-        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<CalculatedFieldStateProto>> requestBuilder = TbKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("monolith-calculated-field-state-" + serviceInfoProvider.getServiceId());
-        requestBuilder.defaultTopic(topicService.buildTopicName(calculatedFieldSettings.getStateTopic()));
-        requestBuilder.admin(cfAdmin);
-        return requestBuilder.build();
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<CalculatedFieldStateProto>>builder()
+                .settings(kafkaSettings)
+                .clientId("monolith-calculated-field-state-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(calculatedFieldSettings.getEventTopic()))
+                .admin(cfStateAdmin)
+                .build();
     }
 
     @PreDestroy

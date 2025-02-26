@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,35 +24,36 @@ public class AbstractTbQueueTemplate {
     protected static final String RESPONSE_TOPIC_HEADER = "responseTopic";
     protected static final String EXPIRE_TS_HEADER = "expireTs";
 
-    protected byte[] uuidToBytes(UUID uuid) {
+    public static byte[] uuidToBytes(UUID uuid) {
         ByteBuffer buf = ByteBuffer.allocate(16);
         buf.putLong(uuid.getMostSignificantBits());
         buf.putLong(uuid.getLeastSignificantBits());
         return buf.array();
     }
 
-    protected static UUID bytesToUuid(byte[] bytes) {
+    public static UUID bytesToUuid(byte[] bytes) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         long firstLong = bb.getLong();
         long secondLong = bb.getLong();
         return new UUID(firstLong, secondLong);
     }
 
-    protected byte[] stringToBytes(String string) {
+    public static byte[] stringToBytes(String string) {
         return string.getBytes(StandardCharsets.UTF_8);
     }
 
-    protected String bytesToString(byte[] data) {
+    public static String bytesToString(byte[] data) {
         return new String(data, StandardCharsets.UTF_8);
     }
 
-    protected static byte[] longToBytes(long x) {
+    public static byte[] longToBytes(long x) {
         ByteBuffer longBuffer = ByteBuffer.allocate(Long.BYTES);
         longBuffer.putLong(0, x);
         return longBuffer.array();
     }
 
-    protected static long bytesToLong(byte[] bytes) {
+    public static long bytesToLong(byte[] bytes) {
         return ByteBuffer.wrap(bytes).getLong();
     }
+
 }

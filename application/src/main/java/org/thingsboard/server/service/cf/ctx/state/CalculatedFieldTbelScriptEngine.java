@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.jsonwebtoken.lang.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.ScriptType;
@@ -27,7 +26,6 @@ import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import javax.script.ScriptException;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -73,21 +71,8 @@ public class CalculatedFieldTbelScriptEngine implements CalculatedFieldScriptEng
     }
 
     @Override
-    public ListenableFuture<Map<String, Object>> executeToMapAsync(Object[] args) {
-        return Futures.transformAsync(executeScriptAsync(args), this::executeToMapTransform, MoreExecutors.directExecutor());
-    }
-
-    @Override
     public ListenableFuture<JsonNode> executeJsonAsync(Object[] args) {
         return Futures.transform(executeScriptAsync(args), JacksonUtil::valueToTree, MoreExecutors.directExecutor());
-    }
-
-    @Override
-    public ListenableFuture<Map<String, Object>> executeToMapTransform(Object result) {
-        if (result instanceof Map) {
-            return Futures.immediateFuture((Map<String, Object>) result);
-        }
-        throw new IllegalArgumentException("Wrong result type: [" + result.getClass().getName() + "]");
     }
 
     @Override

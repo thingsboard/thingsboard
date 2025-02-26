@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,16 +42,15 @@ public interface ArgumentEntry {
 
     boolean updateEntry(ArgumentEntry entry);
 
+    boolean isEmpty();
+
     static ArgumentEntry createSingleValueArgument(KvEntry kvEntry) {
         return new SingleValueArgumentEntry(kvEntry);
     }
 
-    static ArgumentEntry createTsRollingArgument(List<TsKvEntry> kvEntries) {
-        return new TsRollingArgumentEntry(kvEntries);
+    static ArgumentEntry createTsRollingArgument(List<TsKvEntry> kvEntries, int limit, long timeWindow) {
+        return new TsRollingArgumentEntry(kvEntries, limit, timeWindow);
     }
-
-    @JsonIgnore
-    ArgumentEntry copy();
 
     TbelCfArg toTbelCfArg();
 

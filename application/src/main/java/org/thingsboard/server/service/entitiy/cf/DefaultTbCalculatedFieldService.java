@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -35,12 +32,8 @@ import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 
-import java.util.List;
 import java.util.Optional;
-
-import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 
 @TbCoreComponent
 @Service
@@ -60,7 +53,6 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
                 checkForEntityChange(existingCf, calculatedField);
             }
             checkEntityExistence(tenantId, calculatedField.getEntityId());
-            checkReferencedEntities(calculatedField.getConfiguration(), user);
             CalculatedField savedCalculatedField = checkNotNull(calculatedFieldService.save(calculatedField));
             logEntityActionService.logEntityAction(tenantId, savedCalculatedField.getId(), savedCalculatedField, actionType, user);
             return savedCalculatedField;
@@ -105,31 +97,10 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
 
     private void checkEntityExistence(TenantId tenantId, EntityId entityId) {
         switch (entityId.getEntityType()) {
-            case ASSET, DEVICE, ASSET_PROFILE, DEVICE_PROFILE ->
-                    Optional.ofNullable(entityService.fetchEntity(tenantId, entityId))
-                            .orElseThrow(() -> new IllegalArgumentException(entityId.getEntityType().getNormalName() + " with id [" + entityId.getId() + "] does not exist."));
-            default ->
-                    throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' does not support calculated fields.");
+            case ASSET, DEVICE, ASSET_PROFILE, DEVICE_PROFILE -> Optional.ofNullable(entityService.fetchEntity(tenantId, entityId))
+                    .orElseThrow(() -> new IllegalArgumentException(entityId.getEntityType().getNormalName() + " with id [" + entityId.getId() + "] does not exist."));
+            default -> throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' does not support calculated fields.");
         }
-    }
-
-    private <E extends HasId<I> & HasTenantId, I extends EntityId> void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig, SecurityUser user) throws ThingsboardException {
-        List<EntityId> referencedEntityIds = calculatedFieldConfig.getReferencedEntities();
-        for (EntityId referencedEntityId : referencedEntityIds) {
-            validateEntityId(referencedEntityId, id -> "Invalid entity id " + id);
-            E entity = findEntity(user.getTenantId(), referencedEntityId);
-            checkNotNull(entity);
-            checkEntity(user, entity, Operation.READ);
-        }
-
-    }
-
-    private <E extends HasId<I> & HasTenantId, I extends EntityId> E findEntity(TenantId tenantId, EntityId entityId) {
-        return switch (entityId.getEntityType()) {
-            case TENANT, CUSTOMER, ASSET, DEVICE -> (E) entityService.fetchEntity(tenantId, entityId).orElse(null);
-            default ->
-                    throw new IllegalArgumentException("Calculated fields do not support entity type '" + entityId.getEntityType() + "' for referenced entities.");
-        };
     }
 
 }

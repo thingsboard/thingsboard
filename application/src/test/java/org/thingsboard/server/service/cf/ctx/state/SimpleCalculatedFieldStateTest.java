@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -117,7 +118,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key2", key2ArgEntry
         ));
 
-        Map<String, ArgumentEntry> newArgs = Map.of("key3", TsRollingArgumentEntry.EMPTY);
+        Map<String, ArgumentEntry> newArgs = Map.of("key3", new TsRollingArgumentEntry(10, 30000L));
         assertThatThrownBy(() -> state.updateState(newArgs))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Rolling argument entry is not supported for simple calculated fields.");
@@ -137,7 +138,7 @@ public class SimpleCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResultMap()).isEqualTo(Map.of("output", 49.0));
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 49.0)));
     }
 
     @Test
@@ -175,7 +176,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key1", key1ArgEntry,
                 "key2", key2ArgEntry
         ));
-        state.getArguments().put("key3", SingleValueArgumentEntry.EMPTY);
+        state.getArguments().put("key3", new SingleValueArgumentEntry());
 
         assertThat(state.isReady()).isFalse();
     }

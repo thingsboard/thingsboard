@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.service.cf;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -60,8 +58,6 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.Builder;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -70,6 +66,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNot
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
@@ -91,7 +88,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
-import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
+import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @TbRuleEngineComponent
 @Service
@@ -156,8 +153,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             OutputType type = calculatedFieldResult.getType();
             TbMsgType msgType = OutputType.ATTRIBUTES.equals(type) ? TbMsgType.POST_ATTRIBUTES_REQUEST : TbMsgType.POST_TELEMETRY_REQUEST;
             TbMsgMetaData md = OutputType.ATTRIBUTES.equals(type) ? new TbMsgMetaData(Map.of(SCOPE, calculatedFieldResult.getScope().name())) : TbMsgMetaData.EMPTY;
-            ObjectNode payload = createJsonPayload(calculatedFieldResult);
-            TbMsg msg = TbMsg.newMsg().type(msgType).originator(entityId).previousCalculatedFieldIds(cfIds).metaData(md).data(JacksonUtil.writeValueAsString(payload)).build();
+            TbMsg msg = TbMsg.newMsg().type(msgType).originator(entityId).previousCalculatedFieldIds(cfIds).metaData(md).data(JacksonUtil.writeValueAsString(calculatedFieldResult.getResult())).build();
             clusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
@@ -188,7 +184,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             if (broadcast) {
                 broadcasts.add(link);
             } else {
-                TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, link.entityId());
+                TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF, link.entityId());
                 unicasts.computeIfAbsent(tpi, k -> new ArrayList<>()).add(link);
             }
         }
@@ -229,19 +225,6 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         return builder.build();
     }
 
-    //TODO: IM: move to utils;
-    private CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {
-        return CalculatedFieldEntityCtxIdProto.newBuilder()
-                .setTenantIdMSB(ctxId.tenantId().getId().getMostSignificantBits())
-                .setTenantIdLSB(ctxId.tenantId().getId().getLeastSignificantBits())
-                .setCalculatedFieldIdMSB(ctxId.cfId().getId().getMostSignificantBits())
-                .setCalculatedFieldIdLSB(ctxId.cfId().getId().getLeastSignificantBits())
-                .setEntityType(ctxId.entityId().getEntityType().name())
-                .setEntityIdMSB(ctxId.entityId().getId().getMostSignificantBits())
-                .setEntityIdLSB(ctxId.entityId().getId().getLeastSignificantBits())
-                .build();
-    }
-
     private ListenableFuture<ArgumentEntry> fetchKvEntry(TenantId tenantId, EntityId entityId, Argument argument) {
         return switch (argument.getRefEntityKey().getType()) {
             case TS_ROLLING -> fetchTsRolling(tenantId, entityId, argument);
@@ -264,7 +247,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             if (kvEntry.isPresent() && kvEntry.get().getValue() != null) {
                 return ArgumentEntry.createSingleValueArgument(kvEntry.get());
             } else {
-                return SingleValueArgumentEntry.EMPTY;
+                return new SingleValueArgumentEntry();
             }
         }, calculatedFieldCallbackExecutor);
     }
@@ -279,7 +262,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, currentTime, 0, limit, Aggregation.NONE);
         ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
 
-        return Futures.transform(tsRollingFuture, tsRolling -> tsRolling == null ? TsRollingArgumentEntry.EMPTY : ArgumentEntry.createTsRollingArgument(tsRolling), calculatedFieldCallbackExecutor);
+        return Futures.transform(tsRollingFuture, tsRolling -> tsRolling == null ? new TsRollingArgumentEntry(limit, timeWindow) : ArgumentEntry.createTsRollingArgument(tsRolling, limit, timeWindow), calculatedFieldCallbackExecutor);
     }
 
     private KvEntry createDefaultKvEntry(Argument argument) {
@@ -297,25 +280,11 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         return new StringDataEntry(key, defaultValue);
     }
 
-    private ObjectNode createJsonPayload(CalculatedFieldResult calculatedFieldResult) {
-        ObjectNode payload = JacksonUtil.newObjectNode();
-        Map<String, Object> resultMap = calculatedFieldResult.getResultMap();
-        resultMap.forEach((k, v) -> payload.set(k, JacksonUtil.convertValue(v, JsonNode.class)));
-        return payload;
-    }
-
     private CalculatedFieldState createStateByType(CalculatedFieldCtx ctx) {
         return switch (ctx.getCfType()) {
             case SIMPLE -> new SimpleCalculatedFieldState(ctx.getArgNames());
             case SCRIPT -> new ScriptCalculatedFieldState(ctx.getArgNames());
         };
-    }
-
-    private CalculatedFieldIdProto toProto(CalculatedFieldId cfId) {
-        return CalculatedFieldIdProto.newBuilder()
-                .setCalculatedFieldIdMSB(cfId.getId().getMostSignificantBits())
-                .setCalculatedFieldIdLSB(cfId.getId().getLeastSignificantBits())
-                .build();
     }
 
     private static class TbCallbackWrapper implements TbQueueCallback {

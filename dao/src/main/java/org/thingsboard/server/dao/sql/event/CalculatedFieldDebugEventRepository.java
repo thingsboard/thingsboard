@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,10 +59,12 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
                     "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
+                    "AND (:eventArguments IS NULL OR e.e_args ILIKE concat('%', :eventArguments, '%')) " +
+                    "AND (:eventResult IS NULL OR e.e_result ILIKE concat('%', :eventResult, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
                     "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
             ,
-            countQuery = "SELECT count(*) FROM rule_node_debug_event e WHERE " +
+            countQuery = "SELECT count(*) FROM cf_debug_event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
@@ -73,6 +75,8 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
                     "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
+                    "AND (:eventArguments IS NULL OR e.e_args ILIKE concat('%', :eventArguments, '%')) " +
+                    "AND (:eventResult IS NULL OR e.e_result ILIKE concat('%', :eventResult, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
                     "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
     )
@@ -80,12 +84,14 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                                                      @Param("entityId") UUID entityId,
                                                      @Param("startTime") Long startTime,
                                                      @Param("endTime") Long endTime,
-                                                     @Param("serviceId") String server,
+                                                     @Param("serviceId") String serviceId,
                                                      @Param("calculatedFieldId") UUID calculatedFieldId,
                                                      @Param("eventEntityId") String eventEntityId,
                                                      @Param("eventEntityType") String eventEntityType,
                                                      @Param("msgId") String eventMsgId,
                                                      @Param("msgType") String eventMsgType,
+                                                     @Param("eventArguments") String eventArguments,
+                                                     @Param("eventResult") String eventResult,
                                                      @Param("isError") boolean isError,
                                                      @Param("error") String error,
                                                      Pageable pageable);
@@ -117,18 +123,22 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
                     "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
+                    "AND (:eventArguments IS NULL OR e.e_args ILIKE concat('%', :eventArguments, '%')) " +
+                    "AND (:eventResult IS NULL OR e.e_result ILIKE concat('%', :eventResult, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
                     "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))")
     void removeEvents(@Param("tenantId") UUID tenantId,
                       @Param("entityId") UUID entityId,
                       @Param("startTime") Long startTime,
                       @Param("endTime") Long endTime,
-                      @Param("serviceId") String server,
+                      @Param("serviceId") String serviceId,
                       @Param("calculatedFieldId") UUID calculatedFieldId,
                       @Param("eventEntityId") String eventEntityId,
                       @Param("eventEntityType") String eventEntityType,
                       @Param("msgId") String eventMsgId,
                       @Param("msgType") String eventMsgType,
+                      @Param("eventArguments") String eventArguments,
+                      @Param("eventResult") String eventResult,
                       @Param("isError") boolean isError,
                       @Param("error") String error);
 

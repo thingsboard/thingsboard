@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -108,7 +108,14 @@
           @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Attribute) {
             <div class="tb-form-row">
               <div class="fixed-title-width tb-required">{{ 'calculated-fields.timeseries-key' | translate }}</div>
-              <tb-entity-key-autocomplete class="flex-1" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
+              @if (refEntityKeyFormGroup.get('type').value === ArgumentType.LatestTelemetry) {
+                <ng-container [ngTemplateOutlet]="timeseriesKeyAutocomplete"/>
+              } @else {
+                <ng-container [ngTemplateOutlet]="timeseriesKeyAutocomplete"/>
+              }
+              <ng-template #timeseriesKeyAutocomplete>
+                <tb-entity-key-autocomplete class="flex-1" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
+              </ng-template>
             </div>
           } @else {
             @if (enableAttributeScopeSelection) {
@@ -155,13 +162,13 @@
           <tb-timeinterval
             subscriptSizing="dynamic"
             appearance="outline"
-            class="flex-1"
+            class="time-interval-field flex-1"
             formControlName="timeWindow"
           />
         </div>
-        <div class="tb-form-row">
+        <div class="tb-form-row limit-field-row">
           <div class="fixed-title-width">{{ 'calculated-fields.limit' | translate }}</div>
-          <tb-datapoints-limit class="flex-1" formControlName="limit"/>
+          <tb-datapoints-limit class="w-full flex-1" formControlName="limit"/>
         </div>
       }
     </div>

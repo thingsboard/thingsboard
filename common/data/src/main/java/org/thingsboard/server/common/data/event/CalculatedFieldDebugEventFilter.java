@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ import org.thingsboard.server.common.data.StringUtils;
 @Schema
 public class CalculatedFieldDebugEventFilter extends DebugEventFilter {
 
-    @Schema(description = "String value representing the calculated field id in the event body", example = "ccbfa2fe-c8f5-45d8-bb37-6b61a6e02833")
-    protected String calculatedFieldId;
     @Schema(description = "String value representing the entity id in the event body", example = "57b6bafe-d600-423c-9267-fe31e5218986")
     protected String entityId;
     @Schema(description = "String value representing the entity type", allowableValues = "DEVICE")
@@ -35,6 +33,13 @@ public class CalculatedFieldDebugEventFilter extends DebugEventFilter {
     protected String msgId;
     @Schema(description = "String value representing the message type", example = "POST_TELEMETRY_REQUEST")
     protected String msgType;
+    @Schema(description = "String value representing the arguments that were used in the calculation performed",
+            example = "{\"x\":{\"ts\":1739432016629,\"value\":20},\"y\":{\"ts\":1739429717656,\"value\":12}}")
+    protected String arguments;
+    @Schema(description = "String value representing the result of a calculation",
+            example = "{\"x + y\":54}")
+    protected String result;
+
 
     @Override
     public EventType getEventType() {
@@ -43,8 +48,9 @@ public class CalculatedFieldDebugEventFilter extends DebugEventFilter {
 
     @Override
     public boolean isNotEmpty() {
-        return super.isNotEmpty() || !StringUtils.isEmpty(calculatedFieldId) || !StringUtils.isEmpty(entityId)
-                || !StringUtils.isEmpty(entityType) || !StringUtils.isEmpty(msgId) || !StringUtils.isEmpty(msgType);
+        return super.isNotEmpty() || !StringUtils.isEmpty(entityId) || !StringUtils.isEmpty(entityType)
+                || !StringUtils.isEmpty(msgId) || !StringUtils.isEmpty(msgType)
+                || !StringUtils.isEmpty(arguments) || !StringUtils.isEmpty(result);
     }
 
 }

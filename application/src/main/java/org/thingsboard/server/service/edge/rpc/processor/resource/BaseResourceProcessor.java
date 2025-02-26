@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.resource;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -38,7 +39,7 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
     protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg) {
         boolean resourceKeyUpdated = false;
         try {
-            TbResource resource = constructResourceFromUpdateMsg(tenantId, tbResourceId, resourceUpdateMsg);
+            TbResource resource = JacksonUtil.fromString(resourceUpdateMsg.getEntity(), TbResource.class, true);
             if (resource == null) {
                 throw new RuntimeException("[{" + tenantId + "}] resourceUpdateMsg {" + resourceUpdateMsg + " } cannot be converted to resource");
             }
@@ -53,6 +54,9 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
             }
             String resourceKey = resource.getResourceKey();
             ResourceType resourceType = resource.getResourceType();
+            if (!created && !resourceType.isUpdatable()) {
+                resource.setData(null);
+            }
             PageDataIterable<TbResource> resourcesIterable = new PageDataIterable<>(
                     link -> edgeCtx.getResourceService().findTenantResourcesByResourceTypeAndPageLink(tenantId, resourceType, link), 1024);
             for (TbResource tbResource : resourcesIterable) {
@@ -75,7 +79,5 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
         }
         return resourceKeyUpdated;
     }
-
-    protected abstract TbResource constructResourceFromUpdateMsg(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg);
 
 }

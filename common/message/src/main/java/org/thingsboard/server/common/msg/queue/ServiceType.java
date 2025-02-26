@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,7 @@ public enum ServiceType {
     TB_RULE_ENGINE("TB Rule Engine"),
     TB_TRANSPORT("TB Transport"),
     JS_EXECUTOR("JS Executor"),
-    TB_VC_EXECUTOR("TB VC Executor"),
-    TB_CF_ENGINE("TB Calculated Fields Engine");
+    TB_VC_EXECUTOR("TB VC Executor");
 
     private final String label;
 

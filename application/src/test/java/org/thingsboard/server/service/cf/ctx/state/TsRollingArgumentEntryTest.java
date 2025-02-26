@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 
@@ -40,7 +39,7 @@ public class TsRollingArgumentEntryTest {
         values.put(ts - 30, 12.0);
         values.put(ts - 20, 17.0);
 
-        entry = new TsRollingArgumentEntry(values);
+        entry = new TsRollingArgumentEntry(5, 30000L, values);
     }
 
     @Test
@@ -58,17 +57,9 @@ public class TsRollingArgumentEntryTest {
     }
 
     @Test
-    void testUpdateEntryWhenSingleValueEntryWithTheSameTsPassed() {
-        SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 20, new DoubleDataEntry("key", 23.0), 123L);
-
-        assertThat(entry.updateEntry(newEntry)).isFalse();
-    }
-
-    @Test
     void testUpdateEntryWhenRollingEntryPassed() {
         TsRollingArgumentEntry newEntry = new TsRollingArgumentEntry();
         TreeMap<Long, Double> values = new TreeMap<>();
-        values.put(ts - 20, 16.0);
         values.put(ts - 10, 7.0);
         values.put(ts - 5, 1.0);
         newEntry.setTsRecords(values);
@@ -76,11 +67,11 @@ public class TsRollingArgumentEntryTest {
         assertThat(entry.updateEntry(newEntry)).isTrue();
         assertThat(entry.getTsRecords()).hasSize(5);
         assertThat(entry.getTsRecords()).isEqualTo(Map.of(
-                ts - 40, new DoubleDataEntry("key", 10.0),
-                ts - 30, new DoubleDataEntry("key", 12.0),
-                ts - 20, new DoubleDataEntry("key", 17.0),
-                ts - 10, new DoubleDataEntry("key", 7.0),
-                ts - 5, new DoubleDataEntry("key", 1.0)
+                ts - 40, 10.0,
+                ts - 30, 12.0,
+                ts - 20, 17.0,
+                ts - 10, 7.0,
+                ts - 5, 1.0
         ));
     }
 
@@ -90,7 +81,44 @@ public class TsRollingArgumentEntryTest {
 
         assertThatThrownBy(() -> entry.updateEntry(newEntry))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Argument type " + ArgumentEntryType.TS_ROLLING + " only supports numeric values.");
+                .hasMessage("Time series rolling arguments supports only numeric values.");
+    }
+
+    @Test
+    void testUpdateEntryWhenOldTelemetry() {
+        TsRollingArgumentEntry newEntry = new TsRollingArgumentEntry();
+        TreeMap<Long, Double> values = new TreeMap<>();
+        values.put(ts - 40000, 4.0);// will not be used for calculation
+        values.put(ts - 45000, 2.0);// will not be used for calculation
+        values.put(ts - 5, 0.0);
+        newEntry.setTsRecords(values);
+
+        entry = new TsRollingArgumentEntry(3, 30000L);
+        assertThat(entry.updateEntry(newEntry)).isTrue();
+        assertThat(entry.getTsRecords()).hasSize(1);
+        assertThat(entry.getTsRecords()).isEqualTo(Map.of(
+                ts - 5, 0.0
+        ));
+    }
+
+    @Test
+    void testPerformCalculationWhenArgumentsMoreThanLimit() {
+        TsRollingArgumentEntry newEntry = new TsRollingArgumentEntry();
+        TreeMap<Long, Double> values = new TreeMap<>();
+        values.put(ts - 20, 1000.0);// will not be used
+        values.put(ts - 18, 0.0);
+        values.put(ts - 16, 0.0);
+        values.put(ts - 14, 0.0);
+        newEntry.setTsRecords(values);
+
+        entry = new TsRollingArgumentEntry(3, 30000L);
+        assertThat(entry.updateEntry(newEntry)).isTrue();
+        assertThat(entry.getTsRecords()).hasSize(3);
+        assertThat(entry.getTsRecords()).isEqualTo(Map.of(
+                ts - 18, 0.0,
+                ts - 16, 0.0,
+                ts - 14, 0.0
+        ));
     }
 
 }

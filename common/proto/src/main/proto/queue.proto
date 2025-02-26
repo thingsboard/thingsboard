@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -821,15 +821,16 @@ message TsDoubleValProto {
 
 message TsRollingArgumentProto {
   string key = 1;
-  repeated TsDoubleValProto tsValue = 2;
+  int32 limit = 2;
+  int64 timeWindow = 3;
+  repeated TsDoubleValProto tsValue = 4;
 }
 
 message CalculatedFieldStateProto {
   CalculatedFieldEntityCtxIdProto id = 1;
-  // int32 version = 2;
-  string type = 3;
-  repeated SingleValueArgumentProto singleValueArguments = 4;
-  repeated TsRollingArgumentProto rollingValueArguments = 5;
+  string type = 2;
+  repeated SingleValueArgumentProto singleValueArguments = 3;
+  repeated TsRollingArgumentProto rollingValueArguments = 4;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

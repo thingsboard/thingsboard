@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.thingsboard.common.util.NoOpFutureCallback;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,6 +33,8 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import java.util.List;
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNullElse;
+
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class TimeseriesSaveRequest {
@@ -41,12 +44,20 @@ public class TimeseriesSaveRequest {
     private final EntityId entityId;
     private final List<TsKvEntry> entries;
     private final long ttl;
-    private final boolean saveLatest;
-    private final boolean onlyLatest;
+    private final Strategy strategy;
     private final List<CalculatedFieldId> previousCalculatedFieldIds;
     private final UUID tbMsgId;
     private final TbMsgType tbMsgType;
     private final FutureCallback<Void> callback;
+
+    public record Strategy(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate, boolean processCalculatedFields) {
+
+        public static final Strategy PROCESS_ALL = new Strategy(true, true, true, true);
+        public static final Strategy WS_ONLY = new Strategy(false, false, true, false);
+        public static final Strategy LATEST_AND_WS = new Strategy(false, true, true, false);
+        public static final Strategy SKIP_ALL = new Strategy(false, false, false, false);
+
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -59,12 +70,11 @@ public class TimeseriesSaveRequest {
         private EntityId entityId;
         private List<TsKvEntry> entries;
         private long ttl;
-        private FutureCallback<Void> callback;
-        private boolean saveLatest = true;
-        private boolean onlyLatest;
+        private Strategy strategy = Strategy.PROCESS_ALL;
         private List<CalculatedFieldId> previousCalculatedFieldIds;
         private UUID tbMsgId;
         private TbMsgType tbMsgType;
+        private FutureCallback<Void> callback;
 
         Builder() {}
 
@@ -101,14 +111,8 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
-        public Builder saveLatest(boolean saveLatest) {
-            this.saveLatest = saveLatest;
-            return this;
-        }
-
-        public Builder onlyLatest(boolean onlyLatest) {
-            this.onlyLatest = onlyLatest;
-            this.saveLatest = true;
+        public Builder strategy(Strategy strategy) {
+            this.strategy = strategy;
             return this;
         }
 
@@ -147,7 +151,10 @@ public class TimeseriesSaveRequest {
         }
 
         public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, onlyLatest, previousCalculatedFieldIds, tbMsgId, tbMsgType, callback);
+            return new TimeseriesSaveRequest(
+                    tenantId, customerId, entityId, entries, ttl, strategy,
+                    previousCalculatedFieldIds, tbMsgId, tbMsgType, requireNonNullElse(callback, NoOpFutureCallback.instance())
+            );
         }
 
     }
