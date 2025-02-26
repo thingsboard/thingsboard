@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.telemetry.strategy.PersistenceStrategy;
+import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -45,11 +45,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings;
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Advanced;
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Deduplicate;
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.OnEveryMessage;
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.WebSocketsOnly;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Deduplicate;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.OnEveryMessage;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.WebSocketsOnly;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
@@ -58,7 +58,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
         name = "save time series",
         configClazz = TbMsgTimeseriesNodeConfiguration.class,
         nodeDescription = """
-                Saves time series data with a configurable TTL and according to configured persistence strategies.
+                Saves time series data with a configurable TTL and according to configured processing strategies.
                 """,
         nodeDetails = """
                 Node performs three <strong>actions:</strong>
@@ -68,14 +68,14 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                   <li><strong>WebSockets:</strong> notify WebSockets subscriptions about time series data updates.</li>
                 </ul>
                 
-                For each <em>action</em>, three <strong>persistence strategies</strong> are available:
+                For each <em>action</em>, three <strong>processing strategies</strong> are available:
                 <ul>
                   <li><strong>On every message:</strong> perform the action for every message.</li>
                   <li><strong>Deduplicate:</strong> perform the action only for the first message from a particular originator within a configurable interval.</li>
                   <li><strong>Skip:</strong> never perform the action.</li>
                 </ul>
                 
-                <strong>Persistence strategies</strong> are configured using <em>persistence settings</em>, which support two modes:
+                <strong>Processing strategies</strong> are configured using <em>processing settings</em>, which support two modes:
                 <ul>
                   <li><strong>Basic</strong>
                     <ul>
@@ -110,7 +110,7 @@ public class TbMsgTimeseriesNode implements TbNode {
     private TbContext ctx;
     private long tenantProfileDefaultStorageTtl;
 
-    private PersistenceSettings persistenceSettings;
+    private ProcessingSettings processingSettings;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -118,7 +118,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         this.ctx = ctx;
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());
-        persistenceSettings = config.getPersistenceSettings();
+        processingSettings = config.getProcessingSettings();
     }
 
     private void onTenantProfileUpdate(TenantProfile tenantProfile) {
@@ -175,25 +175,25 @@ public class TbMsgTimeseriesNode implements TbNode {
     }
 
     private TimeseriesSaveRequest.Strategy determineSaveStrategy(long ts, UUID originatorUuid) {
-        if (persistenceSettings instanceof OnEveryMessage) {
+        if (processingSettings instanceof OnEveryMessage) {
             return TimeseriesSaveRequest.Strategy.SAVE_ALL;
         }
-        if (persistenceSettings instanceof WebSocketsOnly) {
+        if (processingSettings instanceof WebSocketsOnly) {
             return TimeseriesSaveRequest.Strategy.WS_ONLY;
         }
-        if (persistenceSettings instanceof Deduplicate deduplicate) {
-            boolean isFirstMsgInInterval = deduplicate.getPersistenceStrategy().shouldPersist(ts, originatorUuid);
+        if (processingSettings instanceof Deduplicate deduplicate) {
+            boolean isFirstMsgInInterval = deduplicate.getProcessingStrategy().shouldProcess(ts, originatorUuid);
             return isFirstMsgInInterval ? TimeseriesSaveRequest.Strategy.SAVE_ALL : TimeseriesSaveRequest.Strategy.SKIP_ALL;
         }
-        if (persistenceSettings instanceof Advanced advanced) {
+        if (processingSettings instanceof Advanced advanced) {
             return new TimeseriesSaveRequest.Strategy(
-                    advanced.timeseries().shouldPersist(ts, originatorUuid),
-                    advanced.latest().shouldPersist(ts, originatorUuid),
-                    advanced.webSockets().shouldPersist(ts, originatorUuid)
+                    advanced.timeseries().shouldProcess(ts, originatorUuid),
+                    advanced.latest().shouldProcess(ts, originatorUuid),
+                    advanced.webSockets().shouldProcess(ts, originatorUuid)
             );
         }
         // should not happen
-        throw new IllegalArgumentException("Unknown persistence settings type: " + persistenceSettings.getClass().getSimpleName());
+        throw new IllegalArgumentException("Unknown processing settings type: " + processingSettings.getClass().getSimpleName());
     }
 
     @Override
@@ -209,14 +209,14 @@ public class TbMsgTimeseriesNode implements TbNode {
                 hasChanges = true;
                 JsonNode skipLatestPersistence = oldConfiguration.get("skipLatestPersistence");
                 if (skipLatestPersistence != null && "true".equals(skipLatestPersistence.asText())) {
-                    var skipLatestPersistenceSettings = new Advanced(
-                            PersistenceStrategy.onEveryMessage(),
-                            PersistenceStrategy.skip(),
-                            PersistenceStrategy.onEveryMessage()
+                    var skipLatestProcessingSettings = new Advanced(
+                            ProcessingStrategy.onEveryMessage(),
+                            ProcessingStrategy.skip(),
+                            ProcessingStrategy.onEveryMessage()
                     );
-                    ((ObjectNode) oldConfiguration).set("persistenceSettings", JacksonUtil.valueToTree(skipLatestPersistenceSettings));
+                    ((ObjectNode) oldConfiguration).set("processingSettings", JacksonUtil.valueToTree(skipLatestProcessingSettings));
                 } else {
-                    ((ObjectNode) oldConfiguration).set("persistenceSettings", JacksonUtil.valueToTree(new OnEveryMessage()));
+                    ((ObjectNode) oldConfiguration).set("processingSettings", JacksonUtil.valueToTree(new OnEveryMessage()));
                 }
                 ((ObjectNode) oldConfiguration).remove("skipLatestPersistence");
                 break;

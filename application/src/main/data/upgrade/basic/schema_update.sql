@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2024 The Thingsboard Authors
+-- Copyright © 2016-2025 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ DO $$
             SET configuration = (
                 (configuration::jsonb - 'skipLatestPersistence')
                     || jsonb_build_object(
-                        'persistenceSettings', jsonb_build_object(
+                        'processingSettings', jsonb_build_object(
                                 'type',       'ADVANCED',
                                 'timeseries', jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
                                 'latest',     jsonb_build_object('type', 'SKIP'),
@@ -46,7 +46,7 @@ DO $$
             SET configuration = (
                 (configuration::jsonb - 'skipLatestPersistence')
                     || jsonb_build_object(
-                        'persistenceSettings', jsonb_build_object(
+                        'processingSettings', jsonb_build_object(
                                 'type', 'ON_EVERY_MESSAGE'
                                                )
                        )
@@ -61,3 +61,5 @@ DO $$
 $$;
 
 -- UPDATE SAVE TIME SERIES NODES END
+
+ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS version BIGINT DEFAULT 1;
