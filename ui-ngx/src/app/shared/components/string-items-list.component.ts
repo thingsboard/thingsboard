@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -109,6 +109,9 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
   subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
+  fieldClass: string;
+
+  @Input()
   @coerceArray()
   predefinedValues: StringItemsOption[];
 
@@ -120,8 +123,8 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     return this.stringItemsForm.get('item');
   }
 
-  private propagateChange = (v: any) => {
-  };
+  onTouched = () => {};
+  private propagateChange: (value: any) => void = () => {};
   private dirty = false;
 
   constructor(private fb: FormBuilder) {
@@ -159,6 +162,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
   }
 
   registerOnTouched(fn: any): void {
+    this.onTouched = fn;
   }
 
   setDisabledState(isDisabled: boolean): void {

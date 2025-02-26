@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,20 +24,19 @@ import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/
 import { Direction } from '@shared/models/page/sort-order';
 import { NotificationTemplate, NotificationTemplateTypeTranslateMap } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
-import { EntityAction } from '@home/models/entity/entity-component.models';
 import { MatDialog } from '@angular/material/dialog';
 import {
   TemplateNotificationDialogComponent,
   TemplateNotificationDialogData
 } from '@home/pages/notification/template/template-notification-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import { TemplateTableHeaderComponent } from '@home/pages/notification/template/template-table-header.component';
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { Observable } from 'rxjs';
 
 @Injectable()
-export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<NotificationTemplate>> {
+export class TemplateTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationTemplate> = new EntityTableConfig<NotificationTemplate>();
 
@@ -48,11 +47,13 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
 
     this.config.entityType = EntityType.NOTIFICATION_TEMPLATE;
     this.config.detailsPanelEnabled = false;
-    this.config.addEnabled = false;
+    this.config.addAsTextButton = true;
     this.config.rowPointer = true;
 
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_TEMPLATE);
     this.config.entityResources = {} as EntityTypeResource<NotificationTemplate>;
+
+    this.config.addEntity = () => this.notificationTemplateDialog(null, true);
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTemplates(pageLink);
 
@@ -63,9 +64,6 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
     this.config.deleteEntity = id => this.notificationService.deleteNotificationTemplate(id.id);
 
     this.config.cellActionDescriptors = this.configureCellActions();
-
-    this.config.headerComponent = TemplateTableHeaderComponent;
-    this.config.onEntityAction = action => this.onTemplateAction(action);
 
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
@@ -82,7 +80,7 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
     );
   }
 
-  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTemplate> {
+  resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTemplate> {
     return this.config;
   }
 
@@ -92,16 +90,18 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
         name: this.translate.instant('notification.copy-template'),
         icon: 'content_copy',
         isEnabled: () => true,
-        onAction: ($event, entity) => this.editTemplate($event, entity, false, true)
+        onAction: ($event, entity) => this.editTemplate($event, entity, true)
       }
     ];
   }
 
-  private editTemplate($event: Event, template: NotificationTemplate, isAdd = false, isCopy = false) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<TemplateNotificationDialogComponent, TemplateNotificationDialogData,
+  private editTemplate($event: Event, template: NotificationTemplate, isCopy = false) {
+    $event?.stopPropagation();
+    this.notificationTemplateDialog(template, false, isCopy).subscribe((res) => res ? this.config.updateData() : null);
+  }
+
+  private notificationTemplateDialog(template: NotificationTemplate, isAdd = false, isCopy = false): Observable<NotificationTemplate> {
+    return this.dialog.open<TemplateNotificationDialogComponent, TemplateNotificationDialogData,
       NotificationTemplate>(TemplateNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -110,21 +110,6 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
         isCopy,
         template
       }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
+    }).afterClosed();
   }
-
-  private onTemplateAction(action: EntityAction<NotificationTemplate>): boolean {
-    switch (action.action) {
-      case 'add':
-        this.editTemplate(action.event, action.entity, true);
-        return true;
-    }
-    return false;
-  }
-
 }

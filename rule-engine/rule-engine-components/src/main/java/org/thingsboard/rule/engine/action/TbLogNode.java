@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import java.util.Objects;
         nodeDetails = "Transform incoming Message with configured JS function to String and log final value into Thingsboard log file. " +
                 "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeLogConfig",
         icon = "menu"
 )
@@ -67,6 +66,10 @@ public class TbLogNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        if (!log.isInfoEnabled()) {
+            ctx.tellSuccess(msg);
+            return;
+        }
         if (standard) {
             logStandard(ctx, msg);
             return;

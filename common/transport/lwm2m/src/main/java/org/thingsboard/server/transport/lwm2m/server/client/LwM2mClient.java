@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,13 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.link.LinkParamValue;
+import org.eclipse.leshan.core.LwM2m;
+import org.eclipse.leshan.core.LwM2m.Version;
+import org.eclipse.leshan.core.link.Link;
+import org.eclipse.leshan.core.link.attributes.Attribute;
+import org.eclipse.leshan.core.link.lwm2m.MixedLwM2mLink;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttribute;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
@@ -36,6 +42,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
@@ -57,11 +64,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.equalsResourceTypeGetSimpleName;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.getVerFromPathIdVerOrId;
@@ -128,6 +134,12 @@ public class LwM2mClient {
     @Setter
     private UUID lastSentRpcId;
 
+    @Setter
+    private LwM2m.Version defaultObjectIDVer;
+
+    @Getter
+    private Map<Integer, Version> supportedClientObjects;
+
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
@@ -141,6 +153,7 @@ public class LwM2mClient {
         this.state = LwM2MClientState.CREATED;
         this.lock = new ReentrantLock();
         this.retryAttempts = new AtomicInteger(0);
+        this.supportedClientObjects = null;
     }
 
     public void init(ValidateDeviceCredentialsResponse credentials, UUID sessionId) {
@@ -152,12 +165,14 @@ public class LwM2mClient {
         this.edrxCycle = credentials.getDeviceInfo().getEdrxCycle();
         this.psmActivityTimer = credentials.getDeviceInfo().getPsmActivityTimer();
         this.pagingTransmissionWindow = credentials.getDeviceInfo().getPagingTransmissionWindow();
+        this.defaultObjectIDVer = getObjectIDVerFromDeviceProfile(credentials.getDeviceProfile());
     }
 
     public void setRegistration(Registration registration) {
         this.registration = registration;
         this.clientSupportContentFormats = clientSupportContentFormat(registration);
         this.defaultContentFormat = calculateDefaultContentFormat(registration);
+        this.setSupportedClientObjects();
     }
 
     public void lock() {
@@ -196,6 +211,18 @@ public class LwM2mClient {
         builder.setDeviceType(deviceProfile.getName());
     }
 
+    private LwM2m.Version getObjectIDVerFromDeviceProfile(DeviceProfile deviceProfile) {
+        String defaultObjectIdVer = null;
+        if (deviceProfile != null) {
+            defaultObjectIdVer = ((Lwm2mDeviceProfileTransportConfiguration) deviceProfile
+                    .getProfileData()
+                    .getTransportConfiguration())
+                    .getClientLwM2mSettings()
+                    .getDefaultObjectIDVer();
+        }
+        return new Version(defaultObjectIdVer == null ? LWM2M_OBJECT_VERSION_DEFAULT : defaultObjectIdVer);
+    }
+
     public void refreshSessionId(String nodeId) {
         UUID newId = UUID.randomUUID();
         SessionInfoProto.Builder builder = SessionInfoProto.newBuilder().mergeFrom(session);
@@ -228,7 +255,7 @@ public class LwM2mClient {
             this.resources.get(pathRezIdVer).updateLwM2mResource(resource, mode);
             return true;
         } else {
-            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
+            LwM2mPath pathIds = getLwM2mPathFromString(pathRezIdVer);
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
                 this.resources.put(pathRezIdVer, new ResourceValue(resource, resourceModel));
@@ -239,67 +266,28 @@ public class LwM2mClient {
         }
     }
 
-    public Object getResourceValue(String pathRezIdVer, String pathRezId) {
-        String pathRez = pathRezIdVer == null ? convertObjectIdToVersionedId(pathRezId, this.registration) : pathRezIdVer;
-        if (this.resources.get(pathRez) != null) {
-            return this.resources.get(pathRez).getLwM2mResource().getValue();
-        }
-        return null;
-    }
-
-    public Object getResourceNameByRezId(String pathRezIdVer, String pathRezId) {
-        String pathRez = pathRezIdVer == null ? convertObjectIdToVersionedId(pathRezId, this.registration) : pathRezIdVer;
-        if (this.resources.get(pathRez) != null) {
-            return this.resources.get(pathRez).getResourceModel().name;
-        }
-        return null;
-    }
-
-    public String getRezIdByResourceNameAndObjectInstanceId(String resourceName, String pathObjectInstanceIdVer, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathObjectInstanceIdVer));
-        if (pathIds.isObjectInstance()) {
-            Set<Integer> rezIds = modelProvider.getObjectModel(registration)
-                    .getObjectModel(pathIds.getObjectId()).resources.entrySet()
-                    .stream()
-                    .filter(map -> resourceName.equals(map.getValue().name))
-                    .map(map -> map.getKey())
-                    .collect(Collectors.toSet());
-            return rezIds.size() > 0 ? String.valueOf(rezIds.stream().findFirst().get()) : null;
-        }
-        return null;
-    }
-
     public ResourceModel getResourceModel(String pathIdVer, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
-        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+        LwM2mPath pathIds = getLwM2mPathFromString(pathIdVer);
+        String verSupportedObject = String.valueOf(this.getSupportedObjectVersion(pathIds.getObjectId()));
         String verRez = getVerFromPathIdVerOrId(pathIdVer);
         return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
     }
 
-    public boolean isResourceMultiInstances(String pathIdVer, LwM2mModelProvider modelProvider) {
-        var resourceModel = getResourceModel(pathIdVer, modelProvider);
-        if (resourceModel != null && resourceModel.multiple != null) {
-            return resourceModel.multiple;
-        } else {
-            return false;
-        }
-    }
-
     public ObjectModel getObjectModel(String pathIdVer, LwM2mModelProvider modelProvider) {
         try {
-            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
-            String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+            LwM2mPath pathIds = getLwM2mPathFromString(pathIdVer);
+            String verSupportedObject = String.valueOf(this.getSupportedObjectVersion(pathIds.getObjectId()));
             String verRez = getVerFromPathIdVerOrId(pathIdVer);
             return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                     .getObjectModel(pathIds.getObjectId()) : null;
         } catch (Exception e) {
             if (registration == null) {
                 log.error("[{}] Failed Registration is null, GetObjectModelRegistration. ", this.endpoint, e);
-            } else if (registration.getSupportedObject() == null) {
+            } else if (this.getSupportedClientObjects() == null) {
                 log.error("[{}] Failed SupportedObject in Registration, GetObjectModelRegistration.", this.endpoint, e);
             } else {
-                log.error("[{}] Failed ModelProvider.getObjectModel [{}] in Registration. ", this.endpoint, registration.getSupportedObject(), e);
+                log.error("[{}] Failed ModelProvider.getObjectModel [{}] in Registration. ", this.endpoint, this.getSupportedClientObjects(), e);
             }
             return null;
         }
@@ -308,7 +296,7 @@ public class LwM2mClient {
 
     public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                LwM2mValueConverter converter) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
+        LwM2mPath pathIds = getLwM2mPathFromString(pathRezIdVer);
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
@@ -328,7 +316,7 @@ public class LwM2mClient {
      */
     public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                 LwM2mValueConverter converter) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
+        LwM2mPath pathIds = getLwM2mPathFromString(pathRezIdVer);
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
@@ -369,13 +357,13 @@ public class LwM2mClient {
     }
 
     public String isValidObjectVersion(String path) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(path));
-        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+        LwM2mPath pathIds = getLwM2mPathFromString(path);
+        LwM2m.Version verSupportedObject = this.getSupportedObjectVersion(pathIds.getObjectId());
         if (verSupportedObject == null) {
             return String.format("Specified object id %s absent in the list supported objects of the client or is security object!", pathIds.getObjectId());
         } else {
             String verRez = getVerFromPathIdVerOrId(path);
-            if (verRez == null || !verRez.equals(verSupportedObject)) {
+            if (verRez == null || !verRez.equals(verSupportedObject.toString())) {
                 return String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject);
             }
         }
@@ -389,7 +377,7 @@ public class LwM2mClient {
     public void deleteResources(String pathIdVer, LwM2mModelProvider modelProvider) {
         Set<String> key = getKeysEqualsIdVer(pathIdVer);
         key.forEach(pathRez -> {
-            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRez));
+            LwM2mPath pathIds = getLwM2mPathFromString(pathRez);
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
                 this.resources.get(pathRez).setResourceModel(resourceModel);
@@ -409,7 +397,7 @@ public class LwM2mClient {
     }
 
     private void saveResourceModel(String pathRez, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRez));
+        LwM2mPath pathIds = getLwM2mPathFromString(pathRez);
         ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
         this.resources.get(pathRez).setResourceModel(resourceModel);
     }
@@ -431,18 +419,14 @@ public class LwM2mClient {
 
     private static Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
-        contentFormats.add(ContentFormat.DEFAULT);
-        LinkParamValue ct = Arrays.stream(registration.getObjectLinks())
+        Attribute ct = Arrays.stream(registration.getObjectLinks())
                 .filter(link -> link.getUriReference().equals("/"))
                 .findFirst()
-                .map(link -> link.getLinkParams().get("ct")).orElse(null);
-        if (ct != null) {
-            Set<ContentFormat> codes = Stream.of(ct.getUnquoted().replaceAll("\"", "").split(" ", -1))
-                    .map(String::trim)
-                    .map(Integer::parseInt)
-                    .map(ContentFormat::fromCode)
-                    .collect(Collectors.toSet());
-            contentFormats.addAll(codes);
+                .map(link -> link.getAttributes().get("ct")).orElse(null);
+        if (ct != null && ct.getValue() instanceof Collection<?>) {
+            contentFormats.addAll((Collection<? extends ContentFormat>) ct.getValue());
+        } else {
+            contentFormats.add(ContentFormat.DEFAULT);
         }
         return contentFormats;
     }
@@ -459,5 +443,46 @@ public class LwM2mClient {
         return result;
     }
 
+    public LwM2mPath getLwM2mPathFromString(String path) {
+        return new LwM2mPath(fromVersionedIdToObjectId(path));
+    }
+
+    public LwM2m.Version getDefaultObjectIDVer() {
+        return this.defaultObjectIDVer == null ? new Version(LWM2M_OBJECT_VERSION_DEFAULT) : this.defaultObjectIDVer;
+    }
+
+    public LwM2m.Version getSupportedObjectVersion(Integer objectid) {
+        return this.supportedClientObjects != null ? this.supportedClientObjects.get(objectid) : null;
+    }
+
+    private void setSupportedClientObjects(){
+        if (this.registration.getSupportedObject() != null && this.registration.getSupportedObject().size() > 0) {
+            this.supportedClientObjects = this.registration.getSupportedObject();
+        } else {
+            this.supportedClientObjects = new ConcurrentHashMap<>();
+            for (Link link :  this.registration.getSortedObjectLinks()) {
+                if (link instanceof MixedLwM2mLink) {
+                    LwM2mPath path = ((MixedLwM2mLink) link).getPath();
+                    // add supported objects
+                    if (path.isObject() || path.isObjectInstance()) {
+                        int objectId = path.getObjectId();
+                        LwM2mAttribute<Version> versionParamValue = link.getAttributes().get(LwM2mAttributes.OBJECT_VERSION);
+                        if (versionParamValue != null) {
+                            // if there is a version attribute then use it as version for this object
+                            this.supportedClientObjects.put(objectId, versionParamValue.getValue());
+                        } else {
+                            // there is no version attribute attached.
+                            // In this case we use the DEFAULT_VERSION only if this object stored as supported object.
+                            Version currentVersion = this.supportedClientObjects.get(objectId);
+                            if (currentVersion == null) {
+                                this.supportedClientObjects.put(objectId, getDefaultObjectIDVer());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
+
 

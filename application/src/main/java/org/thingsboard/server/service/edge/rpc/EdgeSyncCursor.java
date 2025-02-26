@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
+import lombok.Getter;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -30,6 +31,10 @@ import org.thingsboard.server.service.edge.rpc.fetch.DeviceProfilesEdgeEventFetc
 import org.thingsboard.server.service.edge.rpc.fetch.DevicesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.EntityViewsEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.NotificationRuleEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.NotificationTargetEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.NotificationTemplateEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.OAuth2EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.OtaPackagesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.QueuesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.RuleChainsEdgeEventFetcher;
@@ -37,6 +42,7 @@ import org.thingsboard.server.service.edge.rpc.fetch.SystemWidgetTypesEdgeEventF
 import org.thingsboard.server.service.edge.rpc.fetch.SystemWidgetsBundlesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantAdminUsersEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.TenantResourcesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantWidgetTypesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.TenantWidgetsBundlesEdgeEventFetcher;
 
@@ -48,22 +54,23 @@ public class EdgeSyncCursor {
 
     private final List<EdgeEventFetcher> fetchers = new LinkedList<>();
 
+    @Getter
     private int currentIdx = 0;
 
     public EdgeSyncCursor(EdgeContextComponent ctx, Edge edge, boolean fullSync) {
         if (fullSync) {
-            fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
-            fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
             fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
+            fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
+            fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
+            fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
-            Customer publicCustomer = ctx.getCustomerService().findOrCreatePublicCustomer(edge.getTenantId());
-            fetchers.add(new CustomerEdgeEventFetcher(publicCustomer.getId()));
-            if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
-                fetchers.add(new CustomerEdgeEventFetcher(edge.getCustomerId()));
-                fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
-            }
         }
-        fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
+        Customer publicCustomer = ctx.getCustomerService().findOrCreatePublicCustomer(edge.getTenantId());
+        fetchers.add(new CustomerEdgeEventFetcher(publicCustomer.getId()));
+        if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
+            fetchers.add(new CustomerEdgeEventFetcher(edge.getCustomerId()));
+            fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
+        }
         fetchers.add(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
         fetchers.add(new DefaultProfilesEdgeEventFetcher(ctx.getDeviceProfileService(), ctx.getAssetProfileService()));
         fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
@@ -72,11 +79,17 @@ public class EdgeSyncCursor {
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));
         fetchers.add(new EntityViewsEdgeEventFetcher(ctx.getEntityViewService()));
         if (fullSync) {
+            fetchers.add(new NotificationTemplateEdgeEventFetcher(ctx.getNotificationTemplateService()));
+            fetchers.add(new NotificationTargetEdgeEventFetcher(ctx.getNotificationTargetService()));
+            fetchers.add(new NotificationRuleEdgeEventFetcher(ctx.getNotificationRuleService()));
             fetchers.add(new SystemWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
             fetchers.add(new TenantWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
             fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new OtaPackagesEdgeEventFetcher(ctx.getOtaPackageService()));
+            fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
+            fetchers.add(new TenantResourcesEdgeEventFetcher(ctx.getResourceService()));
+            fetchers.add(new OAuth2EdgeEventFetcher(ctx.getDomainService()));
         }
     }
 
@@ -91,9 +104,5 @@ public class EdgeSyncCursor {
         EdgeEventFetcher edgeEventFetcher = fetchers.get(currentIdx);
         currentIdx++;
         return edgeEventFetcher;
-    }
-
-    public int getCurrentIdx() {
-        return currentIdx;
     }
 }

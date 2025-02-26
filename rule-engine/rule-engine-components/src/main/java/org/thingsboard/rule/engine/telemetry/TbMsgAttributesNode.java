@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,27 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +46,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
@@ -53,28 +55,27 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
         type = ComponentType.ACTION,
         name = "save attributes",
         configClazz = TbMsgAttributesNodeConfiguration.class,
-        version = 1,
+        version = 2,
         nodeDescription = "Saves attributes data",
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type. " +
-                      "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
-                      "Additionally if checkbox <b>Send attributes updated notification</b> is set to true, rule node will put the \"Attributes Updated\" " +
-                      "event for <b>SHARED_SCOPE</b> and <b>SERVER_SCOPE</b> attributes updates to the corresponding rule engine queue." +
-                      "Performance checkbox 'Save attributes only if the value changes' will skip attributes overwrites for values with no changes (avoid concurrent writes because this check is not transactional; will not update 'Last updated time' for skipped attributes).",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
+                "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
+                "Additionally if checkbox <b>Send attributes updated notification</b> is set to true, rule node will put the \"Attributes Updated\" " +
+                "event for <b>SHARED_SCOPE</b> and <b>SERVER_SCOPE</b> attributes updates to the corresponding rule engine queue." +
+                "Performance checkbox 'Save attributes only if the value changes' will skip attributes overwrites for values with no changes (avoid concurrent writes because this check is not transactional; will not update 'Last updated time' for skipped attributes).",
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"
 )
-public class TbMsgAttributesNode implements TbVersionedNode {
+public class TbMsgAttributesNode implements TbNode {
 
+    static final String NOTIFY_DEVICE_KEY = "notifyDevice";
+    static final String SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY = "sendAttributesUpdatedNotification";
     static final String UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY = "updateAttributesOnlyOnValueChange";
+
     private TbMsgAttributesNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgAttributesNodeConfiguration.class);
-        if (config.getNotifyDevice() == null) {
-            config.setNotifyDevice(true);
-        }
     }
 
     @Override
@@ -89,7 +90,7 @@ public class TbMsgAttributesNode implements TbVersionedNode {
             ctx.tellSuccess(msg);
             return;
         }
-        String scope = getScope(msg.getMetaData().getValue(SCOPE));
+        AttributeScope scope = getScope(msg.getMetaData().getValue(SCOPE));
         boolean sendAttributesUpdateNotification = checkSendNotification(scope);
 
         if (!config.isUpdateAttributesOnlyOnValueChange()) {
@@ -109,21 +110,22 @@ public class TbMsgAttributesNode implements TbVersionedNode {
                 MoreExecutors.directExecutor());
     }
 
-    void saveAttr(List<AttributeKvEntry> attributes, TbContext ctx, TbMsg msg, String scope, boolean sendAttributesUpdateNotification) {
+    void saveAttr(List<AttributeKvEntry> attributes, TbContext ctx, TbMsg msg, AttributeScope scope, boolean sendAttributesUpdateNotification) {
         if (attributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;
         }
-        ctx.getTelemetryService().saveAndNotify(
-                ctx.getTenantId(),
-                msg.getOriginator(),
-                scope,
-                attributes,
-                checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)),
-                sendAttributesUpdateNotification ?
-                        new AttributesUpdateNodeCallback(ctx, msg, scope, attributes) :
-                        new TelemetryNodeCallback(ctx, msg)
-        );
+        FutureCallback<Void> callback = sendAttributesUpdateNotification ?
+                new AttributesUpdateNodeCallback(ctx, msg, scope.name(), attributes) :
+                new TelemetryNodeCallback(ctx, msg);
+        ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
+                .tenantId(ctx.getTenantId())
+                .entityId(msg.getOriginator())
+                .scope(scope)
+                .entries(attributes)
+                .notifyDevice(config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)))
+                .callback(callback)
+                .build());
     }
 
     List<AttributeKvEntry> filterChangedAttr(List<AttributeKvEntry> currentAttributes, List<AttributeKvEntry> newAttributes) {
@@ -144,19 +146,20 @@ public class TbMsgAttributesNode implements TbVersionedNode {
                 .collect(Collectors.toList());
     }
 
-    private boolean checkSendNotification(String scope) {
-        return config.isSendAttributesUpdatedNotification() && !CLIENT_SCOPE.equals(scope);
+    private boolean checkSendNotification(AttributeScope scope) {
+        return config.isSendAttributesUpdatedNotification() && AttributeScope.CLIENT_SCOPE != scope;
     }
 
-    private boolean checkNotifyDevice(String notifyDeviceMdValue) {
-        return config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceMdValue) || Boolean.parseBoolean(notifyDeviceMdValue);
+    private boolean checkNotifyDeviceMdValue(String notifyDeviceMdValue) {
+        // Check for empty string for backward-compatibility. A while ago node always notified devices.
+        return StringUtils.isEmpty(notifyDeviceMdValue) || Boolean.parseBoolean(notifyDeviceMdValue);
     }
 
-    private String getScope(String mdScopeValue) {
+    private AttributeScope getScope(String mdScopeValue) {
         if (StringUtils.isNotEmpty(mdScopeValue)) {
-            return mdScopeValue;
+            return AttributeScope.valueOf(mdScopeValue);
         }
-        return config.getScope();
+        return AttributeScope.valueOf(config.getScope());
     }
 
     @Override
@@ -168,11 +171,34 @@ public class TbMsgAttributesNode implements TbVersionedNode {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, false);
                 }
+            case 1:
+                // update notifyDevice. set true if null or property doesn't exist for backward-compatibility.
+                hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, NOTIFY_DEVICE_KEY, hasChanges, true);
+                // update sendAttributesUpdatedNotification.
+                hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY, hasChanges, false);
+                // update updateAttributesOnlyOnValueChange.
+                hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, hasChanges, true);
                 break;
             default:
                 break;
         }
         return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
+    private boolean fixEscapedBooleanConfigParameter(JsonNode oldConfiguration, String boolKey, boolean hasChanges, boolean valueIfNull) {
+        if (oldConfiguration.hasNonNull(boolKey)) {
+            var value = oldConfiguration.get(boolKey);
+            if (value.isTextual()) {
+                hasChanges = true;
+                ((ObjectNode) oldConfiguration)
+                        .put(boolKey, value.asBoolean(valueIfNull));
+            }
+        } else {
+            hasChanges = true;
+            ((ObjectNode) oldConfiguration)
+                    .put(boolKey, valueIfNull);
+        }
+        return hasChanges;
     }
 
 }

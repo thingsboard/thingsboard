@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.DeviceService;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
@@ -86,7 +87,7 @@ public class TbGetOriginatorFieldsNodeTest {
         var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
 
         // THEN
-        assertThat(exception.getMessage()).isEqualTo("FetchTo cannot be null!");
+        assertThat(exception.getMessage()).isEqualTo("FetchTo option can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
         verify(ctxMock, never()).tellSuccess(any());
     }
 
@@ -134,7 +135,12 @@ public class TbGetOriginatorFieldsNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = TbMsgSource.DATA;
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
+        msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_ARRAY)
+                .build();
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
@@ -163,7 +169,12 @@ public class TbGetOriginatorFieldsNodeTest {
         node.fetchTo = TbMsgSource.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(msgMetaData)
+                .data(msgData)
+                .build();
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -205,7 +216,12 @@ public class TbGetOriginatorFieldsNodeTest {
         node.fetchTo = TbMsgSource.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(msgMetaData)
+                .data(msgData)
+                .build();
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -248,7 +264,12 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(msgMetaData)
+                .data(msgData)
+                .build();
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -296,7 +317,12 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, msgMetaData, msgData);
+        msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(msgMetaData)
+                .data(msgData)
+                .build();
 
         when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         when(ctxMock.getTenantId()).thenReturn(DUMMY_TENANT_ID);
@@ -354,7 +380,12 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, new DashboardId(UUID.randomUUID()), msgMetaData, msgData);
+        msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(new DashboardId(UUID.randomUUID()))
+                .copyMetaData(msgMetaData)
+                .data(msgData)
+                .build();
 
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<section fxLayout="row">
-  <div fxHide.lt-lg *ngIf="displayUserInfo" class="tb-user-info" fxLayout="row">
+<section class="flex flex-row">
+  <div *ngIf="displayUserInfo" class="tb-user-info flex flex-row lt-lg:!hidden">
     <mat-icon class="material-icons tb-mini-avatar">account_circle</mat-icon>
-    <div fxLayout="column" fxLayoutAlign="center">
+    <div class="flex flex-col items-stretch justify-center">
       <span *ngIf="userDisplayName$ | async; let userDisplayName" class="tb-user-display-name">{{ userDisplayName }}</span>
       <span *ngIf="authorityName$ | async; let authorityName" class="tb-user-authority">{{ authorityName | translate }}</span>
     </div>

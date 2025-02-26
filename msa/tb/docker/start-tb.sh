@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ if [ -f ${firstlaunch} ]; then
     java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardServerApplication \
                         -Dspring.jpa.hibernate.ddl-auto=none \
                         -Dlogging.config=${CONF_FOLDER}/logback.xml \
-                        org.springframework.boot.loader.PropertiesLauncher
+                        org.springframework.boot.loader.launch.PropertiesLauncher
 else
     echo "ERROR: ThingsBoard is not installed"
 fi

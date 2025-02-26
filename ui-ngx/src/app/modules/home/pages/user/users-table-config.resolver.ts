@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   DateEntityTableColumn,
   EntityTableColumn,
@@ -57,7 +57,7 @@ export interface UsersTableRouteData {
 }
 
 @Injectable()
-export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>> {
+export class UsersTableConfigResolver  {
 
   private readonly config: EntityTableConfig<User> = new EntityTableConfig<User>();
 
@@ -146,7 +146,7 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
           name: this.authority === Authority.TENANT_ADMIN ?
             this.translate.instant('user.login-as-tenant-admin') :
             this.translate.instant('user.login-as-customer-user'),
-          mdiIcon: 'mdi:login',
+          icon: 'mdi:login',
           isEnabled: () => true,
           onAction: ($event, entity) => this.loginAsUser($event, entity)
         }
@@ -193,14 +193,14 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
     if ($event) {
       $event.stopPropagation();
     }
-    this.userService.getActivationLink(user.id.id).subscribe(
-      (activationLink) => {
+    this.userService.getActivationLinkInfo(user.id.id).subscribe(
+      (activationLinkInfo) => {
         this.dialog.open<ActivationLinkDialogComponent, ActivationLinkDialogData,
           void>(ActivationLinkDialogComponent, {
           disableClose: true,
           panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
           data: {
-            activationLink
+            activationLinkInfo
           }
         });
       }

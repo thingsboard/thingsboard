@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
 
     private boolean cleanSession;
     private boolean ssl;
+    private boolean parseToPlainText;
     private ClientCredentials credentials;
 
     @Override
@@ -44,6 +45,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
         configuration.setCleanSession(true);
         configuration.setSsl(false);
         configuration.setRetainedMessage(false);
+        configuration.setParseToPlainText(false);
         configuration.setCredentials(new AnonymousCredentials());
         return configuration;
     }

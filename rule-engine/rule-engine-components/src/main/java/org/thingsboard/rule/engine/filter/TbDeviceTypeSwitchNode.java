@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         nodeDescription = "Route incoming messages based on the name of the device profile",
         nodeDetails = "Route incoming messages based on the name of the device profile. The device profile name is case-sensitive<br><br>" +
                 "Output connections: <i>Device profile name</i> or <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbDeviceTypeSwitchNode extends TbAbstractTypeSwitchNode {
 

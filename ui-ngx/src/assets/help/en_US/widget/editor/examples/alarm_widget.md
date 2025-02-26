@@ -19,9 +19,9 @@ The **Widget Editor** will be opened, pre-populated with the content of the defa
  - Put the following HTML code inside the HTML tab of "Resources" section:
 
 ```html
-  <div fxFlex fxLayout="column" style="height: 100%;">
+  <div class="flex h-full flex-1 flex-col">
       <div>My first Alarm widget.</div>
-      <table class="my-alarm-table" style="width: 100%;">
+      <table class="my-alarm-table w-full">
           <thead>
               <tr>
                   <th *ngFor="let dataKey of alarmSource?.dataKeys">{{dataKey.label}}</th> 
@@ -30,7 +30,7 @@ The **Widget Editor** will be opened, pre-populated with the content of the defa
           <tbody>
               <tr *ngFor="let alarm of alarms">
                   <td *ngFor="let dataKey of alarmSource?.dataKeys" 
-                      [ngStyle]="getAlarmCellStyle(alarm, dataKey)">
+                      [style]="getAlarmCellStyle(alarm, dataKey)">
                       {{getAlarmValue(alarm, dataKey)}}
                   </td>
               </tr>      
@@ -40,31 +40,24 @@ The **Widget Editor** will be opened, pre-populated with the content of the defa
 {:copy-code}
 ```
 
- - Put the following JSON content inside the "Settings schema" tab of **Settings schema section**:
+ - Import the following JSON content inside the "Settings form" tab by clicking on 'Import form from JSON' button:
 
 ```json
-{
-    "schema": {
-        "type": "object",
-        "title": "AlarmTableSettings",
-        "properties": {
-            "alarmSeverityColorFunction": {
-                "title": "Alarm severity color function: f(severity)",
-                "type": "string",
-                "default": "if(severity == 'CRITICAL') {return 'red';} else if (severity == 'MAJOR') {return 'orange';} else return 'green'; "
-            }
-        },
-        "required": []
-    },
-    "form": [
-        {
-            "key": "alarmSeverityColorFunction",
-            "type": "javascript"
-        }
-    ]
-}
+[
+  {
+    "id": "alarmSeverityColorFunction",
+    "name": "Alarm severity color function: f(severity)",
+    "type": "javascript",
+    "default": "if (severity == 'CRITICAL') {\n    return 'red';\n} else if (severity == 'MAJOR') {\n    return 'orange';\n} else return 'green';",
+    "required": false
+  }
+]
 {:copy-code}
 ```
+
+ - Clear all 'form selector' fields in the "Widget settings" tab.
+
+ - Turn off 'Has basic mode' switch in the "Widget settings" tab.
 
  - Put the following JavaScript code inside the "JavaScript" section:
 

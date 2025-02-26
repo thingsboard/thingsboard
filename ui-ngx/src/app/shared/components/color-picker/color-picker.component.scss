@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../scss/constants";
+
 :host {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 32px;
+  overflow: auto;
+
+  .color-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    @media #{$mat-sm} {
+      flex-direction: row;
+      gap: 12px;
+    }
+  }
+
+  .control-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    @media #{$mat-sm} {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 
   .saturation-component {
+    width: 100%;
     height: 238px;
+    min-height: 160px;
     border-radius: 8px;
+    @media #{$mat-sm} {
+      max-height: 160px;
+    }
   }
 
   .control-component {
@@ -52,7 +80,9 @@
   }
 
   .color-input-block {
+    height: 56px;
     display: flex;
+    align-items: center;
     gap: 20px;
 
     .presentation-select {
@@ -72,8 +102,13 @@
   .color-presets-block {
     .color-presets-component {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      @media #{$mat-xs} {
+        flex-direction: column;
+      }
     }
   }
 }
@@ -89,7 +124,9 @@
 
   indicator-component {
     svg {
-      vertical-align: -70% !important;
+      transform: scale(0.5);
+      height: 100% !important;
+      vertical-align: baseline !important;
     }
   }
 
@@ -109,13 +146,21 @@
 
   .color-presets-component {
     .presets-row {
-      gap: 10px;
+      gap: 8px;
       justify-content: space-between;
     }
     color-preset {
       height: 20px;
       width: 20px;
       border-radius: 4px;
+      @media #{$mat-xs} {
+        height: 40px;
+        width: 48px;
+      }
+      @media #{$mat-sm} {
+        height: 40px;
+        width: 40px;
+      }
     }
   }
 }

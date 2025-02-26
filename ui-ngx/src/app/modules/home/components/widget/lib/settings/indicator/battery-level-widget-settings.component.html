@@ -1,0 +1,101 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="batteryLevelWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.battery-level.battery-level-card-style</div>
+    <tb-image-cards-select rowHeight="1:1"
+                           [cols]="{columns: 4,
+                                    breakpoints: {
+                                      'lt-md': 2
+                                    }}"
+                           label="{{ 'widgets.battery-level.layout' | translate }}" formControlName="layout">
+      <tb-image-cards-select-option *ngFor="let layout of batteryLevelLayouts"
+                                    [value]="layout"
+                                    [image]="batteryLevelLayoutImageMap.get(layout)">
+        {{ batteryLevelLayoutTranslationMap.get(layout) | translate }}
+      </tb-image-cards-select-option>
+    </tb-image-cards-select>
+    <div *ngIf="sectionsCountEnabled" class="tb-form-row space-between">
+      <div>{{ 'widgets.battery-level.sections-count' | translate }}</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput type="number" min="2" max="20" formControlName="sectionsCount" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showValue">
+        {{ 'widgets.battery-level.value' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <mat-chip-listbox formControlName="autoScaleValueSize">
+          <mat-chip-option [value]="true">{{ 'widgets.battery-level.auto-scale' | translate }}</mat-chip-option>
+        </mat-chip-listbox>
+        <tb-font-settings formControlName="valueFont"
+                          [autoScale]="batteryLevelWidgetSettingsForm.get('autoScaleValueSize').value"
+                          [previewText]="valuePreviewFn">
+        </tb-font-settings>
+        <tb-color-settings formControlName="valueColor"
+                           rangeAdvancedMode
+                           gradientAdvancedMode
+                           minValue="0"
+                           maxValue="100"
+                           [aliasController]="aliasController"
+                           [dataKeyCallbacks]="dataKeyCallbacks"
+                           [datasource]="datasource"
+                           settingsKey="{{'widgets.battery-level.value' | translate }}">
+        </tb-color-settings>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.battery-level.battery-level-color' | translate }}</div>
+      <tb-color-settings formControlName="batteryLevelColor"
+                         rangeAdvancedMode
+                         gradientAdvancedMode
+                         minValue="0"
+                         maxValue="100"
+                         [aliasController]="aliasController"
+                         [dataKeyCallbacks]="dataKeyCallbacks"
+                         [datasource]="datasource"
+                         settingsKey="{{'widgets.battery-level.battery-level-color' | translate }}">
+      </tb-color-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.battery-level.battery-shape-color' | translate }}</div>
+      <tb-color-settings formControlName="batteryShapeColor"
+                         rangeAdvancedMode
+                         gradientAdvancedMode
+                         minValue="0"
+                         maxValue="100"
+                         [aliasController]="aliasController"
+                         [dataKeyCallbacks]="dataKeyCallbacks"
+                         [datasource]="datasource"
+                         settingsKey="{{'widgets.battery-level.battery-shape-color' | translate }}">
+      </tb-color-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+</ng-container>

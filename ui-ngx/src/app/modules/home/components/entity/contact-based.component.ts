@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,20 +18,24 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { ContactBased } from '@shared/models/contact-based.model';
-import { AfterViewInit, ChangeDetectorRef, Directive } from '@angular/core';
-import { POSTAL_CODE_PATTERNS } from '@home/models/contact.models';
+import { AfterViewInit, ChangeDetectorRef, DestroyRef, Directive, inject } from '@angular/core';
 import { HasId } from '@shared/models/base-data';
 import { EntityComponent } from './entity.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { CountryData } from '@shared/models/country.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Directive()
 export abstract class ContactBasedComponent<T extends ContactBased<HasId>> extends EntityComponent<T> implements AfterViewInit {
+
+  protected destroyRef = inject(DestroyRef);
 
   protected constructor(protected store: Store<AppState>,
                         protected fb: UntypedFormBuilder,
                         protected entityValue: T,
                         protected entitiesTableConfigValue: EntityTableConfig<T>,
-                        protected cd: ChangeDetectorRef) {
+                        protected cd: ChangeDetectorRef,
+                        protected countryData: CountryData) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -64,7 +68,9 @@ export abstract class ContactBasedComponent<T extends ContactBased<HasId>> exten
   }
 
   ngAfterViewInit() {
-    this.entityForm.get('country').valueChanges.subscribe(
+    this.entityForm.get('country').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (country) => {
         this.entityForm.get('zip').setValidators(this.zipValidators(country));
         this.entityForm.get('zip').updateValueAndValidity({onlySelf: true});
@@ -75,9 +81,11 @@ export abstract class ContactBasedComponent<T extends ContactBased<HasId>> exten
 
   zipValidators(country: string): ValidatorFn[] {
     const zipValidators = [];
-    if (country && POSTAL_CODE_PATTERNS[country]) {
-      const postalCodePattern = POSTAL_CODE_PATTERNS[country];
-      zipValidators.push(Validators.pattern(postalCodePattern));
+    if (country) {
+      const postCodePattern = this.countryData.allCountries.find(item => item.name === country)?.postCodePattern;
+      if (postCodePattern) {
+        zipValidators.push(Validators.pattern(postCodePattern));
+      }
     }
     return zipValidators;
   }

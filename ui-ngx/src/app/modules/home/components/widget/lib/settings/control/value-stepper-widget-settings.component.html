@@ -1,0 +1,266 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="valueStepperWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.value-stepper.behavior</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.value-stepper.initial-state-hint' | translate}}" translate>widgets.value-stepper.initial-state</div>
+      <tb-get-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.value-stepper.initial-state' | translate }}"
+                                    [valueType]="valueType.DOUBLE"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="initialState"></tb-get-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.value-stepper.left-button-click-hint' | translate}}" translate>widgets.value-stepper.left-button-click</div>
+      <tb-set-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.value-stepper.left-button-click' | translate }}"
+                                    [valueType]="valueType.DOUBLE"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="leftButtonClick"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.value-stepper.right-button-click-hint' | translate}}" translate>widgets.value-stepper.right-button-click</div>
+      <tb-set-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.value-stepper.right-button-click' | translate }}"
+                                    [valueType]="valueType.DOUBLE"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="rightButtonClick"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.disabled-state-hint' | translate}}" translate>widgets.button-state.disabled-state</div>
+      <tb-get-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.button-state.disabled-state' | translate }}"
+                                    [valueType]="valueType.BOOLEAN"
+                                    stateLabel="{{ 'widgets.button-state.disabled' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="disabledState"></tb-get-value-action-settings>
+    </div>
+  </div>
+  <div class="tb-form-panel" formGroupName="appearance">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <tb-image-cards-select rowHeight="3:1"
+                           [cols]="{columns:  2,
+                                    breakpoints: {
+                                      'lt-sm': 1
+                                    }}"
+                           label="{{ 'widgets.button.layout' | translate }}" formControlName="type">
+      <tb-image-cards-select-option *ngFor="let type of valueStepperTypes"
+                                    [value]="type"
+                                    [image]="valueStepperTypeImageMap.get(type)">
+        {{ valueStepperTypeTranslationMap.get(type) | translate }}
+      </tb-image-cards-select-option>
+    </tb-image-cards-select>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+        {{ 'widgets.value-stepper.auto-scale' | translate }}
+      </mat-slide-toggle>
+    </div>
+
+    <div class="tb-form-row space-between column-xs">
+      <div>{{ 'widgets.value-stepper.value-range' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <div class="tb-small-label" translate>widgets.value-stepper.min-range</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="minValueRange" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <div class="tb-small-label" translate>widgets.value-stepper.max-range</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="maxValueRange" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.value-stepper.value-increment-decrement-step' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="valueStep" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showValueBox">
+        {{ 'widgets.value-stepper.value' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <tb-unit-input class="flex" formControlName="valueUnits"></tb-unit-input>
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput formControlName="valueDecimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
+        </mat-form-field>
+        <tb-font-settings formControlName="valueFont"
+                          [previewText]="valuePreviewFn">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="valueColor">
+        </tb-color-input>
+      </div>
+    </div>
+
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.value-stepper.value-box-background' | translate }}</div>
+      <tb-color-input asBoxInput
+                      colorClearButton
+                      formControlName="valueBoxBackground">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBorder">
+        {{ 'widgets.value-stepper.border' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-end gap-2">
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="borderWidth" type="number" min="0"  step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix class="lt-md:!hidden">px</div>
+        </mat-form-field>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="borderColor">
+        </tb-color-input>
+      </div>
+    </div>
+  </div>
+  <div class="tb-form-panel" formGroupName="buttonAppearance">
+    <div class="flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" translate>widgets.value-stepper.button-appearance</div>
+      <tb-toggle-select [(ngModel)]="buttonAppearanceType" [ngModelOptions]="{standalone: true}">
+        <tb-toggle-option value="left">{{ 'widgets.value-stepper.left' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="right">{{ 'widgets.value-stepper.right' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <div class="tb-form-panel no-border no-padding" formGroupName="leftButton" [class.!hidden]="buttonAppearanceType !== 'left'">
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showButton">
+          {{ 'widgets.value-stepper.left-button' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row">
+        <div>{{ 'widgets.value-stepper.icon' | translate }}</div>
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+            <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
+          <tb-material-icon-select asBoxInput
+                                   iconClearButton
+                                   formControlName="icon">
+          </tb-material-icon-select>
+        </div>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <div>{{ 'widgets.power-button.power-on-colors' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-3">
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.power-button.main</div>
+            <tb-color-input asBoxInput
+                            formControlName="mainColorOn">
+            </tb-color-input>
+          </div>
+          <mat-divider vertical></mat-divider>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.power-button.background</div>
+            <tb-color-input asBoxInput
+                            formControlName="backgroundColorOn">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <div>{{ 'widgets.power-button.disabled-colors' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-3">
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.power-button.main</div>
+            <tb-color-input asBoxInput
+                            formControlName="mainColorDisabled">
+            </tb-color-input>
+          </div>
+          <mat-divider vertical></mat-divider>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.power-button.background</div>
+            <tb-color-input asBoxInput
+                            formControlName="backgroundColorDisabled">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tb-form-panel no-border no-padding" formGroupName="rightButton" [class.!hidden]="buttonAppearanceType !== 'right'">
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showButton">
+          {{ 'widgets.value-stepper.right-button' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row">
+        <div>{{ 'widgets.value-stepper.icon' | translate }}</div>
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+            <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
+          <tb-material-icon-select asBoxInput
+                                   iconClearButton
+                                   formControlName="icon">
+          </tb-material-icon-select>
+        </div>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <div>{{ 'widgets.power-button.power-on-colors' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-3">
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.power-button.main</div>
+            <tb-color-input asBoxInput
+                            formControlName="mainColorOn">
+            </tb-color-input>
+          </div>
+          <mat-divider vertical></mat-divider>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.power-button.background</div>
+            <tb-color-input asBoxInput
+                            formControlName="backgroundColorOn">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <div>{{ 'widgets.power-button.disabled-colors' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-3">
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.power-button.main</div>
+            <tb-color-input asBoxInput
+                            formControlName="mainColorDisabled">
+            </tb-color-input>
+          </div>
+          <mat-divider vertical></mat-divider>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.power-button.background</div>
+            <tb-color-input asBoxInput
+                            formControlName="backgroundColorDisabled">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

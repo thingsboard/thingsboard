@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,19 +14,15 @@
 /// limitations under the License.
 ///
 
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../../src/typings/rawloader.typings.d.ts" />
-
-import { Inject, Injectable, NgZone } from '@angular/core';
+import { Inject, Injectable, NgZone, Renderer2 } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
-import { ExceptionData } from '@app/shared/models/error.models';
+import { ExceptionData, parseException } from '@app/shared/models/error.models';
 import {
   base64toObj,
   base64toString,
   baseUrl,
   createLabelFromDatasource,
   deepClone,
-  deleteNullProperties,
   guid,
   hashCode,
   isDefined,
@@ -40,23 +36,20 @@ import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constants';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
-import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
+import { DataKeyType, SharedTelemetrySubscriber } from '@app/shared/models/telemetry/telemetry.models';
 import { alarmFields, alarmSeverityTranslations, alarmStatusTranslations } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
-import jsonSchemaDefaults from 'json-schema-defaults';
 import { Observable } from 'rxjs';
 import { publishReplay, refCount } from 'rxjs/operators';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import {
-  AttributeData,
-  LatestTelemetry,
-  TelemetrySubscriber,
-  TelemetryType
-} from '@shared/models/telemetry/telemetry.models';
+import { AttributeData, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
+import cssjs from '@core/css/css';
+import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
+import { defaultFormProperties, FormProperty } from '@shared/models/dynamic-form.models';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
@@ -116,6 +109,7 @@ export class UtilsService {
   defaultAlarmDataKeys: Array<DataKey> = [];
 
   constructor(@Inject(WINDOW) private window: Window,
+              @Inject(DOCUMENT) private document: Document,
               private zone: NgZone,
               private datePipe: DatePipe,
               private translate: TranslateService) {
@@ -143,10 +137,10 @@ export class UtilsService {
     return predefinedFunctions[func];
   }
 
-  public getDefaultDatasource(dataKeySchema: any): Datasource {
+  public getDefaultDatasource(dataKeyForm: FormProperty[]): Datasource {
     const datasource = deepClone(this.defaultDatasource);
-    if (isDefined(dataKeySchema)) {
-      datasource.dataKeys[0].settings = this.generateObjectFromJsonSchema(dataKeySchema);
+    if (dataKeyForm?.length) {
+      datasource.dataKeys[0].settings = defaultFormProperties(dataKeyForm);
     }
     return datasource;
   }
@@ -194,12 +188,6 @@ export class UtilsService {
     return '';
   }
 
-  public generateObjectFromJsonSchema(schema: any): any {
-    const obj = jsonSchemaDefaults(schema);
-    deleteNullProperties(obj);
-    return obj;
-  }
-
   public processWidgetException(exception: any): ExceptionData {
     const data = this.parseException(exception, -6);
     if (data.message?.startsWith('NG0')) {
@@ -217,42 +205,7 @@ export class UtilsService {
   }
 
   public parseException(exception: any, lineOffset?: number): ExceptionData {
-    const data: ExceptionData = {};
-    if (exception) {
-      if (typeof exception === 'string') {
-        data.message = exception;
-      } else if (exception instanceof String) {
-        data.message = exception.toString();
-      } else {
-        if (exception.name) {
-          data.name = exception.name;
-        } else {
-          data.name = 'UnknownError';
-        }
-        if (exception.message) {
-          data.message = exception.message;
-        }
-        if (exception.lineNumber) {
-          data.lineNumber = exception.lineNumber;
-          if (exception.columnNumber) {
-            data.columnNumber = exception.columnNumber;
-          }
-        } else if (exception.stack) {
-          const lineInfoRegexp = /(.*<anonymous>):(\d*)(:)?(\d*)?/g;
-          const lineInfoGroups = lineInfoRegexp.exec(exception.stack);
-          if (lineInfoGroups != null && lineInfoGroups.length >= 3) {
-            if (isUndefined(lineOffset)) {
-              lineOffset = -2;
-            }
-            data.lineNumber = Number(lineInfoGroups[2]) + lineOffset;
-            if (lineInfoGroups.length >= 5) {
-              data.columnNumber = Number(lineInfoGroups[4]);
-            }
-          }
-        }
-      }
-    }
-    return data;
+    return parseException(exception, lineOffset);
   }
 
   public customTranslation(translationValue: string, defaultValue: string): string {
@@ -294,32 +247,6 @@ export class UtilsService {
     return guid();
   }
 
-  public validateDatasources(datasources: Array<Datasource>): Array<Datasource> {
-    datasources.forEach((datasource) => {
-      if (datasource.type === DatasourceType.device) {
-        if (datasource.deviceAliasId) {
-          datasource.type = DatasourceType.entity;
-          datasource.entityAliasId = datasource.deviceAliasId;
-        }
-        if (datasource.deviceName) {
-          datasource.entityName = datasource.deviceName;
-        }
-      }
-      if (datasource.type === DatasourceType.entity && datasource.entityId) {
-        datasource.name = datasource.entityName;
-      }
-      if (!datasource.dataKeys) {
-        datasource.dataKeys = [];
-      }
-      datasource.dataKeys.forEach(dataKey => {
-        if (isUndefined(dataKey.label)) {
-          dataKey.label = dataKey.name;
-        }
-      });
-    });
-    return datasources;
-  }
-
   public getMaterialColor(index: number) {
     const colorIndex = index % materialColors.length;
     return materialColors[colorIndex].value;
@@ -355,7 +282,7 @@ export class UtilsService {
     } else if (index > -1) {
       dataKey.color = this.getMaterialColor(index);
     }
-    if (keyInfo.postFuncBody && keyInfo.postFuncBody.length) {
+    if (isNotEmptyTbFunction(keyInfo.postFuncBody)) {
       dataKey.usePostProcessing = true;
       dataKey.postFuncBody = keyInfo.postFuncBody;
     }
@@ -410,8 +337,7 @@ export class UtilsService {
       this.window.performance.now() : Date.now();
   }
 
-  public getQueryParam(name: string): string {
-    const url = this.window.location.href;
+  public getQueryParam(name: string, url = this.window.location.href): string {
     name = name.replace(/[\[\]]/g, '\\$&');
     const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
     const results = regex.exec(url);
@@ -481,6 +407,10 @@ export class UtilsService {
     return isDefined(value);
   }
 
+  public isDefinedAndNotNull(value: any): boolean {
+    return isDefinedAndNotNull(value);
+  }
+
   public defaultValue(value: any, defaultValue: any): any {
     if (isDefinedAndNotNull(value)) {
       return value;
@@ -500,13 +430,13 @@ export class UtilsService {
     if (!entityId && ctx.datasources.length > 0) {
       entityId = this.getEntityIdFromDatasource(ctx.datasources[0]);
     }
-    const subscription = TelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
+    const subscription = SharedTelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
     if (!ctx.telemetrySubscribers) {
       ctx.telemetrySubscribers = [];
     }
     ctx.telemetrySubscribers.push(subscription);
     subscription.subscribe();
-    return subscription.attributeData$().pipe(
+    return subscription.attributeData$.pipe(
       publishReplay(1),
       refCount()
     );
@@ -526,6 +456,26 @@ export class UtilsService {
 
   public base64toObj(b64Encoded: string): any {
     return base64toObj(b64Encoded);
+  }
+
+  public applyCssToElement(renderer: Renderer2, element: any, cssClassPrefix: string, css: string): string {
+    const cssParser = new cssjs();
+    cssParser.testMode = false;
+    const cssClass = `${cssClassPrefix}-${guid()}`;
+    cssParser.cssPreviewNamespace = cssClass;
+    cssParser.createStyleElement(cssClass, css);
+    renderer.addClass(element, cssClass);
+    return cssClass;
+  }
+
+  public clearCssElement(renderer: Renderer2, cssClass: string, element?: any): void {
+    if (element) {
+      renderer.removeClass(element, cssClass);
+    }
+    const el = this.document.getElementById(cssClass);
+    if (el) {
+      el.parentNode.removeChild(el);
+    }
   }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -34,7 +34,8 @@ import java.util.List;
         @Type(name = "EMAIL", value = EmailDeliveryMethodNotificationTemplate.class),
         @Type(name = "SMS", value = SmsDeliveryMethodNotificationTemplate.class),
         @Type(name = "SLACK", value = SlackDeliveryMethodNotificationTemplate.class),
-        @Type(name = "MICROSOFT_TEAMS", value = MicrosoftTeamsDeliveryMethodNotificationTemplate.class)
+        @Type(name = "MICROSOFT_TEAMS", value = MicrosoftTeamsDeliveryMethodNotificationTemplate.class),
+        @Type(name = "MOBILE_APP", value = MobileAppDeliveryMethodNotificationTemplate.class)
 })
 @Data
 @NoArgsConstructor

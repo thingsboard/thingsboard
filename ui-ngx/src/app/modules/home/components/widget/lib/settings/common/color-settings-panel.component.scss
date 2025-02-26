@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 @import '../../../../../../../../scss/constants';
 
 .tb-color-settings-panel {
-  width: 500px;
-  height: 470px;
+  width: 700px;
+  max-width: 90vw;
+  min-height: 300px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -31,6 +32,12 @@
     line-height: 24px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.87);
+  }
+  .tb-gradient-panel {
+    flex: 1;
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
   }
   .tb-color-ranges-panel {
     flex: 1;
@@ -48,17 +55,6 @@
   }
   .tb-form-row {
     height: auto;
-    .tb-value-range-text {
-      width: 64px;
-      font-size: 14px;
-      color: rgba(0, 0, 0, 0.38);
-      @media #{$mat-xs} {
-        width: auto;
-      }
-      &.tb-value-range-text-to {
-        text-align: center;
-      }
-    }
   }
   button.mat-mdc-button-base.tb-add-color-range {
     &:not(:disabled) {
@@ -81,5 +77,14 @@
     gap: 16px;
     justify-content: flex-end;
     align-items: flex-end;
+  }
+}
+
+.tb-advanced-range-drag {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  tb-advanced-range {
+    flex: 1;
   }
 }

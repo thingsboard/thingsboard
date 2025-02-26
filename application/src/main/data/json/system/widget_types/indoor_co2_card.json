@@ -1,0 +1,52 @@
+{
+  "fqn": "indoor_co2_card",
+  "name": "Indoor CO2 card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/indoor_co2_card_system_widget_image.png",
+  "description": "Displays the latest indoor CO2 level telemetry in a scalable rectangle card.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 3,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '250px',\n        previewHeight: '250px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'co2', label: 'CO2 level', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"CO2 level\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 160 - 80;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 400) {\\n\\tvalue = 400;\\n} else if (value > 1600) {\\n\\tvalue = 1600;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"square\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"co2\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":600,\"color\":\"#3FA71A\"},{\"from\":600,\"to\":800,\"color\":\"#F36900\"},{\"from\":800,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":600,\"color\":\"#3FA71A\"},{\"from\":600,\"to\":800,\"color\":\"#F36900\"},{\"from\":800,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"CO2 card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"ppm\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "environment",
+    "co2",
+    "indoor",
+    "carbon dioxide",
+    "carbon emission",
+    "carbon footprint",
+    "carbon output",
+    "carbon pollution",
+    "carbon capture",
+    "carbon offset",
+    "carbon reduction",
+    "carbon neutral",
+    "climate gas",
+    "fossil fuel emission",
+    "carbon cycle"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/indoor_co2_card_system_widget_image.png",
+      "title": "\"Indoor CO2 card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "indoor_co2_card_system_widget_image.png",
+      "publicResourceKey": "Fs6bFK4n2roolhmLUhdt8LMbCzEPbWKW",
+      "mediaType": "image/png",
+      "data": "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",
+      "public": true
+    }
+  ]
+}

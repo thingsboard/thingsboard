@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -36,7 +36,7 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { Subject } from 'rxjs';
 import { OtaUpdateType } from '@shared/models/ota-package.models';
 import { distinctUntilChanged } from 'rxjs/operators';
-import { getEntityDetailsPageURL } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-device',
@@ -58,7 +58,8 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
               @Inject('entity') protected entityValue: DeviceInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DeviceInfo>,
               public fb: UntypedFormBuilder,
-              protected cd: ChangeDetectorRef) {
+              protected cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -99,7 +100,8 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
       }
     );
     form.get('deviceProfileId').valueChanges.pipe(
-      distinctUntilChanged((prev, curr) => prev?.id === curr?.id)
+      distinctUntilChanged((prev, curr) => prev?.id === curr?.id),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(profileId => {
       if (profileId && this.isEdit) {
         this.entityForm.patchValue({

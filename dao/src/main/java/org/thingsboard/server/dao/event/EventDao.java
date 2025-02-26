@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,15 @@ public interface EventDao {
     List<? extends Event> findLatestEvents(UUID tenantId, UUID entityId, EventType eventType, int limit);
 
     /**
+     * Find latest debug IN event by tenantId, entityId.
+     *
+     * @param tenantId the tenantId
+     * @param entityId the entityId
+     * @return the latest debug IN event
+     */
+    Event findLatestDebugRuleNodeInEvent(UUID tenantId, UUID entityId);
+
+    /**
      * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.
      * @param regularEventExpTs the expiration time of the regular events
      * @param debugEventExpTs the expiration time of the debug events
@@ -92,5 +101,4 @@ public interface EventDao {
      */
     void removeEvents(UUID tenantId, UUID entityId, EventFilter eventFilter, Long startTime, Long endTime);
 
-    void migrateEvents(long regularEventTs, long debugEventTs);
 }

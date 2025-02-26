@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.relation;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
@@ -25,12 +24,12 @@ import java.util.List;
  * Created by ashvayka on 02.05.17.
  */
 @Data
-@ApiModel
+@Schema
 public class EntityRelationsQuery {
 
-    @ApiModelProperty(position = 2, value = "Main search parameters.")
+    @Schema(description = "Main search parameters.")
     private RelationsSearchParameters parameters;
-    @ApiModelProperty(position = 1, value = "Main filters.")
+    @Schema(description = "Main filters.")
     private List<RelationEntityTypeFilter> filters;
 
 }

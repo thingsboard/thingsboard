@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile MqttTopicFilter telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
     private volatile MqttTopicFilter attributesPublishTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
     private volatile MqttTopicFilter attributesSubscribeTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
+    @Getter
     private volatile TransportPayloadType payloadType = TransportPayloadType.JSON;
     private volatile Descriptors.Descriptor attributesDynamicMessageDescriptor;
     private volatile Descriptors.Descriptor telemetryDynamicMessageDescriptor;

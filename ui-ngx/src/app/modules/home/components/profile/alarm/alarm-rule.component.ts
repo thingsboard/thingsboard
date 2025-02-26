@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -36,6 +36,7 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { UtilsService } from '@core/services/utils.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-alarm-rule',
@@ -81,7 +82,8 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
 
   constructor(private dialog: MatDialog,
               private utils: UtilsService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -98,7 +100,9 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
       alarmDetails: [null],
       dashboardId: [null]
     });
-    this.alarmRuleFormGroup.valueChanges.subscribe(() => {
+    this.alarmRuleFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

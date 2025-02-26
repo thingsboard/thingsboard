@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ import {
   InboxNotificationDialogData
 } from '@home/pages/notification/inbox/inbox-notification-dialog.component';
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
-export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notification>> {
+export class InboxTableConfigResolver  {
 
   private readonly config: EntityTableConfig<Notification> = new EntityTableConfig<Notification>();
 
@@ -137,9 +137,10 @@ export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notif
         this.config.getTable().dataSource.pageData$.pipe(take(1)).subscribe(
           (value) => {
             if (value.data.length === 1 && this.config.getTable().pageLink.page) {
-              this.config.getTable().pageLink.page--;
+              this.config.getTable().paginator.previousPage();
+            } else {
+              this.config.updateData();
             }
-            this.config.updateData();
           }
         );
       } else {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
 
-    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
+    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId,
+                          RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
         super(systemContext, tenantId, ruleNodeId);
         this.ruleChainName = ruleChainName;
         this.ruleChainId = ruleChainId;
@@ -46,7 +47,7 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
 
     @Override
     protected RuleNodeActorMessageProcessor createProcessor(TbActorCtx ctx) {
-        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx.getParentRef(), ctx);
+        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx);
     }
 
     @Override
@@ -118,7 +119,6 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
             this.ruleChainId = ruleChainId;
             this.ruleChainName = ruleChainName;
             this.ruleNodeId = ruleNodeId;
-
         }
 
         @Override

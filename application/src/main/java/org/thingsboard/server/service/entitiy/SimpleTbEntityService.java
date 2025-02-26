@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy;
 
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface SimpleTbEntityService<T> {
 
@@ -23,7 +24,7 @@ public interface SimpleTbEntityService<T> {
         return save(entity, null);
     }
 
-    T save(T entity, User user) throws Exception;
+    T save(T entity, SecurityUser user) throws Exception;
 
     void delete(T entity, User user);
 

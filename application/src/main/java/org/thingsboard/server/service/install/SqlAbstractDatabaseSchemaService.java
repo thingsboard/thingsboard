@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,13 +84,17 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
     }
 
     protected void executeQuery(String query) {
+        executeQuery(query, null);
+    }
+
+    protected void executeQuery(String query, String logQuery) {
+        logQuery = logQuery != null ? logQuery : query;
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
             conn.createStatement().execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-            log.info("Successfully executed query: {}", query);
+            log.info("Successfully executed query: {}", logQuery);
             Thread.sleep(5000);
         } catch (InterruptedException | SQLException e) {
-            log.error("Failed to execute query: {} due to: {}", query, e.getMessage());
-            throw new RuntimeException("Failed to execute query: " + query, e);
+            throw new RuntimeException("Failed to execute query: " + logQuery, e);
         }
     }
 

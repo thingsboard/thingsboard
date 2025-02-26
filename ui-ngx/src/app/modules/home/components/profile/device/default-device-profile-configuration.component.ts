@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   DefaultDeviceProfileConfiguration,
   DeviceProfileConfiguration,
   DeviceProfileType
 } from '@shared/models/device.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-default-device-profile-configuration',
@@ -39,22 +39,14 @@ export class DefaultDeviceProfileConfigurationComponent implements ControlValueA
 
   defaultDeviceProfileConfigurationFormGroup: UntypedFormGroup;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
-
   @Input()
   disabled: boolean;
 
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -68,7 +60,9 @@ export class DefaultDeviceProfileConfigurationComponent implements ControlValueA
     this.defaultDeviceProfileConfigurationFormGroup = this.fb.group({
       configuration: [null, Validators.required]
     });
-    this.defaultDeviceProfileConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.defaultDeviceProfileConfigurationFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

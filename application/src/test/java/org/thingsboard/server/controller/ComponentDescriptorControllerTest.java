@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class ComponentDescriptorControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -64,8 +64,7 @@ public class ComponentDescriptorControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test

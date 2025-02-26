@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.discovery;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +30,8 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.util.AfterContextReady;
 
-import javax.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -81,7 +80,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         }
         log.info("Current Service ID: {}", serviceId);
         if (serviceType.equalsIgnoreCase("monolith")) {
-            serviceTypes = Collections.unmodifiableList(Arrays.asList(ServiceType.values()));
+            serviceTypes = List.of(ServiceType.values());
         } else {
             serviceTypes = Collections.singletonList(ServiceType.of(serviceType));
         }
@@ -89,7 +88,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
             assignedTenantProfiles = Collections.emptySet();
         }
 
-       generateNewServiceInfoWithCurrentSystemInfo();
+        generateNewServiceInfoWithCurrentSystemInfo();
     }
 
     @AfterContextReady

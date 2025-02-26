@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTRIBUTE,
   DEFAULT_EDRX_CYCLE,
@@ -40,12 +39,14 @@ import {
   ObjectLwM2M,
   OBSERVE,
   PowerMode,
+  ObjectIDVer,
   RESOURCES,
   ServerSecurityConfig,
-  TELEMETRY
+  TELEMETRY,
+  ObjectIDVerTranslationMap
 } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { deepClone, isDefinedAndNotNull, isEmpty, isUndefined } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEmpty } from '@core/utils';
 import { Direction } from '@shared/models/page/sort-order';
 import _ from 'lodash';
 import { Subject } from 'rxjs';
@@ -75,21 +76,15 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   public disabled = false;
   public isTransportWasRunWithBootstrap = true;
   public isBootstrapServerUpdateEnable: boolean;
-  private requiredValue: boolean;
   private destroy$ = new Subject<void>();
 
   lwm2mDeviceProfileFormGroup: UntypedFormGroup;
   configurationValue: Lwm2mProfileConfigModels;
+
+  objectIDVers = Object.values(ObjectIDVer) as ObjectIDVer[];
+  objectIDVerTranslationMap = ObjectIDVerTranslationMap;
+
   sortFunction: (key: string, value: object) => object;
-
-  get required(): boolean {
-    return this.requiredValue;
-  }
-
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
 
   @Input()
   isAdd: boolean;
@@ -117,7 +112,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         edrxCycle: [{disabled: true, value: 0}, Validators.required],
         psmActivityTimer: [{disabled: true, value: 0}, Validators.required],
         pagingTransmissionWindow: [{disabled: true, value: 0}, Validators.required],
-        compositeOperationsSupport: [false]
+        defaultObjectIDVer: [ObjectIDVer.V1_0, Validators.required]
       })
     });
 
@@ -276,7 +271,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           pagingTransmissionWindow:
             this.configurationValue.clientLwM2mSettings.pagingTransmissionWindow || DEFAULT_PAGING_TRANSMISSION_WINDOW,
           psmActivityTimer: this.configurationValue.clientLwM2mSettings.psmActivityTimer || DEFAULT_PSM_ACTIVITY_TIMER,
-          compositeOperationsSupport: this.configurationValue.clientLwM2mSettings.compositeOperationsSupport || false
+          defaultObjectIDVer: this.configurationValue.clientLwM2mSettings.defaultObjectIDVer || ObjectIDVer.V1_0
         }
       },
       {emitEvent: false});
@@ -290,11 +285,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private updateModel = (): void => {
-    let configuration: Lwm2mProfileConfigModels = null;
-    if (this.lwm2mDeviceProfileFormGroup.valid) {
-      configuration = this.configurationValue;
-    }
-    this.propagateChange(configuration);
+    this.propagateChange(this.configurationValue);
   }
 
   private updateObserveAttrTelemetryObjectFormGroup = (objectsList: ObjectLwM2M[]): void => {
@@ -539,8 +530,10 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.removeObserveAttrTelemetryFromJson(ATTRIBUTE, value.keyId);
     this.removeKeyNameFromJson(value.keyId);
     this.removeAttributesFromJson(value.keyId);
-    this.updateObserveAttrTelemetryObjectFormGroup(objectsOld);
-  }
+    this.lwm2mDeviceProfileFormGroup.patchValue({
+      observeAttrTelemetry: deepClone(objectsOld)
+    }, {emitEvent: false});
+  };
 
   private removeObserveAttrTelemetryFromJson = (observeAttrTel: string, keyId: string): void => {
     const isIdIndex = (element) => element.startsWith(`/${keyId}`);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
@@ -26,7 +26,10 @@ import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
+import java.util.Collections;
 import java.util.Set;
+
+import static org.thingsboard.server.service.sync.ie.importing.impl.DashboardImportService.WIDGET_CONFIG_PROCESSED_FIELDS_PATTERN;
 
 @Service
 @TbCoreComponent
@@ -43,7 +46,7 @@ public class DashboardExportService extends BaseEntityExportService<DashboardId,
             replaceUuidsRecursively(ctx, entityAlias, Set.of("id"), null);
         }
         for (JsonNode widgetConfig : dashboard.getWidgetsConfig()) {
-            replaceUuidsRecursively(ctx, JacksonUtil.getSafely(widgetConfig, "config", "actions"), Set.of("id"), null);
+            replaceUuidsRecursively(ctx, JacksonUtil.getSafely(widgetConfig, "config", "actions"), Collections.emptySet(), WIDGET_CONFIG_PROCESSED_FIELDS_PATTERN);
         }
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,69 +15,114 @@
  */
 package org.thingsboard.server.service.apiusage;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.ApiUsageState;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageStateValue;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
 import java.util.UUID;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.never;
+import static org.junit.Assert.assertEquals;
 
-@RunWith(MockitoJUnitRunner.class)
-public class DefaultTbApiUsageStateServiceTest {
+@DaoSqlTest
+public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
 
-    @Mock
-    TenantService tenantService;
-    @Mock
-    TimeseriesService tsService;
-    @Mock
-    TbClusterService clusterService;
-    @Mock
-    PartitionService partitionService;
-    @Mock
-    TenantApiUsageState tenantUsageStateMock;
-    @Mock
-    ApiUsageStateService apiUsageStateService;
-    @Mock
-    TbTenantProfileCache tenantProfileCache;
-    @Mock
-    MailService mailService;
-    @Mock
-    DbCallbackExecutorService dbExecutor;
-
-    TenantId tenantId = TenantId.fromUUID(UUID.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112"));
-
-    @Spy
-    @InjectMocks
+    @Autowired
     DefaultTbApiUsageStateService service;
 
+    @Autowired
+    private ApiUsageStateService apiUsageStateService;
+
+    private TenantId tenantId;
+    private Tenant savedTenant;
+
+    private static final int MAX_ENABLE_VALUE = 5000;
+    private static final long VALUE_WARNING = 4500L;
+    private static final long VALUE_DISABLE = 5500L;
+    private static final double WARN_THRESHOLD_VALUE = 0.8;
+
     @Before
-    public void setUp() {
+    public void init() throws Exception {
+        loginSysAdmin();
+
+        TenantProfile tenantProfile = createTenantProfile();
+        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        Assert.assertNotNull(savedTenantProfile);
+
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        tenant.setTenantProfileId(savedTenantProfile.getId());
+        savedTenant = saveTenant(tenant);
+        tenantId = savedTenant.getId();
+        Assert.assertNotNull(savedTenant);
     }
 
     @Test
-    public void givenTenantIdFromEntityStatesMap_whenGetApiUsageState() {
-        service.myUsageStates.put(tenantId, tenantUsageStateMock);
-        ApiUsageState tenantUsageState = service.getApiUsageState(tenantId);
-        assertThat(tenantUsageState, is(tenantUsageStateMock.getApiUsageState()));
-        Mockito.verify(service, never()).getOrFetchState(tenantId, tenantId);
+    public void testProcess_transitionFromWarningToDisabled() {
+        TransportProtos.ToUsageStatsServiceMsg.Builder warningMsgBuilder = TransportProtos.ToUsageStatsServiceMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setCustomerIdMSB(0)
+                .setCustomerIdLSB(0)
+                .setServiceId("testService");
+
+        warningMsgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
+                .setKey(ApiUsageRecordKey.STORAGE_DP_COUNT.name())
+                .setValue(VALUE_WARNING)
+                .build());
+
+        TransportProtos.ToUsageStatsServiceMsg warningStatsMsg = warningMsgBuilder.build();
+        TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> warningMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), warningStatsMsg);
+
+        service.process(warningMsg, TbCallback.EMPTY);
+        assertEquals(ApiUsageStateValue.WARNING, apiUsageStateService.findTenantApiUsageState(tenantId).getDbStorageState());
+
+        TransportProtos.ToUsageStatsServiceMsg.Builder disableMsgBuilder = TransportProtos.ToUsageStatsServiceMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setCustomerIdMSB(0)
+                .setCustomerIdLSB(0)
+                .setServiceId("testService");
+
+        disableMsgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
+                .setKey(ApiUsageRecordKey.STORAGE_DP_COUNT.name())
+                .setValue(VALUE_DISABLE)
+                .build());
+
+        TransportProtos.ToUsageStatsServiceMsg disableStatsMsg = disableMsgBuilder.build();
+        TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg> disableMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), disableStatsMsg);
+
+        service.process(disableMsg, TbCallback.EMPTY);
+        assertEquals(ApiUsageStateValue.DISABLED, apiUsageStateService.findTenantApiUsageState(tenantId).getDbStorageState());
+    }
+
+    private TenantProfile createTenantProfile() {
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName("Tenant Profile");
+        tenantProfile.setDescription("Tenant Profile" + " Test");
+
+        TenantProfileData tenantProfileData = new TenantProfileData();
+        DefaultTenantProfileConfiguration config = DefaultTenantProfileConfiguration.builder()
+                .maxDPStorageDays(MAX_ENABLE_VALUE)
+                .warnThreshold(WARN_THRESHOLD_VALUE)
+                .build();
+
+        tenantProfileData.setConfiguration(config);
+        tenantProfile.setProfileData(tenantProfileData);
+        return tenantProfile;
     }
 
 }

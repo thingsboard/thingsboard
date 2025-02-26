@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.notification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
@@ -42,6 +44,9 @@ import java.util.Optional;
 public class DefaultNotificationRequestService implements NotificationRequestService, EntityDaoService {
 
     private final NotificationRequestDao notificationRequestDao;
+    private final NotificationDao notificationDao;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     private final NotificationRequestValidator notificationRequestValidator = new NotificationRequestValidator();
 
@@ -77,14 +82,25 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     }
 
     @Override
-    public List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId) {
-        return notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId);
+    public List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityIdAndStatus(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId, NotificationRequestStatus status) {
+        return notificationRequestDao.findByRuleIdAndOriginatorEntityIdAndStatus(tenantId, ruleId, originatorEntityId, status);
     }
 
-    // ON DELETE CASCADE is used: notifications for request are deleted as well
     @Override
-    public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId requestId) {
-        notificationRequestDao.removeById(tenantId, requestId.getId());
+    public void deleteNotificationRequest(TenantId tenantId, NotificationRequest request) {
+        notificationRequestDao.removeById(tenantId, request.getUuidId());
+        notificationDao.deleteByRequestId(tenantId, request.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(request).entityId(request.getId()).build());
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        if (force) {
+            notificationRequestDao.removeById(tenantId, id.getId());
+        } else {
+            NotificationRequest notificationRequest = findNotificationRequestById(tenantId, (NotificationRequestId) id);
+            deleteNotificationRequest(tenantId, notificationRequest);
+        }
     }
 
     @Override
@@ -97,9 +113,15 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
         notificationRequestDao.updateById(tenantId, requestId, requestStatus, stats);
     }
 
+    // notifications themselves are left in the database until removed by ttl
     @Override
     public void deleteNotificationRequestsByTenantId(TenantId tenantId) {
         notificationRequestDao.removeByTenantId(tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteNotificationRequestsByTenantId(tenantId);
     }
 
     @Override
@@ -111,7 +133,6 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_REQUEST;
     }
-
 
     private static class NotificationRequestValidator extends DataValidator<NotificationRequest> {
 

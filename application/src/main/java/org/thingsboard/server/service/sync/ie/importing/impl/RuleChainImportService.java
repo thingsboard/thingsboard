@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,11 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.sync.ie.RuleChainExportData;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -133,10 +130,6 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     protected void onEntitySaved(User user, RuleChain savedRuleChain, RuleChain oldRuleChain) {
         entityActionService.logEntityAction(user, savedRuleChain.getId(), savedRuleChain, null,
                 oldRuleChain == null ? ActionType.ADDED : ActionType.UPDATED, null);
-        if (savedRuleChain.getType() == RuleChainType.CORE) {
-            clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedRuleChain.getId(),
-                    oldRuleChain == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-        }
     }
 
     @Override

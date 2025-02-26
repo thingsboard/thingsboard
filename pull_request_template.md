@@ -26,6 +26,7 @@ Put your PR description here instead of this sentence.
 - [ ] If new dependency was added: the dependency tree is checked for conflicts.
 - [ ] If new service was added: the service is marked with corresponding @TbCoreComponent, @TbRuleEngineComponent, @TbTransportComponent, etc.
 - [ ] If new REST API was added: the RestClient.java was updated, issue for [Python REST client](https://github.com/thingsboard/thingsboard-python-rest-client) is created.
+- [ ] If new yml property was added: make sure a description is added (above or near the property).
 
 
 

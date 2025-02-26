@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entityListFormGroup" class="mat-block" [ngClass]="{'tb-chip-list': !labelText}" [subscriptSizing]="subscriptSizing">
+<mat-form-field [formGroup]="entityListFormGroup" class="mat-block" [class.tb-chip-list]="!labelText" [appearance]="appearance" [subscriptSizing]="subscriptSizing">
   <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
   <mat-chip-grid #chipList formControlName="entities">
     <mat-chip-row
@@ -42,9 +42,16 @@
       <span [innerHTML]="entity.name | highlight:searchText"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredEntities | async)?.length" [value]="null">
-      <span>
+      <div (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span>{{ 'entity.no-entities-text' | translate }}</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
           {{ translate.get('entity.no-entities-matching', {entity: searchText}) | async }}
-      </span>
+          </span>
+        </ng-template>
+      </div>
     </mat-option>
   </mat-autocomplete>
   <mat-hint *ngIf="hint">

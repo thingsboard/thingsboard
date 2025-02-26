@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,27 +24,30 @@ import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdateType;
 
-import java.util.Collection;
+import java.util.List;
 
 @Getter
 @ToString(exclude = "notifications")
 public class UnreadNotificationsUpdate extends CmdUpdate {
 
-    private final Collection<Notification> notifications;
+    private final List<Notification> notifications;
     private final Notification update;
     private final int totalUnreadCount;
+    private final int sequenceNumber;
 
     @Builder
     @JsonCreator
     public UnreadNotificationsUpdate(@JsonProperty("cmdId") int cmdId, @JsonProperty("errorCode") int errorCode,
                                      @JsonProperty("errorMsg") String errorMsg,
-                                     @JsonProperty("notifications") Collection<Notification> notifications,
+                                     @JsonProperty("notifications") List<Notification> notifications,
                                      @JsonProperty("update") Notification update,
-                                     @JsonProperty("totalUnreadCount") int totalUnreadCount) {
+                                     @JsonProperty("totalUnreadCount") int totalUnreadCount,
+                                     @JsonProperty("sequenceNumber") int sequenceNumber) {
         super(cmdId, errorCode, errorMsg);
         this.notifications = notifications;
         this.update = update;
         this.totalUnreadCount = totalUnreadCount;
+        this.sequenceNumber = sequenceNumber;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,9 @@ public class JpaUserCredentialsDaoTest extends AbstractJpaDaoTest {
         userCredentials.setUserId(new UserId(UUID.randomUUID()));
         userCredentials.setPassword("password");
         userCredentials.setActivateToken("ACTIVATE_TOKEN_" + number);
+        userCredentials.setActivateTokenExpTime(123L);
         userCredentials.setResetToken("RESET_TOKEN_" + number);
+        userCredentials.setResetTokenExpTime(321L);
         return userCredentialsDao.save(SYSTEM_TENANT_ID, userCredentials);
     }
 

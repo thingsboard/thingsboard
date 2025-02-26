@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -38,6 +39,9 @@ import java.util.List;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "server.http.max_payload_size=/api/image*/**=10;/api/**=10000"
+})
 public class RpcControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
@@ -49,7 +53,7 @@ public class RpcControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -66,8 +70,7 @@ public class RpcControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     private Device createDefaultDevice() {
@@ -79,13 +82,18 @@ public class RpcControllerTest extends AbstractControllerTest {
     }
 
     private ObjectNode createDefaultRpc() {
+        return createDefaultRpc(100);
+    }
+
+    private ObjectNode createDefaultRpc(int size) {
         ObjectNode rpc = JacksonUtil.newObjectNode();
         rpc.put("method", "setGpio");
 
         ObjectNode params = JacksonUtil.newObjectNode();
 
         params.put("pin", 7);
-        params.put("value", 1);
+        String value = "a".repeat(size - 83);
+        params.put("value", value);
 
         rpc.set("params", params);
         rpc.put("persistent", true);
@@ -121,6 +129,28 @@ public class RpcControllerTest extends AbstractControllerTest {
 
         Assert.assertNotNull(savedRpc);
         Assert.assertEquals(savedDevice.getId(), savedRpc.getDeviceId());
+    }
+
+    @Test
+    public void testSaveLargeRpc() throws Exception {
+        Device device = createDefaultDevice();
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        ObjectNode rpc = createDefaultRpc(10001);
+        doPost(
+                "/api/rpc/oneway/" + savedDevice.getId().getId().toString(),
+                JacksonUtil.toString(rpc),
+                String.class,
+                status().isPayloadTooLarge()
+        );
+
+        ObjectNode validRpc = createDefaultRpc(10000);
+        doPost(
+                "/api/rpc/oneway/" + savedDevice.getId().getId().toString(),
+                JacksonUtil.toString(validRpc),
+                String.class,
+                status().isOk()
+        );
     }
 
     @Test

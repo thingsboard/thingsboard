@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 -->
 <a mat-button class="tb-button-toggle" (click)="toggleSection($event)">
   <tb-icon matButtonIcon *ngIf="section.icon !== null">{{section.icon}}</tb-icon>
-  <span>{{section.name | translate}}</span>
-  <span class=" pull-right fa fa-chevron-down tb-toggle-icon"
-        [ngClass]="{'tb-toggled' : section.opened}"></span>
+  <span>{{section.customTranslate ? (section.name | customTranslate) : (section.name | translate)}}</span>
+  <span class="pull-right fa fa-chevron-down tb-toggle-icon"
+        [class.tb-toggled]="section.opened"></span>
 </a>
-<ul id="docs-menu-{{section.name | nospace}}" class="tb-menu-toggle-list" [ngStyle]="{height: sectionHeight()}">
+<ul id="docs-menu-{{section.name | nospace}}" class="tb-menu-toggle-list" [style.height]="sectionHeight()">
   <li *ngFor="let page of section.pages; trackBy: trackBySectionPages">
     <tb-menu-link [section]="page"></tb-menu-link>
   </li>

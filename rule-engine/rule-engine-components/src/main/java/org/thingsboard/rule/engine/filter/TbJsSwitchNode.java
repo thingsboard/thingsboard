@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import java.util.Set;
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code><br/>" +
                 "Message type can be accessed via <code>msgType</code> property.<br><br>" +
                 "Output connections: <i>Custom connection(s) defined by switch node</i> or <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeSwitchConfig")
 public class TbJsSwitchNode implements TbNode {
 

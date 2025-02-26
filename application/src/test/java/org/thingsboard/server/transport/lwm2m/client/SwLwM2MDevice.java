@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,18 @@ package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
-import org.eclipse.leshan.client.servers.ServerIdentity;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.node.LwM2mResource;
+import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 
 import javax.security.auth.Destroyable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,14 +38,14 @@ public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
     private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 4, 6, 7, 9);
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope"));
+    private final ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor(getClass().getSimpleName() + "-test-scope");
 
     private final AtomicInteger state = new AtomicInteger(0);
 
     private final AtomicInteger updateResult = new AtomicInteger(0);
 
     @Override
-    public ReadResponse read(ServerIdentity identity, int resourceId) {
+    public ReadResponse read(LwM2mServer identity, int resourceId) {
         if (!identity.isSystem())
             log.info("Read on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
         switch (resourceId) {
@@ -63,12 +63,11 @@ public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     }
 
     @Override
-    public ExecuteResponse execute(ServerIdentity identity, int resourceId, String params) {
-        String withParams = null;
-        if (params != null && params.length() != 0) {
-            withParams = " with params " + params;
-        }
-        log.info("Execute on Device resource /{}/{}/{} {}", getModel().id, getId(), resourceId, withParams != null ? withParams : "");
+    public ExecuteResponse execute(LwM2mServer identity, int resourceId, Arguments arguments) {
+        String withArguments = "";
+        if (!arguments.isEmpty())
+            withArguments = " with arguments " + arguments;
+        log.info("Execute on Device resource /{}/{}/{} {}", getModel().id, getId(), resourceId, withArguments);
 
         switch (resourceId) {
             case 4:
@@ -77,12 +76,12 @@ public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
             case 6:
                 return ExecuteResponse.success();
             default:
-                return super.execute(identity, resourceId, params);
+                return super.execute(identity, resourceId, arguments);
         }
     }
 
     @Override
-    public WriteResponse write(ServerIdentity identity, boolean replace, int resourceId, LwM2mResource value) {
+    public WriteResponse write(LwM2mServer identity, boolean replace, int resourceId, LwM2mResource value) {
         log.info("Write on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
 
         switch (resourceId) {

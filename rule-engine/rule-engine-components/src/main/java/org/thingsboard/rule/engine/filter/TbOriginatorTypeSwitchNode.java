@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         nodeDescription = "Route incoming messages by Message Originator Type",
         nodeDetails = "Routes messages to chain according to the entity type ('Device', 'Asset', etc.).<br><br>" +
                 "Output connections: <i>Message originator type</i> or <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbOriginatorTypeSwitchNode extends TbAbstractTypeSwitchNode {
 

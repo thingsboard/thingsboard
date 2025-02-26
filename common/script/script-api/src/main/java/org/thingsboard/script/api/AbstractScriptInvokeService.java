@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.stats.TbApiUsageReportClient;
-import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -45,9 +40,6 @@ import static java.lang.String.format;
 public abstract class AbstractScriptInvokeService implements ScriptInvokeService {
 
     protected final Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
-
-    private final Optional<TbApiUsageStateClient> apiUsageStateClient;
-    private final Optional<TbApiUsageReportClient> apiUsageReportClient;
     private final AtomicInteger pushedMsgs = new AtomicInteger(0);
     private final AtomicInteger invokeMsgs = new AtomicInteger(0);
     private final AtomicInteger evalMsgs = new AtomicInteger(0);
@@ -58,11 +50,6 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     private final FutureCallback<Object> invokeCallback = new ScriptStatCallback<>(invokeMsgs, timeoutMsgs, failedMsgs);
 
     protected ScheduledExecutorService timeoutExecutorService;
-
-    protected AbstractScriptInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
-        this.apiUsageStateClient = apiUsageStateClient;
-        this.apiUsageReportClient = apiUsageReportClient;
-    }
 
     protected long getMaxEvalRequestsTimeout() {
         return getMaxInvokeRequestsTimeout();
@@ -88,6 +75,9 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     protected abstract boolean isScriptPresent(UUID scriptId);
 
+    protected abstract boolean isExecEnabled(TenantId tenantId);
+    protected abstract void reportExecution(TenantId tenantId, CustomerId customerId);
+
     protected abstract ListenableFuture<UUID> doEvalScript(TenantId tenantId, ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames);
 
     protected abstract TbScriptExecutionTask doInvokeFunction(UUID scriptId, Object[] args);
@@ -96,7 +86,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     public void init() {
         if (getMaxEvalRequestsTimeout() > 0 || getMaxInvokeRequestsTimeout() > 0) {
-            timeoutExecutorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("script-timeout"));
+            timeoutExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("script-timeout");
         }
     }
 
@@ -122,7 +112,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     @Override
     public ListenableFuture<UUID> eval(TenantId tenantId, ScriptType scriptType, String scriptBody, String... argNames) {
-        if (!apiUsageStateClient.isPresent() || apiUsageStateClient.get().getApiUsageState(tenantId).isJsExecEnabled()) {
+        if (isExecEnabled(tenantId)) {
             if (scriptBodySizeExceeded(scriptBody)) {
                 return error(format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize()));
             }
@@ -137,7 +127,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     @Override
     public ListenableFuture<Object> invokeScript(TenantId tenantId, CustomerId customerId, UUID scriptId, Object... args) {
-        if (!apiUsageStateClient.isPresent() || apiUsageStateClient.get().getApiUsageState(tenantId).isJsExecEnabled()) {
+        if (isExecEnabled(tenantId)) {
             if (!isScriptPresent(scriptId)) {
                 return error("No compiled script found for scriptId: [" + scriptId + "]!");
             }
@@ -148,26 +138,26 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
                     ));
                     return Futures.immediateFailedFuture(handleScriptException(scriptId, null, t));
                 }
-                apiUsageReportClient.ifPresent(client -> client.report(tenantId, customerId, ApiUsageRecordKey.JS_EXEC_COUNT, 1));
+                reportExecution(tenantId, customerId);
                 pushedMsgs.incrementAndGet();
-                log.trace("InvokeScript uuid {} with timeout {}ms", scriptId, getMaxInvokeRequestsTimeout());
+                log.trace("[{}] InvokeScript uuid {} with timeout {}ms", tenantId, scriptId, getMaxInvokeRequestsTimeout());
                 var task = doInvokeFunction(scriptId, args);
 
-                var resultFuture = Futures.transformAsync(task.getResultFuture(), output -> {
+                var resultFuture = Futures.transform(task.getResultFuture(), output -> {
                     String result = JacksonUtil.toString(output);
                     if (resultSizeExceeded(result)) {
                         throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, null, new RuntimeException(
                                 format("Script invocation result exceeds maximum allowed size of %s symbols", getMaxResultSize())
                         ));
                     }
-                    return Futures.immediateFuture(output);
+                    return output;
                 }, MoreExecutors.directExecutor());
 
                 return withTimeoutAndStatsCallback(scriptId, task, resultFuture, invokeCallback, getMaxInvokeRequestsTimeout());
             } else {
                 String message = "Script invocation is blocked due to maximum error count "
                         + getMaxErrors() + ", scriptId " + scriptId + "!";
-                log.warn(message);
+                log.warn("[{}] " + message, tenantId);
                 return error(message);
             }
         } else {

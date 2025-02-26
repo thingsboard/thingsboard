@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.edge;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.Sets;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,16 +27,17 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -45,14 +46,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class DashboardEdgeTest extends AbstractEdgeTest {
 
     private static final int MOBILE_ORDER = 5;
-    private static final String IMAGE = "data:image/png;base64,iVBORw0KGgoA";
+    private static final String IMAGE = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTMuMjMgMTAuNTZWMTBjLTEuOTQgMC0zLjk5LjM5LTMuOTkgMi42NyAwIDEuMTYuNjEgMS45NSAxLjYzIDEuOTUuNzYgMCAxLjQzLS40NyAxLjg2LTEuMjIuNTItLjkzLjUtMS44LjUtMi44NG0yLjcgNi41M2MtLjE4LjE2LS40My4xNy0uNjMuMDYtLjg5LS43NC0xLjA1LTEuMDgtMS41NC0xLjc5LTEuNDcgMS41LTIuNTEgMS45NS00LjQyIDEuOTUtMi4yNSAwLTQuMDEtMS4zOS00LjAxLTQuMTcgMC0yLjE4IDEuMTctMy42NCAyLjg2LTQuMzggMS40Ni0uNjQgMy40OS0uNzYgNS4wNC0uOTNWNy41YzAtLjY2LjA1LTEuNDEtLjMzLTEuOTYtLjMyLS40OS0uOTUtLjctMS41LS43LTEuMDIgMC0xLjkzLjUzLTIuMTUgMS42MS0uMDUuMjQtLjI1LjQ4LS40Ny40OWwtMi42LS4yOGMtLjIyLS4wNS0uNDYtLjIyLS40LS41Ni42LTMuMTUgMy40NS00LjEgNi00LjEgMS4zIDAgMyAuMzUgNC4wMyAxLjMzQzE3LjExIDQuNTUgMTcgNi4xOCAxNyA3Ljk1djQuMTdjMCAxLjI1LjUgMS44MSAxIDIuNDguMTcuMjUuMjEuNTQgMCAuNzFsLTIuMDYgMS43OGgtLjAxIj48L3BhdGg+PHBhdGggZD0iTTIwLjE2IDE5LjU0QzE4IDIxLjE0IDE0LjgyIDIyIDEyLjEgMjJjLTMuODEgMC03LjI1LTEuNDEtOS44NS0zLjc2LS4yLS4xOC0uMDItLjQzLjI1LS4yOSAyLjc4IDEuNjMgNi4yNSAyLjYxIDkuODMgMi42MSAyLjQxIDAgNS4wNy0uNSA3LjUxLTEuNTMuMzctLjE2LjY2LjI0LjMyLjUxIj48L3BhdGg+PHBhdGggZD0iTTIxLjA3IDE4LjVjLS4yOC0uMzYtMS44NS0uMTctMi41Ny0uMDgtLjE5LjAyLS4yMi0uMTYtLjAzLS4zIDEuMjQtLjg4IDMuMjktLjYyIDMuNTMtLjMzLjI0LjMtLjA3IDIuMzUtMS4yNCAzLjMyLS4xOC4xNi0uMzUuMDctLjI2LS4xMS4yNi0uNjcuODUtMi4xNC41Ny0yLjV6Ij48L3BhdGg+PC9zdmc+";
+
+    private static final String DASHBOARD_TITLE = "Edge Test Dashboard";
 
     @Test
     public void testDashboards() throws Exception {
         // create dashboard and assign to edge
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(2);
         Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("Edge Test Dashboard");
+        dashboard.setTitle(DASHBOARD_TITLE);
         dashboard.setMobileHide(true);
         dashboard.setImage(IMAGE);
         dashboard.setMobileOrder(MOBILE_ORDER);
@@ -60,28 +63,32 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         doPost("/api/edge/" + edge.getUuidId()
                 + "/dashboard/" + savedDashboard.getUuidId(), Dashboard.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof DashboardUpdateMsg);
-        DashboardUpdateMsg dashboardUpdateMsg = (DashboardUpdateMsg) latestMessage;
+        Optional<DashboardUpdateMsg> dashboardUpdateMsgOpt = edgeImitator.findMessageByType(DashboardUpdateMsg.class);
+        Assert.assertTrue(dashboardUpdateMsgOpt.isPresent());
+        DashboardUpdateMsg dashboardUpdateMsg = dashboardUpdateMsgOpt.get();
+        Dashboard dashboardMsg = JacksonUtil.fromString(dashboardUpdateMsg.getEntity(), Dashboard.class, true);
+        Assert.assertNotNull(dashboardMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, dashboardUpdateMsg.getMsgType());
-        Assert.assertEquals(savedDashboard.getUuidId().getMostSignificantBits(), dashboardUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedDashboard.getUuidId().getLeastSignificantBits(), dashboardUpdateMsg.getIdLSB());
-        Assert.assertEquals(savedDashboard.getTitle(), dashboardUpdateMsg.getTitle());
-        Assert.assertTrue(dashboardUpdateMsg.getMobileHide());
-        Assert.assertEquals(IMAGE, dashboardUpdateMsg.getImage());
-        Assert.assertEquals(MOBILE_ORDER, dashboardUpdateMsg.getMobileOrder());
+        Assert.assertEquals(savedDashboard, dashboardMsg);
+        Assert.assertEquals("tb-image;/api/images/tenant/edge_test_dashboard_dashboard_image.svg", dashboardMsg.getImage());
+        Assert.assertEquals(MOBILE_ORDER, dashboardMsg.getMobileOrder().intValue());
         testAutoGeneratedCodeByProtobuf(dashboardUpdateMsg);
+
+        Optional<ResourceUpdateMsg> resourceUpdateMsg = edgeImitator.findMessageByType(ResourceUpdateMsg.class);
+        Assert.assertTrue(resourceUpdateMsg.isPresent());
 
         // update dashboard
         edgeImitator.expectMessageAmount(1);
         savedDashboard.setTitle("Updated Edge Test Dashboard");
         savedDashboard = doPost("/api/dashboard", savedDashboard, Dashboard.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof DashboardUpdateMsg);
         dashboardUpdateMsg = (DashboardUpdateMsg) latestMessage;
+        dashboardMsg = JacksonUtil.fromString(dashboardUpdateMsg.getEntity(), Dashboard.class, true);
+        Assert.assertNotNull(dashboardMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, dashboardUpdateMsg.getMsgType());
-        Assert.assertEquals(savedDashboard.getTitle(), dashboardUpdateMsg.getTitle());
+        Assert.assertEquals(savedDashboard.getTitle(), dashboardMsg.getTitle());
 
         // unassign dashboard from edge
         edgeImitator.expectMessageAmount(1);
@@ -99,7 +106,7 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/dashboard/" + savedDashboard.getUuidId())
                 .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(5));
 
         // create dashboard #2 and assign to edge
         edgeImitator.expectMessageAmount(1);
@@ -112,10 +119,12 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof DashboardUpdateMsg);
         dashboardUpdateMsg = (DashboardUpdateMsg) latestMessage;
+        dashboardMsg = JacksonUtil.fromString(dashboardUpdateMsg.getEntity(), Dashboard.class, true);
+        Assert.assertNotNull(dashboardMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, dashboardUpdateMsg.getMsgType());
         Assert.assertEquals(savedDashboard.getUuidId().getMostSignificantBits(), dashboardUpdateMsg.getIdMSB());
         Assert.assertEquals(savedDashboard.getUuidId().getLeastSignificantBits(), dashboardUpdateMsg.getIdLSB());
-        Assert.assertEquals(savedDashboard.getTitle(), dashboardUpdateMsg.getTitle());
+        Assert.assertEquals(savedDashboard.getTitle(), dashboardMsg.getTitle());
 
         // assign dashboard #2 to customer
         Customer customer = new Customer();
@@ -133,12 +142,12 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof DashboardUpdateMsg);
         dashboardUpdateMsg = (DashboardUpdateMsg) latestMessage;
+        dashboardMsg = JacksonUtil.fromString(dashboardUpdateMsg.getEntity(), Dashboard.class, true);
+        Assert.assertNotNull(dashboardMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, dashboardUpdateMsg.getMsgType());
-        Set<ShortCustomerInfo> assignedCustomers =
-                JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
-        Assert.assertNotNull(assignedCustomers);
-        Assert.assertFalse(assignedCustomers.isEmpty());
-        Assert.assertTrue(assignedCustomers.contains(new ShortCustomerInfo(savedCustomer.getId(), customer.getTitle(), customer.isPublic())));
+        Assert.assertNotNull(dashboardMsg.getAssignedCustomers());
+        Assert.assertFalse(dashboardMsg.getAssignedCustomers().isEmpty());
+        Assert.assertTrue(dashboardMsg.getAssignedCustomers().contains(new ShortCustomerInfo(savedCustomer.getId(), customer.getTitle(), customer.isPublic())));
 
         // unassign dashboard #2 from customer
         edgeImitator.expectMessageAmount(1);
@@ -148,11 +157,11 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof DashboardUpdateMsg);
         dashboardUpdateMsg = (DashboardUpdateMsg) latestMessage;
+        dashboardMsg = JacksonUtil.fromString(dashboardUpdateMsg.getEntity(), Dashboard.class, true);
+        Assert.assertNotNull(dashboardMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, dashboardUpdateMsg.getMsgType());
-        assignedCustomers =
-                JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
-        Assert.assertNotNull(assignedCustomers);
-        Assert.assertTrue(assignedCustomers.isEmpty());
+        Assert.assertNotNull(dashboardMsg.getAssignedCustomers());
+        Assert.assertTrue(dashboardMsg.getAssignedCustomers().isEmpty());
 
         // delete dashboard #2 - messages expected
         edgeImitator.expectMessageAmount(1);
@@ -169,15 +178,18 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendDashboardToCloud() throws Exception {
-        UUID uuid = Uuids.timeBased();
+        Customer customer = new Customer();
+        customer.setTitle("Edge Customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        Dashboard dashboard = buildDashboardForUplinkMsg(savedCustomer);
 
         // create dashboard on edge
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         DashboardUpdateMsg.Builder dashboardUpdateMsgBuilder = DashboardUpdateMsg.newBuilder();
-        dashboardUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
-        dashboardUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
-        dashboardUpdateMsgBuilder.setTitle("Edge Test Dashboard");
-        dashboardUpdateMsgBuilder.setConfiguration("");
+        dashboardUpdateMsgBuilder.setIdMSB(dashboard.getUuidId().getMostSignificantBits());
+        dashboardUpdateMsgBuilder.setIdLSB(dashboard.getUuidId().getLeastSignificantBits());
+        dashboardUpdateMsgBuilder.setEntity(JacksonUtil.toString(dashboard));
         dashboardUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
         testAutoGeneratedCodeByProtobuf(dashboardUpdateMsgBuilder);
         uplinkMsgBuilder.addDashboardUpdateMsg(dashboardUpdateMsgBuilder.build());
@@ -189,31 +201,29 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
 
         Assert.assertTrue(edgeImitator.waitForResponses());
 
-        Dashboard dashboard = doGet("/api/dashboard/" + uuid, Dashboard.class);
-        Assert.assertNotNull(dashboard);
-        Assert.assertEquals("Edge Test Dashboard", dashboard.getName());
+        Dashboard foundDashboard = doGet("/api/dashboard/" + dashboard.getUuidId(), Dashboard.class);
+        Assert.assertNotNull(foundDashboard);
+        Assert.assertEquals(DASHBOARD_TITLE, foundDashboard.getName());
 
-        // update dashboard on edge
-        uplinkMsgBuilder = UplinkMsg.newBuilder();
-        dashboardUpdateMsgBuilder = DashboardUpdateMsg.newBuilder();
-        dashboardUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
-        dashboardUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
-        dashboardUpdateMsgBuilder.setTitle("Edge Test Dashboard Updated");
-        dashboardUpdateMsgBuilder.setConfiguration("");
+        PageData<DashboardInfo> pageData = doGetTypedWithPageLink("/api/customer/" + savedCustomer.getId().toString() + "/dashboards?",
+                new TypeReference<>() {}, new PageLink(100));
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(DASHBOARD_TITLE, pageData.getData().get(0).getTitle());
+
+        dashboard.setTitle(DASHBOARD_TITLE + " Updated");
+        dashboard.setAssignedCustomers(null);
+        dashboardUpdateMsgBuilder.setEntity(JacksonUtil.toString(dashboard));
         dashboardUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE);
-        testAutoGeneratedCodeByProtobuf(dashboardUpdateMsgBuilder);
+        uplinkMsgBuilder = UplinkMsg.newBuilder();
         uplinkMsgBuilder.addDashboardUpdateMsg(dashboardUpdateMsgBuilder.build());
-
-        testAutoGeneratedCodeByProtobuf(uplinkMsgBuilder);
 
         edgeImitator.expectResponsesAmount(1);
         edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
 
         Assert.assertTrue(edgeImitator.waitForResponses());
 
-        dashboard = doGet("/api/dashboard/" + uuid, Dashboard.class);
-        Assert.assertNotNull(dashboard);
-        Assert.assertEquals("Edge Test Dashboard Updated", dashboard.getName());
+        foundDashboard = doGet("/api/dashboard/" + dashboard.getUuidId(), Dashboard.class);
+        Assert.assertEquals(DASHBOARD_TITLE + " Updated", foundDashboard.getName());
     }
 
     @Test
@@ -258,6 +268,15 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedDashboard.getUuidId().getMostSignificantBits(), entityViewUpdateMsg.getIdMSB());
         Assert.assertEquals(savedDashboard.getUuidId().getLeastSignificantBits(), entityViewUpdateMsg.getIdLSB());
         return savedDashboard;
+    }
+
+    private Dashboard buildDashboardForUplinkMsg(Customer savedCustomer) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setId(new DashboardId(UUID.randomUUID()));
+        dashboard.setTenantId(tenantId);
+        dashboard.setTitle(DASHBOARD_TITLE);
+        dashboard.setAssignedCustomers(Sets.newHashSet(new ShortCustomerInfo(savedCustomer.getId(), savedCustomer.getTitle(), savedCustomer.isPublic())));
+        return dashboard;
     }
 
 }

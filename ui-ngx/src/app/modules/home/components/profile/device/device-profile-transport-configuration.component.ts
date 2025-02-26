@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,38 +14,45 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validator
+} from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceProfileTransportConfiguration, DeviceTransportType } from '@shared/models/device.models';
 import { deepClone } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-device-profile-transport-configuration',
   templateUrl: './device-profile-transport-configuration.component.html',
   styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
+      multi: true,
+    }
+  ]
 })
-export class DeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
+export class DeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 
   deviceTransportType = DeviceTransportType;
 
   deviceProfileTransportConfigurationFormGroup: UntypedFormGroup;
-
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
 
   @Input()
   disabled: boolean;
@@ -58,7 +65,8 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -70,9 +78,11 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
 
   ngOnInit() {
     this.deviceProfileTransportConfigurationFormGroup = this.fb.group({
-      configuration: [null, Validators.required]
+      configuration: [null]
     });
-    this.deviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.deviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }
@@ -98,11 +108,16 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
   }
 
   private updateModel() {
-    let configuration: DeviceProfileTransportConfiguration = null;
-    if (this.deviceProfileTransportConfigurationFormGroup.valid) {
-      configuration = this.deviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
-      configuration.type = this.transportType;
-    }
+    const configuration = this.deviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
+    configuration.type = this.transportType;
     this.propagateChange(configuration);
+  }
+
+  public validate(c: UntypedFormControl): ValidationErrors | null {
+    return (this.deviceProfileTransportConfigurationFormGroup.valid) ? null : {
+      configuration: {
+        valid: false,
+      },
+    };
   }
 }

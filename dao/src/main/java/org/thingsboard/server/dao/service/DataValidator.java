@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.EntitiesLimitException;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 
 import java.util.HashSet;
@@ -41,7 +43,10 @@ public abstract class DataValidator<D extends BaseData<?>> {
             Pattern.compile("^[A-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern QUEUE_PATTERN = Pattern.compile("^[a-zA-Z0-9_.\\-]+$");
-
+    private static final String DOMAIN_REGEX = "^(((?!-))(xn--|_)?[a-z0-9-]{0,61}[a-z0-9]{1,1}\\.)*(xn--)?([a-z0-9][a-z0-9\\-]{0,60}|[a-z0-9-]{1,30}\\.[a-z]{2,})$";
+    private static final Pattern DOMAIN_PATTERN = Pattern.compile(DOMAIN_REGEX);
+    private static final String LOCALHOST_REGEX = "^localhost(:\\d{1,5})?$";
+    private static final Pattern LOCALHOST_PATTERN = Pattern.compile(LOCALHOST_REGEX);
     private static final String NAME = "name";
     private static final String TOPIC = "topic";
 
@@ -117,7 +122,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     protected void validateNumberOfEntitiesPerTenant(TenantId tenantId,
                                                      EntityType entityType) {
         if (!apiLimitService.checkEntitiesLimit(tenantId, entityType)) {
-            throw new DataValidationException(entityType.getNormalName() + "s limit reached");
+            throw new EntitiesLimitException(tenantId, entityType);
         }
     }
 
@@ -128,8 +133,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
                                                    EntityType entityType) {
         if (maxSumDataSize > 0) {
             if (dataDao.sumDataSizeByTenantId(tenantId) + currentDataSize > maxSumDataSize) {
-                throw new DataValidationException(String.format("Failed to create the %s, files size limit is exhausted %d bytes!",
-                        entityType.name().toLowerCase().replaceAll("_", " "), maxSumDataSize));
+                throw new DataValidationException(String.format("%ss total size exceeds the maximum of " + FileUtils.byteCountToDisplaySize(maxSumDataSize), entityType.getNormalName()));
             }
         }
     }
@@ -161,13 +165,23 @@ public abstract class DataValidator<D extends BaseData<?>> {
     }
 
     static void validateQueueNameOrTopic(String value, String fieldName) {
-        if (StringUtils.isEmpty(value) || value.trim().length() == 0 ) {
+        if (StringUtils.isEmpty(value) || value.trim().length() == 0) {
             throw new DataValidationException(String.format("Queue %s should be specified!", fieldName));
         }
         if (!QUEUE_PATTERN.matcher(value).matches()) {
             throw new DataValidationException(
                     String.format("Queue %s contains a character other than ASCII alphanumerics, '.', '_' and '-'!", fieldName));
         }
+    }
+
+    public static boolean isValidDomain(String domainName) {
+        if (domainName == null) {
+            return false;
+        }
+        if (LOCALHOST_PATTERN.matcher(domainName).matches()) {
+            return true;
+        }
+        return DOMAIN_PATTERN.matcher(domainName).matches();
     }
 
 }

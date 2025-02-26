@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.user.UserService;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -127,7 +128,7 @@ public class TbGetCustomerDetailsNodeTest {
         var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
 
         // THEN
-        assertThat(exception.getMessage()).isEqualTo("FetchTo cannot be null!");
+        assertThat(exception.getMessage()).isEqualTo("FetchTo option can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
         verify(ctxMock, never()).tellSuccess(any());
     }
 
@@ -158,7 +159,12 @@ public class TbGetCustomerDetailsNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = TbMsgSource.DATA;
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
+        msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_ARRAY)
+                .build();
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
@@ -457,7 +463,12 @@ public class TbGetCustomerDetailsNodeTest {
 
         var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
 
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, msgMetaData, msgData);
+        msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(originator)
+                .copyMetaData(msgMetaData)
+                .data(msgData)
+                .build();
     }
 
     private void mockFindCustomer() {

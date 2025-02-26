@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
 ///
 
 import { PageComponent } from '@shared/components/page.component';
-import { Directive, Injector, OnDestroy, OnInit, TemplateRef } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { IDynamicWidgetComponent, WidgetContext } from '@home/models/widget-component.models';
+import { Directive, inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import {
+  IDynamicWidgetComponent,
+  widgetContextToken,
+  widgetErrorMessagesToken,
+  widgetTitlePanelToken
+} from '@home/models/widget-component.models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import {
@@ -45,9 +48,10 @@ import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { TbInject } from '@shared/decorators/tb-inject';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import { UserSettingsService } from '@core/http/user-settings.service';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { UtilsService } from '@core/services/utils.service';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -56,42 +60,45 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
   executingRpcRequest: boolean;
   rpcEnabled: boolean;
   rpcErrorText: string;
-  rpcRejection: HttpErrorResponse;
+  rpcRejection: HttpErrorResponse | Error;
 
   [key: string]: any;
 
   validators = Validators;
 
-  constructor(@TbInject(RafService) public raf: RafService,
-              @TbInject(Store) protected store: Store<AppState>,
-              @TbInject(UntypedFormBuilder) public fb: UntypedFormBuilder,
-              @TbInject(Injector) public readonly $injector: Injector,
-              @TbInject('widgetContext') public readonly ctx: WidgetContext,
-              @TbInject('errorMessages') public readonly errorMessages: string[],
-              @TbInject('widgetTitlePanel') public readonly widgetTitlePanel: TemplateRef<any>) {
-    super(store);
-    this.ctx.$injector = $injector;
-    this.ctx.deviceService = $injector.get(DeviceService);
-    this.ctx.assetService = $injector.get(AssetService);
-    this.ctx.entityViewService = $injector.get(EntityViewService);
-    this.ctx.customerService = $injector.get(CustomerService);
-    this.ctx.dashboardService = $injector.get(DashboardService);
-    this.ctx.userService = $injector.get(UserService);
-    this.ctx.attributeService = $injector.get(AttributeService);
-    this.ctx.entityRelationService = $injector.get(EntityRelationService);
-    this.ctx.entityService = $injector.get(EntityService);
-    this.ctx.authService = $injector.get(AuthService);
-    this.ctx.dialogs = $injector.get(DialogService);
-    this.ctx.customDialog = $injector.get(CustomDialogService);
-    this.ctx.resourceService = $injector.get(ResourceService);
-    this.ctx.userSettingsService = $injector.get(UserSettingsService);
-    this.ctx.telemetryWsService = $injector.get(TelemetryWebsocketService);
-    this.ctx.date = $injector.get(DatePipe);
-    this.ctx.milliSecondsToTimeString = $injector.get(MillisecondsToTimeStringPipe);
-    this.ctx.translate = $injector.get(TranslateService);
-    this.ctx.http = $injector.get(HttpClient);
-    this.ctx.sanitizer = $injector.get(DomSanitizer);
-    this.ctx.router = $injector.get(Router);
+  public raf = inject(RafService);
+  public fb = inject(UntypedFormBuilder);
+  public readonly $injector = inject(Injector);
+  public readonly ctx = inject(widgetContextToken);
+  public readonly errorMessages = inject(widgetErrorMessagesToken);
+  public readonly widgetTitlePanel = inject(widgetTitlePanelToken);
+
+  constructor() {
+    super();
+    this.ctx.$injector = this.$injector;
+    this.ctx.deviceService = this.$injector.get(DeviceService);
+    this.ctx.assetService = this.$injector.get(AssetService);
+    this.ctx.entityViewService = this.$injector.get(EntityViewService);
+    this.ctx.customerService = this.$injector.get(CustomerService);
+    this.ctx.dashboardService = this.$injector.get(DashboardService);
+    this.ctx.userService = this.$injector.get(UserService);
+    this.ctx.attributeService = this.$injector.get(AttributeService);
+    this.ctx.entityRelationService = this.$injector.get(EntityRelationService);
+    this.ctx.entityService = this.$injector.get(EntityService);
+    this.ctx.authService = this.$injector.get(AuthService);
+    this.ctx.dialogs = this.$injector.get(DialogService);
+    this.ctx.customDialog = this.$injector.get(CustomDialogService);
+    this.ctx.resourceService = this.$injector.get(ResourceService);
+    this.ctx.userSettingsService = this.$injector.get(UserSettingsService);
+    this.ctx.utilsService = this.$injector.get(UtilsService);
+    this.ctx.telemetryWsService = this.$injector.get(TelemetryWebsocketService);
+    this.ctx.date = this.$injector.get(DatePipe);
+    this.ctx.imagePipe = this.$injector.get(ImagePipe);
+    this.ctx.milliSecondsToTimeString = this.$injector.get(MillisecondsToTimeStringPipe);
+    this.ctx.translate = this.$injector.get(TranslateService);
+    this.ctx.http = this.$injector.get(HttpClient);
+    this.ctx.sanitizer = this.$injector.get(DomSanitizer);
+    this.ctx.router = this.$injector.get(Router);
 
     this.ctx.$scope = this;
     if (this.ctx.defaultSubscription) {

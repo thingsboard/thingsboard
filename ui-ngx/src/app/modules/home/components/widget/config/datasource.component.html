@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <section fxLayout="column" [ngSwitch]="datasourceFormGroup.get('type').value">
+  <section class="flex flex-col" [ngSwitch]="datasourceFormGroup.get('type').value">
     <ng-template [ngSwitchCase]="datasourceType.function">
-      <mat-form-field fxFlex>
+      <mat-form-field *ngIf="!hideDatasourceLabel" class="flex-1">
         <mat-label translate>datasource.label</mat-label>
         <input matInput
                formControlName="name">
@@ -42,60 +42,63 @@
                               style="height: 56px; margin-bottom: 22px;"
                               formControlName="alarmFilterConfig"></tb-alarm-filter-config>
       <tb-entity-autocomplete *ngIf="datasourceFormGroup.get('type').value === datasourceType.device"
-                              required
+                              [required]="!datasourcesOptional"
                               [entityType]="entityType.DEVICE"
                               formControlName="deviceId">
       </tb-entity-autocomplete>
       <tb-entity-alias-select
         *ngIf="datasourceFormGroup.get('type').value !== datasourceType.device && datasourceFormGroup.get('type').value !== datasourceType.alarmCount"
         [showLabel]="true"
-        [tbRequired]="true"
+        [tbRequired]="!datasourcesOptional"
         [aliasController]="aliasController"
         formControlName="entityAliasId"
         [callbacks]="entityAliasSelectCallbacks">
       </tb-entity-alias-select>
-      <mat-form-field *ngIf="[datasourceType.entityCount, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
-                      fxFlex>
+      <mat-form-field *ngIf="!hideDatasourceLabel && [datasourceType.entityCount, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
+                      class="flex-1">
         <input matInput
                placeholder="{{ 'datasource.label' | translate }}"
                formControlName="name">
       </mat-form-field>
     </ng-template>
   </section>
-  <section *ngIf="!hideDataKeys" fxLayout="column" fxLayoutAlign="stretch" fxFlex>
-    <tb-data-keys class="tb-data-keys" fxFlex
+  <section *ngIf="!hideDataKeys" class="flex flex-1 flex-col items-stretch justify-start">
+    <tb-data-keys class="tb-data-keys flex-1"
                   [widgetType]="widgetType"
                   [datasourceType]="datasourceFormGroup.get('type').value"
                   [maxDataKeys]="maxDataKeys"
                   [optDataKeys]="isDataKeysOptional(datasourceFormGroup.get('type').value)"
                   [simpleDataKeysLabel]="!hasAdditionalLatestDataKeys"
                   [aliasController]="aliasController"
-                  [datakeySettingsSchema]="dataKeySettingsSchema"
+                  [dataKeySettingsForm]="dataKeySettingsForm"
                   [dataKeySettingsDirective]="dataKeySettingsDirective"
+                  [datakeySettingsFunction]="dataKeySettingsFunction"
                   [dashboard]="dashboard"
                   [widget]="widget"
-                  [callbacks]="dataKeysCallbacks"
+                  [callbacks]="callbacks"
                   [entityAliasId]="datasourceFormGroup.get('entityAliasId').value"
                   [deviceId]="datasourceFormGroup.get('deviceId').value"
                   formControlName="dataKeys">
     </tb-data-keys>
-    <tb-data-keys *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys" fxFlex
+    <tb-data-keys *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys flex-1"
                   [widgetType]="widgetTypes.latest"
                   [datasourceType]="datasourceFormGroup.get('type').value"
+                  latestDataKeys
                   [optDataKeys]="true"
                   [aliasController]="aliasController"
-                  [datakeySettingsSchema]="latestDataKeySettingsSchema"
+                  [dataKeySettingsForm]="latestDataKeySettingsForm"
                   [dataKeySettingsDirective]="latestDataKeySettingsDirective"
+                  [datakeySettingsFunction]="dataKeySettingsFunction"
                   [dashboard]="dashboard"
                   [widget]="widget"
-                  [callbacks]="dataKeysCallbacks"
+                  [callbacks]="callbacks"
                   [entityAliasId]="datasourceFormGroup.get('entityAliasId').value"
                   [deviceId]="datasourceFormGroup.get('deviceId').value"
                   formControlName="latestDataKeys">
     </tb-data-keys>
   </section>
   <tb-filter-select
-    *ngIf="!basicMode && ![datasourceType.function, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
+    *ngIf="(!basicMode || displayDatasourceFilterForBasicMode) && ![datasourceType.function, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
     [showLabel]="true"
     [aliasController]="aliasController"
     formControlName="filterId"

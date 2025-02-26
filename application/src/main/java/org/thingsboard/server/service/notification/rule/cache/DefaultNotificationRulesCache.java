@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.service.notification.rule.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +30,6 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 
-import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -71,7 +71,14 @@ public class DefaultNotificationRulesCache implements NotificationRulesCache {
                 if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                     lock.writeLock().lock(); // locking in case rules for tenant are fetched while evicting
                     try {
-                        evict(event.getTenantId());
+                        for (var triggerType : NotificationRuleTriggerType.values()) {
+                            String key = key(event.getTenantId(), triggerType);
+                            /*
+                            * temporarily putting empty value because right after tenant deletion
+                            * the rules are still in the db, we don't want them to be fetched
+                            * */
+                            cache.put(key, Collections.emptyList());
+                        }
                     } finally {
                         lock.writeLock().unlock();
                     }

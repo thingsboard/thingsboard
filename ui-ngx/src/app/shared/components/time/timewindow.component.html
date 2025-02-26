@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -44,12 +44,13 @@
          [class]="{'no-padding': noPadding}"
          matTooltip="{{ 'timewindow.edit' | translate }}"
          [matTooltipPosition]="tooltipPosition"
+         [matTooltipDisabled]="timewindowDisabled"
          [style]="timewindowComponentStyle"
          (click)="toggleTimewindow($event)">
   <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'left'"
            [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>
-  <div class="tb-timewindow-label" [fxHide]="hideLabel">
-    {{innerValue?.displayValue}} <span [fxShow]="innerValue?.displayTimezoneAbbr !== ''">| <span class="timezone-abbr">{{innerValue?.displayTimezoneAbbr}}</span></span>
+  <div class="tb-timewindow-label" [class.!hidden]="hideLabel">
+    {{innerValue?.displayValue}} <span [class.!hidden]="!(innerValue?.displayTimezoneAbbr !== '')">| <span class="timezone-abbr">{{innerValue?.displayTimezoneAbbr}}</span></span>
   </div>
   <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'right'"
            [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>

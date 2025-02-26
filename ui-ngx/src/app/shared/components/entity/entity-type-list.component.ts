@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -177,7 +177,7 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
           }
         }),
         filter((value) => typeof value === 'string'),
-        map((value) => value ? (typeof value === 'string' ? value : value.name) : ''),
+        map((value) => value ? value : ''),
         mergeMap(name => this.fetchEntityTypes(name) ),
         share()
       );

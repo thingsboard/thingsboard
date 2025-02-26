@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="input-wrapper" [ngClass]="{'focus': focus}" fxLayoutAlign="start center" fxLayoutGap="16px">
+<div class="input-wrapper flex items-center justify-start gap-4" [class.focus]="focus">
   <mat-icon>search</mat-icon>
   <input type="text"
          [(ngModel)]="searchText"

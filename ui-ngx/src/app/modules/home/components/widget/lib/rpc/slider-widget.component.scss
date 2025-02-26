@@ -1,0 +1,142 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+$mainColor: var(--tb-slider-main-color, #5469FF);
+$hoverRippleColor: var(--tb-slider-hover-ripple-color, rgba(84, 105, 255, 0.05));
+$focusRippleColor: var(--tb-slider-focus-ripple-color, rgba(84, 105, 255, 0.2));
+$backgroundColor: var(--tb-slider-background-color, #CCD2FF);
+$tickMarksColor: var(--tb-slider-tick-marks-color, #5469FF);
+
+$mainColorDisabled: var(--tb-slider-main-color-disabled, #9BA2B0);
+$backgroundColorDisabled: var(--tb-slider-background-color-disabled, #D5D7E5);
+
+.tb-slider-panel {
+
+  .mat-mdc-slider.mat-primary.tb-slider {
+    --mdc-slider-active-track-color: #{$mainColor};
+    --mdc-slider-handle-color: #{$mainColor};
+    --mdc-slider-focus-handle-color: #{$mainColor};
+    --mdc-slider-hover-handle-color: #{$mainColor};
+
+    --mdc-slider-with-tick-marks-inactive-container-color: #{$tickMarksColor};
+    --mat-mdc-slider-ripple-color: #{$mainColor};
+
+    --mat-mdc-slider-hover-ripple-color: #{$hoverRippleColor};
+    --mat-mdc-slider-focus-ripple-color: #{$focusRippleColor};
+
+    --mdc-slider-inactive-track-color: #{$backgroundColor};
+
+    --mdc-slider-disabled-active-track-color: #{$mainColorDisabled};
+    --mdc-slider-disabled-handle-color: #{$mainColorDisabled};
+
+    --mdc-slider-disabled-inactive-track-color: #{$backgroundColorDisabled};
+    --mdc-slider-with-tick-marks-disabled-container-color: #{$mainColorDisabled};
+
+    --mdc-slider-handle-width: 16px;
+    --mdc-slider-handle-height: 16px;
+  }
+
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 24px 24px;
+  gap: 8px;
+  > div:not(.tb-slider-overlay), > tb-icon {
+    z-index: 1;
+  }
+  .tb-slider-overlay {
+    position: absolute;
+    inset: 12px;
+  }
+  div.tb-slider-title-panel {
+    z-index: 2;
+  }
+  &.no-pointer-events {
+    .mat-mdc-slider.tb-slider {
+      .mdc-slider__input {
+        pointer-events: none;
+      }
+    }
+  }
+  .tb-slider-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    .tb-slider-value-container {
+      min-height: 0;
+    }
+    .tb-slider-value {
+      white-space: nowrap;
+    }
+    .tb-slider-container {
+      align-self: stretch;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 8px;
+      &.tb-min-height {
+        height: 6px;
+      }
+      .tb-slider-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        .mat-mdc-slider.tb-slider {
+          margin: 0;
+          height: 6px;
+          min-height: 6px;
+          min-width: 0;
+          &.mdc-slider--disabled {
+            opacity: 1;
+          }
+          .mdc-slider__track--inactive {
+            opacity: 1;
+          }
+          .mdc-slider__tick-marks {
+            .mdc-slider__tick-mark--active {
+              display: none;
+            }
+            .mdc-slider__tick-mark--inactive {
+              opacity: 1;
+            }
+          }
+          .mdc-slider__thumb.mat-mdc-slider-visual-thumb {
+            top: -21px;
+            .mat-ripple {
+              overflow: visible;
+            }
+          }
+          .mdc-slider__value-indicator-text {
+            white-space: nowrap;
+          }
+        }
+        .tb-slider-ticks {
+          display: flex;
+          flex-direction: row;
+          align-items: flex-start;
+          justify-content: space-between;
+        }
+      }
+    }
+  }
+}

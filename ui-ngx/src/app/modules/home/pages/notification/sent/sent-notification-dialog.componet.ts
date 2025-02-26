@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import {
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
@@ -47,6 +46,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
 
 export interface RequestNotificationDialogData {
   request?: NotificationRequest;
@@ -63,7 +63,6 @@ export class SentNotificationDialogComponent extends
 
   @ViewChild('createNotification', {static: true}) createNotification: MatStepper;
   stepperOrientation: Observable<StepperOrientation>;
-  stepperLabelPosition: Observable<'bottom' | 'end'>;
 
   isAdd = true;
   entityType = EntityType;
@@ -77,6 +76,30 @@ export class SentNotificationDialogComponent extends
   dialogTitle = 'notification.notify-again';
 
   showRefresh = false;
+
+  tinyMceOptions: Record<string, any> = {
+    base_url: '/assets/tinymce',
+    suffix: '.min',
+    plugins: ['autoresize'],
+    menubar: false,
+    toolbar: false,
+    statusbar: false,
+    resize: false,
+    readonly: true,
+    height: 400,
+    autofocus: false,
+    branding: false,
+    promotion: false,
+    setup: (ed) => {
+      ed.on('PreInit', () => {
+        const document = $(ed.iframeElement.contentDocument);
+        const body = $('#tinymce', document);
+        body.attr({contenteditable: false});
+        body.css('pointerEvents', 'none');
+        body.css('userSelect', 'none');
+      })
+    }
+  };
 
   private authUser: AuthUser = getCurrentAuthUser(this.store);
 
@@ -101,9 +124,6 @@ export class SentNotificationDialogComponent extends
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
-
-    this.stepperLabelPosition = this.breakpointObserver.observe(MediaBreakpoints['gt-md'])
-      .pipe(map(({matches}) => matches ? 'end' : 'bottom'));
 
     this.notificationRequestForm = this.fb.group({
       useTemplate: [false],
@@ -151,16 +171,16 @@ export class SentNotificationDialogComponent extends
       this.notificationRequestForm.reset({}, {emitEvent: false});
       this.notificationRequestForm.patchValue(this.data.request, {emitEvent: false});
       this.notificationRequestForm.get('template.name').setValue(guid());
+      this.notificationRequestForm.get('template.notificationType').setValue(NotificationType.GENERAL);
       let useTemplate = true;
       if (isDefinedAndNotNull(this.data.request.template)) {
         useTemplate = false;
-        // eslint-disable-next-line guard-for-in
-        for (const method in this.data.request.template.configuration.deliveryMethodsTemplates) {
-          this.deliveryMethodFormsMap.get(NotificationDeliveryMethod[method])
-            .patchValue(this.data.request.template.configuration.deliveryMethodsTemplates[method]);
-        }
+        this.notificationTemplateConfigurationForm.patchValue({
+          deliveryMethodsTemplates: this.data.request.template.configuration.deliveryMethodsTemplates
+        }, {emitEvent: false});
       }
       this.notificationRequestForm.get('useTemplate').setValue(useTemplate, {onlySelf : true});
+      this.deliveryConfiguration = this.templateNotificationForm.get('configuration.deliveryMethodsTemplates').value;
     }
     this.refreshAllowDeliveryMethod();
   }
@@ -182,6 +202,9 @@ export class SentNotificationDialogComponent extends
 
   changeStep($event: StepperSelectionEvent) {
     this.selectedIndex = $event.selectedIndex;
+    if ($event.previouslySelectedIndex > $event.selectedIndex) {
+      $event.previouslySelectedStep.interacted = false;
+    }
     if (this.selectedIndex === this.maxStepperIndex) {
       this.getPreview();
     }
@@ -308,13 +331,16 @@ export class SentNotificationDialogComponent extends
   }
 
   allowConfigureDeliveryMethod(deliveryMethod: NotificationDeliveryMethod): boolean {
+    const tenantAllowConfigureDeliveryMethod = new Set([
+      NotificationDeliveryMethod.SLACK
+    ]);
     if (deliveryMethod === NotificationDeliveryMethod.WEB) {
       return false;
     }
     if(this.isSysAdmin()) {
       return true;
     } else if (this.isTenantAdmin()) {
-      return deliveryMethod === NotificationDeliveryMethod.SLACK;
+      return tenantAllowConfigureDeliveryMethod.has(deliveryMethod);
     }
     return false;
   }
@@ -329,6 +355,7 @@ export class SentNotificationDialogComponent extends
         return '/settings/outgoing-mail';
       case NotificationDeliveryMethod.SMS:
       case NotificationDeliveryMethod.SLACK:
+      case NotificationDeliveryMethod.MOBILE_APP:
         return '/settings/notifications';
     }
   }

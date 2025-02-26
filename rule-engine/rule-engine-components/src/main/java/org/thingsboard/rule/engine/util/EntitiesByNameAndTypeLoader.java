@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class EntitiesByNameAndTypeLoader {
                 throw new IllegalStateException("Unexpected entity type " + entityType.name());
         }
         if (targetEntity == null) {
-            throw new IllegalStateException("Failed to found " + entityType.name() + "  entity by name: '" + entityName + "'!");
+            throw new IllegalStateException("Failed to find " + entityType.getNormalName().toLowerCase() + " with name '" + entityName + "'!");
         }
         return targetEntity.getId();
     }

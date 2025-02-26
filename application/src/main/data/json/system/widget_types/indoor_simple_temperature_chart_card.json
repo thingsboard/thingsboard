@@ -1,0 +1,43 @@
+{
+  "fqn": "indoor_simple_temperature_chart_card",
+  "name": "Indoor simple temperature chart card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/indoor_simple_temperature_chart_card_system_widget_image.png",
+  "description": "Displays historical indoor temperature values as a simplified chart. Optionally may display the corresponding latest indoor temperature value.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 4.5,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-value-chart-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-chart-card-widget>\n",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueChartCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onDataUpdated();\n};\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onLatestDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.valueChartCardWidget.onEditModeChanged();\n}\n\nself.onDestroy = function() {\n    self.ctx.$scope.valueChartCardWidget.onDestroy();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '300px',\n        previewHeight: '150px',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        defaultDataKeysFunction: function() {\n            return [\n                 { name: 'temperature', label: 'Temperature', type: 'timeseries', color: 'rgba(0, 0, 0, 0.87)'}\n            ];\n        },\n        defaultLatestDataKeysFunction: function(configComponent) {\n            return [{ name: 'temperature', label: 'Latest', type: 'timeseries'}];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-value-chart-card-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-chart-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temperature\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 15) {\\n\\tvalue = 15;\\n} else if (value > 30) {\\n\\tvalue = 30;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]},\"latestDataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Latest\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 15) {\\n\\tvalue = 15;\\n} else if (value > 30) {\\n\\tvalue = 30;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":null,\"padding\":\"0\",\"settings\":{\"layout\":\"left\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":28,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":18,\"color\":\"#234CC7\"},{\"from\":18,\"to\":24,\"color\":\"#3FA71A\"},{\"from\":24,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"Temperature\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":true,\"titleIcon\":\"thermostat\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"iconSize\":\"18px\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"useDashboardTimewindow\":true,\"decimals\":0,\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"borderRadius\":null,\"units\":\"°C\",\"displayTimewindow\":true,\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":1,\"history\":{\"historyType\":2,\"timewindowMs\":60000,\"interval\":43200000,\"fixedTimewindow\":{\"startTimeMs\":1697382151041,\"endTimeMs\":1697468551041},\"quickInterval\":\"CURRENT_MONTH_SO_FAR\"},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true}}"
+  },
+  "tags": [
+    "temperature",
+    "environment",
+    "indoor"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/indoor_simple_temperature_chart_card_system_widget_image.png",
+      "title": "\"Indoor simple temperature chart card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "indoor_simple_temperature_chart_card_system_widget_image.png",
+      "publicResourceKey": "3NG02f0El5rLtH0a4zhnR0PqslC6k7Xf",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAh1BMVEUAAADg4ODf39/g4ODg4OD////g4OAjTMchISHHx8fj4+Px8fGQkJA9PT10dHSsrKxYWFgvLy8+Ys7I0vE8PDyRpePk6fjV1dVaedW6urqsvOqenp51j9yCgoLy9PtKSkqrq6tmZmafsec/Ys4wV8tLS0uDmt9ohNhMbtLW3vQxV8rW3fWDm+D/9RHFAAAABXRSTlMA7yC/r1EOHTEAAASnSURBVHja7M9JAcAgDAAwytEP/v0OGdAlDtIAAAAAAAB+p4/I181+HrHX83b0Ngs8zmS0XCVElUiKXEbkNh979rIiNwxEYXh14FSVrmAwRhi3F/P+rxi5e5huj8cQCHHUQf9GRWn1LQwGdUhrdUhrdUhrdUhrdUhrdUhrnUJ0jninTiEpDC8Sc/cmNNspxN8W9wIJYWEIN/x24hVXdg6ZksNrjndRnBQQlah1BEy2o1YXgI4isFhHK5zMBFCByTgBEgVnXQ/RvAzeQF+PJTFB6BMDsObEgpC5qk8rZVy4jJGA84jMC1xOw4xn10HC8gMkJSA70GHihEIIRzjaRIXzCINidMBHgFDxBVEob/fVs4sglslwhHifUg5ghFAQN4hCKS6n5ImQAJTV528QQJjSBwW7roAE1uQIWUVEv0HGCqHU7pBIsfQDJIqI4dlFEG6FA2T2irKHRITBhAVS7hCXVX34vB9tfUAszzCHXZdAMmvzAWIrOewhnrlst8wPiA7MS4INjLaNDwimgfwXH3shmRXHbL8Uqtpjb/hM7et4Lvdz7SIIbmFWnLSHoIk2yJ+krpFXif//7/fd6pDW6pDW6pDW6pDW6pDW6pC/lpXV+xTk3SG/2LG35VRhKADDV2uyEkhIEMJBoNbiqXu///PtoBjKFqhDvJAZvpk62OFi/SWhylYhF0KaV7boEIGSQmMX4W7BIT760GIfmCw2JDEdlhfx14RsYgDQcSeHm/yU5tCq9qc0PeUaXkJG8APFrXtIFX+RsKkhnRSuYmL8hat9Ta7C/WsuyK7fpTy3kGqfEqMJuXy1zMQFNDQJK30ml3tTfb6e/IoSEfUHp+i7hZjJ2pBOQYiGxqaZOSc5mNcmoDLhJui7ghmokNI+dmIPc0vlOYakcd4P0XZlXcipydoAQEhIbNNjmMZo8vAriUpKbOdnPGJg2TSXkI02P/2QPSG5zQy/yLndPxquTPYZpvgKEXn/IZjH1baZVuAhY2yrlC21SkzcNvtDSNi9q4q6Pla3uBRudFEUMM47oAxoJpCz3pQU7v/8DDkwsxdx9tKQ3F6Q/rY5wlNEeztK1AGs4Me6oUEwPHCifpYw55DQLiJremOM3H0yDOxQPIInJBEKCgYtOSJykbmEmDcFzA8R3ciSe3BzUAyewYRC5Fyhkn7gf0bIA292SEHIZX4IQwF39H5c4g6e5GWlEOV9/J1ELti8ED18TyqeDAmQgeUjD2iylejDXFQglrNCCrvVe47dgqu01jCGy94YH2gcMnDAxHZOiK7tYU9uTunO/oYR2f+LiNGMgas5Ibn9y/dVNSEbe81OMOIzAnfuIfbeO7y2Qt1uIpJPfMdw5R5iL8igyiSGcZ4fa0JSGMZ45IGDF4akdgE90CFppRUMolwxcOUeYg/G6Di8ZuxhkFdilMCEd3qupTd/qvGPvL4Hw94vZBTlKBmMWkoIkxhRmLCQkK1SPkxaSMin8GDaQkJ+s4asIUuxhrybNeTdrCHvZg15N2vIv3bu3AiAEAaCoHhOzuWfL0HgCOjOYP2tqcaQajLad4WMUeTcvuef90SQos88XRs9AAAAAAAAXrMA+iCoTuC9Gd4AAAAASUVORK5CYII=",
+      "public": true
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,23 +21,33 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class AdminSettingsEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertAdminSettingsEventToDownlink(EdgeEvent edgeEvent) {
-        AdminSettings adminSettings = JacksonUtil.OBJECT_MAPPER.convertValue(edgeEvent.getBody(), AdminSettings.class);
-        AdminSettingsUpdateMsg adminSettingsUpdateMsg = adminSettingsMsgConstructor.constructAdminSettingsUpdateMsg(adminSettings);
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
+        AdminSettings adminSettings = JacksonUtil.convertValue(edgeEvent.getBody(), AdminSettings.class);
+        if (adminSettings == null) {
+            return null;
+        }
+        AdminSettingsUpdateMsg msg = AdminSettingsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(adminSettings)).build();
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                .addAdminSettingsUpdateMsg(adminSettingsUpdateMsg)
+                .addAdminSettingsUpdateMsg(msg)
                 .build();
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.ADMIN_SETTINGS;
     }
 
 }

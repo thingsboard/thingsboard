@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,24 +22,32 @@ import {
   Input,
   OnDestroy,
   OnInit,
+  Renderer2,
   ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import { ControlValueAccessor, UntypedFormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
+import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, UntypedFormControl, Validator } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { getAce, Range } from '@shared/models/ace/ace.models';
+import { AceHighlightRules, getAce, Range } from '@shared/models/ace/ace.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
-import { guid, isUndefined } from '@app/core/utils';
+import { deepClone, guid, isUndefined, isUndefinedOrNull } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { beautifyJs } from '@shared/models/beautify.models';
-import { ScriptLanguage } from "@shared/models/rule-node.models";
+import { ScriptLanguage } from '@shared/models/rule-node.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { compileTbFunction, loadModulesCompleter, TbFunction } from '@shared/models/js-function.models';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
+import { HttpClient } from '@angular/common/http';
+import { map, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-js-func',
@@ -65,11 +73,14 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   javascriptEditorElmRef: ElementRef;
 
   private jsEditor: Ace.Editor;
+  private initialCompleters: Ace.Completer[];
   private editorsResizeCaf: CancelAnimationFrame;
   private editorResize$: ResizeObserver;
   private ignoreChange = false;
 
   toastTargetId = `jsFuncEditor-${guid()}`;
+
+  @Input() label: string;
 
   @Input() functionTitle: string;
 
@@ -89,13 +100,29 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   @Input() editorCompleter: TbEditorCompleter;
 
+  @Input() highlightRules: AceHighlightRules;
+
   @Input() globalVariables: Array<string>;
 
-  @Input() disableUndefinedCheck = false;
+  @Input()
+  @coerceBoolean()
+  disableUndefinedCheck = false;
 
   @Input() helpId: string;
 
   @Input() scriptLanguage: ScriptLanguage = ScriptLanguage.JS;
+
+  @Input()
+  @coerceBoolean()
+  hideBrackets = false;
+
+  @Input()
+  @coerceBoolean()
+  hideLabel = false;
+
+  @Input()
+  @coerceBoolean()
+  withModules = false;
 
   private noValidateValue: boolean;
   get noValidate(): boolean {
@@ -115,11 +142,13 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     this.requiredValue = coerceBooleanProperty(value);
   }
 
-  functionArgsString = '';
+  functionLabel: string;
 
   fullscreen = false;
 
   modelValue: string;
+
+  modules: {[alias: string]: string };
 
   functionValid = true;
 
@@ -130,7 +159,10 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   errorMarkers: number[] = [];
   errorAnnotationId = -1;
 
+  private functionArgsString = '';
+
   private propagateChange = null;
+  private _onTouched = null;
   public hasErrors = false;
 
   constructor(public elementRef: ElementRef,
@@ -138,10 +170,17 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
               private translate: TranslateService,
               protected store: Store<AppState>,
               private raf: RafService,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef,
+              private http: HttpClient) {
   }
 
   ngOnInit(): void {
+    if (this.functionTitle || this.label) {
+      this.hideBrackets = true;
+    }
     if (!this.resultType || this.resultType.length === 0) {
       this.resultType = 'nocheck';
     }
@@ -152,6 +191,14 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
         }
         this.functionArgsString += functionArg;
       });
+    }
+    if (this.functionTitle) {
+      this.functionLabel = `${this.functionTitle}: f(${this.functionArgsString})`;
+    } else if (this.label) {
+      this.functionLabel = this.label;
+    } else {
+      this.functionLabel =
+        `function ${this.functionName ? this.functionName : ''}(${this.functionArgsString})${this.hideBrackets ? '' : ' {'}`;
     }
     const editorElement = this.javascriptEditorElmRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
@@ -183,6 +230,11 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
             this.updateView();
           }
         });
+        this.jsEditor.on('blur', () => {
+          if (this._onTouched) {
+            this._onTouched();
+          }
+        });
         if (!this.disableUndefinedCheck) {
           // @ts-ignore
           this.jsEditor.session.on('changeAnnotation', () => {
@@ -194,34 +246,29 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
             const hasErrors = annotations.filter(annotation => annotation.type === 'error').length > 0;
             if (this.hasErrors !== hasErrors) {
               this.hasErrors = hasErrors;
-              this.propagateChange(this.modelValue);
+              this.propagateValue(this.modelValue);
               this.cd.markForCheck();
             }
           });
         }
         // @ts-ignore
-        if (!!this.jsEditor.session.$worker) {
-          const jsWorkerOptions = {
-            undef: !this.disableUndefinedCheck,
-            unused: true,
-            globals: {}
-          };
-          if (!this.disableUndefinedCheck && this.functionArgs) {
-            this.functionArgs.forEach(arg => {
-              jsWorkerOptions.globals[arg] = false;
-            });
-          }
-          if (!this.disableUndefinedCheck && this.globalVariables) {
-            this.globalVariables.forEach(arg => {
-              jsWorkerOptions.globals[arg] = false;
-            });
+        if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
+          // @ts-ignore
+          const newMode = new this.jsEditor.session.$mode.constructor();
+          newMode.$highlightRules = new newMode.HighlightRules();
+          for(const group in this.highlightRules) {
+            if(!!newMode.$highlightRules.$rules[group]) {
+              newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
+            } else {
+              newMode.$highlightRules.$rules[group] = this.highlightRules[group];
+            }
           }
           // @ts-ignore
-          this.jsEditor.session.$worker.send('changeOptions', [jsWorkerOptions]);
+          this.jsEditor.session.$onChangeMode(newMode);
         }
-        if (this.editorCompleter) {
-          this.jsEditor.completers = [this.editorCompleter, ...(this.jsEditor.completers || [])];
-        }
+        this.updateJsWorkerGlobals();
+        this.initialCompleters = this.jsEditor.completers || [];
+        this.updateCompleters();
         this.editorResize$ = new ResizeObserver(() => {
           this.onAceEditorResize();
         });
@@ -255,6 +302,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   }
 
   registerOnTouched(fn: any): void {
+    this._onTouched = fn;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -281,103 +329,126 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     );
   }
 
-  validateOnSubmit(): void {
+  validateOnSubmit(): Observable<void> {
     if (!this.disabled) {
       this.cleanupJsErrors();
-      this.functionValid = this.validateJsFunc();
-      if (!this.functionValid) {
-        this.propagateChange(this.modelValue);
-        this.cd.markForCheck();
-        this.store.dispatch(new ActionNotificationShow(
-          {
-            message: this.validationError,
-            type: 'error',
-            target: this.toastTargetId,
-            verticalPosition: 'bottom',
-            horizontalPosition: 'left'
-          }));
-        this.errorShowed = true;
-      }
+      return this.validateJsFunc().pipe(
+        map((valid) => {
+          this.functionValid = valid;
+          if (!this.functionValid) {
+            this.propagateValue(this.modelValue);
+            this.cd.markForCheck();
+            this.store.dispatch(new ActionNotificationShow(
+              {
+                message: this.validationError,
+                type: 'error',
+                target: this.toastTargetId,
+                verticalPosition: 'bottom',
+                horizontalPosition: 'left'
+              }));
+            this.errorShowed = true;
+          }
+        })
+      );
+    } else {
+      return of(null);
     }
   }
 
-  private validateJsFunc(): boolean {
-    try {
-      const toValidate = new Function(this.functionArgsString, this.modelValue);
-      if (this.noValidate) {
-        return true;
-      }
-      if (this.validationArgs) {
-        let res: any;
-        let validationError: any;
-        for (const validationArg of this.validationArgs) {
-          try {
-            res = toValidate.apply(this, validationArg);
-            validationError = null;
-            break;
-          } catch (e) {
-            validationError = e;
-          }
-        }
-        if (validationError) {
-          throw validationError;
-        }
-        if (this.resultType !== 'nocheck') {
-          if (this.resultType === 'any') {
-            if (isUndefined(res)) {
-              this.validationError = this.translate.instant('js-func.no-return-error');
-              return false;
-            }
-          } else {
-            const resType = typeof res;
-            if (resType !== this.resultType) {
-              this.validationError = this.translate.instant('js-func.return-type-mismatch', {type: this.resultType});
-              return false;
-            }
-          }
-        }
-        return true;
-      } else {
-        return true;
-      }
-    } catch (e) {
-      const details = this.utils.parseException(e);
-      let errorInfo = 'Error:';
-      if (details.name) {
-        errorInfo += ' ' + details.name + ':';
-      }
-      if (details.message) {
-        errorInfo += ' ' + details.message;
-      }
-      if (details.lineNumber) {
-        errorInfo += '<br>Line ' + details.lineNumber;
-        if (details.columnNumber) {
-          errorInfo += ' column ' + details.columnNumber;
-        }
-        errorInfo += ' of script.';
-      }
-      this.validationError = errorInfo;
-      if (details.lineNumber) {
-        const line = details.lineNumber - 1;
-        let column = 0;
-        if (details.columnNumber) {
-          column = details.columnNumber;
-        }
-        const errorMarkerId = this.jsEditor.session.addMarker(new Range(line, 0, line, Infinity),
-          'ace_active-line', 'screenLine');
-        this.errorMarkers.push(errorMarkerId);
-        const annotations = this.jsEditor.session.getAnnotations();
-        const errorAnnotation: Ace.Annotation = {
-          row: line,
-          column,
-          text: details.message,
-          type: 'error'
-        };
-        this.errorAnnotationId = annotations.push(errorAnnotation) - 1;
-        this.jsEditor.session.setAnnotations(annotations);
-      }
-      return false;
+  public focus() {
+    this.javascriptEditorElmRef.nativeElement.scrollIntoView();
+    this.jsEditor?.focus();
+  }
+
+  private validateJsFunc(): Observable<boolean> {
+    let toCompile: TbFunction;
+    if (this.withModules && this.modules && Object.keys(this.modules).length) {
+      toCompile = {
+        body: this.modelValue,
+        modules: this.modules
+      };
+    } else {
+      toCompile = this.modelValue;
     }
+    const args = this.functionArgs || [];
+    return compileTbFunction(this.http, toCompile, ...args).pipe(
+      map(toValidate => {
+        if (this.noValidate) {
+          return true;
+        }
+        if (this.validationArgs) {
+          let res: any;
+          let validationError: any;
+          for (const validationArg of this.validationArgs) {
+            try {
+              res = toValidate.apply(this, validationArg);
+              validationError = null;
+              break;
+            } catch (e) {
+              validationError = e;
+            }
+          }
+          if (validationError) {
+            throw validationError;
+          }
+          if (this.resultType !== 'nocheck') {
+            if (this.resultType === 'any') {
+              if (isUndefined(res)) {
+                this.validationError = this.translate.instant('js-func.no-return-error');
+                return false;
+              }
+            } else {
+              const resType = typeof res;
+              if (resType !== this.resultType) {
+                this.validationError = this.translate.instant('js-func.return-type-mismatch', {type: this.resultType});
+                return false;
+              }
+            }
+          }
+          return true;
+        } else {
+          return true;
+        }
+      }),
+      catchError((e) => {
+        const details = this.utils.parseException(e);
+        let errorInfo = 'Error:';
+        if (details.name) {
+          errorInfo += ' ' + details.name + ':';
+        }
+        if (details.message) {
+          errorInfo += ' ' + details.message;
+        }
+        if (details.lineNumber) {
+          errorInfo += '<br>Line ' + details.lineNumber;
+          if (details.columnNumber) {
+            errorInfo += ' column ' + details.columnNumber;
+          }
+          errorInfo += ' of script.';
+        }
+        this.validationError = errorInfo;
+        if (details.lineNumber) {
+          const line = details.lineNumber - 1;
+          let column = 0;
+          if (details.columnNumber) {
+            column = details.columnNumber;
+          }
+          const errorMarkerId = this.jsEditor.session.addMarker(new Range(line, 0, line, Infinity),
+            'ace_active-line', 'screenLine');
+          this.errorMarkers.push(errorMarkerId);
+          const annotations = this.jsEditor.session.getAnnotations();
+          const errorAnnotation: Ace.Annotation = {
+            row: line,
+            column,
+            text: details.message,
+            type: 'error'
+          };
+          this.errorAnnotationId = annotations.push(errorAnnotation) - 1;
+          this.jsEditor.session.setAnnotations(annotations);
+        }
+        return of(false);
+      })
+    );
   }
 
   private cleanupJsErrors(): void {
@@ -400,22 +471,121 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     }
   }
 
-  writeValue(value: string): void {
-    this.modelValue = value;
+  writeValue(value: TbFunction): void {
+    if (isUndefinedOrNull(value) || typeof value === 'string') {
+      this.modelValue = value as any;
+      this.modules = null;
+    } else {
+      this.modelValue = value.body;
+      this.modules = value.modules;
+    }
     if (this.jsEditor) {
+      if (this.withModules) {
+        this.updateJsWorkerGlobals();
+        this.updateCompleters();
+      }
       this.ignoreChange = true;
       this.jsEditor.setValue(this.modelValue ? this.modelValue : '', -1);
       this.ignoreChange = false;
     }
   }
 
-  updateView() {
+  updateView(force = false) {
     const editorValue = this.jsEditor.getValue();
-    if (this.modelValue !== editorValue) {
+    if (this.modelValue !== editorValue || force) {
       this.modelValue = editorValue;
       this.functionValid = true;
-      this.propagateChange(this.modelValue);
+      this.propagateValue(this.modelValue);
       this.cd.markForCheck();
     }
+  }
+
+  editModules($event: Event, element: Element) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = element;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const ctx: any = {
+        modules: deepClone(this.modules)
+      };
+      const modulesPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, JsFuncModulesComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        ctx,
+        {},
+        {}, {}, true);
+      modulesPanelPopover.tbComponentRef.instance.popover = modulesPanelPopover;
+      modulesPanelPopover.tbComponentRef.instance.modulesApplied.subscribe((modules) => {
+        modulesPanelPopover.hide();
+        this.modules = modules;
+        this.updateJsWorkerGlobals();
+        this.updateCompleters();
+        this.updateView(true);
+      });
+    }
+  }
+
+  private propagateValue(value: string) {
+    if (this.withModules && this.modules && Object.keys(this.modules).length) {
+      const tbFunction: TbFunction = {
+        body: value,
+        modules: this.modules
+      };
+      this.propagateChange(tbFunction);
+    } else {
+      this.propagateChange(value);
+    }
+  }
+
+  private updateJsWorkerGlobals() {
+    // @ts-ignore
+    if (!!this.jsEditor.session.$worker) {
+      const jsWorkerOptions = {
+        undef: !this.disableUndefinedCheck,
+        unused: true,
+        globals: {}
+      };
+      if (!this.disableUndefinedCheck) {
+        if (this.functionArgs) {
+          this.functionArgs.forEach(arg => {
+            jsWorkerOptions.globals[arg] = false;
+          });
+        }
+        if (this.withModules && this.modules) {
+          Object.keys(this.modules).forEach(arg => {
+            jsWorkerOptions.globals[arg] = false;
+          });
+        }
+        if (this.globalVariables) {
+          this.globalVariables.forEach(arg => {
+            jsWorkerOptions.globals[arg] = false;
+          });
+        }
+      }
+      // @ts-ignore
+      this.jsEditor.session.$worker.send('changeOptions', [jsWorkerOptions]);
+    }
+  }
+
+  updateCompleters() {
+    let modulesCompleterObservable: Observable<TbEditorCompleter>;
+    if (this.withModules) {
+      modulesCompleterObservable = loadModulesCompleter(this.http, this.modules);
+    } else {
+      modulesCompleterObservable = of(null);
+    }
+    modulesCompleterObservable.subscribe((modulesCompleter) => {
+      const completers: Ace.Completer[] = [];
+      if (this.editorCompleter) {
+        completers.push(this.editorCompleter);
+      }
+      if (modulesCompleter) {
+        completers.push(modulesCompleter);
+      }
+      completers.push(...this.initialCompleters);
+      this.jsEditor.completers = completers;
+    });
   }
 }

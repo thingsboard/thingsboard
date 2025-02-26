@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.deduplication;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -43,20 +44,22 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
+
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "deduplication",
         configClazz = TbMsgDeduplicationNodeConfiguration.class,
+        version = 1,
+        hasQueueName = true,
         nodeDescription = "Deduplicate messages within the same originator entity for a configurable period " +
                 "based on a specified deduplication strategy.",
-        nodeDetails = "Rule node allows you to select one of the following strategy to deduplicate messages: <br></br>" +
-                "<b>FIRST</b> - return first message that arrived during deduplication period.<br></br>" +
-                "<b>LAST</b> - return last message that arrived during deduplication period.<br></br>" +
-                "<b>ALL</b> - return all messages as a single JSON array message. " +
-                "Where each element represents object with <b>msg</b> and <b>metadata</b> inner properties.<br></br>",
+        nodeDetails = "Deduplication strategies: <ul><li><strong>FIRST</strong> - return first message that arrived during deduplication period.</li>" +
+                "<li><strong>LAST</strong> - return last message that arrived during deduplication period.</li>" +
+                "<li><strong>ALL</strong> - return all messages as a single JSON array message. " +
+                "Where each element represents object with <strong><i>msg</i></strong> and <strong><i>metadata</i></strong> inner properties.</li></ul>",
         icon = "content_copy",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeMsgDeduplicationConfig"
+        configDirective = "tbTransformationNodeDeduplicationConfig"
 )
 @Slf4j
 public class TbMsgDeduplicationNode implements TbNode {
@@ -67,6 +70,7 @@ public class TbMsgDeduplicationNode implements TbNode {
 
     private final Map<EntityId, DeduplicationData> deduplicationMap;
     private long deduplicationInterval;
+    private String queueName;
 
     public TbMsgDeduplicationNode() {
         this.deduplicationMap = new HashMap<>();
@@ -76,6 +80,7 @@ public class TbMsgDeduplicationNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
         this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
+        this.queueName = ctx.getQueueName();
     }
 
     @Override
@@ -90,6 +95,22 @@ public class TbMsgDeduplicationNode implements TbNode {
     @Override
     public void destroy() {
         deduplicationMap.clear();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (oldConfiguration.has(QUEUE_NAME)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).remove(QUEUE_NAME);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
     private void processOnRegularMsg(TbContext ctx, TbMsg msg) {
@@ -132,12 +153,13 @@ public class TbMsgDeduplicationNode implements TbNode {
                             iterator.remove();
                         }
                     }
-                    deduplicationResults.add(TbMsg.newMsg(
-                            config.getQueueName(),
-                            config.getOutMsgType(),
-                            deduplicationId,
-                            getMetadata(),
-                            getMergedData(pack)));
+                    deduplicationResults.add(TbMsg.newMsg()
+                            .queueName(queueName)
+                            .type(config.getOutMsgType())
+                            .originator(deduplicationId)
+                            .copyMetaData(getMetadata())
+                            .data(getMergedData(pack))
+                            .build());
                 } else {
                     TbMsg resultMsg = null;
                     boolean searchMin = DeduplicationStrategy.FIRST.equals(config.getStrategy());
@@ -154,13 +176,15 @@ public class TbMsgDeduplicationNode implements TbNode {
                         }
                     }
                     if (resultMsg != null) {
-                        deduplicationResults.add(TbMsg.newMsg(
-                                resultMsg.getQueueName(),
-                                resultMsg.getType(),
-                                resultMsg.getOriginator(),
-                                resultMsg.getCustomerId(),
-                                resultMsg.getMetaData(),
-                                resultMsg.getData()));
+                        String queueName1 = queueName != null ? queueName : resultMsg.getQueueName();
+                        deduplicationResults.add(TbMsg.newMsg()
+                                .queueName(queueName1)
+                                .type(resultMsg.getType())
+                                .originator(resultMsg.getOriginator())
+                                .customerId(resultMsg.getCustomerId())
+                                .copyMetaData(resultMsg.getMetaData())
+                                .data(resultMsg.getData())
+                                .build());
                     }
                 }
                 packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);

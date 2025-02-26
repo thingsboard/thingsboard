@@ -15,12 +15,6 @@ IF NOT "%1"=="" (
     GOTO :loop
 )
 
-if not defined fromVersion (
-    echo "--fromVersion parameter is invalid or unspecified!"
-    echo "Usage: upgrade.bat --fromVersion {VERSION}"
-    exit /b 1
-)
-
 SET LOADER_PATH=%BASE%\conf,%BASE%\extensions
 SET SQL_DATA_FOLDER=%BASE%\data\sql
 SET jarfile=%BASE%\lib\${pkg.name}.jar
@@ -34,7 +28,7 @@ java -cp "%jarfile%" -Dloader.main=org.thingsboard.server.ThingsboardInstallAppl
                     -Dinstall.upgrade=true^
                     -Dinstall.upgrade.from_version=%fromVersion%^
                     -Dlogging.config="%BASE%\install\logback.xml"^
-                    org.springframework.boot.loader.PropertiesLauncher
+                    org.springframework.boot.loader.launch.PropertiesLauncher
 
 if errorlevel 1 (
    @echo ThingsBoard upgrade failed!

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,33 +21,40 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class TenantProfileEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertTenantProfileEventToDownlink(EdgeEvent edgeEvent) {
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
         TenantProfileId tenantProfileId = new TenantProfileId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
         if (EdgeEventActionType.UPDATED.equals(edgeEvent.getAction())) {
-            TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(edgeEvent.getTenantId(), tenantProfileId);
+            TenantProfile tenantProfile = edgeCtx.getTenantProfileService().findTenantProfileById(edgeEvent.getTenantId(), tenantProfileId);
             if (tenantProfile != null) {
                 UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                TenantProfileUpdateMsg tenantProfileUpdateMsg =
-                        tenantProfileMsgConstructor.constructTenantProfileUpdateMsg(msgType, tenantProfile);
-                downlinkMsg = DownlinkMsg.newBuilder()
+                TenantProfileUpdateMsg tenantProfileUpdateMsg = EdgeMsgConstructorUtils.constructTenantProfileUpdateMsg(msgType, tenantProfile);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addTenantProfileUpdateMsg(tenantProfileUpdateMsg)
                         .build();
             }
         }
-        return downlinkMsg;
+        return null;
     }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.TENANT_PROFILE;
+    }
+
 }

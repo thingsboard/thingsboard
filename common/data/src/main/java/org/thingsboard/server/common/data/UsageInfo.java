@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import lombok.Data;
 
 @Data
 public class UsageInfo {
+
     private long devices;
     private long maxDevices;
     private long assets;
@@ -29,11 +30,15 @@ public class UsageInfo {
     private long maxUsers;
     private long dashboards;
     private long maxDashboards;
+    private long edges;
+    private long maxEdges;
 
     private long transportMessages;
     private long maxTransportMessages;
     private long jsExecutions;
+    private long tbelExecutions;
     private long maxJsExecutions;
+    private long maxTbelExecutions;
     private long emails;
     private long maxEmails;
     private long sms;
@@ -41,4 +46,5 @@ public class UsageInfo {
     private Boolean smsEnabled;
     private long alarms;
     private long maxAlarms;
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,9 +189,9 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         subscribeAndWait(client, attrSubTopic, deviceId, featureType, MqttQoS.AT_MOST_ONCE);
     }
 
-    protected void subscribeAndWait(MqttTestClient client, String attrSubTopic, DeviceId deviceId, FeatureType featureType, MqttQoS mqttQoS) throws MqttException {
+    protected void subscribeAndWait(MqttTestClient client, String subTopic, DeviceId deviceId, FeatureType featureType, MqttQoS mqttQoS) throws MqttException {
         int subscriptionCount = getDeviceActorSubscriptionCount(deviceId, featureType);
-        client.subscribeAndWait(attrSubTopic, mqttQoS);
+        client.subscribeAndWait(subTopic, mqttQoS);
         // TODO: This test awaits for the device actor to receive the subscription. Ideally it should not happen. See details below:
         // The transport layer acknowledge subscription request once the message about subscription is in the queue.
         // Test sends data immediately after acknowledgement.
@@ -200,8 +200,8 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         awaitForDeviceActorToReceiveSubscription(deviceId, featureType, subscriptionCount + 1);
     }
 
-    protected void subscribeAndCheckSubscription(MqttTestClient client, String attrSubTopic, DeviceId deviceId, FeatureType featureType) throws MqttException {
-        client.subscribeAndWait(attrSubTopic, MqttQoS.AT_MOST_ONCE);
+    protected void subscribeAndCheckSubscription(MqttTestClient client, String subTopic, DeviceId deviceId, FeatureType featureType) throws MqttException {
+        client.subscribeAndWait(subTopic, MqttQoS.AT_MOST_ONCE);
         // TODO: This test awaits for the device actor to receive the subscription. Ideally it should not happen. See details below:
         // The transport layer acknowledge subscription request once the message about subscription is in the queue.
         // Test sends data immediately after acknowledgement.

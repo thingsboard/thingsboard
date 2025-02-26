@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
   <mat-form-field class="tb-inline-field tb-aggregation-field" subscriptSizing="dynamic">
     <mat-chip-grid #chipList>
       <mat-chip-row class="tb-datakey-chip">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="4px" class="tb-attribute-chip">
+        <div class="tb-attribute-chip flex flex-row items-center justify-start gap-1">
           <div class="tb-chip-labels">
             <div class="tb-chip-label tb-chip-text">
               <ng-container *ngTemplateOutlet="keyName"></ng-container>
@@ -41,7 +41,7 @@
     </mat-chip-grid>
     <input matInput
            type="text"
-           fxHide
+           class="!hidden"
            readonly
            [matChipInputFor]="chipList"
     />
@@ -61,7 +61,7 @@
     </tb-font-settings>
   </div>
   <div class="tb-color-field">
-    <tb-color-settings formControlName="color">
+    <tb-color-settings formControlName="color" settingsKey="{{ (index+1) }}. {{ aggregatedValueCardKeyPositionTranslationMap.get(keyRowFormGroup.get('position').value) | translate }}">
     </tb-color-settings>
   </div>
   <div class="tb-arrow-field">

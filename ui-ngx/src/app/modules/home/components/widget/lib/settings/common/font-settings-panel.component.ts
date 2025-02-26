@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import {
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -27,7 +28,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import {
   commonFonts,
-  ComponentStyle,
+  ComponentStyle, cssUnit,
   Font,
   fontStyles,
   fontStyleTranslations,
@@ -42,6 +43,7 @@ import { AppState } from '@core/core.state';
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-font-settings-panel',
@@ -64,6 +66,17 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   @Input()
   @coerceBoolean()
   clearButton = false;
+
+  @Input()
+  @coerceBoolean()
+  autoScale = false;
+
+  @Input()
+  @coerceBoolean()
+  disabledLineHeight = false;
+
+  @Input()
+  forceSizeUnit: cssUnit;
 
   @Input()
   popover: TbPopoverComponent<FontSettingsPanelComponent>;
@@ -90,23 +103,27 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   previewStyle: ComponentStyle = {};
 
   constructor(private fb: UntypedFormBuilder,
-              protected store: Store<AppState>) {
+              protected store: Store<AppState>,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
   ngOnInit(): void {
     this.fontFormGroup = this.fb.group(
       {
-        size: [this.font?.size, [Validators.min(0)]],
-        sizeUnit: [(this.font?.sizeUnit || 'px'), []],
+        size: [{value: this.font?.size, disabled: this.autoScale}, [Validators.min(0)]],
+        sizeUnit: [{ value: (!!this.forceSizeUnit ?
+            this.forceSizeUnit : (this.font?.sizeUnit || 'px')), disabled: this.autoScale || !!this.forceSizeUnit}, []],
         family: [this.font?.family, []],
         weight: [this.font?.weight, []],
         style: [this.font?.style, []],
-        lineHeight: [this.font?.lineHeight, []]
+        lineHeight: [{ value: this.font?.lineHeight, disabled: this.autoScale || this.disabledLineHeight }, []]
       }
     );
     this.updatePreviewStyle(this.font);
-    this.fontFormGroup.valueChanges.subscribe((font: Font) => {
+    this.fontFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((font: Font) => {
       if (this.fontFormGroup.valid) {
         this.updatePreviewStyle(font);
         setTimeout(() => {this.popover?.updatePosition();}, 0);
@@ -142,11 +159,14 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   }
 
   clearFont() {
-    this.fontFormGroup.reset({sizeUnit: 'px'});
+    this.fontFormGroup.reset({sizeUnit: this.forceSizeUnit || 'px'});
     this.fontFormGroup.markAsDirty();
   }
 
   private updatePreviewStyle(font: Font) {
+    if (!!this.forceSizeUnit) {
+      font = {...font, ...{sizeUnit: this.forceSizeUnit}};
+    }
     this.previewStyle = {...(this.initialPreviewStyle || {}), ...textStyle(font)};
   }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class EmailNotificationChannel implements NotificationChannel<User, Email
 
     @Override
     public void sendNotification(User recipient, EmailDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
-        mailService.send(recipient.getTenantId(), null, TbEmail.builder()
+        mailService.send(ctx.getTenantId(), null, TbEmail.builder()
                 .to(recipient.getEmail())
                 .subject(processedTemplate.getSubject())
                 .body(processedTemplate.getBody())

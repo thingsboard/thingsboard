@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import { Ace } from 'ace-builds';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
+import { unwrapModule } from '@core/utils';
 
 let aceDependenciesLoaded = false;
 let aceModule: any;
@@ -37,6 +38,8 @@ function loadAceDependencies(): Observable<any> {
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-text')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-markdown')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-html')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-xml')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-svg')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-c_cpp')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-protobuf')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/java')));
@@ -47,6 +50,8 @@ function loadAceDependencies(): Observable<any> {
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/text')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/markdown')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/html')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/xml')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/svg')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/c_cpp')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/protobuf')));
     aceObservables.push(from(import('ace-builds/src-noconflict/theme-textmate')));
@@ -63,10 +68,10 @@ export function getAce(): Observable<any> {
   if (aceModule) {
     return of(aceModule);
   } else {
-    return from(import('ace')).pipe(
+    return from(import('ace-builds/src-noconflict/ace')).pipe(
       mergeMap((module) => {
         return loadAceDependencies().pipe(
-         map(() => module)
+         map(() => unwrapModule(module))
         );
       }),
       tap((module) => {
@@ -82,7 +87,9 @@ export function getAceDiff(): Observable<any> {
   } else {
     return getAce().pipe(
       mergeMap((ace) => {
-        return from(import('ace-diff'));
+        return from(import('ace-diff')).pipe(
+          map((module) => unwrapModule(module))
+        );
       }),
       tap((module) => {
         aceDiffModule = module;
@@ -347,3 +354,16 @@ export class Range implements Ace.Range {
   }
 
 }
+
+export interface AceHighlightRules {
+  [group: string]: Array<AceHighlightRule>;
+}
+
+export interface AceHighlightRule {
+  regex: RegExp | string;
+  token: string;
+  next?: string;
+}
+
+
+

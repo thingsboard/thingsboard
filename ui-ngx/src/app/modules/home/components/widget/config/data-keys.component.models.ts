@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
 ///
 
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { DataKey, JsonSettingsSchema } from '@shared/models/widget.models';
+import { DataKey } from '@shared/models/widget.models';
 import { Observable } from 'rxjs';
+import { FormProperty } from '@shared/models/dynamic-form.models';
+
+export type DataKeySettingsFunction = (key: DataKey, isLatestDataKey: boolean) => any;
 
 export interface DataKeysCallbacks {
-  generateDataKey: (chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema) => DataKey;
+  generateDataKey: (chip: any, type: DataKeyType, dataKeySettingsForm: FormProperty[],
+                    isLatestDataKey: boolean, dataKeySettingsFunction: DataKeySettingsFunction) => DataKey;
   fetchEntityKeys: (entityAliasId: string, types: Array<DataKeyType>) => Observable<Array<DataKey>>;
   fetchEntityKeysForDevice: (deviceId: string, types: Array<DataKeyType>) => Observable<Array<DataKey>>;
 }

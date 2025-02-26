@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,12 @@ public class TbRpcService {
     }
 
     private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
-        TbMsg msg = TbMsg.newMsg(TbMsgType.valueOf("RPC_" + rpc.getStatus().name()), rpc.getDeviceId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(rpc));
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.valueOf("RPC_" + rpc.getStatus().name()))
+                .originator(rpc.getDeviceId())
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(JacksonUtil.toString(rpc))
+                .build();
         tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);
     }
 

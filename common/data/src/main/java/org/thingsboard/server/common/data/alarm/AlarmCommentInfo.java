@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,23 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@ApiModel
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AlarmCommentInfo extends AlarmComment {
     private static final long serialVersionUID = 2807343093519543377L;
 
-    @ApiModelProperty(position = 19, value = "User first name", example = "John")
+    @Schema(description = "User first name", example = "John")
     private String firstName;
 
-    @ApiModelProperty(position = 19, value = "User last name", example = "Brown")
+    @Schema(description = "User last name", example = "Brown")
     private String lastName;
 
-    @ApiModelProperty(position = 19, value = "User email address", example = "johnBrown@gmail.com")
+    @Schema(description = "User email address", example = "johnBrown@gmail.com")
     private String email;
 
     public AlarmCommentInfo() {

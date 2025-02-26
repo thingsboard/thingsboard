@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,31 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Table;
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.RULE_CHAIN_TABLE_NAME)
-public class RuleChainEntity extends BaseSqlEntity<RuleChain> {
+public class RuleChainEntity extends BaseVersionedEntity<RuleChain> {
 
     @Column(name = ModelConstants.RULE_CHAIN_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -63,11 +61,11 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> {
     @Column(name = ModelConstants.DEBUG_MODE)
     private boolean debugMode;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.RULE_CHAIN_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -78,10 +76,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> {
     }
 
     public RuleChainEntity(RuleChain ruleChain) {
-        if (ruleChain.getId() != null) {
-            this.setUuid(ruleChain.getUuidId());
-        }
-        this.setCreatedTime(ruleChain.getCreatedTime());
+        super(ruleChain);
         this.tenantId = DaoUtil.getId(ruleChain.getTenantId());
         this.name = ruleChain.getName();
         this.type = ruleChain.getType();
@@ -101,6 +96,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> {
     public RuleChain toData() {
         RuleChain ruleChain = new RuleChain(new RuleChainId(this.getUuid()));
         ruleChain.setCreatedTime(createdTime);
+        ruleChain.setVersion(version);
         ruleChain.setTenantId(TenantId.fromUUID(tenantId));
         ruleChain.setName(name);
         ruleChain.setType(type);
@@ -116,4 +112,5 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> {
         }
         return ruleChain;
     }
+
 }

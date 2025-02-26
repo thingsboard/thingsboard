@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -30,6 +30,7 @@ import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { MapEditorSettings } from '@home/components/widget/lib/maps/map-models';
 import { WidgetService } from '@core/http/widget.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-map-editor-settings',
@@ -62,7 +63,8 @@ export class MapEditorSettingsComponent extends PageComponent implements OnInit,
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -75,10 +77,14 @@ export class MapEditorSettingsComponent extends PageComponent implements OnInit,
       hideEditControlButton: [null, []],
       hideRemoveControlButton: [null, []],
     });
-    this.mapEditorSettingsFormGroup.valueChanges.subscribe(() => {
+    this.mapEditorSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.mapEditorSettingsFormGroup.get('hideAllControlButton').valueChanges.subscribe(() => {
+    this.mapEditorSettingsFormGroup.get('hideAllControlButton').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
     this.updateValidators(false);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,10 @@ public class CaffeineTbCacheTransaction<K extends Serializable, V extends Serial
     @Setter
     private boolean failed;
 
-    private final Map<Object, Object> pendingPuts = new LinkedHashMap<>();
+    private final Map<K, V> pendingPuts = new LinkedHashMap<>();
 
     @Override
-    public void putIfAbsent(K key, V value) {
+    public void put(K key, V value) {
         pendingPuts.put(key, value);
     }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -69,6 +69,14 @@ export class DashboardService {
 
   public getDashboard(dashboardId: string, config?: RequestConfig): Observable<Dashboard> {
     return this.http.get<Dashboard>(`/api/dashboard/${dashboardId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public exportDashboard(dashboardId: string, includeResources = true, config?: RequestConfig): Observable<Dashboard> {
+    let url = `/api/dashboard/${dashboardId}`;
+    if (includeResources) {
+      url += '?includeResources=true';
+    }
+    return this.http.get<Dashboard>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getDashboardInfo(dashboardId: string, config?: RequestConfig): Observable<DashboardInfo> {

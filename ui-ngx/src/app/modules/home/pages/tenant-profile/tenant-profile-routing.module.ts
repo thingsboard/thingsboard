@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,14 +24,14 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
+import { MenuId } from '@core/services/menu.models';
 
 const routes: Routes = [
   {
     path: 'tenantProfiles',
     data: {
       breadcrumb: {
-        label: 'tenant-profile.tenant-profiles',
-        icon: 'mdi:alpha-t-box'
+        menuId: MenuId.tenant_profiles
       }
     },
     children: [

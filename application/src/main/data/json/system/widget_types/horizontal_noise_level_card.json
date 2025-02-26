@@ -1,0 +1,47 @@
+{
+  "fqn": "horizontal_noise_level_card",
+  "name": "Horizontal noise level card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/horizontal_noise_level_card_system_widget_image.png",
+  "description": "Displays the latest noise level telemetry in a scalable horizontal layout.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 1,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        horizontal: true,\n        previewWidth: '420px',\n        previewHeight: '90px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'noise', label: 'Noise level', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Noise level\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value;\\nif (!prevValue) {\\n    value = Math.random() * 120;\\n} else {\\n    value = prevValue + Math.random() * 40 - 20;\\n}\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 120) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"horizontal\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"bar_chart\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":50,\"color\":\"#80C32C\"},{\"from\":50,\"to\":70,\"color\":\"#FFA600\"},{\"from\":70,\"to\":90,\"color\":\"#F36900\"},{\"from\":90,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":50,\"color\":\"#80C32C\"},{\"from\":50,\"to\":70,\"color\":\"#FFA600\"},{\"from\":70,\"to\":90,\"color\":\"#F36900\"},{\"from\":90,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Horizontal noise level card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"dB\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "weather",
+    "environment",
+    "sound level",
+    "acoustic level",
+    "decibel level",
+    "volume",
+    "loudness",
+    "ambient noise",
+    "sound intensity",
+    "acoustic intensity"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/horizontal_noise_level_card_system_widget_image.png",
+      "title": "\"Horizontal noise level card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "horizontal_noise_level_card_system_widget_image.png",
+      "publicResourceKey": "HgbkuuZ8pLLkfdW3S2ozzcCFuVur2tB4",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAnFBMVEUAAADf39/f39/g4ODg4ODf39/////k5OSAwyzg4ODP6a/f8MqQy0bIyMhYWFig0mDOzs67u7v09PTx8fHv9+X5+fn3+/LV1dXb29vi4uLCwsK2trav2Xt0dHTn5+e43Yi/4ZWIxznQ6a+rq6tmZmaYzlNKSkrH5aPn9NiCgoKQkJDt7e3X7L2enp7Y7L2w2Xuo1m48PDytra0hISE2LSZJAAAABnRSTlMAIEDfv1C6kOEmAAADL0lEQVR42u3ai1LaQBiGYar294fshs05hCQEEo6e2/u/t+4unVSoVaiMRuZ71GXdOGNeFobMQA8AAAAAAAAAAAAAAAAAAAAAAAAAAADgI3378mzGxeX1Vze6/K47riP68vzri96VT2cguur16Sz0EdIxCOkahHQNQroGIV1zUEidUOKRcTeiVrKm59YjOspnhLgu1QWRPlMZ0CggCvQPSVcvmWlgD7knC3GW1X3czmjHkB0KZ9r96pCQSe7shtzVxWjRLIJCboon6ekFG7IoFmYcucUiOFnIA2vCnGdlZ+F+yIAtEb4dIniwE+ItNoW3pnVtQrygWd896RC9XLuJ/pL61jtVyICFs6pYEIVmNuHh3yHz2Ww5Z3F8iJQ/i3pNhVfIRDZ1s5HShugDwcatE71JJ9uRXNzqccohTXhCFE85pq343tmG2LaYOXwtJHacF0KoKYKnxqVC3jWul7jNxoQErn60BT9HtG5cE3JC5vSHbJLmvCJrMGUW8zaEmFevhQyY25A9QTvaYff2hOIwNJth7/3taITMk1nONmQemj95pINCPo/DzEPaD1lyrsftjljz+KAQ+xj7HGE1EVzthzzycufJnrOIDwnRE0GfJp5yuBcy5EEbMvy90OmQ21lMZJ/oOQ+ePdnz/ZCcq2NDfHqBf7O/4NMpzO0OCD0u+dG+mJC1tKcv2pBQ8O2xIWMbo79vUrKiiKK+Mgt9ioiorEuK0nR7QC+8J2nJ04dqaP55LPihEly1jzazbkOmef44feMF0clze4miJ5NnIUmiUimVnmWUpZkXjTOVJFJ5N8qLiFTpe15KvrIHlPTo/w0E6zON9Sw0s/YsVvq34Z9LFDGJj71otCFq7EtVqm1ImaR6rtfKVGXShvTTVIfIcSl9nZv59A5hGLcvKfHO+juvfn+oNFPjRGa+2RHlpdnYH0ul1268UioyIZHZkdL7YQ4kWUYfzIYcLS3p3xKZ0gE6ERJFrx306RCdCOkihHQNQroGIV2DkK7p967O4G12Iv9Kf2DgDN5oj/QHBnrfL0fXX93lxTl9qAYAAAAAAAAAAAAAAAAAAAAAAAAAAADgg/wCTYn9BVfiGNYAAAAASUVORK5CYII=",
+      "public": true
+    }
+  ]
+}

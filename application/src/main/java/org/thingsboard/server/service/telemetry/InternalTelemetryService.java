@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,24 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-
-import java.util.List;
+import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 
 /**
  * Created by ashvayka on 27.03.18.
  */
 public interface InternalTelemetryService extends RuleEngineTelemetryService {
 
-    void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Integer> callback);
+    ListenableFuture<Integer> saveTimeseriesInternal(TimeseriesSaveRequest request);
 
-    void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback);
+    void saveAttributesInternal(AttributesSaveRequest request);
 
-    void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback);
+    void deleteTimeseriesInternal(TimeseriesDeleteRequest request);
 
-    void saveLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback);
-
-    void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback);
-
-    void deleteLatestInternal(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback);
+    void deleteAttributesInternal(AttributesDeleteRequest request);
 
 }

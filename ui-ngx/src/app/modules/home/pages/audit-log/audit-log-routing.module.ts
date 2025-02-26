@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
+import { MenuId } from '@core/services/menu.models';
 
 export const auditLogsRoutes: Routes = [
   {
@@ -27,8 +28,7 @@ export const auditLogsRoutes: Routes = [
       auth: [Authority.TENANT_ADMIN],
       title: 'audit-log.audit-logs',
       breadcrumb: {
-        label: 'audit-log.audit-logs',
-        icon: 'track_changes'
+        menuId: MenuId.audit_log
       },
       isPage: true
     }

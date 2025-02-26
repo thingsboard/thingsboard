@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,14 +16,11 @@
 
 import L, { LeafletMouseEvent } from 'leaflet';
 import { CircleData, WidgetCircleSettings } from '@home/components/widget/lib/maps/map-models';
-import {
-  functionValueCalculator,
-  parseWithTranslation
-} from '@home/components/widget/lib/maps/common-maps-utils';
+import { functionValueCalculator, parseWithTranslation } from '@home/components/widget/lib/maps/common-maps-utils';
 import LeafletMap from '@home/components/widget/lib/maps/leaflet-map';
 import { createTooltip } from '@home/components/widget/lib/maps/maps-utils';
 import { FormattedData } from '@shared/models/widget.models';
-import { fillDataPattern, processDataPattern, safeExecute } from '@core/utils';
+import { fillDataPattern, processDataPattern, safeExecuteTbFunction } from '@core/utils';
 
 export class Circle {
 
@@ -94,7 +91,7 @@ export class Circle {
     if (this.settings.showCircleLabel) {
       if (!this.map.circleLabelText || this.settings.useCircleLabelFunction) {
         const pattern = this.settings.useCircleLabelFunction ?
-          safeExecute(this.settings.parsedCircleLabelFunction,
+          safeExecuteTbFunction(this.settings.parsedCircleLabelFunction,
             [this.data, this.dataSources, this.data.dsIndex]) : this.settings.circleLabel;
         this.map.circleLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
         this.map.replaceInfoTooltipCircle = processDataPattern(this.map.circleLabelText, this.data);
@@ -109,7 +106,7 @@ export class Circle {
 
   private updateTooltip() {
     const pattern = this.settings.useCircleTooltipFunction ?
-      safeExecute(this.settings.parsedCircleTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
+      safeExecuteTbFunction(this.settings.parsedCircleTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
       this.settings.circleTooltipPattern;
     this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, this.data, true));
   }

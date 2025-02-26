@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.OriginatorAlarmFilter;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 
 public interface AlarmService extends EntityDaoService {
@@ -81,27 +85,6 @@ public interface AlarmService extends EntityDaoService {
 
     void delAlarmTypes(TenantId tenantId, Set<String> types);
 
-    /*
-     *  Legacy API, before 3.5.
-     */
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    AlarmOperationResult createOrUpdateAlarm(Alarm alarm);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
-
     // Other API
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 
@@ -109,13 +92,13 @@ public interface AlarmService extends EntityDaoService {
 
     AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId);
 
-    ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query);
+    PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query);
 
-    ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
+    PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
 
-    ListenableFuture<PageData<AlarmInfo>> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query);
+    PageData<AlarmInfo> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query);
 
-    ListenableFuture<PageData<AlarmInfo>> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query);
+    PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query);
 
     AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                            AlarmStatus alarmStatus, String assigneeId);
@@ -125,11 +108,18 @@ public interface AlarmService extends EntityDaoService {
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
-    PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink);
+    List<TbPair<UUID, Long>> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, long createdTimeOffset, AlarmId idOffset, int limit);
 
-    void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId);
+    List<TbPair<UUID, Long>> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, long createdTimeOffset, AlarmId idOffset, int limit);
+
+    int deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId);
+
+    void deleteEntityAlarmRecordsByTenantId(TenantId tenantId);
 
     long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
 
     PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink);
+
+    List<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter originatorAlarmFilter, int limit);
+
 }

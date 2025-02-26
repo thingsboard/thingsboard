@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import { ResetPasswordRequestComponent } from '@modules/login/pages/login/reset-
 import { ResetPasswordComponent } from '@modules/login/pages/login/reset-password.component';
 import { CreatePasswordComponent } from '@modules/login/pages/login/create-password.component';
 import { TwoFactorAuthLoginComponent } from '@modules/login/pages/login/two-factor-auth-login.component';
+import { LinkExpiredComponent } from '@modules/login/pages/login/link-expired.component';
 
 @NgModule({
   declarations: [
@@ -31,7 +32,8 @@ import { TwoFactorAuthLoginComponent } from '@modules/login/pages/login/two-fact
     ResetPasswordRequestComponent,
     ResetPasswordComponent,
     CreatePasswordComponent,
-    TwoFactorAuthLoginComponent
+    TwoFactorAuthLoginComponent,
+    LinkExpiredComponent
   ],
   imports: [
     CommonModule,

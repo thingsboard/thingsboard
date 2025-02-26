@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-import { MapProviders } from '@home/components/widget/lib/maps/map-models';
 import {
   createLabelFromDatasource,
   hashCode,
@@ -25,10 +24,12 @@ import {
   isUndefined,
   padValue
 } from '@core/utils';
-import { Observable, Observer, of } from 'rxjs';
+import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FormattedData } from '@shared/models/widget.models';
 import L from 'leaflet';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { CompiledTbFunction, GenericFunction } from '@shared/models/js-function.models';
 
 export function getRatio(firsMoment: number, secondMoment: number, intermediateMoment: number): number {
   return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
@@ -57,7 +58,7 @@ export function findAngle(startPoint: FormattedData, endPoint: FormattedData, la
 }
 
 
-export function getDefCenterPosition(position): [number, number] {
+export function getDefCenterPosition(position: string | [number, number]): [number, number] {
   if (typeof (position) === 'string') {
     const parts = position.split(',');
     if (parts.length === 2) {
@@ -71,44 +72,59 @@ export function getDefCenterPosition(position): [number, number] {
 }
 
 
-const imageAspectMap = {};
+const imageAspectMap: {[key: string]: ImageWithAspect} = {};
 
-function imageLoader(imageUrl: string): Observable<HTMLImageElement> {
-  return new Observable((observer: Observer<HTMLImageElement>) => {
-    const image = document.createElement('img'); // support IE
-    image.style.position = 'absolute';
-    image.style.left = '-99999px';
-    image.style.top = '-99999px';
-    image.onload = () => {
-      observer.next(image);
-      document.body.removeChild(image);
-      observer.complete();
-    };
-    image.onerror = err => {
-      observer.error(err);
-      document.body.removeChild(image);
-      observer.complete();
-    };
-    document.body.appendChild(image);
-    image.src = imageUrl;
-  });
+const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Observable((observer: Observer<HTMLImageElement>) => {
+  const image = document.createElement('img'); // support IE
+  image.style.position = 'absolute';
+  image.style.left = '-99999px';
+  image.style.top = '-99999px';
+  image.onload = () => {
+    observer.next(image);
+    document.body.removeChild(image);
+    observer.complete();
+  };
+  image.onerror = err => {
+    observer.error(err);
+    document.body.removeChild(image);
+    observer.complete();
+  };
+  document.body.appendChild(image);
+  image.src = imageUrl;
+});
+
+const loadImageAspect = (imageUrl: string): Observable<number> =>
+  imageLoader(imageUrl).pipe(map(image => image.width / image.height));
+
+export interface ImageWithAspect {
+  url: string;
+  aspect: number;
 }
 
-export function aspectCache(imageUrl: string): Observable<number> {
+export const loadImageWithAspect = (imagePipe: ImagePipe, imageUrl: string): Observable<ImageWithAspect> => {
   if (imageUrl?.length) {
     const hash = hashCode(imageUrl);
-    let aspect = imageAspectMap[hash];
-    if (aspect) {
-      return of(aspect);
+    let imageWithAspect = imageAspectMap[hash];
+    if (imageWithAspect) {
+      return of(imageWithAspect);
+    } else {
+      return imagePipe.transform(imageUrl, {asString: true, ignoreLoadingImage: true}).pipe(
+        switchMap((res) => {
+          const url = res as string;
+          return loadImageAspect(url).pipe(
+            map((aspect) => {
+              imageWithAspect = {url, aspect};
+              imageAspectMap[hash] = imageWithAspect;
+              return imageWithAspect;
+            })
+          );
+        })
+      );
     }
-    return imageLoader(imageUrl).pipe(map(image => {
-      aspect = image.width / image.height;
-      imageAspectMap[hash] = aspect;
-      return aspect;
-    }));
+  } else {
+    return of(null);
   }
-  return of(0);
-}
+};
 
 export type TranslateFunc = (key: string, defaultTranslation?: string) => string;
 
@@ -242,11 +258,11 @@ export const parseWithTranslation = {
   }
 };
 
-export function functionValueCalculator(useFunction: boolean, func: (...args: any[]) => any, params = [], defaultValue: any) {
-  let res;
-  if (useFunction && isDefined(func) && isFunction(func)) {
+export function functionValueCalculator<T>(useFunction: boolean, func: CompiledTbFunction<GenericFunction>, params = [], defaultValue: T): T {
+  let res: T;
+  if (useFunction && isDefinedAndNotNull(func)) {
     try {
-      res = func(...params);
+      res = func.execute(...params);
       if (!isDefinedAndNotNull(res) || res === '') {
         res = defaultValue;
       }

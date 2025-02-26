@@ -1,0 +1,48 @@
+{
+  "fqn": "snow_depth_card",
+  "name": "Snow depth card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/snow_depth_card_system_widget_image.png",
+  "description": "Displays the latest snow depth telemetry in a scalable rectangle card.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 3,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '250px',\n        previewHeight: '250px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'snow', label: 'Snow depth', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Snow depth\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 120) {\\n\\tvalue = 120;\\n}\\nreturn value;\\n\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"square\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"ac_unit\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":1,\"color\":\"#7191EF\"},{\"from\":1,\"to\":10,\"color\":\"#4B70DD\"},{\"from\":10,\"to\":30,\"color\":\"#305AD7\"},{\"from\":30,\"to\":60,\"color\":\"#234CC7\"},{\"from\":60,\"to\":90,\"color\":\"#F36900\"},{\"from\":90,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":0,\"to\":1,\"color\":\"#7191EF\"},{\"from\":1,\"to\":10,\"color\":\"#4B70DD\"},{\"from\":10,\"to\":30,\"color\":\"#305AD7\"},{\"from\":30,\"to\":60,\"color\":\"#234CC7\"},{\"from\":60,\"to\":90,\"color\":\"#F36900\"},{\"from\":90,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Snow depth card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"cm\",\"decimals\":1,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "weather",
+    "environment",
+    "snow",
+    "snowfall",
+    "flurry",
+    "blizzard",
+    "snowstorm",
+    "snowflake",
+    "sleet",
+    "whiteout",
+    "snowdrift"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/snow_depth_card_system_widget_image.png",
+      "title": "\"Snow depth card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "snow_depth_card_system_widget_image.png",
+      "publicResourceKey": "KwAItnklCK0FXxUZ9L3dtFNFhUuFTEWo",
+      "mediaType": "image/png",
+      "data": "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",
+      "public": true
+    }
+  ]
+}

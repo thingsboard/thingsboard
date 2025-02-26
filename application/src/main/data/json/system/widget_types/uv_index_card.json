@@ -1,0 +1,42 @@
+{
+  "fqn": "uv_index_card",
+  "name": "UV Index card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/uv_index_card_system_widget_image.png",
+  "description": "Displays the latest UV index telemetry in a scalable rectangle card.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 3,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '250px',\n        previewHeight: '250px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'uv', label: 'UV Index', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"UV Index\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.ceil(Math.random() * 4 - 2);\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 14) {\\n\\tvalue = 14;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"square\",\"showLabel\":true,\"labelFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"light_mode\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":2,\"color\":\"#80C32C\"},{\"from\":2,\"to\":5,\"color\":\"#FFA600\"},{\"from\":5,\"to\":7,\"color\":\"#F36900\"},{\"from\":7,\"to\":10,\"color\":\"#F04022\"},{\"from\":10,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":52,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":0,\"to\":2,\"color\":\"#80C32C\"},{\"from\":2,\"to\":5,\"color\":\"#FFA600\"},{\"from\":5,\"to\":7,\"color\":\"#F36900\"},{\"from\":7,\"to\":10,\"color\":\"#F04022\"},{\"from\":10,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"UV Index card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":null,\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "weather",
+    "environment",
+    "uv",
+    "ultraviolet",
+    "sunburn"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/uv_index_card_system_widget_image.png",
+      "title": "\"UV Index card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "uv_index_card_system_widget_image.png",
+      "publicResourceKey": "F1lLXQAtENWgBK5rDRRd9RxZK5wtymGu",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAnFBMVEXg4ODf39/g4ODg4OAAAAD////g4OCAwywhISGqqqr5+fm/4ZXj4+Oenp7P6a/Ozs62trbz8/PCwsJ0dHSkpKRYWFg9PT3n5+fv9+Xx8fH3+/LIyMisrKyQy0ag0mDu7u7f8Mra2trV1dWwsLCv2XsvLy+8vLyQkJCIxznn9NiYzlOCgoJKSkrH5aOrq6tmZmbX7L3H5aK43Yio1m6jslkrAAAABXRSTlPvIL+vAC9A4IoAAARXSURBVHja7M9JEQAwCAPAUA4PvPDvsjYCk3WwCHuo7dwChsn1GgbvPGAeKk/AlUgpQkYRNoqwUYSNImwUYaMIG0XYfGbraMVRGAyg8NUhPzTKQogYHaUUs9rqtLPM+7/bpo6zinVKb1ZyQDExNx8RyQuQvKsKou8FSKrUkej7z5C3Kz8UEUTLG5AZJz1wGu+YjGXW8qSdIIcDY0fV5dzLm3QLgvVALzpSyFGpZnoqvhyVUsUWJJEShoEJ4szvm23BtdYMAVLerHG0LZiEud0gRaXUgUUXpS5sQZy0YXD9hmjJkluwGd8asWFoksxSStmKZm43CHk1bUlRTJBLsQnBZiSiZ8jbeImBwd5nwlvHLfMti/aDkH8UcG46paomD8O0YBvyS/RgWUHG19Zi5Z7GiWfZLpC5d/VVdWadlgSQHpw3cl1DnCQj5DboELQ+TCzaF5Kq77qcdTY76X4U9N67NQQ76DKzXCWhTMJM23vH3K6QvFL/qlmnBxGfECrF8AA5ZeKthfa+KqhxvmduV0iqFh15yGmepd20yvHYLpDzZ13XZ/hcQv7Aex2K8wS5DWlUqIF6CTnARYVSYuyHHblUVXUOoPWOhPk6J8YC5IWfbyj2s/xzSNHNjoqou0Ne25I4v6hXIRwmRvdB3P1lzwxWG4ZhMHxShgzGkhGkNFATu5htp63v/3CTGxGWlhV6yJpDfoJi2X+IvhhD4jwCObZVcTg1jMvB0iflHPwptrH/ePu9TI2Dvf2eF+OJboru4U4h2lj65cvTLWlcH8Q4lpWfbvLe20O30OMC6xpCnMZGsi61CYaWGIgZrbnSF+Ln0WZkJjvegQTEAB1SZfFV8xj0YCkyAAtihKFgTqIpIfYAkwWCFFSQdiUBowo6DW4FEDifp7K/3t4N6PQN9yCcBOoA2fUIM4h3LKy9Q3QNE0ZqR0cziDKVBjImkJRr82AHFF6wi2IgsVYPiXCABUgrlUYIUQ10BQmCOIM4b2skY5Q+hnaxZ7W/DISVwkNOLGkGqdcZ8VyVKSaB/gqSSd3zjIjNCHbazKSe1hWH14AgosNSvMtYCJy0MjpfREFIk4QFo0MiUW9wFSXPIBlJxmmJSaeeorBYiNcE+Xi898stOG7BgUX2YB2zwVlqssTOiTM15+Z24xXkGbmCJe2/FXaQbWoH2Zp2kK1pB9madpAf9udYAAAAAGCQv/U0dpRBNyI3IjciNyI3IjciNyI3IjciNyK1d/c4CMNAEIWdH2cLS9TEElZKUkRCcP+7YTpSpptdvVdM/51grrbt+ZxLyL08rORz/iD1aGbmHrK1p5l7yP7+KQJAilkkSPtEgLSj5pt7yKvUvgEgPSBA/gICBAgQIECA9IAAAQIECBAgTgOiFhC1gKgFRC0gagFRC4haQNQCohYQtYCoBUQtIGoBUQuIWkDUAqIWELWAqAVELSBqAVFrSSmHaEljiMvmdUpDCiBZO2MepsV7aRzmL/oPrqtS4mUjAAAAAElFTkSuQmCC",
+      "public": true
+    }
+  ]
+}

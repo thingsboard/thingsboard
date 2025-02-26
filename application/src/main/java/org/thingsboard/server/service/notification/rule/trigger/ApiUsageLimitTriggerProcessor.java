@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.notification.info.ApiUsageLimitNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.ApiUsageLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
-import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
-import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -32,6 +31,7 @@ import org.thingsboard.server.dao.notification.NotificationTemplateDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,7 +50,12 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     @Override
     public PageData<NotificationTemplate> findByTenantIdAndNotificationTypesAndPageLink(TenantId tenantId, List<NotificationType> notificationTypes, PageLink pageLink) {
         return DaoUtil.toPageData(notificationTemplateRepository.findByTenantIdAndNotificationTypesAndSearchText(tenantId.getId(),
-                notificationTypes, Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
+                notificationTypes, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public int countByTenantIdAndNotificationTypes(TenantId tenantId, Collection<NotificationType> notificationTypes) {
+        return notificationTemplateRepository.countByTenantIdAndNotificationTypes(tenantId.getId(), notificationTypes);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import java.util.Random;
 @Slf4j
 @Listeners(TestListener.class)
 public abstract class AbstractContainerTest {
+
+    protected static final int TIMEOUT = 30;
 
     protected final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";
     protected final static String TEST_PROVISION_DEVICE_SECRET = "test_provision_secret";

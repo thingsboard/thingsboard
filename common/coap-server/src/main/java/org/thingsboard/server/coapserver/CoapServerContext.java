@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,28 +27,12 @@ import org.springframework.stereotype.Component;
 public class CoapServerContext {
 
     @Getter
-    @Value("${transport.coap.bind_address}")
+    @Value("${coap.bind_address}")
     private String host;
 
     @Getter
-    @Value("${transport.coap.bind_port}")
+    @Value("${coap.bind_port}")
     private Integer port;
-
-    @Getter
-    @Value("${transport.coap.timeout}")
-    private Long timeout;
-
-    @Getter
-    @Value("${transport.coap.piggyback_timeout}")
-    private Long piggybackTimeout;
-
-    @Getter
-    @Value("${transport.coap.psm_activity_timer:10000}")
-    private long psmActivityTimer;
-
-    @Getter
-    @Value("${transport.coap.paging_transmission_window:10000}")
-    private long pagingTransmissionWindow;
 
     @Getter
     @Autowired(required = false)

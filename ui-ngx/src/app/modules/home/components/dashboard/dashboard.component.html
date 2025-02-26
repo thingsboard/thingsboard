@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,16 +15,19 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="column" class="tb-progress-cover" fxLayoutAlign="center center"
+<div class="tb-progress-cover flex flex-1 flex-col items-center justify-center"
      [style]="dashboardStyle"
-     [style.backgroundImage]="backgroundImage"
-     [fxShow]="(isLoading$ | async) && !ignoreLoading && !isEdit">
+     [style.background-image]="backgroundImage"
+     [class.!hidden]="(isLoading$ | async) === false || ignoreLoading || isEdit">
   <mat-spinner color="warn" mode="indeterminate" diameter="100">
   </mat-spinner>
 </div>
 <div id="gridster-parent"
-     fxFlex class="tb-dashboard-content layout-wrap" [class]="{'autofill-height': isAutofillHeight()}"
-                (contextmenu)="openDashboardContextMenu($event)">
+     class="tb-dashboard-content flex-1" [class.autofill-height]="isAutofillHeight()"
+                [class.center-vertical]="centerVertical"
+                [class.center-horizontal]="centerHorizontal"
+                (mousedown)="onDashboardMouseDown($event)"
+                (tbcontextmenu)="openDashboardContextMenu($event)">
   <div #dashboardMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
        [style.left]="dashboardMenuPosition.x"
        [style.top]="dashboardMenuPosition.y"
@@ -55,13 +58,13 @@
                 [disabled]="!item.enabled"
                 (click)="item.action(widgetContextMenuEvent, widget)">
           <span *ngIf="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
-          <mat-icon *ngIf="item.icon">{{item.icon}}</mat-icon>
+          <tb-icon matMenuItemIcon *ngIf="item.icon">{{item.icon}}</tb-icon>
           <span translate>{{item.value}}</span>
         </button>
       </div>
     </ng-template>
   </mat-menu>
-  <div [class]="dashboardClass" id="gridster-background" style="height: 100%;">
+  <div [class]="dashboardClass" id="gridster-background">
     <gridster #gridster id="gridster-child" [options]="gridsterOpts">
       <gridster-item #gridsterItem [item]="widget" [class]="{'tb-noselect': isEdit}" *ngFor="let widget of dashboardWidgets">
         <tb-widget-container
@@ -71,6 +74,8 @@
           [dashboardStyle]="dashboardStyle"
           [backgroundImage]="backgroundImage"
           [isEdit]="isEdit"
+          [isEditingWidget]="isEditingWidget"
+          [isPreview]="isPreview"
           [isMobile]="isMobileSize"
           [isEditActionEnabled]="isEditActionEnabled"
           [isExportActionEnabled]="isExportActionEnabled"

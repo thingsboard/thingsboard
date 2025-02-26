@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 -->
 <form style="width: 600px;"
       [formGroup]="dashboardCustomersFormGroup" (ngSubmit)="submit()">
-  <mat-toolbar fxLayout="row" color="primary">
+  <mat-toolbar class="flex flex-row" color="primary">
     <h2>{{ titleText | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -39,8 +39,8 @@
       </tb-entity-list>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
+  <div mat-dialog-actions class="flex flex-row">
+    <span class="flex-1"></span>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

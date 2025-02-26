@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<tb-details-panel fxFlex
+<tb-details-panel class="flex-1"
                    [headerTitle]="entitiesTableConfig.entityTitle(entity)"
                    headerSubtitle="{{ translations.details | translate }}"
                    [isReadOnly]="entitiesTableConfig.detailsReadonly(entity)"
@@ -27,7 +27,7 @@
   <div class="details-buttons">
     <div [tb-help]="helpLinkId()"></div>
   </div>
-  <mat-tab-group mat-stretch-tabs="false" class="tb-absolute-fill" [ngClass]="{'tb-headless': hideDetailsTabs()}" fxFlex [(selectedIndex)]="selectedTab">
+  <mat-tab-group mat-stretch-tabs="false" class="tb-absolute-fill flex-1" [class.tb-headless]="hideDetailsTabs()" [(selectedIndex)]="selectedTab">
     <mat-tab label="{{ 'details.details' | translate }}">
       <tb-anchor #entityDetailsForm></tb-anchor>
     </mat-tab>

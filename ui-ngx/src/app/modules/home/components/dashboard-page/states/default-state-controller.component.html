@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-select class="default-state-controller" [fxShow]="displayStateSelection()"
+<mat-select class="default-state-controller" [class.!hidden]="!displayStateSelection()"
     [(ngModel)]="stateObject[0].id" (ngModelChange)="selectedStateIdChanged()">
   <mat-option *ngFor="let stateKv of states | keyvalue" [value]="stateKv.key">
     {{getStateName(stateKv.key, stateKv.value)}}

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input } from '@angular/core';
+import { Component, HostBinding, Input } from '@angular/core';
 import { TooltipPosition } from '@angular/material/tooltip';
 
 @Component({
@@ -24,6 +24,7 @@ import { TooltipPosition } from '@angular/material/tooltip';
 })
 export class HintTooltipIconComponent {
 
+  @HostBinding('class.tb-hint-tooltip')
   @Input('tb-hint-tooltip-icon') tooltipText: string;
 
   @Input()

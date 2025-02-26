@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.msg;
 
 import lombok.Getter;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 
@@ -36,7 +37,7 @@ public enum MsgType {
     /**
      * ADDED/UPDATED/DELETED events for main entities.
      *
-     * See {@link org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg}
+     * See {@link ComponentLifecycleMsg}
      */
     COMPONENT_LIFE_CYCLE_MSG,
 
@@ -93,6 +94,8 @@ public enum MsgType {
 
     DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG,
 
+    DEVICE_DELETE_TO_DEVICE_ACTOR_MSG,
+
     DEVICE_EDGE_UPDATE_TO_DEVICE_ACTOR_MSG,
 
     DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG,
@@ -124,6 +127,7 @@ public enum MsgType {
      * Message that is sent on Edge Event to Edge Session
      */
     EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG,
+    EDGE_HIGH_PRIORITY_TO_EDGE_SESSION_MSG,
 
     /**
      * Messages that are sent to and from edge session to start edge synchronization process
@@ -141,4 +145,5 @@ public enum MsgType {
     MsgType(boolean ignoreOnStart) {
         this.ignoreOnStart = ignoreOnStart;
     }
+
 }

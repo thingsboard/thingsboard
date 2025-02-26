@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,12 +14,14 @@
 /// limitations under the License.
 ///
 
-import { NgModule, Type } from '@angular/core';
-import { QrCodeWidgetSettingsComponent } from '@home/components/widget/lib/settings/cards/qrcode-widget-settings.component';
+import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
+import { WidgetService } from '@core/http/widget.service';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
-import { IWidgetSettingsComponent } from '@shared/models/widget.models';
+import {
+  QrCodeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/qrcode-widget-settings.component';
 import {
   TimeseriesTableWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/timeseries-table-widget-settings.component';
@@ -33,7 +35,9 @@ import {
   MarkdownWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/markdown-widget-settings.component';
 import { LabelWidgetLabelComponent } from '@home/components/widget/lib/settings/cards/label-widget-label.component';
-import { LabelWidgetSettingsComponent } from '@home/components/widget/lib/settings/cards/label-widget-settings.component';
+import {
+  LabelWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/label-widget-settings.component';
 import {
   SimpleCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/simple-card-widget-settings.component';
@@ -42,23 +46,22 @@ import {
 } from '@home/components/widget/lib/settings/cards/dashboard-state-widget-settings.component';
 import {
   EntitiesHierarchyWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/cards/entities-hierarchy-widget-settings.component';
+} from '@home/components/widget/lib/settings/entity/entities-hierarchy-widget-settings.component';
 import {
   HtmlCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/html-card-widget-settings.component';
 import {
   EntitiesTableWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/cards/entities-table-widget-settings.component';
+} from '@home/components/widget/lib/settings/entity/entities-table-widget-settings.component';
 import {
   EntitiesTableKeySettingsComponent
-} from '@home/components/widget/lib/settings/cards/entities-table-key-settings.component';
+} from '@home/components/widget/lib/settings/entity/entities-table-key-settings.component';
 import {
   AlarmsTableWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/alarm/alarms-table-widget-settings.component';
 import {
   AlarmsTableKeySettingsComponent
 } from '@home/components/widget/lib/settings/alarm/alarms-table-key-settings.component';
-import { GaugeHighlightComponent } from '@home/components/widget/lib/settings/gauge/gauge-highlight.component';
 import {
   AnalogueRadialGaugeWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/gauge/analogue-radial-gauge-widget-settings.component';
@@ -71,7 +74,6 @@ import {
 import {
   DigitalGaugeWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/gauge/digital-gauge-widget-settings.component';
-import { FixedColorLevelComponent } from '@home/components/widget/lib/settings/gauge/fixed-color-level.component';
 import { TickValueComponent } from '@home/components/widget/lib/settings/gauge/tick-value.component';
 import { FlotWidgetSettingsComponent } from '@home/components/widget/lib/settings/chart/flot-widget-settings.component';
 import {
@@ -124,9 +126,6 @@ import {
 import {
   SendRpcWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/send-rpc-widget-settings.component';
-import {
-  DeviceKeyAutocompleteComponent
-} from '@home/components/widget/lib/settings/control/device-key-autocomplete.component';
 import {
   LedIndicatorWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/led-indicator-widget-settings.component';
@@ -258,6 +257,12 @@ import {
   TripAnimationPointSettingsComponent
 } from '@home/components/widget/lib/settings/map/trip-animation-point-settings.component';
 import {
+  GatewayLogsSettingsComponent
+} from '@home/components/widget/lib/settings/gateway/gateway-logs-settings.component';
+import {
+  GatewayServiceRPCSettingsComponent
+} from '@home/components/widget/lib/settings/gateway/gateway-service-rpc-settings.component';
+import {
   DocLinksWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/home-page/doc-links-widget-settings.component';
 import {
@@ -273,10 +278,107 @@ import {
 import {
   AggregatedValueCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/aggregated-value-card-widget-settings.component';
+import {
+  AlarmCountWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/alarm/alarm-count-widget-settings.component';
+import {
+  EntityCountWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/entity/entity-count-widget-settings.component';
+import {
+  BatteryLevelWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/battery-level-widget-settings.component';
+import {
+  WindSpeedDirectionWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/weather/wind-speed-direction-widget-settings.component';
+import {
+  SignalStrengthWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/signal-strength-widget-settings.component';
+import {
+  ValueChartCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/value-chart-card-widget-settings.component';
+import {
+  ProgressBarWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/progress-bar-widget-settings.component';
+import {
+  LiquidLevelCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/liquid-level-card-widget-settings.component';
+import {
+  DoughnutWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/doughnut-widget-settings.component';
+import {
+  RangeChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/range-chart-widget-settings.component';
+import {
+  BarChartWithLabelsWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/bar-chart-with-labels-widget-settings.component';
+import {
+  SingleSwitchWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/single-switch-widget-settings.component';
+import {
+  ActionButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/action-button-widget-settings.component';
+import {
+  CommandButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/command-button-widget-settings.component';
+import {
+  PowerButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/power-button-widget-settings.component';
+import {
+  SliderWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/slider-widget-settings.component';
+import {
+  ToggleButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/toggle-button-widget-settings.component';
+import {
+  TimeSeriesChartKeySettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-key-settings.component';
+import {
+  TimeSeriesChartLineSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-line-settings.component';
+import {
+  TimeSeriesChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-widget-settings.component';
+import {
+  StatusWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/status-widget-settings.component';
+import {
+  PieChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/pie-chart-widget-settings.component';
+import {
+  BarChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/bar-chart-widget-settings.component';
+import {
+  PolarAreaChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/polar-area-chart-widget-settings.component';
+import {
+  RadarChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/radar-chart-widget-settings.component';
+import {
+  MobileAppQrCodeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/mobile-app-qr-code-widget-settings.component';
+import {
+  LabelCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/label-card-widget-settings.component';
+import {
+  LabelValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/label-value-card-widget-settings.component';
+import {
+  UnreadNotificationWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/unread-notification-widget-settings.component';
+import {
+  ScadaSymbolWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/scada/scada-symbol-widget-settings.component';
+import {
+  SegmentedButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/segmented-button-widget-settings.component';
+import {
+  ValueStepperWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/value-stepper-widget-settings.component';
 
 @NgModule({
   declarations: [
     QrCodeWidgetSettingsComponent,
+    MobileAppQrCodeWidgetSettingsComponent,
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
@@ -291,12 +393,10 @@ import {
     EntitiesTableKeySettingsComponent,
     AlarmsTableWidgetSettingsComponent,
     AlarmsTableKeySettingsComponent,
-    GaugeHighlightComponent,
     AnalogueRadialGaugeWidgetSettingsComponent,
     AnalogueLinearGaugeWidgetSettingsComponent,
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
-    FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,
     LabelDataKeyComponent,
@@ -311,7 +411,6 @@ import {
     FlotPieKeySettingsComponent,
     ChartWidgetSettingsComponent,
     DoughnutChartWidgetSettingsComponent,
-    DeviceKeyAutocompleteComponent,
     SwitchRpcSettingsComponent,
     RoundSwitchWidgetSettingsComponent,
     SwitchControlWidgetSettingsComponent,
@@ -369,12 +468,45 @@ import {
     TripAnimationPointSettingsComponent,
     MapWidgetSettingsComponent,
     RouteMapWidgetSettingsComponent,
+    GatewayLogsSettingsComponent,
+    GatewayServiceRPCSettingsComponent,
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
     QuickLinksWidgetSettingsComponent,
     ValueCardWidgetSettingsComponent,
     AggregatedValueCardKeySettingsComponent,
-    AggregatedValueCardWidgetSettingsComponent
+    AggregatedValueCardWidgetSettingsComponent,
+    AlarmCountWidgetSettingsComponent,
+    EntityCountWidgetSettingsComponent,
+    BatteryLevelWidgetSettingsComponent,
+    WindSpeedDirectionWidgetSettingsComponent,
+    SignalStrengthWidgetSettingsComponent,
+    ValueChartCardWidgetSettingsComponent,
+    ProgressBarWidgetSettingsComponent,
+    LiquidLevelCardWidgetSettingsComponent,
+    DoughnutWidgetSettingsComponent,
+    RangeChartWidgetSettingsComponent,
+    BarChartWithLabelsWidgetSettingsComponent,
+    SingleSwitchWidgetSettingsComponent,
+    ActionButtonWidgetSettingsComponent,
+    SegmentedButtonWidgetSettingsComponent,
+    ValueStepperWidgetSettingsComponent,
+    CommandButtonWidgetSettingsComponent,
+    PowerButtonWidgetSettingsComponent,
+    SliderWidgetSettingsComponent,
+    ToggleButtonWidgetSettingsComponent,
+    TimeSeriesChartKeySettingsComponent,
+    TimeSeriesChartLineSettingsComponent,
+    TimeSeriesChartWidgetSettingsComponent,
+    StatusWidgetSettingsComponent,
+    PieChartWidgetSettingsComponent,
+    BarChartWidgetSettingsComponent,
+    PolarAreaChartWidgetSettingsComponent,
+    RadarChartWidgetSettingsComponent,
+    LabelCardWidgetSettingsComponent,
+    LabelValueCardWidgetSettingsComponent,
+    UnreadNotificationWidgetSettingsComponent,
+    ScadaSymbolWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -384,6 +516,7 @@ import {
   ],
   exports: [
     QrCodeWidgetSettingsComponent,
+    MobileAppQrCodeWidgetSettingsComponent,
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
@@ -398,12 +531,10 @@ import {
     EntitiesTableKeySettingsComponent,
     AlarmsTableWidgetSettingsComponent,
     AlarmsTableKeySettingsComponent,
-    GaugeHighlightComponent,
     AnalogueRadialGaugeWidgetSettingsComponent,
     AnalogueLinearGaugeWidgetSettingsComponent,
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
-    FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,
     LabelDataKeyComponent,
@@ -418,7 +549,6 @@ import {
     FlotPieKeySettingsComponent,
     ChartWidgetSettingsComponent,
     DoughnutChartWidgetSettingsComponent,
-    DeviceKeyAutocompleteComponent,
     SwitchRpcSettingsComponent,
     RoundSwitchWidgetSettingsComponent,
     SwitchControlWidgetSettingsComponent,
@@ -476,82 +606,49 @@ import {
     TripAnimationPointSettingsComponent,
     MapWidgetSettingsComponent,
     RouteMapWidgetSettingsComponent,
+    GatewayLogsSettingsComponent,
+    GatewayServiceRPCSettingsComponent,
     TripAnimationWidgetSettingsComponent,
     DocLinksWidgetSettingsComponent,
     QuickLinksWidgetSettingsComponent,
     ValueCardWidgetSettingsComponent,
     AggregatedValueCardKeySettingsComponent,
-    AggregatedValueCardWidgetSettingsComponent
+    AggregatedValueCardWidgetSettingsComponent,
+    AlarmCountWidgetSettingsComponent,
+    EntityCountWidgetSettingsComponent,
+    BatteryLevelWidgetSettingsComponent,
+    WindSpeedDirectionWidgetSettingsComponent,
+    SignalStrengthWidgetSettingsComponent,
+    ValueChartCardWidgetSettingsComponent,
+    ProgressBarWidgetSettingsComponent,
+    LiquidLevelCardWidgetSettingsComponent,
+    DoughnutWidgetSettingsComponent,
+    RangeChartWidgetSettingsComponent,
+    BarChartWithLabelsWidgetSettingsComponent,
+    SingleSwitchWidgetSettingsComponent,
+    ActionButtonWidgetSettingsComponent,
+    SegmentedButtonWidgetSettingsComponent,
+    ValueStepperWidgetSettingsComponent,
+    CommandButtonWidgetSettingsComponent,
+    PowerButtonWidgetSettingsComponent,
+    SliderWidgetSettingsComponent,
+    ToggleButtonWidgetSettingsComponent,
+    TimeSeriesChartKeySettingsComponent,
+    TimeSeriesChartLineSettingsComponent,
+    TimeSeriesChartWidgetSettingsComponent,
+    StatusWidgetSettingsComponent,
+    PieChartWidgetSettingsComponent,
+    BarChartWidgetSettingsComponent,
+    PolarAreaChartWidgetSettingsComponent,
+    RadarChartWidgetSettingsComponent,
+    LabelCardWidgetSettingsComponent,
+    LabelValueCardWidgetSettingsComponent,
+    UnreadNotificationWidgetSettingsComponent,
+    ScadaSymbolWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
+  constructor(private widgetService: WidgetService) {
+    this.widgetService.registerWidgetSettingsComponents(this.constructor)
+  }
 }
-
-export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsComponent>} = {
-  'tb-qrcode-widget-settings': QrCodeWidgetSettingsComponent,
-  'tb-timeseries-table-widget-settings': TimeseriesTableWidgetSettingsComponent,
-  'tb-timeseries-table-key-settings': TimeseriesTableKeySettingsComponent,
-  'tb-timeseries-table-latest-key-settings': TimeseriesTableLatestKeySettingsComponent,
-  'tb-markdown-widget-settings': MarkdownWidgetSettingsComponent,
-  'tb-label-widget-settings': LabelWidgetSettingsComponent,
-  'tb-simple-card-widget-settings': SimpleCardWidgetSettingsComponent,
-  'tb-dashboard-state-widget-settings': DashboardStateWidgetSettingsComponent,
-  'tb-entities-hierarchy-widget-settings': EntitiesHierarchyWidgetSettingsComponent,
-  'tb-html-card-widget-settings': HtmlCardWidgetSettingsComponent,
-  'tb-entities-table-widget-settings': EntitiesTableWidgetSettingsComponent,
-  'tb-entities-table-key-settings': EntitiesTableKeySettingsComponent,
-  'tb-alarms-table-widget-settings': AlarmsTableWidgetSettingsComponent,
-  'tb-alarms-table-key-settings': AlarmsTableKeySettingsComponent,
-  'tb-analogue-radial-gauge-widget-settings': AnalogueRadialGaugeWidgetSettingsComponent,
-  'tb-analogue-linear-gauge-widget-settings': AnalogueLinearGaugeWidgetSettingsComponent,
-  'tb-analogue-compass-widget-settings': AnalogueCompassWidgetSettingsComponent,
-  'tb-digital-gauge-widget-settings': DigitalGaugeWidgetSettingsComponent,
-  'tb-flot-line-widget-settings': FlotLineWidgetSettingsComponent,
-  'tb-flot-bar-widget-settings': FlotBarWidgetSettingsComponent,
-  'tb-flot-line-key-settings': FlotLineKeySettingsComponent,
-  'tb-flot-bar-key-settings': FlotBarKeySettingsComponent,
-  'tb-flot-latest-key-settings': FlotLatestKeySettingsComponent,
-  'tb-flot-pie-widget-settings': FlotPieWidgetSettingsComponent,
-  'tb-flot-pie-key-settings': FlotPieKeySettingsComponent,
-  'tb-chart-widget-settings': ChartWidgetSettingsComponent,
-  'tb-doughnut-chart-widget-settings': DoughnutChartWidgetSettingsComponent,
-  'tb-round-switch-widget-settings': RoundSwitchWidgetSettingsComponent,
-  'tb-switch-control-widget-settings': SwitchControlWidgetSettingsComponent,
-  'tb-slide-toggle-widget-settings': SlideToggleWidgetSettingsComponent,
-  'tb-persistent-table-widget-settings': PersistentTableWidgetSettingsComponent,
-  'tb-update-device-attribute-widget-settings': UpdateDeviceAttributeWidgetSettingsComponent,
-  'tb-send-rpc-widget-settings': SendRpcWidgetSettingsComponent,
-  'tb-led-indicator-widget-settings': LedIndicatorWidgetSettingsComponent,
-  'tb-knob-control-widget-settings': KnobControlWidgetSettingsComponent,
-  'tb-rpc-terminal-widget-settings': RpcTerminalWidgetSettingsComponent,
-  'tb-rpc-shell-widget-settings': RpcShellWidgetSettingsComponent,
-  'tb-date-range-navigator-widget-settings': DateRangeNavigatorWidgetSettingsComponent,
-  'tb-edge-quick-overview-widget-settings': EdgeQuickOverviewWidgetSettingsComponent,
-  'tb-gateway-config-widget-settings': GatewayConfigWidgetSettingsComponent,
-  'tb-gateway-config-single-device-widget-settings': GatewayConfigSingleDeviceWidgetSettingsComponent,
-  'tb-gateway-events-widget-settings': GatewayEventsWidgetSettingsComponent,
-  'tb-gpio-control-widget-settings': GpioControlWidgetSettingsComponent,
-  'tb-gpio-panel-widget-settings': GpioPanelWidgetSettingsComponent,
-  'tb-navigation-card-widget-settings': NavigationCardWidgetSettingsComponent,
-  'tb-navigation-cards-widget-settings': NavigationCardsWidgetSettingsComponent,
-  'tb-device-claiming-widget-settings': DeviceClaimingWidgetSettingsComponent,
-  'tb-update-integer-attribute-widget-settings': UpdateIntegerAttributeWidgetSettingsComponent,
-  'tb-update-double-attribute-widget-settings': UpdateDoubleAttributeWidgetSettingsComponent,
-  'tb-update-string-attribute-widget-settings': UpdateStringAttributeWidgetSettingsComponent,
-  'tb-update-boolean-attribute-widget-settings': UpdateBooleanAttributeWidgetSettingsComponent,
-  'tb-update-image-attribute-widget-settings': UpdateImageAttributeWidgetSettingsComponent,
-  'tb-update-date-attribute-widget-settings': UpdateDateAttributeWidgetSettingsComponent,
-  'tb-update-location-attribute-widget-settings': UpdateLocationAttributeWidgetSettingsComponent,
-  'tb-update-json-attribute-widget-settings': UpdateJsonAttributeWidgetSettingsComponent,
-  'tb-photo-camera-input-widget-settings': PhotoCameraInputWidgetSettingsComponent,
-  'tb-update-multiple-attributes-widget-settings': UpdateMultipleAttributesWidgetSettingsComponent,
-  'tb-update-multiple-attributes-key-settings': UpdateMultipleAttributesKeySettingsComponent,
-  'tb-map-widget-settings': MapWidgetSettingsComponent,
-  'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
-  'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent,
-  'tb-doc-links-widget-settings': DocLinksWidgetSettingsComponent,
-  'tb-quick-links-widget-settings': QuickLinksWidgetSettingsComponent,
-  'tb-value-card-widget-settings': ValueCardWidgetSettingsComponent,
-  'tb-aggregated-value-card-key-settings': AggregatedValueCardKeySettingsComponent,
-  'tb-aggregated-value-card-widget-settings': AggregatedValueCardWidgetSettingsComponent
-};

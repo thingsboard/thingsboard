@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.AttributeKey;
 import io.netty.util.ResourceLeakDetector;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,15 +33,13 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.TbTransportService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.net.InetSocketAddress;
 
 /**
  * @author Andrew Shvayka
  */
 @Service("MqttTransportService")
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.mqtt.enabled}'=='true')")
+@TbMqttTransportComponent
 @Slf4j
 public class MqttTransportService implements TbTransportService {
 

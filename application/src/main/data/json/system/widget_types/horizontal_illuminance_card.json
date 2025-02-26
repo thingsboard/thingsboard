@@ -1,0 +1,48 @@
+{
+  "fqn": "horizontal_illuminance_card",
+  "name": "Horizontal illuminance card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/horizontal_illuminance_card_system_widget_image.png",
+  "description": "Displays the latest illuminance telemetry in a scalable horizontal layout.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 1,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        horizontal: true,\n        previewWidth: '420px',\n        previewHeight: '90px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'illuminance', label: 'Illuminance', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Illuminance\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 7;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"horizontal\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"mdi:lightbulb-on\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":1,\"color\":\"rgba(0, 0, 0, 0.76)\"},{\"from\":1,\"to\":5,\"color\":\"#FFA600\"},{\"from\":5,\"to\":20,\"color\":\"#F36900\"},{\"from\":20,\"to\":50,\"color\":\"#F04022\"},{\"from\":50,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":1,\"color\":\"rgba(0, 0, 0, 0.76)\"},{\"from\":1,\"to\":5,\"color\":\"#FFA600\"},{\"from\":5,\"to\":20,\"color\":\"#F36900\"},{\"from\":20,\"to\":50,\"color\":\"#F04022\"},{\"from\":50,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Horizontal illuminance card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"lx\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "weather",
+    "environment",
+    "brightness",
+    "luminance",
+    "luminosity",
+    "light",
+    "light level",
+    "light intensity",
+    "lux",
+    "candela",
+    "foot-candle"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/horizontal_illuminance_card_system_widget_image.png",
+      "title": "\"Horizontal illuminance card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "horizontal_illuminance_card_system_widget_image.png",
+      "publicResourceKey": "EsYSgLiomSUEPeZTATGgvjzZBVc3aghJ",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAolBMVEUAAADg4ODf39/g4ODg4ODf39/////g4ODYGDjdNVH1xc2srKzx8fHOzs6QkJDiUmn98fM9PT364ubIyMjz8/P5+fnb29u2trZ0dHTj4+PCwsLnb4K8vLzn5+fwqLTri5vpfY/409pmZmbaJkXV1dXumqjzt8Hu7u7sjJzkYHbU1NRYWFjfQ12dnZ1LS0vgRF0vLy8hISHwqbSCgoLpfZDofY9vEfvyAAAABnRSTlMA7yC/r7BI7FImAAADHklEQVR42u3a53LaUBCGYcDJsmqoC9QLiGJip9//rWUlOWAcTMyECTLzPeD10dEf3jEyzMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM42uhuO37sPI+kYrujd04ejwQedbsDqbjCmmzC8lZAxQnoGIX2DkL5BSN8cD/mp0HtzPCRmem4aapqr0Z4+ob55GWLFlswsJlGX1Jm5k4k20XUKKWwnae2CdF3uckhhd3BRVp1/c6ih1vmSnqisvCkk488WddZsPg+RG9n0ZWZXVdUt3IdtpWmPlU3fq2042douXdCahVLuVs55IZTnZK03n+OSStP6M+QrTbTQpuY208JJNdNmZOs2LcJH7fuMLsdhVsuclWalqGXB5nkhwlG4sSZxOmSbPOxD7Kkb0uVkvJE5Z4cKLoisOVu7EMtp1o7MkyEKd9QXIYvH6sthyMN224bQpHoMH+xKu2iI2YZYZPJSVp+43IU4PHdkKM7JkIyfmPSS/uqG3o0LshSunYJjkhCV2rkLoZxjKavp1ZDaLKjg30g1TbqaksVn62iIVMby+/WQXELifcjyiiHyWDe5wuujITKZHaIznlpXU3PcXiPq0RA58Yn+EmIp3PlG17ThTGYsU34OL/anl5b6jf9+c9rx6Ahv9XLDowuK+YdMhZdU86Z9MaF9iMPzJc+tkyFiyWJDe9M2Ru6rgFq+T/7YaDbG5MtxqqXkB0F3QjYukKQyx7n5+8rOFc6fhWzkqOD4byEli/gwZLEwAtc1ZBVRFESJP42MxcI1kpWR+ERG6iVJQJ7RnjDchP7ZUmFm03l6iswL2odkbZ9cPydDxDLLMucw5P5+6rlGanQh6X0ga9lLAyNy25BxEEiIm6SuJ7mRR//OcqyD1flv41XTLOgZzQgiY7pwI0+SIiMJoqk3dQ3ZW8kDN6gJ8Zu/SJpozYlFFNH/cjrkk1LQCUFKr7t3A7qCJuRsvn/qpEdv0YuQPkJI3yCkbxDSNzcUMqSbMB7c3cTH0/rHwWh4AyX6sPnqw4fxeze8Gw0AAAAAAAAAAAAAAAAAAAAAAAAAAAAA4Fy/AL5F9/papj6AAAAAAElFTkSuQmCC",
+      "public": true
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import java.util.concurrent.TimeUnit;
                 "Deprecated because the acknowledged message still stays in memory (to be delayed) and this " +
                 "does not guarantee that message will be processed even if the \"retry failures and timeouts\" processing strategy will be chosen.",
         icon = "pause",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDelayConfig"
 )
 public class TbMsgDelayNode implements TbNode {
@@ -65,14 +64,14 @@ public class TbMsgDelayNode implements TbNode {
             TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
             if (pendingMsg != null) {
                 ctx.enqueueForTellNext(
-                        TbMsg.newMsg(
-                                pendingMsg.getQueueName(),
-                                pendingMsg.getType(),
-                                pendingMsg.getOriginator(),
-                                pendingMsg.getCustomerId(),
-                                pendingMsg.getMetaData(),
-                                pendingMsg.getData()
-                        ),
+                        TbMsg.newMsg()
+                                .queueName(pendingMsg.getQueueName())
+                                .type(pendingMsg.getType())
+                                .originator(pendingMsg.getOriginator())
+                                .customerId(pendingMsg.getCustomerId())
+                                .copyMetaData(pendingMsg.getMetaData())
+                                .data(pendingMsg.getData())
+                                .build(),
                         TbNodeConnectionType.SUCCESS
                 );
             }

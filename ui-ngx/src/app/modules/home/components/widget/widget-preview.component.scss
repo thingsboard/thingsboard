@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
   z-index: 10;
   background: #F3F6FA;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: auto;
   .tb-preview-dashboard {
     position: relative;
+    margin: auto;
   }
   .tb-preview-panel {
     position: absolute;

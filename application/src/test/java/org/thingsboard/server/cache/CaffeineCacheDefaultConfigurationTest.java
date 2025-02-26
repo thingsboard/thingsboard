@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +33,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ContextConfiguration(classes = CaffeineCacheDefaultConfigurationTest.class, loader = SpringBootContextLoader.class)
 @ComponentScan({"org.thingsboard.server.cache"})
 @EnableConfigurationProperties
+@TestPropertySource(properties = {
+        "cache.specs.edgeSessions.timeToLiveInMinutes=1",
+        "cache.specs.relatedEdges.maxSize=1"
+})
 @Slf4j
 public class CaffeineCacheDefaultConfigurationTest {
 
@@ -41,10 +46,10 @@ public class CaffeineCacheDefaultConfigurationTest {
     @Test
     public void verifyTransactionAwareCacheManagerProxy() {
         assertThat(cacheSpecsMap.getSpecs()).as("specs").isNotNull();
-        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs)->assertThat(cacheSpecs).as("cache %s specs", name).isNotNull());
+        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs) -> assertThat(cacheSpecs).as("cache %s specs", name).isNotNull());
 
         SoftAssertions softly = new SoftAssertions();
-        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs)->{
+        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs) -> {
             softly.assertThat(name).as("cache name").isNotEmpty();
             softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isGreaterThan(0);
             softly.assertThat(cacheSpecs.getMaxSize()).as("cache %s max size", name).isGreaterThan(0);

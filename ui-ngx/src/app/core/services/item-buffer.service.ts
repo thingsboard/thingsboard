@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
+import { BreakpointId, Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
 import { AliasesInfo, EntityAlias, EntityAliases, EntityAliasInfo } from '@shared/models/alias.models';
 import {
   Datasource,
   DatasourceType,
+  TargetDeviceType,
   Widget,
   WidgetPosition,
   WidgetSize,
   widgetType
 } from '@shared/models/widget.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
-import { deepClone, isEqual } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -55,6 +56,7 @@ export interface WidgetReference {
   widgetId: string;
   originalSize: WidgetSize;
   originalColumns: number;
+  breakpoint: string;
 }
 
 export interface RuleNodeConnection {
@@ -84,16 +86,17 @@ export class ItemBufferService {
               private ruleChainService: RuleChainService,
               private utils: UtilsService) {}
 
-  public prepareWidgetItem(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): WidgetItem {
+  public prepareWidgetItem(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
+                           widget: Widget, breakpoint: BreakpointId): WidgetItem {
     const aliasesInfo: AliasesInfo = {
       datasourceAliases: {},
-      targetDeviceAliases: {}
+      targetDeviceAlias: null
     };
     const filtersInfo: FiltersInfo = {
       datasourceFilters: {}
     };
-    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout);
-    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget);
+    const originalColumns = this.dashboardUtils.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
+    const originalSize = this.dashboardUtils.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
     const datasources: Datasource[] = widget.type === widgetType.alarm ? [widget.config.alarmSource] : widget.config.datasources;
     if (widget.config && dashboard.configuration
       && dashboard.configuration.entityAliases) {
@@ -111,15 +114,11 @@ export class ItemBufferService {
           }
         }
       }
-      if (widget.config.targetDeviceAliasIds) {
-        for (let i = 0; i < widget.config.targetDeviceAliasIds.length; i++) {
-          const targetDeviceAliasId = widget.config.targetDeviceAliasIds[i];
-          if (targetDeviceAliasId) {
-            entityAlias = dashboard.configuration.entityAliases[targetDeviceAliasId];
-            if (entityAlias) {
-              aliasesInfo.targetDeviceAliases[i] = this.prepareAliasInfo(entityAlias);
-            }
-          }
+      if (widget.config.targetDevice?.type === TargetDeviceType.entity && widget.config.targetDevice.entityAliasId) {
+        const targetDeviceAliasId = widget.config.targetDevice.entityAliasId;
+        entityAlias = dashboard.configuration.entityAliases[targetDeviceAliasId];
+        if (entityAlias) {
+          aliasesInfo.targetDeviceAlias = this.prepareAliasInfo(entityAlias);
         }
       }
     }
@@ -149,13 +148,14 @@ export class ItemBufferService {
     };
   }
 
-  public copyWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): void {
-    const widgetItem = this.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
+  public copyWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: BreakpointId) {
+    const widgetItem = this.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget, breakpoint);
     this.storeSet(WIDGET_ITEM, widgetItem);
   }
 
-  public copyWidgetReference(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): void {
-    const widgetReference = this.prepareWidgetReference(dashboard, sourceState, sourceLayout, widget);
+  public copyWidgetReference(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
+                             widget: Widget, breakpoint: BreakpointId): void {
+    const widgetReference = this.prepareWidgetReference(dashboard, sourceState, sourceLayout, widget, breakpoint);
     this.storeSet(WIDGET_REFERENCE, widgetReference);
   }
 
@@ -163,11 +163,11 @@ export class ItemBufferService {
     return this.storeHas(WIDGET_ITEM);
   }
 
-  public canPasteWidgetReference(dashboard: Dashboard, state: string, layout: DashboardLayoutId): boolean {
+  public canPasteWidgetReference(dashboard: Dashboard, state: string, layout: DashboardLayoutId, breakpoint: string): boolean {
     const widgetReference: WidgetReference = this.storeGet(WIDGET_REFERENCE);
     if (widgetReference) {
       if (widgetReference.dashboardId === dashboard.id.id) {
-        if ((widgetReference.sourceState !== state || widgetReference.sourceLayout !== layout)
+        if ((widgetReference.sourceState !== state || widgetReference.sourceLayout !== layout || widgetReference.breakpoint !== breakpoint)
           && dashboard.configuration.widgets[widgetReference.widgetId]) {
           return true;
         }
@@ -177,7 +177,9 @@ export class ItemBufferService {
   }
 
   public pasteWidget(targetDashboard: Dashboard, targetState: string,
-                     targetLayout: DashboardLayoutId, position: WidgetPosition,
+                     targetLayout: DashboardLayoutId,
+                     breakpoint: string,
+                     position: WidgetPosition,
                      onAliasesUpdateFunction: () => void,
                      onFiltersUpdateFunction: () => void): Observable<Widget> {
     const widgetItem: WidgetItem = this.storeGet(WIDGET_ITEM);
@@ -197,7 +199,7 @@ export class ItemBufferService {
       return this.addWidgetToDashboard(targetDashboard, targetState,
                                 targetLayout, widget, aliasesInfo, filtersInfo,
                                 onAliasesUpdateFunction, onFiltersUpdateFunction,
-                                originalColumns, originalSize, targetRow, targetColumn).pipe(
+                                originalColumns, originalSize, targetRow, targetColumn, breakpoint).pipe(
         map(() => widget)
       );
     } else {
@@ -205,8 +207,11 @@ export class ItemBufferService {
     }
   }
 
-  public pasteWidgetReference(targetDashboard: Dashboard, targetState: string,
-                              targetLayout: DashboardLayoutId, position: WidgetPosition): Observable<Widget> {
+  public pasteWidgetReference(targetDashboard: Dashboard,
+                              targetState: string,
+                              targetLayout: DashboardLayoutId,
+                              breakpoint: string,
+                              position: WidgetPosition): Observable<Widget> {
     const widgetReference: WidgetReference = this.storeGet(WIDGET_REFERENCE);
     if (widgetReference) {
       const widget = targetDashboard.configuration.widgets[widgetReference.widgetId];
@@ -222,7 +227,7 @@ export class ItemBufferService {
         return this.addWidgetToDashboard(targetDashboard, targetState,
           targetLayout, widget, null,
           null, null, null, originalColumns,
-          originalSize, targetRow, targetColumn).pipe(
+          originalSize, targetRow, targetColumn, breakpoint).pipe(
           map(() => widget)
         );
       } else {
@@ -242,7 +247,8 @@ export class ItemBufferService {
                               originalColumns: number,
                               originalSize: WidgetSize,
                               row: number,
-                              column: number): Observable<Dashboard> {
+                              column: number,
+                              breakpoint = 'default'): Observable<Dashboard> {
     let theDashboard: Dashboard;
     if (dashboard) {
       theDashboard = dashboard;
@@ -273,7 +279,7 @@ export class ItemBufferService {
       }
     }
     this.dashboardUtils.addWidgetToLayout(theDashboard, targetState, targetLayout, widget,
-                                          originalColumns, originalSize, row, column);
+                                          originalColumns, originalSize, row, column, breakpoint);
     if (callAliasUpdateFunction) {
       onAliasesUpdateFunction();
     }
@@ -299,7 +305,11 @@ export class ItemBufferService {
         connectors: [],
         additionalInfo: origNode.additionalInfo,
         configuration: origNode.configuration,
-        debugMode: origNode.debugMode,
+        debugSettings: {
+          failuresEnabled: origNode.debugSettings?.failuresEnabled,
+          allEnabled: origNode.debugSettings?.allEnabled || origNode.debugSettings?.allEnabledUntil > new Date().getTime(),
+          allEnabledUntil: 0
+        },
         x: origNode.x,
         y: origNode.y,
         name: origNode.name,
@@ -311,6 +321,12 @@ export class ItemBufferService {
       }
       if (origNode.error) {
         node.error = origNode.error;
+      }
+      if (isDefinedAndNotNull(origNode.singletonMode)) {
+        node.singletonMode = origNode.singletonMode;
+      }
+      if (isDefinedAndNotNull(origNode.queueName)) {
+        node.queueName = origNode.queueName;
       }
       ruleNodes.nodes.push(node);
       if (i === 0) {
@@ -384,35 +400,6 @@ export class ItemBufferService {
     return ruleChainImport;
   }
 
-  private getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId): number {
-    let originalColumns = 24;
-    let gridSettings = null;
-    const state = dashboard.configuration.states[sourceState];
-    const layoutCount = Object.keys(state.layouts).length;
-    if (state) {
-      const layout = state.layouts[sourceLayout];
-      if (layout) {
-        gridSettings = layout.gridSettings;
-
-      }
-    }
-    if (gridSettings &&
-      gridSettings.columns) {
-      originalColumns = gridSettings.columns;
-    }
-    originalColumns = originalColumns * layoutCount;
-    return originalColumns;
-  }
-
-  private getOriginalSize(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): WidgetSize {
-    const layout = dashboard.configuration.states[sourceState].layouts[sourceLayout];
-    const widgetLayout = layout.widgets[widget.id];
-    return {
-      sizeX: widgetLayout.sizeX,
-      sizeY: widgetLayout.sizeY
-    };
-  }
-
   private prepareAliasInfo(entityAlias: EntityAlias): EntityAliasInfo {
     return {
       alias: entityAlias.alias,
@@ -429,16 +416,17 @@ export class ItemBufferService {
   }
 
   private prepareWidgetReference(dashboard: Dashboard, sourceState: string,
-                                 sourceLayout: DashboardLayoutId, widget: Widget): WidgetReference {
-    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout);
-    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget);
+                                 sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: BreakpointId): WidgetReference {
+    const originalColumns = this.dashboardUtils.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
+    const originalSize = this.dashboardUtils.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
     return {
       dashboardId: dashboard.id.id,
       sourceState,
       sourceLayout,
       widgetId: widget.id,
       originalSize,
-      originalColumns
+      originalColumns,
+      breakpoint
     };
   }
 
@@ -456,11 +444,15 @@ export class ItemBufferService {
         widget.config.datasources[datasourceIndex].entityAliasId = newAliasId;
       }
     }
-    for (const targetDeviceAliasIndexStr of Object.keys(aliasesInfo.targetDeviceAliases)) {
-      const targetDeviceAliasIndex = Number(targetDeviceAliasIndexStr);
-      aliasInfo = aliasesInfo.targetDeviceAliases[targetDeviceAliasIndex];
+    if (aliasesInfo.targetDeviceAlias) {
+      aliasInfo = aliasesInfo.targetDeviceAlias;
       newAliasId = this.getEntityAliasId(entityAliases, aliasInfo);
-      widget.config.targetDeviceAliasIds[targetDeviceAliasIndex] = newAliasId;
+      if (widget.config.targetDevice?.type !== TargetDeviceType.entity) {
+        widget.config.targetDevice = {
+          type: TargetDeviceType.entity
+        };
+      }
+      widget.config.targetDevice.entityAliasId = newAliasId;
     }
     return entityAliases;
   }

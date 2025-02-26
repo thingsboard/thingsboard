@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,43 +15,43 @@
  */
 package org.thingsboard.server.common.data.sms.config;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
 public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
-    @ApiModelProperty(value = "SMPP version", allowableValues = "3.3, 3.4", required = true)
+    @Schema(description = "SMPP version", allowableValues = "3.3, 3.4", requiredMode = Schema.RequiredMode.REQUIRED)
     private String protocolVersion;
 
-    @ApiModelProperty(value = "SMPP host", required = true)
+    @Schema(description = "SMPP host", requiredMode = Schema.RequiredMode.REQUIRED)
     private String host;
-    @ApiModelProperty(value = "SMPP port", required = true)
+    @Schema(description = "SMPP port", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer port;
 
-    @ApiModelProperty(value = "System ID", required = true)
+    @Schema(description = "System ID", requiredMode = Schema.RequiredMode.REQUIRED)
     private String systemId;
-    @ApiModelProperty(value = "Password", required = true)
+    @Schema(description = "Password", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 
-    @ApiModelProperty(value = "System type", required = false)
+    @Schema(description = "System type", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String systemType;
-    @ApiModelProperty(value = "TX - Transmitter, RX - Receiver, TRX - Transciever. By default TX is used", required = false)
+    @Schema(description = "TX - Transmitter, RX - Receiver, TRX - Transciever. By default TX is used", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private SmppBindType bindType;
-    @ApiModelProperty(value = "Service type", required = false)
+    @Schema(description = "Service type", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String serviceType;
 
-    @ApiModelProperty(value = "Source address", required = false)
+    @Schema(description = "Source address", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String sourceAddress;
-    @ApiModelProperty(value = "Source TON (Type of Number). Needed is source address is set. 5 by default.\n" +
+    @Schema(description = "Source TON (Type of Number). Needed is source address is set. 5 by default.\n" +
             "0 - Unknown\n" +
             "1 - International\n" +
             "2 - National\n" +
             "3 - Network Specific\n" +
             "4 - Subscriber Number\n" +
             "5 - Alphanumeric\n" +
-            "6 - Abbreviated", required = false)
+            "6 - Abbreviated", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte sourceTon;
-    @ApiModelProperty(value = "Source NPI (Numbering Plan Identification). Needed is source address is set. 0 by default.\n" +
+    @Schema(description = "Source NPI (Numbering Plan Identification). Needed is source address is set. 0 by default.\n" +
             "0 - Unknown\n" +
             "1 - ISDN/telephone numbering plan (E163/E164)\n" +
             "3 - Data numbering plan (X.121)\n" +
@@ -61,19 +61,19 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "9 - Private numbering plan\n" +
             "10 - ERMES numbering plan (ETSI DE/PS 3 01-3)\n" +
             "13 - Internet (IP)\n" +
-            "18 - WAP Client Id (to be defined by WAP Forum)", required = false)
+            "18 - WAP Client Id (to be defined by WAP Forum)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte sourceNpi;
 
-    @ApiModelProperty(value = "Destination TON (Type of Number). 5 by default.\n" +
+    @Schema(description = "Destination TON (Type of Number). 5 by default.\n" +
             "0 - Unknown\n" +
             "1 - International\n" +
             "2 - National\n" +
             "3 - Network Specific\n" +
             "4 - Subscriber Number\n" +
             "5 - Alphanumeric\n" +
-            "6 - Abbreviated", required = false)
+            "6 - Abbreviated", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte destinationTon;
-    @ApiModelProperty(value = "Destination NPI (Numbering Plan Identification). 0 by default.\n" +
+    @Schema(description = "Destination NPI (Numbering Plan Identification). 0 by default.\n" +
             "0 - Unknown\n" +
             "1 - ISDN/telephone numbering plan (E163/E164)\n" +
             "3 - Data numbering plan (X.121)\n" +
@@ -83,14 +83,14 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "9 - Private numbering plan\n" +
             "10 - ERMES numbering plan (ETSI DE/PS 3 01-3)\n" +
             "13 - Internet (IP)\n" +
-            "18 - WAP Client Id (to be defined by WAP Forum)", required = false)
+            "18 - WAP Client Id (to be defined by WAP Forum)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte destinationNpi;
 
-    @ApiModelProperty(value = "Address range", required = false)
+    @Schema(description = "Address range", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String addressRange;
 
-    @ApiModelProperty(allowableValues = "0-10,13-14",
-            value = "0 - SMSC Default Alphabet (ASCII for short and long code and to GSM for toll-free, used as default)\n" +
+    @Schema(allowableValues = {"0-10" ,"13-14"},
+            description = "0 - SMSC Default Alphabet (ASCII for short and long code and to GSM for toll-free, used as default)\n" +
                     "1 - IA5 (ASCII for short and long code, Latin 9 for toll-free (ISO-8859-9))\n" +
                     "2 - Octet Unspecified (8-bit binary)\n" +
                     "3 - Latin 1 (ISO-8859-1)\n" +
@@ -102,7 +102,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
                     "9 - Pictogram Encoding\n" +
                     "10 - Music Codes (ISO-2022-JP)\n" +
                     "13 - Extended Kanji JIS (X 0212-1990)\n" +
-                    "14 - Korean Graphic Character Set (KS C 5601/KS X 1001)", required = false)
+                    "14 - Korean Graphic Character Set (KS C 5601/KS X 1001)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte codingScheme;
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @EqualsAndHashCode
@@ -31,6 +32,7 @@ import java.io.Serializable;
 @Builder
 public class RelationCacheKey implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 3911151843961657570L;
 
     private final EntityId from;

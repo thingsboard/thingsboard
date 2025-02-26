@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,31 +18,35 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-@ApiModel
+@Schema
 @EqualsAndHashCode(callSuper = true)
-public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTitle {
+public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTitle, HasVersion {
 
     private static final long serialVersionUID = 8057243243859922101L;
 
     @Length(fieldName = "title")
     @NoXss
-    @ApiModelProperty(position = 3, required = true, value = "Title of the tenant", example = "Company A")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Title of the tenant", example = "Company A")
     private String title;
     @NoXss
     @Length(fieldName = "region")
-    @ApiModelProperty(position = 5, value = "Geo region of the tenant", example = "North America")
+    @Schema(description = "Geo region of the tenant", example = "North America")
     private String region;
 
-    @ApiModelProperty(position = 6, value = "JSON object with Tenant Profile Id")
+    @Schema(description = "JSON object with Tenant Profile Id")
     private TenantProfileId tenantProfileId;
+
+    @Getter @Setter
+    private Long version;
 
     public Tenant() {
         super();
@@ -57,6 +61,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         this.title = tenant.getTitle();
         this.region = tenant.getRegion();
         this.tenantProfileId = tenant.getTenantProfileId();
+        this.version = tenant.getVersion();
     }
 
     public String getTitle() {
@@ -74,7 +79,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
     }
 
     @Override
-    @ApiModelProperty(position = 4, value = "Name of the tenant. Read-only, duplicated from title for backward compatibility", example = "Company A", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Name of the tenant. Read-only, duplicated from title for backward compatibility", example = "Company A", accessMode = Schema.AccessMode.READ_ONLY)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return title;
@@ -96,70 +101,70 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         this.tenantProfileId = tenantProfileId;
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the tenant Id. " +
+    @Schema(description = "JSON object with the tenant Id. " +
             "Specify this field to update the tenant. " +
             "Referencing non-existing tenant Id will cause error. " +
-            "Omit this field to create new tenant." )
+            "Omit this field to create new tenant.")
     @Override
     public TenantId getId() {
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the tenant creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the tenant creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 7, value = "Country", example = "US")
+    @Schema(description = "Country", example = "US")
     @Override
     public String getCountry() {
         return super.getCountry();
     }
 
-    @ApiModelProperty(position = 8, value = "State", example = "NY")
+    @Schema(description = "State", example = "NY")
     @Override
     public String getState() {
         return super.getState();
     }
 
-    @ApiModelProperty(position = 9, value = "City", example = "New York")
+    @Schema(description = "City", example = "New York")
     @Override
     public String getCity() {
         return super.getCity();
     }
 
-    @ApiModelProperty(position = 10, value = "Address Line 1", example = "42 Broadway Suite 12-400")
+    @Schema(description = "Address Line 1", example = "42 Broadway Suite 12-400")
     @Override
     public String getAddress() {
         return super.getAddress();
     }
 
-    @ApiModelProperty(position = 11, value = "Address Line 2", example = "")
+    @Schema(description = "Address Line 2", example = "")
     @Override
     public String getAddress2() {
         return super.getAddress2();
     }
 
-    @ApiModelProperty(position = 12, value = "Zip code", example = "10004")
+    @Schema(description = "Zip code", example = "10004")
     @Override
     public String getZip() {
         return super.getZip();
     }
 
-    @ApiModelProperty(position = 13, value = "Phone number", example = "+1(415)777-7777")
+    @Schema(description = "Phone number", example = "+1(415)777-7777")
     @Override
     public String getPhone() {
         return super.getPhone();
     }
 
-    @ApiModelProperty(position = 14, required = true, value = "Email", example = "example@company.com")
+    @Schema(description = "Email", example = "example@company.com")
     @Override
     public String getEmail() {
         return super.getEmail();
     }
 
-    @ApiModelProperty(position = 15, value = "Additional parameters of the device", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @Schema(description = "Additional parameters of the device", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

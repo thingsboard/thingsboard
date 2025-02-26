@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="docLinksWidgetSettingsForm" fxLayout="column">
-  <mat-form-field fxFlex class="mat-block">
+<section class="tb-widget-settings flex flex-col" [formGroup]="docLinksWidgetSettingsForm">
+  <mat-form-field class="mat-block flex-1">
     <mat-label translate>widgets.documentation.columns</mat-label>
     <input required matInput type="number" step="1" min="1" max="20" formControlName="columns">
   </mat-form-field>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,36 +15,36 @@
 ///
 
 import {
-  AfterViewInit,
   Component,
-  ComponentFactoryResolver,
   ComponentRef,
   forwardRef,
   Input,
   OnChanges,
   OnDestroy,
-  OnInit,
   SimpleChanges,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormGroup,
+  ValidationErrors,
+  Validator,
   Validators
 } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
-import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
-import { IWidgetSettingsComponent, Widget, WidgetSettings } from '@shared/models/widget.models';
-import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
+import { DynamicFormData, IWidgetSettingsComponent, Widget, WidgetSettings } from '@shared/models/widget.models';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { WidgetService } from '@core/http/widget.service';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 @Component({
   selector: 'tb-widget-settings',
@@ -54,19 +54,25 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => WidgetSettingsComponent),
     multi: true
+  },
+  {
+    provide: NG_VALIDATORS,
+    useExisting: forwardRef(() => WidgetSettingsComponent),
+    multi: true
   }]
 })
-export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit, OnChanges {
+export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy, OnChanges, Validator {
 
   @ViewChild('definedSettingsContent', {read: ViewContainerRef, static: true}) definedSettingsContainer: ViewContainerRef;
-
-  @ViewChild('jsonFormComponent') jsonFormComponent: JsonFormComponent;
 
   @Input()
   disabled: boolean;
 
   @Input()
   aliasController: IAliasController;
+
+  @Input()
+  callbacks: WidgetConfigCallbacks;
 
   @Input()
   dashboard: Dashboard;
@@ -81,6 +87,8 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
 
   definedDirectiveError: string;
 
+  settingsForm?: FormProperty[];
+
   widgetSettingsFormGroup: UntypedFormGroup;
 
   changeSubscription: Subscription;
@@ -88,12 +96,10 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
   private definedSettingsComponentRef: ComponentRef<IWidgetSettingsComponent>;
   private definedSettingsComponent: IWidgetSettingsComponent;
 
-  private widgetSettingsFormData: JsonFormComponentData;
-
-  private propagateChange = (v: any) => { };
+  private widgetSettingsFormData: DynamicFormData;
+  private propagateChange = (_v: any) => { };
 
   constructor(private translate: TranslateService,
-              private cfr: ComponentFactoryResolver,
               private widgetService: WidgetService,
               private fb: UntypedFormBuilder) {
     this.widgetSettingsFormGroup = this.fb.group({
@@ -106,9 +112,6 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
   }
 
   registerOnTouched(fn: any): void {
-  }
-
-  ngOnInit(): void {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -130,6 +133,12 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
             this.definedSettingsComponent.aliasController = this.aliasController;
           }
         }
+        if (propName === 'callbacks') {
+          if (this.definedSettingsComponent) {
+            this.definedSettingsComponent.callbacks = this.callbacks;
+            this.definedSettingsComponent.dataKeyCallbacks = this.callbacks;
+          }
+        }
         if (propName === 'widgetConfig') {
           if (this.definedSettingsComponent) {
             this.definedSettingsComponent.widgetConfig = this.widgetConfig;
@@ -143,9 +152,10 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
     if (this.definedSettingsComponentRef) {
       this.definedSettingsComponentRef.destroy();
     }
-  }
-
-  ngAfterViewInit(): void {
+    if (this.changeSubscription) {
+      this.changeSubscription.unsubscribe();
+      this.changeSubscription = null;
+    }
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -157,8 +167,9 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
     }
   }
 
-  writeValue(value: JsonFormComponentData): void {
+  writeValue(value: DynamicFormData): void {
     this.widgetSettingsFormData = value;
+    this.settingsForm = this.widgetSettingsFormData.settingsForm;
     if (this.changeSubscription) {
       this.changeSubscription.unsubscribe();
       this.changeSubscription = null;
@@ -173,10 +184,10 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
         this.updateModel(settings);
       });
     } else {
-      this.widgetSettingsFormGroup.get('settings').patchValue(this.widgetSettingsFormData, {emitEvent: false});
+      this.widgetSettingsFormGroup.get('settings').patchValue(this.widgetSettingsFormData.model, {emitEvent: false});
       this.changeSubscription = this.widgetSettingsFormGroup.get('settings').valueChanges.subscribe(
-        (widgetSettingsFormData: JsonFormComponentData) => {
-          this.updateModel(widgetSettingsFormData.model);
+        (data: WidgetSettings) => {
+          this.updateModel(data);
         }
       );
     }
@@ -187,17 +198,13 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
       this.settingsDirective.length && !this.definedDirectiveError;
   }
 
-  useJsonForm(): boolean {
+  useDynamicForm(): boolean {
     return !this.settingsDirective || !this.settingsDirective.length;
   }
 
   private updateModel(settings: WidgetSettings) {
     this.widgetSettingsFormData.model = settings;
-    if (this.definedSettingsComponent || this.widgetSettingsFormGroup.valid) {
-      this.propagateChange(this.widgetSettingsFormData);
-    } else {
-      this.propagateChange(null);
-    }
+    this.propagateChange(this.widgetSettingsFormData);
   }
 
   private validateDefinedDirective() {
@@ -207,7 +214,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
       this.definedSettingsComponent = null;
     }
     if (this.settingsDirective && this.settingsDirective.length) {
-      const componentType = widgetSettingsComponentsMap[this.settingsDirective];
+      const componentType = this.widgetService.getWidgetSettingsComponentTypeBySelector(this.settingsDirective);
       if (!componentType) {
         this.definedDirectiveError = this.translate.instant('widget-config.settings-component-not-found',
           {selector: this.settingsDirective});
@@ -217,10 +224,11 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
           this.changeSubscription = null;
         }
         this.definedSettingsContainer.clear();
-        const factory = this.cfr.resolveComponentFactory(componentType);
-        this.definedSettingsComponentRef = this.definedSettingsContainer.createComponent(factory);
+        this.definedSettingsComponentRef = this.definedSettingsContainer.createComponent(componentType);
         this.definedSettingsComponent = this.definedSettingsComponentRef.instance;
         this.definedSettingsComponent.aliasController = this.aliasController;
+        this.definedSettingsComponent.callbacks = this.callbacks;
+        this.definedSettingsComponent.dataKeyCallbacks = this.callbacks;
         this.definedSettingsComponent.dashboard = this.dashboard;
         this.definedSettingsComponent.widget = this.widget;
         this.definedSettingsComponent.widgetConfig = this.widgetConfig;
@@ -232,9 +240,24 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
     }
   }
 
-  validate() {
+  validate(control: AbstractControl): ValidationErrors | null {
     if (this.useDefinedDirective()) {
-      this.definedSettingsComponent.validate();
+      if (!this.definedSettingsComponent.validateSettings()) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      }
+    } else if (this.useDynamicForm()) {
+      if (!this.widgetSettingsFormGroup.get('settings').valid) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      }
     }
+    return null;
   }
 }

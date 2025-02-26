@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package org.thingsboard.server.service.security.model;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-@ApiModel
+@Schema
 @Data
 public class ActivateUserRequest {
 
-    @ApiModelProperty(position = 1, value = "The activate token to verify", example = "AAB254FF67D..")
+    @Schema(description = "The activate token to verify", example = "AAB254FF67D..")
     private String activateToken;
-    @ApiModelProperty(position = 2, value = "The new password to set", example = "secret")
+    @Schema(description = "The new password to set", example = "secret")
     private String password;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.thingsboard.server.dao.cassandra;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jmx.JmxReporter;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +30,6 @@ import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
 import org.thingsboard.server.dao.cassandra.guava.GuavaSessionBuilder;
 import org.thingsboard.server.dao.cassandra.guava.GuavaSessionUtils;
 
-import javax.annotation.PreDestroy;
 import java.nio.file.Paths;
 
 @Slf4j

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   forwardRef,
   Input,
@@ -40,7 +41,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
-import { MatButton } from '@angular/material/button';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-color-input',
@@ -77,6 +78,10 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
   @coerceBoolean()
   openOnInput = false;
 
+  @Input()
+  @coerceBoolean()
+  noBorder = false;
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
@@ -110,7 +115,8 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
               private fb: UntypedFormBuilder,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -119,7 +125,9 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
       color: [null, this.required ? [Validators.required] : []]
     });
 
-    this.colorFormGroup.valueChanges.subscribe(() => {
+    this.colorFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }
@@ -189,13 +197,13 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
         this.popoverService.hidePopover(trigger);
       } else {
         const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
-            this.viewContainerRef, ColorPickerPanelComponent, 'left', true, null,
+            this.viewContainerRef, ColorPickerPanelComponent, ['left'], true, null,
             {
               color: this.colorFormGroup.get('color').value,
-              colorClearButton: this.colorClearButton
+              colorClearButton: this.colorClearButton,
+              colorCancelButton: true
             },
-            {},
-            {}, {}, true);
+            {}, {}, {}, false, () => {}, {padding: '12px 4px 12px 12px'});
         colorPickerPopover.tbComponentRef.instance.popover = colorPickerPopover;
         colorPickerPopover.tbComponentRef.instance.colorSelected.subscribe((color) => {
           colorPickerPopover.hide();

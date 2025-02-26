@@ -1,0 +1,40 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div #singleSwitchPanel class="tb-single-switch-panel" [class.auto-scale]="autoScale" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'" [style.padding]="padding" [style]="backgroundStyle$ | async">
+  <div class="tb-single-switch-overlay" [style]="overlayStyle" [style.inset]="overlayInset"></div>
+  <div class="tb-single-switch-title-panel">
+    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  </div>
+  <div #singleSwitchContent class="tb-single-switch-content" [class]="this.layout" [class.no-label]="!showIcon && !showLabel" [class.auto-scale]="autoScale">
+    <div *ngIf="showIcon || showLabel" #singleSwitchLabelRow class="tb-single-switch-label-row">
+      <tb-icon *ngIf="showIcon" [style]="iconStyle"
+               [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.iconColor">{{ icon }}</tb-icon>
+      <div *ngIf="showLabel" class="tb-single-switch-label" [style]="labelStyle"
+           [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.labelColor">{{ label$ | async }}</div>
+    </div>
+    <div #singleSwitchToggleRow class="tb-single-switch-slide-toggle-row">
+      <div *ngIf="showOffLabel" [style]="offLabelStyle"
+           [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.offLabelColor">{{ offLabel }}</div>
+      <mat-slide-toggle class="tb-single-switch-toggle" [disabled]="disabled || (loading$ | async)" [(ngModel)]="value" (click)="!disabled && onToggleChange($event)">
+      </mat-slide-toggle>
+      <div *ngIf="showOnLabel" [style]="onLabelStyle"
+           [style.color]="(disabled || (loading$ | async)) ? disabledColor : settings.onLabelColor">{{ onLabel }}</div>
+    </div>
+  </div>
+  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
+</div>

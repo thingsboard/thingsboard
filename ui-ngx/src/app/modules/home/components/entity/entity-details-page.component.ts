@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver,
   HostBinding,
   Injector,
   OnDestroy,
@@ -30,7 +29,6 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormGroup } from '@angular/forms';
-import { AssetId } from '@shared/models/id/asset-id';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from '@core/utils';
 import { BroadcastService } from '@core/services/broadcast.service';
@@ -50,6 +48,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
   headerSubtitle: string;
 
   isReadOnly = false;
+
+  backNavigationCommands?: any[];
 
   set entitiesTableConfig(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
     if (this.entitiesTableConfigValue !== entitiesTableConfig) {
@@ -72,13 +72,13 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
               private router: Router,
               protected injector: Injector,
               protected cd: ChangeDetectorRef,
-              protected componentFactoryResolver: ComponentFactoryResolver,
               private broadcast: BroadcastService,
               private translate: TranslateService,
               private dialogService: DialogService,
               protected store: Store<AppState>) {
-    super(store, injector, cd, componentFactoryResolver);
+    super(store, injector, cd);
     this.entitiesTableConfig = this.route.snapshot.data.entitiesTableConfig;
+    this.backNavigationCommands = this.route.snapshot.data.backNavigationCommands;
   }
 
   ngOnInit() {
@@ -145,7 +145,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
   }
 
   goBack(): void {
-    this.router.navigate(['../'], { relativeTo: this.route });
+    const commands = this.backNavigationCommands || ['../'];
+    this.router.navigate(commands, { relativeTo: this.route });
   }
 
   private onUpdateEntity() {

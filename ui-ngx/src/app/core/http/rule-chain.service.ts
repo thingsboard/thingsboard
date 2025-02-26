@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ComponentFactory, Injectable } from '@angular/core';
+import { Injectable, Type } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { forkJoin, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -31,11 +31,14 @@ import { ComponentDescriptorService } from './component-descriptor.service';
 import {
   IRuleNodeConfigurationComponent,
   LinkLabel,
-  RuleNodeComponentDescriptor, RuleNodeConfiguration, ScriptLanguage,
+  RuleNodeComponentDescriptor,
+  RuleNodeConfiguration,
+  RuleNodeConfigurationComponent,
+  ScriptLanguage,
   TestScriptInputParams,
   TestScriptResult
 } from '@app/shared/models/rule-node.models';
-import { ResourcesService } from '../services/resources.service';
+import { componentTypeBySelector, ResourcesService } from '../services/resources.service';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone, snakeCase } from '@core/utils';
@@ -50,7 +53,7 @@ export class RuleChainService {
 
   private ruleNodeComponentsMap: Map<RuleChainType, Array<RuleNodeComponentDescriptor>> =
     new Map<RuleChainType, Array<RuleNodeComponentDescriptor>>();
-  private ruleNodeConfigFactories: {[directive: string]: ComponentFactory<IRuleNodeConfigurationComponent>} = {};
+  private ruleNodeConfigComponents: {[directive: string]: Type<IRuleNodeConfigurationComponent>} = {};
 
   constructor(
     private http: HttpClient,
@@ -126,8 +129,8 @@ export class RuleChainService {
     }
   }
 
-  public getRuleNodeConfigFactory(directive: string): ComponentFactory<IRuleNodeConfigurationComponent> {
-    return this.ruleNodeConfigFactories[directive];
+  public getRuleNodeConfigComponent(directive: string): Type<IRuleNodeConfigurationComponent> {
+    return this.ruleNodeConfigComponents[directive];
   }
 
   public getRuleNodeComponentByClazz(ruleChainType: RuleChainType = RuleChainType.CORE, clazz: string): RuleNodeComponentDescriptor {
@@ -178,6 +181,10 @@ export class RuleChainService {
     return this.http.post<TestScriptResult>(url, inputParams, defaultHttpOptionsFromConfig(config));
   }
 
+  public registerSystemRuleNodeConfigModule(module: any) {
+    Object.assign(this.ruleNodeConfigComponents, this.resourcesService.extractComponentsFromModule<IRuleNodeConfigurationComponent>(module, RuleNodeConfigurationComponent, true));
+  }
+
   private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
     return this.componentDescriptorService.getComponentDescriptorsByTypes(ruleNodeTypeComponentTypes, ruleChainType, config).pipe(
       map((components) => {
@@ -209,7 +216,7 @@ export class RuleChainService {
     Observable<RuleNodeComponentDescriptor> {
     const nodeDefinition = component.configurationDescriptor.nodeDefinition;
     const uiResources = nodeDefinition.uiResources;
-    if (uiResources && uiResources.length) {
+    if (!this.ruleNodeConfigComponents[nodeDefinition.configDirective] && uiResources && uiResources.length) {
       const commonResources = uiResources.filter((resource) => !resource.endsWith('.js'));
       const moduleResource = uiResources.find((resource) => resource.endsWith('.js'));
       const tasks: Observable<any>[] = [];
@@ -219,14 +226,13 @@ export class RuleChainService {
         });
       }
       if (moduleResource) {
-        tasks.push(this.resourcesService.loadFactories(moduleResource, modulesMap).pipe(
+        tasks.push(this.resourcesService.loadModulesWithComponents(moduleResource, modulesMap).pipe(
           map((res) => {
             if (nodeDefinition.configDirective && nodeDefinition.configDirective.length) {
               const selector = snakeCase(nodeDefinition.configDirective, '-');
-              const componentFactory = res.factories.find((factory) =>
-              factory.selector === selector);
-              if (componentFactory) {
-                this.ruleNodeConfigFactories[nodeDefinition.configDirective] = componentFactory;
+              const componentType = componentTypeBySelector(res, selector);
+              if (componentType) {
+                this.ruleNodeConfigComponents[nodeDefinition.configDirective] = componentType;
               } else {
                 component.configurationDescriptor.nodeDefinition.uiResourceLoadError =
                   this.translate.instant('rulenode.directive-is-not-loaded',

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 
 
@@ -30,22 +31,42 @@ public class ApiUsageStateServiceTest extends AbstractServiceTest {
     ApiUsageStateService apiUsageStateService;
 
     @Test
-    public void testFindApiUsageStateByTenantId() {
-        ApiUsageState apiUsageState = apiUsageStateService.findTenantApiUsageState(tenantId);
-        Assert.assertNotNull(apiUsageState);
+    public void testFindTenantApiUsageState() {
+        ApiUsageState state = apiUsageStateService.findTenantApiUsageState(tenantId);
+        Assert.assertNotNull(state);
     }
 
     @Test
-    public void testUpdateApiUsageState(){
-        ApiUsageState apiUsageState = apiUsageStateService.findTenantApiUsageState(tenantId);
-        Assert.assertNotNull(apiUsageState);
-        Assert.assertTrue(apiUsageState.isTransportEnabled());
-        apiUsageState.setTransportState(ApiUsageStateValue.DISABLED);
-        apiUsageState = apiUsageStateService.update(apiUsageState);
-        Assert.assertNotNull(apiUsageState);
-        apiUsageState = apiUsageStateService.findTenantApiUsageState(tenantId);
-        Assert.assertNotNull(apiUsageState);
-        Assert.assertFalse(apiUsageState.isTransportEnabled());
+    public void testUpdate() {
+        ApiUsageState state = apiUsageStateService.findTenantApiUsageState(tenantId);
+
+        state.setTransportState(ApiUsageStateValue.DISABLED);
+        ApiUsageState updated = apiUsageStateService.update(state);
+        Assert.assertEquals(ApiUsageStateValue.DISABLED, updated.getTransportState());
+    }
+
+    @Test
+    public void testUpdateWithNullId() {
+        ApiUsageState newState = new ApiUsageState();
+        newState.setTenantId(tenantId);
+        newState.setTransportState(ApiUsageStateValue.ENABLED);
+        Assert.assertThrows(IncorrectParameterException.class, () -> apiUsageStateService.update(newState));
+    }
+
+    @Test
+    public void testFindApiUsageStateByEntityId() {
+        ApiUsageState state = apiUsageStateService.findApiUsageStateByEntityId(tenantId);
+        Assert.assertNotNull(state);
+    }
+
+    @Test
+    public void testDeleteByTenantId() {
+        ApiUsageState state = apiUsageStateService.findTenantApiUsageState(tenantId);
+        Assert.assertNotNull(state);
+
+        apiUsageStateService.deleteByTenantId(tenantId);
+        state = apiUsageStateService.findTenantApiUsageState(tenantId);
+        Assert.assertNull(state);
     }
 
 }

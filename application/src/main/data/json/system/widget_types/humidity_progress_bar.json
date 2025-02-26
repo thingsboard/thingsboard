@@ -1,0 +1,49 @@
+{
+  "fqn": "humidity_progress_bar",
+  "name": "Humidity progress bar",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/humidity_progress_bar_system_widget_image.png",
+  "description": "Displays humidity reading as a horizontal progress bar. Allows to configure value range, bar colors, and other settings.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-progress-bar-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-progress-bar-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.progressBarWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.progressBarWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '280px',\n        previewHeight: '180px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'humidity', label: 'humidity', type: 'timeseries' }];\n        }\n    };\n};\n\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-progress-bar-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-progress-bar-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"humidity\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 7;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"layout\":\"default\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":24,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":20,\"color\":\"#D81838\"},{\"from\":20,\"to\":40,\"color\":\"#FFA600\"},{\"from\":40,\"to\":60,\"color\":\"#5B7EE6\"},{\"from\":60,\"to\":80,\"color\":\"#305AD7\"},{\"from\":80,\"to\":100,\"color\":\"#234CC7\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"tickMin\":0,\"tickMax\":100,\"showTicks\":true,\"ticksFont\":{\"family\":\"Roboto\",\"size\":11,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"400\",\"lineHeight\":\"16px\"},\"ticksColor\":\"rgba(0,0,0,0.54)\",\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"barColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":0,\"to\":20,\"color\":\"#D81838\"},{\"from\":20,\"to\":40,\"color\":\"#FFA600\"},{\"from\":40,\"to\":60,\"color\":\"#5B7EE6\"},{\"from\":60,\"to\":80,\"color\":\"#305AD7\"},{\"from\":80,\"to\":100,\"color\":\"#234CC7\"}]},\"barBackground\":\"rgba(0, 0, 0, 0.04)\"},\"title\":\"Humidity\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"%\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"titleIcon\":\"mdi:water-percent\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"18px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null},\"titleColor\":\"rgba(0, 0, 0, 0.87)\"}"
+  },
+  "tags": [
+    "weather",
+    "environment",
+    "moisture",
+    "dampness",
+    "wetness",
+    "humidness",
+    "moistness",
+    "dew",
+    "water vapor",
+    "condensation",
+    "dew point",
+    "steaminess"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/humidity_progress_bar_system_widget_image.png",
+      "title": "\"Humidity progress bar\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "humidity_progress_bar_system_widget_image.png",
+      "publicResourceKey": "bp8G9hoOBYGXAoEvuSq8KcNewfKMvxRS",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAn1BMVEXg4ODf39/g4ODg4OAAAAD///8jTMfg4OD29vYhISHHx8fj4+M9PT10dHSQkJDx8fHk6fitra3I0vG6urpYWFjy9Pvv7++svOo+Ys5aedWGhoZ1j9y6x+7V1dWpqamenp6Xl5eCgoIvLy+Dmt9LbdEwV8vX3vSRpeOesefLy8tmZmbCwsJohNmOjo6RpuPY2Nh+fn7l5eVXdtJKSkrm5uZgoBxmAAAABXRSTlPvIL+vAC9A4IoAAAQhSURBVHja7M/BEQBABAPAOIynn/5LvTbCZDtYhD3Udm4Bw+R6DYN3HjAPlSfgSqQUIaMIG0XYKMJGETaKsFGEjSKf3TrWcRAGoihaveJ5xjNCoWUtu3Sb//+3JVgrlA2KqYBIuUg2yNURU/hqvYHcBl+37czQigyQGHBCfYhSMDe2bSsnfYUk5pltgn1dCYJpwgpB8Payq3MgwSZgsgCxEHKesCyAJQCS8xAZlnO7M/5MdgOQzNHpeIhxAAYaApWFrI8lAFRACh9PWM61UKuzAEJFp+MgNc7pP4ggtyU2yEiDKBukjda4fGV0Og6ij/gMiUBgBYRjg7AAiE+QRFt+ZK8zR6tB4gqZ9xeIU513vO9qEKe+QDAy8QedzoAkJiBtQqB0oD5DbizdyToFEqgp6TbEqINxhdQb4IUjOp0CgZGlbkOQSc1/kEkXQjx0slZIPxd/cwasiS8Qwc6ufPuVwIpenwAZWQS9PgESBke3T4Ds6Av5Qn7Zn2MUAGEgAIJVUocDwWBrxMr/P09DsI3tCjs/mL8wQmOExgiNERojNEZojNAYoTFCY4TGCI0RGiM0RmiM0BihMUJjhOYjckSU9FoiYklQ08jZ8qOOSqm526CVWeTKQyv9seZhT0iTSLnZL3sVh2EgCFczpMtiEJKwO8s/hau8/8Od8JokBG6PwIE3RB8ujCt/jGYlkewQRjIDyOQYMFedCI8YIgPZAwgTJ2BWHf3oEUMkkhGaxS6wHDFleMQQ6cgRlcQEBJFw/+gRQ6QaTMNe+QV3erLDjrPpZYlIIqdJS/HozXYYlTzDEZZI0Pk7xWe1SXTdZXQbxE9fLJFSw4hrIteniAaoSI85ox/gBXtqLQBCTSFoQup0vA/jGB1NYkMkk4LKeozhUNRMkWWVLHCDLRI0Gc1hU48HfewWN2vLENmOSdtrMcbXHUSKpFi8HFjsjiQ9a6WwbyelUwQ7SeKCwUtNDBH0PBgA4QMNYV0QR0Qv+7wlgphYyR1eRQ5C2pKXvv95Q5wDDMTNQeVb7uyfQxPxRhPxRhPxRhPxRhPxRhPxxheISOYZlPli8r5I4TncLjZvi/AsLpXrr8/7IpnnUOrv/msiUngGN+2IylxfXipfPLU+jCbijSby094dqzgMwwAYdtr+1MtxBIMGQVKtwYSkcO//bFdK5kK6WE31g3d9eNAobwXEWy8gdbZC43IdATEz2QbaDxEVbKFpWXsFxspkLJpllf2Q4Qal+ZeIAirkldrDOO2HTKMbyM/zlRIQLxAVWKlvQmTN3AaatkFsYTAWA/3bD6HobLRtg9zV9A79PBfegJAzXpJtoO/e7J9VQLwVEG8FxFsB8VZAvBUQbwXEWwHxVkC8FRBvHQiSOETXdDrA6Wn4PacuHeD4tDwYl+58/fTSqbv8A8IwqxFwwnsYAAAAAElFTkSuQmCC",
+      "public": true
+    }
+  ]
+}

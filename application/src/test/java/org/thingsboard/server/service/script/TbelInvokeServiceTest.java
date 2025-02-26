@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,11 @@ import com.github.benmanes.caffeine.cache.Cache;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.script.api.ScriptType;
-import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.script.api.tbel.TbelScript;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.controller.AbstractControllerTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -42,9 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
-@DaoSqlTest
 @TestPropertySource(properties = {
         "tbel.max_script_body_size=100",
         "tbel.max_total_args_size=50",
@@ -52,10 +45,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
         "tbel.max_errors=2",
         "tbel.compiled_scripts_cache_size=100"
 })
-class TbelInvokeServiceTest extends AbstractControllerTest {
-
-    @Autowired
-    private TbelInvokeService invokeService;
+class TbelInvokeServiceTest extends AbstractTbelInvokeTest {
 
     @Value("${tbel.max_errors}")
     private int maxJsErrors;
@@ -69,14 +59,14 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
         for (int i = 0; i < 100; i++) {
             msg.put("temperature", i);
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScriptResultString(scriptId, JacksonUtil.toString(msg)));
             Assert.assertEquals(expected, result);
         }
         long startTs = System.currentTimeMillis();
         for (int i = 0; i < iterations; i++) {
             msg.put("temperature", i);
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScriptResultString(scriptId, JacksonUtil.toString(msg)));
             Assert.assertEquals(expected, result);
         }
         long duration = System.currentTimeMillis() - startTs;
@@ -101,7 +91,7 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
 
         for (int i = 0; i < maxJsErrors; i++) {
             assertThatThrownBy(() -> {
-                invokeScript(scriptId, hugeMsg);
+                invokeScriptResultString(scriptId, hugeMsg);
             }).hasMessageContaining("input arguments exceed maximum");
         }
         assertThatScriptIsBlocked(scriptId);
@@ -114,7 +104,7 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
 
         for (int i = 0; i < maxJsErrors; i++) {
             assertThatThrownBy(() -> {
-                invokeScript(scriptId, "{}");
+                invokeScriptResultString(scriptId, "{}");
             }).hasMessageContaining("result exceeds maximum allowed size");
         }
         assertThatScriptIsBlocked(scriptId);
@@ -129,9 +119,9 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
             scriptsIds.add(scriptId);
         }
 
-        Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
-        Map<String, TbelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
-        Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
+        Map<UUID, String> scriptIdToHash = (Map<UUID, String>) ReflectionTestUtils.getField(invokeService, "scriptIdToHash");
+        Map<String, TbelScript> scriptMap = (Map<String, TbelScript>) ReflectionTestUtils.getField(invokeService, "scriptMap");
+        Cache<String, Serializable> compiledScriptsCache = (Cache<String, Serializable>) ReflectionTestUtils.getField(invokeService, "compiledScriptsCache");
 
         String scriptHash = scriptIdToHash.get(scriptsIds.get(0));
 
@@ -149,9 +139,9 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
             scriptsIds.add(scriptId);
         }
 
-        Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
-        Map<String, TbelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
-        Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
+        Map<UUID, String> scriptIdToHash = (Map<UUID, String>) ReflectionTestUtils.getField(invokeService, "scriptIdToHash");
+        Map<String, TbelScript> scriptMap = (Map<String, TbelScript>) ReflectionTestUtils.getField(invokeService, "scriptMap");
+        Cache<String, Serializable> compiledScriptsCache = (Cache<String, Serializable>) ReflectionTestUtils.getField(invokeService, "compiledScriptsCache");
 
         String scriptHash = scriptIdToHash.get(scriptsIds.get(0));
         for (int i = 0; i < 9; i++) {
@@ -172,8 +162,8 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
     @Ignore("This test is based on assumption that Caffeine cache is LRU based but in fact it is based on " +
             "Tiny LFU which is the cause that the tests fail sometime: https://arxiv.org/pdf/1512.00727.pdf")
     public void whenCompiledScriptsCacheIsTooBig_thenRemoveRarelyUsedScripts() throws Exception {
-        Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
-        Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
+        Map<UUID, String> scriptIdToHash = (Map<UUID, String>) ReflectionTestUtils.getField(invokeService, "scriptIdToHash");
+        Cache<String, Serializable> compiledScriptsCache = (Cache<String, Serializable>) ReflectionTestUtils.getField(invokeService, "compiledScriptsCache");
 
         List<UUID> scriptsIds = new ArrayList<>();
         for (int i = 0; i < 110; i++) { // tbel.compiled_scripts_cache_size = 100
@@ -182,7 +172,7 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
             scriptsIds.add(scriptId);
 
             for (int j = 0; j < i; j++) {
-                invokeScript(scriptId, "{ \"temperature\": 12 }"); // so that scriptsIds is ordered by number of invocations
+                invokeScriptResultString(scriptId, "{ \"temperature\": 12 }"); // so that scriptsIds is ordered by number of invocations
             }
         }
 
@@ -201,23 +191,13 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
 
         UUID scriptRemovedFromCache = scriptsIds.get(0);
         assertThat(compiledScriptsCache.getIfPresent(scriptIdToHash.get(scriptRemovedFromCache))).isNull();
-        invokeScript(scriptRemovedFromCache, "{ \"temperature\": 12 }");
+        invokeScriptResultString(scriptRemovedFromCache, "{ \"temperature\": 12 }");
         assertThat(compiledScriptsCache.getIfPresent(scriptIdToHash.get(scriptRemovedFromCache))).isNotNull();
     }
 
     private void assertThatScriptIsBlocked(UUID scriptId) {
         assertThatThrownBy(() -> {
-            invokeScript(scriptId, "{}");
+            invokeScriptResultString(scriptId, "{}");
         }).hasMessageContaining("invocation is blocked due to maximum error");
     }
-
-    private UUID evalScript(String script) throws ExecutionException, InterruptedException {
-        return invokeService.eval(TenantId.SYS_TENANT_ID, ScriptType.RULE_NODE_SCRIPT, script, "msg", "metadata", "msgType").get();
-    }
-
-    private String invokeScript(UUID scriptId, String str) throws ExecutionException, InterruptedException {
-        var msg = JacksonUtil.fromString(str, Map.class);
-        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.name()).get().toString();
-    }
-
 }

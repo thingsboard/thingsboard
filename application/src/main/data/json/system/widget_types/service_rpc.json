@@ -1,0 +1,38 @@
+{
+  "fqn": "gateway_widgets.service_rpc",
+  "name": "Service RPC",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/service_rpc_system_widget_image.png",
+  "description": "Allow users to send RPC requests to specific devices through the gateway.",
+  "descriptor": {
+    "type": "rpc",
+    "sizeX": 8.5,
+    "sizeY": 5.5,
+    "resources": [
+      {
+        "url": "tb-resource;/api/resource/js_module/system/gateway-management-extension.js",
+        "isModule": true
+      }
+    ],
+    "templateHtml": "<tb-gateway-service-rpc [ctx]=\"ctx\"></tb-gateway-service-rpc>",
+    "templateCss": ".error {\n    font-size: 14px !important;\n    color: maroon;/*rgb(250,250,250);*/\n    background-color: transparent;\n    padding: 6px;\n}\n\n.error span {\n    margin: auto;\n}\n\n.gpio-panel {\n    padding-top: 10px;\n    white-space: nowrap;\n}\n\n.gpio-panel section.flex-1 {\n    min-width: 0px;\n}\n\n\n.switch-panel {\n    margin: 0;\n    height: 32px;\n    width: 66px;\n    min-width: 66px;\n}\n\n.switch-panel mat-slide-toggle {\n    margin: 0;\n    width: 36px;\n    min-width: 36px;\n}\n\n.switch-panel.col-0 mat-slide-toggle {\n    margin-left: 8px;\n    margin-right: 4px;\n}\n\n.switch-panel.col-1 mat-slide-toggle {\n    margin-left: 4px;\n    margin-right: 8px;\n}\n\n.gpio-row {\n    height: 32px;\n}\n\n.pin {\n    margin-top: auto;\n    margin-bottom: auto;\n    color: white;\n    font-size: 12px;\n    width: 16px;\n    min-width: 16px;\n}\n\n.switch-panel.col-0 .pin {\n    margin-left: auto;\n    padding-left: 2px;\n    text-align: right;\n}\n\n.switch-panel.col-1 .pin {\n    margin-right: auto;\n\n    text-align: left;\n}\n\n.gpio-left-label {\n    margin-right: 8px;\n}\n\n.gpio-right-label {\n    margin-left: 8px;\n}",
+    "controllerScript": "\nself.onInit = function() {\n};",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "{}\n",
+    "settingsDirective": "tb-gateway-service-rpc-settings",
+    "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"isConnector\":false},\"title\":\"Service RPC\"}"
+  },
+  "tags": [
+    "command",
+    "downlink",
+    "device configuration",
+    "device control",
+    "invocation",
+    "remote method",
+    "remote function",
+    "interface",
+    "subroutine call",
+    "inter-process communication",
+    "server request"
+  ]
+}

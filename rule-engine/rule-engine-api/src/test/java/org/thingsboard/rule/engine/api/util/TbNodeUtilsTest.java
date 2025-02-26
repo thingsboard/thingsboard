@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package org.thingsboard.rule.engine.api.util;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -29,7 +29,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TbNodeUtilsTest {
 
     private static final String DATA_VARIABLE_TEMPLATE = "$[%s]";
@@ -44,9 +44,14 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("data_key", "data_value");
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, md, JacksonUtil.toString(node));
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(md)
+                .data(JacksonUtil.toString(node))
+                .build();
         String result = TbNodeUtils.processPattern(pattern, msg);
-        Assert.assertEquals("ABC metadata_value data_value", result);
+        Assertions.assertEquals("ABC metadata_value data_value", result);
     }
 
     @Test
@@ -58,9 +63,14 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("key", "data_value");
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, md, JacksonUtil.toString(node));
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(md)
+                .data(JacksonUtil.toString(node))
+                .build();
         String result = TbNodeUtils.processPattern(pattern, msg);
-        Assert.assertEquals(pattern, result);
+        Assertions.assertEquals(pattern, result);
     }
 
     @Test
@@ -72,9 +82,14 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("key", "data_value");
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, md, JacksonUtil.toString(node));
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(md)
+                .data(JacksonUtil.toString(node))
+                .build();
         String result = TbNodeUtils.processPattern(pattern, msg);
-        Assert.assertEquals("ABC metadata_value data_value", result);
+        Assertions.assertEquals("ABC metadata_value data_value", result);
     }
 
     @Test
@@ -93,9 +108,14 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.set("key1", key1Node);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, md, JacksonUtil.toString(node));
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(md)
+                .data(JacksonUtil.toString(node))
+                .build();
         String result = TbNodeUtils.processPattern(pattern, msg);
-        Assert.assertEquals("ABC metadata_value value3", result);
+        Assertions.assertEquals("ABC metadata_value value3", result);
     }
 
     @Test
@@ -114,9 +134,14 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.set("key1", key1Node);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, md, JacksonUtil.toString(node));
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(md)
+                .data(JacksonUtil.toString(node))
+                .build();
         String result = TbNodeUtils.processPattern(pattern, msg);
-        Assert.assertEquals("ABC metadata_value $[key1.key2[0].key3]", result);
+        Assertions.assertEquals("ABC metadata_value $[key1.key2[0].key3]", result);
     }
 
     @Test

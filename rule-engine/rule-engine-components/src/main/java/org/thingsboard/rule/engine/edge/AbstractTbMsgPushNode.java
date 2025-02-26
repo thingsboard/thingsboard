@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -38,6 +39,8 @@ import java.util.UUID;
 
 import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_ACK;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_CLEAR;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.CONNECT_EVENT;
@@ -46,13 +49,12 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 import static org.thingsboard.server.common.data.msg.TbMsgType.TIMESERIES_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.TO_SERVER_RPC_REQUEST;
 
 @Slf4j
 public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfiguration, S, U> implements TbNode {
 
     protected T config;
-
-    private static final String SCOPE = "scope";
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -66,16 +68,10 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             ctx.ack(msg);
             return;
         }
-        if (isSupportedOriginator(msg.getOriginator().getEntityType())) {
-            if (isSupportedMsgType(msg)) {
-                processMsg(ctx, msg);
-            } else {
-                String errMsg = String.format("Unsupported msg type %s", msg.getType());
-                log.debug(errMsg);
-                ctx.tellFailure(msg, new RuntimeException(errMsg));
-            }
+        if (isSupportedMsgType(msg)) {
+            processMsg(ctx, msg);
         } else {
-            String errMsg = String.format("Unsupported originator type %s", msg.getOriginator().getEntityType());
+            String errMsg = String.format("Unsupported msg type %s", msg.getType());
             log.debug(errMsg);
             ctx.tellFailure(msg, new RuntimeException(errMsg));
         }
@@ -85,29 +81,33 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         if (msg.isTypeOf(ALARM)) {
             EdgeEventActionType actionType = getAlarmActionType(msg);
             return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
+        } else if (msg.isTypeOneOf(ALARM_ACK, ALARM_CLEAR)) {
+            EdgeEventActionType actionType = EdgeEventActionType.valueOf(msg.getType());
+            return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
         } else {
             Map<String, String> metadata = msg.getMetaData().getData();
             EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msg);
             Map<String, Object> entityBody = new HashMap<>();
             JsonNode dataJson = JacksonUtil.toJsonNode(msg.getData());
             switch (actionType) {
-                case ATTRIBUTES_UPDATED:
-                case POST_ATTRIBUTES:
+                case ATTRIBUTES_UPDATED, POST_ATTRIBUTES -> {
                     entityBody.put("kv", dataJson);
-                    entityBody.put(SCOPE, getScope(metadata));
+                    entityBody.put("ts", msg.getMetaDataTs());
+                    entityBody.put(DataConstants.SCOPE, getScope(metadata));
                     if (EdgeEventActionType.POST_ATTRIBUTES.equals(actionType)) {
                         entityBody.put("isPostAttributes", true);
                     }
-                    break;
-                case ATTRIBUTES_DELETED:
-                    List<String> keys = JacksonUtil.convertValue(dataJson.get("attributes"), new TypeReference<>() {});
+                }
+                case ATTRIBUTES_DELETED -> {
+                    List<String> keys = JacksonUtil.convertValue(dataJson.get("attributes"), new TypeReference<>() {
+                    });
                     entityBody.put("keys", keys);
-                    entityBody.put(SCOPE, getScope(metadata));
-                    break;
-                case TIMESERIES_UPDATED:
+                    entityBody.put(DataConstants.SCOPE, getScope(metadata));
+                }
+                case TIMESERIES_UPDATED -> {
                     entityBody.put("data", dataJson);
                     entityBody.put("ts", msg.getMetaDataTs());
-                    break;
+                }
             }
             return buildEvent(ctx.getTenantId(),
                     actionType,
@@ -144,13 +144,12 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     abstract void processMsg(TbContext ctx, TbMsg msg);
 
     protected UUID getUUIDFromMsgData(TbMsg msg) {
-        JsonNode data = JacksonUtil.toJsonNode(msg.getData()).get("id");
-        String id = JacksonUtil.convertValue(data.get("id"), String.class);
-        return UUID.fromString(id);
+        Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
+        return alarm != null ? alarm.getUuidId() : null;
     }
 
     protected String getScope(Map<String, String> metadata) {
-        String scope = metadata.get(SCOPE);
+        String scope = metadata.get(DataConstants.SCOPE);
         if (StringUtils.isEmpty(scope)) {
             scope = config.getScope();
         }
@@ -168,9 +167,11 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         } else if (msg.isTypeOf(ATTRIBUTES_DELETED)) {
             actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
         } else if (msg.isTypeOneOf(CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT)) {
-            String scope = msg.getMetaData().getValue(SCOPE);
+            String scope = msg.getMetaData().getValue(DataConstants.SCOPE);
             actionType = StringUtils.isEmpty(scope) ?
                     EdgeEventActionType.TIMESERIES_UPDATED : EdgeEventActionType.ATTRIBUTES_UPDATED;
+        } else if (msg.isTypeOneOf(ALARM_ACK, ALARM_CLEAR)) {
+            actionType = EdgeEventActionType.valueOf(msg.getType());
         } else {
             String type = msg.getType();
             log.warn("Unsupported msg type [{}]", type);
@@ -180,23 +181,8 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     }
 
     protected boolean isSupportedMsgType(TbMsg msg) {
-        return msg.isTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED,
-                ATTRIBUTES_DELETED, TIMESERIES_UPDATED, ALARM, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT);
+        return msg.isTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED, TIMESERIES_UPDATED,
+                ALARM, ALARM_ACK, ALARM_CLEAR, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT, TO_SERVER_RPC_REQUEST);
     }
 
-    protected boolean isSupportedOriginator(EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-            case ASSET:
-            case ENTITY_VIEW:
-            case DASHBOARD:
-            case TENANT:
-            case CUSTOMER:
-            case USER:
-            case EDGE:
-                return true;
-            default:
-                return false;
-        }
-    }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -40,10 +41,9 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
@@ -77,11 +77,10 @@ public class TbMsgDeleteAttributesNodeTest {
 
         willReturn(telemetryService).given(ctx).getTelemetryService();
         willAnswer(invocation -> {
-            TelemetryNodeCallback callBack = invocation.getArgument(5);
-            callBack.onSuccess(null);
+            AttributesDeleteRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
             return null;
-        }).given(telemetryService).deleteAndNotify(
-                any(), any(), anyString(), anyList(), anyBoolean(), any());
+        }).given(telemetryService).deleteAttributes(any());
     }
 
     @AfterEach
@@ -138,7 +137,13 @@ public class TbMsgDeleteAttributesNodeTest {
         }
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, metaData, data, callback);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(metaData)
+                .data(data)
+                .callback(callback)
+                .build();
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
@@ -152,6 +157,8 @@ public class TbMsgDeleteAttributesNodeTest {
         }
         verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
-        verify(telemetryService, times(1)).deleteAndNotify(any(), any(), anyString(), anyList(), eq(notifyDevice || notifyDeviceMetadata), any());
+        verify(telemetryService, times(1)).deleteAttributes(assertArg(request -> {
+            assertThat(request.isNotifyDevice()).isEqualTo(notifyDevice || notifyDeviceMetadata);
+        }));
     }
 }

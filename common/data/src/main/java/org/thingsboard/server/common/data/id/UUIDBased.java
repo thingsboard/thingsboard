@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,18 @@
  */
 package org.thingsboard.server.common.data.id;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 import java.util.UUID;
 
-@ApiModel
+@Schema
 public abstract class UUIDBased implements HasUUID, Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    /** Cache the hash code */
+    private transient int hash; // Default to 0. The hash code calculated for this object likely never be zero
 
     private final UUID id;
 
@@ -37,17 +39,19 @@ public abstract class UUIDBased implements HasUUID, Serializable {
         this.id = id;
     }
 
-    @ApiModelProperty(position = 1, required = true, value = "string", example = "784f394c-42b6-435a-983c-b7beff2784f9")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     public UUID getId() {
         return id;
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        return result;
+        if (hash == 0) {
+            final int prime = 31;
+            int result = 1;
+            hash = prime * result + ((id == null) ? 0 : id.hashCode());
+        }
+        return hash;
     }
 
     @Override
@@ -69,7 +73,7 @@ public abstract class UUIDBased implements HasUUID, Serializable {
 
     @Override
     public String toString() {
-        return id.toString();
+        return String.valueOf(id);
     }
 
 }

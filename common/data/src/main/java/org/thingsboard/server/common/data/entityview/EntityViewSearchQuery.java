@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.entityview;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -27,15 +26,15 @@ import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import java.util.Collections;
 import java.util.List;
 
-@ApiModel
+@Schema
 @Data
 public class EntityViewSearchQuery {
 
-    @ApiModelProperty(position = 3, value = "Main search parameters.")
+    @Schema(description = "Main search parameters.")
     private RelationsSearchParameters parameters;
-    @ApiModelProperty(position = 1, value = "Type of the relation between root entity and device (e.g. 'Contains' or 'Manages').")
+    @Schema(description = "Type of the relation between root entity and device (e.g. 'Contains' or 'Manages').")
     private String relationType;
-    @ApiModelProperty(position = 2, value = "Array of entity view types to filter the related entities (e.g. 'Temperature Sensor', 'Smoke Sensor').")
+    @Schema(description = "Array of entity view types to filter the related entities (e.g. 'Temperature Sensor', 'Smoke Sensor').")
     private List<String> entityViewTypes;
 
     public EntityRelationsQuery toEntitySearchQuery() {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,10 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,14 +51,25 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
 
     @Override
     public NotificationTemplate saveNotificationTemplate(TenantId tenantId, NotificationTemplate notificationTemplate) {
+        NotificationType notificationType = notificationTemplate.getNotificationType();
         if (notificationTemplate.getId() != null) {
             NotificationTemplate oldNotificationTemplate = findNotificationTemplateById(tenantId, notificationTemplate.getId());
-            if (notificationTemplate.getNotificationType() != oldNotificationTemplate.getNotificationType()) {
+            if (notificationType != oldNotificationTemplate.getNotificationType()) {
                 throw new IllegalArgumentException("Notification type cannot be updated");
+            }
+        } else {
+            if (notificationType.isSystem()) {
+                int systemTemplatesCount = countNotificationTemplatesByTenantIdAndNotificationTypes(tenantId, List.of(notificationType));
+                if (systemTemplatesCount > 0) {
+                    throw new IllegalArgumentException("There can only be one notification template of this type");
+                }
             }
         }
         try {
-            return notificationTemplateDao.saveAndFlush(tenantId, notificationTemplate);
+            NotificationTemplate savedTemplate = notificationTemplateDao.saveAndFlush(tenantId, notificationTemplate);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedTemplate.getId())
+                    .created(notificationTemplate.getId() == null).build());
+            return savedTemplate;
         } catch (Exception e) {
             checkConstraintViolation(e, Map.of(
                     "uq_notification_template_name", "Notification template with such name already exists"
@@ -70,9 +84,39 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     }
 
     @Override
+    public Optional<NotificationTemplate> findTenantOrSystemNotificationTemplate(TenantId tenantId, NotificationType notificationType) {
+        return findNotificationTemplateByTenantIdAndType(tenantId, notificationType)
+                .or(() -> findNotificationTemplateByTenantIdAndType(TenantId.SYS_TENANT_ID, notificationType));
+    }
+
+    @Override
+    public Optional<NotificationTemplate> findNotificationTemplateByTenantIdAndType(TenantId tenantId, NotificationType notificationType) {
+        return findNotificationTemplatesByTenantIdAndNotificationTypes(tenantId, List.of(notificationType), new PageLink(1)).getData()
+                .stream().findFirst();
+    }
+
+    @Override
+    public int countNotificationTemplatesByTenantIdAndNotificationTypes(TenantId tenantId, Collection<NotificationType> notificationTypes) {
+        return notificationTemplateDao.countByTenantIdAndNotificationTypes(tenantId, notificationTypes);
+    }
+
+    @Override
     public void deleteNotificationTemplateById(TenantId tenantId, NotificationTemplateId id) {
-        if (notificationRequestDao.existsByTenantIdAndStatusAndTemplateId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
-            throw new IllegalArgumentException("Notification template is referenced by scheduled notification request");
+        deleteEntity(tenantId, id, false);
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        if (!force) {
+            if (notificationRequestDao.existsByTenantIdAndStatusAndTemplateId(tenantId, NotificationRequestStatus.SCHEDULED, (NotificationTemplateId) id)) {
+                throw new IllegalArgumentException("Notification template is referenced by scheduled notification request");
+            }
+            if (tenantId.isSysTenantId()) {
+                NotificationTemplate notificationTemplate = findNotificationTemplateById(tenantId, (NotificationTemplateId) id);
+                if (notificationTemplate.getNotificationType().isSystem()) {
+                    throw new IllegalArgumentException("System notification template cannot be deleted");
+                }
+            }
         }
         try {
             notificationTemplateDao.removeById(tenantId, id.getId());
@@ -82,6 +126,7 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
             ));
             throw e;
         }
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(id).build());
     }
 
     @Override
@@ -90,13 +135,13 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     }
 
     @Override
-    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(findNotificationTemplateById(tenantId, new NotificationTemplateId(entityId.getId())));
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteNotificationTemplatesByTenantId(tenantId);
     }
 
     @Override
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteNotificationTemplateById(tenantId, (NotificationTemplateId) id);
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findNotificationTemplateById(tenantId, new NotificationTemplateId(entityId.getId())));
     }
 
     @Override

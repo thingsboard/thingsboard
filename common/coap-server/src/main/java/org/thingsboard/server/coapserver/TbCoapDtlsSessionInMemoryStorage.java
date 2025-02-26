@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.thingsboard.server.coapserver;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -26,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
 @Data
 public class TbCoapDtlsSessionInMemoryStorage {
 
-    private final ConcurrentMap<InetSocketAddress, TbCoapDtlsSessionInfo> dtlsSessionsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TbCoapDtlsSessionKey, TbCoapDtlsSessionInfo> dtlsSessionsMap = new ConcurrentHashMap<>();
     private long dtlsSessionInactivityTimeout;
     private long dtlsSessionReportTimeout;
 
@@ -36,9 +35,9 @@ public class TbCoapDtlsSessionInMemoryStorage {
         this.dtlsSessionReportTimeout = dtlsSessionReportTimeout;
     }
 
-    public void put(InetSocketAddress remotePeer, TbCoapDtlsSessionInfo dtlsSessionInfo) {
-        log.trace("DTLS session added to in-memory store: [{}] timestamp: [{}]", remotePeer, dtlsSessionInfo.getLastActivityTime());
-        dtlsSessionsMap.putIfAbsent(remotePeer, dtlsSessionInfo);
+    public void put(TbCoapDtlsSessionKey tbCoapDtlsSessionKey, TbCoapDtlsSessionInfo dtlsSessionInfo) {
+        log.trace("DTLS session added to in-memory store: [{}] timestamp: [{}]", tbCoapDtlsSessionKey, dtlsSessionInfo.getLastActivityTime());
+        dtlsSessionsMap.putIfAbsent(tbCoapDtlsSessionKey, dtlsSessionInfo);
     }
 
     public void evictTimeoutSessions() {

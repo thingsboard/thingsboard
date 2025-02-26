@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -32,8 +32,10 @@ import {
   EntityKeyValueType,
   FilterPredicateValue,
   getDynamicSourcesForAllowUser,
-  inheritModeForDynamicValueSourceType
+  inheritModeForDynamicValueSourceType,
+  StringOperation
 } from '@shared/models/query/query.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-filter-predicate-value',
@@ -82,6 +84,15 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, Vali
   }
 
   @Input()
+  set operation(operation: StringOperation) {
+    if (operation && (operation === StringOperation.IN || operation === StringOperation.NOT_IN)) {
+      this.hintText = 'filter.default-comma-separated-values';
+    } else {
+      this.hintText = 'filter.default-value';
+    }
+  }
+
+  @Input()
   valueType: EntityKeyValueType;
 
   valueTypeEnum = EntityKeyValueType;
@@ -98,10 +109,13 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, Vali
 
   inheritMode = false;
 
+  hintText = 'filter.default-value';
+
   private propagateChange = null;
   private propagateChangePending = false;
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -135,7 +149,9 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, Vali
         }
       )
     });
-    this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceType').valueChanges.subscribe(
+    this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (sourceType) => {
         if (!sourceType) {
           this.filterPredicateValueFormGroup.get('dynamicValue').get('sourceAttribute').patchValue(null, {emitEvent: false});
@@ -144,7 +160,9 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, Vali
       }
     );
     this.updateValidationDynamicMode();
-    this.filterPredicateValueFormGroup.valueChanges.subscribe(() => {
+    this.filterPredicateValueFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
-        String expectedObjectId = pathIdVerToObjectId((String) expectedPath);
+        String expectedObjectId = pathIdVerToObjectId(expectedPath);
         LwM2mPath expectedPathId = new LwM2mPath(expectedObjectId);
         String expected = "Specified object id " + expectedPathId.getObjectId() + " absent in the list supported objects of the client or is security object!";
         String actual = rpcActualResult.get("error").asText();
@@ -118,7 +118,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
-        String expectedObjectId = pathIdVerToObjectId((String) expectedPath);
+        String expectedObjectId = pathIdVerToObjectId(expectedPath);
         LwM2mPath expectedPathId = new LwM2mPath(expectedObjectId);
         String expected = "Specified object id " + expectedPathId.getObjectId() + " absent in the list supported objects of the client or is security object!";
         String actual = rpcActualResult.get("error").asText();
@@ -127,7 +127,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
 
     private String sendRPCreateById(String path, String value) throws Exception {
         String setRpcRequest = "{\"method\": \"Create\", \"params\": {\"id\": \"" + path + "\", \"value\": " + value + " }}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
 }

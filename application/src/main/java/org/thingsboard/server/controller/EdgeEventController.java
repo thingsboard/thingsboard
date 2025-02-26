@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -33,16 +31,15 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 
@@ -59,26 +56,25 @@ public class EdgeEventController extends BaseController {
 
     @ApiOperation(value = "Get Edge Events (getEdgeEvents)",
             notes = "Returns a page of edge events for the requested edge. " +
-                    PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
+                    PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/events", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/edge/{edgeId}/events")
     public PageData<EdgeEvent> getEdgeEvents(
-            @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(EDGE_ID) String strEdgeId,
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = "The case insensitive 'substring' filter based on the edge event type name.")
+            @Parameter(description = "The case insensitive 'substring' filter based on the edge event type name.")
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EDGE_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "type", "label", "customerTitle"}))
             @RequestParam(required = false) String sortProperty,
-            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder,
-            @ApiParam(value = "Timestamp. Edge events with creation time before it won't be queried")
+            @Parameter(description = "Timestamp. Edge events with creation time before it won't be queried")
             @RequestParam(required = false) Long startTime,
-            @ApiParam(value = "Timestamp. Edge events with creation time after it won't be queried")
+            @Parameter(description = "Timestamp. Edge events with creation time after it won't be queried")
             @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         TenantId tenantId = getCurrentUser().getTenantId();
@@ -87,4 +83,5 @@ public class EdgeEventController extends BaseController {
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
         return checkNotNull(edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, pageLink));
     }
+
 }

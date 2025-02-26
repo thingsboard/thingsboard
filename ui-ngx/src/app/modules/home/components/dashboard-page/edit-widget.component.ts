@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import { IAliasController, IStateController } from '@core/api/widget-api.models'
 import { Widget, WidgetConfigMode } from '@shared/models/widget.models';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigComponentData } from '../../models/widget-component.models';
-import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
+import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-edit-widget',
@@ -55,6 +57,14 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
 
   @Input()
   widgetLayout: WidgetLayout;
+
+  @Input()
+  @coerceBoolean()
+  showLayoutConfig = true;
+
+  @Input()
+  @coerceBoolean()
+  isDefaultBreakpoint= true;
 
   @Output()
   applyWidgetConfig = new EventEmitter<void>();
@@ -129,31 +139,18 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       return;
     }
     const widgetInfo = this.widgetComponentService.getInstantWidgetInfo(this.widget);
-    const rawSettingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
-    const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
-    const rawLatestDataKeySettingsSchema = widgetInfo.typeLatestDataKeySettingsSchema || widgetInfo.latestDataKeySettingsSchema;
+
+    const settingsForm = widgetInfo.typeSettingsForm?.length ?
+      widgetInfo.typeSettingsForm : (widgetInfo.settingsForm || []);
+    const dataKeySettingsForm = widgetInfo.typeDataKeySettingsForm?.length ?
+      widgetInfo.typeDataKeySettingsForm : (widgetInfo.dataKeySettingsForm || []);
+    const latestDataKeySettingsForm = widgetInfo.typeLatestDataKeySettingsForm?.length ?
+      widgetInfo.typeLatestDataKeySettingsForm : (widgetInfo.latestDataKeySettingsForm || []);
     const typeParameters = widgetInfo.typeParameters;
+    const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
-    let settingsSchema;
-    if (!rawSettingsSchema || rawSettingsSchema === '') {
-      settingsSchema = {};
-    } else {
-      settingsSchema = isString(rawSettingsSchema) ? JSON.parse(rawSettingsSchema) : rawSettingsSchema;
-    }
-    let dataKeySettingsSchema;
-    if (!rawDataKeySettingsSchema || rawDataKeySettingsSchema === '') {
-      dataKeySettingsSchema = {};
-    } else {
-      dataKeySettingsSchema = isString(rawDataKeySettingsSchema) ? JSON.parse(rawDataKeySettingsSchema) : rawDataKeySettingsSchema;
-    }
-    let latestDataKeySettingsSchema;
-    if (!rawLatestDataKeySettingsSchema || rawLatestDataKeySettingsSchema === '') {
-      latestDataKeySettingsSchema = {};
-    } else {
-      latestDataKeySettingsSchema = isString(rawLatestDataKeySettingsSchema) ?
-        JSON.parse(rawLatestDataKeySettingsSchema) : rawLatestDataKeySettingsSchema;
-    }
+
     this.widgetConfig = {
       widgetName: widgetInfo.widgetName,
       config: this.widget.config,
@@ -162,9 +159,10 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       typeParameters,
       actionSources,
       isDataEnabled,
-      settingsSchema,
-      dataKeySettingsSchema,
-      latestDataKeySettingsSchema,
+      settingsForm,
+      dataKeySettingsForm,
+      latestDataKeySettingsForm,
+      dataKeySettingsFunction,
       settingsDirective: widgetInfo.settingsDirective,
       dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
       latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,

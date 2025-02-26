@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,15 +15,22 @@
 ///
 
 import _ from 'lodash';
-import { Observable, Subject } from 'rxjs';
-import { finalize, share } from 'rxjs/operators';
+import { from, Observable, of, ReplaySubject, Subject } from 'rxjs';
+import { catchError, finalize, share } from 'rxjs/operators';
 import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
+import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
+import {
+  CompiledTbFunction,
+  compileTbFunction, GenericFunction,
+  isNotEmptyTbFunction,
+  TbFunction
+} from '@shared/models/js-function.models';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -132,16 +139,16 @@ export function isLiteralObject(value: any) {
 
 export const formatValue = (value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined => {
   if (isDefinedAndNotNull(value) && isNumeric(value) &&
-    (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
-    let formatted: string | number = Number(value);
+    (isDefinedAndNotNull(dec) || isNotEmptyStr(units) || Number(value).toString() === value)) {
+    let formatted = value;
     if (isDefinedAndNotNull(dec)) {
-      formatted = formatted.toFixed(dec);
+      formatted = Number(formatted).toFixed(dec);
     }
     if (!showZeroDecimals) {
       formatted = (Number(formatted));
     }
     formatted = formatted.toString();
-    if (isDefinedAndNotNull(units) && units.length > 0) {
+    if (isNotEmptyStr(units)) {
       formatted += ' ' + units;
     }
     return formatted;
@@ -201,6 +208,37 @@ export function base64toObj(b64Encoded: string): any {
   const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
   return JSON.parse(json);
 }
+
+export function stringToBase64(value: string): string {
+  return btoa(encodeURIComponent(value).replace(/%([0-9A-F]{2})/g,
+    function toSolidBytes(match, p1) {
+      return String.fromCharCode(Number('0x' + p1));
+    }));
+}
+
+export const blobToBase64 = (blob: Blob): Observable<string> => from(new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    }
+  ));
+
+export const blobToText = (blob: Blob): Observable<string> => from(new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsText(blob);
+  }
+));
+
+export const updateFileContent = (file: File, newContent: string): File => {
+  const blob = new Blob([newContent], { type: file.type });
+  return new File([blob], file.name, {type: file.type});
+};
+
+export const createFileFromContent = (content: string, name: string, type: string): File => {
+  const blob = new Blob([content], { type });
+  return new File([blob], name, { type });
+};
 
 const scrollRegex = /(auto|scroll)/;
 
@@ -323,6 +361,8 @@ export const isEmpty = (a: any): boolean => _.isEmpty(a);
 
 export const unset = (object: any, path: string | symbol): boolean => _.unset(object, path);
 
+export const setByPath = <T extends object>(object: T, path: string | number | symbol, value: any): T => _.set(object, path, value);
+
 export const isEqualIgnoreUndefined = (a: any, b: any): boolean => {
   if (a === b) {
     return true;
@@ -345,6 +385,16 @@ export const isArraysEqualIgnoreUndefined = (a: any[], b: any[]): boolean => {
 
 export function mergeDeep<T>(target: T, ...sources: T[]): T {
   return _.merge(target, ...sources);
+}
+
+function ignoreArrayMergeFunc(target: any, sources: any) {
+  if (_.isArray(target)) {
+    return sources;
+  }
+}
+
+export function mergeDeepIgnoreArray<T>(target: T, ...sources: T[]): T {
+  return _.mergeWith(target, ...sources, ignoreArrayMergeFunc);
 }
 
 export function guid(): string {
@@ -406,6 +456,33 @@ export const createLabelFromDatasource = (datasource: Datasource, pattern: strin
       label = label.replace(variable, datasource.aliasName);
     } else if (variableName === 'entityDescription') {
       label = label.replace(variable, datasource.entityDescription);
+    }
+    match = varsRegex.exec(pattern);
+  }
+  return label;
+};
+
+export const createLabelFromSubscriptionEntityInfo = (entityInfo: SubscriptionEntityInfo, pattern: string): string => {
+  let label = pattern;
+  if (!entityInfo) {
+    return label;
+  }
+  let match = varsRegex.exec(pattern);
+  while (match !== null) {
+    const variable = match[0];
+    const variableName = match[1];
+    if (variableName === 'dsName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'deviceName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityLabel') {
+      label = label.replace(variable, entityInfo.entityLabel || entityInfo.entityName);
+    } else if (variableName === 'aliasName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityDescription') {
+      label = label.replace(variable, entityInfo.entityDescription);
     }
     match = varsRegex.exec(pattern);
   }
@@ -602,11 +679,29 @@ export function parseFunction(source: any, params: string[] = ['def']): (...args
   return res;
 }
 
-export function safeExecute(func: (...args: any[]) => any, params = []) {
+export function parseTbFunction<T extends GenericFunction>(http: HttpClient, source: TbFunction, params: string[] = ['def']): Observable<CompiledTbFunction<T>> {
+  if (isNotEmptyTbFunction(source)) {
+    return compileTbFunction<T>(http, source, ...params).pipe(
+      catchError(() => {
+        return of(null);
+      }),
+      share({
+        connector: () => new ReplaySubject(1),
+        resetOnError: false,
+        resetOnComplete: false,
+        resetOnRefCountZero: false
+      })
+    );
+  } else {
+    return of(null);
+  }
+}
+
+export function safeExecuteTbFunction<T extends GenericFunction>(func: CompiledTbFunction<T>, params = []) {
   let res = null;
-  if (func && typeof (func) === 'function') {
+  if (func) {
     try {
-      res = func(...params);
+      res = func.execute(...params);
     }
     catch (err) {
       console.log('error in external function:', err);
@@ -697,7 +792,7 @@ export function randomAlphanumeric(length: number): string {
 }
 
 export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
-  return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
+  return baseDetailsPageByEntityType.has(entityType) ? `${baseDetailsPageByEntityType.get(entityType)}/${id}` : '';
 }
 
 export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
@@ -761,7 +856,7 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
         if (datasource) {
           if (datasource.dataKeys) {
             datasource.dataKeys.forEach((dataKey) => {
-              if (dataKey.label === label) {
+              if (dataKey?.label === label) {
                 i++;
                 label = name + ' ' + i;
                 matches = true;
@@ -770,7 +865,7 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
           }
           if (datasource.latestDataKeys) {
             datasource.latestDataKeys.forEach((dataKey) => {
-              if (dataKey.label === label) {
+              if (dataKey?.label === label) {
                 i++;
                 label = name + ' ' + i;
                 matches = true;
@@ -804,4 +899,30 @@ export const getOS = (): string => {
   }
 
   return os;
+};
+
+export const isSafari = (): boolean => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /^((?!chrome|android).)*safari/i.test(userAgent);
+};
+
+export const isFirefox = (): boolean => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /^((?!seamonkey).)*firefox/i.test(userAgent);
+};
+
+export const camelCase = (str: string): string => {
+  return _.camelCase(str);
+};
+
+export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
+  return _.mapKeys(obj, (value, key) => _.camelCase(key));
+};
+
+export const unwrapModule = (module: any) : any => {
+  if ('default' in module && Object.keys(module).length === 1) {
+    return module.default;
+  } else {
+    return module;
+  }
 };

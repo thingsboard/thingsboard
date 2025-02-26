@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   CircleSettings,
+  defaultCircleSettings,
+  defaultMapProviderSettings,
+  defaultPolygonSettings,
+  defaultTripAnimationCommonSettings,
+  defaultTripAnimationMarkersSettings,
+  defaultTripAnimationPathSettings,
+  defaultTripAnimationPointSettings,
   defaultTripAnimationSettings,
   MapProviderSettings,
   PointsSettings,
@@ -30,7 +37,6 @@ import {
   TripAnimationMarkerSettings
 } from 'src/app/modules/home/components/widget/lib/maps/map-models';
 import { extractType } from '@core/utils';
-import { keys } from 'ts-transformer-keys';
 
 @Component({
   selector: 'tb-trip-animation-widget-settings',
@@ -69,13 +75,13 @@ export class TripAnimationWidgetSettingsComponent extends WidgetSettingsComponen
   }
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
-    const mapProviderSettings = extractType<MapProviderSettings>(settings, keys<MapProviderSettings>());
-    const commonMapSettings = extractType<TripAnimationCommonSettings>(settings, keys<TripAnimationCommonSettings>());
-    const markersSettings = extractType<TripAnimationMarkerSettings>(settings, keys<TripAnimationMarkerSettings>());
-    const pathSettings = extractType<PolylineSettings>(settings, keys<PolylineSettings>());
-    const pointSettings = extractType<PointsSettings>(settings, keys<PointsSettings>());
-    const polygonSettings = extractType<PolygonSettings>(settings, keys<PolygonSettings>());
-    const circleSettings = extractType<CircleSettings>(settings, keys<CircleSettings>());
+    const mapProviderSettings = extractType<MapProviderSettings>(settings, Object.keys(defaultMapProviderSettings) as (keyof MapProviderSettings)[]);
+    const commonMapSettings = extractType<TripAnimationCommonSettings>(settings, Object.keys(defaultTripAnimationCommonSettings) as (keyof TripAnimationCommonSettings)[]);
+    const markersSettings = extractType<TripAnimationMarkerSettings>(settings, Object.keys(defaultTripAnimationMarkersSettings) as (keyof TripAnimationMarkerSettings)[]);
+    const pathSettings = extractType<PolylineSettings>(settings, Object.keys(defaultTripAnimationPathSettings) as (keyof PolylineSettings)[]);
+    const pointSettings = extractType<PointsSettings>(settings, Object.keys(defaultTripAnimationPointSettings) as (keyof PointsSettings)[]);
+    const polygonSettings = extractType<PolygonSettings>(settings, Object.keys(defaultPolygonSettings) as (keyof PolygonSettings)[]);
+    const circleSettings = extractType<CircleSettings>(settings, Object.keys(defaultCircleSettings) as (keyof CircleSettings)[]);
     return {
       mapProviderSettings,
       commonMapSettings,

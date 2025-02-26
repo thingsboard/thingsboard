@@ -1,0 +1,43 @@
+{
+  "fqn": "simple_temperature_chart_card",
+  "name": "Simple temperature chart card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/simple_temperature_chart_card_system_widget_image.png",
+  "description": "Displays historical temperature values as a simplified chart. Optionally may display the corresponding latest temperature value.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 4.5,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-value-chart-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-chart-card-widget>\n",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueChartCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onDataUpdated();\n};\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onLatestDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.valueChartCardWidget.onEditModeChanged();\n}\n\nself.onDestroy = function() {\n    self.ctx.$scope.valueChartCardWidget.onDestroy();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '300px',\n        previewHeight: '150px',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        defaultDataKeysFunction: function() {\n            return [\n                 { name: 'temperature', label: 'Temperature', type: 'timeseries', color: 'rgba(0, 0, 0, 0.87)'}\n            ];\n        },\n        defaultLatestDataKeysFunction: function(configComponent) {\n            return [{ name: 'temperature', label: 'Latest', type: 'timeseries'}];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-value-chart-card-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-chart-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temperature\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < -60) {\\n\\tvalue = -60;\\n} else if (value > 60) {\\n\\tvalue = 60;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"latestDataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Latest\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < -60) {\\n\\tvalue = -60;\\n} else if (value > 60) {\\n\\tvalue = 60;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":null,\"padding\":\"0\",\"settings\":{\"layout\":\"left\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":28,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":-20,\"color\":\"#234CC7\"},{\"from\":-20,\"to\":0,\"color\":\"#305AD7\"},{\"from\":0,\"to\":10,\"color\":\"#7191EF\"},{\"from\":10,\"to\":20,\"color\":\"#FFA600\"},{\"from\":20,\"to\":30,\"color\":\"#F36900\"},{\"from\":30,\"to\":40,\"color\":\"#F04022\"},{\"from\":40,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"Temperature\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":true,\"titleIcon\":\"thermostat\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"iconSize\":\"18px\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"useDashboardTimewindow\":true,\"decimals\":0,\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"borderRadius\":null,\"units\":\"°C\",\"displayTimewindow\":true,\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":1,\"history\":{\"historyType\":2,\"timewindowMs\":60000,\"interval\":43200000,\"fixedTimewindow\":{\"startTimeMs\":1697382151041,\"endTimeMs\":1697468551041},\"quickInterval\":\"CURRENT_MONTH_SO_FAR\"},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true}}"
+  },
+  "tags": [
+    "temperature",
+    "weather",
+    "environment"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/simple_temperature_chart_card_system_widget_image.png",
+      "title": "\"Simple temperature chart card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "simple_temperature_chart_card_system_widget_image.png",
+      "publicResourceKey": "YjcBGNAgfoO3qdFunRrhi3mcyYiqYDnZ",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAe1BMVEUAAADg4ODf39/g4ODg4OD////g4OAjTMchISHHx8c8PDzj4+Px8fGQkJCsrKx0dHRaedXk6fhYWFgvLy8+Ys7I0vGCgoKsvOry9PuRpeN1j9yenp5KSkrV1dWfsedohNkwV8tmZma6urqDmt+RpuNMbtLW3fW6x+65ubn1i4vJAAAABXRSTlMA7yC/r1EOHTEAAATQSURBVHja7M9JAcAgDAAwytEX/vUOGdAlDtIAAAAAAAB+p4/I181+HrHX83b0Ngs8zmS0XCVElUiKXEbkNh979q7qOAxFYbhasPZFEkjgxnJhV3n/JxwfJwzKSQwDw3iUg34wEtuNvsJg0ID01oD01oD01oD01oD01oD01inEpohP6hSSkzYSD0cbuu0UorGGBpJSZUoRf5yo4crOIbcc0BZ4iOJmgJhE27eAy7EA+wCwRQQeo8Fn3twFMIHLsgESBW2XQbZ3ECtV1UHdl5qZIdTMBKwlc0YqXE3zSlkq6xIJBEVkqQgl64SmyyCpvoHkDJQABmzcMBPCBYG+0RAUSQ1LAGqC0PAbYjDGY9R0DcQLmV4hqjmXhONUgkjIcUgJJWclUgYwr1q+QQBhzpWCpmsgiXvyCllFxL5BFkqg7B2QSPH8BhJFxNF0DYRfpRfIpIb5GRKR1IUzZD4goZhperxffL1DvEzwgLZrIIV70wvEV1KfIcoyA4Esd4gpS81wZfSv7R2Cm5L/42OfSRbDa/48FJr5fe54ZP5Y7k8zbrsIgpgmw2ktBF10QP4iC53cSvz8v99Pa0B6a0B6a0B6a0B6a0B6a0D+cb7Ns/jHQ36xa25LjoJAAH3qAgFFvBITo1k35v//cMHWwR3NxBqtmVjleZjh9tAnDaSpCpfUEmdi3yIli31PCE9SxvcswtkQfxkzsWMRGXP3kva3EkmLMKyu6qPbmG6u3HxehTn06GuFs6vgNHOdKBabiKiQdNR9sH+xm7SA4ECD7Wvdz17XJYRyQDAlW4joxDhUlflL0iHs0HZr3YuSRKs7aYfJ+t6ZrzJhEhCXknUiGFuiAEyopOq9bGoqQk7QkdqY824wtwLGT5+c51LEWUYZx3ZAPRjh0fMGIkmfidQIAcDD5AMMrQkVOlorWHSLkg+7EFvL4YyyiOImEozBf0RsvYgmhIBFYaMxEQ6Cagg6ScgdXYexnJiR53g3xm4BIH3snrHJqPR4wGj5aTn9sz4jSmFsKYYWdjsLG4/etajrRtuTbrOFqKIovjrLsbyx8c3kU97/N1inzynhK0UcBZ7fEHcaGk2XNLCADHeQ70w4lYAILyhhQhkzvokIHhH1QmTZwcCoUUgAwhh/WbHI0mpKRulF8uUiqkN/dPGy2kTkTPs4BM2GkWBRDWkkYun7t5hKvlSEdIQjjwY2ErlE0JPhverFtyWJDDLpe9j0mVH5hoi+E1LAS5FikUjpPn4R0cj3I1fgLgRVskUiaUeLncpdptXk1nI0VhfRSqmnR30UdnChlPkCHMtVzq9FpgEmenx5We6YmjG5WefuhhrmYRFsjxN5XaQgV0KK4YsS5Ry6Rjn0rWAWz+2sHxZxHr1ArVAonE2dGsqA/NlLQ8AKVhWNpDghDzwbySO1o/lspZyc8rypJ5pzNfnPioTEUeBNjJxggpskoZ73GD9cf1cEVPHFy0mdkk5jflZk9PIDv0VZTtsqeIpKWw2zeIxmAhy/L/ItRDYpa3cpMpeOPYr4c+nYo8htLh17FJnhEDlE9sIh8m4cIu/GIfJuHCLvxiHyr507NwIghIEgKJ6TdfnHSxA4ArozWH9rqjGkmoz2XSFjFDm37/nnPRGk6DNP10YPAAAAAACA1yz9maqJM0bCeAAAAABJRU5ErkJggg==",
+      "public": true
+    }
+  ]
+}

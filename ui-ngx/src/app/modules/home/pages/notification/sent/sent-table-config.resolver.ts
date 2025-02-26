@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import {
-  NotificationDeliveryMethodTranslateMap,
+  NotificationDeliveryMethodInfoMap,
   NotificationRequest,
   NotificationRequestInfo,
   NotificationRequestStats,
@@ -45,11 +45,11 @@ import {
   NotificationRequestErrorDialogData,
   SentErrorDialogComponent
 } from '@home/pages/notification/sent/sent-error-dialog.component';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 
 @Injectable()
-export class SentTableConfigResolver implements Resolve<EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo>> {
+export class SentTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo> =
     new EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo>();
@@ -94,7 +94,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
           request => this.requestStatusStyle(request.status)),
       new EntityTableColumn<NotificationRequest>('deliveryMethods', 'notification.delivery-method.delivery-method', '15%',
         (request) => request.deliveryMethods
-          .map((deliveryMethod) => this.translate.instant(NotificationDeliveryMethodTranslateMap.get(deliveryMethod))).join(', '),
+          .map((deliveryMethod) => this.translate.instant(NotificationDeliveryMethodInfoMap.get(deliveryMethod).name)).join(', '),
         () => ({}), false),
       new EntityTableColumn<NotificationRequest>('templateName', 'notification.template', '70%')
     );
@@ -107,7 +107,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
   private configureCellActions(): Array<CellActionDescriptor<NotificationRequestInfo>> {
     return [{
       name: this.translate.instant('notification.notify-again'),
-      mdiIcon: 'mdi:repeat-variant',
+      icon: 'mdi:repeat-variant',
       isEnabled: (request) => request.status !== NotificationRequestStatus.SCHEDULED,
       onAction: ($event, entity) => this.createRequest($event, entity)
     }];
@@ -165,8 +165,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     if (!stats?.errors) {
       return '';
     }
-    let countError = 0;
-    Object.keys(stats.errors).forEach(method => countError += Object.keys(stats.errors[method]).length);
+    const countError = stats.totalErrors;
     if (countError === 0) {
       return '';
     }

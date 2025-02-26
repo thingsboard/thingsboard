@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 ///
 
 // @ts-ignore
-import L, { PolylineDecorator, PolylineDecoratorOptions, Symbol } from 'leaflet';
 import 'leaflet-polylinedecorator';
+import L, { PolylineDecorator, PolylineDecoratorOptions, Symbol } from 'leaflet';
 
 import { WidgetPolylineSettings } from './map-models';
 import { functionValueCalculator } from '@home/components/widget/lib/maps/common-maps-utils';

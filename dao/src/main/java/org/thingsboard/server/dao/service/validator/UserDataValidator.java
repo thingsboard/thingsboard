@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,11 +122,6 @@ public class UserDataValidator extends DataValidator<User> {
                 break;
         }
 
-        User existentUserWithEmail = userService.findUserByEmail(tenantId, user.getEmail());
-        if (existentUserWithEmail != null && !isSameData(existentUserWithEmail, user)) {
-            throw new DataValidationException("User with email '" + user.getEmail() + "' "
-                    + " already present in database!");
-        }
         if (!tenantId.getId().equals(ModelConstants.NULL_UUID)) {
             if (!tenantService.tenantExists(user.getTenantId())) {
                 throw new DataValidationException("User is referencing to non-existent tenant!");

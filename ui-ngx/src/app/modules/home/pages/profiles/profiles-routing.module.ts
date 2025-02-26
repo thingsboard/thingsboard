@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { NgModule } from '@angular/core';
 import { deviceProfilesRoutes } from '@home/pages/device-profile/device-profile-routing.module';
 import { assetProfilesRoutes } from '@home/pages/asset-profile/asset-profile-routing.module';
+import { MenuId } from '@core/services/menu.models';
 
 const routes: Routes = [
   {
@@ -26,8 +27,7 @@ const routes: Routes = [
     data: {
       auth: [Authority.TENANT_ADMIN],
       breadcrumb: {
-        label: 'profiles.profiles',
-        icon: 'badge'
+        menuId: MenuId.profiles
       }
     },
     children: [

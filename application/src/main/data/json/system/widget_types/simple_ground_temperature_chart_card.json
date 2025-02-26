@@ -1,0 +1,52 @@
+{
+  "fqn": "simple_ground_temperature_chart_card",
+  "name": "Simple ground temperature chart card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/simple_ground_temperature_chart_card_system_widget_image.png",
+  "description": "Displays historical ground temperature values as a simplified chart. Optionally may display the corresponding latest ground temperature value.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 4.5,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-value-chart-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-chart-card-widget>\n",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueChartCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onDataUpdated();\n};\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onLatestDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.valueChartCardWidget.onEditModeChanged();\n}\n\nself.onDestroy = function() {\n    self.ctx.$scope.valueChartCardWidget.onDestroy();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '300px',\n        previewHeight: '150px',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        defaultDataKeysFunction: function() {\n            return [\n                 { name: 'temperature', label: 'Ground temperature', type: 'timeseries', color: 'rgba(0, 0, 0, 0.87)'}\n            ];\n        },\n        defaultLatestDataKeysFunction: function(configComponent) {\n            return [{ name: 'temperature', label: 'Latest', type: 'timeseries'}];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-value-chart-card-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-chart-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Ground temperature\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < -60) {\\n\\tvalue = -60;\\n} else if (value > 60) {\\n\\tvalue = 60;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]},\"latestDataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Latest\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nif (value < -60) {\\n\\tvalue = -60;\\n} else if (value > 60) {\\n\\tvalue = 60;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":null,\"padding\":\"0\",\"settings\":{\"layout\":\"left\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":28,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":-20,\"color\":\"#234CC7\"},{\"from\":-20,\"to\":0,\"color\":\"#305AD7\"},{\"from\":0,\"to\":10,\"color\":\"#7191EF\"},{\"from\":10,\"to\":20,\"color\":\"#FFA600\"},{\"from\":20,\"to\":30,\"color\":\"#F36900\"},{\"from\":30,\"to\":40,\"color\":\"#F04022\"},{\"from\":40,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"Ground temperature\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":true,\"titleIcon\":\"thermostat\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"iconSize\":\"18px\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"useDashboardTimewindow\":true,\"decimals\":0,\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"borderRadius\":null,\"units\":\"°C\",\"displayTimewindow\":true,\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":1,\"history\":{\"historyType\":2,\"timewindowMs\":60000,\"interval\":43200000,\"fixedTimewindow\":{\"startTimeMs\":1697382151041,\"endTimeMs\":1697468551041},\"quickInterval\":\"CURRENT_MONTH_SO_FAR\"},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true}}"
+  },
+  "tags": [
+    "weather",
+    "environment",
+    "soil temperature",
+    "terrestrial temperature",
+    "subsurface temperature",
+    "earth temperature",
+    "below surface temperature",
+    "surface temp",
+    "soil warmth",
+    "land temperature",
+    "geothermal reading",
+    "ground warmth"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/simple_ground_temperature_chart_card_system_widget_image.png",
+      "title": "\"Simple ground temperature chart card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "simple_ground_temperature_chart_card_system_widget_image.png",
+      "publicResourceKey": "Skz1MGrcNBZuwCqB4US9o6M0KgUOYP8i",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAilBMVEUAAADf39/g4ODf39/f39/g4OD////k5OTg4OAhISEjTMc8PDyQkJDHx8esrKwvLy9YWFh0dHTy8vLV1dWenp6CgoLI0vHy9ftmZmY+Ys7j6Pi6urqRpeN1j9xKSkowV8tMbtLk6fhaedU/Ys6svOoxV8qesOeDmt9aeNVLS0vW3fXW3vS6x+5ohNlXhEbjAAAABnRSTlMAIL9AEN/GQiaNAAAFKElEQVR42uzPuQ2AMBAAsMtDuDoN+2+KxASUSWRv4AAAAAAAAPivl831r9Fq3pvLq0WUfMb2Zraocxxg1shxhBRZjMhqRF526WVFbhiIwvDuFIcqqXQFgcH7ef8XjC+k09NMQgYUcAf/GISL0uIzvlo35GrdkKt1Q67WDblav4dUwXcrgglNhph7xVOlpxTx5yInSGZDNK6GX4muLbP9FSQlfKOU/jEk5GdIowDdIRasIFgUwCqKSbHaTIDSzA5IVG1AsCYQq2aybQNLPA6I7csWWkUwk3O7BcDqOd1vTIW01b74boG6SvesWsAIYRDub4Bq1gPSXDuM+0rgx3asg4bMNNggvh0V9DWY91XLsa0GMB7TyjFcZkLieIGImSGwQhhRvD0gAQtle55/Le0ojPt2Y0FOyA5kxUhAymAGQtiv79sPSAfSAD76TAj5CskrESgHBh/5CbJNjXiCCF2VFg4dDogCjdBt7gk0oCbVF0jEuZDnQRpJFTzqXgA7IZVhg/TPkMbyBClsIlJeIObQIVsHRDPkC0jeL86DKLcMj8RHlXFCoKM2BniW/oAEmowTMlZB0ir5E8Rr1QzzRSwekPP6uZ1q4wkxD2J1HoR7Gb+qK5kWVBVAVnoDmjNrEA3H1NyzHpCFKyTRe9nniwJ9bBBlEqD7fmgDorJrROS67TDpgu1ByWSSeZDErYh5ZcU3mgeRQW/4DyDTCws+966Ql27IDXmXbsjVuiFX64ZcrRtytS4JkRDK+0Nqdm6l+OYQo/cYFlMmeWeIsRccNdfyvpBIw8+qp/eF/GDP7HYVhYEAfDdNp1CkihUFQdTj+vf+r7ed0pM9CIJ6NgQSvkStlIv5mKFDqBCV7PhjFZGV0FUwG6vITABUUzJOkTmXANWUjEZESblR4Ag5e1zD5uMQUREnPLAwHj7OB+HwRJSUvno4JLjHmB/yUJGHCFi9rbCBibAZJ6KKSsSlC1eEXmg3LTtS8rmIXtfGDq0rE+2wIPDmdO3PP0wYj75Hq4CLiDV2+sV/ENFJhpilZZjLAhHN2JGYP7o8aY+IxaGj0THXKFbVg53MKpsb6jOR3GgYlZgCvpnx3o4tB0wOWWIGuxxLkvZGV1+HaEfkBSIuJMXve7RnE6w274t8IR7o28YYY65hl+EJLOkf+tDATJuJO+Ky5bJuwaH+ldOr5S+NgBAB5zNPLkJhvN4VyfFe/piAl2WgJzy6yjpeL3EKcHWp0BkW8AzGZe0GV+fX9259LwwjqZwXqbwnkqY3MBRGhPICZYGtgdAxYrwmM3cgJUVH2yKqtjz0gS0E38CHkMrmg+U3pnJKyjhdYuzwoK1lDp2IWbXoibMPnyPF9n2RBHFN33FFhHB19/YjFNt4Cx9+T7fIktAArpgSeC6yf0EkbGrPfYjs0OACvtA69UsRsYI6fYjolLhap8yuXA33iKMgwXZk623dz3utne0erqc4ERJ0lOuxO6EooBEmBPQAibR50BL7IxVfj4vskpomYZSfeDT3iz5FtPNwDe9uzVKoUuCRcpSQUAMbeqZtpEeREz1eWW62tuIiw2xdzxrmeYZkWEOtWl6z9SeSosNe7CRG43Kp1589LUua07GAFnorrfU32rWXS/N5NPF5Oob+Nr4rHWMRifi2PR2jEfGgnbGIdDCJTCJjYRIZGpPI0JhEhsYkMjQmkb/t3EENACAMwMDAQjIH+HcKEniO5c5BDbQaIdU0Cmmz3IlsULJz3C3V+n9LNaPTKAwAAAAAAODJAUZK/mXsQYqsAAAAAElFTkSuQmCC",
+      "public": true
+    }
+  ]
+}

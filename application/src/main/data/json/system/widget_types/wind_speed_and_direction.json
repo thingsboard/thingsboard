@@ -1,0 +1,46 @@
+{
+  "fqn": "wind_speed_and_direction",
+  "name": "Wind speed and direction",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/wind_speed_and_direction_system_widget_image.png",
+  "description": "Displays the latest values of the wind speed and direction.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 3,
+    "resources": [],
+    "templateHtml": "<tb-wind-speed-direction-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-wind-speed-direction-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.windSpeedDirectionWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.windSpeedDirectionWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 2,\n        singleEntity: true,\n        previewWidth: '270px',\n        previewHeight: '270px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'direction', label: 'Wind Direction', type: 'timeseries' },\n                    { name: 'speed', label: 'Wind Speed', type: 'timeseries',\n                      units: 'm/s', decimals: 1 }];\n        }\n    };\n};\n\nself.actionSources = function() {\n    return {\n        'cardClick': {\n            name: 'widget-action.card-click',\n            multiple: false\n        }\n    };\n}\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-wind-speed-direction-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-wind-speed-direction-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Wind Direction\",\"color\":\"#4caf50\",\"settings\":{},\"_hash\":0.7227918773301678,\"funcBody\":\"if (prevValue === 0) {\\n    prevValue = Math.random() * 360;\\n}\\nvar value = prevValue + Math.random() * 20 - 10;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 360) {\\n\\tvalue = 360;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Wind Speed\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 16 - 8;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 26) {\\n\\tvalue = 26;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":\"m/s\",\"decimals\":1,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"layout\":\"default\",\"centerValueFont\":{\"family\":\"Roboto\",\"size\":24,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"centerValueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":0.2,\"color\":\"#7191EF\"},{\"from\":0.2,\"to\":3.4,\"color\":\"#5B7EE6\"},{\"from\":3.4,\"to\":8,\"color\":\"#5B7EE6\"},{\"from\":8,\"to\":10.8,\"color\":\"#305AD7\"},{\"from\":10.8,\"to\":17.2,\"color\":\"#234CC7\"},{\"from\":17.2,\"to\":24.5,\"color\":\"#F04022\"},{\"from\":24.5,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"ticksColor\":\"rgba(0, 0, 0, 0.12)\",\"directionalNamesElseDegrees\":true,\"majorTicksFont\":{\"family\":\"Roboto\",\"size\":14,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"20px\"},\"majorTicksColor\":\"rgba(158, 158, 158, 1)\",\"minorTicksFont\":{\"family\":\"Roboto\",\"size\":14,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"20px\"},\"minorTicksColor\":\"rgba(0, 0, 0, 0.12)\",\"arrowColor\":\"rgba(0, 0, 0, 0.87)\",\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"Wind Speed\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{\"headerButton\":[]},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":true,\"titleTooltip\":\"\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"titleIcon\":\"mdi:windsock\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"24px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null},\"titleColor\":\"rgba(0, 0, 0, 0.87)\"}"
+  },
+  "tags": [
+    "wind",
+    "weather",
+    "compass",
+    "degrees",
+    "environment",
+    "speed",
+    "airspeed",
+    "flow",
+    "gust"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/wind_speed_and_direction_system_widget_image.png",
+      "title": "\"Wind speed and direction\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "wind_speed_and_direction_system_widget_image.png",
+      "publicResourceKey": "bvEM0WNogfvLGp755LUN2QJZ5VQYHB67",
+      "mediaType": "image/png",
+      "data": "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",
+      "public": true
+    }
+  ]
+}

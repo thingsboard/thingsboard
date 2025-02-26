@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import lombok.Getter;
 import lombok.ToString;
 
 @ToString(exclude = "future")
-public final class TbSqlQueueElement<E> {
+public final class TbSqlQueueElement<E, R> {
     @Getter
-    private final SettableFuture<Void> future;
+    private final SettableFuture<R> future;
     @Getter
     private final E entity;
 
-    public TbSqlQueueElement(SettableFuture<Void> future, E entity) {
+    public TbSqlQueueElement(SettableFuture<R> future, E entity) {
         this.future = future;
         this.entity = entity;
     }

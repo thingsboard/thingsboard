@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.util.concurrent.ExecutionException;
-
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
@@ -48,7 +46,6 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         nodeDetails = "Will publish message payload to the AWS SNS topic. Outbound message will contain response fields " +
                 "(<code>messageId</code>, <code>requestId</code>) in the Message Metadata from the AWS SNS. " +
                 "For example <b>requestId</b> field can be accessed with <code>metadata.requestId</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbExternalNodeSnsConfig",
         iconUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTMuMjMgMTAuNTZWMTBjLTEuOTQgMC0zLjk5LjM5LTMuOTkgMi42NyAwIDEuMTYuNjEgMS45NSAxLjYzIDEuOTUuNzYgMCAxLjQzLS40NyAxLjg2LTEuMjIuNTItLjkzLjUtMS44LjUtMi44NG0yLjcgNi41M2MtLjE4LjE2LS40My4xNy0uNjMuMDYtLjg5LS43NC0xLjA1LTEuMDgtMS41NC0xLjc5LTEuNDcgMS41LTIuNTEgMS45NS00LjQyIDEuOTUtMi4yNSAwLTQuMDEtMS4zOS00LjAxLTQuMTcgMC0yLjE4IDEuMTctMy42NCAyLjg2LTQuMzggMS40Ni0uNjQgMy40OS0uNzYgNS4wNC0uOTNWNy41YzAtLjY2LjA1LTEuNDEtLjMzLTEuOTYtLjMyLS40OS0uOTUtLjctMS41LS43LTEuMDIgMC0xLjkzLjUzLTIuMTUgMS42MS0uMDUuMjQtLjI1LjQ4LS40Ny40OWwtMi42LS4yOGMtLjIyLS4wNS0uNDYtLjIyLS40LS41Ni42LTMuMTUgMy40NS00LjEgNi00LjEgMS4zIDAgMyAuMzUgNC4wMyAxLjMzQzE3LjExIDQuNTUgMTcgNi4xOCAxNyA3Ljk1djQuMTdjMCAxLjI1LjUgMS44MSAxIDIuNDguMTcuMjUuMjEuNTQgMCAuNzFsLTIuMDYgMS43OGgtLjAxIj48L3BhdGg+PHBhdGggZD0iTTIwLjE2IDE5LjU0QzE4IDIxLjE0IDE0LjgyIDIyIDEyLjEgMjJjLTMuODEgMC03LjI1LTEuNDEtOS44NS0zLjc2LS4yLS4xOC0uMDItLjQzLjI1LS4yOSAyLjc4IDEuNjMgNi4yNSAyLjYxIDkuODMgMi42MSAyLjQxIDAgNS4wNy0uNSA3LjUxLTEuNTMuMzctLjE2LjY2LjI0LjMyLjUxIj48L3BhdGg+PHBhdGggZD0iTTIxLjA3IDE4LjVjLS4yOC0uMzYtMS44NS0uMTctMi41Ny0uMDgtLjE5LjAyLS4yMi0uMTYtLjAzLS4zIDEuMjQtLjg4IDMuMjktLjYyIDMuNTMtLjMzLjI0LjMtLjA3IDIuMzUtMS4yNCAzLjMyLS4xOC4xNi0uMzUuMDctLjI2LS4xMS4yNi0uNjcuODUtMi4xNC41Ny0yLjV6Ij48L3BhdGg+PC9zdmc+"
 )
@@ -81,37 +78,41 @@ public class TbSnsNode extends TbAbstractExternalNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         var tbMsg = ackIfNeeded(ctx, msg);
         withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
-                t -> tellFailure(ctx, processException(ctx, tbMsg, t), t));
+                t -> tellFailure(ctx, processException(tbMsg, t), t));
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
-        return ctx.getExternalCallExecutor().executeAsync(() -> publishMessage(ctx, msg));
+        return ctx.getExternalCallExecutor().executeAsync(() -> publishMessage(msg));
     }
 
-    private TbMsg publishMessage(TbContext ctx, TbMsg msg) {
+    private TbMsg publishMessage(TbMsg msg) {
         String topicArn = TbNodeUtils.processPattern(this.config.getTopicArnPattern(), msg);
         PublishRequest publishRequest = new PublishRequest()
                 .withTopicArn(topicArn)
                 .withMessage(msg.getData());
         PublishResult result = this.snsClient.publish(publishRequest);
-        return processPublishResult(ctx, msg, result);
+        return processPublishResult(msg, result);
     }
 
-    private TbMsg processPublishResult(TbContext ctx, TbMsg origMsg, PublishResult result) {
+    private TbMsg processPublishResult(TbMsg origMsg, PublishResult result) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(MESSAGE_ID, result.getMessageId());
         metaData.putValue(REQUEST_ID, result.getSdkResponseMetadata().getRequestId());
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
+    private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     @Override

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 import { Inject, Injectable, Type } from '@angular/core';
 import { Observable } from 'rxjs';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
-import { AuthService } from '@core/auth/auth.service';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { CommonModule } from '@angular/common';
 import { mergeMap, tap } from 'rxjs/operators';
@@ -28,41 +26,44 @@ import {
   CustomDialogContainerData
 } from '@home/components/widget/dialog/custom-dialog-container.component';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
-import { HOME_COMPONENTS_MODULE_TOKEN, SHARED_HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import {
+  HOME_COMPONENTS_MODULE_TOKEN,
+  SHARED_HOME_COMPONENTS_MODULE_TOKEN,
+  WIDGET_COMPONENTS_MODULE_TOKEN
+} from '@home/components/tokens';
 
 @Injectable()
 export class CustomDialogService {
 
-  private customModules: Array<Type<any>>;
+  private customImports: Array<Type<any>>;
 
   constructor(
-    private translate: TranslateService,
-    private authService: AuthService,
     private dynamicComponentFactoryService: DynamicComponentFactoryService,
     @Inject(SHARED_MODULE_TOKEN) private sharedModule: Type<any>,
     @Inject(SHARED_HOME_COMPONENTS_MODULE_TOKEN) private sharedHomeComponentsModule: Type<any>,
     @Inject(HOME_COMPONENTS_MODULE_TOKEN) private homeComponentsModule: Type<any>,
+    @Inject(WIDGET_COMPONENTS_MODULE_TOKEN) private widgetComponentsModule: Type<any>,
     public dialog: MatDialog
   ) {
   }
 
-  setAdditionalModules(modules: Array<Type<any>>) {
-    this.customModules = modules;
+  setAdditionalImports(imports: Array<Type<any>>) {
+    this.customImports = imports;
   }
 
   customDialog(template: string, controller: (instance: CustomDialogComponent) => void, data?: any,
                config?: MatDialogConfig): Observable<any> {
-    const modules = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule];
-    if (Array.isArray(this.customModules)) {
-      modules.push(...this.customModules);
+    const imports = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule,
+      this.widgetComponentsModule];
+    if (Array.isArray(this.customImports)) {
+      imports.push(...this.customImports);
     }
     return this.dynamicComponentFactoryService.createDynamicComponent(
-      class CustomDialogComponentInstance extends CustomDialogComponent {}, template, modules).pipe(
-      mergeMap((componentData) => {
+      class CustomDialogComponentInstance extends CustomDialogComponent {}, template, imports).pipe(
+      mergeMap((componentType) => {
           const dialogData: CustomDialogContainerData = {
             controller,
-            customComponentType: componentData.componentType,
-            customComponentModuleRef: componentData.componentModuleRef,
+            customComponentType: componentType,
             data
           };
           let dialogConfig: MatDialogConfig = {
@@ -77,7 +78,7 @@ export class CustomDialogService {
             CustomDialogContainerComponent,
             dialogConfig).afterClosed().pipe(
             tap(() => {
-              this.dynamicComponentFactoryService.destroyDynamicComponent(componentData.componentType);
+              this.dynamicComponentFactoryService.destroyDynamicComponent(componentType);
             })
           );
         }

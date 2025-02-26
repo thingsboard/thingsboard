@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,13 @@ public final class TbNodeConnectionType {
     public static final String SUCCESS = "Success";
     public static final String FAILURE = "Failure";
 
+    public static final String ACK = "ACK";
+
     public static final String TRUE = "True";
     public static final String FALSE = "False";
 
     public static final String OTHER = "Other";
+
+    public static final String TO_ROOT_RULE_CHAIN = "To Root Rule Chain";
 
 }

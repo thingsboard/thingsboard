@@ -1,0 +1,53 @@
+{
+  "fqn": "indoor_simple_pm2_5_chart_card",
+  "name": "Indoor simple PM2.5 chart card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/indoor_simple_pm2_5_chart_card_system_widget_image.png",
+  "description": "Displays historical indoor fine particulate matter (PM2.5) values as a simplified chart. Optionally may display the corresponding latest indoor PM2.5 value.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 4.5,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-value-chart-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-chart-card-widget>\n",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueChartCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onDataUpdated();\n};\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onLatestDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.valueChartCardWidget.onEditModeChanged();\n}\n\nself.onDestroy = function() {\n    self.ctx.$scope.valueChartCardWidget.onDestroy();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '300px',\n        previewHeight: '150px',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        defaultDataKeysFunction: function() {\n            return [\n                 { name: 'pm2.5', label: 'PM2.5', type: 'timeseries', color: 'rgba(0, 0, 0, 0.87)'}\n            ];\n        },\n        defaultLatestDataKeysFunction: function(configComponent) {\n            return [{ name: 'pm2.5', label: 'Latest', type: 'timeseries'}];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-value-chart-card-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-chart-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"PM2.5\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 150) {\\n\\tvalue = 150;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]},\"latestDataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Latest\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 40 - 20;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 150) {\\n\\tvalue = 150;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":null,\"padding\":\"0\",\"settings\":{\"layout\":\"left\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":28,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":35,\"color\":\"#80C32C\"},{\"from\":35,\"to\":75,\"color\":\"#FFA600\"},{\"from\":75,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"PM2.5\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":true,\"titleIcon\":\"mdi:broom\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"iconSize\":\"18px\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"useDashboardTimewindow\":true,\"decimals\":0,\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"borderRadius\":null,\"units\":\"µg/m³\",\"displayTimewindow\":true,\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":1,\"history\":{\"historyType\":2,\"timewindowMs\":60000,\"interval\":43200000,\"fixedTimewindow\":{\"startTimeMs\":1697382151041,\"endTimeMs\":1697468551041},\"quickInterval\":\"CURRENT_MONTH_SO_FAR\"},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true}}"
+  },
+  "tags": [
+    "environment",
+    "pm2.5",
+    "particulate",
+    "matter",
+    "air",
+    "fine particulates",
+    "fine particles",
+    "particulate matter 2.5",
+    "airborne particles",
+    "microscopic particles",
+    "respirable particles",
+    "aerosol particles",
+    "dust particles"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/indoor_simple_pm2_5_chart_card_system_widget_image.png",
+      "title": "\"Indoor simple PM2.5 chart card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "indoor_simple_pm2_5_chart_card_system_widget_image.png",
+      "publicResourceKey": "pu8WbYrMPMesZCGsY1NlINRouOD4LeUh",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAflBMVEUAAADf39/g4ODf39/f39/g4OD////k5OSAwyzg4OAhISHv9+WQy0Z0dHSQkJA8PDzP6a/f8MpYWFjy8vLA4ZWv2Xug0mD3+/OIxzkvLy+enp6srKzHx8fV1dWCgoJKSkrn9NjH5aO6urq43Yio1m5mZmaYzlPX7L25ubmQyka17GyFAAAABnRSTlMAIL9AEN/GQiaNAAAEqElEQVR42uzPuQ2AMBAAsMtD0NUp2H9TxAaUSWRv4AAAAAAAAPivl831+LSa9+byahEln7G9mS3qHAeYNXIcIUUWI7IakZfduletGIbBMLx9gg9kgTTZzg8EAr3/K2ycdjgH2iFLcFq/YDAIDc+m3hqQ3hqQ3hqQ3hqQ3vonkFrx3aaqywxUnXGkGpDFVXCW2hTXuhNS84zvElPauUHpACZSYGtdc6CVvV9IxKsDiQDcoZYD0EzZOKO9Fidc7SZISKE3xxtkd6jnAuSFgqPKwJFQNQUudQtkdpokOl4hKSkL1JOj2nRCxBJa87qU7LjWHZBCnpI3iLtWQD04HT9Kc+jrTuBSd0Ain5LyBsGZOlwpDRLriq/mDag9QlDYJPEz5IOOBlnzNk2CMmFiETdc6h4IlEfySjOcLTtirfgwEWsVWAKS0QUXuwWCRCqe1G8QSBU8qX9yaz2oAemtAemtAemtAemtAemtAemt3iERfwESKZO2yNMhYtxL2WnybIjYl2A2i0dDPtk3tx1HYRiAvhkrDpdQIKH0AtNO2f3/H1yPgcxFYaesxA6Veh5Ca6LKR7FDWql7FYFwUPuHFjnnMJLnjywSva9DonYPLNKoI4CvrccT2R3H/F9T8KT5w4k0tVKpqNQxML62HkzkqM6/mrSO3nI/AONra/MiuybZRzCRpzt5gLzmKgYI1NZyEbLwPzjWikn8TtXIJT6fJRSorWUitnCIuiRvpfUFvueqQ/amQlcRBInq9MB5T5UTqwiCHNTpX0RIswar3Ka8+H0J30J4C0bdpcQKgpyGzPN6XJAYZjjJqkWnWtVxdLdIic4AFIgdCAXeJdJhFlpdQwD4+69P7706+EPJrEmdn9kiiVOV3CvisPQXhlC7GRHbGvBoJBDItMC0xo6FWmEX7vQxp52cD1/qGOY5xPlrspMOUnl0l4gtSzMkNjTGDTs9iWSI4xoBI63EIZlupH4QOW2OUsb3hg+gSusCQrxMe+wxVWmtzhHcxb5OXxZsv4SYDRWjISQio6s0jiKlTOeQxDTfcsghSxbghjZcL77rmzhuFpzwzwtEStRj51NIREwry/NGES3JssIQuwKQ49HgzRiHMy2y+nd2ybUffAoIicjrVkpKRMwwBXm6v3XFCuCCiK6baZH1RTrOaMhc27AIDw68CAv3n0RIYhWP1Pd25ulwWF2kHz2IO94YwzVi6KtIib/fRSxqCIp4gi2ytkg77bcZeoqvIpePK5JhuVgkzdcWIT1l0FeCQ1dlowgFe6RCs1QkUc3KIqSlMTyfe+QCYDUij07yvL6JEGpYKJKoBFYWuSE6LbQBEeQF4nHYELS8NhwvlomIx9oiGidMQESz5tW3CroLT2N3WiQiHquLkMf6iPUi1hhriaZTle0RW8Lq00y57y8BYvZYXSSMFwEPdSA9oqHNWliAeGxI5Ia6KCoppmWc2GNLIqTRHz+Wiezhp0Uoy+ADpuuybfxD9sd/RXmKPEU2zlNkazxFtsZTZGs8RbbGn3bumAYAEAaAYKBhqAL8OwUJjKW5c/AGXkg1QqrJPsudyAYlO8fdUq3/t1QzOo3CAAAAAAAAnhxh9Pec6lVI3gAAAABJRU5ErkJggg==",
+      "public": true
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,4 +20,5 @@ import { EntityAlias } from '@shared/models/alias.models';
 
 export interface EntityAliasSelectCallbacks {
   createEntityAlias: (alias: string, allowedEntityTypes: Array<EntityType>) => Observable<EntityAlias>;
+  editEntityAlias: (alias: EntityAlias, allowedEntityTypes: Array<EntityType>) => Observable<EntityAlias>;
 }

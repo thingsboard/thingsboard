@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.ttl;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -49,19 +50,19 @@ import static org.mockito.Mockito.verify;
 })
 public class AlarmsCleanUpServiceTest extends AbstractControllerTest {
 
-    @Autowired
+    @SpyBean
     private AlarmsCleanUpService alarmsCleanUpService;
     @SpyBean
     private AlarmService alarmService;
     @Autowired
     private AlarmDao alarmDao;
 
-    private static Logger cleanUpServiceLogger;
+    private Logger cleanUpServiceLoggerSpy;
 
-    @BeforeClass
-    public static void before() throws Exception {
-        cleanUpServiceLogger = Mockito.spy(LoggerFactory.getLogger(AlarmsCleanUpService.class));
-        setStaticFinalFieldValue(AlarmsCleanUpService.class, "log", cleanUpServiceLogger);
+    @Before
+    public void beforeEach() throws Exception {
+        cleanUpServiceLoggerSpy = Mockito.spy(LoggerFactory.getLogger(AlarmsCleanUpService.class));
+        willReturn(cleanUpServiceLoggerSpy).given(alarmsCleanUpService).getLogger();
     }
 
     @Test
@@ -110,7 +111,7 @@ public class AlarmsCleanUpServiceTest extends AbstractControllerTest {
             verify(alarmService, never()).delAlarm(eq(tenantId), eq(freshAlarm), eq(false));
         }
 
-        verify(cleanUpServiceLogger).info(startsWith("Removed {} outdated alarm"), eq((long) count), eq(tenantId), any());
+        verify(cleanUpServiceLoggerSpy).info(startsWith("Removed {} outdated alarm"), eq((long) count), eq(tenantId), any());
     }
 
 }

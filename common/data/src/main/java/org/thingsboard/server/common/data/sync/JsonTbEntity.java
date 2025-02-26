@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
@@ -56,8 +57,9 @@ import java.lang.annotation.Target;
         @Type(name = "WIDGET_TYPE", value = WidgetTypeDetails.class),
         @Type(name = "NOTIFICATION_TEMPLATE", value = NotificationTemplate.class),
         @Type(name = "NOTIFICATION_TARGET", value = NotificationTarget.class),
-        @Type(name = "NOTIFICATION_RULE", value = NotificationRule.class)
+        @Type(name = "NOTIFICATION_RULE", value = NotificationRule.class),
+        @Type(name = "TB_RESOURCE", value = TbResource.class)
 })
-@JsonIgnoreProperties(value = {"tenantId", "createdTime"}, ignoreUnknown = true)
+@JsonIgnoreProperties(value = {"tenantId", "createdTime", "version"}, ignoreUnknown = true)
 public @interface JsonTbEntity {
 }

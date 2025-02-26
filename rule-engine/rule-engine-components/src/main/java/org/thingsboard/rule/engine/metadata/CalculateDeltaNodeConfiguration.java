@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
     private String periodValueKey;
     private Integer round;
     private boolean tellFailureIfDeltaIsNegative;
+    private boolean excludeZeroDeltas;
 
     @Override
     public CalculateDeltaNodeConfiguration defaultConfiguration() {
@@ -40,6 +41,7 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
         configuration.setAddPeriodBetweenMsgs(false);
         configuration.setPeriodValueKey("periodInMs");
         configuration.setTellFailureIfDeltaIsNegative(true);
+        configuration.setExcludeZeroDeltas(false);
         return configuration;
     }
 

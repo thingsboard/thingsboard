@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
@@ -26,8 +26,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
@@ -41,7 +39,7 @@ import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @TbCoreComponent
@@ -66,10 +64,7 @@ public class NotificationTargetImportService extends BaseEntityImportService<Not
                     break;
                 case USER_LIST:
                     UserListFilter userListFilter = (UserListFilter) usersFilter;
-                    userListFilter.setUsersIds(userListFilter.getUsersIds().stream()
-                            .map(UserId::new).map(idProvider::getInternalId)
-                            .map(UUIDBased::getId).collect(Collectors.toList())
-                    );
+                    userListFilter.setUsersIds(List.of(ctx.getUser().getUuidId())); // user entities are not supported by VC; replacing with current user id
                     break;
                 case TENANT_ADMINISTRATORS:
                     if (CollectionUtils.isNotEmpty(((TenantAdministratorsFilter) usersFilter).getTenantsIds()) ||

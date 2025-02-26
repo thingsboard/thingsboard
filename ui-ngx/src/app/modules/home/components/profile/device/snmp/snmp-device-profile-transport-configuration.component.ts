@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,9 +25,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  DeviceProfileTransportConfiguration,
   DeviceTransportType,
   SnmpDeviceProfileTransportConfiguration
 } from '@shared/models/device.models';
@@ -64,16 +62,6 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements OnInit,
   snmpDeviceProfileTransportConfigurationFormGroup: UntypedFormGroup;
 
   private destroy$ = new Subject<void>();
-  private requiredValue: boolean;
-
-  get required(): boolean {
-    return this.requiredValue;
-  }
-
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
 
   @Input()
   disabled: boolean;
@@ -125,11 +113,8 @@ export class SnmpDeviceProfileTransportConfigurationComponent implements OnInit,
   }
 
   private updateModel() {
-    let configuration: DeviceProfileTransportConfiguration = null;
-    if (this.snmpDeviceProfileTransportConfigurationFormGroup.valid) {
-      configuration = this.snmpDeviceProfileTransportConfigurationFormGroup.getRawValue();
-      configuration.type = DeviceTransportType.SNMP;
-    }
+    const configuration = this.snmpDeviceProfileTransportConfigurationFormGroup.getRawValue();
+    configuration.type = DeviceTransportType.SNMP;
     this.propagateChange(configuration);
   }
 

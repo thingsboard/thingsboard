@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, Optional } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit, Optional } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -29,8 +29,8 @@ import {
   Datasource,
   DatasourceType,
   datasourceTypeTranslationMap,
-  JsonSettingsSchema,
-  Widget, WidgetConfigMode,
+  Widget,
+  WidgetConfigMode,
   widgetType
 } from '@shared/models/widget.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
@@ -39,9 +39,12 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
 import { IAliasController } from '@core/api/widget-api.models';
 import { EntityAliasSelectCallbacks } from '@home/components/alias/entity-alias-select.component.models';
 import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DatasourcesComponent } from '@home/components/widget/config/datasources.component';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-datasource',
@@ -82,6 +85,10 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
 
+  public get callbacks(): WidgetConfigCallbacks {
+    return this.widgetConfigComponent.widgetConfigCallbacks;
+  }
+
   public get dataKeysCallbacks(): DataKeysCallbacks {
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
@@ -95,24 +102,32 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
     return this.widgetConfigComponent.modelValue?.typeParameters?.dataKeysOptional;
   }
 
+  public get datasourcesOptional(): boolean {
+    return this.widgetConfigComponent.modelValue?.typeParameters?.datasourcesOptional;
+  }
+
   public get maxDataKeys(): number {
     return this.widgetConfigComponent.modelValue?.typeParameters?.maxDataKeys;
   }
 
-  public get dataKeySettingsSchema(): JsonSettingsSchema {
-    return this.widgetConfigComponent.modelValue?.dataKeySettingsSchema;
+  public get dataKeySettingsForm(): FormProperty[] {
+    return this.widgetConfigComponent.modelValue?.dataKeySettingsForm;
   }
 
   public get dataKeySettingsDirective(): string {
     return this.widgetConfigComponent.modelValue?.dataKeySettingsDirective;
   }
 
-  public get latestDataKeySettingsSchema(): JsonSettingsSchema {
-    return this.widgetConfigComponent.modelValue?.latestDataKeySettingsSchema;
+  public get latestDataKeySettingsForm(): FormProperty[] {
+    return this.widgetConfigComponent.modelValue?.latestDataKeySettingsForm;
   }
 
   public get latestDataKeySettingsDirective(): string {
     return this.widgetConfigComponent.modelValue?.latestDataKeySettingsDirective;
+  }
+
+  public get dataKeySettingsFunction(): DataKeySettingsFunction {
+    return this.widgetConfigComponent.modelValue?.dataKeySettingsFunction;
   }
 
   public get dashboard(): Dashboard {
@@ -121,6 +136,14 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
 
   public get widget(): Widget {
     return this.widgetConfigComponent.widget;
+  }
+
+  public get hideDatasourceLabel(): boolean {
+    return this.datasourcesComponent?.hideDatasourceLabel;
+  }
+
+  public get displayDatasourceFilterForBasicMode(): boolean {
+    return this.datasourcesComponent?.displayDatasourceFilterForBasicMode;
   }
 
   public get hideDataKeyLabel(): boolean {
@@ -167,7 +190,8 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
   constructor(private fb: UntypedFormBuilder,
               @Optional()
               private datasourcesComponent: DatasourcesComponent,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -217,10 +241,14 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
     if (this.hasAdditionalLatestDataKeys) {
       this.datasourceFormGroup.addControl('latestDataKeys', this.fb.control(null));
     }
-    this.datasourceFormGroup.get('type').valueChanges.subscribe(() => {
+    this.datasourceFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
-    this.datasourceFormGroup.valueChanges.subscribe(
+    this.datasourceFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.datasourceUpdated(this.datasourceFormGroup.value);
       }
@@ -255,7 +283,7 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
   }
 
   public isDataKeysOptional(type?: DatasourceType): boolean {
-    if (this.hasAdditionalLatestDataKeys) {
+    if (this.hasAdditionalLatestDataKeys || this.hideDataKeys) {
       return true;
     } else {
       return this.dataKeysOptional
@@ -268,18 +296,20 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
   }
 
   private updateValidators() {
-    const type: DatasourceType = this.datasourceFormGroup.get('type').value;
-    this.datasourceFormGroup.get('deviceId').setValidators(
-      type === DatasourceType.device ? [Validators.required] : []
-    );
-    this.datasourceFormGroup.get('entityAliasId').setValidators(
-      (type === DatasourceType.entity || type === DatasourceType.entityCount) ? [Validators.required] : []
-    );
-    const newDataKeysRequired = !this.isDataKeysOptional(type);
-    this.datasourceFormGroup.get('dataKeys').setValidators(newDataKeysRequired ? [Validators.required] : []);
-    this.datasourceFormGroup.get('deviceId').updateValueAndValidity({emitEvent: false});
-    this.datasourceFormGroup.get('entityAliasId').updateValueAndValidity({emitEvent: false});
-    this.datasourceFormGroup.get('dataKeys').updateValueAndValidity({emitEvent: false});
+    if (!this.datasourcesOptional) {
+      const type: DatasourceType = this.datasourceFormGroup.get('type').value;
+      this.datasourceFormGroup.get('deviceId').setValidators(
+        type === DatasourceType.device ? [Validators.required] : []
+      );
+      this.datasourceFormGroup.get('entityAliasId').setValidators(
+        (type === DatasourceType.entity || type === DatasourceType.entityCount) ? [Validators.required] : []
+      );
+      const newDataKeysRequired = !this.isDataKeysOptional(type);
+      this.datasourceFormGroup.get('dataKeys').setValidators(newDataKeysRequired ? [Validators.required] : []);
+      this.datasourceFormGroup.get('deviceId').updateValueAndValidity({emitEvent: false});
+      this.datasourceFormGroup.get('entityAliasId').updateValueAndValidity({emitEvent: false});
+      this.datasourceFormGroup.get('dataKeys').updateValueAndValidity({emitEvent: false});
+    }
   }
 
 }

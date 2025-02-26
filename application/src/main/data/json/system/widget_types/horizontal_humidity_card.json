@@ -1,0 +1,49 @@
+{
+  "fqn": "horizontal_humidity_card",
+  "name": "Horizontal humidity card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/horizontal_humidity_card_system_widget_image.png",
+  "description": "Displays the latest humidity telemetry in a scalable horizontal layout.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 1,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        horizontal: true,\n        previewWidth: '420px',\n        previewHeight: '90px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'humidity', label: 'Humidity', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Humidity\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 7;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"horizontal\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"mdi:water-percent\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":20,\"color\":\"#D81838\"},{\"from\":20,\"to\":40,\"color\":\"#FFA600\"},{\"from\":40,\"to\":60,\"color\":\"#5B7EE6\"},{\"from\":60,\"to\":80,\"color\":\"#305AD7\"},{\"from\":80,\"to\":100,\"color\":\"#234CC7\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":0,\"to\":20,\"color\":\"#D81838\"},{\"from\":20,\"to\":40,\"color\":\"#FFA600\"},{\"from\":40,\"to\":60,\"color\":\"#5B7EE6\"},{\"from\":60,\"to\":80,\"color\":\"#305AD7\"},{\"from\":80,\"to\":100,\"color\":\"#234CC7\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Horizontal humidity card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"%\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "weather",
+    "environment",
+    "moisture",
+    "dampness",
+    "wetness",
+    "humidness",
+    "moistness",
+    "dew",
+    "water vapor",
+    "condensation",
+    "dew point",
+    "steaminess"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/horizontal_humidity_card_system_widget_image.png",
+      "title": "\"Horizontal humidity card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "horizontal_humidity_card_system_widget_image.png",
+      "publicResourceKey": "QrZjOZpjlySxL9a8u7JqAcE6wKAz8go3",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAnFBMVEUAAADf39/f39/g4ODg4OD////k5OQjTMfg4ODz8/M+Ys7k6fjOzs51j9zIyMjy9PusrKz5+fm2trbb29vCwsKQkJCRpeMwV8usvOq8vLw9PT3n5+eesefW3fWRpuODm+DV1dVYWFhMbdHI0vF0dHS6x+1aedVmZmZohNnW3fTt7e2CgoJKSkpaeNUxV8ovLy8hISG6x+6enp6dnZ2UGhvnAAAABXRSTlMAIETfv0i0+14AAANBSURBVHja7dp5b9owHMZxxvrkh+OcJOSA0HCUY4WtO97/e5sdygCpg2orbVo9nz+Qa0uVvzKOUEuHiIiIiIiIiIiIiIiIiIiIiIiIiIiI6DV9evc6Vvez8971PndNhxPj3VNOt3Oj8AHEN50ePoQeQ1qGIW3DkLZhSNswpG2eDqlmIY5EDiYljmwABFEQoT2f054MuRVxNQ6mAaI7peDAaV4RAU40mATBVjlQ16oJq6zQsOZVttBH0/psyHHHacn0Z7C5C+4wdYab4Wo1xRCb1XAQDQbD/oPaRHhhx9v4AsDfjyztujP58pyQW2nMwkPI3WD1GGIOAt9NyAMiE+JMMfg5dHANWmQ+zsS1G3LnY1+WaGTfQri+6ZlfCBnLo/rkrXUaoob7kGC4wlUUsgaQi8ZM5kAoEu5CTNrSR+1eOhFX9uand2S7ejicyGC1NSFqW2Ia4SoKWTYhIYrCJoigUYnWbq1FXwgpRPwql3wt4uKUeuIH5WwVriJ0pdK1+Pt97UfhzF5g18eFENeW+/kYM3skl/3q40rGxzdV54cjGI9RufpCyBcRuV3Mxs2Vr/GGQlfWmSu3uw5XKhzovBhnmT4XMhcjtx2GjzdUid/ckfkuKsMR39f5V/MQPhOiHzvWVf7GJ7KWwm7Zvoaz045CdP0NcOszITD7X5jzsL9Cfpxe7FPqHqeUwkvypW6u7A/bVJ++6TL4zUP4XEgm4tb2nriHp1Z/F6Nwn6ARx4h7np3oIQYwikaIk2S3YCZeImku4mdLu4najKwFdhZmrvqmdV6cCwld2SuOQiYTLwkCz4xSpElaxv3Um0wCr7z3yhjwRqosEyivWfCCEv9vYXfyVQNL2cmOt7k0a+G5EOh9SYXjEK+vAm/k7UJGk8SMzdwo8dKgCekliQkJ+qNAmdxU4QWEOsRfaX3ps1ZYzERyf4w/Ii9Jvf4kSJU9Ea9M0r7qB56Zuy9HgQcbEtsTGZWRXZikKV7F+ZDLkhH+bhIkeI42hMTxuUWF52hFSBsxpG0Y0jYMaRuGtE2vc/MB/s0OqJtO12nPH3D/Wex07Vc4es5797n7kb5UQ0RERERERERERERERERERERERERERPRKfgPNbdZin3BhXgAAAABJRU5ErkJggg==",
+      "public": true
+    }
+  ]
+}

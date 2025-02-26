@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 <form [formGroup]="userFilterFormGroup" (ngSubmit)="save()" style="width: 400px;">
   <mat-toolbar color="primary">
     <h2>{{ filter.filter }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -47,8 +47,7 @@
           <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
             <label class="tb-title no-padding tb-required">{{ userInputControl.get('label').value }}</label>
             <tb-datetime [formControl]="userInputControl.get('value')"
-                         dateText="filter.date"
-                         timeText="filter.time"
+                         dateText="{{ 'filter.date' | translate }}"
                          required [showLabel]="false"></tb-datetime>
           </ng-template>
           <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">
@@ -60,7 +59,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

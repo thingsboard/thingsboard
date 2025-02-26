@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
+<div class="tb-card-content flex flex-col gap-2">
   <div class="tb-card-header">
     <a class="tb-title-link" href="https://thingsboard.io/docs/" target="_blank">{{ 'widgets.documentation.title' | translate }}</a>
     <button class="tb-title-icon"
@@ -26,20 +26,20 @@
       <tb-icon>edit</tb-icon>
     </button>
   </div>
-  <mat-grid-list class="tb-links-list" fxFlex [cols]="columns" [rowHeight]="rowHeight" [gutterSize]="gutterSize">
+  <mat-grid-list class="tb-links-list flex-1" [cols]="columns" [rowHeight]="rowHeight" [gutterSize]="gutterSize">
     <mat-grid-tile class="tb-links-tile" *ngFor="let docLink of documentationLinks?.links">
-      <a fxFlex class="tb-link-button"
+      <a class="tb-link-button flex-1"
          [href]="docLink.link" target="_blank">
         <div class="tb-link-container">
           <div class="tb-link-icon-container">
             <tb-icon color="primary">{{ docLink.icon }}</tb-icon>
           </div>
-          <div class="tb-link-text">{{ docLink.name }}</div>
+          <div class="tb-link-text">{{ docLink.name | customTranslate }}</div>
         </div>
       </a>
     </mat-grid-tile>
     <mat-grid-tile class="tb-links-tile">
-      <div fxFlex class="tb-add-link-button"
+      <div class="tb-add-link-button flex-1"
            matTooltip="{{ 'widgets.documentation.add-link' | translate }}"
            matTooltipPosition="above"
            (click)="addLink()">

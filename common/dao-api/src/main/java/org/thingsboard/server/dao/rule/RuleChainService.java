@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,17 @@ public interface RuleChainService extends EntityDaoService {
 
     RuleChain saveRuleChain(RuleChain ruleChain);
 
-    RuleChain saveRuleChain(RuleChain ruleChain, boolean doValidate);
+    RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent);
+
+    RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent, boolean doValidate);
 
     boolean setRootRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
     RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater);
+
+    RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater, boolean publishSaveEvent);
+
+    RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater, boolean publishSaveEvent, boolean doValidate);
 
     RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId);
 
@@ -102,7 +108,12 @@ public interface RuleChainService extends EntityDaoService {
 
     PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
 
+    @Deprecated(forRemoval = true, since = "3.6.3")
     PageData<RuleNode> findAllRuleNodesByTypeAndVersionLessThan(String type, int version, PageLink pageLink);
+
+    PageData<RuleNodeId> findAllRuleNodeIdsByTypeAndVersionLessThan(String type, int version, PageLink pageLink);
+
+    List<RuleNode> findAllRuleNodesByIds(List<RuleNodeId> ruleNodeIds);
 
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 

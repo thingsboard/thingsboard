@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,12 @@ public class CacheConstants {
     public static final String DEVICE_CACHE = "devices";
     public static final String SESSIONS_CACHE = "sessions";
     public static final String ASSET_CACHE = "assets";
+    public static final String CUSTOMER_CACHE = "customers";
+    public static final String USER_CACHE = "users";
     public static final String ENTITY_VIEW_CACHE = "entityViews";
     public static final String EDGE_CACHE = "edges";
+    public static final String EDGE_SESSIONS_CACHE = "edgeSessions";
+    public static final String RELATED_EDGES_CACHE = "relatedEdges";
     public static final String CLAIM_DEVICES_CACHE = "claimDevices";
     public static final String SECURITY_SETTINGS_CACHE = "securitySettings";
     public static final String TENANT_PROFILE_CACHE = "tenantProfiles";
@@ -34,6 +38,7 @@ public class CacheConstants {
 
     public static final String ASSET_PROFILE_CACHE = "assetProfiles";
     public static final String ATTRIBUTES_CACHE = "attributes";
+    public static final String TS_LATEST_CACHE = "tsLatest";
     public static final String USERS_SESSION_INVALIDATION_CACHE = "userSessionsInvalidation";
     public static final String OTA_PACKAGE_CACHE = "otaPackages";
     public static final String OTA_PACKAGE_DATA_CACHE = "otaPackagesData";
@@ -46,4 +51,6 @@ public class CacheConstants {
     public static final String ENTITY_COUNT_CACHE = "entityCount";
     public static final String RESOURCE_INFO_CACHE = "resourceInfo";
     public static final String ALARM_TYPES_CACHE = "alarmTypes";
+    public static final String QR_CODE_SETTINGS_CACHE = "qrCodeSettings";
+    public static final String MOBILE_SECRET_KEY_CACHE = "mobileSecretKey";
 }

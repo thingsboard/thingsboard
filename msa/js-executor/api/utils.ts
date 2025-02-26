@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,13 +16,6 @@
 
 import Long from 'long';
 import uuidParse from 'uuid-parse';
-
-export function toUUIDString(mostSigBits: string, leastSigBits: string): string {
-    const msbBytes = Long.fromValue(mostSigBits, false).toBytes(false);
-    const lsbBytes = Long.fromValue(leastSigBits, false).toBytes(false);
-    const uuidBytes = msbBytes.concat(lsbBytes);
-    return uuidParse.unparse(uuidBytes as any);
-}
 
 export function UUIDFromBuffer(buf: Buffer): string {
     return uuidParse.unparse(buf);
@@ -59,6 +52,6 @@ export function parseJsErrorDetails(err: any): string | undefined {
     return details;
 }
 
-export function isNotUUID(candidate: string) {
-    return candidate.length != 36 || !candidate.includes('-');
+export function isNotEmptyStr(value: any): boolean {
+    return typeof value === 'string' && value.trim().length > 0;
 }

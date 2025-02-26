@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,35 +15,17 @@
     limitations under the License.
 
 -->
-<section fxLayout="column" fxLayoutAlign="start stretch">
-  <section fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="16px"
-           fxLayout.xs="column" fxLayoutAlign.xs="start stretch"  fxLayoutGap.xs="0">
-    <mat-form-field>
-      <mat-label translate>datetime.date-from</mat-label>
-      <mat-datetimepicker-toggle [for]="startDatePicker" matPrefix></mat-datetimepicker-toggle>
-      <mat-datetimepicker #startDatePicker type="date" openOnFocus="true"></mat-datetimepicker>
-      <input matInput [disabled]="disabled" [(ngModel)]="startDate" [matDatetimepicker]="startDatePicker" (ngModelChange)="onStartDateChange()">
+<section class="tb-form-row column-xs no-border no-padding tb-standard-fields" [formGroup]="dateTimePeriodFormGroup">
+    <mat-form-field class="flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+      <mat-label translate>datetime.from</mat-label>
+      <mat-datetimepicker-toggle [for]="startDatePicker" matSuffix></mat-datetimepicker-toggle>
+      <mat-datetimepicker #startDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+      <input matInput formControlName="startDate" [matDatetimepicker]="startDatePicker" [max]="maxStartDate">
     </mat-form-field>
-    <mat-form-field>
-      <mat-label translate>datetime.time-from</mat-label>
-      <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
-      <mat-datetimepicker #startTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
-      <input matInput [disabled]="disabled" [(ngModel)]="startDate" [matDatetimepicker]="startTimePicker" (ngModelChange)="onStartDateChange()">
+    <mat-form-field class="flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+      <mat-label translate>datetime.to</mat-label>
+      <mat-datetimepicker-toggle [for]="endDatePicker" matSuffix></mat-datetimepicker-toggle>
+      <mat-datetimepicker #endDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+      <input matInput formControlName="endDate" [matDatetimepicker]="endDatePicker" [max]="maxEndDate">
     </mat-form-field>
-  </section>
-  <section fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="16px"
-           fxLayout.xs="column" fxLayoutAlign.xs="start stretch"  fxLayoutGap.xs="0">
-    <mat-form-field>
-      <mat-label translate>datetime.date-to</mat-label>
-      <mat-datetimepicker-toggle [for]="endDatePicker" matPrefix></mat-datetimepicker-toggle>
-      <mat-datetimepicker #endDatePicker type="date" openOnFocus="true"></mat-datetimepicker>
-      <input matInput [disabled]="disabled" [(ngModel)]="endDate" [matDatetimepicker]="endDatePicker" (ngModelChange)="onEndDateChange()">
-    </mat-form-field>
-    <mat-form-field>
-      <mat-label translate>datetime.time-to</mat-label>
-      <mat-datetimepicker-toggle [for]="endTimePicker" matPrefix></mat-datetimepicker-toggle>
-      <mat-datetimepicker #endTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
-      <input matInput [disabled]="disabled" [(ngModel)]="endDate" [matDatetimepicker]="endTimePicker" (ngModelChange)="onEndDateChange()">
-    </mat-form-field>
-  </section>
 </section>

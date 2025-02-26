@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="mat-content mat-padding">
-  <div fxLayout="row" *ngFor="let alias of entityAliasesInfo | keyvalue">
-    <tb-aliases-entity-autocomplete fxFlex
+<div class="mat-content mat-padding flex flex-col">
+  <div class="flex flex-row" *ngFor="let alias of entityAliasesInfo | keyvalue">
+    <tb-aliases-entity-autocomplete class="flex-1"
       required
       [alias]="alias.value.alias"
       [entityFilter]="alias.value.entityFilter"

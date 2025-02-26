@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 /// limitations under the License.
 ///
 
-import L, { FeatureGroup, LatLngBounds, LatLngTuple, Projection } from 'leaflet';
+import L, { FeatureGroup, LatLngBounds, LatLngTuple, PointExpression, Projection } from 'leaflet';
 import tinycolor from 'tinycolor2';
 import 'leaflet-providers';
-import { MarkerClusterGroup, MarkerClusterGroupOptions } from 'leaflet.markercluster/dist/leaflet.markercluster';
+import 'leaflet.markercluster';
 import '@geoman-io/leaflet-geoman-free';
 
 import {
@@ -32,7 +32,7 @@ import {
   WidgetUnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
-import { Observable, of } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import { Circle } from './circle';
@@ -41,7 +41,8 @@ import {
   entitiesParseName,
   isCutPolygon,
   isJSON,
-  isValidLatLng
+  isValidLatLng,
+  LabelSettings
 } from '@home/components/widget/lib/maps/maps-utils';
 import { checkLngLat, createLoadingDiv } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -53,7 +54,7 @@ import {
   isNotEmptyStr,
   isString,
   mergeFormattedData,
-  safeExecute
+  safeExecuteTbFunction
 } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -62,6 +63,8 @@ import {
 } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { FormattedData, ReplaceInfo } from '@shared/models/widget.models';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { take, tap } from 'rxjs/operators';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 export default abstract class LeafletMap {
@@ -74,7 +77,7 @@ export default abstract class LeafletMap {
     options: WidgetUnitedMapSettings;
     bounds: L.LatLngBounds;
     datasources: FormattedData[];
-    markersCluster: MarkerClusterGroup;
+    markersCluster: L.MarkerClusterGroup;
     points: FeatureGroup;
     markersData: FormattedData[] = [];
     polygonsData: FormattedData[] = [];
@@ -97,9 +100,7 @@ export default abstract class LeafletMap {
     selectedEntity: FormattedData;
     ignoreUpdateBounds = false;
     initDragModeIgnoreUpdateBoundsSet = false;
-  // eslint-disable-next-line @typescript-eslint/dot-notation
     southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
-  // eslint-disable-next-line @typescript-eslint/dot-notation
     northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
     saveLocation: (e: FormattedData, values: {[key: string]: any}) => Observable<any>;
     saveMarkerLocation: (e: FormattedData, lat?: number, lng?: number) => Observable<any>;
@@ -107,7 +108,7 @@ export default abstract class LeafletMap {
     translateService: TranslateService;
     tooltipInstances: ITooltipsterInstance[] = [];
 
-    clusteringSettings: MarkerClusterGroupOptions;
+    clusteringSettings: L.MarkerClusterGroupOptions;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -148,7 +149,7 @@ export default abstract class LeafletMap {
             const childCount = cluster.getChildCount();
             const formattedData = cluster.getAllChildMarkers().map(clusterMarker => clusterMarker.options.tbMarkerData);
             const markerColor = markerClusteringSettings.clusterMarkerFunction
-              ? safeExecute(markerClusteringSettings.parsedClusterMarkerFunction,
+              ? safeExecuteTbFunction(markerClusteringSettings.parsedClusterMarkerFunction,
                 [formattedData, childCount])
               : null;
             if (isDefinedAndNotNull(markerColor) && tinycolor(markerColor).isValid()) {
@@ -183,13 +184,13 @@ export default abstract class LeafletMap {
         if (markerClusteringSettings.maxZoom && markerClusteringSettings.maxZoom >= 0 && markerClusteringSettings.maxZoom < 19) {
             this.clusteringSettings.disableClusteringAtZoom = Math.floor(markerClusteringSettings.maxZoom);
         }
-        this.markersCluster = new MarkerClusterGroup(this.clusteringSettings);
+        this.markersCluster = new L.MarkerClusterGroup(this.clusteringSettings);
       }
     }
 
     private selectEntityWithoutLocationDialog(shapes: L.PM.SUPPORTED_SHAPES): Observable<FormattedData> {
-      let entities;
-      let labelSettings;
+      let entities: FormattedData[];
+      let labelSettings: LabelSettings;
       switch (shapes) {
         case 'Polygon':
         case 'Rectangle':
@@ -242,8 +243,8 @@ export default abstract class LeafletMap {
         if (data !== null) {
           this.selectedEntity = data;
           this.toggleDrawMode(type);
-          let tooltipText;
-          let customTranslation;
+          let tooltipText: string;
+          let customTranslation: L.PM.Translations;
           switch (type) {
             case 'tbMarker':
               tooltipText = this.translateService.instant('widgets.maps.tooltips.placeMarker', {entityName: data.entityParseName});
@@ -308,7 +309,7 @@ export default abstract class LeafletMap {
         this.map.pm.Toolbar.copyDrawControl('Marker', {
           name: 'tbMarker',
           afterClick: () => this.selectEntityWithoutLocation('tbMarker'),
-          disabled: true,
+          disabled: false,
           actions
         });
       }
@@ -334,14 +335,14 @@ export default abstract class LeafletMap {
         this.map.pm.Toolbar.copyDrawControl('Rectangle', {
           name: 'tbRectangle',
           afterClick: () => this.selectEntityWithoutLocation('tbRectangle'),
-          disabled: true,
+          disabled: false,
           actions: rectangleActions
         });
 
         this.map.pm.Toolbar.copyDrawControl('Polygon', {
           name: 'tbPolygon',
           afterClick: () => this.selectEntityWithoutLocation('tbPolygon'),
-          disabled: true,
+          disabled: false,
           actions: polygonActions
         });
       }
@@ -356,7 +357,7 @@ export default abstract class LeafletMap {
         this.map.pm.Toolbar.copyDrawControl('Circle', {
           name: 'tbCircle',
           afterClick: () => this.selectEntityWithoutLocation('tbCircle'),
-          disabled: true,
+          disabled: false,
           actions
         });
       }
@@ -424,7 +425,7 @@ export default abstract class LeafletMap {
         switch (e.shape) {
           case 'tbMarker':
             // @ts-ignore
-            this.saveLocation(this.selectedEntity, this.convertToCustomFormat(e.layer.getLatLng())).subscribe(() => {});
+            this.saveLocation(this.selectedEntity, this.convertToCustomFormat(e.marker.getLatLng())).subscribe(() => {});
             break;
           case 'tbRectangle':
           case 'tbPolygon':
@@ -565,8 +566,8 @@ export default abstract class LeafletMap {
         }
         $(this.ctx.$container)
           .find('a[role="button"]:not(.leaflet-pm-action)')
-          .each((index, element) => {
-            let title;
+          .each((_index, element) => {
+            let title: string;
             if (element.title) {
               title = element.title;
               $(element).removeAttr('title');
@@ -587,7 +588,12 @@ export default abstract class LeafletMap {
                 },
                 side: 'right',
                 distance: 2,
-                trackOrigin: true
+                trackOrigin: true,
+                functionBefore: (instance, helper) => {
+                  if (helper.origin.ariaDisabled === 'true' || helper.origin.parentElement.classList.contains('active')) {
+                    return false;
+                  }
+                },
               }
             );
             this.tooltipInstances.push(tooltip.tooltipster('instance'));
@@ -621,7 +627,7 @@ export default abstract class LeafletMap {
         return this.map.getCenter();
     }
 
-    fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) {
+    fitBounds(bounds: LatLngBounds, padding?: PointExpression) {
         if (bounds.isValid()) {
             this.bounds = !!this.bounds ? this.bounds.extend(bounds) : bounds;
             if (!this.options.fitMapBounds && this.options.defaultZoomLevel) {
@@ -667,7 +673,7 @@ export default abstract class LeafletMap {
       return L.latLng(position.x, position.y) as L.LatLng;
     }
 
-    convertPosition(data: FormattedData, dsData: FormattedData[]): L.LatLng {
+    convertPosition(data: FormattedData, _dsData: FormattedData[]): L.LatLng {
       const position = this.extractPosition(data);
       if (position) {
         return this.positionToLatLng(position);
@@ -893,18 +899,29 @@ export default abstract class LeafletMap {
       rawMarkers.forEach(data => {
         if (data.rotationAngle || data.rotationAngle === 0) {
           const currentImage: MarkerImageInfo = this.options.useMarkerImageFunction ?
-            safeExecute(this.options.parsedMarkerImageFunction,
+            safeExecuteTbFunction(this.options.parsedMarkerImageFunction,
               [data, this.options.markerImages, markersData, data.dsIndex]) : this.options.currentImage;
-          const imageSize = `height: ${this.options.markerImageSize || 34}px; width: ${this.options.markerImageSize || 34}px;`;
-          const style = currentImage ? 'background-image: url(' + currentImage.url + '); ' + imageSize : '';
-          this.options.icon = { icon: L.divIcon({
-            html: `<div class="arrow"
+          const imageUrl$ =
+            currentImage
+              ? this.ctx.$injector.get(ImagePipe).transform(currentImage.url, {asString: true, ignoreLoadingImage: true})
+              : of(null);
+          this.options.icon$ = imageUrl$.pipe(
+            map((imageUrl) => {
+              const size = this.options.useMarkerImageFunction && currentImage ? currentImage.size : this.options.markerImageSize;
+              const imageSize = `height: ${size || 34}px; width: ${size || 34}px;`;
+              const style = imageUrl ? 'background-image: url(' + imageUrl + '); ' + imageSize : '';
+              return { icon: L.divIcon({
+                  html: `<div class="arrow"
                style="transform: translate(-10px, -10px)
                rotate(${data.rotationAngle}deg);
                ${style}"><div>`
-          }),  size: [30, 30]};
+                }),  size: [size, size]};
+            })
+          );
+          this.options.icon = null;
         } else {
           this.options.icon = null;
+          this.options.icon$ = null;
         }
         if (this.markers.get(data.entityName)) {
           m = this.updateMarker(data.entityName, data, markersData, this.options);
@@ -928,7 +945,12 @@ export default abstract class LeafletMap {
       this.markersData = markersData;
       if (this.options.useClusterMarkers) {
         if (createdMarkers.length) {
-          this.markersCluster.addLayers(createdMarkers.map(marker => marker.leafletMarker));
+          createdMarkers.forEach((marker) => {
+            marker.createMarkerIconSubject.pipe(
+              tap(() => this.markersCluster.addLayer(marker.leafletMarker)),
+              take(1)
+            ).subscribe();
+          });
         }
         if (updatedMarkers.length) {
           this.markersCluster.refreshClusters(updatedMarkers.map(marker => marker.leafletMarker));
@@ -959,10 +981,15 @@ export default abstract class LeafletMap {
       }
       this.markers.set(key, newMarker);
       if (!this.options.useClusterMarkers) {
-        this.map.addLayer(newMarker.leafletMarker);
-        if (this.map.pm.globalDragModeEnabled() && newMarker.leafletMarker.pm) {
-          newMarker.leafletMarker.pm.enableLayerDrag();
-        }
+        newMarker.createMarkerIconSubject.pipe(
+          tap(() => {
+            this.map.addLayer(newMarker.leafletMarker);
+            if (this.map.pm.globalDragModeEnabled() && newMarker.leafletMarker.pm) {
+              newMarker.leafletMarker.pm.enableLayerDrag();
+            }
+          }),
+          take(1)
+        ).subscribe();
       }
       return newMarker;
     }
@@ -1015,7 +1042,7 @@ export default abstract class LeafletMap {
         if (!!this.extractPosition(pdata)) {
           const dsData = pointsData.map(ds => ds[tsIndex]);
           if (this.options.useColorPointFunction) {
-            pointColor = safeExecute(this.options.parsedColorPointFunction, [pdata, dsData, pdata.dsIndex]);
+            pointColor = safeExecuteTbFunction(this.options.parsedColorPointFunction, [pdata, dsData, pdata.dsIndex]);
           }
           const point = L.circleMarker(this.convertPosition(pdata, dsData), {
             color: pointColor,
@@ -1052,7 +1079,7 @@ export default abstract class LeafletMap {
             }
         });
         const toDelete: string[] = [];
-        this.polylines.forEach((v, mKey) => {
+        this.polylines.forEach((_v, mKey) => {
           if (!keys.includes(mKey)) {
             toDelete.push(mKey);
           }
@@ -1122,7 +1149,7 @@ export default abstract class LeafletMap {
       }
     });
     const toDelete: string[] = [];
-    this.polygons.forEach((v, mKey) => {
+    this.polygons.forEach((_v, mKey) => {
       if (!keys.includes(mKey)) {
         toDelete.push(mKey);
       }

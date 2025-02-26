@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,46 +19,50 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class QueueEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertQueueEventToDownlink(EdgeEvent edgeEvent) {
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
         QueueId queueId = new QueueId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-                Queue queue = queueService.findQueueById(edgeEvent.getTenantId(), queueId);
+            case ADDED, UPDATED -> {
+                Queue queue = edgeCtx.getQueueService().findQueueById(edgeEvent.getTenantId(), queueId);
                 if (queue != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    QueueUpdateMsg queueUpdateMsg =
-                            queueMsgConstructor.constructQueueUpdatedMsg(msgType, queue);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    QueueUpdateMsg queueUpdateMsg = EdgeMsgConstructorUtils.constructQueueUpdatedMsg(msgType, queue);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addQueueUpdateMsg(queueUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
-                QueueUpdateMsg queueDeleteMsg =
-                        queueMsgConstructor.constructQueueDeleteMsg(queueId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+            }
+            case DELETED -> {
+                QueueUpdateMsg queueDeleteMsg = EdgeMsgConstructorUtils.constructQueueDeleteMsg(queueId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addQueueUpdateMsg(queueDeleteMsg)
                         .build();
-                break;
+            }
         }
-        return downlinkMsg;
+        return null;
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.QUEUE;
     }
 
 }

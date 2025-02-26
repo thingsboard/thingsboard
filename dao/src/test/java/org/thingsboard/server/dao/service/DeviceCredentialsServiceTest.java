@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public class DeviceCredentialsServiceTest extends AbstractServiceTest {
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
         deviceCredentials.setCredentialsId("access_token");
-        deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+        deviceCredentials = deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
         DeviceCredentials foundDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
         Assert.assertEquals(deviceCredentials, foundDeviceCredentials);
         deviceService.deleteDevice(tenantId, savedDevice.getId());

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,14 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -29,14 +32,10 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.MappedSuperclass;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
@@ -47,10 +46,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPER
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @MappedSuperclass
 @Slf4j
-public abstract class AbstractEntityViewEntity<T extends EntityView> extends BaseSqlEntity<T> {
+public abstract class AbstractEntityViewEntity<T extends EntityView> extends BaseVersionedEntity<T> {
 
     @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
     private UUID entityId;
@@ -80,7 +78,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
     @Column(name = ModelConstants.ENTITY_VIEW_END_TS_PROPERTY)
     private long endTs;
 
-    @Type(type = "json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -91,11 +89,8 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         super();
     }
 
-    public AbstractEntityViewEntity(EntityView entityView) {
-        if (entityView.getId() != null) {
-            this.setUuid(entityView.getId().getId());
-        }
-        this.setCreatedTime(entityView.getCreatedTime());
+    public AbstractEntityViewEntity(T entityView) {
+        super(entityView);
         if (entityView.getEntityId() != null) {
             this.entityId = entityView.getEntityId().getId();
             this.entityType = entityView.getEntityId().getEntityType();
@@ -122,8 +117,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
     }
 
     public AbstractEntityViewEntity(EntityViewEntity entityViewEntity) {
-        this.setId(entityViewEntity.getId());
-        this.setCreatedTime(entityViewEntity.getCreatedTime());
+        super(entityViewEntity);
         this.entityId = entityViewEntity.getEntityId();
         this.entityType = entityViewEntity.getEntityType();
         this.tenantId = entityViewEntity.getTenantId();
@@ -140,6 +134,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
     protected EntityView toEntityView() {
         EntityView entityView = new EntityView(new EntityViewId(getUuid()));
         entityView.setCreatedTime(createdTime);
+        entityView.setVersion(version);
 
         if (entityId != null) {
             entityView.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType.name(), entityId));
@@ -165,4 +160,5 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         }
         return entityView;
     }
+
 }

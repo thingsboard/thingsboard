@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,18 @@ package org.thingsboard.server.dao.nosql;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
-
-import javax.annotation.PreDestroy;
 
 /**
  * Created by ashvayka on 24.10.18.

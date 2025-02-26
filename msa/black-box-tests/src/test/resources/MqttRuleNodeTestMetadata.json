@@ -1,0 +1,78 @@
+{
+  "firstNodeIndex": 2,
+  "nodes": [
+    {
+      "additionalInfo": {
+        "description": "",
+        "layoutX": 626,
+        "layoutY": 152
+      },
+      "type": "org.thingsboard.rule.engine.mqtt.TbMqttNode",
+      "name": "test mqtt",
+      "singletonMode": true,
+      "queueName": "HighPriority",
+      "configurationVersion": 0,
+      "configuration": {
+        "topicPattern": "tb/mqtt/device",
+        "host": "broker",
+        "port": 1883,
+        "connectTimeoutSec": 10,
+        "clientId": null,
+        "cleanSession": true,
+        "retainedMessage": false,
+        "ssl": false,
+        "credentials": {
+          "type": "anonymous"
+        }
+      },
+      "externalId": null
+    },
+    {
+      "additionalInfo": {
+        "description": "",
+        "layoutX": 949,
+        "layoutY": 153
+      },
+      "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+      "name": "save timeseries",
+      "singletonMode": false,
+      "configurationVersion": 1,
+      "configuration": {
+        "defaultTTL": 0,
+        "useServerTs": false,
+        "processingSettings": {
+          "type": "ON_EVERY_MESSAGE"
+        }
+      },
+      "externalId": null
+    },
+    {
+      "additionalInfo": {
+        "description": "",
+        "layoutX": 305,
+        "layoutY": 151
+      },
+      "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+      "name": "switch",
+      "singletonMode": false,
+      "configurationVersion": 0,
+      "configuration": {
+        "version": 0
+      },
+      "externalId": null
+    }
+  ],
+  "connections": [
+    {
+      "fromIndex": 0,
+      "toIndex": 1,
+      "type": "Success"
+    },
+    {
+      "fromIndex": 2,
+      "toIndex": 0,
+      "type": "Post telemetry"
+    }
+  ],
+  "ruleChainConnections": null
+}

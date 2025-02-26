@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import { AppState } from '@core/core.state';
 import { isDefined, isNumber } from '@core/utils';
 import { CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import tinycolor from 'tinycolor2';
-import { ResizeObserver } from '@juggle/resize-observer';
+import { ColorProcessor, gradientColor } from '@shared/models/widget-settings.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 interface KnobSettings {
@@ -158,16 +158,15 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       neonGlowBrightness: 0,
       gaugeWidthScale: 0.4,
       gaugeColor: 'rgba(0, 0, 0, 0)',
-      levelColors,
       minValue: this.minValue,
       maxValue: this.maxValue,
       gaugeType: 'donut',
       dashThickness: 2,
       donutStartAngle: 3 / 4 * Math.PI,
       donutEndAngle: 9 / 4 * Math.PI,
-      animation: false
+      animation: false,
+      barColorProcessor: ColorProcessor.fromSettings(gradientColor('rgba(0, 0, 0, 0)', levelColors, this.minValue, this.maxValue), this.ctx)
     };
-
 
     this.knob.on('click', (e) => {
       if (this.moving) {

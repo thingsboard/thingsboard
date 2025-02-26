@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,11 @@ public class ControllerConstants {
     protected static final String PAGE_DATA_PARAMETERS = "You can specify parameters to filter the results. " +
             "The result is wrapped with PageData object that allows you to iterate over result set using pagination. " +
             "See the 'Model' tab of the Response Class for more details. ";
+
+    protected static final String INLINE_IMAGES = "inlineImages";
+    protected static final String INLINE_IMAGES_DESCRIPTION = "Inline images as a data URL (Base64)";
+    protected static final String INCLUDE_RESOURCES = "includeResources";
+    protected static final String INCLUDE_RESOURCES_DESCRIPTION = "Export used resources and replace resource links with resource metadata";
     protected static final String DASHBOARD_ID_PARAM_DESCRIPTION = "A string value representing the dashboard id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String RPC_ID_PARAM_DESCRIPTION = "A string value representing the rpc id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
@@ -92,34 +97,8 @@ public class ControllerConstants {
     protected static final String EVENT_TEXT_SEARCH_DESCRIPTION = "The value is not used in searching.";
     protected static final String AUDIT_LOG_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on one of the next properties: entityType, entityName, userName, actionType, actionStatus.";
     protected static final String SORT_PROPERTY_DESCRIPTION = "Property of entity to sort by";
-    protected static final String DASHBOARD_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title";
-    protected static final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
-    protected static final String RPC_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, expirationTime, request, response";
-    protected static final String DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deviceProfileName, label, customerTitle";
-    protected static final String ENTITY_VIEW_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type";
-    protected static final String ENTITY_VIEW_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, customerTitle";
-    protected static final String USER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, firstName, lastName, email";
-    protected static final String TENANT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, state, city, address, address2, zip, phone, email";
-    protected static final String TENANT_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, description, isDefault";
-    protected static final String TENANT_PROFILE_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "id, name";
-    protected static final String TENANT_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, tenantProfileName, title, email, country, state, city, address, address2, zip, phone, email";
-    protected static final String DEVICE_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, transportType, description, isDefault";
 
-    protected static final String ASSET_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, description, isDefault";
-    protected static final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
-    protected static final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
-    protected static final String ALARM_COMMENT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, id";
-    protected static final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "ts, id";
-    protected static final String EDGE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
-    protected static final String RULE_CHAIN_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, root";
-    protected static final String WIDGET_BUNDLE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, tenantId";
-    protected static final String WIDGET_TYPE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deprecated, tenantId";
-    protected static final String AUDIT_LOG_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, entityType, entityName, userName, actionType, actionStatus";
     protected static final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESC (DESCENDING)";
-    protected static final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
-    protected static final String RPC_STATUS_ALLOWABLE_VALUES = "QUEUED, SENT, DELIVERED, SUCCESSFUL, TIMEOUT, EXPIRED, FAILED";
-    protected static final String RULE_CHAIN_TYPES_ALLOWABLE_VALUES = "CORE, EDGE";
-    protected static final String TRANSPORT_TYPE_ALLOWABLE_VALUES = "DEFAULT, MQTT, COAP, LWM2M, SNMP";
     protected static final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
     protected static final String ASSET_INFO_DESCRIPTION = "Asset Info is an extension of the default Asset object that contains information about the assigned customer name. ";
     protected static final String ALARM_INFO_DESCRIPTION = "Alarm Info is an extension of the default Alarm object that also contains name of the alarm originator.";
@@ -129,26 +108,26 @@ public class ControllerConstants {
 
     protected static final String ASSET_PROFILE_INFO_DESCRIPTION = "Asset Profile Info is a lightweight object that includes main information about Asset Profile. ";
     protected static final String QUEUE_SERVICE_TYPE_DESCRIPTION = "Service type (implemented only for the TB-RULE-ENGINE)";
-    protected static final String QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES = "TB-RULE-ENGINE, TB-CORE, TB-TRANSPORT, JS-EXECUTOR";
     protected static final String QUEUE_QUEUE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the queue name.";
-    protected static final String QUEUE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, topic";
+    protected static final String QUEUE_STATS_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the queue name or service id.";
     protected static final String QUEUE_ID_PARAM_DESCRIPTION = "A string value representing the queue id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    protected static final String QUEUE_STATS_ID_PARAM_DESCRIPTION = "A string value representing the queue stats id. For example, '687f294c-42b6-435a-983c-b7beff2784f9'";
     protected static final String QUEUE_NAME_PARAM_DESCRIPTION = "A string value representing the queue id. For example, 'Main'";
     protected static final String OTA_PACKAGE_INFO_DESCRIPTION = "OTA Package Info is a lightweight object that includes main information about the OTA Package excluding the heavyweight data. ";
     protected static final String OTA_PACKAGE_DESCRIPTION = "OTA Package is a heavyweight object that includes main information about the OTA Package and also data. ";
-    protected static final String OTA_PACKAGE_CHECKSUM_ALGORITHM_ALLOWABLE_VALUES = "MD5, SHA256, SHA384, SHA512, CRC32, MURMUR3_32, MURMUR3_128";
     protected static final String OTA_PACKAGE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the ota package title.";
-    protected static final String OTA_PACKAGE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, type, title, version, tag, url, fileName, dataSize, checksum";
     protected static final String RESOURCE_INFO_DESCRIPTION = "Resource Info is a lightweight object that includes main information about the Resource excluding the heavyweight data. ";
     protected static final String RESOURCE_DESCRIPTION = "Resource is a heavyweight object that includes main information about the Resource and also data. ";
 
+    protected static final String RESOURCE_IMAGE_SUB_TYPE_DESCRIPTION = "A string value representing resource sub-type.";
+
+    protected static final String RESOURCE_INCLUDE_SYSTEM_IMAGES_DESCRIPTION = "Use 'true' to include system images. Disabled by default. Ignored for requests by users with system administrator authority.";
+
     protected static final String RESOURCE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the resource title.";
-    protected static final String RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, resourceType, tenantId";
-    protected static final String RESOURCE_TYPE_PROPERTY_ALLOWABLE_VALUES = "LWM2M_MODEL, JKS, PKCS_12, JS_MODULE";
     protected static final String RESOURCE_TYPE = "A string value representing the resource type.";
+    protected static final String RESOURCE_SUB_TYPE = "A string value representing the resource sub-type.";
 
     protected static final String LWM2M_OBJECT_DESCRIPTION = "LwM2M Object is a object that includes information about the LwM2M model which can be used in transport configuration for the LwM2M device profile. ";
-    protected static final String LWM2M_OBJECT_SORT_PROPERTY_ALLOWABLE_VALUES = "id, name";
 
     protected static final String DEVICE_NAME_DESCRIPTION = "A string value representing the Device name.";
     protected static final String ASSET_NAME_DESCRIPTION = "A string value representing the Asset name.";
@@ -817,7 +796,7 @@ public class ControllerConstants {
             " * 'SHARED_ATTRIBUTE' - used for shared attributes; \n" +
             " * 'SERVER_ATTRIBUTE' - used for server attributes; \n" +
             " * 'ATTRIBUTE' - used for any of the above; \n" +
-            " * 'TIME_SERIES' - used for time-series values; \n" +
+            " * 'TIME_SERIES' - used for time series values; \n" +
             " * 'ENTITY_FIELD' - used for accessing entity fields like 'name', 'label', etc. The list of available fields depends on the entity type; \n" +
             " * 'ALARM_FIELD' - similar to entity field, but is used in alarm queries only; \n" +
             "\n\n Let's review the example:\n\n" +
@@ -928,7 +907,7 @@ public class ControllerConstants {
 
     protected static final String KEY_FILTERS =
             "\n\n # Key Filters" +
-                    "\nKey Filter allows you to define complex logical expressions over entity field, attribute or latest time-series value. The filter is defined using 'key', 'valueType' and 'predicate' objects. " +
+                    "\nKey Filter allows you to define complex logical expressions over entity field, attribute or latest time series value. The filter is defined using 'key', 'valueType' and 'predicate' objects. " +
                     "Single Entity Query may have zero, one or multiple predicates. If multiple filters are defined, they are evaluated using logical 'AND'. " +
                     "The example below checks that temperature of the entity is above 20 degrees:" +
                     "\n\n" + MARKDOWN_CODE_BLOCK_START +
@@ -959,7 +938,7 @@ public class ControllerConstants {
                     "For example, \"find all devices with profile 'Moisture Sensor'\" or \"Find all devices related to asset 'Building A'\"" +
                     "\n\nOptional **key filters** allow to filter results of the entity filter by complex criteria against " +
                     "main entity fields (name, label, type, etc), attributes and telemetry. " +
-                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and timeseries field 'batteryLevel' > 40\"." +
+                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and time series field 'batteryLevel' > 40\"." +
                     "\n\nLet's review the example:" +
                     "\n\n" + MARKDOWN_CODE_BLOCK_START +
                     "{\n" +
@@ -994,13 +973,13 @@ public class ControllerConstants {
     protected static final String ENTITY_DATA_QUERY_DESCRIPTION =
             "Allows to run complex queries over platform entities (devices, assets, customers, etc) " +
                     "based on the combination of main entity filter and multiple key filters. " +
-                    "Returns the paginated result of the query that contains requested entity fields and latest values of requested attributes and time-series data.\n\n" +
+                    "Returns the paginated result of the query that contains requested entity fields and latest values of requested attributes and time series data.\n\n" +
                     "# Query Definition\n\n" +
                     "\n\nMain **entity filter** is mandatory and defines generic search criteria. " +
                     "For example, \"find all devices with profile 'Moisture Sensor'\" or \"Find all devices related to asset 'Building A'\"" +
                     "\n\nOptional **key filters** allow to filter results of the **entity filter** by complex criteria against " +
                     "main entity fields (name, label, type, etc), attributes and telemetry. " +
-                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and timeseries field 'batteryLevel' > 40\"." +
+                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and time series field 'batteryLevel' > 40\"." +
                     "\n\nThe **entity fields** and **latest values** contains list of entity fields and latest attribute/telemetry fields to fetch for each entity." +
                     "\n\nThe **page link** contains information about the page to fetch and the sort ordering." +
                     "\n\nLet's review the example:" +
@@ -1078,7 +1057,7 @@ public class ControllerConstants {
     protected static final String ALARM_DATA_QUERY_DESCRIPTION = "This method description defines how Alarm Data Query extends the Entity Data Query. " +
             "See method 'Find Entity Data by Query' first to get the info about 'Entity Data Query'." +
             "\n\n The platform will first search the entities that match the entity and key filters. Then, the platform will use 'Alarm Page Link' to filter the alarms related to those entities. " +
-            "Finally, platform fetch the properties of alarm that are defined in the **'alarmFields'** and combine them with the other entity, attribute and latest time-series fields to return the result. " +
+            "Finally, platform fetch the properties of alarm that are defined in the **'alarmFields'** and combine them with the other entity, attribute and latest time series fields to return the result. " +
             "\n\n See example of the alarm query below. The query will search first 100 active alarms with type 'Temperature Alarm' or 'Fire Alarm' for any device with current temperature > 0. " +
             "The query will return combination of the entity fields: name of the device, device model and latest temperature reading and alarms fields: createdTime, type, severity and status: " +
             "\n\n" + MARKDOWN_CODE_BLOCK_START +
@@ -1199,7 +1178,7 @@ public class ControllerConstants {
     protected static final String ALARM_FILTER_KEY = "## Alarm Filter Key" + NEW_LINE +
             "Filter Key defines either entity field, attribute, telemetry or constant. It is a JSON object that consists the key name and type. The following filter key types are supported:\n" +
             " * 'ATTRIBUTE' - used for attributes values;\n" +
-            " * 'TIME_SERIES' - used for time-series values;\n" +
+            " * 'TIME_SERIES' - used for time series values;\n" +
             " * 'ENTITY_FIELD' - used for accessing entity fields like 'name', 'label', etc. The list of available fields depends on the entity type;\n" +
             " * 'CONSTANT' - constant value specified." + NEW_LINE + "Let's review the example:" + NEW_LINE +
             MARKDOWN_CODE_BLOCK_START +
@@ -1317,7 +1296,7 @@ public class ControllerConstants {
 
     protected static final String KEY_FILTERS_DESCRIPTION = "# Key Filters" + NEW_LINE +
             "Key filter objects are created under the **'condition'** array. They allow you to define complex logical expressions over entity field, " +
-            "attribute, latest time-series value or constant. The filter is defined using 'key', 'valueType', " +
+            "attribute, latest time series value or constant. The filter is defined using 'key', 'valueType', " +
             "'value' (refers to the value of the 'CONSTANT' alarm filter key type) and 'predicate' objects. Let's review each object:" + NEW_LINE +
             ALARM_FILTER_KEY + FILTER_VALUE_TYPE + NEW_LINE + DEVICE_PROFILE_FILTER_PREDICATE + NEW_LINE;
 
@@ -1627,12 +1606,10 @@ public class ControllerConstants {
 
     protected static final String ATTRIBUTES_SCOPE_DESCRIPTION = "A string value representing the attributes scope. For example, 'SERVER_SCOPE'.";
     protected static final String ATTRIBUTES_KEYS_DESCRIPTION = "A string value representing the comma-separated list of attributes keys. For example, 'active,inactivityAlarmTime'.";
-    protected static final String ATTRIBUTES_SAVE_SCOPE_ALLOWED_VALUES = "SERVER_SCOPE, SHARED_SCOPE";
-    protected static final String ATTRIBUTES_SCOPE_ALLOWED_VALUES = ATTRIBUTES_SAVE_SCOPE_ALLOWED_VALUES + ", CLIENT_SCOPE";
     protected static final String ATTRIBUTES_JSON_REQUEST_DESCRIPTION = "A string value representing the json object. For example, '{\"key\":\"value\"}'. See API call description for more details.";
 
     protected static final String TELEMETRY_KEYS_BASE_DESCRIPTION = "A string value representing the comma-separated list of telemetry keys.";
-    protected static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, the result will return all latest timeseries. For example, 'temperature,humidity'.";
+    protected static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, the result will return all latest time series. For example, 'temperature,humidity'.";
     protected static final String TELEMETRY_SCOPE_DESCRIPTION = "Value is deprecated, reserved for backward compatibility and not used in the API call implementation. Specify any scope for compatibility";
     protected static final String TELEMETRY_JSON_REQUEST_DESCRIPTION = "A JSON with the telemetry values. See API call description for more details.";
 
@@ -1648,11 +1625,11 @@ public class ControllerConstants {
     protected static final String SAVE_ENTITY_ATTRIBUTES_STATUS_UNAUTHORIZED = "User is not authorized to save entity attributes for selected entity. Most likely, User belongs to different Customer or Tenant.";
     protected static final String SAVE_ENTITY_ATTRIBUTES_STATUS_INTERNAL_SERVER_ERROR = "The exception was thrown during processing the request. " +
             "Platform creates an audit log event about entity attributes updates with action type 'ATTRIBUTES_UPDATED' that includes an error stacktrace.";
-    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_OK = "Timeseries from the request was created or updated. " +
-            "Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED'.";
-    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_UNAUTHORIZED = "User is not authorized to save entity timeseries for selected entity. Most likely, User belongs to different Customer or Tenant.";
+    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_OK = "Time series from the request was created or updated. " +
+            "Platform creates an audit log event about entity time series updates with action type 'TIMESERIES_UPDATED'.";
+    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_UNAUTHORIZED = "User is not authorized to save entity time series for selected entity. Most likely, User belongs to different Customer or Tenant.";
     protected static final String SAVE_ENTITY_TIMESERIES_STATUS_INTERNAL_SERVER_ERROR = "The exception was thrown during processing the request. " +
-            "Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED' that includes an error stacktrace.";
+            "Platform creates an audit log event about entity time series updates with action type 'TIMESERIES_UPDATED' that includes an error stacktrace.";
 
     protected static final String ENTITY_ATTRIBUTE_SCOPES_TEMPLATE = " List of possible attribute scopes depends on the entity type: " +
             "\n\n * SERVER_SCOPE - supported for all entity types;" +
@@ -1740,4 +1717,6 @@ public class ControllerConstants {
             MARKDOWN_CODE_BLOCK_START +
             "[{\"ts\":1634712287000,\"values\":{\"temperature\":26, \"humidity\":87}}, {\"ts\":1634712588000,\"values\":{\"temperature\":25, \"humidity\":88}}]" +
             MARKDOWN_CODE_BLOCK_END ;
+
+    protected static final String SECURITY_WRITE_CHECK = " Security check is performed to verify that the user has 'WRITE' permission for the entity (entities).";
 }

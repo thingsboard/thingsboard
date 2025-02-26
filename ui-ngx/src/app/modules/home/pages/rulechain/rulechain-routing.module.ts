@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,16 +15,7 @@
 ///
 
 import { Inject, Injectable, NgModule, Optional } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  CanActivate,
-  Resolve,
-  Router,
-  RouterModule,
-  RouterStateSnapshot,
-  Routes,
-  UrlTree
-} from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterModule, RouterStateSnapshot, Routes, UrlTree } from '@angular/router';
 
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
@@ -39,12 +30,12 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { ItemBufferService } from '@core/public-api';
+import { ItemBufferService, MenuId } from '@core/public-api';
 import { MODULES_MAP } from '@shared/public-api';
 import { IModulesMap } from '@modules/common/modules-map.models';
 
 @Injectable()
-export class RuleChainResolver implements Resolve<RuleChain> {
+export class RuleChainResolver  {
 
   constructor(private ruleChainService: RuleChainService) {
   }
@@ -56,7 +47,7 @@ export class RuleChainResolver implements Resolve<RuleChain> {
 }
 
 @Injectable()
-export class RuleChainMetaDataResolver implements Resolve<RuleChainMetaData> {
+export class RuleChainMetaDataResolver  {
 
   constructor(private ruleChainService: RuleChainService) {
   }
@@ -68,7 +59,7 @@ export class RuleChainMetaDataResolver implements Resolve<RuleChainMetaData> {
 }
 
 @Injectable()
-export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeComponentDescriptor>> {
+export class RuleNodeComponentsResolver  {
 
   constructor(private ruleChainService: RuleChainService,
               @Optional() @Inject(MODULES_MAP) private modulesMap: IModulesMap) {
@@ -80,7 +71,7 @@ export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeCompone
 }
 
 @Injectable()
-export class TooltipsterResolver implements Resolve<any> {
+export class TooltipsterResolver  {
 
   constructor() {
   }
@@ -91,7 +82,7 @@ export class TooltipsterResolver implements Resolve<any> {
 }
 
 @Injectable()
-export class RuleChainImportGuard implements CanActivate {
+export class RuleChainImportGuard  {
 
   constructor(private itembuffer: ItemBufferService,
               private router: Router) {
@@ -127,8 +118,7 @@ const routes: Routes = [
     path: 'ruleChains',
     data: {
       breadcrumb: {
-        label: 'rulechain.rulechains',
-        icon: 'settings_ethernet'
+        menuId: MenuId.rule_chains
       }
     },
     children: [
@@ -158,6 +148,7 @@ const routes: Routes = [
           import: false,
           ruleChainType: RuleChainType.CORE
         },
+        loadChildren: () => import('./rulechain-page.module').then(m => m.RuleChainPageModule),
         resolve: {
           ruleChain: RuleChainResolver,
           ruleChainMetaData: RuleChainMetaDataResolver,
@@ -180,6 +171,7 @@ const routes: Routes = [
           import: true,
           ruleChainType: RuleChainType.CORE
         },
+        loadChildren: () => import('./rulechain-page.module').then(m => m.RuleChainPageModule),
         resolve: {
           ruleNodeComponents: RuleNodeComponentsResolver,
           tooltipster: TooltipsterResolver

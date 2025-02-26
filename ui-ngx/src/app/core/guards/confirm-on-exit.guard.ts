@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanDeactivate, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { UntypedFormGroup } from '@angular/forms';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -28,16 +28,18 @@ import { isDefined } from '../utils';
 
 export interface HasConfirmForm {
   confirmForm(): UntypedFormGroup;
+  confirmOnExitMessage?: string;
 }
 
 export interface HasDirtyFlag {
   isDirty: boolean;
+  confirmOnExitMessage?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
-export class ConfirmOnExitGuard implements CanDeactivate<HasConfirmForm & HasDirtyFlag> {
+export class ConfirmOnExitGuard  {
 
   constructor(private store: Store<AppState>,
               private dialogService: DialogService,
@@ -66,9 +68,10 @@ export class ConfirmOnExitGuard implements CanDeactivate<HasConfirmForm & HasDir
         isDirty = component.isDirty;
       }
       if (isDirty) {
+        const message = this.getMessage(component);
         return this.dialogService.confirm(
           this.translate.instant('confirm-on-exit.title'),
-          this.translate.instant('confirm-on-exit.html-message')
+          message
         ).pipe(
           map((dialogResult) => {
             if (dialogResult) {
@@ -84,5 +87,11 @@ export class ConfirmOnExitGuard implements CanDeactivate<HasConfirmForm & HasDir
       }
     }
     return true;
+  }
+
+  private getMessage(component: HasConfirmForm & HasDirtyFlag): string {
+    return component.confirmOnExitMessage
+      ? component.confirmOnExitMessage
+      : this.translate.instant('confirm-on-exit.html-message');
   }
 }

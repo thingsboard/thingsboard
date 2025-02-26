@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.service.rpc;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcResponse;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -27,23 +29,22 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -81,7 +82,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
 
     @PostConstruct
     public void initExecutor() {
-        scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("rule-engine-rpc-scheduler"));
+        scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("rule-engine-rpc-scheduler");
         serviceId = serviceInfoProvider.getServiceId();
     }
 
@@ -114,8 +115,9 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
         ToDeviceRpcRequest request = new ToDeviceRpcRequest(src.getRequestUUID(), src.getTenantId(), src.getDeviceId(),
                 src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()), src.isPersisted(), src.getRetries(), src.getAdditionalInfo());
         forwardRpcRequestToDeviceActor(request, response -> {
-            if (src.isRestApiCall()) {
-                sendRpcResponseToTbCore(src.getOriginServiceId(), response);
+            String originServiceId = src.getOriginServiceId();
+            if (src.isRestApiCall() && originServiceId != null) {
+                sendRpcResponseToTbCore(originServiceId, response);
             }
             consumer.accept(RuleEngineDeviceRpcResponse.builder()
                     .deviceId(src.getDeviceId())
@@ -124,6 +126,16 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
                     .response(response.getResponse())
                     .build());
         });
+    }
+
+    @Override
+    public void sendRestApiCallReply(String serviceId, UUID requestId, TbMsg tbMsg) {
+        TransportProtos.RestApiCallResponseMsgProto msg = TransportProtos.RestApiCallResponseMsgProto.newBuilder()
+                .setRequestIdMSB(requestId.getMostSignificantBits())
+                .setRequestIdLSB(requestId.getLeastSignificantBits())
+                .setResponse(TbMsg.toByteString(tbMsg))
+                .build();
+        clusterService.pushNotificationToCore(serviceId, msg, null);
     }
 
     @Override

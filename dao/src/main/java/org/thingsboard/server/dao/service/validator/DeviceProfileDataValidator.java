@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@ package org.thingsboard.server.dao.service.validator;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.util.SecurityUtil;
+import org.eclipse.leshan.core.security.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -64,6 +63,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -327,10 +327,23 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
                 throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
-            String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server" + " shortServerId: " + serverConfig.getShortServerId() + ":";
-            if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
-                throw new DeviceCredentialsValidationException(server + " ShortServerId must not be less than 1 and more than 65534!");
+
+            if (serverConfig.getShortServerId() != null) {
+                if (serverConfig.isBootstrapServerIs()){
+                    if(serverConfig.getShortServerId() < 0 || serverConfig.getShortServerId() > 65535){
+                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
+                    }
+                } else {
+                    if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
+                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [1 - 65534]!");
+                    }
+                }
+            } else {
+                String serverName = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
+                throw new DeviceCredentialsValidationException(serverName + " ShortServerId must not be null!");
             }
+
+            String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
             if (!shortServerIds.add(serverConfig.getShortServerId())) {
                 throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
             }
@@ -408,6 +421,6 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     }
 
     private String getCertificateString(X509Certificate cert) throws CertificateEncodingException {
-        return EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
+        return EncryptionUtil.certTrimNewLines(Base64.getEncoder().encodeToString(cert.getEncoded()));
     }
 }

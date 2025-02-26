@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.sync.vc;
 
+import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -36,11 +37,9 @@ import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.service.sync.vc.GitRepository.Diff;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
@@ -81,13 +80,20 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         GitRepository repository = checkRepository(commit.getTenantId());
         String branch = commit.getBranch();
         try {
-            repository.fetch();
-
-            repository.createAndCheckoutOrphanBranch(commit.getWorkingBranch());
-            repository.resetAndClean();
-
-            if (repository.listRemoteBranches().contains(new BranchInfo(branch, false))) {
-                repository.merge(branch);
+            List<String> branches = repository.listBranches().stream().map(BranchInfo::getName).toList();
+            if (repository.getSettings().isLocalOnly()) {
+                if (branches.contains(commit.getBranch())) {
+                    repository.checkoutBranch(commit.getBranch());
+                } else {
+                    repository.createAndCheckoutOrphanBranch(commit.getBranch());
+                }
+                repository.resetAndClean();
+            } else {
+                repository.createAndCheckoutOrphanBranch(commit.getWorkingBranch());
+                repository.resetAndClean();
+                if (branches.contains(branch)) {
+                    repository.merge(branch);
+                }
             }
         } catch (IOException | GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
@@ -157,18 +163,16 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
     @Override
     public void fetch(TenantId tenantId) throws GitAPIException {
-        var repository = repositories.get(tenantId);
-        if (repository != null) {
-            log.debug("[{}] Fetching tenant repository.", tenantId);
-            repository.fetch();
-            log.debug("[{}] Fetched tenant repository.", tenantId);
-        }
+        var repository = checkRepository(tenantId);
+        log.debug("[{}] Fetching tenant repository.", tenantId);
+        repository.fetch();
+        log.debug("[{}] Fetched tenant repository.", tenantId);
     }
 
     @Override
     public String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId) throws IOException {
         GitRepository repository = checkRepository(tenantId);
-        return repository.getFileContentAtCommit(relativePath, versionId);
+        return new String(repository.getFileContentAtCommit(relativePath, versionId), StandardCharsets.UTF_8);
     }
 
     @Override
@@ -187,7 +191,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     public List<BranchInfo> listBranches(TenantId tenantId) {
         GitRepository repository = checkRepository(tenantId);
         try {
-            return repository.listRemoteBranches();
+            return repository.listBranches();
         } catch (GitAPIException gitAPIException) {
             //TODO: analyze and return meaningful exceptions that we can show to the client;
             throw new RuntimeException(gitAPIException);
@@ -195,8 +199,17 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     private GitRepository checkRepository(TenantId tenantId) {
-        return Optional.ofNullable(repositories.get(tenantId))
+        GitRepository gitRepository = Optional.ofNullable(repositories.get(tenantId))
                 .orElseThrow(() -> new IllegalStateException("Repository is not initialized"));
+
+        if (!GitRepository.exists(gitRepository.getDirectory())) {
+            try {
+                return openOrCloneRepository(tenantId, gitRepository.getSettings(), false);
+            } catch (Exception e) {
+                throw new IllegalStateException("Could not initialize the repository: " + e.getMessage(), e);
+            }
+        }
+        return gitRepository;
     }
 
     @Override
@@ -225,21 +238,11 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
-    public void initRepository(TenantId tenantId, RepositorySettings settings) throws Exception {
-        testRepository(tenantId, settings);
-
-        clearRepository(tenantId);
-        log.debug("[{}] Init tenant repository started.", tenantId);
-        Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
-        GitRepository repository;
-        if (Files.exists(repositoryDirectory)) {
-            FileUtils.forceDelete(repositoryDirectory.toFile());
+    public void initRepository(TenantId tenantId, RepositorySettings settings, boolean fetch) throws Exception {
+        if (!settings.isLocalOnly()) {
+            clearRepository(tenantId);
         }
-
-        Files.createDirectories(repositoryDirectory);
-        repository = GitRepository.clone(settings, repositoryDirectory.toFile());
-        repositories.put(tenantId, repository);
-        log.debug("[{}] Init tenant repository completed.", tenantId);
+        openOrCloneRepository(tenantId, settings, fetch);
     }
 
     @Override
@@ -250,11 +253,10 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
     @Override
     public void clearRepository(TenantId tenantId) throws IOException {
-        GitRepository repository = repositories.get(tenantId);
+        GitRepository repository = repositories.remove(tenantId);
         if (repository != null) {
             log.debug("[{}] Clear tenant repository started.", tenantId);
             FileUtils.deleteDirectory(new File(repository.getDirectory()));
-            repositories.remove(tenantId);
             log.debug("[{}] Clear tenant repository completed.", tenantId);
         }
     }
@@ -276,4 +278,14 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         String entityId = StringUtils.substringBetween(path, "/", ".json");
         return EntityIdFactory.getByTypeAndUuid(entityType, entityId);
     }
+
+    private GitRepository openOrCloneRepository(TenantId tenantId, RepositorySettings settings, boolean fetch) throws Exception {
+        log.debug("[{}] Init tenant repository started.", tenantId);
+        Path repositoryDirectory = Path.of(repositoriesFolder, settings.isLocalOnly() ? "local_" + settings.getRepositoryUri() : tenantId.getId().toString());
+        GitRepository repository = GitRepository.openOrClone(repositoryDirectory, settings, fetch);
+        repositories.put(tenantId, repository);
+        log.debug("[{}] Init tenant repository completed.", tenantId);
+        return repository;
+    }
+
 }

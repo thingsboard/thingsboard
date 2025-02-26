@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="tb-entity-filter-view">
+<div class="tb-entity-filter-view flex flex-col">
   <div *ngIf="!filter || !filter.type; else filterView" class="entity-filter-empty" translate>alias.no-entity-filter-specified</div>
   <ng-template #filterView>
-    <div fxLayout="column">
+    <div class="flex flex-col">
       <div class="entity-filter-value">{{ filterDisplayValue }}</div>
     </div>
   </ng-template>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data.relation;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class EntityRelationInfo extends EntityRelation {
 
@@ -32,7 +32,7 @@ public class EntityRelationInfo extends EntityRelation {
         super(entityRelation);
     }
 
-    @ApiModelProperty(position = 6, value = "Name of the entity for [from] direction.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "A4B72CCDFF33")
+    @Schema(description = "Name of the entity for [from] direction.", accessMode = Schema.AccessMode.READ_ONLY, example = "A4B72CCDFF33")
     public String getFromName() {
         return fromName;
     }
@@ -41,7 +41,7 @@ public class EntityRelationInfo extends EntityRelation {
         this.fromName = fromName;
     }
 
-    @ApiModelProperty(position = 7, value = "Name of the entity for [to] direction.", accessMode = ApiModelProperty.AccessMode.READ_ONLY, example = "A4B72CCDFF35")
+    @Schema(description = "Name of the entity for [to] direction.", accessMode = Schema.AccessMode.READ_ONLY, example = "A4B72CCDFF35")
     public String getToName() {
         return toName;
     }

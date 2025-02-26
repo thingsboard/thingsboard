@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,14 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         configClazz = TbRabbitMqNodeConfiguration.class,
         nodeDescription = "Publish messages to the RabbitMQ",
         nodeDetails = "Will publish message payload to RabbitMQ queue.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbExternalNodeRabbitMqConfig",
         iconUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHZlcnNpb249IjEuMSIgeT0iMHB4IiB4PSIwcHgiIHZpZXdCb3g9IjAgMCAxMDAwIDEwMDAiPjxwYXRoIHN0cm9rZS13aWR0aD0iLjg0OTU2IiBkPSJtODYwLjQ3IDQxNi4zMmgtMjYyLjAxYy0xMi45MTMgMC0yMy42MTgtMTAuNzA0LTIzLjYxOC0yMy42MTh2LTI3Mi43MWMwLTIwLjMwNS0xNi4yMjctMzYuMjc2LTM2LjI3Ni0zNi4yNzZoLTkzLjc5MmMtMjAuMzA1IDAtMzYuMjc2IDE2LjIyNy0zNi4yNzYgMzYuMjc2djI3MC44NGMtMC4yNTQ4NyAxNC4xMDMtMTEuNDY5IDI1LjU3Mi0yNS43NDIgMjUuNTcybC04NS42MzYgMC42Nzk2NWMtMTQuMTAzIDAtMjUuNTcyLTExLjQ2OS0yNS41NzItMjUuNTcybDAuNjc5NjUtMjcxLjUyYzAtMjAuMzA1LTE2LjIyNy0zNi4yNzYtMzYuMjc2LTM2LjI3NmgtOTMuNTM3Yy0yMC4zMDUgMC0zNi4yNzYgMTYuMjI3LTM2LjI3NiAzNi4yNzZ2NzYzLjg0YzAgMTguMDk2IDE0Ljc4MiAzMi40NTMgMzIuNDUzIDMyLjQ1M2g3MjIuODFjMTguMDk2IDAgMzIuNDUzLTE0Ljc4MiAzMi40NTMtMzIuNDUzdi00MzUuMzFjLTEuMTg5NC0xOC4xODEtMTUuMjkyLTMyLjE5OC0zMy4zODgtMzIuMTk4em0tMTIyLjY4IDI4Ny4wN2MwIDIzLjYxOC0xOC44NiA0Mi40NzgtNDIuNDc4IDQyLjQ3OGgtNzMuOTk3Yy0yMy42MTggMC00Mi40NzgtMTguODYtNDIuNDc4LTQyLjQ3OHYtNzQuMjUyYzAtMjMuNjE4IDE4Ljg2LTQyLjQ3OCA0Mi40NzgtNDIuNDc4aDczLjk5N2MyMy42MTggMCA0Mi40NzggMTguODYgNDIuNDc4IDQyLjQ3OHoiLz48L3N2Zz4="
 )
 public class TbRabbitMqNode extends TbAbstractExternalNode {
+
+    private static final String supportedPropertiesStr = String.join(", ",
+            "BASIC", "TEXT_PLAIN", "MINIMAL_BASIC", "MINIMAL_PERSISTENT_BASIC", "PERSISTENT_BASIC", "PERSISTENT_TEXT_PLAIN"
+    );
 
     private static final Charset UTF8 = StandardCharsets.UTF_8;
 
@@ -64,16 +67,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx);
         this.config = TbNodeUtils.convert(configuration, TbRabbitMqNodeConfiguration.class);
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(this.config.getHost());
-        factory.setPort(this.config.getPort());
-        factory.setVirtualHost(this.config.getVirtualHost());
-        factory.setUsername(this.config.getUsername());
-        factory.setPassword(this.config.getPassword());
-        factory.setAutomaticRecoveryEnabled(this.config.isAutomaticRecoveryEnabled());
-        factory.setConnectionTimeout(this.config.getConnectionTimeout());
-        factory.setHandshakeTimeout(this.config.getHandshakeTimeout());
-        this.config.getClientProperties().forEach((k,v) -> factory.getClientProperties().put(k,v));
+        ConnectionFactory factory = getConnectionFactory();
         try {
             this.connection = factory.newConnection();
             this.channel = this.connection.createChannel();
@@ -88,6 +82,20 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
                 t -> tellFailure(ctx, processException(tbMsg, t), t));
+    }
+
+    ConnectionFactory getConnectionFactory() {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(this.config.getHost());
+        factory.setPort(this.config.getPort());
+        factory.setVirtualHost(this.config.getVirtualHost());
+        factory.setUsername(this.config.getUsername());
+        factory.setPassword(this.config.getPassword());
+        factory.setAutomaticRecoveryEnabled(this.config.isAutomaticRecoveryEnabled());
+        factory.setConnectionTimeout(this.config.getConnectionTimeout());
+        factory.setHandshakeTimeout(this.config.getHandshakeTimeout());
+        this.config.getClientProperties().forEach((k, v) -> factory.getClientProperties().put(k, v));
+        return factory;
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
@@ -118,7 +126,9 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
     private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     @Override
@@ -132,7 +142,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         }
     }
 
-    private static AMQP.BasicProperties convert(String name) throws TbNodeException {
+    static AMQP.BasicProperties convert(String name) throws TbNodeException {
         switch (name) {
             case "BASIC":
                 return MessageProperties.BASIC;
@@ -147,7 +157,8 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
             case "PERSISTENT_TEXT_PLAIN":
                 return MessageProperties.PERSISTENT_TEXT_PLAIN;
             default:
-                throw new TbNodeException("Message Properties: '" + name + "' is undefined!");
+                throw new TbNodeException("Undefined message properties type '" + name +
+                        "'! Only " + supportedPropertiesStr + " message properties types are supported!");
         }
     }
 }

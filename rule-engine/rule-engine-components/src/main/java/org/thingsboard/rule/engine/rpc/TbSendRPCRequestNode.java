@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import java.util.concurrent.TimeUnit;
         nodeDescription = "Sends RPC call to device",
         nodeDetails = "Expects messages with \"method\" and \"params\". Will forward response from device to next nodes." +
                 "If the RPC call request is originated by REST API call from user, will forward the response to user immediately.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcRequestConfig",
         icon = "call_made"
 )

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,22 @@
  */
 package org.thingsboard.server.queue.provider;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-
-import javax.annotation.PostConstruct;
 
 @Service
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport'")
@@ -38,6 +41,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> toTbCore;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
+    private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeper;
 
     public TbTransportQueueProducerProvider(TbTransportQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -49,6 +53,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
         this.toRuleEngine = tbQueueProvider.createRuleEngineMsgProducer();
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
         this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
+        this.toHousekeeper = tbQueueProvider.createHousekeeperMsgProducer();
     }
 
     @Override
@@ -77,7 +82,22 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> getTbEdgeMsgProducer() {
+        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> getTbEdgeNotificationsMsgProducer() {
+        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> getTbEdgeEventsMsgProducer() {
+        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
         throw new RuntimeException("Not Implemented! Should not be used by Transport!");
     }
 
@@ -85,4 +105,10 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer() {
         return toUsageStats;
     }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> getHousekeeperMsgProducer() {
+        return toHousekeeper;
+    }
+
 }

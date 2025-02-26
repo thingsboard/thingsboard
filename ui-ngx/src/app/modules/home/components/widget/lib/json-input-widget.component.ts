@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
@@ -23,13 +23,15 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { UntypedFormBuilder, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, ValidatorFn } from '@angular/forms';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
 import { createLabelFromDatasource, isDefinedAndNotNull } from '@core/utils';
 import { Observable } from 'rxjs';
+import { jsonRequired } from '@shared/components/json-object-edit.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 enum JsonInputWidgetMode {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -76,7 +78,8 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
               private utils: UtilsService,
               private fb: UntypedFormBuilder,
               private attributeService: AttributeService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -131,19 +134,21 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
   private buildForm() {
     const validators: ValidatorFn[] = [];
     if (this.settings.attributeRequired) {
-      validators.push(Validators.required);
+      validators.push(jsonRequired);
     }
     this.attributeUpdateFormGroup = this.fb.group({
       currentValue: [{}, validators]
     });
-    this.attributeUpdateFormGroup.valueChanges.subscribe(() => {
+    this.attributeUpdateFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.ctx.detectChanges();
     });
   }
 
   private updateWidgetData(data: Array<DatasourceData>) {
     if (!this.errorMessage) {
-      let value = {};
+      let value = null;
       if (data[0].data[0][1] !== '') {
         try {
           value = JSON.parse(data[0].data[0][1]);

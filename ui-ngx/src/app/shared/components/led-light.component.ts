@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -85,11 +85,11 @@ export class LedLightComponent implements OnInit, AfterViewInit, OnChanges {
     this.canvasSize = this.size;
     this.radius = this.canvasSize / 4;
     this.glowSize = this.radius / 5;
-    if (this.paper) {
-      this.paper.remove();
-    }
     import('raphael').then(
       (raphael) => {
+        if (this.paper) {
+          this.paper.remove();
+        }
         this.paper = raphael.default($('#canvas_container', this.elementRef.nativeElement)[0], this.canvasSize, this.canvasSize);
         const center = this.canvasSize / 2;
         this.circleElement = this.paper.circle(center, center, this.radius);

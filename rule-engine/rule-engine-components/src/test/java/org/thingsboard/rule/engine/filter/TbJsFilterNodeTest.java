@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package org.thingsboard.rule.engine.filter;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.Futures;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -38,12 +38,12 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.script.ScriptException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TbJsFilterNodeTest {
 
     private TbJsFilterNode node;
@@ -59,7 +59,15 @@ public class TbJsFilterNodeTest {
     @Test
     public void falseEvaluationDoNotSendMsg() throws TbNodeException {
         initWithScript();
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, TbMsgMetaData.EMPTY, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(false));
 
         node.onMsg(ctx, msg);
@@ -71,7 +79,15 @@ public class TbJsFilterNodeTest {
     public void exceptionInJsThrowsException() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFailedFuture(new ScriptException("error")));
 
 
@@ -83,7 +99,15 @@ public class TbJsFilterNodeTest {
     public void metadataConditionCanBeTrue() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(true));
 
         node.onMsg(ctx, msg);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,28 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import java.io.Serializable;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ATTRIBUTE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ATTRIBUTE_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Embeddable
 public class AttributeKvCompositeKey implements Serializable {
-    @Enumerated(EnumType.STRING)
-    @Column(name = ENTITY_TYPE_COLUMN)
-    private EntityType entityType;
     @Column(name = ENTITY_ID_COLUMN, columnDefinition = "uuid")
     private UUID entityId;
     @Column(name = ATTRIBUTE_TYPE_COLUMN)
-    private String attributeType;
+    private int attributeType;
     @Column(name = ATTRIBUTE_KEY_COLUMN)
-    private String attributeKey;
+    private int attributeKey;
 }

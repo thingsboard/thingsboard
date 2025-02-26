@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,13 +28,7 @@ case $i in
 esac
 done
 
-if [[ -z "${FROM_VERSION// }" ]]; then
-    echo "--fromVersion parameter is invalid or unspecified!"
-    echo "Usage: upgrade_dev_db.sh --fromVersion={VERSION}"
-    exit 1
-else
-    fromVersion="${FROM_VERSION// }"
-fi
+fromVersion="${FROM_VERSION// }"
 
 BASE=${project.basedir}/target
 CONF_FOLDER=${BASE}/conf
@@ -57,7 +51,7 @@ sudo -u "$run_user" -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=
                     -Dinstall.upgrade=true \
                     -Dinstall.upgrade.from_version=${fromVersion} \
                     -Dlogging.config=logback.xml \
-                    org.springframework.boot.loader.PropertiesLauncher"
+                    org.springframework.boot.loader.launch.PropertiesLauncher"
 
 if [ $? -ne 0 ]; then
     echo "ThingsBoard DB installation failed!"

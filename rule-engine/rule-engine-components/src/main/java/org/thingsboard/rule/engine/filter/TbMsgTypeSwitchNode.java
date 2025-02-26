@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDetails = "Sends messages with message types <b>\"Post attributes\", \"Post telemetry\", \"RPC Request\"</b>" +
                 " etc. via corresponding chain, otherwise <b>Other</b> chain is used.<br><br>" +
                 "Output connections: <i>Message type connection</i>, <code>Other</code> - if message type is custom or <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbMsgTypeSwitchNode implements TbNode {
 

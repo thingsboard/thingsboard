@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,17 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.queue.discovery.event.OtherServiceShutdownEvent;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
 import java.util.List;
 
 public interface SubscriptionManagerService extends ApplicationListener<PartitionChangeEvent> {
 
-    void addSubscription(TbSubscription subscription, TbCallback callback);
+    void onSubEvent(String serviceId, TbEntitySubEvent event, TbCallback empty);
 
-    void cancelSubscription(String sessionId, int subscriptionId, TbCallback callback);
+    void onApplicationEvent(OtherServiceShutdownEvent event);
 
     void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbCallback callback);
 
@@ -50,7 +50,5 @@ public interface SubscriptionManagerService extends ApplicationListener<Partitio
     void onAlarmDeleted(TenantId tenantId, EntityId entityId, AlarmInfo alarm, TbCallback callback);
 
     void onNotificationUpdate(TenantId tenantId, UserId recipientId, NotificationUpdate notificationUpdate, TbCallback callback);
-
-    void onNotificationRequestUpdate(TenantId tenantId, NotificationRequestUpdate notificationRequestUpdate, TbCallback callback);
 
 }

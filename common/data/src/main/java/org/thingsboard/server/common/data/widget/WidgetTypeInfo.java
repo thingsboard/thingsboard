@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,36 @@
  */
 package org.thingsboard.server.common.data.widget;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
 @Data
 public class WidgetTypeInfo extends BaseWidgetType {
 
-    @ApiModelProperty(position = 8, value = "Base64 encoded widget thumbnail", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Serial
+    private static final long serialVersionUID = 1343617007959780969L;
+
+    @Schema(description = "Base64 encoded widget thumbnail", accessMode = Schema.AccessMode.READ_ONLY)
     private String image;
     @NoXss
-    @ApiModelProperty(position = 9, value = "Description of the widget type", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Description of the widget type", accessMode = Schema.AccessMode.READ_ONLY)
     private String description;
     @NoXss
-    @ApiModelProperty(position = 10, value = "Type of the widget (timeseries, latest, control, alarm or static)", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Tags of the widget type", accessMode = Schema.AccessMode.READ_ONLY)
+    private String[] tags;
+    @NoXss
+    @Schema(description = "Type of the widget (timeseries, latest, control, alarm or static)", accessMode = Schema.AccessMode.READ_ONLY)
     private String widgetType;
+    @Valid
+    @Schema(description = "Bundles", accessMode = Schema.AccessMode.READ_ONLY)
+    private List<WidgetBundleInfo> bundles;
 
     public WidgetTypeInfo() {
         super();
@@ -45,20 +59,33 @@ public class WidgetTypeInfo extends BaseWidgetType {
     }
 
     public WidgetTypeInfo(WidgetTypeInfo widgetTypeInfo) {
+        this(widgetTypeInfo, Collections.emptyList());
+    }
+
+    public WidgetTypeInfo(WidgetTypeInfo widgetTypeInfo, List<WidgetBundleInfo> bundles) {
         super(widgetTypeInfo);
         this.image = widgetTypeInfo.getImage();
         this.description = widgetTypeInfo.getDescription();
+        this.tags = widgetTypeInfo.getTags();
         this.widgetType = widgetTypeInfo.getWidgetType();
+        this.bundles = bundles;
     }
 
     public WidgetTypeInfo(WidgetTypeDetails widgetTypeDetails) {
+        this(widgetTypeDetails, Collections.emptyList());
+    }
+
+    public WidgetTypeInfo(WidgetTypeDetails widgetTypeDetails, List<WidgetBundleInfo> bundles) {
         super(widgetTypeDetails);
         this.image = widgetTypeDetails.getImage();
         this.description = widgetTypeDetails.getDescription();
+        this.tags = widgetTypeDetails.getTags();
         if (widgetTypeDetails.getDescriptor() != null && widgetTypeDetails.getDescriptor().has("type")) {
             this.widgetType = widgetTypeDetails.getDescriptor().get("type").asText();
         } else {
             this.widgetType = "";
         }
+        this.bundles = bundles;
     }
+
 }

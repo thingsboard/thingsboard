@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,22 +17,23 @@
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator,
   ValidatorFn,
   Validators
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   defaultAttributesSchema,
   defaultRpcRequestSchema,
   defaultRpcResponseSchema,
   defaultTelemetrySchema,
-  DeviceProfileTransportConfiguration,
   DeviceTransportType,
   MqttDeviceProfileTransportConfiguration,
   TransportPayloadType,
@@ -46,13 +47,20 @@ import { takeUntil } from 'rxjs/operators';
   selector: 'tb-mqtt-device-profile-transport-configuration',
   templateUrl: './mqtt-device-profile-transport-configuration.component.html',
   styleUrls: ['./mqtt-device-profile-transport-configuration.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => MqttDeviceProfileTransportConfigurationComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => MqttDeviceProfileTransportConfigurationComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => MqttDeviceProfileTransportConfigurationComponent),
+      multi: true
+    }
+  ]
 })
-export class MqttDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class MqttDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 
   transportPayloadTypes = Object.keys(TransportPayloadType);
 
@@ -61,16 +69,6 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
   mqttDeviceProfileTransportConfigurationFormGroup: UntypedFormGroup;
 
   private destroy$ = new Subject<void>();
-  private requiredValue: boolean;
-
-  get required(): boolean {
-    return this.requiredValue;
-  }
-
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
 
   @Input()
   disabled: boolean;
@@ -172,12 +170,15 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     }
   }
 
+  public validate(c: UntypedFormControl): ValidationErrors | null {
+    return (this.mqttDeviceProfileTransportConfigurationFormGroup.valid) ? null : {
+      valid: false,
+    };
+  }
+
   private updateModel() {
-    let configuration: DeviceProfileTransportConfiguration = null;
-    if (this.mqttDeviceProfileTransportConfigurationFormGroup.valid) {
-      configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.getRawValue();
-      configuration.type = DeviceTransportType.MQTT;
-    }
+    const configuration = this.mqttDeviceProfileTransportConfigurationFormGroup.getRawValue();
+    configuration.type = DeviceTransportType.MQTT;
     this.propagateChange(configuration);
   }
 

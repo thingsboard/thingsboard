@@ -1,0 +1,50 @@
+{
+  "fqn": "indoor_illuminance_progress_bar",
+  "name": "Indoor illuminance progress bar",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/indoor_illuminance_progress_bar_system_widget_image.png",
+  "description": "Displays indoor illuminance reading as a horizontal progress bar. Allows to configure value range, bar colors, and other settings.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-progress-bar-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-progress-bar-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.progressBarWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.progressBarWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '280px',\n        previewHeight: '180px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'illuminance', label: 'Illuminance', type: 'timeseries' }];\n        }\n    };\n};\n\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-progress-bar-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-progress-bar-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Illuminance\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 400 - 200;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\\n\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"layout\":\"default\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":24,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":100,\"color\":\"rgba(0, 0, 0, 0.76)\"},{\"from\":100,\"to\":300,\"color\":\"#FFA600\"},{\"from\":300,\"to\":500,\"color\":\"#F36900\"},{\"from\":500,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"tickMin\":0,\"tickMax\":1000,\"showTicks\":true,\"ticksFont\":{\"family\":\"Roboto\",\"size\":11,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"400\",\"lineHeight\":\"16px\"},\"ticksColor\":\"rgba(0,0,0,0.54)\",\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"barColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":100,\"color\":\"rgba(0, 0, 0, 0.76)\"},{\"from\":100,\"to\":300,\"color\":\"#FFA600\"},{\"from\":300,\"to\":500,\"color\":\"#F36900\"},{\"from\":500,\"to\":null,\"color\":\"#D81838\"}]},\"barBackground\":\"rgba(0, 0, 0, 0.04)\"},\"title\":\"Illuminance\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"lx\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"titleIcon\":\"mdi:lightbulb-on\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"18px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null},\"titleColor\":\"rgba(0, 0, 0, 0.87)\"}"
+  },
+  "tags": [
+    "progress",
+    "environment",
+    "illuminance",
+    "indoor",
+    "brightness",
+    "luminance",
+    "luminosity",
+    "light",
+    "light level",
+    "light intensity",
+    "lux",
+    "candela",
+    "foot-candle"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/indoor_illuminance_progress_bar_system_widget_image.png",
+      "title": "\"Indoor illuminance progress bar\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "indoor_illuminance_progress_bar_system_widget_image.png",
+      "publicResourceKey": "J5BwmUhdg3vLzfFIptTxkpaSA8wera50",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAqFBMVEXg4ODf39/g4ODg4OAAAAD////g4ODzaQD19fUhISHk5OT+7N/0fCBYWFirq6uQkJA9PT3x8fHv7++6urp0dHQvLy/Hx8eGhob82r/+9u+Xl5f7x6Cenp75tICBgYH3oWD0chD2jj/6xqD39/f948/Ly8vV1dX6vZCOjo74qm/70LBKSkr1hC/CwsL3oV/c3NyxsbF1dXX3l0/2j0CgoKD149ZmZmb94s+rdVHIAAAABXRSTlPvIL+vAC9A4IoAAARhSURBVHja7NjdauMwEIZhZ9uvYeRY0tSSSUGbpcuSE5/3/i9tR45NvJTWCz3INMwLFvpJDh4Sm5DmcfejefruPewem13zjG8fC+OBcQc9y9cKd1FzL5AngyjLINoyiLYMoi2DaMsg2jKItgyirU8gvWc46oCOHD4qFejoE0hHwybkTCN09EUIBi1/XfwvpA+CGcK5Xn06OUwDOHggFA7JQ3IlhYouhctlh0t9neRCKg7XbgVJskAgL1fMmXKqg7ucU46R6AT0OY9EPRBzzEQJcJHkqNQjkulKogDyxrKKjBOVGSLbLmdgJIeh7sR6lAlI0yQzR0H4il1SAAmAn4cFAiASJHaO4ryoLBIefOKeEoAcsUoxxHUkLRB5Wz2eCnQJ1zRDIg2MNYSXp3OhN1/DtZtBeuC0AakGXkMQM4u/c9OdA8aqG0EKRR/yBiRT8OM/kEKjDxTrIvkSFdzsSER56xM5R6IUia8QCJ46B3Aimdzg8fs+dtjO8YdbLJP32a9fg2jPINoyiLYMoi2DaMsg2jKItgyiLYNoyyDaMoi2DKItg2jLINoyiLYMoi2DaMsg2jKItgyiLYNoaxvSti1qL+3cy7x/PP6BnjYhv/f7A2o/93OvE+O1Tg9HaGkL0h4WyK81RLYvqZFsQf6yXwerEcJQFIZXhyPc+wCGIomOIIrMQil9/zerziSDLWVEiyTD+C9d+WFyL14ZICNddau7P24NGlKRSCuQjnT+ZXuWCBkvuKbzSVYgSqse4jgglJOFdzZIo+eQgioBQrYII6shPzAlpEUaPYUIWcFDhOwdSSsz8BekiT+In0KUFgGS06eygPhhrB+I1zqkIOUBkdG1grony1eDCFkgQELGkeYvSFcDdYUIrUIGOplSqggeWbJeQgYPaZyBtojQGqTjoh/nLX9MrS/SegjGtlCDDUWCtNZibpghOdmGPRIg4iItx/U7MhWOlgdMKWlg3GKzewjUGURoBRJajl/NIZa0d0EhpiEVAVLo2GJDsSAoFnsERnnLSYAIK9l0tqJBUClJZwVzcuVUWSNA1AIRb/sSsl6d1wYhk+cG6fRG/+wv0glJrROSWicktU5Iap2Q1DohqfUGECm5t/4zO6ztkJ77K7PDumyG8D9lx7UZMnJ/fXZQe76I9Nxbedwdubzx1HqxTkhqnZDv9u5YxUEgCMCwJvmDWAg3WyxMYSPKNqIB3//ZzgSEqw72rtiJmR+22G4+WNhyrOUQa/0CmZMGijXMHSCqKsco+2Vr8iESBV0oVBPXCHQzo7LEQXpBJ9Y1HzJtEALFkghEoemZV+hGHiApHzJ2BiCP1wnhCZEIEh1SrONp0TO/IPTQpnyI9A3bRJkOiC5MyqIQ2+dl7PIhhJiUQh2QNuouYE0pQKua5A8QhoHyyc9R5LN/9vfKIdZyiLUcYi2HWMsh1nKItRxiLYdYyyHWcoi1TgSpOEX36nKC1dPwda3qysoGp38kO+NWX+/vXnWpb99gbrYRFl0QWwAAAABJRU5ErkJggg==",
+      "public": true
+    }
+  ]
+}

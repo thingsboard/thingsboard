@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.thingsboard.server.actors;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 import java.util.Collections;
@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -51,7 +50,7 @@ public class DefaultTbActorSystem implements TbActorSystem {
 
     public DefaultTbActorSystem(TbActorSystemSettings settings) {
         this.settings = settings;
-        this.scheduler = Executors.newScheduledThreadPool(settings.getSchedulerPoolSize(), ThingsBoardThreadFactory.forName("actor-system-scheduler"));
+        this.scheduler = ThingsBoardExecutors.newScheduledThreadPool(settings.getSchedulerPoolSize(), "actor-system-scheduler");
     }
 
     @Override
@@ -156,14 +155,29 @@ public class DefaultTbActorSystem implements TbActorSystem {
 
     @Override
     public void broadcastToChildren(TbActorId parent, TbActorMsg msg) {
-        broadcastToChildren(parent, id -> true, msg);
+        broadcastToChildren(parent, msg, false);
+    }
+
+    @Override
+    public void broadcastToChildren(TbActorId parent, TbActorMsg msg, boolean highPriority) {
+        broadcastToChildren(parent, id -> true, msg, highPriority);
     }
 
     @Override
     public void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg) {
+        broadcastToChildren(parent, childFilter, msg, false);
+    }
+
+    private void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg, boolean highPriority) {
         Set<TbActorId> children = parentChildMap.get(parent);
         if (children != null) {
-            children.stream().filter(childFilter).forEach(id -> tell(id, msg));
+            children.stream().filter(childFilter).forEach(id -> {
+                try {
+                    tell(id, msg, highPriority);
+                } catch (TbActorNotRegisteredException e) {
+                    log.warn("Actor is missing for {}", id);
+                }
+            });
         }
     }
 
@@ -190,6 +204,8 @@ public class DefaultTbActorSystem implements TbActorSystem {
                 stop(child);
             }
         }
+        parentChildMap.values().forEach(parentChildren -> parentChildren.remove(actorId));
+
         TbActorMailbox mailbox = actors.remove(actorId);
         if (mailbox != null) {
             mailbox.destroy(null);

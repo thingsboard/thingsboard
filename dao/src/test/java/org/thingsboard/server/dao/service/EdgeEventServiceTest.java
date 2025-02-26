@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 
 import java.io.IOException;
@@ -40,13 +41,16 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
+import static org.apache.commons.lang3.time.DateFormatUtils.ISO_8601_EXTENDED_DATETIME_FORMAT;
 
 @DaoSqlTest
 public class EdgeEventServiceTest extends AbstractServiceTest {
 
     @Autowired
     EdgeEventService edgeEventService;
+
+    @Autowired
+    EdgeEventDao edgeEventDao;
 
     long timeBeforeStartTime;
     long startTime;
@@ -56,19 +60,18 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
 
     @Before
     public void before() throws ParseException {
-        timeBeforeStartTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T11:30:00Z").getTime();
-        startTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T12:00:00Z").getTime();
-        eventTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T12:30:00Z").getTime();
-        endTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T13:00:00Z").getTime();
-        timeAfterEndTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T13:30:30Z").getTime();
+        timeBeforeStartTime = ISO_8601_EXTENDED_DATETIME_FORMAT.parse("2016-11-01T11:30:00").getTime();
+        startTime = ISO_8601_EXTENDED_DATETIME_FORMAT.parse("2016-11-01T12:00:00").getTime();
+        eventTime = ISO_8601_EXTENDED_DATETIME_FORMAT.parse("2016-11-01T12:30:00").getTime();
+        endTime = ISO_8601_EXTENDED_DATETIME_FORMAT.parse("2016-11-01T13:00:00").getTime();
+        timeAfterEndTime = ISO_8601_EXTENDED_DATETIME_FORMAT.parse("2016-11-01T13:30:30").getTime();
     }
 
     @Test
     public void saveEdgeEvent() throws Exception {
         EdgeId edgeId = new EdgeId(Uuids.timeBased());
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
-        EdgeEvent edgeEvent = generateEdgeEvent(tenantId, edgeId, deviceId, EdgeEventActionType.ADDED);
+        EdgeEvent edgeEvent = generateEdgeEvent(tenantId, edgeId, deviceId);
         edgeEventService.saveAsync(edgeEvent).get();
 
         PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, new TimePageLink(1));
@@ -81,9 +84,11 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(saved.getType(), edgeEvent.getType());
         Assert.assertEquals(saved.getAction(), edgeEvent.getAction());
         Assert.assertEquals(saved.getBody(), edgeEvent.getBody());
+
+        edgeEventDao.cleanupEvents(1);
     }
 
-    protected EdgeEvent generateEdgeEvent(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType edgeEventAction) throws IOException {
+    protected EdgeEvent generateEdgeEvent(TenantId tenantId, EdgeId edgeId, EntityId entityId) throws IOException {
         if (tenantId == null) {
             tenantId = TenantId.fromUUID(Uuids.timeBased());
         }
@@ -92,7 +97,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         edgeEvent.setEdgeId(edgeId);
         edgeEvent.setEntityId(entityId.getId());
         edgeEvent.setType(EdgeEventType.DEVICE);
-        edgeEvent.setAction(edgeEventAction);
+        edgeEvent.setAction(EdgeEventActionType.ADDED);
         edgeEvent.setBody(readFromResource("TestJsonData.json"));
         return edgeEvent;
     }
@@ -101,7 +106,6 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
     public void findEdgeEventsByTimeDescOrder() throws Exception {
         EdgeId edgeId = new EdgeId(Uuids.timeBased());
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
 
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         futures.add(saveEdgeEventWithProvidedTime(timeBeforeStartTime, edgeId, deviceId, tenantId));
@@ -129,11 +133,11 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(Uuids.startOf(eventTime), edgeEvents.getData().get(0).getUuidId());
         Assert.assertFalse(edgeEvents.hasNext());
 
-        edgeEventService.cleanupEvents(1);
+        edgeEventDao.cleanupEvents(1);
     }
 
     private ListenableFuture<Void> saveEdgeEventWithProvidedTime(long time, EdgeId edgeId, EntityId entityId, TenantId tenantId) throws Exception {
-        EdgeEvent edgeEvent = generateEdgeEvent(tenantId, edgeId, entityId, EdgeEventActionType.ADDED);
+        EdgeEvent edgeEvent = generateEdgeEvent(tenantId, edgeId, entityId);
         edgeEvent.setId(new EdgeEventId(Uuids.startOf(time)));
         return edgeEventService.saveAsync(edgeEvent);
     }

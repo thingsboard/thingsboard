@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Created by igor on 3/13/18.
@@ -559,5 +562,36 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, savedEdge.getId(), pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testSaveRuleChainWithExistingExternalId() {
+        RuleChainId externalRuleChainId = new RuleChainId(UUID.fromString("2675d180-e1e5-11ee-9f06-71b6c7dc2cbf"));
+
+        RuleChain ruleChain = getRuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setExternalId(externalRuleChainId);
+        ruleChainService.saveRuleChain(ruleChain);
+
+        assertThatThrownBy(() -> ruleChainService.saveRuleChain(ruleChain))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Rule Chain with such external id already exists!");
+
+        ruleChainService.deleteRuleChainsByTenantId(tenantId);
+    }
+
+    private RuleChain getRuleChain() {
+        String ruleChainStr = "{\n" +
+                "  \"name\": \"Root Rule Chain\",\n" +
+                "  \"type\": \"CORE\",\n" +
+                "  \"firstRuleNodeId\": {\n" +
+                "    \"entityType\": \"RULE_NODE\",\n" +
+                "    \"id\": \"91ad0b00-e779-11ee-9cf0-15d8b6079fdb\"\n" +
+                "  },\n" +
+                "  \"debugMode\": false,\n" +
+                "  \"configuration\": null,\n" +
+                "  \"additionalInfo\": null\n" +
+                "}";
+        return JacksonUtil.fromString(ruleChainStr, RuleChain.class);
     }
 }

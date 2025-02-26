@@ -1,0 +1,49 @@
+{
+  "fqn": "power_button",
+  "name": "Power button",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/power-button.svg",
+  "description": "Sends the command to the device or updates attribute/time series when the user pushes the button. Widget settings will enable you to configure behavior how to fetch the initial state and what to trigger when power on/off states.",
+  "descriptor": {
+    "type": "rpc",
+    "sizeX": 3.5,
+    "sizeY": 3.5,
+    "resources": [],
+    "templateHtml": "<tb-power-button-widget\n    [ctx]='ctx'\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-power-button-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.actionWidget.onInit();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '280px',\n        previewHeight: '280px',\n        embedTitlePanel: true,\n        overflowVisible: true,\n        displayRpcMessageToast: false\n    };\n};\n\nself.onDestroy = function() {\n}\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "{}\n",
+    "settingsDirective": "tb-power-button-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-power-button-basic-config",
+    "defaultConfig": "{\"showTitle\":true,\"backgroundColor\":\"#ffffff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{},\"title\":\"Power\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"actions\":{},\"widgetCss\":\"\",\"noDataDisplayMessage\":\"\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":null,\"lineHeight\":\"1.6\"},\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"pageSize\":1024,\"titleIcon\":\"mdi:lightbulb-outline\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"24px\",\"configMode\":\"basic\",\"targetDevice\":null,\"titleColor\":null,\"borderRadius\":null}"
+  },
+  "tags": [
+    "command",
+    "downlink",
+    "device configuration",
+    "device control",
+    "invocation",
+    "remote method",
+    "remote function",
+    "interface",
+    "subroutine call",
+    "inter-process communication",
+    "server request",
+    "power"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/power-button.svg",
+      "title": "\"Power button\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "power-button.svg",
+      "publicResourceKey": "XlRFYjsuo9Ksgij0pWicE0JcOMECfijv",
+      "mediaType": "image/svg+xml",
+      "data": "PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE2MCIgdmlld0JveD0iMCAwIDIwMCAxNjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxnIGZpbHRlcj0idXJsKCNmaWx0ZXIwX2lfNDU4OF84ODQyMCkiPgo8cGF0aCBkPSJNMTQ2LjUgODBDMTQ2LjUgMTA1LjEyOSAxMjUuNjgxIDEyNS41IDEwMCAxMjUuNUM3NC4zMTg4IDEyNS41IDUzLjUgMTA1LjEyOSA1My41IDgwQzUzLjUgNTQuODcxIDc0LjMxODggMzQuNSAxMDAgMzQuNUMxMjUuNjgxIDM0LjUgMTQ2LjUgNTQuODcxIDE0Ni41IDgwWiIgZmlsbD0iIzNGNTJERCIvPgo8L2c+CjxwYXRoIGQ9Ik0xNDUuNSA4MEMxNDUuNSAxMDQuNTU2IDEyNS4xNSAxMjQuNSAxMDAgMTI0LjVDNzQuODUwNCAxMjQuNSA1NC41IDEwNC41NTYgNTQuNSA4MEM1NC41IDU1LjQ0MzcgNzQuODUwNCAzNS41IDEwMCAzNS41QzEyNS4xNSAzNS41IDE0NS41IDU1LjQ0MzcgMTQ1LjUgODBaIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz4KPGcgZmlsdGVyPSJ1cmwoI2ZpbHRlcjFfZF80NTg4Xzg4NDIwKSI+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMTAwIDEzNS41QzEzMS4yMDQgMTM1LjUgMTU2LjUgMTEwLjY1MiAxNTYuNSA4MEMxNTYuNSA0OS4zNDgyIDEzMS4yMDQgMjQuNSAxMDAgMjQuNUM2OC43OTU5IDI0LjUgNDMuNSA0OS4zNDgyIDQzLjUgODBDNDMuNSAxMTAuNjUyIDY4Ljc5NTkgMTM1LjUgMTAwIDEzNS41Wk0xMDAgMTI1LjVDMTI1LjY4MSAxMjUuNSAxNDYuNSAxMDUuMTI5IDE0Ni41IDgwQzE0Ni41IDU0Ljg3MSAxMjUuNjgxIDM0LjUgMTAwIDM0LjVDNzQuMzE4OCAzNC41IDUzLjUgNTQuODcxIDUzLjUgODBDNTMuNSAxMDUuMTI5IDc0LjMxODggMTI1LjUgMTAwIDEyNS41WiIgZmlsbD0idXJsKCNwYWludDBfbGluZWFyXzQ1ODhfODg0MjApIi8+CjwvZz4KPHBhdGggZD0iTTk4LjM1NzQgNzkuMTg1NVY4MC4xNzM4Qzk4LjM1NzQgODEuMzQ4MyA5OC4yMTA2IDgyLjQwMSA5Ny45MTcgODMuMzMyQzk3LjYyMzQgODQuMjYzIDk3LjIwMDggODUuMDU0NCA5Ni42NDk0IDg1LjcwNjFDOTYuMDk4IDg2LjM1NzcgOTUuNDM1NSA4Ni44NTU1IDk0LjY2MjEgODcuMTk5MkM5My44OTU4IDg3LjU0MyA5My4wMzY1IDg3LjcxNDggOTIuMDg0IDg3LjcxNDhDOTEuMTYwMiA4Ny43MTQ4IDkwLjMxMTUgODcuNTQzIDg5LjUzODEgODcuMTk5MkM4OC43NzE4IDg2Ljg1NTUgODguMTA1OCA4Ni4zNTc3IDg3LjU0IDg1LjcwNjFDODYuOTgxNCA4NS4wNTQ0IDg2LjU0ODIgODQuMjYzIDg2LjI0MDIgODMuMzMyQzg1LjkzMjMgODIuNDAxIDg1Ljc3ODMgODEuMzQ4MyA4NS43NzgzIDgwLjE3MzhWNzkuMTg1NUM4NS43NzgzIDc4LjAxMTEgODUuOTI4NyA3Ni45NjE5IDg2LjIyOTUgNzYuMDM4MUM4Ni41Mzc0IDc1LjEwNzEgODYuOTcwNyA3NC4zMTU4IDg3LjUyOTMgNzMuNjY0MUM4OC4wODc5IDczLjAwNTIgODguNzUwMyA3Mi41MDM5IDg5LjUxNjYgNzIuMTYwMkM5MC4yOSA3MS44MTY0IDkxLjEzODcgNzEuNjQ0NSA5Mi4wNjI1IDcxLjY0NDVDOTMuMDE1IDcxLjY0NDUgOTMuODc0MyA3MS44MTY0IDk0LjY0MDYgNzIuMTYwMkM5NS40MTQxIDcyLjUwMzkgOTYuMDc2NSA3My4wMDUyIDk2LjYyNzkgNzMuNjY0MUM5Ny4xODY1IDc0LjMxNTggOTcuNjEyNiA3NS4xMDcxIDk3LjkwNjIgNzYuMDM4MUM5OC4yMDcgNzYuOTYxOSA5OC4zNTc0IDc4LjAxMTEgOTguMzU3NCA3OS4xODU1Wk05Ni4zMDU3IDgwLjE3MzhWNzkuMTY0MUM5Ni4zMDU3IDc4LjIzMzEgOTYuMjA5IDc3LjQwOTUgOTYuMDE1NiA3Ni42OTM0Qzk1LjgyOTQgNzUuOTc3MiA5NS41NTM3IDc1LjM3NTcgOTUuMTg4NSA3NC44ODg3Qzk0LjgyMzIgNzQuNDAxNyA5NC4zNzU3IDc0LjAzMjkgOTMuODQ1NyA3My43ODIyQzkzLjMyMjkgNzMuNTMxNiA5Mi43Mjg1IDczLjQwNjIgOTIuMDYyNSA3My40MDYyQzkxLjQxOCA3My40MDYyIDkwLjgzNDMgNzMuNTMxNiA5MC4zMTE1IDczLjc4MjJDODkuNzk1OSA3NC4wMzI5IDg5LjM1MTkgNzQuNDAxNyA4OC45Nzk1IDc0Ljg4ODdDODguNjE0MyA3NS4zNzU3IDg4LjMzMTQgNzUuOTc3MiA4OC4xMzA5IDc2LjY5MzRDODcuOTMwMyA3Ny40MDk1IDg3LjgzMDEgNzguMjMzMSA4Ny44MzAxIDc5LjE2NDFWODAuMTczOEM4Ny44MzAxIDgxLjExMiA4Ny45MzAzIDgxLjk0MjcgODguMTMwOSA4Mi42NjZDODguMzMxNCA4My4zODIyIDg4LjYxNzggODMuOTg3MyA4OC45OTAyIDg0LjQ4MTRDODkuMzY5OCA4NC45Njg0IDg5LjgxNzQgODUuMzM3MiA5MC4zMzMgODUuNTg3OUM5MC44NTU4IDg1LjgzODUgOTEuNDM5NSA4NS45NjM5IDkyLjA4NCA4NS45NjM5QzkyLjc1NzIgODUuOTYzOSA5My4zNTUxIDg1LjgzODUgOTMuODc3OSA4NS41ODc5Qzk0LjQwMDcgODUuMzM3MiA5NC44NDExIDg0Ljk2ODQgOTUuMTk5MiA4NC40ODE0Qzk1LjU2NDUgODMuOTg3MyA5NS44NDAyIDgzLjM4MjIgOTYuMDI2NCA4Mi42NjZDOTYuMjEyNiA4MS45NDI3IDk2LjMwNTcgODEuMTEyIDk2LjMwNTcgODAuMTczOFpNMTEzLjQ5MyA3MS44NTk0Vjg3LjVIMTExLjQwOUwxMDMuNTM1IDc1LjQzNjVWODcuNUgxMDEuNDYyVjcxLjg1OTRIMTAzLjUzNUwxMTEuNDQxIDgzLjk1NTFWNzEuODU5NEgxMTMuNDkzWiIgZmlsbD0id2hpdGUiLz4KPGRlZnM+CjxmaWx0ZXIgaWQ9ImZpbHRlcjBfaV80NTg4Xzg4NDIwIiB4PSI0OC41IiB5PSIzNC41IiB3aWR0aD0iOTgiIGhlaWdodD0iOTYiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIj4KPGZlRmxvb2QgZmxvb2Qtb3BhY2l0eT0iMCIgcmVzdWx0PSJCYWNrZ3JvdW5kSW1hZ2VGaXgiLz4KPGZlQmxlbmQgbW9kZT0ibm9ybWFsIiBpbj0iU291cmNlR3JhcGhpYyIgaW4yPSJCYWNrZ3JvdW5kSW1hZ2VGaXgiIHJlc3VsdD0ic2hhcGUiLz4KPGZlQ29sb3JNYXRyaXggaW49IlNvdXJjZUFscGhhIiB0eXBlPSJtYXRyaXgiIHZhbHVlcz0iMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMTI3IDAiIHJlc3VsdD0iaGFyZEFscGhhIi8+CjxmZU9mZnNldCBkeD0iLTUiIGR5PSI1Ii8+CjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjQiLz4KPGZlQ29tcG9zaXRlIGluMj0iaGFyZEFscGhhIiBvcGVyYXRvcj0iYXJpdGhtZXRpYyIgazI9Ii0xIiBrMz0iMSIvPgo8ZmVDb2xvck1hdHJpeCB0eXBlPSJtYXRyaXgiIHZhbHVlcz0iMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMC4xNSAwIi8+CjxmZUJsZW5kIG1vZGU9Im5vcm1hbCIgaW4yPSJzaGFwZSIgcmVzdWx0PSJlZmZlY3QxX2lubmVyU2hhZG93XzQ1ODhfODg0MjAiLz4KPC9maWx0ZXI+CjxmaWx0ZXIgaWQ9ImZpbHRlcjFfZF80NTg4Xzg4NDIwIiB4PSIzNS41IiB5PSIyMC41IiB3aWR0aD0iMTI5IiBoZWlnaHQ9IjEyNyIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiPgo8ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCIvPgo8ZmVDb2xvck1hdHJpeCBpbj0iU291cmNlQWxwaGEiIHR5cGU9Im1hdHJpeCIgdmFsdWVzPSIwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAxMjcgMCIgcmVzdWx0PSJoYXJkQWxwaGEiLz4KPGZlT2Zmc2V0IGR5PSI0Ii8+CjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjQiLz4KPGZlQ29tcG9zaXRlIGluMj0iaGFyZEFscGhhIiBvcGVyYXRvcj0ib3V0Ii8+CjxmZUNvbG9yTWF0cml4IHR5cGU9Im1hdHJpeCIgdmFsdWVzPSIwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwLjA4IDAiLz4KPGZlQmxlbmQgbW9kZT0ibm9ybWFsIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJlZmZlY3QxX2Ryb3BTaGFkb3dfNDU4OF84ODQyMCIvPgo8ZmVCbGVuZCBtb2RlPSJub3JtYWwiIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9ImVmZmVjdDFfZHJvcFNoYWRvd180NTg4Xzg4NDIwIiByZXN1bHQ9InNoYXBlIi8+CjwvZmlsdGVyPgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MF9saW5lYXJfNDU4OF84ODQyMCIgeDE9IjY1Ljg5NjQiIHkxPSIxMjQuNSIgeDI9IjEyOS41MTkiIHkyPSIzMy45MjQ4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNDQ0NDQ0MiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSJ3aGl0ZSIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPgo=",
+      "public": true
+    }
+  ]
+}

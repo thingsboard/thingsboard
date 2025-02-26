@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ const dashboardLoadedHandler = 'tbMobileDashboardLoadedHandler';
 const dashboardLayoutHandler = 'tbMobileDashboardLayoutHandler';
 const navigationHandler = 'tbMobileNavigationHandler';
 const mobileHandler = 'tbMobileHandler';
+const mobileReadyHandler = 'tbMobileReadyHandler';
 
 // @dynamic
 @Injectable({
@@ -54,6 +55,7 @@ export class MobileService {
     this.mobileApp = isDefined(this.mobileChannel);
     if (this.mobileApp) {
       window.addEventListener('message', this.onWindowMessageListener);
+      this.mobileChannel.callHandler(mobileReadyHandler);
     }
   }
 

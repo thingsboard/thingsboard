@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,12 @@
  */
 package org.thingsboard.server.common.data.notification;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@AllArgsConstructor
+@NoArgsConstructor
 public enum NotificationType {
 
     GENERAL,
@@ -28,6 +34,12 @@ public enum NotificationType {
     ENTITIES_LIMIT,
     API_USAGE_LIMIT,
     RULE_NODE,
-    RATE_LIMITS
+    RATE_LIMITS,
+    EDGE_CONNECTION,
+    EDGE_COMMUNICATION_FAILURE,
+    TASK_PROCESSING_FAILURE;
+
+    @Getter
+    private boolean system; // for future use and compatibility with PE
 
 }

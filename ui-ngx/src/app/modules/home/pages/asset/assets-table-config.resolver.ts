@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -65,7 +65,7 @@ import {
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
 
 @Injectable()
-export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<AssetInfo>> {
+export class AssetsTableConfigResolver  {
 
   private readonly config: EntityTableConfig<AssetInfo> = new EntityTableConfig<AssetInfo>();
 

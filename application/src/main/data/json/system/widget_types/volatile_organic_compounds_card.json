@@ -1,0 +1,49 @@
+{
+  "fqn": "volatile_organic_compounds_card",
+  "name": "Volatile organic compounds card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/volatile_organic_compounds_card_system_widget_image.png",
+  "description": "Displays the latest volatile organic compounds (VOCs) telemetry in a scalable rectangle card.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 3,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '250px',\n        previewHeight: '250px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'voc', label: 'VOCs', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"VOCs\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 500 - 250;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 2000) {\\n\\tvalue = 2000;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"square\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"mdi:molecule\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":500,\"color\":\"#80C32C\"},{\"from\":500,\"to\":1000,\"color\":\"#FFA600\"},{\"from\":1000,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":32,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":0,\"to\":500,\"color\":\"#80C32C\"},{\"from\":500,\"to\":1000,\"color\":\"#FFA600\"},{\"from\":1000,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Volatile organic compounds card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"ppb\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "environment",
+    "indoor",
+    "air",
+    "vocs",
+    "voc",
+    "organic solvents",
+    "hydrocarbons",
+    "emissions",
+    "fumes",
+    "gaseous organics",
+    "contaminants",
+    "air pollutants"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/volatile_organic_compounds_card_system_widget_image.png",
+      "title": "\"Volatile organic compounds card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "volatile_organic_compounds_card_system_widget_image.png",
+      "publicResourceKey": "CxTJ0IjYkxOnEdsBVASalDA2axwuLK1c",
+      "mediaType": "image/png",
+      "data": "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",
+      "public": true
+    }
+  ]
+}

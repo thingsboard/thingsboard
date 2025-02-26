@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.thingsboard.server.transport.lwm2m.secure;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
-import org.eclipse.leshan.core.util.SecurityUtil;
+import org.eclipse.leshan.core.security.util.SecurityUtil;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
@@ -74,7 +74,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
 
                     @Override
                     public void onError(Throwable e) {
-                        log.trace("[{}] [{}] Failed to process credentials ", credentialsId, e);
+                        log.info("[{}] [{}] Failed to process credentials ", credentialsId, e);
                         TbLwM2MSecurityInfo result = new TbLwM2MSecurityInfo();
                         result.setEndpoint(credentialsId);
                         resultSecurityStore[0] = result;

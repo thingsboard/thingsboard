@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/tab
 import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
 import { UserId } from '@shared/models/id/user-id';
 import { AlarmFilter } from '@shared/models/query/query.models';
+import { HasTenantId } from '@shared/models/entity.models';
+import { isNotEmptyStr } from '@core/utils';
 
 export enum AlarmsMode {
   ALL,
@@ -94,7 +96,7 @@ export const alarmSeverityColors = new Map<AlarmSeverity, string>(
   ]
 );
 
-export interface Alarm extends BaseData<AlarmId> {
+export interface Alarm extends BaseData<AlarmId>, HasTenantId {
   tenantId: TenantId;
   customerId: CustomerId;
   assigneeId: UserId;
@@ -102,6 +104,8 @@ export interface Alarm extends BaseData<AlarmId> {
   originator: EntityId;
   severity: AlarmSeverity;
   status: AlarmStatus;
+  acknowledged: boolean;
+  cleared: boolean;
   startTs: number;
   endTs: number;
   ackTs: number;
@@ -124,7 +128,7 @@ export interface AlarmComment extends BaseData<AlarmCommentId> {
     text: string;
     edited?: boolean;
     editedOn?: number;
-  }
+  };
 }
 
 export interface AlarmCommentInfo extends AlarmComment {
@@ -170,9 +174,9 @@ export const simulatedAlarm: AlarmInfo = {
   originatorName: 'Simulated',
   originatorLabel: 'Simulated',
   assignee: {
-    firstName: "",
-    lastName: "",
-    email: "test@example.com",
+    firstName: '',
+    lastName: '',
+    email: 'test@example.com',
   },
   originator: {
     entityType: EntityType.DEVICE,
@@ -181,6 +185,8 @@ export const simulatedAlarm: AlarmInfo = {
   type: 'TEMPERATURE',
   severity: AlarmSeverity.MAJOR,
   status: AlarmStatus.ACTIVE_UNACK,
+  acknowledged: false,
+  cleared: false,
   details: {
     message: 'Temperature is high!'
   },
@@ -330,7 +336,7 @@ export class AlarmQueryV2 {
     let query = this.affectedEntityId ? `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}` : '';
     query += this.pageLink.toQuery();
     if (this.typeList && this.typeList.length) {
-      query += `&typeList=${this.typeList.join(',')}`;
+      query += `&typeList=${this.typeList.map(type => encodeURIComponent(type)).join(',')}`;
     }
     if (this.statusList && this.statusList.length) {
       query += `&statusList=${this.statusList.join(',')}`;
@@ -345,3 +351,36 @@ export class AlarmQueryV2 {
   }
 
 }
+
+export const getUserDisplayName = (alarmAssignee: AlarmAssignee |  AlarmCommentInfo) => {
+  let displayName = '';
+  if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
+    if (alarmAssignee.firstName) {
+      displayName += alarmAssignee.firstName;
+    }
+    if (alarmAssignee.lastName) {
+      if (displayName.length > 0) {
+        displayName += ' ';
+      }
+      displayName += alarmAssignee.lastName;
+    }
+  } else {
+    displayName = alarmAssignee.email;
+  }
+  return displayName;
+};
+
+export const getUserInitials = (alarmAssignee: AlarmAssignee): string => {
+  let initials = '';
+  if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
+    if (alarmAssignee.firstName) {
+      initials += alarmAssignee.firstName.charAt(0);
+    }
+    if (alarmAssignee.lastName) {
+      initials += alarmAssignee.lastName.charAt(0);
+    }
+  } else {
+    initials += alarmAssignee.email.charAt(0);
+  }
+  return initials.toUpperCase();
+};

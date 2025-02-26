@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ public final class TbActorMailbox implements TbActorCtx {
                     destroy(updateException.getCause());
                 } catch (Throwable t) {
                     log.debug("[{}] Failed to process message: {}", selfId, msg, t);
-                    ProcessFailureStrategy strategy = actor.onProcessFailure(t);
+                    ProcessFailureStrategy strategy = actor.onProcessFailure(msg, t);
                     if (strategy.isStop()) {
                         system.stop(selfId);
                     }
@@ -190,7 +190,12 @@ public final class TbActorMailbox implements TbActorCtx {
 
     @Override
     public void broadcastToChildren(TbActorMsg msg) {
-        system.broadcastToChildren(selfId, msg);
+        broadcastToChildren(msg, false);
+    }
+
+    @Override
+    public void broadcastToChildren(TbActorMsg msg, boolean highPriority) {
+        system.broadcastToChildren(selfId, msg, highPriority);
     }
 
     @Override
@@ -235,7 +240,7 @@ public final class TbActorMailbox implements TbActorCtx {
                 highPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
                 normalPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
             } catch (Throwable t) {
-                log.warn("[{}] Failed to destroy actor: {}", selfId, t);
+                log.warn("[{}] Failed to destroy actor: ", selfId, t);
             }
         });
     }

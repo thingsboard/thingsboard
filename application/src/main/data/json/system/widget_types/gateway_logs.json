@@ -1,0 +1,44 @@
+{
+  "fqn": "gateway_widgets.gateway_logs",
+  "name": "Gateway logs",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/gateway_logs_system_widget_image.png",
+  "description": "Allows to monitor and analyze the gateway logs.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 7.5,
+    "sizeY": 3,
+    "resources": [
+      {
+        "url": "tb-resource;/api/resource/js_module/system/gateway-management-extension.js",
+        "isModule": true
+      }
+    ],
+    "templateHtml": "<tb-gateway-logs [ctx]=\"ctx\">\n    \n</tb-gateway-logs>",
+    "templateCss": "#container {\n    overflow: auto;\n}\n\n.tbDatasource-container {\n    margin: 5px;\n    padding: 8px;\n}\n\n.tbDatasource-title {\n    font-size: 1.200rem;\n    font-weight: 500;\n    padding-bottom: 10px;\n}\n\n.tbDatasource-table {\n    width: 100%;\n    box-shadow: 0 0 10px #ccc;\n    border-collapse: collapse;\n    white-space: nowrap;\n    font-size: 1.000rem;\n    color: #757575;\n}\n\n.tbDatasource-table td {\n    position: relative;\n    border-top: 1px solid rgba(0, 0, 0, 0.12);\n    border-bottom: 1px solid rgba(0, 0, 0, 0.12);\n    padding: 0px 18px;\n    box-sizing: border-box;\n}",
+    "controllerScript": "self.onInit = function() {\n};\n\nself.typeParameters  = function() {\n    return {\n        dataKeysOptional: true,\n        singleEntity: true\n    };\n}",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}\n",
+    "settingsDirective": "tb-gateway-logs-settings",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"entityAliasId\":null,\"filterId\":null,\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":0,\"realtime\":{\"realtimeType\":0,\"timewindowMs\":86400000,\"quickInterval\":\"CURRENT_DAY\",\"interval\":300000},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"showTitle\":false,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Gateway logs\",\"showTitleIcon\":false,\"dropShadow\":false,\"enableFullscreen\":true,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false,\"useDashboardTimewindow\":false,\"displayTimewindow\":true}"
+  },
+  "tags": [
+    "router",
+    "bridge",
+    "hub",
+    "access point",
+    "relay",
+    "opc ua",
+    "opc-ua",
+    "modbus",
+    "bacnet",
+    "odbc",
+    "ftp",
+    "snmp",
+    "mqtt",
+    "xmpp",
+    "ocpp",
+    "ble",
+    "bluetooth"
+  ]
+}

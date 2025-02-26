@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
@@ -39,11 +39,10 @@ import java.util.concurrent.ExecutionException;
         type = ComponentType.TRANSFORMATION,
         name = "split array msg",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Split array message into several msgs",
-        nodeDetails = "Split the array fetched from the msg body. If the msg data is not a JSON array returns the "
-                + "incoming message as outbound message with <code>Failure</code> chain, otherwise returns "
-                + "inner objects of the extracted array as separate messages via <code>Success</code> chain.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        nodeDescription = "Split array message into several messages",
+        nodeDetails = "Splits an array message into individual elements, with each element sent as a separate message. " +
+                "All outbound messages will have the same type and metadata as the original array message.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         icon = "content_copy",
         configDirective = "tbNodeEmptyConfig"
 )
@@ -64,7 +63,9 @@ public class TbSplitArrayMsgNode implements TbNode {
             if (data.isEmpty()) {
                 ctx.ack(msg);
             } else if (data.size() == 1) {
-                ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(data.get(0))));
+                ctx.tellSuccess(msg.transform()
+                        .data(JacksonUtil.toString(data.get(0)))
+                        .build());
             } else {
                 TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(data.size(), new TbMsgCallback() {
                     @Override
@@ -78,7 +79,9 @@ public class TbSplitArrayMsgNode implements TbNode {
                     }
                 });
                 data.forEach(msgNode -> {
-                    TbMsg outMsg = TbMsg.transformMsgData(msg, JacksonUtil.toString(msgNode));
+                    TbMsg outMsg = msg.transform()
+                            .data(JacksonUtil.toString(msgNode))
+                            .build();
                     ctx.enqueueForTellNext(outMsg, TbNodeConnectionType.SUCCESS, wrapper::onSuccess, wrapper::onFailure);
                 });
             }

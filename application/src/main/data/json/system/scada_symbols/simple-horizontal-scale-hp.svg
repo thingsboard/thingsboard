@@ -1,0 +1,723 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="800" height="400" fill="none" version="1.1" viewBox="0 0 800 400"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Simple horizontal scale",
+  "description": "Simple horizontal scale with current volume value and configurable warning and critical scale.",
+  "searchTags": [
+    "scale"
+  ],
+  "widgetSizeX": 4,
+  "widgetSizeY": 2,
+  "tags": [
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "highCriticalScale",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    const clampedValue = Math.max(Math.min(value, Math.max(minValue, maxValue)), Math.min(minValue, maxValue));\n    const normalizedValue = minValue < maxValue\n        ? (clampedValue - minValue) / (maxValue - minValue)\n        : (minValue - clampedValue) / (minValue - maxValue);\n    return normalizedValue * 653;\n}\n\nconst value = ctx.values.value;\nconst { minValue, maxValue, showHighCriticalScale, highCriticalScale, activeCriticalScaleColor, defaultCriticalScaleColor } = ctx.properties;\n\nif (showHighCriticalScale) {\n    element.show();\n    const offset = calculateOffset(highCriticalScale, minValue, maxValue);\n    element.width(653 - offset);\n\n    if (value !== null) {\n        const isActive = minValue < maxValue ? value >= highCriticalScale : value <= highCriticalScale;\n        element.fill(isActive ? activeCriticalScaleColor : defaultCriticalScaleColor);\n    }\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "highWarningScale",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    const clampedValue = Math.max(Math.min(value, Math.max(minValue, maxValue)), Math.min(minValue, maxValue));\n    const normalizedValue = minValue < maxValue\n        ? (clampedValue - minValue) / (maxValue - minValue)\n        : (minValue - clampedValue) / (minValue - maxValue);\n    return normalizedValue * 653;\n}\n\nconst value = ctx.values.value;\nconst {\n    minValue,\n    maxValue,\n    showHighWarningScale,\n    showHighCriticalScale,\n    highWarningScale,\n    highCriticalScale,\n    activeWarningScaleColor,\n    defaultWarningScaleColor\n} = ctx.properties;\n\nif (showHighWarningScale) {\n    element.show();\n    const offset = calculateOffset(highWarningScale, minValue, maxValue);\n    element.width(653 - offset);\n} else {\n    element.hide();\n}\n\nif (showHighWarningScale && value !== null) {\n    let adjustedHighCriticalScale = highCriticalScale;\n    if (!showHighCriticalScale) {\n        adjustedHighCriticalScale = minValue < maxValue ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER;\n    }\n    let adjustedHighWarningScale = highWarningScale;\n    if (minValue > maxValue) {\n        [adjustedHighCriticalScale, adjustedHighWarningScale] = [adjustedHighWarningScale, adjustedHighCriticalScale];\n    }\n    const isActive = value < adjustedHighCriticalScale && value >= adjustedHighWarningScale;\n    element.fill(isActive ? activeWarningScaleColor : defaultWarningScaleColor);\n}",
+      "actions": null
+    },
+    {
+      "tag": "label",
+      "stateRenderFunction": "if (ctx.properties.label) {\n    element.show();\n    ctx.api.font(element, ctx.properties.labelFont, ctx.properties.labelColor);\n    ctx.api.text(element, ctx.properties.labelText);\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "lowCriticalScale",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    const clampedValue = Math.max(Math.min(value, Math.max(minValue, maxValue)), Math.min(minValue, maxValue));\n    const normalizedValue = minValue < maxValue\n        ? (clampedValue - minValue) / (maxValue - minValue)\n        : (minValue - clampedValue) / (minValue - maxValue);\n    return normalizedValue * 653;\n}\n\nconst value = ctx.values.value;\nconst {\n    minValue,\n    maxValue,\n    showLowCriticalScale,\n    lowCriticalScale,\n    activeCriticalScaleColor,\n    defaultCriticalScaleColor\n} = ctx.properties;\n\nif (showLowCriticalScale) {\n    element.show();\n    const offset = calculateOffset(lowCriticalScale, minValue, maxValue);\n    element.width(offset);\n} else {\n    element.hide();\n}\n\nif (showLowCriticalScale && value !== null) {\n    const isActive = minValue < maxValue ? value <= lowCriticalScale : value >= lowCriticalScale;\n    element.fill(isActive ? activeCriticalScaleColor : defaultCriticalScaleColor);\n}\n",
+      "actions": null
+    },
+    {
+      "tag": "lowWarningScale",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    const clampedValue = Math.max(Math.min(value, Math.max(minValue, maxValue)), Math.min(minValue, maxValue));\n    const normalizedValue = minValue < maxValue\n        ? (clampedValue - minValue) / (maxValue - minValue)\n        : (minValue - clampedValue) / (minValue - maxValue);\n    return normalizedValue * 653;\n}\n\nconst value = ctx.values.value;\nconst {\n    minValue,\n    maxValue,\n    showLowWarningScale,\n    showLowCriticalScale,\n    lowWarningScale,\n    lowCriticalScale: initialLowCriticalScale,\n    activeWarningScaleColor,\n    defaultWarningScaleColor\n} = ctx.properties;\n\nif (showLowWarningScale) {\n    element.show();\n    const offset = calculateOffset(lowWarningScale, minValue, maxValue);\n    element.width(offset);\n} else {\n    element.hide();\n}\n\nif (showLowWarningScale && value !== null) {\n    let adjustedLowCriticalScale = initialLowCriticalScale;\n    if (!showLowCriticalScale) {\n        adjustedLowCriticalScale = minValue < maxValue ? Number.MIN_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;\n    }\n    let adjustedLowWarningScale = lowWarningScale;\n    if (minValue > maxValue) {\n        [adjustedLowCriticalScale, adjustedLowWarningScale] =\n            [adjustedLowWarningScale, adjustedLowCriticalScale];\n    }\n    const isActive = value > adjustedLowCriticalScale && value <= adjustedLowWarningScale;\n    element.fill(isActive ? activeWarningScaleColor : defaultWarningScaleColor);\n}",
+      "actions": null
+    },
+    {
+      "tag": "maxValue",
+      "stateRenderFunction": "if (ctx.properties.minMaxValue) {\n    ctx.api.text(element, ctx.properties.maxValue);\n}",
+      "actions": null
+    },
+    {
+      "tag": "minMaxValue",
+      "stateRenderFunction": "if (ctx.properties.minMaxValue) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "minValue",
+      "stateRenderFunction": "if (ctx.properties.minMaxValue) {\n    ctx.api.text(element, ctx.properties.minValue);\n}",
+      "actions": null
+    },
+    {
+      "tag": "scaleBackground",
+      "stateRenderFunction": "element.fill(ctx.properties.scaleColor);",
+      "actions": null
+    },
+    {
+      "tag": "target",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    var clampedValue = Math.max(Math.min(value, Math.max(minValue, maxValue)), Math.min(minValue, maxValue));\n    var normalizedValue = minValue < maxValue\n        ? (clampedValue - minValue) / (maxValue - minValue)\n        : (minValue - clampedValue) / (minValue - maxValue);\n    var offset = normalizedValue * 653;\n    return offset;\n}\n\nvar minValue = ctx.properties.minValue;\nvar maxValue = ctx.properties.maxValue;\nvar showTarget = ctx.properties.showTarget;\nvar targetValue = ctx.values.targetValue;\n\nif (showTarget && targetValue !== null) {\n    element.show();\n    var offset = calculateOffset(targetValue, minValue, maxValue);\n    element.transform({translateX: Math.min(Math.max(offset-17, 0), 619)});\n} else {\n    element.hide();\n}\n\n",
+      "actions": null
+    },
+    {
+      "tag": "targetBackground",
+      "stateRenderFunction": "element.fill(ctx.properties.targetColor);",
+      "actions": null
+    },
+    {
+      "tag": "units",
+      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.properties.units);\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "value",
+      "stateRenderFunction": "if (ctx.properties.value) {\n    element.show();\n    ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.value, ctx.properties.valueDecimals, null, ctx.properties.valueDecimals));\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "valueArrowPosition",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    var clampedValue = Math.max(Math.min(value, Math.max(minValue, maxValue)), Math.min(minValue, maxValue));\n    var normalizedValue = minValue < maxValue\n        ? (clampedValue - minValue) / (maxValue - minValue)\n        : (minValue - clampedValue) / (minValue - maxValue);\n    var offset = normalizedValue * 653;\n    return offset;\n}\n\nvar minValue = ctx.properties.minValue;\nvar maxValue = ctx.properties.maxValue;\nvar value = ctx.values.value;\n\nif (value !== null) {\n    var offset = calculateOffset(value, minValue, maxValue);\n    element.transform({translateX: offset});\n}\n",
+      "actions": null
+    },
+    {
+      "tag": "valuePointer",
+      "stateRenderFunction": "element.fill(ctx.properties.arrowColor);",
+      "actions": null
+    },
+    {
+      "tag": "valueTextPositon",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    var clampedValue = Math.max(Math.min(value, Math.max(minValue, maxValue)), Math.min(minValue, maxValue));\n    var normalizedValue = minValue < maxValue\n        ? (clampedValue - minValue) / (maxValue - minValue)\n        : (minValue - clampedValue) / (minValue - maxValue);\n    var offset = normalizedValue * 653;\n    return offset;\n}\n\nvar minValue = ctx.properties.minValue;\nvar maxValue = ctx.properties.maxValue;\nvar value = ctx.values.value;\n\nif (value !== null) {\n    var offset = calculateOffset(value, minValue, maxValue);\n    element.transform({translateX: offset});\n}\n",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "value",
+      "name": "{i18n:scada.symbol.value}",
+      "hint": "{i18n:scada.symbol.value-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_TIME_SERIES",
+        "defaultValue": null,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "temperature"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "targetValue",
+      "name": "{i18n:scada.symbol.target-value}",
+      "hint": "{i18n:scada.symbol.target-value-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": null,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SERVER_SCOPE",
+          "key": "target"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "minMaxValue",
+      "name": "{i18n:scada.symbol.min-max-value}",
+      "type": "switch",
+      "default": false,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "minValue",
+      "name": "{i18n:scada.symbol.min-max-value}",
+      "type": "number",
+      "default": 0,
+      "required": true,
+      "subLabel": "{i18n:scada.symbol.min-value}",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": 1
+    },
+    {
+      "id": "maxValue",
+      "name": "{i18n:scada.symbol.min-max-value}",
+      "type": "number",
+      "default": 100,
+      "required": true,
+      "subLabel": "{i18n:scada.symbol.max-value}",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": 1
+    },
+    {
+      "id": "showHighCriticalScale",
+      "name": "{i18n:scada.symbol.high-critical-scale}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "highCriticalScale",
+      "name": "{i18n:scada.symbol.high-critical-scale}",
+      "type": "number",
+      "default": 85,
+      "required": null,
+      "subLabel": "",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "showHighCriticalScale",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": 1
+    },
+    {
+      "id": "showHighWarningScale",
+      "name": "{i18n:scada.symbol.high-warning-scale}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "highWarningScale",
+      "name": "{i18n:scada.symbol.high-warning-scale}",
+      "type": "number",
+      "default": 70,
+      "required": null,
+      "subLabel": "",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "showHighWarningScale",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": 1
+    },
+    {
+      "id": "showLowWarningScale",
+      "name": "{i18n:scada.symbol.low-warning-scale}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "lowWarningScale",
+      "name": "{i18n:scada.symbol.low-warning-scale}",
+      "type": "number",
+      "default": 30,
+      "required": null,
+      "subLabel": "",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "showLowWarningScale",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": 1
+    },
+    {
+      "id": "showLowCriticalScale",
+      "name": "{i18n:scada.symbol.low-critical-scale}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "lowCriticalScale",
+      "name": "{i18n:scada.symbol.low-critical-scale}",
+      "type": "number",
+      "default": 15,
+      "required": null,
+      "subLabel": "",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "showLowCriticalScale",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": 1
+    },
+    {
+      "id": "value",
+      "name": "{i18n:scada.symbol.value}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "valueDecimals",
+      "name": "{i18n:scada.symbol.value}",
+      "type": "number",
+      "default": 0,
+      "required": true,
+      "subLabel": "Decimals",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "value",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": 10,
+      "step": 1
+    },
+    {
+      "id": "valueFont",
+      "name": "{i18n:scada.symbol.value}",
+      "type": "font",
+      "default": {
+        "size": 60,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "400",
+        "style": "normal"
+      },
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "value",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "valueColor",
+      "name": "{i18n:scada.symbol.value}",
+      "type": "color",
+      "default": "#002878",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "value",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "label",
+      "name": "{i18n:scada.symbol.label}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "labelText",
+      "name": "{i18n:scada.symbol.label}",
+      "type": "text",
+      "default": "Outdoor",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "label",
+      "rowClass": "",
+      "fieldClass": "flex",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "labelFont",
+      "name": "{i18n:scada.symbol.label}",
+      "type": "font",
+      "default": {
+        "size": 56,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "500",
+        "style": "normal"
+      },
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "label",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "labelColor",
+      "name": "{i18n:scada.symbol.label}",
+      "type": "color",
+      "default": "#000000DE",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "label",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "showUnits",
+      "name": "{i18n:scada.symbol.units}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "units",
+      "name": "{i18n:scada.symbol.units}",
+      "type": "units",
+      "default": "°C",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "showUnits",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "unitsFont",
+      "name": "{i18n:scada.symbol.units}",
+      "type": "font",
+      "default": {
+        "size": 56,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "500",
+        "style": "normal"
+      },
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "showUnits",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "unitsColor",
+      "name": "{i18n:scada.symbol.units}",
+      "type": "color",
+      "default": "#000000DE",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "showUnits",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "arrowColor",
+      "name": "{i18n:scada.symbol.arrow-color}",
+      "type": "color",
+      "default": "#666666",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "showTarget",
+      "name": "{i18n:scada.symbol.target}",
+      "type": "switch",
+      "default": false,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "targetColor",
+      "name": "{i18n:scada.symbol.target}",
+      "type": "color",
+      "default": "#DEDEDE",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "showTarget",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "scaleColor",
+      "name": "{i18n:scada.symbol.scale-color}",
+      "type": "color",
+      "default": "#C8DFF7",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "defaultWarningScaleColor",
+      "name": "{i18n:scada.symbol.warning-scale-color}",
+      "type": "color",
+      "default": "#EBEBEB",
+      "required": null,
+      "subLabel": "Default",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "activeWarningScaleColor",
+      "name": "{i18n:scada.symbol.warning-scale-color}",
+      "type": "color",
+      "default": "#FAA405",
+      "required": null,
+      "subLabel": "Active",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "defaultCriticalScaleColor",
+      "name": "{i18n:scada.symbol.critical-scale-color}",
+      "type": "color",
+      "default": "#666666",
+      "required": null,
+      "subLabel": "Default",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "activeCriticalScaleColor",
+      "name": "{i18n:scada.symbol.critical-scale-color}",
+      "type": "color",
+      "default": "#D12730",
+      "required": null,
+      "subLabel": "Active",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<text x="409.16602" y="97.234375" fill="#000000" font-family="Roboto" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">Outdoor</tspan></text><text x="401.15625" y="345.75" fill="#000000" font-family="Roboto" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="units" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">°C</tspan></text><g fill="#666" font-family="Roboto" font-size="32px" font-weight="500" text-anchor="middle" style="display: none;" tb:tag="minMaxValue">
+  <text x="88.070312" y="268" tb:tag="minValue" xml:space="preserve" style=""><tspan dominant-baseline="middle">0</tspan></text>
+  <text x="705.02344" y="268" tb:tag="maxValue" xml:space="preserve" style=""><tspan dominant-baseline="middle">100</tspan></text>
+ </g><g transform="translate(180)" tb:tag="valueArrowPosition">
+  <path d="m80 179 24-42h-48z" fill="#666" tb:tag="valuePointer"/>
+ </g><g transform="translate(180)" tb:tag="valueTextPositon">
+  <text x="79.779297" y="273.125" fill="#002878" font-family="Roboto" font-size="60px" font-weight="400" text-anchor="middle" tb:tag="value" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">26</tspan></text>
+ </g><g stroke="#000" tb:tag="scale">
+  <rect x="80.5" y="183.5" width="652" height="41" fill="#c8dff7" tb:tag="scaleBackground"/>
+  <rect x="80.5" y="183.5" width="164" height="41" fill="#ebebeb" tb:tag="lowWarningScale"/>
+  <rect x="80.5" y="183.5" width="81" height="41" fill="#666" tb:tag="lowCriticalScale"/>
+  <rect transform="scale(-1,1)" x="-732.5" y="183.5" width="164" height="41" fill="#ebebeb" tb:tag="highWarningScale"/>
+  <rect transform="scale(-1,1)" x="-732.5" y="183.5" width="81" height="41" fill="#666" tb:tag="highCriticalScale"/>
+ </g><g transform="translate(400)" style="display: none;" tb:tag="target">
+  <rect transform="rotate(45)" x="201.8" y="64.66" width="22" height="22" fill="#dedede" stroke="#000" stroke-width="2" tb:tag="targetBackground" style=""/>
+ </g><path d="m269.06 0s-269.06 0-269.06 67v328.36c0 2.6512 7.1634 4.6404 16 4.6404h768c8.836 0 16-1.9892 16-4.6404v-328.36c0-67-264.28-67-264.28-67h-135.72zm268.28 81.2c-5.1546 0-9.3334 1.2536-9.3334 2.8v300.4c0 1.5464 4.1786 2.8 9.3334 2.8h58.666c5.1546 0 9.3334-1.2536 9.3334-2.8v-300.4c0-1.5464-4.1786-2.8-9.3334-2.8z" fill="#000" fill-opacity="0" style="stroke-width:.7303" tb:tag="clickArea"/>
+</svg>

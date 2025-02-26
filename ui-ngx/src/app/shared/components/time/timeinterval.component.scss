@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,8 @@
 @import '../../../../scss/constants';
 
 :host {
-  min-width: 355px;
-
-  .advanced-switch {
-    margin-bottom: 16px;
-  }
-
-  .advanced-label {
-    margin: 5px 0;
-  }
-
-  .hide-label {
-    margin-bottom: 5px;
-    margin-right: 5px;
+  .advanced-input {
+    gap: 8px;
   }
 
   @media #{$mat-xs} {
@@ -38,6 +27,14 @@
 }
 
 :host ::ng-deep {
+  .mat-mdc-form-field-has-icon-suffix {
+    .mat-mdc-text-field-wrapper:has(.mat-mdc-form-field-icon-suffix:empty) {
+      padding-right: 12px;
+    }
+    .mat-mdc-form-field-icon-suffix:empty {
+      padding: 0;
+    }
+  }
   .number-input {
     .mat-mdc-form-field-infix {
       width: 50px;

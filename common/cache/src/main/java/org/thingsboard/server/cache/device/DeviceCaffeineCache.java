@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package org.thingsboard.server.cache.device;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
+import org.thingsboard.server.cache.VersionedCaffeineTbCache;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Device;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
 @Service("DeviceCache")
-public class DeviceCaffeineCache extends CaffeineTbTransactionalCache<DeviceCacheKey, Device> {
+public class DeviceCaffeineCache extends VersionedCaffeineTbCache<DeviceCacheKey, Device> {
 
     public DeviceCaffeineCache(CacheManager cacheManager) {
         super(cacheManager, CacheConstants.DEVICE_CACHE);

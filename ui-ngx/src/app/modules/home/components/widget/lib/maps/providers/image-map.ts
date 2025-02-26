@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
+import L, { LatLngBounds, LatLngLiteral, LatLngTuple, PointExpression } from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import {
   CircleData,
@@ -23,18 +23,17 @@ import {
   PosFunction,
   WidgetUnitedMapSettings
 } from '../map-models';
-import { Observable, ReplaySubject } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
-import {
-  aspectCache,
-  calculateNewPointCoordinate
-} from '@home/components/widget/lib/maps/common-maps-utils';
+import { combineLatest, Observable, of, ReplaySubject, switchMap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { calculateNewPointCoordinate, loadImageWithAspect } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseFunction } from '@core/utils';
+import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseTbFunction } from '@core/utils';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
 
 const maxZoom = 4; // ?
 
@@ -45,13 +44,20 @@ export class ImageMap extends LeafletMap {
     width = 0;
     height = 0;
     imageUrl: string;
-    posFunction: PosFunction;
+    posFunction: CompiledTbFunction<PosFunction>;
 
     constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
-        this.posFunction = parseFunction(options.posFunction,
-          ['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']) as PosFunction;
-        this.mapImage(options).subscribe((mapImage) => {
+
+        const initData = {
+          posFunction: parseTbFunction<PosFunction>(this.ctx.http, options.posFunction,
+            ['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']),
+          mapImage: this.mapImage(options)
+        };
+
+        combineLatest(initData).subscribe(inited => {
+          this.posFunction = inited.posFunction;
+          const mapImage = inited.mapImage;
           this.imageUrl = mapImage.imageUrl;
           this.aspect = mapImage.aspect;
           if (mapImage.update) {
@@ -122,45 +128,49 @@ export class ImageMap extends LeafletMap {
     }
 
     private imageFromUrl(url: string): Observable<MapImage> {
-      return aspectCache(url).pipe(
-        map( aspect => {
-            const mapImage: MapImage = {
-              imageUrl: url,
-              aspect,
-              update: false
-            };
-            return mapImage;
+      return loadImageWithAspect(this.ctx.$injector.get(ImagePipe), url).pipe(
+        switchMap( aspectImage => {
+            if (aspectImage) {
+              return of({
+                imageUrl: aspectImage.url,
+                aspect: aspectImage.aspect,
+                update: false
+              });
+            } else {
+              return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+            }
           }
         ),
-        catchError((e) => {
-          return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
-        })
+        catchError(() => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
       );
     }
 
     private imageFromAlias(alias: Observable<[DataSet, boolean]>): Observable<MapImage> {
       return alias.pipe(
-        mergeMap(res => {
+        switchMap(res => {
+          const url = res[0][0][1];
           const mapImage: MapImage = {
-            imageUrl: res[0][0][1],
+            imageUrl: null,
             aspect: null,
             update: res[1]
           };
-          return aspectCache(mapImage.imageUrl).pipe(
-            map((aspect) => {
-                mapImage.aspect = aspect;
-                return mapImage;
-              }
-            ),
-            catchError((e) => {
-              return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
-            })
+          return loadImageWithAspect(this.ctx.$injector.get(ImagePipe), url).pipe(
+            switchMap((aspectImage) => {
+                if (aspectImage) {
+                  mapImage.aspect = aspectImage.aspect;
+                  mapImage.imageUrl = aspectImage.url;
+                  return of(mapImage);
+                } else {
+                  return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+                }
+              }),
+            catchError(() => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
           );
         })
       );
     }
 
-    updateBounds(updateImage?: boolean, lastCenterPos?) {
+    updateBounds(updateImage?: boolean, lastCenterPos?: L.Point) {
         const w = this.width;
         const h = this.height;
         this.southWest = this.pointToLatLng(0, h);
@@ -229,7 +239,7 @@ export class ImageMap extends LeafletMap {
       }
     }
 
-    fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) { }
+    fitBounds(_bounds: LatLngBounds, _padding?: PointExpression) { }
 
     initMap(updateImage?: boolean) {
       if (!this.map && this.aspect > 0) {
@@ -249,7 +259,7 @@ export class ImageMap extends LeafletMap {
       }
     }
 
-    extractPosition(data: FormattedData): {x: number, y: number} {
+    extractPosition(data: FormattedData): {x: number; y: number} {
       if (!data) {
         return null;
       }
@@ -261,16 +271,16 @@ export class ImageMap extends LeafletMap {
       return {x: xPos, y: yPos};
     }
 
-    positionToLatLng(position: {x: number, y: number}): L.LatLng {
+    positionToLatLng(position: {x: number; y: number}): L.LatLng {
       return this.pointToLatLng(
         position.x * this.width,
         position.y * this.height);
     }
 
-    convertPosition(data, dsData: FormattedData[]): L.LatLng {
+    convertPosition(data: FormattedData, dsData: FormattedData[]): L.LatLng {
       const position = this.extractPosition(data);
       if (position) {
-        const converted = this.posFunction(position.x, position.y, data, dsData, data.dsIndex, this.aspect) || {x: 0, y: 0};
+        const converted = this.posFunction.execute(position.x, position.y, data, dsData, data.dsIndex, this.aspect) || {x: 0, y: 0};
         return this.positionToLatLng(converted);
       } else {
         return null;
@@ -292,7 +302,7 @@ export class ImageMap extends LeafletMap {
       }).filter(el => !!el);
     }
 
-    pointToLatLng(x, y): L.LatLng {
+    pointToLatLng(x: number, y: number): L.LatLng {
         return L.CRS.Simple.pointToLatLng({ x, y } as L.PointExpression, maxZoom - 1);
     }
 
@@ -300,7 +310,7 @@ export class ImageMap extends LeafletMap {
         return L.CRS.Simple.latLngToPoint(latLng, maxZoom - 1);
     }
 
-    convertToCustomFormat(position: L.LatLng, offset = 0, width = this.width, height = this.height): {[key: string]: any} {
+    convertToCustomFormat(position: L.LatLng, _offset = 0, width = this.width, height = this.height): {[key: string]: any} {
       if (!position) {
         return {
           [this.options.xPosKeyName]: null,

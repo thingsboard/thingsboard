@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@
       <span>{{ assignedToCurrentUserText | translate }}</span>
     </mat-option>
     <mat-option *ngFor="let user of filteredUsers | async" [value]="user"
-                [fxHide]="assigneeId === user.id.id">
+                [class.!hidden]="assigneeId === user.id.id">
       <span class="user-avatar" [innerHTML]="getUserInitials(user)"
             [style.background-color]="getAvatarBgColor(user)">
       </span>
-      <div class="user-display-name" fxLayout="column" fxLayoutGap="2px">
+      <div class="user-display-name flex flex-col gap-0.5">
         <span *ngIf="user.firstName || user.lastName"
               [innerHTML]="getFullName(user) | highlight:searchText"></span>
         <span [innerHTML]="user.email | highlight:searchText"></span>

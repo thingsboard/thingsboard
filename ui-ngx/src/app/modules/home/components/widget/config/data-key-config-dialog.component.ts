@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,17 +30,18 @@ import {
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { DataKey, DataKeyConfigMode, Widget, widgetType } from '@shared/models/widget.models';
-import { DataKeysCallbacks } from './data-keys.component.models';
 import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 export interface DataKeyConfigDialogData {
   dataKey: DataKey;
   dataKeyConfigMode?: DataKeyConfigMode;
-  dataKeySettingsSchema: any;
+  dataKeySettingsForm: FormProperty[];
   dataKeySettingsDirective: string;
   dashboard: Dashboard;
   aliasController: IAliasController;
@@ -49,7 +50,7 @@ export interface DataKeyConfigDialogData {
   deviceId?: string;
   entityAliasId?: string;
   showPostProcessing?: boolean;
-  callbacks?: DataKeysCallbacks;
+  callbacks?: WidgetConfigCallbacks;
   hideDataKeyName?: boolean;
   hideDataKeyLabel?: boolean;
   hideDataKeyColor?: boolean;
@@ -92,8 +93,8 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
     this.dataKeyFormGroup = this.fb.group({
       dataKey: [this.data.dataKey, [Validators.required]]
     });
-    if (this.data.dataKeySettingsSchema && this.data.dataKeySettingsSchema.schema ||
-      this.data.dataKeySettingsDirective && this.data.dataKeySettingsDirective.length) {
+    if (this.data.dataKeySettingsForm?.length ||
+      this.data.dataKeySettingsDirective?.length) {
       this.hasAdvanced = true;
       this.dataKeyConfigHeaderOptions = [
         {
@@ -123,10 +124,11 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
 
   save(): void {
     this.submitted = true;
-    this.dataKeyConfig.validateOnSubmit();
-    if (this.dataKeyFormGroup.valid) {
-      const dataKey: DataKey = this.dataKeyFormGroup.get('dataKey').value;
-      this.dialogRef.close(dataKey);
-    }
+    this.dataKeyConfig.validateOnSubmit().subscribe(() => {
+      if (this.dataKeyFormGroup.valid) {
+        const dataKey: DataKey = this.dataKeyFormGroup.get('dataKey').value;
+        this.dialogRef.close(dataKey);
+      }
+    });
   }
 }

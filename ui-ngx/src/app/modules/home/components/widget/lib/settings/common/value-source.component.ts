@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { TranslateService } from '@ngx-translate/core';
 import { IAliasController } from '@core/api/widget-api.models';
 import { Observable, of } from 'rxjs';
 import { catchError, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
 import { DataKey } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityService } from '@core/http/entity.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export declare type ValueSource = 'predefinedValue' | 'entityAttribute';
 
@@ -60,9 +60,15 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
   @Input()
   aliasController: IAliasController;
 
+  @Input()
+  entityAliasPlaceholder = 'widgets.value-source.source-entity-alias';
+
+  @Input()
+  entityAttributePlaceholder = 'widgets.value-source.source-entity-attribute';
+
   private modelValue: ValueSourceProperty;
 
-  private propagateChange = null;
+  private propagateChange = (v: any) => { };
 
   public valueSourceFormGroup: UntypedFormGroup;
 
@@ -78,9 +84,9 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
   private entityAliasList: Array<string> = [];
 
   constructor(protected store: Store<AppState>,
-              private translate: TranslateService,
               private entityService: EntityService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -91,10 +97,14 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
       attribute: [null, []],
       value: [null, []]
     });
-    this.valueSourceFormGroup.valueChanges.subscribe(() => {
+    this.valueSourceFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.valueSourceFormGroup.get('valueSource').valueChanges.subscribe(() => {
+    this.valueSourceFormGroup.get('valueSource').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
     this.updateValidators(false);
@@ -247,5 +257,4 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
     this.valueSourceFormGroup.get('attribute').updateValueAndValidity({emitEvent: false});
     this.valueSourceFormGroup.get('value').updateValueAndValidity({emitEvent: false});
   }
-
 }

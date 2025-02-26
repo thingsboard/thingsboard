@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,22 +42,35 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTra
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.common.data.housekeeper.TenantEntitiesDeletionHousekeeperTask;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.MapperType;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
+import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
 import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
+import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -76,6 +89,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected TenantService tenantService;
+
+    @Autowired
+    protected EntityServiceRegistry entityServiceRegistry;
 
     protected TenantId tenantId;
 
@@ -98,6 +114,10 @@ public abstract class AbstractServiceTest {
 
 
     protected RuleNodeDebugEvent generateEvent(TenantId tenantId, EntityId entityId) throws IOException {
+        return generateEvent(tenantId, entityId, null);
+    }
+
+    protected RuleNodeDebugEvent generateEvent(TenantId tenantId, EntityId entityId, String eventType) throws IOException {
         if (tenantId == null) {
             tenantId = TenantId.fromUUID(Uuids.timeBased());
         }
@@ -105,6 +125,7 @@ public abstract class AbstractServiceTest {
                 .tenantId(tenantId)
                 .entityId(entityId.getId())
                 .serviceId("server A")
+                .eventType(eventType)
                 .data(JacksonUtil.toString(readFromResource("TestJsonData.json")))
                 .build();
     }
@@ -124,6 +145,16 @@ public abstract class AbstractServiceTest {
         var props = new AuditLogLevelProperties();
         props.setMask(mask);
         return new AuditLogLevelFilter(props);
+    }
+
+    @Bean
+    public HousekeeperClient housekeeperClient() {
+        return task -> {
+            if (task.getTaskType() == HousekeeperTaskType.DELETE_TENANT_ENTITIES) {
+                EntityDaoService entityService = entityServiceRegistry.getServiceByEntityType(((TenantEntitiesDeletionHousekeeperTask) task).getEntityType());
+                entityService.deleteByTenantId(task.getTenantId());
+            }
+        };
     }
 
     protected DeviceProfile createDeviceProfile(TenantId tenantId, String name) {
@@ -186,6 +217,41 @@ public abstract class AbstractServiceTest {
         firmware.setData(ByteBuffer.wrap(new byte[]{1}));
         firmware.setDataSize(1L);
         return firmware;
+    }
+
+    protected OAuth2Client validClientInfo(TenantId tenantId, String title) {
+        return validClientInfo(tenantId, title, null);
+    }
+
+    protected OAuth2Client validClientInfo(TenantId tenantId, String title, List<PlatformType> platforms) {
+        OAuth2Client oAuth2Client = new OAuth2Client();
+        oAuth2Client.setTenantId(tenantId);
+        oAuth2Client.setTitle(title);
+        oAuth2Client.setClientId(UUID.randomUUID().toString());
+        oAuth2Client.setClientSecret(UUID.randomUUID().toString());
+        oAuth2Client.setAuthorizationUri(UUID.randomUUID().toString());
+        oAuth2Client.setAccessTokenUri(UUID.randomUUID().toString());
+        oAuth2Client.setScope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        oAuth2Client.setPlatforms(platforms == null ? Collections.emptyList() : platforms);
+        oAuth2Client.setUserInfoUri(UUID.randomUUID().toString());
+        oAuth2Client.setUserNameAttributeName(UUID.randomUUID().toString());
+        oAuth2Client.setJwkSetUri(UUID.randomUUID().toString());
+        oAuth2Client.setClientAuthenticationMethod(UUID.randomUUID().toString());
+        oAuth2Client.setLoginButtonLabel(UUID.randomUUID().toString());
+        oAuth2Client.setLoginButtonIcon(UUID.randomUUID().toString());
+        oAuth2Client.setAdditionalInfo(JacksonUtil.newObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        oAuth2Client.setMapperConfig(
+                OAuth2MapperConfig.builder()
+                        .allowUserCreation(true)
+                        .activateUser(true)
+                        .type(MapperType.CUSTOM)
+                        .custom(
+                                OAuth2CustomMapperConfig.builder()
+                                        .url(UUID.randomUUID().toString())
+                                        .build()
+                        )
+                        .build());
+        return oAuth2Client;
     }
 
 }

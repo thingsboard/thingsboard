@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@
       [dashboard]="dashboard"
       [widget]="widget"
       [hideToggleHeader]="previewMode"
+      [showLayoutConfig]="showLayoutConfig"
+      [isDefaultBreakpoint]="isDefaultBreakpoint"
       formControlName="widgetConfig">
       <div class="tb-widget-config-header-prefix">
         <button mat-button
@@ -33,31 +35,31 @@
           {{ 'action.back' | translate }}
         </button>
         <button *ngIf="!previewMode"
-                fxHide.gt-sm
-                [disabled]="widgetFormGroup.invalid"
+                class="gt-sm:!hidden"
+                [disabled]="!widgetFormGroup.valid"
                 mat-button color="primary"
                 (click)="previewMode = true">
           <mat-icon>visibility</mat-icon>
           {{ 'widget-config.preview' | translate }}
         </button>
       </div>
-      <div fxFlex.lt-md class="tb-widget-config-header-suffix" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
+      <div class="tb-widget-config-header-suffix flex flex-row items-center justify-end gap-3 lt-md:flex-1">
         <button *ngIf="!previewMode"
-                fxHide.lt-md
-                [disabled]="widgetFormGroup.invalid"
+                class="lt-md:!hidden"
+                [disabled]="!widgetFormGroup.valid"
                 mat-button color="primary"
                 (click)="previewMode = true">
           <mat-icon>visibility</mat-icon>
           {{ 'widget-config.preview' | translate }}
         </button>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+        <div class="flex flex-row items-center justify-start gap-3">
           <button [disabled]="!widgetFormGroup.dirty"
             mat-stroked-button color="primary"
             (click)="onRevertWidgetConfig()">
             <mat-icon>close</mat-icon>
             {{ 'action.decline' | translate }}
           </button>
-          <button [disabled]="widgetFormGroup.invalid || !widgetFormGroup.dirty"
+          <button [disabled]="!widgetFormGroup.valid || !widgetFormGroup.dirty"
             mat-flat-button color="primary"
             (click)="onApplyWidgetConfig()">
             <mat-icon>done</mat-icon>

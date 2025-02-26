@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.server.service.install.update;
 
 public interface DataUpdateService {
 
-    void updateData(String fromVersion) throws Exception;
+    void updateData() throws Exception;
 
     void upgradeRuleNodes();
 }

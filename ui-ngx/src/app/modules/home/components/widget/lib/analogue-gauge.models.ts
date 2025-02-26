@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -64,9 +64,13 @@ export interface AnalogueGaugeSettings {
   animationRule: AnimationRule;
 }
 
+interface BaseGaugeModel extends BaseGauge {
+  _value?: number;
+}
+
 export abstract class TbBaseGauge<S, O extends GenericOptions> {
 
-  private gauge: BaseGauge;
+  private gauge: BaseGaugeModel;
 
   protected constructor(protected ctx: WidgetContext, canvasId: string) {
     const gaugeElement = $('#' + canvasId, ctx.$container)[0];
@@ -77,16 +81,20 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
 
   protected abstract createGaugeOptions(gaugeElement: HTMLElement, settings: S): O;
 
-  protected abstract createGauge(gaugeData: O): BaseGauge;
+  protected abstract createGauge(gaugeData: O): BaseGaugeModel;
 
   update() {
     if (this.ctx.data.length > 0) {
       const cellData = this.ctx.data[0];
       if (cellData.data.length > 0) {
-        const tvPair = cellData.data[cellData.data.length -
-        1];
+        const tvPair = cellData.data[cellData.data.length - 1];
         const value = parseFloat(tvPair[1]);
         if (value !== this.gauge.value) {
+          if (!this.gauge.options.animation) {
+            this.gauge._value = value;
+          } else {
+            delete this.gauge._value;
+          }
           this.gauge.value = value;
         }
       }
@@ -130,7 +138,7 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
 
     const valueDec = getValueDec(this.ctx, settings);
 
-    step = parseFloat(parseFloat(step + '').toFixed(valueDec));
+    step = parseFloat(parseFloat(step + '').toFixed(valueDec)) || 1;
 
     const majorTicks: number[] = [];
     const highlights: Highlight[] = [];

@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 queue_type: "kafka"
 request_topic: "js_eval.requests"
+queue_prefix: ""
 http_port: "8888" # /livenessProbe
 
 js:
@@ -33,30 +34,15 @@ kafka:
   partitions_consumed_concurrently: "1" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
   requestTimeout: "30000" # The default value in kafkajs is: 30000
   connectionTimeout: "1000" # The default value in kafkajs is: 1000
-  compression: "gzip" # gzip or uncompressed
-  topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1"
+  compression: "none" # gzip or uncompressed
+  topic_properties: "retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1"
   use_confluent_cloud: false
   client_id: "kafkajs" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
+  ssl:
+    enabled: false
   confluent:
     sasl:
       mechanism: "PLAIN"
-
-pubsub:
-  queue_properties: "ackDeadlineInSec:30;messageRetentionInSec:604800"
-
-aws_sqs:
-  queue_properties: "VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800"
-
-rabbitmq:
-  host: "localhost"
-  port: "5672"
-  virtual_host: "/"
-  username: "admin"
-  password: "password"
-  queue_properties: "x-max-length-bytes:1048576000;x-message-ttl:604800000"
-
-service_bus:
-  queue_properties: "lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800"
 
 logger:
   level: "info"

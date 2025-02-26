@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 @import "../../../../../../../scss/constants";
 
 :host {
@@ -39,6 +38,9 @@
   .tb-get-started-container {
     flex: 1;
     overflow: auto;
+    mat-stepper {
+      transform: scale(1); //fixed blur content
+    }
   }
 }
 
@@ -149,7 +151,7 @@
             }
             p {
               margin: 0;
-              padding: 7px;
+              padding: 6px 7px;
               color: #305680;
             }
             div {

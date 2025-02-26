@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -79,6 +79,7 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
   ngOnInit(): void {
     this.loadVersionFormGroup = this.fb.group({
       entityTypes: [createDefaultEntityTypesVersionLoad(), []],
+      rollbackOnError: [true]
     });
   }
 
@@ -116,6 +117,7 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
     const request: EntityTypeVersionLoadRequest = {
       versionId: this.versionId,
       entityTypes: this.loadVersionFormGroup.get('entityTypes').value,
+      rollbackOnError: this.loadVersionFormGroup.get('rollbackOnError').value,
       type: VersionLoadRequestType.ENTITY_TYPE
     };
     this.versionLoadResult$ = this.entitiesVersionControlService.loadEntitiesVersion(request, {ignoreErrors: true}).pipe(

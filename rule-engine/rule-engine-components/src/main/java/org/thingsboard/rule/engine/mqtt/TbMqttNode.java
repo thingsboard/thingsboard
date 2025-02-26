@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,14 @@
  */
 package org.thingsboard.rule.engine.mqtt;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttConnectResult;
@@ -35,6 +38,7 @@ import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -49,10 +53,10 @@ import java.util.concurrent.TimeoutException;
         type = ComponentType.EXTERNAL,
         name = "mqtt",
         configClazz = TbMqttNodeConfiguration.class,
+        version = 1,
         clusteringMode = ComponentClusteringMode.USER_PREFERENCE,
         nodeDescription = "Publish messages to the MQTT broker",
         nodeDetails = "Will publish message payload to the MQTT broker with QoS <b>AT_LEAST_ONCE</b>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbExternalNodeMqttConfig",
         icon = "call_split"
 )
@@ -72,6 +76,8 @@ public class TbMqttNode extends TbAbstractExternalNode {
         this.mqttNodeConfiguration = TbNodeUtils.convert(configuration, TbMqttNodeConfiguration.class);
         try {
             this.mqttClient = initClient(ctx);
+        } catch (TbNodeException e) {
+            throw e;
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
@@ -81,7 +87,8 @@ public class TbMqttNode extends TbAbstractExternalNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         String topic = TbNodeUtils.processPattern(this.mqttNodeConfiguration.getTopicPattern(), msg);
         var tbMsg = ackIfNeeded(ctx, msg);
-        this.mqttClient.publish(topic, Unpooled.wrappedBuffer(tbMsg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE, mqttNodeConfiguration.isRetainedMessage())
+        this.mqttClient.publish(topic, Unpooled.wrappedBuffer(getData(tbMsg, mqttNodeConfiguration.isParseToPlainText()).getBytes(UTF8)),
+                        MqttQoS.AT_LEAST_ONCE, mqttNodeConfiguration.isRetainedMessage())
                 .addListener(future -> {
                             if (future.isSuccess()) {
                                 tellSuccess(ctx, tbMsg);
@@ -95,7 +102,9 @@ public class TbMqttNode extends TbAbstractExternalNode {
     private TbMsg processException(TbMsg origMsg, Throwable e) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     @Override
@@ -113,15 +122,14 @@ public class TbMqttNode extends TbAbstractExternalNode {
         MqttClientConfig config = new MqttClientConfig(getSslContext());
         config.setOwnerId(getOwnerId(ctx));
         if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {
-            config.setClientId(this.mqttNodeConfiguration.isAppendClientIdSuffix() ?
-                    this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() : this.mqttNodeConfiguration.getClientId());
+            config.setClientId(getClientId(ctx));
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 
         prepareMqttClientConfig(config);
-        MqttClient client = MqttClient.create(config, null, ctx.getExternalCallExecutor());
+        MqttClient client = getMqttClient(ctx, config);
         client.setEventLoop(ctx.getSharedEventLoop());
-        Future<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
+        Promise<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
         MqttConnectResult result;
         try {
             result = connectFuture.get(this.mqttNodeConfiguration.getConnectTimeoutSec(), TimeUnit.SECONDS);
@@ -140,7 +148,22 @@ public class TbMqttNode extends TbAbstractExternalNode {
         return client;
     }
 
-    protected void prepareMqttClientConfig(MqttClientConfig config) throws SSLException {
+    private String getClientId(TbContext ctx) throws TbNodeException {
+        String clientId = this.mqttNodeConfiguration.isAppendClientIdSuffix() ?
+                this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() :
+                this.mqttNodeConfiguration.getClientId();
+        if (clientId.length() > 23) {
+            throw new TbNodeException("Client ID is too long '" + clientId + "'. " +
+                    "The length of Client ID cannot be longer than 23, but current length is " + clientId.length() + ".", true);
+        }
+        return clientId;
+    }
+
+    MqttClient getMqttClient(TbContext ctx, MqttClientConfig config) {
+        return MqttClient.create(config, null, ctx.getExternalCallExecutor());
+    }
+
+    protected void prepareMqttClientConfig(MqttClientConfig config) {
         ClientCredentials credentials = this.mqttNodeConfiguration.getCredentials();
         if (credentials.getType() == CredentialsType.BASIC) {
             BasicCredentials basicCredentials = (BasicCredentials) credentials;
@@ -153,4 +176,27 @@ public class TbMqttNode extends TbAbstractExternalNode {
         return this.mqttNodeConfiguration.isSsl() ? this.mqttNodeConfiguration.getCredentials().initSslContext() : null;
     }
 
+    private String getData(TbMsg tbMsg, boolean parseToPlainText) {
+        if (parseToPlainText) {
+            return JacksonUtil.toPlainText(tbMsg.getData());
+        }
+        return tbMsg.getData();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                String parseToPlainText = "parseToPlainText";
+                if (!oldConfiguration.has(parseToPlainText)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(parseToPlainText, false);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
+    }
 }

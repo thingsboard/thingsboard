@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,18 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig;
+import org.thingsboard.server.dao.config.DefaultDedicatedJpaDaoConfig;
+import org.thingsboard.server.dao.config.JpaDaoConfig;
+import org.thingsboard.server.dao.config.SqlTsDaoConfig;
+import org.thingsboard.server.dao.config.SqlTsLatestDaoConfig;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 /**
  * Created by Valerii Sosliuk on 4/22/2017.
  */
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {JpaDaoConfig.class, SqlTsDaoConfig.class, SqlTsLatestDaoConfig.class, SqlTimeseriesDaoConfig.class})
+@ContextConfiguration(classes = {JpaDaoConfig.class, SqlTsDaoConfig.class, SqlTsLatestDaoConfig.class, DedicatedEventsJpaDaoConfig.class, DefaultDedicatedJpaDaoConfig.class})
 @DaoSqlTest
 @TestExecutionListeners({
         DependencyInjectionTestExecutionListener.class,

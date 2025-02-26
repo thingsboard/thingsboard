@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
-import javax.annotation.PostConstruct;
 import java.util.Map;
 
 @Component
 @ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
 public class TbKafkaTopicConfigs {
+
     public static final String NUM_PARTITIONS_SETTING = "partitions";
 
     @Value("${queue.kafka.topic-properties.core:}")
@@ -43,6 +44,14 @@ public class TbKafkaTopicConfigs {
     private String fwUpdatesProperties;
     @Value("${queue.kafka.topic-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.kafka.topic-properties.edge:}")
+    private String edgeProperties;
+    @Value("${queue.kafka.topic-properties.edge-event:}")
+    private String edgeEventProperties;
+    @Value("${queue.kafka.topic-properties.housekeeper:}")
+    private String housekeeperProperties;
+    @Value("${queue.kafka.topic-properties.housekeeper-reprocessing:}")
+    private String housekeeperReprocessingProperties;
 
     @Getter
     private Map<String, String> coreConfigs;
@@ -62,6 +71,14 @@ public class TbKafkaTopicConfigs {
     private Map<String, String> fwUpdatesConfigs;
     @Getter
     private Map<String, String> vcConfigs;
+    @Getter
+    private Map<String, String> housekeeperConfigs;
+    @Getter
+    private Map<String, String> housekeeperReprocessingConfigs;
+    @Getter
+    private Map<String, String> edgeConfigs;
+    @Getter
+    private Map<String, String> edgeEventConfigs;
 
     @PostConstruct
     private void init() {
@@ -76,6 +93,10 @@ public class TbKafkaTopicConfigs {
         jsExecutorResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
         fwUpdatesConfigs = PropertyUtils.getProps(fwUpdatesProperties);
         vcConfigs = PropertyUtils.getProps(vcProperties);
+        housekeeperConfigs = PropertyUtils.getProps(housekeeperProperties);
+        housekeeperReprocessingConfigs = PropertyUtils.getProps(housekeeperReprocessingProperties);
+        edgeConfigs = PropertyUtils.getProps(edgeProperties);
+        edgeEventConfigs = PropertyUtils.getProps(edgeEventProperties);
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5029,7 +5029,6 @@ var JSHINT = (function() {
     }, 20);
   }
   function nullSafeProperty(s) {
-    console.log("test " + s);
     symbol(s, 20).exps = true;
     return infix(s, function(context, left, that) {
       if (state.option.bitwise) {

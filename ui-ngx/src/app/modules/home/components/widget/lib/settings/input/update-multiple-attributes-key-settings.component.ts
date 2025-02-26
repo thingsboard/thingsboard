@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -60,6 +60,9 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
 
       slideToggleLabelPosition: 'after',
       selectOptions: [],
+      radioColor: null,
+      radioColumns: 1,
+      radioLabelPosition: 'after',
       step: 1,
       minValue: null,
       maxValue: null,
@@ -104,9 +107,15 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
 
       slideToggleLabelPosition: [settings.slideToggleLabelPosition, []],
 
-      // Select options
+      // Select/Radio options
 
       selectOptions: this.prepareSelectOptionsFormArray(settings.selectOptions),
+
+      // Radio settings
+
+      radioColor: [settings.radioColor, []],
+      radioColumns: [settings.radioColumns, []],
+      radioLabelPosition: [settings.radioLabelPosition, []],
 
       // Numeric field settings
 
@@ -183,6 +192,11 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
         this.updateMultipleAttributesKeySettingsForm.get('slideToggleLabelPosition').enable({emitEvent: false});
       } else if (dataKeyValueType === 'select') {
         this.updateMultipleAttributesKeySettingsForm.get('selectOptions').enable({emitEvent: false});
+      } else if (dataKeyValueType === 'radio') {
+        this.updateMultipleAttributesKeySettingsForm.get('selectOptions').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('radioColor').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('radioColumns').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('radioLabelPosition').enable({emitEvent: false});
       } else if (dataKeyValueType === 'integer' || dataKeyValueType === 'double') {
         this.updateMultipleAttributesKeySettingsForm.get('step').enable({emitEvent: false});
         this.updateMultipleAttributesKeySettingsForm.get('minValue').enable({emitEvent: false});

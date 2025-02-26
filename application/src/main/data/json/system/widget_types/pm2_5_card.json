@@ -1,0 +1,50 @@
+{
+  "fqn": "pm2_5_card",
+  "name": "PM2.5 card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/pm2_5_card_system_widget_image.png",
+  "description": "Displays the latest fine particulate matter (PM2.5) telemetry in a scalable rectangle card.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 3,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '250px',\n        previewHeight: '250px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'pm2.5', label: 'PM2.5', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"PM2.5\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 120 - 60;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 500) {\\n\\tvalue = 500;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"square\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"bubble_chart\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":10,\"color\":\"#80C32C\"},{\"from\":10,\"to\":35,\"color\":\"#FFA600\"},{\"from\":35,\"to\":75,\"color\":\"#F36900\"},{\"from\":75,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":32,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":0,\"to\":10,\"color\":\"#80C32C\"},{\"from\":10,\"to\":35,\"color\":\"#FFA600\"},{\"from\":35,\"to\":75,\"color\":\"#F36900\"},{\"from\":75,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"PM2.5 card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"µg/m³\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "environment",
+    "pm2.5",
+    "particulate",
+    "matter",
+    "air",
+    "fine particulates",
+    "fine particles",
+    "particulate matter 2.5",
+    "airborne particles",
+    "microscopic particles",
+    "respirable particles",
+    "aerosol particles",
+    "dust particles"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/pm2_5_card_system_widget_image.png",
+      "title": "\"PM2.5 card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "pm2_5_card_system_widget_image.png",
+      "publicResourceKey": "F3ovBDVOqdjFVzUClaHLBzFptoPO7kE4",
+      "mediaType": "image/png",
+      "data": "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",
+      "public": true
+    }
+  ]
+}

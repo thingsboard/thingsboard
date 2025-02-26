@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,23 @@
  */
 package org.thingsboard.server.dao.model.sqlts.latest;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.ColumnResult;
+import jakarta.persistence.ConstructorResult;
+import jakarta.persistence.Entity;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.NamedNativeQueries;
+import jakarta.persistence.NamedNativeQuery;
+import jakarta.persistence.SqlResultSetMapping;
+import jakarta.persistence.SqlResultSetMappings;
+import jakarta.persistence.Table;
 import lombok.Data;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 
-import javax.persistence.ColumnResult;
-import javax.persistence.ConstructorResult;
-import javax.persistence.Entity;
-import javax.persistence.IdClass;
-import javax.persistence.NamedNativeQueries;
-import javax.persistence.NamedNativeQuery;
-import javax.persistence.SqlResultSetMapping;
-import javax.persistence.SqlResultSetMappings;
-import javax.persistence.Table;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 
 @Data
 @Entity
@@ -50,7 +53,7 @@ import java.util.UUID;
                                         @ColumnResult(name = "doubleValue", type = Double.class),
                                         @ColumnResult(name = "jsonValue", type = String.class),
                                         @ColumnResult(name = "ts", type = Long.class),
-
+                                        @ColumnResult(name = "version", type = Long.class)
                                 }
                         ),
                 })
@@ -65,6 +68,9 @@ import java.util.UUID;
 })
 public final class TsKvLatestEntity extends AbstractTsKvEntity {
 
+    @Column(name = VERSION_COLUMN)
+    private Long version;
+
     @Override
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null || jsonValue != null;
@@ -73,7 +79,7 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity {
     public TsKvLatestEntity() {
     }
 
-    public TsKvLatestEntity(UUID entityId, Integer key, String strKey, String strValue, Boolean boolValue, Long longValue, Double doubleValue, String jsonValue, Long ts) {
+    public TsKvLatestEntity(UUID entityId, Integer key, String strKey, String strValue, Boolean boolValue, Long longValue, Double doubleValue, String jsonValue, Long ts, Long version) {
         this.entityId = entityId;
         this.key = key;
         this.ts = ts;
@@ -83,5 +89,6 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity {
         this.booleanValue = boolValue;
         this.jsonValue = jsonValue;
         this.strKey = strKey;
+        this.version = version;
     }
 }

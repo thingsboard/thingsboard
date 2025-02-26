@@ -1,0 +1,40 @@
+{
+  "fqn": "indoor_horizontal_temperature_card",
+  "name": "Indoor horizontal temperature card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/indoor_horizontal_temperature_card_system_widget_image.png",
+  "description": "Displays the latest indoor temperature telemetry in a scalable horizontal layout.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 1,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        horizontal: true,\n        previewWidth: '420px',\n        previewHeight: '90px',\n        embedTitlePanel: true\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Temperature\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 20 - 10;\\nif (value < 15) {\\n\\tvalue = 15;\\n} else if (value > 30) {\\n\\tvalue = 30;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"horizontal\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"thermostat\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":18,\"color\":\"#234CC7\"},{\"from\":18,\"to\":24,\"color\":\"#3FA71A\"},{\"from\":24,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":18,\"color\":\"#234CC7\"},{\"from\":18,\"to\":24,\"color\":\"#3FA71A\"},{\"from\":24,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Horizontal temperature card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"°C\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "temperature",
+    "environment",
+    "indoor"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/indoor_horizontal_temperature_card_system_widget_image.png",
+      "title": "\"Indoor horizontal temperature card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "indoor_horizontal_temperature_card_system_widget_image.png",
+      "publicResourceKey": "KS1Q3BWBqv93F4n7zaMiTzAzoKVKbdbu",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAt1BMVEUAAADf39/u7u7t7e3r6+vl5eXf39/x8fHw8PDr6+vf39/////z8/MjTMc+Ys7j4+ORpePHx8fk6fjPz8/x8fF1j9zI0vGQkJD5+fnV1dXCwsK2trZYWFisvOo9PT2tra3n5+ft7e28vLzy9Pvb29swV8tmZmZaeNXIyMiCgoIvLy/x9PvW3fWesedog9lMbtI8PDxaedWenp50dHRKSkqDm+DU1NQxV8q6x+6qqqohISHd3d2dnZ2F97sdAAAAC3RSTlMAIN/fz6AQ7++/MOBJYlEAAANbSURBVHja7dppc5pQFMZxbdP1cLisIiCKiLjvS5O23/9z9V6pI60NSdWmxnl+GQNceHH+IyGTiRUAAAAAAAAAAAAAAAAAAAAAAAAAAACAl/S++sq9ryifP2mvnXNXrVSqH+kGfKxW3tFNeFe5o5vwtvKGbgJCrg1Crg1Crg1Crs1th4x1djv034xJsmp7+0k60X3n5959FI2p6JEQXZ+yQQcNqUUlHJ8uZWx0dZJc3qvRjqUz67uSSZcl3SKpNMRiw+j26EC0GsIhX5AQpvBNObfcJ8ck8n3HMQU9rIUQZJIvv8vzp5ss1IgkRe5Oj9minUi3rO6EiDbMvc1U5y/WM0JGeo8KzAZRY7A2vfmguWoszbU3N/35oEHNzG9+n5uDuem16Ks8NAerbEknkxUzGXLgsks5Y0a02BDVmI38DVo8I2Tc/T1EDL1s4HnUpJYnD73lKvOGTlOeGzRbciEPETT0VhmdzKiRUQyx9m+ICphO1cH05/kJf+k8HTI5DmkK4RxCVsvBUgh55Ayd7JcQdXud4dcQlw9z3Pem6sely0Y+pWE8I4SOby1vnZn7kGG2FmKdrVTIPBu2nHnLbGZDFfK92VheLMTSOaJfjfhoqSREX3CPfucUupzCgpO/nMN1FwuJ8v0i6y9CxizN6HHCozKXC9E5OidkxsqEznR+SKR+cZx+a0WsFJ8JbfqjtkYF9bp8xSRdLERnl450eUPK2HU75SFTzt3TXphPLcfcbuW06ku2te1YbupJPr7/oC6waXdKa9fzzLNCIvXsPeLyl8O2NMTlXK0YEtthPbRFv08UaIH24Pe/9YPYF0E71ELbJrWstdSOLRIt6afbflI/M2TBLh2rMW/UpsvuEyETznWKId/sUEv7cZrmISEldpzG9jahQM7v70LatqZCtmGaxmlCdnxWiJq49ucLuLvQmXXriZDRjBWDDiFBP01aWhj4cUCUBi3tIbDjIIkTO6RQS2yxC6mHfRki1+pJkPpBSOeFuI89OSOdZYsxotIQVeJ2eRZRmfIh62lf0L80qln0GxVygjaV0tr0sm79L8TXCCHXBiHXBiHXBiHX5u52/j1d/UA34IP66MOdo712nz7f0odqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF7ID2D6pgpcp3y+AAAAAElFTkSuQmCC",
+      "public": true
+    }
+  ]
+}

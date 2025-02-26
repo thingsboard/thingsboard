@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
 export class HEREMap extends LeafletMap {
-    constructor(ctx: WidgetContext, $container, options: WidgetUnitedMapSettings) {
+    constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
         const map = L.map($container, {
           doubleClickZoom: !this.options.disableDoubleClickZooming,

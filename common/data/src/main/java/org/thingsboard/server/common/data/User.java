@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,9 +33,9 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
-@ApiModel
+@Schema
 @EqualsAndHashCode(callSuper = true)
-public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId, NotificationRecipient {
+public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId, NotificationRecipient, HasVersion {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -50,6 +51,9 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
     private String lastName;
     @NoXss
     private String phone;
+
+    @Getter @Setter
+    private Long version;
 
     public User() {
         super();
@@ -68,10 +72,11 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
         this.phone = user.getPhone();
+        this.version = user.getVersion();
     }
 
 
-    @ApiModelProperty(position = 1, value = "JSON object with the User Id. " +
+    @Schema(description = "JSON object with the User Id. " +
             "Specify this field to update the device. " +
             "Referencing non-existing User Id will cause error. " +
             "Omit this field to create new customer.")
@@ -80,13 +85,13 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the user creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the user creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 3, value = "JSON object with the Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with the Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -95,7 +100,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.tenantId = tenantId;
     }
 
-    @ApiModelProperty(position = 4, value = "JSON object with the Customer Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with the Customer Id.", accessMode = Schema.AccessMode.READ_ONLY)
     public CustomerId getCustomerId() {
         return customerId;
     }
@@ -104,7 +109,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.customerId = customerId;
     }
 
-    @ApiModelProperty(position = 5, required = true, value = "Email of the user", example = "user@example.com")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Email of the user", example = "user@example.com")
     public String getEmail() {
         return email;
     }
@@ -113,14 +118,14 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.email = email;
     }
 
-    @ApiModelProperty(position = 6, accessMode = ApiModelProperty.AccessMode.READ_ONLY, value = "Duplicates the email of the user, readonly", example = "user@example.com")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "Duplicates the email of the user, readonly", example = "user@example.com")
     @Override
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return email;
     }
 
-    @ApiModelProperty(position = 7, required = true, value = "Authority", example = "SYS_ADMIN, TENANT_ADMIN or CUSTOMER_USER")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Authority", example = "SYS_ADMIN, TENANT_ADMIN or CUSTOMER_USER")
     public Authority getAuthority() {
         return authority;
     }
@@ -129,7 +134,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.authority = authority;
     }
 
-    @ApiModelProperty(position = 8, required = false, value = "First name of the user", example = "John")
+    @Schema(description = "First name of the user", example = "John")
     public String getFirstName() {
         return firstName;
     }
@@ -138,7 +143,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.firstName = firstName;
     }
 
-    @ApiModelProperty(position = 9, required = false, value = "Last name of the user", example = "Doe")
+    @Schema(description = "Last name of the user", example = "Doe")
     public String getLastName() {
         return lastName;
     }
@@ -147,7 +152,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.lastName = lastName;
     }
 
-    @ApiModelProperty(position = 10, required = false, value = "Phone number of the user", example = "38012345123")
+    @Schema(description = "Phone number of the user", example = "38012345123")
     public String getPhone() {
         return phone;
     }
@@ -156,7 +161,7 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
         this.phone = phone;
     }
 
-    @ApiModelProperty(position = 11, value = "Additional parameters of the user", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @Schema(description = "Additional parameters of the user", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
@@ -223,4 +228,5 @@ public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName,
     public boolean isCustomerUser() {
         return !isSystemAdmin() && !isTenantAdmin();
     }
+
 }

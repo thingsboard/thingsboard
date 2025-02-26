@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EventService } from '@app/core/http/event.service';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EntityTypeResource } from '@shared/models/entity-type.models';
-import { Observable } from 'rxjs';
+import { fromEvent, Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { Direction } from '@shared/models/page/sort-order';
 import { DialogService } from '@core/services/dialog.service';
@@ -40,8 +40,8 @@ import {
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
 import { isEqual, sortObjectKeys } from '@core/utils';
-import { historyInterval, MINUTE } from '@shared/models/time/time.models';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { DAY, historyInterval, MINUTE } from '@shared/models/time/time.models';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ChangeDetectorRef, EventEmitter, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
@@ -50,6 +50,10 @@ import {
   EventFilterPanelData,
   FilterEntityColumn
 } from '@home/components/event/event-filter-panel.component';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -58,6 +62,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   private filterParams: FilterEventBody = {};
   private filterColumns: FilterEntityColumn[] = [];
+  private readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
 
   set eventType(eventType: EventType | DebugEventType) {
     if (this.eventTypeValue !== eventType) {
@@ -87,13 +92,15 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
+              private store: Store<AppState>,
               public testButtonLabel?: string,
               private debugEventSelected?: EventEmitter<EventBody>) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
     this.useTimePageLink = true;
-    this.defaultTimewindowInterval = historyInterval(MINUTE * 15);
+    const defaultInterval = this.maxDebugModeDurationMinutes ? Math.min(this.maxDebugModeDurationMinutes * MINUTE, DAY) : DAY;
+    this.defaultTimewindowInterval = historyInterval(defaultInterval);
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = false;
@@ -457,19 +464,16 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       $event.stopPropagation();
     }
     const target = $event.target || $event.srcElement || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
-    config.maxHeight = '70vh';
-    config.height = 'min-content';
+    const config = new OverlayConfig({
+      panelClass: 'tb-panel-container',
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: true,
+      height: 'fit-content',
+      maxHeight: '65vh'
+    });
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(target as HTMLElement)
+      .withPositions(DEFAULT_OVERLAY_POSITIONS);
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
@@ -491,7 +495,11 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
     const componentRef = overlayRef.attach(new ComponentPortal(EventFilterPanelComponent,
       this.viewContainerRef, injector));
+    const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+      overlayRef.updatePosition();
+    });
     componentRef.onDestroy(() => {
+      resizeWindows$.unsubscribe();
       if (componentRef.instance.result && !isEqual(this.filterParams, componentRef.instance.result.filterParams)) {
         this.filterParams = componentRef.instance.result.filterParams;
         this.getTable().paginator.pageIndex = 0;

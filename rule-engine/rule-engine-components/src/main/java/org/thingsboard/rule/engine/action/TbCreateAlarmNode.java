@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,6 @@ import java.util.List;
                         "If alarm was not created, original message is returned. Otherwise new Message returned with type 'ALARM', Alarm object in 'msg' property and 'metadata' will contains one of those properties 'isNewAlarm/isExistingAlarm'. " +
                         "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
                         "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCreateAlarmConfig",
         icon = "notifications_active"
 )
@@ -176,7 +175,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 existingAlarm.setPropagateRelationTypes(relationTypes);
                 existingAlarm.setDetails(details);
             }
-            existingAlarm.setEndTs(System.currentTimeMillis());
+            existingAlarm.setEndTs(currentTimeMillis());
             return ctx.getAlarmService().updateAlarm(AlarmUpdateRequest.fromAlarm(existingAlarm));
         }, ctx.getDbCallbackExecutor());
         return Futures.transform(asyncUpdated, TbAlarmResult::fromAlarmResult, MoreExecutors.directExecutor());
@@ -207,6 +206,10 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             throw new RuntimeException("Used incorrect pattern or Alarm Severity not included in message");
         }
         return severity;
+    }
+
+    long currentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class TenantEdgeEventFetcher extends BasePageableEdgeEventFetcher<Tenant>
     private final TenantService tenantService;
 
     @Override
-    PageData<Tenant> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<Tenant> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         Tenant tenant = tenantService.findTenantById(tenantId);
         // returns PageData object to be in sync with other fetchers
         return new PageData<>(List.of(tenant), 1, 1, false);
@@ -48,4 +48,5 @@ public class TenantEdgeEventFetcher extends BasePageableEdgeEventFetcher<Tenant>
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.TENANT,
                 EdgeEventActionType.UPDATED, entity.getId(), null);
     }
+
 }

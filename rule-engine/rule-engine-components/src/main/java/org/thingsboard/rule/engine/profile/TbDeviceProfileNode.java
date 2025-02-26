@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -36,6 +37,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
@@ -52,12 +54,12 @@ import java.util.concurrent.TimeUnit;
         name = "device profile",
         customRelations = true,
         relationTypes = {"Alarm Created", "Alarm Updated", "Alarm Severity Updated", "Alarm Cleared", "Success", "Failure"},
+        version = 1,
         configClazz = TbDeviceProfileNodeConfiguration.class,
         nodeDescription = "Process device messages based on device profile settings",
         nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. The output relation type is either " +
                 "'Alarm Created', 'Alarm Updated', 'Alarm Severity Updated' and 'Alarm Cleared' or simply 'Success' if no alarms were affected.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbDeviceProfileConfig"
+        configDirective = "tbActionNodeDeviceProfileConfig"
 )
 public class TbDeviceProfileNode implements TbNode {
 
@@ -174,7 +176,14 @@ public class TbDeviceProfileNode implements TbNode {
     }
 
     protected void scheduleAlarmHarvesting(TbContext ctx, TbMsg msg) {
-        TbMsg periodicCheck = TbMsg.newMsg(TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG, ctx.getTenantId(), msg != null ? msg.getCustomerId() : null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        CustomerId customerId = msg != null ? msg.getCustomerId() : null;
+        TbMsg periodicCheck = TbMsg.newMsg()
+                .type(TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG)
+                .originator(ctx.getTenantId())
+                .customerId(customerId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         ctx.tellSelf(periodicCheck, TimeUnit.MINUTES.toMillis(1));
     }
 
@@ -199,7 +208,12 @@ public class TbDeviceProfileNode implements TbNode {
     }
 
     protected void onProfileUpdate(DeviceProfile profile) {
-        ctx.tellSelf(TbMsg.newMsg(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG, ctx.getTenantId(), TbMsgMetaData.EMPTY, profile.getId().getId().toString()), 0L);
+        ctx.tellSelf(TbMsg.newMsg()
+                .type(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG)
+                .originator(ctx.getTenantId())
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(profile.getId().getId().toString())
+                .build(), 0L);
     }
 
     private void onDeviceUpdate(DeviceId deviceId, DeviceProfile deviceProfile) {
@@ -208,7 +222,12 @@ public class TbDeviceProfileNode implements TbNode {
         if (deviceProfile != null) {
             msgData.put("deviceProfileId", deviceProfile.getId().getId().toString());
         }
-        ctx.tellSelf(TbMsg.newMsg(TbMsgType.DEVICE_UPDATE_SELF_MSG, ctx.getTenantId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(msgData)), 0L);
+        ctx.tellSelf(TbMsg.newMsg()
+                .type(TbMsgType.DEVICE_UPDATE_SELF_MSG)
+                .originator(ctx.getTenantId())
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(JacksonUtil.toString(msgData))
+                .build(), 0L);
     }
 
     protected void invalidateDeviceProfileCache(DeviceId deviceId, String deviceJson) {
@@ -241,4 +260,25 @@ public class TbDeviceProfileNode implements TbNode {
             ctx.removeRuleNodeStateForEntity(deviceId);
         }
     }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                String persistAlarmRulesState = "persistAlarmRulesState";
+                String fetchAlarmRulesStateOnStart = "fetchAlarmRulesStateOnStart";
+                if (oldConfiguration.has(persistAlarmRulesState)) {
+                    if (!oldConfiguration.get(persistAlarmRulesState).asBoolean()) {
+                        hasChanges = true;
+                        ((ObjectNode) oldConfiguration).put(fetchAlarmRulesStateOnStart, false);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
 }

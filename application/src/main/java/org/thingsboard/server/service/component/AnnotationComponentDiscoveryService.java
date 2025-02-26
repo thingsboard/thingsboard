@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.service.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,19 +31,17 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
-import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
-import org.thingsboard.rule.engine.api.TbVersionedNode;
 import org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode;
 import org.thingsboard.rule.engine.filter.TbOriginatorTypeSwitchNode;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 
-import javax.annotation.PostConstruct;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,15 +88,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             try {
                 var clazz = Class.forName(clazzName);
                 RuleNode annotation = clazz.getAnnotation(RuleNode.class);
-                boolean versioned = false;
-                if (annotation.version() > 0) { // No need to process nodes that has version = 0;
-                    if (TbVersionedNode.class.isAssignableFrom(clazz)) {
-                        versioned = true;
-                    } else {
-                        log.error("RuleNode [{}] has version {} but does not implement TbVersionedNode interface! Any update procedures for this rule node will be skipped!", clazzName, annotation.version());
-                    }
-                }
-                ruleNodeClasses.put(clazzName, new RuleNodeClassInfo(clazz, annotation, versioned));
+                ruleNodeClasses.put(clazzName, new RuleNodeClassInfo(clazz, annotation));
             } catch (Exception e) {
                 log.warn("Failed to create instance of rule node type: {} due to: ", clazzName, e);
             }
@@ -194,10 +185,11 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             scannedComponent.setType(type);
             Class<?> clazz = def.getClazz();
             RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
-            scannedComponent.setConfigurationVersion(def.isVersioned() ? def.getCurrentVersion() : 0);
+            scannedComponent.setConfigurationVersion(def.getCurrentVersion());
             scannedComponent.setName(ruleNodeAnnotation.name());
             scannedComponent.setScope(ruleNodeAnnotation.scope());
             scannedComponent.setClusteringMode(ruleNodeAnnotation.clusteringMode());
+            scannedComponent.setHasQueueName(ruleNodeAnnotation.hasQueueName());
             NodeDefinition nodeDefinition = prepareNodeDefinition(clazz, ruleNodeAnnotation);
             ObjectNode configurationDescriptor = JacksonUtil.newObjectNode();
             JsonNode node = JacksonUtil.valueToTree(nodeDefinition);

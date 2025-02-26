@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,14 +41,14 @@ import {
 } from '@home/pages/rulechain/rulechain-routing.module';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
+import { MenuId } from '@core/services/menu.models';
 
 const routes: Routes = [
   {
     path: 'edgeManagement',
     data: {
       breadcrumb: {
-        label: 'edge.management',
-        icon: 'settings_input_antenna'
+        menuId: MenuId.edge_management
       }
     },
     children: [
@@ -64,8 +64,7 @@ const routes: Routes = [
         path: 'instances',
         data: {
           breadcrumb: {
-            label: 'edge.instances',
-            icon: 'router'
+            menuId: MenuId.edges
           }
         },
         children: [
@@ -292,6 +291,7 @@ const routes: Routes = [
                   import: false,
                   ruleChainType: RuleChainType.EDGE
                 },
+                loadChildren: () => import('../rulechain/rulechain-page.module').then(m => m.RuleChainPageModule),
                 resolve: {
                   ruleChain: RuleChainResolver,
                   ruleChainMetaData: RuleChainMetaDataResolver,
@@ -307,8 +307,7 @@ const routes: Routes = [
         path: 'ruleChains',
         data: {
           breadcrumb: {
-            label: 'edge.rulechain-templates',
-            icon: 'settings_ethernet'
+            menuId: MenuId.rulechain_templates
           }
         },
         children: [
@@ -338,6 +337,7 @@ const routes: Routes = [
               import: false,
               ruleChainType: RuleChainType.EDGE
             },
+            loadChildren: () => import('../rulechain/rulechain-page.module').then(m => m.RuleChainPageModule),
             resolve: {
               ruleChain: RuleChainResolver,
               ruleChainMetaData: RuleChainMetaDataResolver,
@@ -360,6 +360,7 @@ const routes: Routes = [
               import: true,
               ruleChainType: RuleChainType.EDGE
             },
+            loadChildren: () => import('../rulechain/rulechain-page.module').then(m => m.RuleChainPageModule),
             resolve: {
               ruleNodeComponents: RuleNodeComponentsResolver,
               tooltipster: TooltipsterResolver

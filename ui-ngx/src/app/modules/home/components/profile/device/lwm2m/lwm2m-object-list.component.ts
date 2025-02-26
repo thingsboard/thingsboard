@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ import { distinctUntilChanged, filter, mergeMap, share, tap } from 'rxjs/operato
 import { ObjectLwM2M, PAGE_SIZE_LIMIT } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Direction } from '@shared/models/page/sort-order';
-import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isObject, isString } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-list',
@@ -90,12 +91,16 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       objectsList: [this.objectsList],
       objectLwm2m: ['']
     });
-    this.lwm2mListFormGroup.valueChanges.subscribe((value) => {
-      let formValue = null;
-      if (this.lwm2mListFormGroup.valid) {
-        formValue = value.objectsList;
+    this.lwm2mListFormGroup.get('objectsList').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((value) => {
+      if (!value.length || (value.length && isObject(value[0]))) {
+        let formValue = null;
+        if (this.lwm2mListFormGroup.valid) {
+          formValue = value;
+        }
+        this.propagateChange(formValue);
       }
-      this.propagateChange(formValue);
     });
   }
 
@@ -185,7 +190,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   private fetchListObjects = (searchText: string): Observable<Array<ObjectLwM2M>> =>  {
     this.searchText = searchText;
     const pageLink = new PageLink(PAGE_SIZE_LIMIT, 0, this.searchText, {
-      property: 'id',
+      property: 'resourceKey',
       direction: Direction.ASC
     });
     return this.deviceProfileService.getLwm2mObjectsPage(pageLink);

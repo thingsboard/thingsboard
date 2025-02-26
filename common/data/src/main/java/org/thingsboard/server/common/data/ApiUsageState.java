@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenantId {
+public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenantId, HasVersion {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -37,9 +37,11 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
     private ApiUsageStateValue dbStorageState;
     private ApiUsageStateValue reExecState;
     private ApiUsageStateValue jsExecState;
+    private ApiUsageStateValue tbelExecState;
     private ApiUsageStateValue emailExecState;
     private ApiUsageStateValue smsExecState;
     private ApiUsageStateValue alarmExecState;
+    private Long version;
 
     public ApiUsageState() {
         super();
@@ -57,9 +59,11 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         this.dbStorageState = ur.getDbStorageState();
         this.reExecState = ur.getReExecState();
         this.jsExecState = ur.getJsExecState();
+        this.tbelExecState = ur.getTbelExecState();
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
+        this.version = ur.getVersion();
     }
 
     public boolean isTransportEnabled() {
@@ -78,15 +82,20 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         return !ApiUsageStateValue.DISABLED.equals(jsExecState);
     }
 
-    public boolean isEmailSendEnabled(){
+    public boolean isTbelExecEnabled() {
+        return !ApiUsageStateValue.DISABLED.equals(tbelExecState);
+    }
+
+    public boolean isEmailSendEnabled() {
         return !ApiUsageStateValue.DISABLED.equals(emailExecState);
     }
 
-    public boolean isSmsSendEnabled(){
+    public boolean isSmsSendEnabled() {
         return !ApiUsageStateValue.DISABLED.equals(smsExecState);
     }
 
     public boolean isAlarmCreationEnabled() {
         return alarmExecState != ApiUsageStateValue.DISABLED;
     }
+
 }

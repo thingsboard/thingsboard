@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.settings.StarredDashboardInfo;
 import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserDao;
@@ -81,6 +82,9 @@ public class UserControllerTest extends AbstractControllerTest {
     @Autowired
     private UserDao userDao;
 
+    @Autowired
+    private DeviceService deviceService;
+
     static class Config {
         @Bean
         @Primary
@@ -109,6 +113,7 @@ public class UserControllerTest extends AbstractControllerTest {
         Assert.assertEquals(email, savedUser.getEmail());
 
         User foundUser = doGet("/api/user/" + savedUser.getId().getId().toString(), User.class);
+        foundUser.setAdditionalInfo(savedUser.getAdditionalInfo());
         Assert.assertEquals(foundUser, savedUser);
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundUser, foundUser,
@@ -261,6 +266,7 @@ public class UserControllerTest extends AbstractControllerTest {
         User savedUser = doPost("/api/user", user, User.class);
         User foundUser = doGet("/api/user/" + savedUser.getId().getId().toString(), User.class);
         Assert.assertNotNull(foundUser);
+        foundUser.setAdditionalInfo(savedUser.getAdditionalInfo());
         Assert.assertEquals(savedUser, foundUser);
     }
 
@@ -275,7 +281,7 @@ public class UserControllerTest extends AbstractControllerTest {
         user.setTenantId(tenantId);
         user.setEmail(TENANT_ADMIN_EMAIL);
 
-        String msgError = "User with email '" + TENANT_ADMIN_EMAIL + "'  already present in database";
+        String msgError = "User with email '" + TENANT_ADMIN_EMAIL + "' already present in database!";
         doPost("/api/user", user)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
@@ -376,7 +382,7 @@ public class UserControllerTest extends AbstractControllerTest {
         //here created a new tenant despite already created on AbstractWebTest and then delete the tenant properly on the last line
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant with many admins");
-        Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Tenant savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         TenantId tenantId = savedTenant.getId();
@@ -418,8 +424,7 @@ public class UserControllerTest extends AbstractControllerTest {
         assertThat(tenantAdmins).as("admins list size").hasSameSizeAs(loadedTenantAdmins);
         assertThat(tenantAdmins).as("admins list content").isEqualTo(loadedTenantAdmins);
 
-        doDelete("/api/tenant/" + tenantId.getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(tenantId);
 
         pageLink = new PageLink(33);
         pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",
@@ -665,7 +670,7 @@ public class UserControllerTest extends AbstractControllerTest {
         List<UserId> expectedCustomerUserIds = new ArrayList<>();
         expectedCustomerUserIds.add(customerUserId);
         for (int i = 0; i < 45; i++) {
-            User customerUser = createCustomerUser( customerId);
+            User customerUser = createCustomerUser(customerId);
             customerUser.setEmail(email + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
             User user = doPost("/api/user", customerUser, User.class);
             expectedCustomerUserIds.add(user.getId());
@@ -738,6 +743,43 @@ public class UserControllerTest extends AbstractControllerTest {
         loadedUserIds.sort(userIdComparator);
 
         Assert.assertEquals(expectedCustomerUserIds, loadedUserIds);
+    }
+
+    @Test
+    public void testGetUsersForDeletedAlarmOriginator() throws Exception {
+        loginTenantAdmin();
+
+        String email = "testEmail1";
+        for (int i = 0; i < 45; i++) {
+            User customerUser = createCustomerUser(customerId);
+            customerUser.setEmail(email + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
+            doPost("/api/user", customerUser, User.class);
+        }
+
+        Device device = new Device();
+        device.setName("testDevice");
+        device.setCustomerId(customerId);
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        Alarm alarm = createTestAlarm(savedDevice);
+
+        deviceService.deleteDevice(tenantId, savedDevice.getId());
+
+        List<UserId> loadedUserIds = new ArrayList<>();
+        PageLink pageLink = new PageLink(33, 0);
+        PageData<UserEmailInfo> pageData;
+        do {
+            pageData = doGetTypedWithPageLink("/api/users/assign/" + alarm.getId().getId().toString() + "?",
+                    new TypeReference<>() {}, pageLink);
+            loadedUserIds.addAll(pageData.getData().stream().map(UserEmailInfo::getId)
+                    .collect(Collectors.toList()));
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Assert.assertEquals(1, loadedUserIds.size());
+        Assert.assertEquals(tenantAdminUserId, loadedUserIds.get(0));
     }
 
     @Test
@@ -952,8 +994,8 @@ public class UserControllerTest extends AbstractControllerTest {
         List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
         List<UserEmailInfo> expectedUserInfos = customerUsersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
-                customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
-                customerUser.getLastName() == null ? "" : customerUser.getLastName()))
+                        customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
+                        customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
         usersInfo.sort(userDataIdComparator);
 
@@ -1005,8 +1047,8 @@ public class UserControllerTest extends AbstractControllerTest {
         List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
         List<UserEmailInfo> expectedUserInfos = usersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
-                customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
-                customerUser.getLastName() == null ? "" : customerUser.getLastName()))
+                        customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
+                        customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
         usersInfo.sort(userDataIdComparator);
 
@@ -1068,13 +1110,14 @@ public class UserControllerTest extends AbstractControllerTest {
 
     private List<UserEmailInfo> getUsersInfo(PageLink pageLink) throws Exception {
         List<UserEmailInfo> loadedCustomerUsers = new ArrayList<>();
-        PageData<UserEmailInfo> pageData = null;
+        PageData<UserEmailInfo> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/users/info?", new TypeReference<>() {
             }, pageLink);
             loadedCustomerUsers.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
+                Assert.assertEquals(pageLink.getPageSize(), pageData.getData().size());
             }
         } while (pageData.hasNext());
         return loadedCustomerUsers;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,59 +36,15 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
     private final CacheManager cacheManager;
     private final Optional<RedisTemplate<String, Object>> redisTemplate;
 
-
     /**
      * Cleanup caches that can not deserialize anymore due to schema upgrade or data update using sql scripts.
      * Refer to SqlDatabaseUpgradeService and /data/upgrage/*.sql
      * to discover which tables were changed
      * */
     @Override
-    public void clearCache(String fromVersion) throws Exception {
-        switch (fromVersion) {
-            case "3.0.1":
-                log.info("Clear cache to upgrade from version 3.0.1 to 3.1.0 ...");
-                clearAllCaches();
-                //do not break to show explicit calls for next versions
-            case "3.1.1":
-                log.info("Clear cache to upgrade from version 3.1.1 to 3.2.0 ...");
-                clearCacheByName("devices");
-                clearCacheByName("deviceProfiles");
-                clearCacheByName("tenantProfiles");
-            case "3.2.2":
-                log.info("Clear cache to upgrade from version 3.2.2 to 3.3.0 ...");
-                clearCacheByName("devices");
-                clearCacheByName("deviceProfiles");
-                clearCacheByName("tenantProfiles");
-                clearCacheByName("relations");
-                break;
-            case "3.3.2":
-                log.info("Clear cache to upgrade from version 3.3.2 to 3.3.3 ...");
-                clearAll();
-                break;
-            case "3.3.3":
-                log.info("Clear cache to upgrade from version 3.3.3 to 3.3.4 ...");
-                clearAll();
-                break;
-            case "3.3.4":
-                log.info("Clear cache to upgrade from version 3.3.4 to 3.4.0 ...");
-                clearAll();
-                break;
-            case "3.4.1":
-                log.info("Clear cache to upgrade from version 3.4.1 to 3.4.2 ...");
-                clearCacheByName("assets");
-                clearCacheByName("repositorySettings");
-                break;
-            case "3.4.2":
-                log.info("Clearing cache to upgrade from version 3.4.2 to 3.4.3 ...");
-                clearCacheByName("repositorySettings");
-                break;
-            case "3.4.4":
-                log.info("Clearing cache to upgrade from version 3.4.4 to 3.5.0");
-                clearAll();
-                break;
-            default:
-                //Do nothing, since cache cleanup is optional.
-        }
+    public void clearCache() throws Exception {
+        log.info("Clearing cache to upgrade.");
+        clearAll();
     }
 
     void clearAllCaches() {
@@ -106,11 +62,12 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
         if (redisTemplate.isPresent()) {
             log.info("Flushing all caches");
             redisTemplate.get().execute((RedisCallback<Object>) connection -> {
-                connection.flushAll();
+                connection.serverCommands().flushAll();
                 return null;
             });
             return;
         }
         cacheManager.getCacheNames().forEach(this::clearCacheByName);
     }
+
 }

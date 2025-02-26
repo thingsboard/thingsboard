@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,11 @@
 package org.thingsboard.server.dao.service;
 
 import com.google.common.collect.Iterators;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.metadata.ConstraintDescriptor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.validator.HibernateValidator;
@@ -30,11 +35,6 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.constraints.AssertTrue;
-import javax.validation.metadata.ConstraintDescriptor;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -100,7 +100,7 @@ public class ConstraintValidator {
     }
 
     private static ConstraintMapping getCustomConstraintMapping() {
-        ConstraintMapping constraintMapping = new DefaultConstraintMapping();
+        ConstraintMapping constraintMapping = new DefaultConstraintMapping(null);
         constraintMapping.constraintDefinition(NoXss.class).validatedBy(NoXssValidator.class);
         constraintMapping.constraintDefinition(Length.class).validatedBy(StringLengthValidator.class);
         return constraintMapping;

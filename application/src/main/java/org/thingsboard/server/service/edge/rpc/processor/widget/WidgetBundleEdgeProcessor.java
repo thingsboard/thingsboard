@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.util.List;
@@ -34,33 +36,36 @@ import java.util.List;
 @TbCoreComponent
 public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertWidgetsBundleEventToDownlink(EdgeEvent edgeEvent) {
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-                WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
+            case ADDED, UPDATED -> {
+                WidgetsBundle widgetsBundle = edgeCtx.getWidgetsBundleService().findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
                 if (widgetsBundle != null) {
-                    List<String> widgets = widgetTypeService.findWidgetFqnsByWidgetsBundleId(edgeEvent.getTenantId(), widgetsBundleId);
+                    List<String> widgets = edgeCtx.getWidgetTypeService().findWidgetFqnsByWidgetsBundleId(edgeEvent.getTenantId(), widgetsBundleId);
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                            widgetsBundleMsgConstructor.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = EdgeMsgConstructorUtils.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
-                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
-                        widgetsBundleMsgConstructor.constructWidgetsBundleDeleteMsg(widgetsBundleId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+            }
+            case DELETED -> {
+                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = EdgeMsgConstructorUtils.constructWidgetsBundleDeleteMsg(widgetsBundleId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
                         .build();
-                break;
+            }
         }
-        return downlinkMsg;
+        return null;
     }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.WIDGETS_BUNDLE;
+    }
+
 }

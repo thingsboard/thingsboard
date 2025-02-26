@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,22 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Table;
 import java.util.UUID;
 
 /**
@@ -41,9 +39,8 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.API_USAGE_STATE_TABLE_NAME)
-public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements BaseEntity<ApiUsageState> {
+public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> implements BaseEntity<ApiUsageState> {
 
     @Column(name = ModelConstants.API_USAGE_STATE_TENANT_ID_COLUMN)
     private UUID tenantId;
@@ -64,6 +61,9 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
     @Column(name = ModelConstants.API_USAGE_STATE_JS_EXEC_COLUMN)
     private ApiUsageStateValue jsExecState = ApiUsageStateValue.ENABLED;
     @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_TBEL_EXEC_COLUMN)
+    private ApiUsageStateValue tbelExecState = ApiUsageStateValue.ENABLED;
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.API_USAGE_STATE_EMAIL_EXEC_COLUMN)
     private ApiUsageStateValue emailExecState = ApiUsageStateValue.ENABLED;
     @Enumerated(EnumType.STRING)
@@ -77,10 +77,7 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
     }
 
     public ApiUsageStateEntity(ApiUsageState ur) {
-        if (ur.getId() != null) {
-            this.setUuid(ur.getId().getId());
-        }
-        this.setCreatedTime(ur.getCreatedTime());
+        super(ur);
         if (ur.getTenantId() != null) {
             this.tenantId = ur.getTenantId().getId();
         }
@@ -92,6 +89,7 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         this.dbStorageState = ur.getDbStorageState();
         this.reExecState = ur.getReExecState();
         this.jsExecState = ur.getJsExecState();
+        this.tbelExecState = ur.getTbelExecState();
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
@@ -111,9 +109,11 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         ur.setDbStorageState(dbStorageState);
         ur.setReExecState(reExecState);
         ur.setJsExecState(jsExecState);
+        ur.setTbelExecState(tbelExecState);
         ur.setEmailExecState(emailExecState);
         ur.setSmsExecState(smsExecState);
         ur.setAlarmExecState(alarmExecState);
+        ur.setVersion(version);
         return ur;
     }
 

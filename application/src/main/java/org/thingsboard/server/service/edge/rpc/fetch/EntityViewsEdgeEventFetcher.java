@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class EntityViewsEdgeEventFetcher extends BasePageableEdgeEventFetcher<En
     private final EntityViewService entityViewService;
 
     @Override
-    PageData<EntityView> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<EntityView> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
     }
 
@@ -44,4 +44,5 @@ public class EntityViewsEdgeEventFetcher extends BasePageableEdgeEventFetcher<En
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ENTITY_VIEW,
                 EdgeEventActionType.ADDED, entityView.getId(), null);
     }
+
 }

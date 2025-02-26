@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { ComponentStyle, Font } from '@shared/models/widget-settings.models';
+import { ComponentStyle, cssUnit, Font } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { FontSettingsPanelComponent } from '@home/components/widget/lib/settings/common/font-settings-panel.component';
@@ -49,6 +49,17 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
   @Input()
   @coerceBoolean()
   clearButton = false;
+
+  @Input()
+  @coerceBoolean()
+  autoScale = false;
+
+  @Input()
+  @coerceBoolean()
+  disabledLineHeight = false;
+
+  @Input()
+  forceSizeUnit: cssUnit;
 
   private modelValue: Font;
 
@@ -87,7 +98,10 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
       const ctx: any = {
         font: this.modelValue,
         initialPreviewStyle: this.initialPreviewStyle,
-        clearButton: this.clearButton
+        clearButton: this.clearButton,
+        autoScale: this.autoScale,
+        disabledLineHeight: this.disabledLineHeight,
+        forceSizeUnit: this.forceSizeUnit
       };
       if (isDefinedAndNotNull(this.previewText)) {
         const previewText = typeof this.previewText === 'string' ? this.previewText : this.previewText();

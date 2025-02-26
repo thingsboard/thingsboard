@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,32 +19,27 @@
   <div [ngSwitch]="transportType">
     <ng-template [ngSwitchCase]="deviceTransportType.DEFAULT">
       <tb-default-device-profile-transport-configuration
-        [required]="required"
         formControlName="configuration">
       </tb-default-device-profile-transport-configuration>
     </ng-template>
     <ng-template [ngSwitchCase]="deviceTransportType.MQTT">
       <tb-mqtt-device-profile-transport-configuration
-        [required]="required"
         formControlName="configuration">
       </tb-mqtt-device-profile-transport-configuration>
     </ng-template>
     <ng-template [ngSwitchCase]="deviceTransportType.COAP">
       <tb-coap-device-profile-transport-configuration
-        [required]="required"
         formControlName="configuration">
       </tb-coap-device-profile-transport-configuration>
     </ng-template>
     <ng-template [ngSwitchCase]="deviceTransportType.LWM2M">
       <tb-profile-lwm2m-device-transport-configuration
         [isAdd]="isAdd"
-        [required]="required"
         formControlName="configuration">
       </tb-profile-lwm2m-device-transport-configuration>
     </ng-template>
     <ng-template [ngSwitchCase]="deviceTransportType.SNMP">
       <tb-snmp-device-profile-transport-configuration
-        [required]="required"
         formControlName="configuration">
       </tb-snmp-device-profile-transport-configuration>
     </ng-template>

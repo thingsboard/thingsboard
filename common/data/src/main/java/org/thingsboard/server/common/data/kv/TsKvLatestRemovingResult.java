@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,22 @@ public class TsKvLatestRemovingResult {
     private String key;
     private TsKvEntry data;
     private boolean removed;
+    private Long version;
 
-    public TsKvLatestRemovingResult(TsKvEntry data) {
+    public TsKvLatestRemovingResult(String key, boolean removed) {
+        this(key, removed, null);
+    }
+
+    public TsKvLatestRemovingResult(TsKvEntry data, Long version) {
         this.key = data.getKey();
         this.data = data;
         this.removed = true;
+        this.version = version;
     }
 
-    public TsKvLatestRemovingResult(String key, boolean removed) {
+    public TsKvLatestRemovingResult(String key, boolean removed, Long version) {
         this.key = key;
         this.removed = removed;
+        this.version = version;
     }
 }

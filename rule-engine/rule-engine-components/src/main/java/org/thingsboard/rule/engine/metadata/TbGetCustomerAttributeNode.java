@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.util.TbPair;
                 "that is stored as customer attributes or telemetry data and used for dynamic message filtering, transformation, " +
                 "or actions such as alarm creation if the threshold is exceeded.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
 public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<CustomerId> {
 

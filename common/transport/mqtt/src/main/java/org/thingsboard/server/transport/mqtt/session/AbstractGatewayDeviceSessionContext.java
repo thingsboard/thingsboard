@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttMessage;
+import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -34,9 +36,11 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Created by ashvayka on 19.01.17.
  */
+@ToString(callSuper = true)
 @Slf4j
 public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGatewaySessionHandler> extends MqttDeviceAwareSessionContext implements SessionMsgListener {
 
+    @Getter
     protected final T parent;
     private final TransportService transportService;
 
@@ -59,6 +63,8 @@ public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGate
                 .setDeviceType(deviceInfo.getDeviceType())
                 .setGwSessionIdMSB(parent.getSessionId().getMostSignificantBits())
                 .setGwSessionIdLSB(parent.getSessionId().getLeastSignificantBits())
+                .setGatewayIdMSB(parent.gateway.getDeviceId().getId().getMostSignificantBits())
+                .setGatewayIdLSB(parent.gateway.getDeviceId().getId().getLeastSignificantBits())
                 .setDeviceProfileIdMSB(deviceInfo.getDeviceProfileId().getId().getMostSignificantBits())
                 .setDeviceProfileIdLSB(deviceInfo.getDeviceProfileId().getId().getLeastSignificantBits())
                 .build());

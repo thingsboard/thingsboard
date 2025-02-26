@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,20 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
+import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -57,7 +62,7 @@ public class TenantIdLoader {
         HasTenantId tenantEntity;
         switch (entityType) {
             case TENANT:
-                return new TenantId(id);
+                return TenantId.fromUUID(id);
             case CUSTOMER:
                 tenantEntity = ctx.getCustomerService().findCustomerById(ctxTenantId, new CustomerId(id));
                 break;
@@ -140,6 +145,21 @@ public class TenantIdLoader {
                 return ctxTenantId;
             case NOTIFICATION_RULE:
                 tenantEntity = ctx.getNotificationRuleService().findNotificationRuleById(ctxTenantId, new NotificationRuleId(id));
+                break;
+            case QUEUE_STATS:
+                tenantEntity = ctx.getQueueStatsService().findQueueStatsById(ctxTenantId, new QueueStatsId(id));
+                break;
+            case OAUTH2_CLIENT:
+                tenantEntity = ctx.getOAuth2ClientService().findOAuth2ClientById(ctxTenantId, new OAuth2ClientId(id));
+                break;
+            case DOMAIN:
+                tenantEntity = ctx.getDomainService().findDomainById(ctxTenantId, new DomainId(id));
+                break;
+            case MOBILE_APP:
+                tenantEntity = ctx.getMobileAppService().findMobileAppById(ctxTenantId, new MobileAppId(id));
+                break;
+            case MOBILE_APP_BUNDLE:
+                tenantEntity = ctx.getMobileAppBundleService().findMobileAppBundleById(ctxTenantId, new MobileAppBundleId(id));
                 break;
             default:
                 throw new RuntimeException("Unexpected entity type: " + entityId.getEntityType());

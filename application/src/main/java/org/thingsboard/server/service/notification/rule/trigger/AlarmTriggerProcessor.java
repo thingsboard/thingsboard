@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig.AlarmAction;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig.ClearRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmTrigger;
 
-import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;
 
 @Service
@@ -46,10 +46,10 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
             if (triggerConfig.getNotifyOn().contains(AlarmAction.CREATED)) {
                 return severityMatches(alarm, triggerConfig);
             }
-        }  else if (alarmUpdate.isSeverityChanged()) {
+        } else if (alarmUpdate.isSeverityChanged()) {
             if (triggerConfig.getNotifyOn().contains(AlarmAction.SEVERITY_CHANGED)) {
                 return severityMatches(alarmUpdate.getOld(), triggerConfig) || severityMatches(alarm, triggerConfig);
-            }  else {
+            } else {
                 // if we haven't yet sent notification about the alarm
                 return !severityMatches(alarmUpdate.getOld(), triggerConfig) && severityMatches(alarm, triggerConfig);
             }
@@ -111,6 +111,7 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
                 .acknowledged(alarmInfo.isAcknowledged())
                 .cleared(alarmInfo.isCleared())
                 .alarmCustomerId(alarmInfo.getCustomerId())
+                .dashboardId(alarmInfo.getDashboardId())
                 .build();
     }
 

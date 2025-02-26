@@ -1,0 +1,52 @@
+{
+  "fqn": "horizontal_co2_card",
+  "name": "Horizontal CO2 card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/horizontal_co2_card_system_widget_image.png",
+  "description": "Displays the latest CO2 level telemetry in a scalable horizontal layout.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 1,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        horizontal: true,\n        previewWidth: '420px',\n        previewHeight: '90px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'co2', label: 'CO2 level', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"CO2 level\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 160 - 80;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 400) {\\n\\tvalue = 400;\\n} else if (value > 1600) {\\n\\tvalue = 1600;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"horizontal\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"co2\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":600,\"color\":\"#3FA71A\"},{\"from\":600,\"to\":1000,\"color\":\"#80C32C\"},{\"from\":1000,\"to\":1500,\"color\":\"#F36900\"},{\"from\":1500,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":600,\"color\":\"#3FA71A\"},{\"from\":600,\"to\":1000,\"color\":\"#80C32C\"},{\"from\":1000,\"to\":1500,\"color\":\"#F36900\"},{\"from\":1500,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Horizontal CO2 card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"ppm\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "weather",
+    "environment",
+    "co2",
+    "carbon dioxide",
+    "carbon emission",
+    "carbon footprint",
+    "carbon output",
+    "carbon pollution",
+    "carbon capture",
+    "carbon offset",
+    "carbon reduction",
+    "carbon neutral",
+    "climate gas",
+    "fossil fuel emission",
+    "carbon cycle"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/horizontal_co2_card_system_widget_image.png",
+      "title": "\"Horizontal CO2 card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "horizontal_co2_card_system_widget_image.png",
+      "publicResourceKey": "51EsWGIY3Qk23Yo47KLwZzuqLc8r70yi",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAllBMVEUAAADf39/f39/g4ODg4ODf39/////k5OSAwyzg4OCQy0bQ6a/v9+Wv2XvIyMjf8Mqg0mD3+/LOzs6/4ZX09PT5+flYWFiIxznY7L3b29u3t7fV1dXCwsK8vLzx8fHn5+fn9NiQkJDH5aN0dHS43Yitra2YzlOenp6CgoJmZmY5OTnU1NS33Yio1m7t7e1KSkqn1m243YlPJUzgAAAABnRSTlMAIEDfv1C6kOEmAAADiElEQVR42u3a647aMBAFYNpuJyYX554QkkAId3ZZtu//cp1xUHoVpbS0gM4nYYaMf/jIGITIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOBfenf3BuL9B+veDT985BxWSncvsd4PnhJ6AOnTYEgPYYggNwZBbg2C3BoEuTUIcmvOC7KelUR6tpShltclfaXc0P93VpDNRh/0cqu3S70tdxOiuabJhCwiS551RhcJ29hxSfhtPKK+ul6Qw4RKK9Okt7zsLkidZevNWM+tw3Z9YZBYMbvpK7evwmsF2RHLSiozotmMJEg2Wx/0fDOeb5a7y4K4SvlNrGypbL95UQGRL9WbWlwrSKZppjdrWs4lhwmynWlNu4zm/HxZEEe98Zgrl15k5WGuQvKUw5XKyQjdMByNXFNR6Pgm/rEKfW6cCuI7js9THefraWWWZRNrlx0svcuyWoKU2XZNszm3OMqFQQITJKRAybFYqYYfslpbuccZ+1zxHhEH3Js3n/Q8qRqbx/ZUELUKchrlgf3t9k76oTfpny8T2qp1PymPOIhPZuwi8Ogfg6h45Kk8JB5iZ6UC6dmOwykW0jgZxCWXnIBij66tUWwVngryZq47HKQ1b76m67XHzXTPCxIodcU0siNvsa3iU0E8IjlB3dmhPY/SOzbs00GCVU6OeWuFbhvQ9bRmNbnyfxEk5rEL4v1OkJE57Dy69MkOWrqefb84eZjDLsfehAu/2ZG4myHdM4L8KPA4k5HQTySv319I6HwSYWFWM6JW7c2XCVEs1xqpjp9axxmeimWGci8KsgiCFzLGXZiEXgsy0pTSYSQXhpQS0XQ5pbQoukYqM3/NV8qLA2Wb0+J1pyXMTeUcg/QzPKl4Fl0URPRByjIqtI64qqgqqjodV1FZ6qh+jeqUKJomdV1QEplGpGv6tZF8FwSyGJerfEGskar98k3DL1euBHnhKgj/QpDn53Gio2nUBZk+F1zztWkRVdoEGRYFB9H1VCcct0roDKEb/lC5fSXr5ZfUnSSpTjgvyDIqqmhc6iqRHYnqohonYx3xtVdeeEQSJJUdmdZLaZRVRX/OBBEmyFV+WBXTE81nXfB4H0HS9FQzob+k6X+ajOIGP3XvDYLcGgS5NQhyax4oyNMD/M1OlDzxDQMP8Ed7yjcMDD5+GFr37sP7R7qpBgAAAAAAAAAAAAAAAAAAAAAAAAAAAOAf+QwerQBC9f0WmwAAAABJRU5ErkJggg==",
+      "public": true
+    }
+  ]
+}

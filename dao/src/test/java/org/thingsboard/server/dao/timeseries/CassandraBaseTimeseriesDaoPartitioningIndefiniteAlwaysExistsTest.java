@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.thingsboard.server.dao.nosql.CassandraBufferedRateWriteExecutor;
 
 import java.text.ParseException;
 
-import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
+import static org.apache.commons.lang3.time.DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
@@ -64,7 +64,7 @@ public class CassandraBaseTimeseriesDaoPartitioningIndefiniteAlwaysExistsTest {
     @Test
     public void testToPartitionsIndefinite() throws ParseException {
         assertThat(tsDao.getPartitioning()).isEqualTo("INDEFINITE");
-        assertThat(tsDao.toPartitionTs(ISO_DATETIME_TIME_ZONE_FORMAT.parse("2022-01-01T00:00:00Z").getTime())).isEqualTo(0L);
+        assertThat(tsDao.toPartitionTs(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-01-01T00:00:00Z").getTime())).isEqualTo(0L);
     }
 
 

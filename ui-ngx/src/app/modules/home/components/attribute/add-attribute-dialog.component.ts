@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
 
   submitted = false;
 
-  title = '';
+  isTelemetry = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -62,14 +62,18 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
       key: ['', [Validators.required, Validators.maxLength(255)]],
       value: [null, [Validators.required]]
     });
-    this.title = this.data.attributeScope === LatestTelemetry.LATEST_TELEMETRY ?
-      'attribute.add-telemetry' : 'attribute.add'
+    this.isTelemetry = this.data.attributeScope === LatestTelemetry.LATEST_TELEMETRY;
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
+  }
+
+  invalid(): boolean {
+    const value = this.attributeFormGroup.get('value').value;
+    return !Array.isArray(value) && this.attributeFormGroup.invalid;
   }
 
   cancel(): void {

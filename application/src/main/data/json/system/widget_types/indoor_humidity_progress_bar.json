@@ -1,0 +1,51 @@
+{
+  "fqn": "indoor_humidity_progress_bar",
+  "name": "Indoor humidity progress bar",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/indoor_humidity_progress_bar_system_widget_image.png",
+  "description": "Displays indoor humidity reading as a horizontal progress bar. Allows to configure value range, bar colors, and other settings.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-progress-bar-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-progress-bar-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.progressBarWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.progressBarWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '280px',\n        previewHeight: '180px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'humidity', label: 'humidity', type: 'timeseries' }];\n        }\n    };\n};\n\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-progress-bar-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-progress-bar-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"humidity\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 7;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"layout\":\"default\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":24,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":30,\"color\":\"#FFA600\"},{\"from\":30,\"to\":60,\"color\":\"#3FA71A\"},{\"from\":60,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"tickMin\":0,\"tickMax\":100,\"showTicks\":true,\"ticksFont\":{\"family\":\"Roboto\",\"size\":11,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"400\",\"lineHeight\":\"16px\"},\"ticksColor\":\"rgba(0,0,0,0.54)\",\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"barColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":30,\"color\":\"#FFA600\"},{\"from\":30,\"to\":60,\"color\":\"#3FA71A\"},{\"from\":60,\"to\":null,\"color\":\"#D81838\"}]},\"barBackground\":\"rgba(0, 0, 0, 0.04)\"},\"title\":\"Humidity\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"%\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"titleIcon\":\"mdi:water-percent\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"18px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null},\"titleColor\":\"rgba(0, 0, 0, 0.87)\"}"
+  },
+  "tags": [
+    "progress",
+    "environment",
+    "humidity",
+    "indoor",
+    "moisture",
+    "dampness",
+    "wetness",
+    "humidness",
+    "moistness",
+    "dew",
+    "water vapor",
+    "condensation",
+    "dew point",
+    "steaminess"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/indoor_humidity_progress_bar_system_widget_image.png",
+      "title": "\"Indoor humidity progress bar\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "indoor_humidity_progress_bar_system_widget_image.png",
+      "publicResourceKey": "jOb5rm71U1uqrGiQdK3ns7NDHF61Yefe",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAn1BMVEXg4ODf39/g4OAAAADg4ODf39/////g4OA/pxr29vYhISHx8fHn9OPHx8fj4+OQkJB0dHQ9PT2srKy6urpYWFhXsjfv7+9XsjaHyHC33qmGhoaBgYFvvVKenp6Xl5cvLy/z+vHP6caf04xit0TV1dWpqanc7tbLy8vD5LhmZmZLrCiTzn7CwsJ7w2E8PDzc3Nzm5ubU1NSxsbGr2ZtKSkqpy9RjAAAABnRSTlPvIL8Ar7DvmsykAAAD+0lEQVR42uzPwREAQAQDwDiGh7/+S702wmQ7WLg91HZhDsPkeg1DdB4wD5Un4EqkFCGjCBtF2CjCRhE2irBRhI0in9061nEQBqIo2r3iWTNjGzrLckPjhir//22bwK5YFBJTAZFykWyQqyOm8NV6A+miW7btzDDnKVAvOKE2JFBxr6fiRY50CyQzAZ0p9nUlCIYBCwTi5pddnQMRG4DBBGoiKQ2YFsAyAE0pesp0bjf6OFgHIJtDo+MhxghEGoSBhayPRQAGQAsfj0znoTBUxwIoRzQ6DlL9vbCGjIo0L36G9DToOEN+R6ufvhIaHQcJj7iGeEBYAWU/Q1gA+BUk06Yf2ei00VogfoHc9yeIY3C84X1XgziGJwh6ZkY0OgOSmYG8CUGgA+oa0rE0J+sUiDDkHLYhxhCNC6R2gCvs0egUCIwsdRuCRI7pDzKME8EfOlkLpJ1T9+YM/1I3QRR7u/DtV4UVrT4B0rMoWn0CRKJDs0+A7OgL+UJ+2J9jFABhIACC3XHFtaKCRfD/j5RArK/dwM4PZhdGaIzQGKExQmOExgiNERojNEZojNAYoTFCY4TGCI0RGiM0RmiM0PSRqopp1DKCqI3cmUdMby5PEHWROv/ItXfkY78OehwEgTAM3yaf2bkaIeEgkBCD8dT//98WW2jXw1Ib23Sa8urN0xNhUIUCMYj63EQSuwOZgJghXuir2AcZoIYMiVhIcHWIQ88FAswkdWTdgzCgKUMY8BGAYrokjFSFDFBUIBa5/iJR3gQSVA3iAL5C2MSZKfg8fq0huxDL2f8VCAOOCqQ0RmBcIYqCISVnFFcgCyKnEoR5c7CEFdRP86wViel/yIQ/bdabpRS7ExsmMe2GzErR2pIhKaWtE7O2anskVZbWDTAAY37uuddek4wypNJt/PaWWAGqPGDtaJKyTXZDyG3PETo50vN6y2g/hPQAICqma+OwDFL2e4bsK9gw0iY5315f9M/+ITWItBpEWg0irQaRVoNIq0Gk9QUQNjiUD90rehzicTDTvaSHIThcl/pJ91OvxyEGB/NnRvf2N8IehzKhSz0d88VT68NqEGk1yG97d6ziMAwDYNhp7/5ibsiBQYNCtYUshjR5/4e7a2nXQrpYTfWDd3140ChvBcRbTyC1t0Ljch0BMTO5D7QdIirYTNOyrgqMlcmYNcsg2yHLGUrzLxEFVMgDdYVx2g6ZRjeQ39srJSBeICowUF+EyJA5L7TsAbGZxZgN9LIdQtHeaNoDclG7Cta+L7wAIWe8JPeBPnuzv1cB8VZAvBUQbwXEWwHxVkC8FRBvBcRbAfFWQLy1I0hiF53SYQenp+HnO3VpB8en5Z9x7L5O7146dMc/B6Inq4uieH4AAAAASUVORK5CYII=",
+      "public": true
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,14 @@
  */
 package org.thingsboard.server.queue.provider;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -26,8 +31,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServ
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-
-import javax.annotation.PostConstruct;
 
 @Service
 @TbCoreComponent
@@ -39,8 +42,12 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> toTbCore;
     private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
+    private TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> toEdge;
+    private TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> toEdgeNotifications;
+    private TbQueueProducer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> toEdgeEvents;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
     private TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> toVersionControl;
+    private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeper;
 
     public TbCoreQueueProducerProvider(TbCoreQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -55,6 +62,10 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
         this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
         this.toVersionControl = tbQueueProvider.createVersionControlMsgProducer();
+        this.toHousekeeper = tbQueueProvider.createHousekeeperMsgProducer();
+        this.toEdge = tbQueueProvider.createEdgeMsgProducer();
+        this.toEdgeNotifications = tbQueueProvider.createEdgeNotificationsMsgProducer();
+        this.toEdgeEvents = tbQueueProvider.createEdgeEventMsgProducer();
     }
 
     @Override
@@ -91,4 +102,26 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     public TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> getTbVersionControlMsgProducer() {
         return toVersionControl;
     }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> getHousekeeperMsgProducer() {
+        return toHousekeeper;
+    }
+
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> getTbEdgeMsgProducer() {
+        return toEdge;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> getTbEdgeNotificationsMsgProducer() {
+        return toEdgeNotifications;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> getTbEdgeEventsMsgProducer() {
+        return toEdgeEvents;
+    }
+
 }

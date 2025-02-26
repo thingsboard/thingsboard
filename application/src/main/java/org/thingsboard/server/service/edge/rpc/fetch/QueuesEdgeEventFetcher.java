@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class QueuesEdgeEventFetcher extends BasePageableEdgeEventFetcher<Queue> 
     private final QueueService queueService;
 
     @Override
-    PageData<Queue> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<Queue> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return queueService.findQueuesByTenantId(tenantId, pageLink);
     }
 
@@ -44,4 +44,5 @@ public class QueuesEdgeEventFetcher extends BasePageableEdgeEventFetcher<Queue> 
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.QUEUE,
                 EdgeEventActionType.ADDED, queue.getId(), null);
     }
+
 }

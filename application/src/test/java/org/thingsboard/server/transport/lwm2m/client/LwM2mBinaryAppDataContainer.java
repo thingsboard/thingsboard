@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
-import org.eclipse.leshan.client.servers.ServerIdentity;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
@@ -27,8 +27,10 @@ import org.eclipse.leshan.core.response.WriteResponse;
 
 import javax.security.auth.Destroyable;
 import java.sql.Time;
+import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +87,8 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
                         fireResourceChange(0);
                         fireResourceChange(2);
                     }
-                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
+                    , 1, 1, TimeUnit.SECONDS); // 1 sec
+//                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
         } catch (Throwable e) {
             log.error("[{}]Throwable", e.toString());
             e.printStackTrace();
@@ -93,7 +96,7 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
     }
 
     @Override
-    public ReadResponse read(ServerIdentity identity, int resourceId) {
+    public ReadResponse read(LwM2mServer identity, int resourceId) {
         try {
             switch (resourceId) {
                 case 0:
@@ -118,21 +121,22 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
     }
 
     @Override
-    public WriteResponse write(ServerIdentity identity, boolean replace, int resourceId, LwM2mResource value) {
+    public WriteResponse write(LwM2mServer identity, boolean replace, int resourceId, LwM2mResource value) {
         log.info("Write on Device resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
         switch (resourceId) {
             case 0:
                 if (setData(value, replace)) {
+                    fireResourceChange(resourceId);
                     return WriteResponse.success();
                 } else {
-                    WriteResponse.badRequest("Invalidate value ...");
+                    return WriteResponse.badRequest("Invalidate value ...");
                 }
             case 1:
                 setPriority((Integer) (value.getValue() instanceof Long ? ((Long) value.getValue()).intValue() : value.getValue()));
                 fireResourceChange(resourceId);
                 return WriteResponse.success();
             case 2:
-                setTimestamp(((Date) value.getValue()).getTime());
+                setTimestamp();
                 fireResourceChange(resourceId);
                 return WriteResponse.success();
             case 3:
@@ -177,12 +181,15 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
         return this.description;
     }
 
-    private void setTimestamp(long time) {
-        this.timestamp = new Time(time);
+    private void setTimestamp() {
+        long currentTimeMillis = System.currentTimeMillis();
+        this.timestamp = new Time(currentTimeMillis);
     }
 
     private Time getTimestamp() {
-        return this.timestamp != null ? this.timestamp : new Time(new Date().getTime());
+        LocalTime localTime = LocalTime.ofInstant(Instant.now(), ZoneId.systemDefault());
+        this.timestamp = Time.valueOf(localTime);
+        return this.timestamp;
     }
 
     private boolean setData(LwM2mResource value, boolean replace) {

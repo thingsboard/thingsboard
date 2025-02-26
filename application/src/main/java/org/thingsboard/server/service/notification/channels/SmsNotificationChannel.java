@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class SmsNotificationChannel implements NotificationChannel<User, SmsDeli
             throw new RuntimeException("User does not have phone number");
         }
 
-        smsService.sendSms(recipient.getTenantId(), recipient.getCustomerId(), new String[]{phone}, processedTemplate.getBody());
+        smsService.sendSms(ctx.getTenantId(), null, new String[]{phone}, processedTemplate.getBody());
     }
 
     @Override

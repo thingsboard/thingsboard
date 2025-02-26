@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,44 +20,49 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertOtaPackageEventToDownlink(EdgeEvent edgeEvent) {
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
         OtaPackageId otaPackageId = new OtaPackageId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-                OtaPackage otaPackage = otaPackageService.findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
+            case ADDED, UPDATED -> {
+                OtaPackage otaPackage = edgeCtx.getOtaPackageService().findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
                 if (otaPackage != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    OtaPackageUpdateMsg otaPackageUpdateMsg =
-                            otaPackageMsgConstructor.constructOtaPackageUpdatedMsg(msgType, otaPackage);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    OtaPackageUpdateMsg otaPackageUpdateMsg = EdgeMsgConstructorUtils.constructOtaPackageUpdatedMsg(msgType, otaPackage);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
-                OtaPackageUpdateMsg otaPackageUpdateMsg =
-                        otaPackageMsgConstructor.constructOtaPackageDeleteMsg(otaPackageId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+            }
+            case DELETED -> {
+                OtaPackageUpdateMsg otaPackageUpdateMsg = EdgeMsgConstructorUtils.constructOtaPackageDeleteMsg(otaPackageId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
                         .build();
-                break;
+            }
         }
-        return downlinkMsg;
+        return null;
     }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.OTA_PACKAGE;
+    }
+
 }

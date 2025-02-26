@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Injectable, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterModule, Routes } from '@angular/router';
 
 import { Authority } from '@shared/models/authority.enum';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
@@ -28,7 +28,7 @@ import { Widget } from '@app/shared/models/widget.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 
 @Injectable()
-export class WidgetEditorDashboardResolver implements Resolve<Dashboard> {
+export class WidgetEditorDashboardResolver  {
 
   constructor(private dashboardService: DashboardService,
               private dashboardUtils: DashboardUtilsService,

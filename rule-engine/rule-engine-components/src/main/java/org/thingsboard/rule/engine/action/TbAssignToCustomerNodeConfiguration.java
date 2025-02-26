@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,20 @@
 package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TbAssignToCustomerNodeConfiguration extends TbAbstractCustomerActionNodeConfiguration implements NodeConfiguration<TbAssignToCustomerNodeConfiguration> {
 
     private boolean createCustomerIfNotExists;
 
     @Override
     public TbAssignToCustomerNodeConfiguration defaultConfiguration() {
-        TbAssignToCustomerNodeConfiguration configuration = new TbAssignToCustomerNodeConfiguration();
+        var configuration = new TbAssignToCustomerNodeConfiguration();
         configuration.setCustomerNamePattern("");
         configuration.setCreateCustomerIfNotExists(false);
-        configuration.setCustomerCacheExpiration(300);
         return configuration;
     }
 }

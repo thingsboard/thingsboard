@@ -1,0 +1,62 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="moduleRowFormGroup" class="tb-form-table-row tb-js-func-module-row">
+  <mat-form-field class="tb-inline-field tb-alias-field" appearance="outline" subscriptSizing="dynamic">
+    <input required matInput formControlName="alias" placeholder="{{ 'widget-config.set' | translate }}">
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'js-func.invalid-module-alias-name' | translate"
+              *ngIf="moduleRowFormGroup.get('alias').invalid && moduleRowFormGroup.get('alias').touched"
+              class="tb-error">
+      warning
+    </mat-icon>
+  </mat-form-field>
+  <tb-resource-autocomplete class="tb-module-link-field"
+                            #resourceAutocomplete
+                            formControlName="moduleLink"
+                            inlineField
+                            hideRequiredMarker required
+                            [subType]="ResourceSubType.MODULE"
+                            [allowAutocomplete]="true"
+                            placeholder="{{ 'widget-config.set' | translate }}">
+  </tb-resource-autocomplete>
+  <div class="tb-form-table-row-cell-buttons">
+    <div [tb-help-popup-async-content]="this.moduleRowFormGroup.get('moduleLink').value ? moduleDescription : null"
+         tb-help-popup-placement="top"
+         [tb-help-popup-style]="{marginTop: '8px'}"
+         help-icon-button-class=""
+         help-icon="info_outline"
+         help-opened-icon="info"
+         help-icon-tooltip="{{ 'js-func.show-module-info' | translate }}"></div>
+    <div [tb-help-popup-async-content]="this.moduleRowFormGroup.get('moduleLink').value ? moduleSourceCode : null"
+         tb-help-popup-placement="top"
+         [tb-help-popup-style]="{marginTop: '8px'}"
+         help-icon-button-class=""
+         help-icon="mdi:application-brackets-outline"
+         help-opened-icon="mdi:application-brackets"
+         help-icon-tooltip="{{ 'js-func.show-module-source-code' | translate }}"></div>
+    <button type="button"
+            mat-icon-button
+            (click)="moduleRemoved.emit()"
+            matTooltip="{{ 'js-func.remove-module' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,46 +19,50 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class WidgetTypeEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertWidgetTypeEventToDownlink(EdgeEvent edgeEvent) {
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
         WidgetTypeId widgetTypeId = new WidgetTypeId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-                WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(edgeEvent.getTenantId(), widgetTypeId);
+            case ADDED, UPDATED -> {
+                WidgetTypeDetails widgetTypeDetails = edgeCtx.getWidgetTypeService().findWidgetTypeDetailsById(edgeEvent.getTenantId(), widgetTypeId);
                 if (widgetTypeDetails != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    WidgetTypeUpdateMsg widgetTypeUpdateMsg =
-                            widgetTypeMsgConstructor.constructWidgetTypeUpdateMsg(msgType, widgetTypeDetails);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    WidgetTypeUpdateMsg widgetTypeUpdateMsg = EdgeMsgConstructorUtils.constructWidgetTypeUpdateMsg(msgType, widgetTypeDetails);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addWidgetTypeUpdateMsg(widgetTypeUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
-                WidgetTypeUpdateMsg widgetTypeUpdateMsg =
-                        widgetTypeMsgConstructor.constructWidgetTypeDeleteMsg(widgetTypeId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+            }
+            case DELETED -> {
+                WidgetTypeUpdateMsg widgetTypeUpdateMsg = EdgeMsgConstructorUtils.constructWidgetTypeDeleteMsg(widgetTypeId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addWidgetTypeUpdateMsg(widgetTypeUpdateMsg)
                         .build();
-                break;
+            }
         }
-        return downlinkMsg;
+        return null;
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.WIDGET_TYPE;
     }
 
 }

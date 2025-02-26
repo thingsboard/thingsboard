@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,7 +156,11 @@ public class RuleNodeTbelScriptEngine extends RuleNodeScriptEngine<TbelInvokeSer
         String newData = data != null ? data : msg.getData();
         TbMsgMetaData newMetadata = metadata != null ? new TbMsgMetaData(metadata) : msg.getMetaData().copy();
         String newMessageType = !StringUtils.isEmpty(messageType) ? messageType : msg.getType();
-        return TbMsg.transformMsg(msg, newMessageType, msg.getOriginator(), newMetadata, newData);
+        return msg.transform()
+                .type(newMessageType)
+                .metaData(newMetadata)
+                .data(newData)
+                .build();
     }
 
     private static <T> ListenableFuture<T> wrongResultType(Object result) {

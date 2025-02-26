@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -35,20 +35,22 @@ import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.Set;
 import java.util.UUID;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
-public class DashboardEdgeProcessor extends BaseDashboardProcessor {
+public class DashboardEdgeProcessor extends BaseDashboardProcessor implements DashboardProcessor {
 
+    @Override
     public ListenableFuture<Void> processDashboardMsgFromEdge(TenantId tenantId, Edge edge, DashboardUpdateMsg dashboardUpdateMsg) {
-        log.trace("[{}] executing processDashboardMsgFromEdge [{}] from edge [{}]", tenantId, dashboardUpdateMsg, edge.getName());
+        log.trace("[{}] executing processDashboardMsgFromEdge [{}] from edge [{}]", tenantId, dashboardUpdateMsg, edge.getId());
         DashboardId dashboardId = new DashboardId(new UUID(dashboardUpdateMsg.getIdMSB(), dashboardUpdateMsg.getIdLSB()));
         try {
-            edgeSynchronizationManager.getSync().set(true);
+            edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
             switch (dashboardUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
@@ -56,9 +58,9 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
                     saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg, edge);
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    Dashboard dashboardToDelete = dashboardService.findDashboardById(tenantId, dashboardId);
+                    Dashboard dashboardToDelete = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
                     if (dashboardToDelete != null) {
-                        dashboardService.unassignDashboardFromEdge(tenantId, dashboardId, edge.getId());
+                        edgeCtx.getDashboardService().unassignDashboardFromEdge(tenantId, dashboardId, edge.getId());
                     }
                     return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
@@ -73,23 +75,22 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
                 return Futures.immediateFailedFuture(e);
             }
         } finally {
-            edgeSynchronizationManager.getSync().remove();
+            edgeSynchronizationManager.getEdgeId().remove();
         }
     }
 
     private void saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, Edge edge) {
-        CustomerId customerId = safeGetCustomerId(dashboardUpdateMsg.getCustomerIdMSB(), dashboardUpdateMsg.getCustomerIdLSB());
-        boolean created = super.saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg, customerId);
+        boolean created = super.saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg, edge.getCustomerId());
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), dashboardId);
             pushDashboardCreatedEventToRuleEngine(tenantId, edge, dashboardId);
-            dashboardService.assignDashboardToEdge(tenantId, dashboardId, edge.getId());
+            edgeCtx.getDashboardService().assignDashboardToEdge(tenantId, dashboardId, edge.getId());
         }
     }
 
     private void pushDashboardCreatedEventToRuleEngine(TenantId tenantId, Edge edge, DashboardId dashboardId) {
         try {
-            Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
+            Dashboard dashboard = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
             String dashboardAsString = JacksonUtil.toString(dashboard);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
             pushEntityEventToRuleEngine(tenantId, dashboardId, null, TbMsgType.ENTITY_CREATED, dashboardAsString, msgMetaData);
@@ -98,42 +99,41 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor {
         }
     }
 
-    public DownlinkMsg convertDashboardEventToDownlink(EdgeEvent edgeEvent) {
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
         DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-            case ASSIGNED_TO_EDGE:
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
-                Dashboard dashboard = dashboardService.findDashboardById(edgeEvent.getTenantId(), dashboardId);
+            case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
+                Dashboard dashboard = edgeCtx.getDashboardService().findDashboardById(edgeEvent.getTenantId(), dashboardId);
                 if (dashboard != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    DashboardUpdateMsg dashboardUpdateMsg =
-                            dashboardMsgConstructor.constructDashboardUpdatedMsg(msgType, dashboard);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    DashboardUpdateMsg dashboardUpdateMsg = EdgeMsgConstructorUtils.constructDashboardUpdatedMsg(msgType, dashboard);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addDashboardUpdateMsg(dashboardUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
-            case UNASSIGNED_FROM_EDGE:
-                DashboardUpdateMsg dashboardUpdateMsg =
-                        dashboardMsgConstructor.constructDashboardDeleteMsg(dashboardId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+            }
+            case DELETED, UNASSIGNED_FROM_EDGE -> {
+                DashboardUpdateMsg dashboardUpdateMsg = EdgeMsgConstructorUtils.constructDashboardDeleteMsg(dashboardId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addDashboardUpdateMsg(dashboardUpdateMsg)
                         .build();
-                break;
+            }
         }
-        return downlinkMsg;
+        return null;
     }
 
     @Override
-    protected Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers) {
-        // do nothing on cloud
-        return assignedCustomers;
+    protected Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers) {
+        newAssignedCustomers.addAll(currentAssignedCustomers);
+        return newAssignedCustomers;
     }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.DASHBOARD;
+    }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,11 @@ public interface DeviceService extends EntityDaoService {
 
     Device findDeviceByTenantIdAndName(TenantId tenantId, String name);
 
-    Device saveDevice(Device device, boolean doValidate);
+    ListenableFuture<Device> findDeviceByTenantIdAndNameAsync(TenantId tenantId, String name);
 
     Device saveDevice(Device device);
+
+    Device saveDevice(Device device, boolean doValidate);
 
     Device saveDeviceWithAccessToken(Device device, String accessToken);
 
@@ -75,7 +77,7 @@ public interface DeviceService extends EntityDaoService {
 
     PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type, PageLink pageLink);
 
-    Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType otaPackageType);
+    long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType otaPackageType);
 
     ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds);
 
@@ -95,6 +97,7 @@ public interface DeviceService extends EntityDaoService {
 
     ListenableFuture<List<Device>> findDevicesByQuery(TenantId tenantId, DeviceSearchQuery query);
 
+    @Deprecated(since = "3.6.2", forRemoval = true)
     ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId);
 
     Device assignDeviceToTenant(TenantId tenantId, Device device);

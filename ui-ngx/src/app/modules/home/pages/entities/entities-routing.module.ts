@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import { NgModule } from '@angular/core';
 import { deviceRoutes } from '@home/pages/device/device-routing.module';
 import { assetRoutes } from '@home/pages/asset/asset-routing.module';
 import { entityViewRoutes } from '@home/pages/entity-view/entity-view-routing.module';
+import { gatewaysRoutes } from '@home/pages/gateways/gateways-routing.module';
 
 const routes: Routes = [
   {
@@ -41,7 +42,8 @@ const routes: Routes = [
       },
       ...deviceRoutes,
       ...assetRoutes,
-      ...entityViewRoutes
+      ...entityViewRoutes,
+      ...gatewaysRoutes
     ]
   }
 ];

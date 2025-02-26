@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import { ComponentFactory, ComponentFactoryResolver, Injectable, Type } from '@angular/core';
+import { Injectable, Type } from '@angular/core';
 import { deepClone } from '@core/utils';
 import { IStateControllerComponent } from '@home/components/dashboard-page/states/state-controller.models';
 
 export interface StateControllerData {
-  factory: ComponentFactory<IStateControllerComponent>;
+  component: Type<IStateControllerComponent>;
 }
 
 @Injectable()
@@ -29,13 +29,12 @@ export class StatesControllerService {
 
   statesControllerStates: {[stateControllerInstanceId: string]: any} = {};
 
-  constructor(private componentFactoryResolver: ComponentFactoryResolver) {
+  constructor() {
   }
 
   public registerStatesController(stateControllerId: string, stateControllerComponent: Type<IStateControllerComponent>): void {
-    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(stateControllerComponent);
     this.statesControllers[stateControllerId] = {
-      factory: componentFactory
+      component: stateControllerComponent
     };
   }
 

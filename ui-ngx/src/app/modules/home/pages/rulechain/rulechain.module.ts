@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,31 +21,14 @@ import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.comp
 import { RuleChainRoutingModule } from '@modules/home/pages/rulechain/rulechain-routing.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
-import {
-  AddRuleNodeDialogComponent,
-  AddRuleNodeLinkDialogComponent, CreateNestedRuleChainDialogComponent,
-  RuleChainPageComponent
-} from './rulechain-page.component';
 import { RuleNodeComponent } from '@home/pages/rulechain/rulenode.component';
 import { FC_NODE_COMPONENT_CONFIG } from 'ngx-flowchart';
-import { RuleNodeDetailsComponent } from './rule-node-details.component';
-import { RuleNodeLinkComponent } from './rule-node-link.component';
-import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component';
-import { RuleNodeConfigComponent } from './rule-node-config.component';
 
 @NgModule({
   declarations: [
     RuleChainComponent,
     RuleChainTabsComponent,
-    RuleChainPageComponent,
     RuleNodeComponent,
-    RuleNodeDetailsComponent,
-    RuleNodeConfigComponent,
-    LinkLabelsComponent,
-    RuleNodeLinkComponent,
-    AddRuleNodeLinkDialogComponent,
-    AddRuleNodeDialogComponent,
-    CreateNestedRuleChainDialogComponent
   ],
   providers: [
     {
@@ -53,13 +36,13 @@ import { RuleNodeConfigComponent } from './rule-node-config.component';
       useValue: {
         nodeComponentType: RuleNodeComponent
       }
-    }
+    },
   ],
   imports: [
     CommonModule,
     SharedModule,
     HomeComponentsModule,
-    RuleChainRoutingModule
+    RuleChainRoutingModule,
   ]
 })
 export class RuleChainModule { }

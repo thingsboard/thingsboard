@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import { Injectable, Type } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -23,19 +23,27 @@ import { PageData } from '@shared/models/page/page-data';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import {
   BaseWidgetType,
+  DeprecatedFilter,
   fullWidgetTypeFqn,
+  IWidgetSettingsComponent,
+  migrateWidgetTypeToDynamicForms,
+  WidgetSettingsComponent,
   WidgetType,
   widgetType,
   WidgetTypeDetails,
   WidgetTypeInfo,
   widgetTypesData
 } from '@shared/models/widget.models';
-import { TranslateService } from '@ngx-translate/core';
 import { toWidgetInfo, toWidgetTypeDetails, WidgetInfo } from '@app/modules/home/models/widget-component.models';
 import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActivationEnd, Router } from '@angular/router';
+import {
+  BasicWidgetConfigComponent,
+  IBasicWidgetConfigComponent
+} from '@home/components/widget/config/widget-config.component.models';
+import { ResourcesService } from '@core/services/resources.service';
 
 @Injectable({
   providedIn: 'root'
@@ -46,16 +54,17 @@ export class WidgetService {
   private systemWidgetsBundles: Array<WidgetsBundle>;
   private tenantWidgetsBundles: Array<WidgetsBundle>;
 
-  private widgetTypeInfosCache = new Map<string, Array<WidgetTypeInfo>>();
-
   private widgetsInfoInMemoryCache = new Map<string, WidgetInfo>();
 
   private loadWidgetsBundleCacheSubject: ReplaySubject<void>;
 
+  private basicWidgetSettingsComponentsMap: { [key: string]: Type<IBasicWidgetConfigComponent> } = {};
+  private widgetSettingsComponentsMap: { [key: string]: Type<IWidgetSettingsComponent> } = {};
+
   constructor(
     private http: HttpClient,
-    private translate: TranslateService,
-    private router: Router
+    private router: Router,
+    private resourcesService: ResourcesService,
   ) {
     this.router.events.pipe(filter(event => event instanceof ActivationEnd)).subscribe(
       () => {
@@ -86,14 +95,22 @@ export class WidgetService {
     );
   }
 
-  public getWidgetBundles(pageLink: PageLink, config?: RequestConfig): Observable<PageData<WidgetsBundle>> {
-    return this.http.get<PageData<WidgetsBundle>>(`/api/widgetsBundles${pageLink.toQuery()}`,
-      defaultHttpOptionsFromConfig(config));
+  public getWidgetBundles(pageLink: PageLink, fullSearch = false,
+                          tenantOnly = false, scadaFirst = false, config?: RequestConfig): Observable<PageData<WidgetsBundle>> {
+    return this.http.get<PageData<WidgetsBundle>>(
+      `/api/widgetsBundles${pageLink.toQuery()}&tenantOnly=${tenantOnly}&fullSearch=${fullSearch}&scadaFirst=${scadaFirst}`,
+      defaultHttpOptionsFromConfig(config)
+    );
   }
 
   public getWidgetsBundle(widgetsBundleId: string,
                           config?: RequestConfig): Observable<WidgetsBundle> {
     return this.http.get<WidgetsBundle>(`/api/widgetsBundle/${widgetsBundleId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public exportWidgetsBundle(widgetsBundleId: string,
+                          config?: RequestConfig): Observable<WidgetsBundle> {
+    return this.http.get<WidgetsBundle>(`/api/widgetsBundle/${widgetsBundleId}?inlineImages=true`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveWidgetsBundle(widgetsBundle: WidgetsBundle,
@@ -109,32 +126,20 @@ export class WidgetService {
   public updateWidgetsBundleWidgetTypes(widgetsBundleId: string, widgetTypeIds: Array<string>,
                                         config?: RequestConfig): Observable<void> {
     return this.http.post<void>(`/api/widgetsBundle/${widgetsBundleId}/widgetTypes`, widgetTypeIds,
-      defaultHttpOptionsFromConfig(config)).pipe(
-      tap(() => {
-        this.widgetTypeInfosCache.delete(widgetsBundleId);
-      })
-    );
+      defaultHttpOptionsFromConfig(config));
   }
 
   public updateWidgetsBundleWidgetFqns(widgetsBundleId: string, widgetTypeFqns: Array<string>,
                                        config?: RequestConfig): Observable<void> {
     return this.http.post<void>(`/api/widgetsBundle/${widgetsBundleId}/widgetTypeFqns`, widgetTypeFqns,
-      defaultHttpOptionsFromConfig(config)).pipe(
-      tap(() => {
-        this.widgetTypeInfosCache.delete(widgetsBundleId);
-      })
-    );
+      defaultHttpOptionsFromConfig(config));
   }
 
   public deleteWidgetsBundle(widgetsBundleId: string, config?: RequestConfig) {
-    return this.getWidgetsBundle(widgetsBundleId, config).pipe(
-      mergeMap((widgetsBundle) => this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`,
-          defaultHttpOptionsFromConfig(config)).pipe(
-          tap(() => {
-            this.invalidateWidgetsBundleCache();
-          })
-        )
-    ));
+    return this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`, defaultHttpOptionsFromConfig(config))
+      .pipe(
+        tap(() => this.invalidateWidgetsBundleCache())
+      );
   }
 
   public getBundleWidgetTypes(widgetsBundleId: string,
@@ -143,10 +148,14 @@ export class WidgetService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getBundleWidgetTypesDetails(widgetsBundleId: string,
-                                     config?: RequestConfig): Observable<Array<WidgetTypeDetails>> {
-    return this.http.get<Array<WidgetTypeDetails>>(`/api/widgetTypesDetails?widgetsBundleId=${widgetsBundleId}`,
-      defaultHttpOptionsFromConfig(config));
+  public exportBundleWidgetTypesDetails(widgetsBundleId: string,
+                                        includeResources = true,
+                                        config?: RequestConfig): Observable<Array<WidgetTypeDetails>> {
+    let url = `/api/widgetTypesDetails?widgetsBundleId=${widgetsBundleId}`
+    if (includeResources) {
+      url += '&includeResources=true';
+    }
+    return this.http.get<Array<WidgetTypeDetails>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getBundleWidgetTypeFqns(widgetsBundleId: string,
@@ -155,16 +164,27 @@ export class WidgetService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getBundleWidgetTypeInfos(widgetsBundleId: string,
-                                  config?: RequestConfig): Observable<Array<WidgetTypeInfo>> {
-    if (this.widgetTypeInfosCache.has(widgetsBundleId)) {
-      return of(this.widgetTypeInfosCache.get(widgetsBundleId));
-    } else {
-      return this.http.get<Array<WidgetTypeInfo>>(`/api/widgetTypesInfos?widgetsBundleId=${widgetsBundleId}`,
-        defaultHttpOptionsFromConfig(config)).pipe(
-          tap((res) => this.widgetTypeInfosCache.set(widgetsBundleId, res) )
-      );
+  public getBundleWidgetTypeInfosList(widgetsBundleId: string,
+                                      config?: RequestConfig): Observable<Array<WidgetTypeInfo>> {
+    return this.getBundleWidgetTypeInfos(new PageLink(1024), widgetsBundleId, false, DeprecatedFilter.ALL, null, config).pipe(
+      map((data) => data.data)
+    );
+  }
+
+  public getBundleWidgetTypeInfos(pageLink: PageLink,
+                                  widgetsBundleId: string,
+                                  fullSearch = false,
+                                  deprecatedFilter = DeprecatedFilter.ALL,
+                                  widgetTypes: Array<widgetType> = null,
+                                  config?: RequestConfig): Observable<PageData<WidgetTypeInfo>> {
+
+    let url =
+      `/api/widgetTypesInfos${pageLink.toQuery()}&widgetsBundleId=${widgetsBundleId}` +
+      `&fullSearch=${fullSearch}&deprecatedFilter=${deprecatedFilter}`;
+    if (widgetTypes && widgetTypes.length) {
+      url += `&widgetTypeList=${widgetTypes.join(',')}`;
     }
+    return this.http.get<PageData<WidgetTypeInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getWidgetType(fullFqn: string, config?: RequestConfig): Observable<WidgetType> {
@@ -175,8 +195,9 @@ export class WidgetService {
   public saveWidgetTypeDetails(widgetInfo: WidgetInfo,
                                id: WidgetTypeId,
                                createdTime: number,
+                               version: number,
                                config?: RequestConfig): Observable<WidgetTypeDetails> {
-    const widgetTypeDetails = toWidgetTypeDetails(widgetInfo, id, undefined, createdTime);
+    const widgetTypeDetails = toWidgetTypeDetails(widgetInfo, id, undefined, createdTime, version);
     return this.http.post<WidgetTypeDetails>('/api/widgetType', widgetTypeDetails,
       defaultHttpOptionsFromConfig(config)).pipe(
       tap((savedWidgetType) => {
@@ -197,6 +218,16 @@ export class WidgetService {
                            config?: RequestConfig): Observable<WidgetTypeDetails> {
     return this.http.get<WidgetTypeDetails>(`/api/widgetType/${widgetTypeId}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public exportWidgetType(widgetTypeId: string,
+                          includeResources = true,
+                          config?: RequestConfig): Observable<WidgetTypeDetails> {
+    let url = `/api/widgetType/${widgetTypeId}`;
+    if (includeResources) {
+      url += '?includeResources=true';
+    }
+    return this.http.get<WidgetTypeDetails>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getWidgetTypeInfoById(widgetTypeId: string,
@@ -224,10 +255,26 @@ export class WidgetService {
   }
 
   public getWidgetTypes(pageLink: PageLink, tenantOnly = false,
-                        fullSearch = false, config?: RequestConfig): Observable<PageData<WidgetTypeInfo>> {
-    return this.http.get<PageData<WidgetTypeInfo>>(
-        `/api/widgetTypes${pageLink.toQuery()}&tenantOnly=${tenantOnly}&fullSearch=${fullSearch}`,
-      defaultHttpOptionsFromConfig(config));
+                        fullSearch = false, scadaFirst = false,
+                        deprecatedFilter = DeprecatedFilter.ALL,
+                        widgetTypes: Array<widgetType> = null,
+                        config?: RequestConfig): Observable<PageData<WidgetTypeInfo>> {
+    let url =
+      `/api/widgetTypes${pageLink.toQuery()}&tenantOnly=${tenantOnly}&fullSearch=${fullSearch}
+      &scadaFirst=${scadaFirst}&deprecatedFilter=${deprecatedFilter}`;
+    if (widgetTypes && widgetTypes.length) {
+      url += `&widgetTypeList=${widgetTypes.join(',')}`;
+    }
+    return this.http.get<PageData<WidgetTypeInfo>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public addWidgetFqnToWidgetBundle(widgetsBundleId: string, fqn: string, config?: RequestConfig) {
+    return this.getBundleWidgetTypeFqns(widgetsBundleId, config).pipe(
+      mergeMap(widgetsBundleFqn => {
+        widgetsBundleFqn.push(fqn);
+        return this.updateWidgetsBundleWidgetFqns(widgetsBundleId, widgetsBundleFqn, config);
+      })
+    );
   }
 
   public getWidgetTemplate(widgetTypeParam: widgetType,
@@ -236,6 +283,7 @@ export class WidgetService {
     return this.getWidgetType(templateWidgetType.template.fullFqn,
       config).pipe(
         map((result) => {
+          result = migrateWidgetTypeToDynamicForms(result);
           const widgetInfo = toWidgetInfo(result);
           widgetInfo.fullFqn = undefined;
           return widgetInfo;
@@ -249,6 +297,30 @@ export class WidgetService {
 
   public putWidgetInfoToCache(widgetInfo: WidgetInfo) {
     this.widgetsInfoInMemoryCache.set(widgetInfo.fullFqn, widgetInfo);
+  }
+
+  public registerBasicWidgetConfigComponents(module: any) {
+    Object.assign(this.basicWidgetSettingsComponentsMap, this.resourcesService.extractComponentsFromModule<IBasicWidgetConfigComponent>(module, BasicWidgetConfigComponent));
+  }
+
+  public getBasicWidgetSettingsComponentBySelector(selector: string): Type<IBasicWidgetConfigComponent> {
+    return this.basicWidgetSettingsComponentsMap[selector];
+  }
+
+  public putBasicWidgetSettingsComponentToMap(selector: string, compType: Type<IBasicWidgetConfigComponent>) {
+    this.basicWidgetSettingsComponentsMap[selector] = compType;
+  }
+
+  public registerWidgetSettingsComponents(module: any) {
+    Object.assign(this.widgetSettingsComponentsMap, this.resourcesService.extractComponentsFromModule<IWidgetSettingsComponent>(module, WidgetSettingsComponent));
+  }
+
+  public getWidgetSettingsComponentTypeBySelector(selector: string): Type<IWidgetSettingsComponent> {
+    return this.widgetSettingsComponentsMap[selector];
+  }
+
+  public putWidgetSettingsComponentToMap(selector: string, compType: Type<IWidgetSettingsComponent>) {
+    this.widgetSettingsComponentsMap[selector] = compType;
   }
 
   private widgetTypeUpdated(updatedWidgetType: BaseWidgetType): void {
@@ -301,6 +373,5 @@ export class WidgetService {
     this.systemWidgetsBundles = undefined;
     this.tenantWidgetsBundles = undefined;
     this.loadWidgetsBundleCacheSubject = undefined;
-    this.widgetTypeInfosCache.clear();
   }
 }

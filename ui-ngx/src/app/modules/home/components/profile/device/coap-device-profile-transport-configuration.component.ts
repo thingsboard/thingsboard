@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,10 +15,19 @@
 ///
 
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validator,
+  Validators
+} from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   CoapDeviceProfileTransportConfiguration,
   coapDeviceTypeTranslationMap,
@@ -27,7 +36,6 @@ import {
   defaultRpcRequestSchema,
   defaultRpcResponseSchema,
   defaultTelemetrySchema,
-  DeviceProfileTransportConfiguration,
   DeviceTransportType,
   TransportPayloadType,
   transportPayloadTypeTranslationMap,
@@ -41,13 +49,20 @@ import { PowerMode } from '@home/components/profile/device/lwm2m/lwm2m-profile-c
   selector: 'tb-coap-device-profile-transport-configuration',
   templateUrl: './coap-device-profile-transport-configuration.component.html',
   styleUrls: ['./coap-device-profile-transport-configuration.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => CoapDeviceProfileTransportConfigurationComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => CoapDeviceProfileTransportConfigurationComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => CoapDeviceProfileTransportConfigurationComponent),
+      multi: true
+    }
+  ]
 })
-export class CoapDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class CoapDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 
   coapTransportDeviceTypes = Object.values(CoapTransportDeviceType);
   coapTransportDeviceTypeTranslations = coapDeviceTypeTranslationMap;
@@ -58,7 +73,6 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   coapTransportConfigurationFormGroup: UntypedFormGroup;
 
   private destroy$ = new Subject<void>();
-  private requiredValue: boolean;
 
   private transportPayloadTypeConfiguration = this.fb.group({
     transportPayloadType: [TransportPayloadType.JSON, Validators.required],
@@ -67,15 +81,6 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
     deviceRpcRequestProtoSchema: [defaultRpcRequestSchema, Validators.required],
     deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required]
   });
-
-  get required(): boolean {
-    return this.requiredValue;
-  }
-
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
 
   @Input()
   disabled: boolean;
@@ -178,12 +183,15 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
     }
   }
 
+  public validate(c: UntypedFormControl): ValidationErrors | null {
+    return (this.coapTransportConfigurationFormGroup.valid) ? null : {
+      valid: false,
+    };
+  }
+
   private updateModel() {
-    let configuration: DeviceProfileTransportConfiguration = null;
-    if (this.coapTransportConfigurationFormGroup.valid) {
-      configuration = this.coapTransportConfigurationFormGroup.value;
-      configuration.type = DeviceTransportType.COAP;
-    }
+    const configuration = this.coapTransportConfigurationFormGroup.value;
+    configuration.type = DeviceTransportType.COAP;
     this.propagateChange(configuration);
   }
 }

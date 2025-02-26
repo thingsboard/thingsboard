@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
+import { MenuId } from '@core/services/menu.models';
 
 export const vcRoutes: Routes = [
   {
@@ -29,8 +30,7 @@ export const vcRoutes: Routes = [
       auth: [Authority.TENANT_ADMIN],
       title: 'version-control.version-control',
       breadcrumb: {
-        label: 'version-control.version-control',
-        icon: 'history'
+        menuId: MenuId.version_control
       }
     }
   }

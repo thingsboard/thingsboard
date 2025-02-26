@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.transport.service;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -25,11 +24,10 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
@@ -42,7 +40,6 @@ public class DefaultTransportDeviceProfileCache implements TransportDeviceProfil
 
     private final Lock deviceProfileFetchLock = new ReentrantLock();
     private final ConcurrentMap<DeviceProfileId, DeviceProfile> deviceProfiles = new ConcurrentHashMap<>();
-    private final DataDecodingEncodingService dataDecodingEncodingService;
 
     private TransportService transportService;
 
@@ -52,19 +49,12 @@ public class DefaultTransportDeviceProfileCache implements TransportDeviceProfil
         this.transportService = transportService;
     }
 
-    public DefaultTransportDeviceProfileCache(DataDecodingEncodingService dataDecodingEncodingService) {
-        this.dataDecodingEncodingService = dataDecodingEncodingService;
-    }
-
     @Override
-    public DeviceProfile getOrCreate(DeviceProfileId id, ByteString profileBody) {
+    public DeviceProfile getOrCreate(DeviceProfileId id, TransportProtos.DeviceProfileProto proto) {
         DeviceProfile profile = deviceProfiles.get(id);
         if (profile == null) {
-            Optional<DeviceProfile> deviceProfile = dataDecodingEncodingService.decode(profileBody.toByteArray());
-            if (deviceProfile.isPresent()) {
-                profile = deviceProfile.get();
-                deviceProfiles.put(id, profile);
-            }
+            profile = ProtoUtils.fromProto(proto);
+            deviceProfiles.put(id, profile);
         }
         return profile;
     }
@@ -80,14 +70,10 @@ public class DefaultTransportDeviceProfileCache implements TransportDeviceProfil
     }
 
     @Override
-    public DeviceProfile put(ByteString profileBody) {
-        Optional<DeviceProfile> deviceProfile = dataDecodingEncodingService.decode(profileBody.toByteArray());
-        if (deviceProfile.isPresent()) {
-            put(deviceProfile.get());
-            return deviceProfile.get();
-        } else {
-            return null;
-        }
+    public DeviceProfile put(TransportProtos.DeviceProfileProto proto) {
+        DeviceProfile deviceProfile = ProtoUtils.fromProto(proto);
+        put(deviceProfile);
+        return deviceProfile;
     }
 
     @Override
@@ -107,14 +93,8 @@ public class DefaultTransportDeviceProfileCache implements TransportDeviceProfil
                         .setEntityIdLSB(id.getId().getLeastSignificantBits())
                         .build();
                 TransportProtos.GetEntityProfileResponseMsg entityProfileMsg = transportService.getEntityProfile(msg);
-                Optional<DeviceProfile> profileOpt = dataDecodingEncodingService.decode(entityProfileMsg.getData().toByteArray());
-                if (profileOpt.isPresent()) {
-                    profile = profileOpt.get();
-                    this.put(profile);
-                } else {
-                    log.warn("[{}] Can't find device profile: {}", id, entityProfileMsg.getData());
-                    throw new RuntimeException("Can't find device profile!");
-                }
+                profile = ProtoUtils.fromProto(entityProfileMsg.getDeviceProfile());
+                this.put(profile);
             } finally {
                 deviceProfileFetchLock.unlock();
             }

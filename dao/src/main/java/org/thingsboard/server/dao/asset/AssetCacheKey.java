@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Getter
@@ -29,6 +30,7 @@ import java.io.Serializable;
 @Builder
 public class AssetCacheKey implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 4196610233744512673L;
 
     private final TenantId tenantId;

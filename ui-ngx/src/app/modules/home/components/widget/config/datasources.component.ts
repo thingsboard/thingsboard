@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -31,7 +31,7 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
 import {
   Datasource,
   DatasourceType,
-  JsonSettingsSchema,
+  datasourceValid,
   WidgetConfigMode,
   widgetType
 } from '@shared/models/widget.models';
@@ -39,9 +39,11 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { deepClone } from '@core/utils';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { FormProperty } from '@shared/models/dynamic-form.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-datasources',
@@ -95,6 +97,18 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
   @Input()
   @coerceBoolean()
+  hideDatasourcesMode = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDatasourceLabel = false;
+
+  @Input()
+  @coerceBoolean()
+  displayDatasourceFilterForBasicMode = false;
+
+  @Input()
+  @coerceBoolean()
   hideDataKeyLabel = false;
 
   @Input()
@@ -137,7 +151,8 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   constructor(private fb: UntypedFormBuilder,
               private utils: UtilsService,
               public translate: TranslateService,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -165,7 +180,9 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
     this.datasourcesFormGroup = this.fb.group({
       datasources: this.fb.array([])
     });
-    this.datasourcesFormGroup.valueChanges.subscribe(
+    this.datasourcesFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.datasourcesUpdated(this.datasourcesFormGroup.get('datasources').value);
       }
@@ -231,7 +248,7 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
         }
       };
     }
-    if (this.hasAdditionalLatestDataKeys) {
+    if (this.hasAdditionalLatestDataKeys && !this.basicMode) {
       let valid = datasources.filter(datasource => datasource?.dataKeys?.length).length > 0;
       if (!valid) {
         this.timeseriesKeyError = true;
@@ -285,7 +302,8 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
     if (datasources && datasources.length) {
       datasourcesMode = datasources[0].type;
     }
-    if (datasourcesMode !== DatasourceType.device && datasourcesMode !== DatasourceType.entity) {
+    if (!this.hideDatasourcesMode
+      && datasourcesMode !== DatasourceType.device && datasourcesMode !== DatasourceType.entity) {
       datasourcesMode = DatasourceType.device;
     }
     return datasourcesMode;
@@ -304,6 +322,9 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   private datasourcesUpdated(datasources: Datasource[]) {
+    if (this.datasourcesOptional) {
+      datasources = datasources ? datasources.filter(d => datasourceValid(d)) : [];
+    }
     this.propagateChange(datasources);
   }
 
@@ -320,8 +341,9 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   public addDatasource(emitEvent = true) {
     let newDatasource: Datasource;
     if (this.widgetConfigComponent.functionsOnly) {
-      newDatasource = deepClone(this.utils.getDefaultDatasource(this.dataKeySettingsSchema.schema));
-      newDatasource.dataKeys = [this.dataKeysCallbacks.generateDataKey('Sin', DataKeyType.function, this.dataKeySettingsSchema)];
+      newDatasource = deepClone(this.utils.getDefaultDatasource(this.dataKeySettingsForm));
+      newDatasource.dataKeys = [this.dataKeysCallbacks.generateDataKey('Sin', DataKeyType.function, this.dataKeySettingsForm,
+        false, this.dataKeySettingsFunction)];
     } else {
       const type = this.basicMode ? this.datasourcesMode : DatasourceType.entity;
       newDatasource = { type,
@@ -334,8 +356,12 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
     this.datasourcesFormArray.push(this.fb.control(newDatasource, []), {emitEvent});
   }
 
-  private get dataKeySettingsSchema(): JsonSettingsSchema {
-    return this.widgetConfigComponent.modelValue?.dataKeySettingsSchema;
+  private get dataKeySettingsForm(): FormProperty[] {
+    return this.widgetConfigComponent.modelValue?.dataKeySettingsForm;
+  }
+
+  private get dataKeySettingsFunction(): DataKeySettingsFunction {
+    return this.widgetConfigComponent.modelValue?.dataKeySettingsFunction;
   }
 
   private get dataKeysCallbacks(): DataKeysCallbacks {

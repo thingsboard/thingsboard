@@ -1,0 +1,220 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="singleSwitchWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.single-switch.behavior</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
+      <tb-get-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
+                                    [valueType]="valueType.BOOLEAN"
+                                    trueLabel="{{ 'widgets.rpc-state.on' | translate }}"
+                                    falseLabel="{{ 'widgets.rpc-state.off' | translate }}"
+                                    stateLabel="{{ 'widgets.rpc-state.on' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="initialState"></tb-get-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-on-hint' | translate}}" translate>widgets.rpc-state.turn-on</div>
+      <tb-set-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.rpc-state.turn-on' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="onUpdateState"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-off-hint' | translate}}" translate>widgets.rpc-state.turn-off</div>
+      <tb-set-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.rpc-state.turn-off' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="offUpdateState"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
+      <tb-get-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
+                                    [valueType]="valueType.BOOLEAN"
+                                    stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="disabledState"></tb-get-value-action-settings>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-style</div>
+    <tb-image-cards-select rowHeight="2:1"
+                           [cols]="{columns: 3,
+                                    breakpoints: {
+                                      'lt-sm': 1,
+                                      'lt-md': 2
+                                    }}"
+                           label="{{ 'widgets.single-switch.layout' | translate }}" formControlName="layout">
+      <tb-image-cards-select-option *ngFor="let layout of singleSwitchLayouts"
+                                    [value]="layout"
+                                    [image]="singleSwitchLayoutImageMap.get(layout)">
+        {{ singleSwitchLayoutTranslationMap.get(layout) | translate }}
+      </tb-image-cards-select-option>
+    </tb-image-cards-select>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+        {{ 'widgets.single-switch.auto-scale' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
+        {{ 'widgets.single-switch.label' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="labelFont"
+                          [previewText]="singleSwitchWidgetSettingsForm.get('label').value">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="labelColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
+        {{ 'widgets.single-switch.icon' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-material-icon-select asBoxInput
+                                 iconClearButton
+                                 [color]="singleSwitchWidgetSettingsForm.get('iconColor').value?.color"
+                                 formControlName="icon">
+        </tb-material-icon-select>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="iconColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.single-switch.switch</div>
+    <div class="tb-form-row space-between column-xs">
+      <div>{{ 'widgets.single-switch.switch-color' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-3 lt-sm:justify-between">
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div translate>widgets.single-switch.on</div>
+          <tb-color-input asBoxInput
+                          formControlName="switchColorOn">
+          </tb-color-input>
+        </div>
+        <mat-divider vertical class="lt-sm:!hidden"></mat-divider>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div translate>widgets.single-switch.off</div>
+          <tb-color-input asBoxInput
+                          formControlName="switchColorOff">
+          </tb-color-input>
+        </div>
+        <mat-divider vertical class="lt-sm:!hidden"></mat-divider>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div translate>widgets.single-switch.disabled</div>
+          <tb-color-input asBoxInput
+                          formControlName="switchColorDisabled">
+          </tb-color-input>
+        </div>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div>{{ 'widgets.single-switch.tumbler-color' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-3 lt-sm:justify-between">
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div translate>widgets.single-switch.on</div>
+          <tb-color-input asBoxInput
+                          formControlName="tumblerColorOn">
+          </tb-color-input>
+        </div>
+        <mat-divider vertical class="lt-sm:!hidden"></mat-divider>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div translate>widgets.single-switch.off</div>
+          <tb-color-input asBoxInput
+                          formControlName="tumblerColorOff">
+          </tb-color-input>
+        </div>
+        <mat-divider vertical class="lt-sm:!hidden"></mat-divider>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div translate>widgets.single-switch.disabled</div>
+          <tb-color-input asBoxInput
+                          formControlName="tumblerColorDisabled">
+          </tb-color-input>
+        </div>
+      </div>
+    </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showOnLabel">
+        {{ 'widgets.single-switch.on-label' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="onLabel" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="onLabelFont"
+                          [previewText]="singleSwitchWidgetSettingsForm.get('onLabel').value">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="onLabelColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showOffLabel">
+        {{ 'widgets.single-switch.off-label' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="offLabel" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="offLabelFont"
+                          [previewText]="singleSwitchWidgetSettingsForm.get('offLabel').value">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="offLabelColor">
+        </tb-color-input>
+      </div>
+    </div>
+  </div>
+</ng-container>

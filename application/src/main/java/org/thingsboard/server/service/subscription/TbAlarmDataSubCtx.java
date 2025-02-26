@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,11 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         this.alarmsMap = new HashMap<>();
     }
 
+    @Override
+    public void clearSubscriptions() {
+        super.clearSubscriptions();
+    }
+
     public void fetchAlarms() {
         alarmInvocationAttempts++;
         log.trace("[{}] Fetching alarms: {}", cmdId, alarmInvocationAttempts);
@@ -177,7 +182,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
                 .updateProcessor((sub, update) -> sendWsMsg(sub.getSessionId(), update))
                 .ts(startTs)
                 .build();
-        localSubscriptionService.addSubscription(subscription);
+        localSubscriptionService.addSubscription(subscription, sessionRef);
     }
 
     @Override
@@ -341,8 +346,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             long startTs = System.currentTimeMillis() - query.getPageLink().getTimeWindow();
             newSubsList.forEach(entity -> createAlarmSubscriptionForEntity(query.getPageLink(), startTs, entity));
         }
-        subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getSessionId(), subId));
-        subsToAdd.forEach(localSubscriptionService::addSubscription);
+        subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getTenantId(), getSessionId(), subId));
+        subsToAdd.forEach(subscription -> localSubscriptionService.addSubscription(subscription, sessionRef));
     }
 
     private void resetInvocationCounter() {
@@ -361,4 +366,5 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null, entitiesSortOrder);
         return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters());
     }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class DashboardsEdgeEventFetcher extends BasePageableEdgeEventFetcher<Das
     private final DashboardService dashboardService;
 
     @Override
-    PageData<DashboardInfo> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<DashboardInfo> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
     }
 
@@ -44,4 +44,5 @@ public class DashboardsEdgeEventFetcher extends BasePageableEdgeEventFetcher<Das
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.DASHBOARD,
                 EdgeEventActionType.ADDED, dashboardInfo.getId(), null);
     }
+
 }

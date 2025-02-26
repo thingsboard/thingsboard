@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,30 +30,29 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.asset.BaseAssetService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.UUID;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
-public class AssetEdgeProcessor extends BaseAssetProcessor {
+public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProcessor {
 
+    @Override
     public ListenableFuture<Void> processAssetMsgFromEdge(TenantId tenantId, Edge edge, AssetUpdateMsg assetUpdateMsg) {
-        log.trace("[{}] executing processAssetMsgFromEdge [{}] from edge [{}]", tenantId, assetUpdateMsg, edge.getName());
+        log.trace("[{}] executing processAssetMsgFromEdge [{}] from edge [{}]", tenantId, assetUpdateMsg, edge.getId());
         AssetId assetId = new AssetId(new UUID(assetUpdateMsg.getIdMSB(), assetUpdateMsg.getIdLSB()));
         try {
-            edgeSynchronizationManager.getSync().set(true);
+            edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
             switch (assetUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
@@ -61,9 +60,9 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
                     saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, edge);
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    Asset assetToDelete = assetService.findAssetById(tenantId, assetId);
+                    Asset assetToDelete = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
                     if (assetToDelete != null) {
-                        assetService.unassignAssetFromEdge(tenantId, assetId, edge.getId());
+                        edgeCtx.getAssetService().unassignAssetFromEdge(tenantId, assetId, edge.getId());
                     }
                     return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
@@ -78,18 +77,17 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
                 return Futures.immediateFailedFuture(e);
             }
         } finally {
-            edgeSynchronizationManager.getSync().remove();
+            edgeSynchronizationManager.getEdgeId().remove();
         }
     }
 
     private void saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, Edge edge) {
-        CustomerId customerId = safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB());
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, customerId);
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg);
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), assetId);
             pushAssetCreatedEventToRuleEngine(tenantId, edge, assetId);
-            assetService.assignAssetToEdge(tenantId, assetId, edge.getId());
+            edgeCtx.getAssetService().assignAssetToEdge(tenantId, assetId, edge.getId());
         }
         Boolean assetNameUpdated = resultPair.getSecond();
         if (assetNameUpdated) {
@@ -99,7 +97,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
 
     private void pushAssetCreatedEventToRuleEngine(TenantId tenantId, Edge edge, AssetId assetId) {
         try {
-            Asset asset = assetService.findAssetById(tenantId, assetId);
+            Asset asset = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
             String assetAsString = JacksonUtil.toString(asset);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, asset.getCustomerId());
             pushEntityEventToRuleEngine(tenantId, assetId, asset.getCustomerId(), TbMsgType.ENTITY_CREATED, assetAsString, msgMetaData);
@@ -108,41 +106,44 @@ public class AssetEdgeProcessor extends BaseAssetProcessor {
         }
     }
 
-    public DownlinkMsg convertAssetEventToDownlink(EdgeEvent edgeEvent, EdgeId edgeId, EdgeVersion edgeVersion) {
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
         AssetId assetId = new AssetId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-            case ASSIGNED_TO_EDGE:
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
-                Asset asset = assetService.findAssetById(edgeEvent.getTenantId(), assetId);
-                if (asset != null && !BaseAssetService.TB_SERVICE_QUEUE.equals(asset.getType())) {
+            case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
+                Asset asset = edgeCtx.getAssetService().findAssetById(edgeEvent.getTenantId(), assetId);
+                if (asset != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    AssetUpdateMsg assetUpdateMsg =
-                            assetMsgConstructor.constructAssetUpdatedMsg(msgType, asset);
+                    AssetUpdateMsg assetUpdateMsg = EdgeMsgConstructorUtils.constructAssetUpdatedMsg(msgType, asset);
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAssetUpdateMsg(assetUpdateMsg);
                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(msgType)) {
-                        AssetProfile assetProfile = assetProfileService.findAssetProfileById(edgeEvent.getTenantId(), asset.getAssetProfileId());
-                        assetProfile = checkIfAssetProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, assetProfile, edgeVersion);
-                        builder.addAssetProfileUpdateMsg(assetProfileMsgConstructor.constructAssetProfileUpdatedMsg(msgType, assetProfile));
+                        AssetProfile assetProfile = edgeCtx.getAssetProfileService().findAssetProfileById(edgeEvent.getTenantId(), asset.getAssetProfileId());
+                        builder.addAssetProfileUpdateMsg(EdgeMsgConstructorUtils.constructAssetProfileUpdatedMsg(msgType, assetProfile));
                     }
-                    downlinkMsg = builder.build();
+                    return builder.build();
                 }
-                break;
-            case DELETED:
-            case UNASSIGNED_FROM_EDGE:
-                AssetUpdateMsg assetUpdateMsg =
-                        assetMsgConstructor.constructAssetDeleteMsg(assetId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+            }
+            case DELETED, UNASSIGNED_FROM_EDGE -> {
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addAssetUpdateMsg(assetUpdateMsg)
+                        .addAssetUpdateMsg(EdgeMsgConstructorUtils.constructAssetDeleteMsg(assetId))
                         .build();
-                break;
+            }
         }
-        return downlinkMsg;
+        return null;
     }
+
+    @Override
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg) {
+        CustomerId customerUUID = asset.getCustomerId() != null ? asset.getCustomerId() : customerId;
+        asset.setCustomerId(customerUUID);
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.ASSET;
+    }
+
 }

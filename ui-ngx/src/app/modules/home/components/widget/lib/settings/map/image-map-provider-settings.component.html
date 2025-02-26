@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 -->
 <section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
-  <tb-image-input label="{{ 'widgets.maps.image-map-background' | translate }}"
+  <tb-gallery-image-input label="{{ 'widgets.maps.image-map-background' | translate }}"
                   formControlName="mapImageUrl">
-  </tb-image-input>
+  </tb-gallery-image-input>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.image-map-background-from-entity-attribute</legend>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="!flex flex-col gt-xs:flex-row gt-xs:gap-2">
+      <mat-form-field class="flex-1">
         <mat-label translate>widgets.maps.image-url-source-entity-alias</mat-label>
         <input matInput type="text"
                placeholder="{{ 'entity.entity-alias' | translate }}"
@@ -44,7 +44,7 @@
           </mat-option>
         </mat-autocomplete>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="flex-1">
         <mat-label translate>widgets.maps.image-url-source-entity-attribute</mat-label>
         <input matInput type="text"
                placeholder="{{ 'entity.key-name' | translate }}"

@@ -1,0 +1,40 @@
+{
+  "fqn": "horizontal_pressure_card",
+  "name": "Horizontal pressure card",
+  "deprecated": false,
+  "image": "tb-image;/api/images/system/horizontal_pressure_card_system_widget_image.png",
+  "description": "Displays the latest pressure telemetry in a scalable horizontal layout.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 1,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        horizontal: true,\n        previewWidth: '420px',\n        previewHeight: '90px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'pressure', label: 'Pressure', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Pressure\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 80 - 40;\\nif (value < 980) {\\n\\tvalue = 980;\\n} else if (value > 1040) {\\n\\tvalue = 1040;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"horizontal\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"compress\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":1000,\"color\":\"#D81838\"},{\"from\":1000,\"to\":1020,\"color\":\"#80C32C\"},{\"from\":1020,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":1000,\"color\":\"#D81838\"},{\"from\":1000,\"to\":1020,\"color\":\"#80C32C\"},{\"from\":1020,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Horizontal pressure card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"hPa\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "tags": [
+    "weather",
+    "environment",
+    "barometry"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/horizontal_pressure_card_system_widget_image.png",
+      "title": "\"Horizontal pressure card\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "horizontal_pressure_card_system_widget_image.png",
+      "publicResourceKey": "0ZoCJWezliQ21MaeLSuEhM7fuuHEIkRK",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAolBMVEUAAADf39/f39/g4ODg4ODf39/////k5OTYGDjg4ODri5v64ub1xc3nboLdNVHwqLT98fPOzs5YWFjz8/O3t7faJkXx8fH5+fnb29vCwsK8vLziUmnV1dXHx8fkYHbn5+f409rIyMjzt8HpfY9mZmarq6t0dHTiUmrfQ13umqiQkJCCgoJKSko6Ojrt7e3tmajsi5z39/faJkTgRF3pfY4hISGGGYADAAAABnRSTlMAIEDfv1C6kOEmAAADqUlEQVR42u3ai1LaQBiGYar2z89uzgdIYgKEcBJBrW3v/9a6WUCgUiTMlAnM90hCTHCyr7Aggy0AAAAAAAAAAAAAAAAAAAAAAAAAAACAS/p29XTG3b1x7dr331WH8YOuXmDctR4CugE/HlptuglthDQMQpoGIU2DkKY5HOJKujaHQyy+upJDIc6bxaagrfF8blDDHQqxOVJfQ/rgj/NlZnQ6VOUYHb2otVoZ1eUs5vrqVXycaOCYq31CmLQmWGx+wFGGgzoh0mZmQVt+TqPQX+TPI7/zPFlk88kyn+SGb/xeGP7o+YyKMmKqvLFiS50xZbY2Z2fb/TvEYs2Wp4RsSwTt8Be+T35mLMejsT9JO3O16BCf5qPxkmpyZ6yQItk2ByVPq46ILaca5CNbcjBj8Tmk5zivM5VYY7LLJ9rl59XKMJZ52MlzP83y0XgS6pDnSZ5TTdIWziqk5FJ1RazGZrNDml2NdMj2R4g7HEodopMidlaPQnk8RIodw/0Q0g+t0cKYj/xwvBxVIcZiNKH65CrkUc/EGQ/UyC2S27GZPN2E9Gzmd3MToq/klJW3oyEm77DoL529Zbvv/BBzvS65F20mgCvNn+xsQlg4PZ5+hDzyE/W4NJ2I5bEQ19whqZ7zQ9TClrB5uh68Gu0m5JcaFHMVYpnm0OJIkhAuqRrnjHvkAiFCz5aBfvq1ondzd7KvQrSouoX7Wlo2O3XniHKBkGrL2gzO5NnnkJ7jOLrviaPZowqp+6yl/KcQPXA92fUDRa2HrjMkhflziKAVl1luo794HXmjHQEdELz8vSOoHfLKvWrbrram+rzS5Xc1ygHb/w6R/K6jnVNe2fdKQh2jLi8xad0uddtetaNNXfV9f9ynbhyvDqgdwYkhrq2nuFhv/WSrGqAtyojF4RCtuu2UvwxxV39rOXshWebFReGprYSSOEm7YeJlWeGlL16qRu71gzSNKfD0Aa9ITwvRv7Oo1Fs9Zi5ddXpVwdETHQkZ2MxTi8ujIYoQFps9dz/EC4PC63urkH4Wq221rx97SaFD2nGsQoqwXwQqNwnoRK50P21JSV+Q8qz3I2MvTrwwK5IgVCFeGidhEBae2veS9gsVp0K61T3ST8fVgSxJ6AyXf4cY9+nfsiKmy9MhtXW7xw4GdIpGhDQRQpoGIU2DkKZBSNO0Ww838DE7UfDQujNu4IP2H8Zdq/X9vm1cu/u7W/qnGgAAAAAAAAAAAAAAAAAAAAAAAAAAAIAL+QMW1wDljmkjjQAAAABJRU5ErkJggg==",
+      "public": true
+    }
+  ]
+}

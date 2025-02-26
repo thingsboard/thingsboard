@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.account;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 
 @EqualsAndHashCode(callSuper = true)
 @Data

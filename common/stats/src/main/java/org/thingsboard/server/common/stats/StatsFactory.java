@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package org.thingsboard.server.common.stats;
 import io.micrometer.core.instrument.Timer;
 
 public interface StatsFactory {
-    StatsCounter createStatsCounter(String key, String statsName);
+
+    StatsCounter createStatsCounter(String key, String statsName, String... otherTags);
 
     DefaultCounter createDefaultCounter(String key, String... tags);
 
@@ -27,4 +28,7 @@ public interface StatsFactory {
     MessagesStats createMessagesStats(String key);
 
     Timer createTimer(String key, String... tags);
+
+    StatsTimer createTimer(StatsType type, String name, String... tags);
+
 }

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
     limitations under the License.
 
 -->
-<div [formGroup]="scriptLangFormGroup" fxLayout="row" fxLayoutAlign="center">
+<div [formGroup]="scriptLangFormGroup" class="flex flex-row items-stretch justify-center">
   <mat-button-toggle-group class="tb-script-lang-toggle-group"
-                           style="width: 320px;"
-                           formControlName="scriptLang" aria-label="Script language">
-    <mat-button-toggle fxFlex value="{{ scriptLanguage.TBEL }}">{{ 'rulenode.script-lang-tbel' | translate }}</mat-button-toggle>
-    <mat-button-toggle fxFlex value="{{ scriptLanguage.JS }}">{{ 'rulenode.script-lang-java-script' | translate }}</mat-button-toggle>
+                           formControlName="scriptLang"
+                           aria-label="Script language">
+    <mat-button-toggle class="flex-1" value="{{ scriptLanguage.TBEL }}">{{ 'rulenode.script-lang-tbel' | translate }}</mat-button-toggle>
+    <mat-button-toggle class="flex-1" value="{{ scriptLanguage.JS }}">
+      {{ 'rulenode.script-lang-java-script' | translate }}
+    </mat-button-toggle>
   </mat-button-toggle-group>
 </div>

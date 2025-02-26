@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ export enum ActionType {
   ALARM_ACK = 'ALARM_ACK',
   ALARM_CLEAR = 'ALARM_CLEAR',
   ALARM_ASSIGNED = 'ALARM_ASSIGNED',
+  ALARM_DELETE = 'ALARM_DELETE',
   ALARM_UNASSIGNED = 'ALARM_UNASSIGNED',
   ADDED_COMMENT = 'ADDED_COMMENT',
   UPDATED_COMMENT = 'UPDATED_COMMENT',
@@ -91,6 +92,7 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.RELATIONS_DELETED, 'audit-log.type-relations-delete'],
     [ActionType.ALARM_ACK, 'audit-log.type-alarm-ack'],
     [ActionType.ALARM_CLEAR, 'audit-log.type-alarm-clear'],
+    [ActionType.ALARM_DELETE, 'audit-log.type-alarm-delete'],
     [ActionType.ALARM_ASSIGNED, 'audit-log.type-alarm-assign'],
     [ActionType.ALARM_UNASSIGNED, 'audit-log.type-alarm-unassign'],
     [ActionType.ADDED_COMMENT, 'audit-log.type-added-comment'],

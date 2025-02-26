@@ -39,8 +39,16 @@ An optional key/value object holding additional entity parameters depending on w
             containing <code>entity</code> field holding basic entity properties <br> (ex. <code>id</code>, <code>name</code>, <code>label</code>) and <code>data</code> field holding other entity attributes/timeseries declared in widget datasource configuration.
       </li>
     </ul>
-  </li>    
-  <li>Pie - Flot widget (<i>On slice click</i>) - <b>additionalParams:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/e264f7b8ddff05bda85c4833bf497f47f447496e/ui-ngx/src/app/modules/home/components/widget/lib/flot-widget.models.ts#L62" target="_blank">TbFlotPlotItem</a></code>:
+  </li>
+  <li>Pie (<i>On slice click</i>) - <b>additionalParams:</b> <code>LatestChartDataItem</code>:
+    <ul>
+      <li><b>additionalParams:</b> <code>LatestChartDataItem</code> - A 
+            data object of clicked pie slice 
+            containing <code>dataKey</code>, <code>datasource</code> and <code>value</code> fields.
+      </li>
+    </ul>
+  </li>
+  <li>Pie - Flot widget (deprecated) (<i>On slice click</i>) - <b>additionalParams:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/e264f7b8ddff05bda85c4833bf497f47f447496e/ui-ngx/src/app/modules/home/components/widget/lib/flot-widget.models.ts#L62" target="_blank">TbFlotPlotItem</a></code>:
     <ul>
       <li><b>additionalParams:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/e264f7b8ddff05bda85c4833bf497f47f447496e/ui-ngx/src/app/modules/home/components/widget/lib/flot-widget.models.ts#L62" target="_blank">TbFlotPlotItem</a></code> - A 
             <a href="https://github.com/thingsboard/thingsboard/blob/e264f7b8ddff05bda85c4833bf497f47f447496e/ui-ngx/src/app/modules/home/components/widget/lib/flot-widget.models.ts#L62" target="_blank">TbFlotPlotItem</a> object

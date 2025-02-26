@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.api;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rpc.Rpc;
+import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -30,6 +31,8 @@ public interface RuleEngineRpcService {
     void sendRpcReplyToDevice(String serviceId, UUID sessionId, int requestId, String body);
 
     void sendRpcRequestToDevice(RuleEngineDeviceRpcRequest request, Consumer<RuleEngineDeviceRpcResponse> consumer);
+
+    void sendRestApiCallReply(String serviceId, UUID requestId, TbMsg msg);
 
     Rpc findRpcById(TenantId tenantId, RpcId id);
 }

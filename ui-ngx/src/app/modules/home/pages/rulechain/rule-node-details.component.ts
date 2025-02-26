@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,26 +14,39 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
 import { Router } from '@angular/router';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
 import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { ServiceType } from '@shared/models/queue.models';
+import { takeUntil } from 'rxjs/operators';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-rule-node',
   templateUrl: './rule-node-details.component.html',
   styleUrls: ['./rule-node-details.component.scss']
 })
-export class RuleNodeDetailsComponent extends PageComponent implements OnInit, OnChanges {
+export class RuleNodeDetailsComponent extends PageComponent implements OnInit, OnChanges, OnDestroy {
 
   @ViewChild('ruleNodeConfigComponent') ruleNodeConfigComponent: RuleNodeConfigComponent;
 
@@ -63,9 +76,13 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   ruleNodeType = RuleNodeType;
   entityType = EntityType;
 
+  serviceType = ServiceType.TB_RULE_ENGINE;
+
   ruleNodeFormGroup: UntypedFormGroup;
 
-  private ruleNodeFormSubscription: Subscription;
+  readonly ruleChainDebugPerTenantLimitsConfiguration = getCurrentAuthState(this.store).ruleChainDebugPerTenantLimitsConfiguration;
+
+  private destroy$ = new Subject<void>();
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
@@ -75,14 +92,10 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   }
 
   private buildForm() {
-    if (this.ruleNodeFormSubscription) {
-      this.ruleNodeFormSubscription.unsubscribe();
-      this.ruleNodeFormSubscription = null;
-    }
     if (this.ruleNode) {
       this.ruleNodeFormGroup = this.fb.group({
         name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*'), Validators.maxLength(255)]],
-        debugMode: [this.ruleNode.debugMode, []],
+        debugSettings: [this.ruleNode.debugSettings],
         singletonMode: [this.ruleNode.singletonMode, []],
         configuration: [this.ruleNode.configuration, [Validators.required]],
         additionalInfo: this.fb.group(
@@ -91,9 +104,32 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
           }
         )
       });
-      this.ruleNodeFormSubscription = this.ruleNodeFormGroup.valueChanges.subscribe(() => {
-        this.updateRuleNode();
-      });
+
+      if (this.isAddQueue()) {
+        this.ruleNodeFormGroup.addControl('queueName', this.fb.control(this.ruleNode?.queueName ? this.ruleNode.queueName : null));
+        if (this.isSingleton()) {
+          if (!this.isSingletonEditAllowed()) {
+            this.ruleNodeFormGroup.get('singletonMode').disable({emitEvent: false});
+          }
+          if (!this.ruleNodeFormGroup.get('singletonMode').value) {
+            this.ruleNodeFormGroup.get('queueName').disable({emitEvent: false});
+          }
+          this.ruleNodeFormGroup.get('singletonMode').valueChanges.pipe(
+            takeUntil(this.destroy$)
+          ).subscribe(value => {
+            if (value) {
+              this.ruleNodeFormGroup.get('queueName').enable({emitEvent: false});
+            } else {
+              this.ruleNodeFormGroup.get('queueName').disable({emitEvent: false});
+            }
+          });
+        }
+      }
+
+      this.ruleNodeFormGroup.valueChanges.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(() => this.updateRuleNode());
+
     } else {
       this.ruleNodeFormGroup = this.fb.group({});
     }
@@ -114,6 +150,11 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     }
   }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
@@ -129,6 +170,15 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     this.ruleNodeConfigComponent.validate();
   }
 
+  onSingleModeChange($event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const singleModeControl = this.ruleNodeFormGroup.get('singletonMode');
+    singleModeControl.patchValue(!singleModeControl.value);
+    singleModeControl.markAsDirty();
+  }
+
   openRuleChain($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -141,6 +191,15 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
         this.router.navigateByUrl(`/ruleChains/${ruleChainId}`);
       }
     }
+  }
+
+  isAddQueue() {
+    return this.isSingleton() || this.ruleNode.component.hasQueueName;
+  }
+
+  isSingleton() {
+    return this.ruleNode.component.clusteringMode === ComponentClusteringMode.SINGLETON ||
+      this.ruleNode.component.clusteringMode === ComponentClusteringMode.USER_PREFERENCE;
   }
 
   isSingletonEditAllowed() {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
       tb-toast toastTarget="{{ toastTargetId }}"
       (ngSubmit)="saveForm()" novalidate autocomplete="off">
   <div class="tb-multiple-input-container" *ngIf="entityDetected && isAllParametersValid">
-    <fieldset *ngFor="let source of sources" [ngClass]="{'fields-group': settings.showGroupTitle}">
+    <fieldset *ngFor="let source of sources" [class.fields-group]="settings.showGroupTitle">
       <legend class="group-title" *ngIf="settings.showGroupTitle">{{ getGroupTitle(source.datasource) }}
       </legend>
       <div class="tb-multiple-input-layout"
@@ -36,7 +36,7 @@
                    type="text"
                    (focus)="key.isFocused = true; focusInputElement($event)"
                    (blur)="key.isFocused = false; inputChanged(source, key)">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
@@ -56,7 +56,7 @@
                    max="{{key.settings.maxValue}}"
                    (focus)="key.isFocused = true; focusInputElement($event)"
                    (blur)="key.isFocused = false; inputChanged(source, key)">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
@@ -82,7 +82,7 @@
               (focus)="key.isFocused = true; focusInputElement($event)"
               (blur)="key.isFocused = false; inputChanged(source, key)"
             />
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <button [disabled]="key.settings.isEditable === 'disabled' || key.settings.isEditable === 'readonly'"
@@ -91,7 +91,7 @@
                     (click)="openEditJSONDialog($event, key, source)">
               <mat-icon>open_in_new</mat-icon>
             </button>
-            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+            <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required') && !multipleInputFormGroup.get(key.formId).hasError('invalidJSON')">
               {{ getErrorMessageText(key.settings,'required') }}
             </mat-error>
             <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('invalidJSON')">
@@ -123,21 +123,43 @@
             <mat-label>{{key.label}}</mat-label>
             <mat-select formControlName="{{key.formId}}"
                         [required]="key.settings.required"
-                        (focus)="key.isFocused = true;"
-                        (selectionChange)="key.isFocused = false; inputChanged(source, key)">
+                        (openedChange)="key.isFocused = $event"
+                        (selectionChange)="inputChanged(source, key)">
               <mat-option *ngFor="let option of key.settings.selectOptions"
                           [value]="option.value"
                           [disabled]="key.settings.isEditable === 'readonly'">
                 {{ getCustomTranslationText(option.label ? option.label : option.value) }}
               </mat-option>
             </mat-select>
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
               {{ getErrorMessageText(key.settings, 'required') }}
             </mat-error>
           </mat-form-field>
+
+          <div *ngIf="key.settings.dataKeyValueType === 'radio'">
+            <mat-label>{{key.label}}</mat-label>
+            <mat-radio-group
+              [style]="{'display': 'grid', 'grid-template-columns': 'repeat(' + key.settings.radioColumns + ', 1fr)', 'column-gap': '5px', 'row-gap': '5px'}"
+              [labelPosition]="key.settings.radioLabelPosition"
+              (change)="inputChanged(source, key)"
+              formControlName="{{key.formId}}">
+                <mat-radio-button
+                  [style]="radioButtonSelectedColor(key.settings.radioColor)"
+                  [disabled]="key.settings.isEditable === 'readonly'"
+                  *ngFor="let option of key.settings.selectOptions"
+                  [value]="option.value">
+                  <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
+                    <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
+                  </ng-container>
+                  <span class="label-wrapper">
+                    {{ getCustomTranslationText(option.label ? option.label : option.value) }}
+                  </span>
+                </mat-radio-button>
+            </mat-radio-group>
+          </div>
           <mat-form-field *ngIf="key.settings.dataKeyValueType === 'color'"
                           class="color-input" [appearance]="key.settings.appearance" [subscriptSizing]="key.settings.subscriptSizing"
                           (click)="colorInput.openColorPickerPopup($event)">
@@ -148,7 +170,7 @@
                    [readonly]="key.settings.isEditable === 'readonly'"
                    type="text"
                    (keydown)="$event.preventDefault();">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matIconPrefix>
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl" matIconPrefix>
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <tb-color-input #colorInput asBoxInput matSuffix
@@ -166,7 +188,7 @@
           <mat-checkbox *ngIf="key.settings.dataKeyValueType === 'booleanCheckbox'"
                         formControlName="{{key.formId}}"
                         (change)="inputChanged(source, key)">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl">
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <span class="label-wrapper">{{key.label}}</span>
@@ -175,7 +197,7 @@
                             formControlName="{{key.formId}}"
                             [labelPosition]="key.settings.slideToggleLabelPosition"
                             (change)="inputChanged(source, key)">
-            <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
+            <ng-container *ngIf="key.settings.icon || key.settings.customIconUrl">
               <ng-container *ngTemplateOutlet="iconPrefix; context: {key: key}"></ng-container>
             </ng-container>
             <span class="label-wrapper">{{key.label}}</span>
@@ -193,22 +215,22 @@
     </button>
     <button mat-button mat-raised-button color="primary" type="submit"
             class="tb-multiple-input--buttons-container__button"
-            [disabled]="!multipleInputFormGroup.dirty || multipleInputFormGroup.invalid">
+            [disabled]="!multipleInputFormGroup.dirty || invalid()">
       {{ saveButtonLabel }}
     </button>
   </div>
   <div class="tb-multiple-input--errors-container" *ngIf="(!entityDetected || !isAllParametersValid) && datasourceDetected">
-    <div class="tb-multiple-input--errors-container__error" [fxHide]="entityDetected">
+    <div class="tb-multiple-input--errors-container__error" [class.!hidden]="entityDetected">
       {{ 'widgets.input-widgets.no-entity-selected' | translate }}
     </div>
-    <div class="tb-multiple-input--errors-container__error" [fxShow]="entityDetected && !isAllParametersValid">
+    <div class="tb-multiple-input--errors-container__error" [class.!hidden]="!entityDetected || isAllParametersValid">
       {{ 'widgets.input-widgets.not-allowed-entity' | translate }}
     </div>
   </div>
 </form>
 <ng-template #iconPrefix let-key="key">
-  <tb-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</tb-icon>
+  <tb-icon *ngIf="!key.settings.customIconUrl; else customToggleIcon">{{key.settings.icon}}</tb-icon>
   <ng-template #customToggleIcon>
-    <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
+    <img class="mat-icon" [src]="key.settings.customIconUrl | image | async" alt="icon">
   </ng-template>
 </ng-template>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,6 +42,12 @@ export const selectIsUserLoaded = createSelector(
   (state: AuthState) => state.isUserLoaded
 );
 
+export const selectUserReady = createSelector(
+  selectIsAuthenticated,
+  selectIsUserLoaded,
+  (isAuthenticated, isUserLoaded) => ({isAuthenticated, isUserLoaded})
+);
+
 export const selectAuthUser = createSelector(
   selectAuthState,
   (state: AuthState) => state.authUser
@@ -70,6 +76,17 @@ export const selectTbelEnabled = createSelector(
 export const selectPersistDeviceStateToTelemetry = createSelector(
   selectAuthState,
   (state: AuthState) => state.persistDeviceStateToTelemetry
+);
+
+export const selectMobileQrEnabled = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.mobileQrEnabled
+);
+
+export const selectHomeDashboardParams = createSelector(
+  selectPersistDeviceStateToTelemetry,
+  selectMobileQrEnabled,
+  (persistDeviceStateToTelemetry, mobileQrEnabled) => ({persistDeviceStateToTelemetry, mobileQrEnabled})
 );
 
 export const selectUserSettings = createSelector(

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@
       *ngFor="let objectLwM2M of modelsFormArray.controls; let $index = index; trackBy: trackByParams"
       [formGroupName]="$index">
       <mat-expansion-panel-header >
-        <mat-panel-title fxLayoutAlign="start center" >
+        <mat-panel-title class="flex items-center justify-start">
           <span class="tb-panel-title">{{ objectLwM2M.get('name').value}}</span>&nbsp;#{{ objectLwM2M.get('keyId').value}}
-          <span fxFlex></span>
+          <span class="flex-1"></span>
           <tb-profile-lwm2m-attributes
             formControlName="attributes"
             [modelName]="getNameObject(objectLwM2M.value)">

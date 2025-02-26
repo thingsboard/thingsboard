@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,26 @@
  */
 package org.thingsboard.server.queue.scheduler;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Component
 public class DefaultSchedulerComponent implements SchedulerComponent {
 
-    protected ScheduledExecutorService schedulerExecutor;
+    private ScheduledExecutorService schedulerExecutor;
 
     @PostConstruct
     public void init() {
-        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("queue-scheduler"));
+        schedulerExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("queue-scheduler");
     }
 
     @PreDestroy
@@ -58,4 +59,5 @@ public class DefaultSchedulerComponent implements SchedulerComponent {
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
         return schedulerExecutor.scheduleWithFixedDelay(command, initialDelay, delay, unit);
     }
+
 }

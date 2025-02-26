@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,14 @@
 package org.thingsboard.server.service.notification;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -35,12 +38,10 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
-import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 
-import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -55,16 +57,16 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings("UnstableApiUsage")
 public class DefaultNotificationSchedulerService extends AbstractPartitionBasedService<NotificationRequestId> implements NotificationSchedulerService {
 
     private final NotificationCenter notificationCenter;
     private final NotificationRequestService notificationRequestService;
-    private final SchedulerComponent scheduler;
     private final NotificationExecutorService notificationExecutor;
+    private final ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("notification-scheduler");
 
     private final Map<NotificationRequestId, ScheduledRequestMetadata> scheduledNotificationRequests = new ConcurrentHashMap<>();
 
+    @Override
     @PostConstruct
     public void init() {
         super.init();
@@ -72,9 +74,7 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
 
     @Override
     protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
-        PageDataIterable<NotificationRequest> notificationRequests = new PageDataIterable<>(pageLink -> {
-            return notificationRequestService.findScheduledNotificationRequests(pageLink);
-        }, 1000);
+        PageDataIterable<NotificationRequest> notificationRequests = new PageDataIterable<>(notificationRequestService::findScheduledNotificationRequests, 1000);
         for (NotificationRequest notificationRequest : notificationRequests) {
             TopicPartitionInfo requestPartition = partitionService.resolve(ServiceType.TB_CORE, notificationRequest.getTenantId(), notificationRequest.getId());
             if (addedPartitions.contains(requestPartition)) {
@@ -164,6 +164,13 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
     @Override
     protected String getSchedulerExecutorName() {
         return "notifications-scheduler";
+    }
+
+    @Override
+    @PreDestroy
+    public void stop() {
+        super.stop();
+        scheduler.shutdownNow();
     }
 
     @Data

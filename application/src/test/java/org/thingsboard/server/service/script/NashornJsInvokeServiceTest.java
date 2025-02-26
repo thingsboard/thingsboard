@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,42 @@
  */
 package org.thingsboard.server.service.script;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.js.NashornJsInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
         "js.evaluator=local",
-        "js.max_script_body_size=50",
+        "js.max_script_body_size=10000",
         "js.max_total_args_size=50",
         "js.max_result_size=50",
-        "js.local.max_errors=2"
+        "js.local.max_errors=2",
 })
+@Slf4j
 class NashornJsInvokeServiceTest extends AbstractControllerTest {
 
     @Autowired
@@ -56,28 +64,69 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
         int iterations = 1000;
         UUID scriptId = evalScript("return msg.temperature > 20");
         // warmup
-        ObjectNode msg = JacksonUtil.newObjectNode();
-        for (int i = 0; i < 100; i++) {
-            msg.put("temperature", i);
+        log.info("Warming up 1000 times...");
+        var warmupWatch = TbStopWatch.create();
+        for (int i = 0; i < 1000; i++) {
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScript(scriptId, "{\"temperature\":" + i + "}"));
             Assert.assertEquals(expected, result);
         }
-        long startTs = System.currentTimeMillis();
+        log.info("Warming up finished in {} ms", warmupWatch.stopAndGetTotalTimeMillis());
+        log.info("Starting performance test...");
+        var watch = TbStopWatch.create();
         for (int i = 0; i < iterations; i++) {
-            msg.put("temperature", i);
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScript(scriptId, "{\"temperature\":" + i + "}"));
+            log.debug("asserting result");
             Assert.assertEquals(expected, result);
         }
-        long duration = System.currentTimeMillis() - startTs;
-        System.out.println(iterations + " invocations took: " + duration + "ms");
-        Assert.assertTrue(duration < TimeUnit.MINUTES.toMillis(4));
+        long duration = watch.stopAndGetTotalTimeMillis();
+        log.info("Performance test with {} invocations took: {} ms", iterations, duration);
+        assertThat(duration).as("duration ms")
+                .isLessThan(TimeUnit.MINUTES.toMillis(1)); // effective exec time is about 500ms
+    }
+
+    @Test
+    void givenSimpleScriptMultiThreadTestPerformance() throws ExecutionException, InterruptedException, TimeoutException {
+        int iterations = 1000 * 4;
+        List<ListenableFuture<Object>> futures = new ArrayList<>(iterations);
+        UUID scriptId = evalScript("return msg.temperature > 20 ;");
+        // warmup
+        log.info("Warming up 1000 times...");
+
+        var warmupWatch = TbStopWatch.create();
+        for (int i = 0; i < 1000; i++) {
+            futures.add(invokeScriptAsync(scriptId, "{\"temperature\":" + i + "}"));
+        }
+        List<Object> results = Futures.allAsList(futures).get(1, TimeUnit.MINUTES);
+        for (int i = 0; i < 1000; i++) {
+            boolean expected = i > 20;
+            boolean result = Boolean.parseBoolean(results.get(i).toString());
+            Assert.assertEquals(expected, result);
+        }
+        log.info("Warming up finished in {} ms", warmupWatch.stopAndGetTotalTimeMillis());
+        futures.clear();
+
+        log.info("Starting performance test...");
+        var watch = TbStopWatch.create();
+        for (int i = 0; i < iterations; i++) {
+            futures.add(invokeScriptAsync(scriptId, "{\"temperature\":" + i + "}"));
+        }
+        results = Futures.allAsList(futures).get(1, TimeUnit.MINUTES);
+        for (int i = 0; i < iterations; i++) {
+            boolean expected = i > 20;
+            boolean result = Boolean.parseBoolean(results.get(i).toString());
+            Assert.assertEquals(expected, result);
+        }
+        long duration = watch.stopAndGetTotalTimeMillis();
+        log.info("Performance test with {} invocations took: {} ms", iterations, duration);
+        assertThat(duration).as("duration ms")
+                .isLessThan(TimeUnit.MINUTES.toMillis(1)); // effective exec time is about 500ms
     }
 
     @Test
     void givenTooBigScriptForEval_thenReturnError() {
-        String hugeScript = "var a = 'qwertyqwertywertyqwabababer'; return {a: a};";
+        String hugeScript = "var a = '" + "a".repeat(10000) + "'; return {a: a};";
 
         assertThatThrownBy(() -> {
             evalScript(hugeScript);
@@ -111,6 +160,46 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
         assertThatScriptIsBlocked(scriptId);
     }
 
+    @Test
+    void givenComplexScript_testCompile() {
+        String script = """
+                function(data) {
+                  if (data.get("propertyA") == "a special value 1" || data.get("propertyA") == "a special value 2") {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyC") == "a special value 1" || data.get("propertyJ") == "a special value 1" || data.get("propertyV") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "4" && (data.get("propertyD") == "a special value 1" || data.get("propertyV") == "a special value 1" || data.get("propertyW") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 2" && (data.get("propertyE") == "a special value 1" || data.get("propertyF") == "a special value 1" || data.get("propertyL") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyE") == "a special value 1" || data.get("propertyF") == "a special value 1" || data.get("propertyL") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  }  else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else {
+                     return "0"
+                  };
+                }
+                """;
+
+        // with delight-nashorn-sandbox 0.4.2, this would throw delight.nashornsandbox.exceptions.ScriptCPUAbuseException: Regular expression running for too many iterations. The operation could NOT be gracefully interrupted.
+        assertDoesNotThrow(() -> {
+            evalScript(script);
+        });
+    }
+
     private void assertThatScriptIsBlocked(UUID scriptId) {
         assertThatThrownBy(() -> {
             invokeScript(scriptId, "{}");
@@ -122,7 +211,11 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
     }
 
     private String invokeScript(UUID scriptId, String msg) throws ExecutionException, InterruptedException {
-        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.name()).get().toString();
+        return invokeScriptAsync(scriptId, msg).get().toString();
+    }
+
+    private ListenableFuture<Object> invokeScriptAsync(UUID scriptId, String msg) {
+        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.name());
     }
 
 }
