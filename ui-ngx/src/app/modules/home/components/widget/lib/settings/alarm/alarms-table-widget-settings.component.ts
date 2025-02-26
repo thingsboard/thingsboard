@@ -19,7 +19,7 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { buildPageStepSizeValues, isDefinedAndNotNull } from '@core/utils';
+import { buildPageStepSizeValues } from '@home/components/widget/lib/table-widget.models';
 
 @Component({
   selector: 'tb-alarms-table-widget-settings',
@@ -58,7 +58,7 @@ export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent 
       displayActivity: true,
       displayPagination: true,
       defaultPageSize: 10,
-      pageStepSize: null,
+      pageStepIncrement: null,
       pageStepCount: 3,
       defaultSortOrder: '-createdTime',
       useRowStyleFunction: false,
@@ -84,47 +84,46 @@ export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent 
       displayActivity: [settings.displayActivity, []],
       displayPagination: [settings.displayPagination, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],
-      pageStepCount: [isDefinedAndNotNull(settings.pageStepCount) ? settings.pageStepCount : 3,
-        [Validators.min(1), Validators.max(100), Validators.required, Validators.pattern(/^\d*$/)]],
-      pageStepSize: [isDefinedAndNotNull(settings.pageStepSize) ? settings.pageStepSize : settings.defaultPageSize,
+      pageStepCount: [settings.pageStepCount ?? 3, [Validators.min(1), Validators.max(100),
+        Validators.required, Validators.pattern(/^\d*$/)]],
+      pageStepIncrement: [settings.pageStepIncrement ?? settings.defaultPageSize,
         [Validators.min(1), Validators.required, Validators.pattern(/^\d*$/)]],
       defaultSortOrder: [settings.defaultSortOrder, []],
       useRowStyleFunction: [settings.useRowStyleFunction, []],
       rowStyleFunction: [settings.rowStyleFunction, [Validators.required]]
     });
-    buildPageStepSizeValues(this.alarmsTableWidgetSettingsForm, this.pageStepSizeValues);
-  }
-
-  public onPaginationSettingsChange(): void {
-    this.alarmsTableWidgetSettingsForm.get('defaultPageSize').reset();
-    buildPageStepSizeValues(this.alarmsTableWidgetSettingsForm, this.pageStepSizeValues);
+    this.pageStepSizeValues = buildPageStepSizeValues(this.alarmsTableWidgetSettingsForm.get('pageStepCount').value,
+      this.alarmsTableWidgetSettingsForm.get('pageStepIncrement').value);
   }
 
   protected validatorTriggers(): string[] {
-    return ['useRowStyleFunction', 'displayPagination'];
+    return ['useRowStyleFunction', 'displayPagination', 'pageStepCount',
+      'pageStepIncrement'];
   }
 
-  protected updateValidators(emitEvent: boolean) {
+  protected updateValidators(emitEvent: boolean, trigger: string) {
+    if (trigger === 'pageStepCount' || trigger === 'pageStepIncrement') {
+      this.alarmsTableWidgetSettingsForm.get('defaultPageSize').reset();
+      this.pageStepSizeValues = buildPageStepSizeValues(this.alarmsTableWidgetSettingsForm.get('pageStepCount').value,
+        this.alarmsTableWidgetSettingsForm.get('pageStepIncrement').value);
+      return;
+    }
     const useRowStyleFunction: boolean = this.alarmsTableWidgetSettingsForm.get('useRowStyleFunction').value;
     const displayPagination: boolean = this.alarmsTableWidgetSettingsForm.get('displayPagination').value;
     if (useRowStyleFunction) {
-      this.alarmsTableWidgetSettingsForm.get('rowStyleFunction').enable();
+      this.alarmsTableWidgetSettingsForm.get('rowStyleFunction').enable({emitEvent});
     } else {
-      this.alarmsTableWidgetSettingsForm.get('rowStyleFunction').disable();
+      this.alarmsTableWidgetSettingsForm.get('rowStyleFunction').disable({emitEvent});
     }
     if (displayPagination) {
-      this.alarmsTableWidgetSettingsForm.get('defaultPageSize').enable();
-      this.alarmsTableWidgetSettingsForm.get('pageStepCount').enable();
-      this.alarmsTableWidgetSettingsForm.get('pageStepSize').enable();
+      this.alarmsTableWidgetSettingsForm.get('defaultPageSize').enable({emitEvent});
+      this.alarmsTableWidgetSettingsForm.get('pageStepCount').enable({emitEvent: false});
+      this.alarmsTableWidgetSettingsForm.get('pageStepIncrement').enable({emitEvent: false});
     } else {
-      this.alarmsTableWidgetSettingsForm.get('defaultPageSize').disable();
-      this.alarmsTableWidgetSettingsForm.get('pageStepCount').disable();
-      this.alarmsTableWidgetSettingsForm.get('pageStepSize').disable();
+      this.alarmsTableWidgetSettingsForm.get('defaultPageSize').disable({emitEvent});
+      this.alarmsTableWidgetSettingsForm.get('pageStepCount').disable({emitEvent: false});
+      this.alarmsTableWidgetSettingsForm.get('pageStepIncrement').disable({emitEvent: false});
     }
-    this.alarmsTableWidgetSettingsForm.get('rowStyleFunction').updateValueAndValidity({emitEvent});
-    this.alarmsTableWidgetSettingsForm.get('defaultPageSize').updateValueAndValidity({emitEvent});
-    this.alarmsTableWidgetSettingsForm.get('pageStepCount').updateValueAndValidity({emitEvent});
-    this.alarmsTableWidgetSettingsForm.get('pageStepSize').updateValueAndValidity({emitEvent});
   }
 
 }

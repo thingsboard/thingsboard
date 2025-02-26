@@ -92,29 +92,53 @@
       {{ 'widgets.table.display-pagination' | translate }}
     </mat-slide-toggle>
     <div class="tb-form-row space-between column-xs">
-      <div translate>widgets.table.page-step-size</div>
-      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-        <input matInput formControlName="pageStepSize" type="number" min="1" step="1" required
-               (change)="onPaginationSettingsChange()"
-               placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
+      <div class="fixed-title-width">{{ 'widgets.table.page-step-settings' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <div class="tb-small-label" translate>widgets.table.page-step-increment</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required
+                 placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="(entitiesTableWidgetSettingsForm.get('pageStepIncrement').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-increment-format-message') | translate"
+                    *ngIf="entitiesTableWidgetSettingsForm.get('pageStepIncrement').invalid
+                    && entitiesTableWidgetSettingsForm.get('pageStepIncrement').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+        <mat-divider vertical></mat-divider>
+        <div class="tb-small-label" translate>widgets.table.page-step-count</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
+                 placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="(entitiesTableWidgetSettingsForm.get('pageStepCount').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-count-format-message') | translate"
+                    *ngIf="entitiesTableWidgetSettingsForm.get('pageStepCount').invalid
+                    && entitiesTableWidgetSettingsForm.get('pageStepCount').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
     </div>
     <div class="tb-form-row space-between column-xs">
-      <div translate>widgets.table.page-step-count</div>
-      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-        <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
-               (change)="onPaginationSettingsChange()"
-               placeholder="{{ 'widget-config.set' | translate }}">
+      <div translate>widgets.table.default-page-size</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="defaultPageSize" placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-option *ngFor="let size of pageStepSizeValues" [value]="size">
+            {{ size }}
+          </mat-option>
+        </mat-select>
       </mat-form-field>
     </div>
-    <mat-form-field class="flex-1" subscriptSizing="dynamic">
-      <mat-label translate>widgets.table.default-page-size</mat-label>
-      <mat-select formControlName="defaultPageSize">
-        <mat-option *ngFor="let size of pageStepSizeValues" [value]="size">
-          {{ size }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <div class="tb-form-panel-title" translate>widgets.table.rows</div>
