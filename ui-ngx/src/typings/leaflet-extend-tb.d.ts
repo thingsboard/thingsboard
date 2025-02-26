@@ -17,6 +17,7 @@
 import { FormattedData } from '@shared/models/widget.models';
 import L, { Control, ControlOptions } from 'leaflet';
 import { TbMapDatasource } from '@home/components/widget/lib/maps/models/map.models';
+import { MatIconRegistry } from '@angular/material/icon';
 
 // redeclare module, maintains compatibility with @types/leaflet
 declare module 'leaflet' {
@@ -91,22 +92,28 @@ declare module 'leaflet' {
 
     interface TopToolbarButtonOptions {
       icon: string;
-      iconColor?: string;
+      color?: string;
       title: string;
     }
 
     class TopToolbarButton {
-      constructor(options: TopToolbarButtonOptions);
-      onClick(onClick: (e: MouseEvent) => void): void;
+      constructor(options: TopToolbarButtonOptions, iconRegistry: MatIconRegistry);
+      onClick(onClick: (e: MouseEvent, button: TopToolbarButton) => void): void;
+      setActive(active: boolean): void;
+      isActive(): boolean;
+      setDisabled(disabled: boolean): void;
+      isDisabled(): boolean;
     }
 
     interface TopToolbarControlOptions {
       mapElement: JQuery<HTMLElement>;
+      iconRegistry: MatIconRegistry;
     }
 
     class TopToolbarControl {
       constructor(options: TopToolbarControlOptions);
       toolbarButton(options: TopToolbarButtonOptions): TopToolbarButton;
+      setDisabled(disabled: boolean): void;
     }
 
     interface ToolbarButtonOptions {

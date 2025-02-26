@@ -15,17 +15,21 @@
 ///
 
 import {
-  ControlValueAccessor, FormControl,
+  ControlValueAccessor,
+  FormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator, ValidatorFn,
+  Validator,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
+  MapItemType,
+  mapItemTypeTranslationMap,
   WidgetAction,
   WidgetActionType,
   widgetActionTypes,
@@ -97,9 +101,24 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   @Input()
   actionNames: string[];
 
+  @Input()
+  set additionalWidgetActionTypes(value: WidgetActionType[]) {
+    if (this.widgetActionFormGroup && !widgetActionTypes.includes(this.widgetActionFormGroup.get('type').value)) {
+      this.widgetActionFormGroup.get('type').setValue(WidgetActionType.doNothing);
+    }
+    if (value?.length) {
+      this.widgetActionTypes = widgetActionTypes.concat(value);
+    } else {
+      this.widgetActionTypes = widgetActionTypes;
+    }
+  }
+
   widgetActionTypes = widgetActionTypes;
   widgetActionTypeTranslations = widgetActionTypeTranslationMap;
   widgetActionType = WidgetActionType;
+
+  mapItemTypes = Object.values(MapItemType) as MapItemType[];
+  mapItemTypeTranslationMap = mapItemTypeTranslationMap;
 
   allStateDisplayTypes = stateDisplayTypes;
   allPopoverPlacements = PopoverPlacements;
@@ -171,6 +190,9 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
     ).subscribe(() => {
       this.widgetActionUpdated();
     });
+    if (this.additionalWidgetActionTypes) {
+      this.widgetActionTypes = this.widgetActionTypes.concat(this.additionalWidgetActionTypes);
+    }
   }
 
   writeValue(widgetAction?: WidgetAction): void {
@@ -305,6 +327,16 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
           this.actionTypeFormGroup.addControl(
             'url',
             this.fb.control(action ? action.url : null, [Validators.required])
+          );
+          break;
+        case WidgetActionType.placeMapItem:
+          this.actionTypeFormGroup.addControl(
+            'mapItemType',
+            this.fb.control(action?.mapItemType ?? MapItemType.marker, [Validators.required])
+          );
+          this.actionTypeFormGroup.addControl(
+            'customAction',
+            this.fb.control(toCustomAction(action), [Validators.required])
           );
           break;
       }
@@ -497,6 +529,12 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
     let result: WidgetAction;
     if (type === WidgetActionType.customPretty) {
       result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.get('customAction').value};
+    } else if (type === WidgetActionType.placeMapItem) {
+      result = {
+        ...this.widgetActionFormGroup.value,
+        ...this.actionTypeFormGroup.get('customAction').value,
+        mapItemType: this.actionTypeFormGroup.get('mapItemType').value
+      };
     } else {
       result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.value};
     }
