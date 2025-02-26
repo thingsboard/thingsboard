@@ -198,8 +198,9 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         List<TsKvEntry> tsList = new ArrayList<>();
         tsList.add(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", false)));
         getCpuUsage().ifPresent(v -> {
-            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuUsage", (long) v)));
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage((long) v).build());
+            long value = (long) v;
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuUsage", value)));
+            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(value).build());
         });
         getMemoryUsage().ifPresent(v -> {
             long value = (long) v;

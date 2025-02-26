@@ -68,6 +68,8 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.ResourcesShortageTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.ResourcesShortageTrigger.Resource;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmAssignmentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig;
@@ -78,6 +80,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Entit
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RateLimitsNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.ResourcesShortageNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.AffectedTenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
@@ -98,8 +101,10 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.queue.notification.DefaultNotificationDeduplicationService;
 import org.thingsboard.server.service.notification.rule.cache.DefaultNotificationRulesCache;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.system.DefaultSystemInfoService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -132,7 +137,9 @@ import static org.thingsboard.server.common.data.notification.rule.trigger.confi
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @SpyBean
-    private AlarmSubscriptionService alarmSubscriptionService;
+    private AlarmSubscriptionService alarmSubscriptionService;;
+    @Autowired
+    private DefaultSystemInfoService systemInfoService;
     @Autowired
     private NotificationRequestService notificationRequestService;
     @Autowired
@@ -778,6 +785,56 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                     assertThat(notifications2.get(LimitedApi.ENTITY_EXPORT)).isEqualTo(2);
                     assertThat(notifications2.get(LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE)).isEqualTo(2);
                 });
+    }
+
+    @Test
+    public void testNotificationRuleProcessing_resourcesShortage() throws Exception {
+        loginSysAdmin();
+        ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .resource(Resource.CPU.name())
+                .cpuThreshold(0.01f)
+                .ramThreshold(0.01f)
+                .storageThreshold(0.01f)
+                .build();
+        createNotificationRule(triggerConfig, "Test", "Test", createNotificationTarget(tenantAdminUserId).getId());
+        loginTenantAdmin();
+
+        Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
+        method.setAccessible(true);
+        method.invoke(systemInfoService);
+
+        TimeUnit.SECONDS.sleep(5);
+
+        assertThat(getMyNotifications(false, 100)).size().isEqualTo(3);
+    }
+
+    @Test
+    public void testNotificationsDeduplication_resourcesShortage() throws Exception {
+        loginSysAdmin();
+        ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .resource(Resource.CPU.name())
+                .cpuThreshold(0.1f)
+                .build();
+        createNotificationRule(triggerConfig, "Test", "Test", createNotificationTarget(tenantAdminUserId).getId());
+        loginTenantAdmin();
+
+        assertThat(getMyNotifications(false, 100)).size().isZero();
+        for (int i = 0; i < 10; i++) {
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
+                    .resource(Resource.CPU)
+                    .usage(15L)
+                    .build());
+            TimeUnit.MILLISECONDS.sleep(300);
+        }
+        TimeUnit.SECONDS.sleep(5);
+        assertThat(getMyNotifications(false, 100)).size().isOne();
+
+        // deduplication is 5 minute, no new message is exp
+        notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
+                .resource(Resource.CPU)
+                .usage(5L)
+                .build());
+        await("").atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getMyNotifications(false, 100)).size().isOne());
     }
 
     @Test
