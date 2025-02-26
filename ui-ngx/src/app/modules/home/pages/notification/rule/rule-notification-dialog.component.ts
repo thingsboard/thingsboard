@@ -316,7 +316,7 @@ export class RuleNotificationDialogComponent extends
     this.entitiesLimitTemplateForm = this.fb.group({
       triggerConfig: this.fb.group({
         entityTypes: [],
-        threshold: [.8, [Validators.min(0), Validators.max(1)]]
+        threshold: [80, [Validators.min(0), Validators.max(100)]]
       })
     });
 
@@ -347,9 +347,9 @@ export class RuleNotificationDialogComponent extends
 
     this.resourceUsageShortageTemplateForm = this.fb.group({
       triggerConfig: this.fb.group({
-        cpuThreshold: [.8, [Validators.min(0), Validators.max(1)]],
-        ramThreshold: [.8, [Validators.min(0), Validators.max(1)]],
-        storageThreshold: [.8, [Validators.min(0), Validators.max(1)]]
+        cpuThreshold: [80, [Validators.min(0), Validators.max(100)]],
+        ramThreshold: [80, [Validators.min(0), Validators.max(100)]],
+        storageThreshold: [80, [Validators.min(0), Validators.max(100)]]
       })
     });
 
@@ -389,6 +389,14 @@ export class RuleNotificationDialogComponent extends
       if (this.ruleNotification.triggerType === TriggerType.DEVICE_ACTIVITY) {
         this.deviceInactivityTemplateForm.get('triggerConfig.filterByDevice')
           .patchValue(!!this.ruleNotification.triggerConfig.devices, {onlySelf: true});
+      }
+      if (this.ruleNotification.triggerType === TriggerType.ENTITIES_LIMIT) {
+        this.entitiesLimitTemplateForm.get('triggerConfig.threshold').patchValue(this.ruleNotification.triggerConfig.threshold * 100, {emitEvent: false});
+      }
+      if (this.ruleNotification.triggerType === TriggerType.RESOURCES_SHORTAGE) {
+        this.resourceUsageShortageTemplateForm.get('triggerConfig.cpuThreshold').patchValue(this.ruleNotification.triggerConfig.cpuThreshold * 100, {emitEvent: false});
+        this.resourceUsageShortageTemplateForm.get('triggerConfig.ramThreshold').patchValue(this.ruleNotification.triggerConfig.ramThreshold * 100, {emitEvent: false});
+        this.resourceUsageShortageTemplateForm.get('triggerConfig.storageThreshold').patchValue(this.ruleNotification.triggerConfig.storageThreshold * 100, {emitEvent: false});
       }
     }
   }
@@ -437,6 +445,14 @@ export class RuleNotificationDialogComponent extends
       Object.assign(formValue, currentForm.value);
       if (triggerType === TriggerType.DEVICE_ACTIVITY) {
         delete formValue.triggerConfig.filterByDevice;
+      }
+      if (triggerType === TriggerType.ENTITIES_LIMIT) {
+        formValue.triggerConfig.threshold = formValue.triggerConfig.threshold / 100;
+      }
+      if (triggerType === TriggerType.RESOURCES_SHORTAGE) {
+        formValue.triggerConfig.cpuThreshold = formValue.triggerConfig.cpuThreshold / 100;
+        formValue.triggerConfig.ramThreshold = formValue.triggerConfig.ramThreshold / 100;
+        formValue.triggerConfig.storageThreshold = formValue.triggerConfig.storageThreshold / 100;
       }
       formValue.recipientsConfig.triggerType = triggerType;
       formValue.triggerConfig.triggerType = triggerType;
@@ -493,8 +509,7 @@ export class RuleNotificationDialogComponent extends
   }
 
   formatLabel(value: number): string {
-    const formatValue = (value * 100).toFixed();
-    return `${formatValue}%`;
+    return `${value}%`;
   }
 
   private isSysAdmin(): boolean {
