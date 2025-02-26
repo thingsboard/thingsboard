@@ -603,6 +603,13 @@ export const mapZoomActionTranslationMap = new Map<MapZoomAction, string>(
   ]
 );
 
+export interface MapActionButtonSettings {
+  label?: string;
+  icon?: string;
+  color: string;
+  action: WidgetAction;
+}
+
 export interface TripTimelineSettings {
   showTimelineControl: boolean;
   timeStep: number;
@@ -628,6 +635,7 @@ export interface BaseMapSettings {
   defaultZoomLevel: number;
   minZoomLevel: number;
   mapPageSize: number;
+  mapActionButtons: MapActionButtonSettings[];
   tripTimeline?: TripTimelineSettings;
 }
 
@@ -649,6 +657,7 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   defaultZoomLevel: null,
   minZoomLevel: 16,
   mapPageSize: DEFAULT_MAP_PAGE_SIZE,
+  mapActionButtons: [],
   tripTimeline: {
     showTimelineControl: false,
     timeStep: 1000,
@@ -659,6 +668,15 @@ export const defaultBaseMapSettings: BaseMapSettings = {
     locationSnapFilter: 'return true;'
   }
 };
+
+export const defaultMapActionButtonSettings: MapActionButtonSettings = {
+  label: '',
+  icon: 'add',
+  color: '#0000008a',
+  action: {
+    type: WidgetActionType.doNothing
+  }
+}
 
 export enum MapProvider {
   openstreet = 'openstreet',
@@ -990,6 +1008,11 @@ export interface MarkerImageInfo {
 export interface MarkerIconInfo {
   icon: L.Icon<L.BaseIconOptions>;
   size: [number, number];
+}
+
+export interface CustomActionData {
+  button: L.TB.TopToolbarButton;
+  action: WidgetAction;
 }
 
 export type MapStringFunction = (data: FormattedData<TbMapDatasource>,

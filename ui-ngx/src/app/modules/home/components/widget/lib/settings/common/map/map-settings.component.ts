@@ -139,7 +139,8 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       useDefaultCenterPosition: [null, []],
       defaultCenterPosition: [null, []],
       defaultZoomLevel: [null, [Validators.min(0), Validators.max(20)]],
-      mapPageSize: [null, [Validators.min(1), Validators.required]]
+      mapPageSize: [null, [Validators.min(1), Validators.required]],
+      mapActionButtons: [null]
     });
     this.mapSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
