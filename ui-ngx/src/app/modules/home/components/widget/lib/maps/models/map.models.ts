@@ -33,6 +33,7 @@ import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { MarkerShape } from '@home/components/widget/lib/maps/models/marker-shape.models';
 import { UnplacedMapDataItem } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import { DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -368,6 +369,83 @@ export const defaultBaseMarkersDataLayerSettings = (mapType: MapType): Partial<M
   }
 } as MarkersDataLayerSettings, defaultBaseDataLayerSettings(mapType));
 
+export enum PathDecoratorSymbol {
+  arrowHead = 'arrowHead',
+  dash = 'dash'
+}
+
+export const pathDecoratorSymbols = Object.keys(PathDecoratorSymbol) as PathDecoratorSymbol[];
+
+export const pathDecoratorSymbolTranslationMap = new Map<PathDecoratorSymbol, string>(
+  [
+    [PathDecoratorSymbol.arrowHead, 'widgets.maps.data-layer.decorator-symbol-arrow-head'],
+    [PathDecoratorSymbol.dash, 'widgets.maps.data-layer.decorator-symbol-dash']
+  ]
+);
+
+export interface TripsDataLayerSettings extends MarkersDataLayerSettings {
+  rotateMarker: boolean;
+  offsetAngle: number;
+  showPath: boolean;
+  pathStrokeWeight?: number;
+  pathStrokeColor?: DataLayerColorSettings;
+  usePathDecorator?: boolean;
+  pathDecoratorSymbol?: PathDecoratorSymbol;
+  pathDecoratorSymbolSize?: number;
+  pathDecoratorSymbolColor?: string;
+  pathDecoratorOffset?: number;
+  pathEndDecoratorOffset?: number;
+  pathDecoratorRepeat?: number;
+  showPoints: boolean;
+  pointSize?: number;
+  pointColor?: DataLayerColorSettings;
+  pointTooltip?: DataLayerTooltipSettings;
+}
+
+export const defaultBaseTripsDataLayerSettings = (mapType: MapType): Partial<TripsDataLayerSettings> => mergeDeep(
+  defaultBaseMarkersDataLayerSettings(mapType),
+  {
+    tooltip: {
+      pattern: mapType === MapType.geoMap ?
+        '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}<br/><b>End Time:</b> ${maxTime}<br/><b>Start Time:</b> ${minTime}'
+        : '<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}<br/><b>End Time:</b> ${maxTime}<br/><b>Start Time:</b> ${minTime}',
+    },
+    rotateMarker: true,
+    offsetAngle: 0,
+    markerOffsetX: 0.5,
+    markerOffsetY: 0.5,
+    showPath: true,
+    pathStrokeWeight: 2,
+    pathStrokeColor: {
+      type: DataLayerColorType.constant,
+      color: '#307FE5',
+    },
+    usePathDecorator: false,
+    pathDecoratorSymbol: PathDecoratorSymbol.arrowHead,
+    pathDecoratorSymbolSize: 10,
+    pathDecoratorSymbolColor: '#307FE5',
+    pathDecoratorOffset: 20,
+    pathEndDecoratorOffset: 20,
+    pathDecoratorRepeat: 20,
+    showPoints: false,
+    pointSize: 10,
+    pointColor: {
+      type: DataLayerColorType.constant,
+      color: '#307FE5',
+    },
+    pointTooltip: {
+      show: true,
+      trigger: DataLayerTooltipTrigger.click,
+      autoclose: true,
+      type: DataLayerPatternType.pattern,
+      pattern: mapType === MapType.geoMap ?
+        '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}<br/><b>End Time:</b> ${maxTime}<br/><b>Start Time:</b> ${minTime}'
+        : '<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}<br/><b>End Time:</b> ${maxTime}<br/><b>Start Time:</b> ${minTime}',
+      offsetX: 0,
+      offsetY: -1
+    },
+  } as TripsDataLayerSettings);
+
 export interface ShapeDataLayerSettings extends MapDataLayerSettings {
   fillColor: DataLayerColorSettings;
   strokeColor: DataLayerColorSettings;
@@ -525,8 +603,19 @@ export const mapZoomActionTranslationMap = new Map<MapZoomAction, string>(
   ]
 );
 
+export interface TripTimelineSettings {
+  showTimelineControl: boolean;
+  timeStep: number;
+  speedOptions: number[];
+  showTimestamp: boolean;
+  timestampFormat: DateFormatSettings;
+  snapToRealLocation: boolean;
+  locationSnapFilter: TbFunction;
+}
+
 export interface BaseMapSettings {
   mapType: MapType;
+  trips?: TripsDataLayerSettings[];
   markers: MarkersDataLayerSettings[];
   polygons: PolygonsDataLayerSettings[];
   circles: CirclesDataLayerSettings[];
@@ -539,6 +628,7 @@ export interface BaseMapSettings {
   defaultZoomLevel: number;
   minZoomLevel: number;
   mapPageSize: number;
+  tripTimeline?: TripTimelineSettings;
 }
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
@@ -546,6 +636,7 @@ export const DEFAULT_ZOOM_LEVEL = 8;
 
 export const defaultBaseMapSettings: BaseMapSettings = {
   mapType: MapType.geoMap,
+  trips: [],
   markers: [],
   polygons: [],
   circles: [],
@@ -557,7 +648,16 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   defaultCenterPosition: '0,0',
   defaultZoomLevel: null,
   minZoomLevel: 16,
-  mapPageSize: DEFAULT_MAP_PAGE_SIZE
+  mapPageSize: DEFAULT_MAP_PAGE_SIZE,
+  tripTimeline: {
+    showTimelineControl: false,
+    timeStep: 1000,
+    speedOptions: [1,5,10,15,25],
+    showTimestamp: true,
+    timestampFormat: simpleDateFormat('yyyy-MM-dd HH:mm:ss'),
+    snapToRealLocation: false,
+    locationSnapFilter: 'return true;'
+  }
 };
 
 export enum MapProvider {

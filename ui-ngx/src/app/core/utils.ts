@@ -512,18 +512,20 @@ export function formattedDataFormDatasourceData<D extends Datasource = Datasourc
     });
 }
 
-export function formattedDataArrayFromDatasourceData(input: DatasourceData[]): FormattedData[][] {
-  return _(input).groupBy(el => el.datasource.entityName)
+export function formattedDataArrayFromDatasourceData<D extends Datasource = Datasource>(input: DatasourceData[],
+                                                                                        groupFunction: (el: DatasourceData) => any =
+                                                                                        (el) => el.datasource.entityName + el.datasource.entityType): FormattedData<D>[][] {
+  return _(input).groupBy(groupFunction)
     .values().value().map((entityArray, dsIndex) => {
-      const timeDataMap: {[time: number]: FormattedData} = {};
+      const timeDataMap: {[time: number]: FormattedData<D>} = {};
       entityArray.filter(e => e.data.length).forEach(entity => {
         entity.data.forEach(tsData => {
           const time = tsData[0];
           const value = tsData[1];
           let data = timeDataMap[time];
           if (!data) {
-            const datasource = entity.datasource;
-            data = formattedDataFromDatasource(datasource, dsIndex);
+            const datasource = entity.datasource as D;
+            data = formattedDataFromDatasource<D>(datasource, dsIndex);
             data.time = time;
             timeDataMap[time] = data;
           }

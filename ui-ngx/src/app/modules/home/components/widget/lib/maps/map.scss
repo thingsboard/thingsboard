@@ -15,7 +15,7 @@
  */
 @import '../../../../../../../scss/constants';
 
-.tb-map-layout {
+.tb-map-container, .tb-map-layout {
   position: relative;
   display: flex;
   width: 100%;
@@ -23,6 +23,13 @@
   min-width: 0;
   min-height: 0;
   flex: 1;
+}
+
+.tb-map-container {
+  flex-direction: column;
+}
+
+.tb-map-layout {
   &.tb-sidebar-left {
     flex-direction: row-reverse;
   }

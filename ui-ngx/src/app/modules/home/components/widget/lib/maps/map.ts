@@ -28,7 +28,13 @@ import {
   TbPolygonRawCoordinates
 } from '@home/components/widget/lib/maps/models/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formattedDataFormDatasourceData, isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
+import {
+  formattedDataArrayFromDatasourceData,
+  formattedDataFormDatasourceData,
+  isDefined,
+  isDefinedAndNotNull,
+  mergeDeepIgnoreArray
+} from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -61,6 +67,9 @@ import { DomSanitizer } from '@angular/platform-browser';
 import tinycolor from 'tinycolor2';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
+import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/panels/map-timeline-panel.component';
+import { ComponentRef } from '@angular/core';
+import { TbTripsDataLayer } from '@home/components/widget/lib/maps/data-layer/trips-data-layer';
 
 type TooltipInstancesData = {root: HTMLElement, instances: ITooltipsterInstance[]};
 
@@ -76,11 +85,13 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected southWest = new L.LatLng(-L.Projection.SphericalMercator['MAX_LATITUDE'], -180);
   protected northEast = new L.LatLng(L.Projection.SphericalMercator['MAX_LATITUDE'], 180);
 
-  protected dataLayers: TbMapDataLayer<any,any>[];
+  protected dataLayers: TbMapDataLayer<any>[];
+  protected tripDataLayers: TbTripsDataLayer[];
   protected dsData: FormattedData<TbMapDatasource>[];
 
   protected selectedDataItem: TbDataLayerItem;
 
+  protected mapLayoutElement: HTMLElement;
   protected mapElement: HTMLElement;
 
   protected sidebar: L.TB.SidebarControl;
@@ -92,6 +103,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected addRectangleButton: L.TB.ToolbarButton;
   protected addPolygonButton: L.TB.ToolbarButton;
   protected addCircleButton: L.TB.ToolbarButton;
+
+  protected timeLineComponentRef: ComponentRef<MapTimelinePanelComponent>;
+  protected timeLineComponent: MapTimelinePanelComponent;
 
   protected addMarkerDataLayers: TbMapDataLayer<any,any>[];
   protected addPolygonDataLayers: TbMapDataLayer<any,any>[];
@@ -114,9 +128,27 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultSettings(), this.inputSettings as S);
 
     $(containerElement).empty();
-    $(containerElement).addClass('tb-map-layout');
+    $(containerElement).addClass('tb-map-container');
+    const mapLayoutElement = $('<div class="tb-map-layout"></div>');
+    this.mapLayoutElement = mapLayoutElement[0];
+    $(containerElement).append(mapLayoutElement);
+
+    if (this.settings.tripTimeline?.showTimelineControl) {
+      this.timeLineComponentRef = this.ctx.widgetContentContainer.createComponent(MapTimelinePanelComponent);
+      this.timeLineComponent = this.timeLineComponentRef.instance;
+      this.timeLineComponent.settings = this.settings.tripTimeline;
+      this.timeLineComponent.timeChanged.subscribe((time) => {
+        console.log(`Time updated: ${time}`);
+      });
+      const parentElement = this.timeLineComponentRef.instance.element.nativeElement;
+      const content = parentElement.firstChild;
+      parentElement.removeChild(content);
+      parentElement.style.display = 'none';
+      containerElement.append(content);
+    }
+
     const mapElement = $('<div class="tb-map"></div>');
-    $(containerElement).append(mapElement);
+    mapLayoutElement.append(mapElement);
 
     this.mapResize$ = new ResizeObserver(() => {
       this.resize();
@@ -173,6 +205,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   private setupDataLayers() {
     this.dataLayers = [];
+    this.tripDataLayers = [];
     if (this.settings.markers) {
       this.dataLayers.push(...this.settings.markers.map(settings => new TbMarkersDataLayer(this, settings)));
     }
@@ -182,10 +215,14 @@ export abstract class TbMap<S extends BaseMapSettings> {
     if (this.settings.circles) {
       this.dataLayers.push(...this.settings.circles.map(settings => new TbCirclesDataLayer(this, settings)));
     }
-    if (this.dataLayers.length) {
+    if (this.settings.trips) {
+      this.tripDataLayers.push(...this.settings.trips.map(settings => new TbTripsDataLayer(this, settings)));
+    }
+    if (this.dataLayers.length || this.tripDataLayers.length) {
       const groupsMap = new Map<string, L.TB.GroupData>();
       const customTranslate = this.ctx.$injector.get(CustomTranslatePipe);
-      this.dataLayers.forEach(dl => {
+      const allDataLayers = [...this.dataLayers, ...this.tripDataLayers];
+      allDataLayers.forEach(dl => {
         dl.getGroups().forEach(group => {
           let groupData = groupsMap.get(group);
           if (!groupData) {
@@ -217,7 +254,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
         });
       }
 
-      const setup = this.dataLayers.map(dl => dl.setup());
+      const setup = allDataLayers.map(dl => dl.setup());
       forkJoin(setup).subscribe(
         () => {
           let datasources: TbMapDatasource[];
@@ -231,35 +268,77 @@ export abstract class TbMap<S extends BaseMapSettings> {
           }
           const additionalDatasources = additionalMapDataSourcesToDatasources(this.settings.additionalDataSources);
           datasources = mergeMapDatasources(datasources, additionalDatasources);
-          const dataLayersSubscriptionOptions: WidgetSubscriptionOptions = {
-            datasources,
-            hasDataPageLink: true,
-            useDashboardTimewindow: false,
-            type: widgetType.latest,
-            callbacks: {
-              onDataUpdated: (subscription) => {
-                this.update(subscription);
+          if (datasources.length) {
+            const dataLayersSubscriptionOptions: WidgetSubscriptionOptions = {
+              datasources,
+              hasDataPageLink: true,
+              useDashboardTimewindow: false,
+              type: widgetType.latest,
+              callbacks: {
+                onDataUpdated: (subscription) => {
+                  this.update(subscription);
+                }
               }
-            }
-          };
-          this.ctx.subscriptionApi.createSubscription(dataLayersSubscriptionOptions, false).subscribe(
-            (dataLayersSubscription) => {
-              let pageSize = this.settings.mapPageSize;
-              if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
-                pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
+            };
+            this.ctx.subscriptionApi.createSubscription(dataLayersSubscriptionOptions, false).subscribe(
+              (dataLayersSubscription) => {
+                let pageSize = this.settings.mapPageSize;
+                if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
+                  pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
+                }
+                const pageLink: EntityDataPageLink = {
+                  page: 0,
+                  pageSize,
+                  textSearch: null,
+                  dynamic: true
+                };
+                dataLayersSubscription.paginatedDataSubscriptionUpdated.subscribe(() => {
+                  // this.map.resetState();
+                });
+                dataLayersSubscription.subscribeAllForPaginatedData(pageLink, null);
               }
-              const pageLink: EntityDataPageLink = {
-                page: 0,
-                pageSize,
-                textSearch: null,
-                dynamic: true
-              };
-              dataLayersSubscription.paginatedDataSubscriptionUpdated.subscribe(() => {
-                // this.map.resetState();
-              });
-              dataLayersSubscription.subscribeAllForPaginatedData(pageLink, null);
+            );
+          }
+          if (this.tripDataLayers.length) {
+            const tripDatasources = this.tripDataLayers.map(dl => dl.getDatasource());
+            const tripDataLayersSubscriptionOptions: WidgetSubscriptionOptions = {
+              datasources: tripDatasources,
+              hasDataPageLink: true,
+              useDashboardTimewindow: isDefined(this.ctx.widgetConfig.useDashboardTimewindow)
+                ? this.ctx.widgetConfig.useDashboardTimewindow : true,
+              type: widgetType.timeseries,
+              callbacks: {
+                onDataUpdated: (subscription) => {
+                  this.updateTrips(subscription);
+                },
+                onLatestDataUpdated: (subscription) => {
+                  this.updateTripsWithLatestData(subscription);
+                }
+              }
+            };
+            if (!tripDataLayersSubscriptionOptions.useDashboardTimewindow) {
+              tripDataLayersSubscriptionOptions.timeWindowConfig = this.ctx.widgetConfig.timewindow;
             }
-          );
+
+            this.ctx.subscriptionApi.createSubscription(tripDataLayersSubscriptionOptions, false).subscribe(
+              (tripDataLayersSubscription) => {
+                let pageSize = this.settings.mapPageSize;
+                if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
+                  pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
+                }
+                const pageLink: EntityDataPageLink = {
+                  page: 0,
+                  pageSize,
+                  textSearch: null,
+                  dynamic: true
+                };
+                tripDataLayersSubscription.paginatedDataSubscriptionUpdated.subscribe(() => {
+                  // this.map.resetState();
+                });
+                tripDataLayersSubscription.subscribeAllForPaginatedData(pageLink, null);
+              }
+            );
+          }
         }
       );
     }
@@ -582,8 +661,49 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.dsData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.data,
       undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
     this.dataLayers.forEach(dl => dl.updateData(this.dsData));
+    this.updateTripsAppearance();
+    this.updateTripsTimeline();
     this.updateBounds();
     this.updateAddButtonsStates();
+  }
+
+  private updateTrips(subscription: IWidgetSubscription) {
+    const tripsData = formattedDataArrayFromDatasourceData<TbMapDatasource>(subscription.data, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
+    const tripsLatestData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.latestData,
+      undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
+
+    let minTime = Infinity;
+    let maxTime = -Infinity;
+    for (const tripsDataLayer of this.tripDataLayers) {
+      const minMax = tripsDataLayer.prepareTripsData(tripsData, tripsLatestData);
+      minTime = Math.min(minMax.minTime, minTime);
+      maxTime = Math.max(minMax.maxTime, maxTime);
+    }
+    this.tripDataLayers.forEach(dl => dl.updateTrips(minTime, maxTime));
+    this.updateTripsTimeline(minTime, maxTime);
+    this.updateBounds();
+  }
+
+  private updateTripsWithLatestData(subscription: IWidgetSubscription) {
+    const tripsLatestData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.latestData,
+      undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
+    this.tripDataLayers.forEach(dl => dl.updateTripsLatestData(tripsLatestData));
+    this.updateTripsAppearance();
+    this.updateTripsTimeline();
+  }
+
+  private updateTripsAppearance() {}
+
+  private updateTripsTimeline(minTime?: number, maxTime?: number) {
+    if (this.settings.tripTimeline?.showTimelineControl) {
+      if (isDefinedAndNotNull(minTime) && isDefinedAndNotNull(maxTime)) {
+        this.timeLineComponent.min = minTime;
+        this.timeLineComponent.max = maxTime;
+      }
+      if (this.settings.tripTimeline.snapToRealLocation) {
+        // Recalculate anchors only for enabled layers
+      }
+    }
   }
 
   private resize() {
@@ -659,7 +779,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected getSidebar(): L.TB.SidebarControl {
     if (!this.sidebar) {
       this.sidebar = L.TB.sidebar({
-        container: $(this.containerElement),
+        container: $(this.mapLayoutElement),
         position: this.settings.controlsPosition,
         paneWidth: 220
       }).addTo(this.map);
@@ -685,6 +805,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public enabledDataLayersUpdated() {
     this.updateAddButtonsStates();
+    this.updateTripsTimeline();
   }
 
   public dataItemClick($event: Event, action: WidgetAction, entityInfo: TbMapDatasource) {
@@ -787,6 +908,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
         instance.destroy();
       })
     });
+    if (this.timeLineComponentRef) {
+      this.timeLineComponentRef.destroy();
+    }
   }
 
   public abstract locationDataToLatLng(position: {x: number; y: number}): L.LatLng;

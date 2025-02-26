@@ -278,6 +278,12 @@
     </div>
   </ng-template>
   <ng-template #appearance>
+    <ng-container *ngIf="!displayData && displayTimewindowConfig" [formGroup]="dataSettings">
+      <tb-timewindow-config-panel
+        [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+        formControlName="timewindowConfig">
+      </tb-timewindow-config-panel>
+    </ng-container>
     <div *ngIf="displayAppearanceDataSettings" class="tb-form-panel" [formGroup]="widgetSettings">
       <div class="tb-form-panel-title" translate>widget-config.data-settings</div>
       <div *ngIf="displayUnitsConfig" class="tb-form-row space-between">

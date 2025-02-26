@@ -80,6 +80,10 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
   MapType = MapType;
 
   @Input()
+  @coerceBoolean()
+  trip = false;
+
+  @Input()
   disabled: boolean;
 
   @Input()

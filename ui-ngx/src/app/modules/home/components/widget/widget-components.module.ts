@@ -93,6 +93,7 @@ import { MapWidgetComponent } from '@home/components/widget/lib/maps/map-widget.
 import {
   SelectMapEntityPanelComponent
 } from '@home/components/widget/lib/maps/panels/select-map-entity-panel.component';
+import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/panels/map-timeline-panel.component';
 
 @NgModule({
   declarations: [
@@ -149,6 +150,7 @@ import {
     NotificationTypeFilterPanelComponent,
     ScadaSymbolWidgetComponent,
     SelectMapEntityPanelComponent,
+    MapTimelinePanelComponent,
     MapWidgetComponent
   ],
   imports: [

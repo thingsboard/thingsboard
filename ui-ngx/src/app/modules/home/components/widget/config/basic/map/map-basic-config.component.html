@@ -16,7 +16,10 @@
 
 -->
 <ng-container [formGroup]="mapWidgetConfigForm">
+  <tb-timewindow-config-panel *ngIf="trip" formControlName="timewindowConfig">
+  </tb-timewindow-config-panel>
   <tb-map-settings
+    [trip]="trip"
     [functionsOnly]="functionsOnly"
     [aliasController]="aliasController"
     [callbacks]="callbacks"

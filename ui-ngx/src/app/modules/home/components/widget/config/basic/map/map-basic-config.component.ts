@@ -21,10 +21,14 @@ import { AppState } from '@core/core.state';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { isUndefined, mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
+import { isDefinedAndNotNull, isUndefined, mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
 import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
 import { cssSizeToStrSize, resolveCssSize } from '@shared/models/widget-settings.models';
 import { WidgetConfig } from '@shared/models/widget.models';
+import {
+  getTimewindowConfig,
+  setTimewindowConfig
+} from '@home/components/widget/config/timewindow-config-panel.component';
 
 @Component({
   selector: 'tb-map-basic-config',
@@ -34,6 +38,8 @@ import { WidgetConfig } from '@shared/models/widget.models';
 export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
 
   mapWidgetConfigForm: UntypedFormGroup;
+
+  trip = false;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -46,6 +52,14 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
     return this.mapWidgetConfigForm;
   }
 
+  protected setupConfig(widgetConfig: WidgetConfigComponentData) {
+    const params = widgetConfig.typeParameters as any;
+    if (isDefinedAndNotNull(params.trip)) {
+      this.trip = params.trip === true;
+    }
+    super.setupConfig(widgetConfig);
+  }
+
   protected setupDefaults(configData: WidgetConfigComponentData) {
     const settings = configData.config.settings as MapWidgetSettings;
     if (settings?.markers?.length) {
@@ -56,6 +70,11 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
     }
     if (settings?.circles?.length) {
       settings.circles = [];
+    }
+    if (this.trip) {
+      if (settings?.trips?.length) {
+        settings.trips = [];
+      }
     }
   }
 
@@ -85,10 +104,15 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
 
       actions: [configData.config.actions || {}, []]
     });
+    if (this.trip) {
+      this.mapWidgetConfigForm.addControl('timewindowConfig', this.fb.control(getTimewindowConfig(configData.config)))
+    }
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
-
+    if (this.trip) {
+      setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
+    }
     this.widgetConfig.config.settings = config.mapSettings || {};
 
     this.widgetConfig.config.showTitle = config.showTitle;

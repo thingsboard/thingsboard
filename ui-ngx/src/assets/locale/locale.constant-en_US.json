@@ -7858,6 +7858,10 @@
                     "place-marker": "Place marker",
                     "place-marker-hint": "Click to place '{{entityName}}' entity"
                 },
+                "path": {
+                    "decorator-symbol-arrow-head": "Arrow",
+                    "decorator-symbol-dash": "Dash"
+                },
                 "polygon": {
                     "polygon-key": "Polygon key",
                     "polygon-key-required": "Polygon key required",

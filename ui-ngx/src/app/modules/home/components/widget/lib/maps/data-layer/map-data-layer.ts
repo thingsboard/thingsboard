@@ -306,12 +306,13 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
 }
 
 export enum MapDataLayerType {
+   trip = 'trip',
    marker = 'marker',
    polygon = 'polygon',
    circle = 'circle'
 }
 
-class DataLayerPatternProcessor {
+export class DataLayerPatternProcessor {
 
   private patternFunction: CompiledTbFunction<MapStringFunction>;
   private pattern: string;
