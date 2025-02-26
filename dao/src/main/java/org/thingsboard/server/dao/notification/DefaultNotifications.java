@@ -378,7 +378,7 @@ public class DefaultNotifications {
             .name("Resources shortage notification")
             .type(NotificationType.RESOURCES_SHORTAGE)
             .subject("Warning: ${resource} shortage")
-            .text("${resource} usage is at ${usage}%).")
+            .text("${resource} usage is at ${usage}%.")
             .icon("warning")
             .rule(DefaultRule.builder()
                     .name("Resources shortage")
