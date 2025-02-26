@@ -197,8 +197,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                     processTelemetry(ctx, proto, cfIdList, callback);
                 } else if (proto.getAttrDataCount() > 0) {
                     processAttributes(ctx, proto, cfIdList, callback);
-                }
-                if (proto.getRemovedTsKeysCount() > 0) {
+                } else if (proto.getRemovedTsKeysCount() > 0) {
                     processRemovedTelemetry(ctx, proto, cfIdList, callback);
                 } else if (proto.getRemovedAttrKeysCount() > 0) {
                     processRemovedAttributes(ctx, proto, cfIdList, callback);
