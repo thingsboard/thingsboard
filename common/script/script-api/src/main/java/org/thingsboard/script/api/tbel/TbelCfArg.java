@@ -15,6 +15,7 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 })
 public interface TbelCfArg extends TbelCfObject {
 
+    @JsonIgnore
     String getType();
 
 }

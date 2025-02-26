@@ -120,6 +120,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
             }
         } catch (Exception e) {
+            if (e instanceof CalculatedFieldException cfe) {
+                throw cfe;
+            }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
     }
@@ -191,23 +194,23 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
             }
         } catch (Exception e) {
+            if (e instanceof CalculatedFieldException cfe) {
+                throw cfe;
+            }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
     }
 
-    @SneakyThrows
-    private void processTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) {
+    private void processTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
         processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getTsDataList()), toTbMsgId(proto), toTbMsgType(proto));
     }
 
-    @SneakyThrows
-    private void processAttributes(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) {
+    private void processAttributes(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
         processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getScope(), proto.getAttrDataList()), toTbMsgId(proto), toTbMsgType(proto));
     }
 
-    @SneakyThrows
     private void processArgumentValuesUpdate(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback,
-                                             Map<String, ArgumentEntry> newArgValues, UUID tbMsgId, TbMsgType tbMsgType) {
+                                             Map<String, ArgumentEntry> newArgValues, UUID tbMsgId, TbMsgType tbMsgType) throws CalculatedFieldException {
         if (newArgValues.isEmpty()) {
             log.info("[{}] No new argument values to process for CF.", ctx.getCfId());
             callback.onSuccess(CALLBACKS_PER_CF);
@@ -249,19 +252,22 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return state;
     }
 
-    @SneakyThrows
-    private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) {
+    private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) throws CalculatedFieldException {
         CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
         boolean stateSizeOk;
         if (ctx.isInitialized() && state.isReady()) {
-            CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
-            state.checkStateSize(ctxId, ctx.getMaxStateSize());
-            stateSizeOk = state.isSizeOk();
-            if (stateSizeOk) {
-                cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
-                if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
+            try {
+                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
+                state.checkStateSize(ctxId, ctx.getMaxStateSize());
+                stateSizeOk = state.isSizeOk();
+                if (stateSizeOk) {
+                    cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
+                    if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
+                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
+                    }
                 }
+            } catch (Exception e) {
+                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(tbMsgId).msgType(tbMsgType).arguments(state.getArguments()).cause(e).build();
             }
         } else {
             state.checkStateSize(ctxId, ctx.getMaxStateSize());
