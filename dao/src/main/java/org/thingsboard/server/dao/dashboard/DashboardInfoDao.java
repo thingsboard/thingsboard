@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.dashboard;
 
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
@@ -81,8 +80,5 @@ public interface DashboardInfoDao extends Dao<DashboardInfo>, ImageContainerDao<
     DashboardInfo findFirstByTenantIdAndName(UUID tenantId, String name);
 
     String findTitleById(UUID tenantId, UUID dashboardId);
-
-    @Override
-    EntityType getEntityType();
 
 }

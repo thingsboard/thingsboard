@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -143,11 +142,6 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
     @Override
     public List<DashboardInfo> findByResourceLink(String link, int limit) {
         return DaoUtil.convertDataList(dashboardInfoRepository.findDashboardInfosByResourceLink(link, limit));
-    }
-
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.DASHBOARD;
     }
 
 }

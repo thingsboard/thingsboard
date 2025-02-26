@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -50,6 +51,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.ResourceContainerDao;
+import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -57,6 +59,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
+import org.thingsboard.server.dao.widget.WidgetTypeDao;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -87,9 +90,16 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final TbResourceDao resourceDao;
     protected final TbResourceInfoDao resourceInfoDao;
     protected final ResourceDataValidator resourceValidator;
-    @Autowired
-    private List<ResourceContainerDao<?>> resourceContainerDaos;
+    protected final WidgetTypeDao widgetTypeDao;
+    protected final DashboardInfoDao dashboardInfoDao;
+    private final Map<EntityType, ResourceContainerDao<?>> resourceContainerDaoMap = new HashMap<>();
     protected static final int MAX_ENTITIES_TO_FIND = 10;
+
+    @PostConstruct
+    public void init() {
+        resourceContainerDaoMap.put(EntityType.WIDGET_TYPE, widgetTypeDao);
+        resourceContainerDaoMap.put(EntityType.DASHBOARD, dashboardInfoDao);
+    }
 
     @Autowired @Lazy
     private ImageService imageService;
@@ -338,16 +348,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 var link = resource.getLink();
                 Map<String, List<? extends HasId<?>>> affectedEntities = new HashMap<>();
 
-                for (ResourceContainerDao<?> resourceContainerDao : resourceContainerDaos) {
-
-                    var entities = tenantId.isSysTenantId()
-                            ? resourceContainerDao.findByResourceLink(link, MAX_ENTITIES_TO_FIND)
-                            : resourceContainerDao.findByTenantIdAndResourceLink(tenantId, link, MAX_ENTITIES_TO_FIND);
-
+                resourceContainerDaoMap.forEach((entityType, resourceContainerDao) -> {
+                    var entities = tenantId.isSysTenantId() ? resourceContainerDao.findByResourceLink(link, MAX_ENTITIES_TO_FIND) :
+                            resourceContainerDao.findByTenantIdAndResourceLink(tenantId, link, MAX_ENTITIES_TO_FIND);
                     if (!entities.isEmpty()) {
-                        affectedEntities.put(resourceContainerDao.getEntityType().name(), entities);
+                        affectedEntities.put(entityType.name(), entities);
                     }
-                }
+                });
 
                 if (!affectedEntities.isEmpty()) {
                     success = false;
