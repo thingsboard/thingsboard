@@ -27,7 +27,6 @@ import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { map, mergeMap, share, startWith } from 'rxjs/operators';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { isDefinedAndNotNull } from '@core/utils';
 import { buildPageStepSizeValues } from '@home/components/widget/lib/table-widget.models';
 
 interface DisplayColumn {

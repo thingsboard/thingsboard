@@ -31,7 +31,6 @@ import {
   isNotEmptyTbFunction,
   TbFunction
 } from '@shared/models/js-function.models';
-import { UntypedFormGroup } from '@angular/forms';
 
 const varsRegex = /\${([^}]*)}/g;
 

@@ -34,7 +34,6 @@ import {
 } from '@shared/models/js-function.models';
 import { forkJoin, Observable, of, ReplaySubject } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
-import { UntypedFormGroup } from '@angular/forms';
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
