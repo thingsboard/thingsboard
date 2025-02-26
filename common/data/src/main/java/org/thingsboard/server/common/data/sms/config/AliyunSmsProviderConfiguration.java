@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.rule.trigger.config;
+package org.thingsboard.server.common.data.sms.config;
 
 import lombok.Data;
 
 @Data
-public class NewPlatformVersionNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+public class AliyunSmsProviderConfiguration implements SmsProviderConfiguration {
+
+    private String accessKeyId;
+    private String accessKeySecret;
+    private String signName;
+    private String templateCode;
 //    private String toRegion;
 //    private String numberFrom;
 
     @Override
-    public NotificationRuleTriggerType getTriggerType() {
-        return NotificationRuleTriggerType.NEW_PLATFORM_VERSION;
+    public SmsProviderType getType() {
+        return SmsProviderType.ALIYUN;
     }
 
 }
