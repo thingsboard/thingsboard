@@ -17,5 +17,10 @@
 
 set -e
 source compose-utils.sh
-checkFolders || exit $?
-echo "OK"
+if checkFolders "$@" ; then
+    echo "------"
+    echo "All checks have passed"
+else
+    echo "------"
+    echo "Some checks did not pass - check the output"
+fi

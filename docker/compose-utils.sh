@@ -182,29 +182,77 @@ function permissionList() {
 }
 
 function checkFolders() {
+  CREATE=false
+  SKIP_CHOWN=false
+  for i in "$@"
+    do
+      case $i in
+          --create)
+          CREATE=true
+          shift
+          ;;
+          --skipChown)
+          SKIP_CHOWN=true
+          shift
+          ;;
+          *)
+                  # unknown option
+          ;;
+      esac
+    done
   EXIT_CODE=0
   PERMISSION_LIST=$(permissionList) || exit $?
   set -e
   while read -r USR GRP DIR
   do
-    if [ -z "$DIR" ]; then # skip empty lines
+    IS_EXIST_CHECK_PASSED=false
+    IS_OWNER_CHECK_PASSED=false
+
+    # skip empty lines
+    if [ -z "$DIR" ]; then
           continue
     fi
-    MESSAGE="Checking user ${USR} group ${GRP} dir ${DIR}"
-    if [[ -d "$DIR" ]] &&
-       [[ $(ls -ldn "$DIR" | awk '{print $3}') -eq "$USR" ]] &&
-       [[ $(ls -ldn "$DIR" | awk '{print $4}') -eq "$GRP" ]]
-    then
-      MESSAGE="$MESSAGE OK"
+
+    # checks section
+    echo "Checking if dir ${DIR} exists..."
+    if [[ -d "$DIR" ]]; then
+      echo "> OK"
+      IS_EXIST_CHECK_PASSED=true
+      if [ "$SKIP_CHOWN" = false ]; then
+        echo "Checking user ${USR} group ${GRP} ownership for dir ${DIR}..."
+        if [[ $(ls -ldn "$DIR" | awk '{print $3}') -eq "$USR" ]] && [[ $(ls -ldn "$DIR" | awk '{print $4}') -eq "$GRP" ]]; then
+          echo "> OK"
+          IS_OWNER_CHECK_PASSED=true
+        else
+          echo "...ownership check failed"
+          if [ "$CREATE" = false ]; then
+            EXIT_CODE=1
+          fi
+        fi
+      fi
     else
-      if [ "$1" = "--create" ]; then
-        echo "Create and chown: user ${USR} group ${GRP} dir ${DIR}"
-        mkdir -p "$DIR" && sudo chown -R "$USR":"$GRP" "$DIR"
-      else
-        echo "$MESSAGE FAILED"
+      echo "...does not exist"
+      if [ "$CREATE" = false ]; then
         EXIT_CODE=1
       fi
     fi
+
+    # create/chown section
+    if [ "$CREATE" = true ]; then
+      if [ "$IS_EXIST_CHECK_PASSED" = false ]; then
+        echo "...will create dir ${DIR}"
+        if [ "$SKIP_CHOWN" = false ]; then
+        echo "...will change ownership to user ${USR} group ${GRP} for dir ${DIR}"
+          mkdir -p "$DIR" && sudo chown -R "$USR":"$GRP" "$DIR" && echo "> OK"
+        else
+          mkdir -p "$DIR" && echo "> OK"
+        fi
+      elif [ "$IS_OWNER_CHECK_PASSED" = false ] && [ "$SKIP_CHOWN" = false ]; then
+        echo "...will change ownership to user ${USR} group ${GRP} for dir ${DIR}"
+        sudo chown -R "$USR":"$GRP" "$DIR" && echo "> OK"
+      fi
+    fi
+
   done < <(echo "$PERMISSION_LIST")
   return $EXIT_CODE
 }
