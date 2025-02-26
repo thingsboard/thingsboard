@@ -131,7 +131,6 @@ function additionalStartupServices() {
 function permissionList() {
     PERMISSION_LIST="
       799  799  tb-node/log
-      799  799  tb-transports/coap/log
       799  799  tb-transports/lwm2m/log
       799  799  tb-transports/http/log
       799  799  tb-transports/mqtt/log
