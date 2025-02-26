@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 import {
-  defaultAdvancedPersistenceStrategy,
+  defaultAdvancedProcessingStrategy,
   maxDeduplicateTimeSecs,
   ProcessingSettings,
   ProcessingSettingsForm,
@@ -37,9 +37,9 @@ export class TimeseriesConfigComponent extends RuleNodeConfigurationComponent {
 
   timeseriesConfigForm: FormGroup;
 
-  PersistenceType = ProcessingType;
-  persistenceStrategies = [ProcessingType.ON_EVERY_MESSAGE, ProcessingType.DEDUPLICATE, ProcessingType.WEBSOCKETS_ONLY];
-  PersistenceTypeTranslationMap = ProcessingTypeTranslationMap;
+  ProcessingType = ProcessingType;
+  processingStrategies = [ProcessingType.ON_EVERY_MESSAGE, ProcessingType.DEDUPLICATE, ProcessingType.WEBSOCKETS_ONLY];
+  ProcessingTypeTranslationMap = ProcessingTypeTranslationMap;
 
   maxDeduplicateTime = maxDeduplicateTimeSecs
 
@@ -63,14 +63,14 @@ export class TimeseriesConfigComponent extends RuleNodeConfigurationComponent {
         type: isAdvanced ? ProcessingType.ON_EVERY_MESSAGE : config.processingSettings.type,
         isAdvanced: isAdvanced,
         deduplicationIntervalSecs: config.processingSettings?.deduplicationIntervalSecs ?? 60,
-        advanced: isAdvanced ? config.processingSettings : defaultAdvancedPersistenceStrategy
+        advanced: isAdvanced ? config.processingSettings : defaultAdvancedProcessingStrategy
       }
     } else {
       processingSettings = {
         type: ProcessingType.ON_EVERY_MESSAGE,
         isAdvanced: false,
         deduplicationIntervalSecs: 60,
-        advanced: defaultAdvancedPersistenceStrategy
+        advanced: defaultAdvancedProcessingStrategy
       };
     }
     return {

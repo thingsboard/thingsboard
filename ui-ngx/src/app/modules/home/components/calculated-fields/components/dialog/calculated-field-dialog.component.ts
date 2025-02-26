@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -143,10 +143,10 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   }
 
   private applyDialogData(): void {
-    const { configuration = {}, type = CalculatedFieldType.SIMPLE, ...value } = this.data.value ?? {};
+    const { configuration = {}, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
     const { expression, ...restConfig } = configuration as CalculatedFieldConfiguration;
     const updatedConfig = { ...restConfig , ['expression'+type]: expression };
-    this.fieldFormGroup.patchValue({ configuration: updatedConfig, type, ...value }, {emitEvent: false});
+    this.fieldFormGroup.patchValue({ configuration: updatedConfig, type, debugSettings, ...value }, {emitEvent: false});
   }
 
   private observeTypeChanges(): void {

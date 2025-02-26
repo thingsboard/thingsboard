@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@use '../../../../../../../scss/constants' as constants;
-
 :host {
-  .entity-key-field {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  .arguments-table {
+    min-height: 108px;
+
+    &-with-error {
+      min-height: 150px;
+    }
+
+    .mat-mdc-table {
+      table-layout: fixed;
+    }
+
+    .key-text {
+      font-size: 13px;
+    }
   }
 
   .tb-form-table-row-cell-buttons {
@@ -25,38 +35,24 @@
     --mat-badge-small-size-container-overlap-offset: -5px;
     --mat-badge-small-size-text-size: 0;
   }
-
-  .argument-name-field {
-    @media #{constants.$mat-sm} {
-      min-width: 25%;
-      max-width: 25%;
-    }
-    @media #{constants.$mat-xs} {
-      min-width: 33%;
-      max-width: 33%;
-    }
-  }
-
-  .datasource-field {
-    min-width: 33%;
-    max-width: 33%;
-  }
 }
 
 :host ::ng-deep {
-  .entity-field {
-    a {
-      font-size: 14px;
-      white-space: nowrap;
-      display: block;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
-
   .mat-mdc-standard-chip {
     .mdc-evolution-chip__cell--primary, .mdc-evolution-chip__action--primary, .mdc-evolution-chip__text-label {
       overflow: hidden;
+    }
+  }
+
+  .arguments-table:not(.arguments-table-with-error) {
+    .mdc-data-table__row:last-child .mat-mdc-cell {
+      border-bottom: none;
+    }
+  }
+
+  .arguments-table {
+    .mat-mdc-header-row.mat-row-select .mat-mdc-header-cell.entity-type-header {
+      padding: 0 28px 0 0;
     }
   }
 }

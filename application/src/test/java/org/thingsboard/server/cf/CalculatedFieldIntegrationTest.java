@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,57 +83,52 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         calculatedField.setConfiguration(config);
         calculatedField.setVersion(1L);
 
-        // create CF -> perform initial calculation
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("77.0");
                 });
 
-        // update telemetry -> recalculate state
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("86.0");
                 });
 
-        // update CF output -> perform calculation with updated output
         Output savedOutput = savedCalculatedField.getConfiguration().getOutput();
         savedOutput.setType(OutputType.ATTRIBUTES);
         savedOutput.setScope(AttributeScope.SERVER_SCOPE);
         savedOutput.setName("temperatureF");
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update CF output -> perform calculation with updated output").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode temperatureF = getServerAttributes(testDevice.getId(), "temperatureF");
                     assertThat(temperatureF).isNotNull();
                     assertThat(temperatureF.get(0).get("value").asText()).isEqualTo("86.0");
                 });
 
-        // update CF argument -> perform calculation with new argument
         Argument savedArgument = savedCalculatedField.getConfiguration().getArguments().get("T");
         savedArgument.setRefEntityKey(new ReferencedEntityKey("deviceTemperature", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update CF argument -> perform calculation with new argument").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode temperatureF = getServerAttributes(testDevice.getId(), "temperatureF");
                     assertThat(temperatureF).isNotNull();
                     assertThat(temperatureF.get(0).get("value").asText()).isEqualTo("104.0");
                 });
 
-        // update CF expression -> perform calculation with new expression
         savedCalculatedField.getConfiguration().setExpression("1.8 * T + 32");
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update CF expression -> perform calculation with new expression").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode temperatureF = getServerAttributes(testDevice.getId(), "temperatureF");
                     assertThat(temperatureF).isNotNull();
@@ -168,20 +163,18 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         calculatedField.setConfiguration(config);
         calculatedField.setVersion(1L);
 
-        // create CF -> state is not ready -> no calculation performed
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("create CF -> state is not ready -> no calculation performed").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").isNull()).isTrue();
                 });
 
-        // update telemetry -> perform calculation
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update telemetry -> perform calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
@@ -217,20 +210,18 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         calculatedField.setConfiguration(config);
         calculatedField.setVersion(1L);
 
-        // create CF -> perform initial calculation with default value
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("create CF -> perform initial calculation with default value").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("53.6");
                 });
 
-        // update telemetry -> recalculate state
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
@@ -283,10 +274,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         calculatedField.setConfiguration(config);
         calculatedField.setVersion(1L);
 
-        // create CF and perform initial calculation
         doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("create CF and perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -299,10 +289,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(z2.get(0).get("value").asText()).isEqualTo("52.0");
                 });
 
-        // update device telemetry -> recalculate state for all assets
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":25}"));
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update device telemetry -> recalculate state for all assets").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -315,10 +304,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(z2.get(0).get("value").asText()).isEqualTo("37.0");
                 });
 
-        // update asset 1 telemetry -> recalculate state only for asset 1
         doPost("/api/plugins/telemetry/ASSET/" + asset1.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":15}"));
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update asset 1 telemetry -> recalculate state only for asset 1").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -331,10 +319,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(z2.get(0).get("value").asText()).isEqualTo("37.0");
                 });
 
-        // update asset 2 telemetry -> recalculate state only for asset 2
         doPost("/api/plugins/telemetry/ASSET/" + asset2.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":5}"));
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update asset 2 telemetry -> recalculate state only for asset 2").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1 (no changes)
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -347,12 +334,11 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(z2.get(0).get("value").asText()).isEqualTo("30.0");
                 });
 
-        // add new entity to profile -> calculate state for new entity
         Asset asset3 = createAsset("Test asset 3", assetProfile.getId());
         doPost("/api/plugins/telemetry/ASSET/" + asset3.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":13}"));
 
         Asset finalAsset3 = asset3;
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("add new entity to profile -> calculate state for new entity").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 3
                     ArrayNode z3 = getServerAttributes(finalAsset3.getId(), "z");
@@ -360,10 +346,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(z3.get(0).get("value").asText()).isEqualTo("38.0");
                 });
 
-        // update device telemetry -> recalculate state for all assets
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":20}"));
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update device telemetry -> recalculate state for all assets").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -386,11 +371,10 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         asset3.setAssetProfileId(newAssetProfile.getId());
         asset3 = doPost("/api/asset", asset3, Asset.class);
 
-        // update device telemetry -> recalculate state for asset 1 and asset 2
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":15}"));
 
         Asset updatedAsset3 = asset3;
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update device telemetry -> recalculate state for asset 1 and asset 2").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -438,20 +422,18 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         calculatedField.setConfiguration(config);
         calculatedField.setVersion(1L);
 
-        // create CF -> ctx is not initialized -> no calculation perform
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("create CF -> ctx is not initialized -> no calculation perform").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").isNull()).isTrue();
                 });
 
-        // update telemetry -> ctx is not initialized -> no calculation perform
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
 
-        await().atMost(5, TimeUnit.SECONDS)
+        await().alias("update telemetry -> ctx is not initialized -> no calculation perform").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();

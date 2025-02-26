@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.thingsboard.script.api.tbel.TbelCfTsDoubleVal;
 import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.exception.CalculatedFieldStateException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +93,7 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) throws CalculatedFieldStateException {
+    public boolean updateEntry(ArgumentEntry entry) {
         if (entry instanceof TsRollingArgumentEntry tsRollingEntry) {
             updateTsRollingEntry(tsRollingEntry);
         } else if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
@@ -124,10 +123,11 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
                 case STRING -> value.getStrValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
                 case JSON -> value.getJsonValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
             }
-            cleanupExpiredRecords();
         } catch (Exception e) {
-            log.warn("Time series rolling arguments supports only numeric values.");
-//            throw new IllegalArgumentException("Time series rolling arguments supports only numeric values.");
+            tsRecords.put(ts, Double.NaN);
+            log.debug("Invalid value '{}' for time series rolling arguments. Only numeric values are supported.", value.getValue());
+        } finally {
+            cleanupExpiredRecords();
         }
     }
 

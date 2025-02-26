@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -55,14 +55,15 @@ export interface BasicProcessingSettings {
   type: ProcessingType;
 }
 
-export interface DeduplicateProcessingStrategy extends BasicProcessingSettings{
+export interface DeduplicateProcessingStrategy extends BasicProcessingSettings {
   deduplicationIntervalSecs: number;
 }
 
-export interface AdvancedProcessingStrategy extends BasicProcessingSettings{
+export interface AdvancedProcessingStrategy extends BasicProcessingSettings {
   timeseries: AdvancedProcessingConfig;
   latest: AdvancedProcessingConfig;
   webSockets: AdvancedProcessingConfig;
+  calculatedFields: AdvancedProcessingConfig;
 }
 
 export type AdvancedProcessingConfig = WithOptional<DeduplicateProcessingStrategy, 'deduplicationIntervalSecs'>;
@@ -71,8 +72,9 @@ export const defaultAdvancedProcessingConfig: AdvancedProcessingConfig = {
   type: ProcessingType.ON_EVERY_MESSAGE
 }
 
-export const defaultAdvancedPersistenceStrategy: Omit<AdvancedProcessingStrategy, 'type'> = {
+export const defaultAdvancedProcessingStrategy: Omit<AdvancedProcessingStrategy, 'type'> = {
   timeseries: defaultAdvancedProcessingConfig,
   latest: defaultAdvancedProcessingConfig,
   webSockets: defaultAdvancedProcessingConfig,
+  calculatedFields: defaultAdvancedProcessingConfig,
 }

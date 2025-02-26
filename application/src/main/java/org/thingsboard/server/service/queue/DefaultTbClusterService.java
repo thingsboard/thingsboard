@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -697,7 +697,6 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onAssetUpdated(Asset entity, Asset old) {
         var created = old == null;
-        broadcastEntityChangeToTransport(entity.getTenantId(), entity.getId(), entity, null);
         if (old != null) {
             boolean assetTypeChanged = !entity.getAssetProfileId().equals(old.getAssetProfileId());
             if (assetTypeChanged) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.thingsboard.server.service.telemetry;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,6 +75,7 @@ import java.util.stream.Stream;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
@@ -100,14 +100,6 @@ class DefaultTelemetrySubscriptionServiceTest {
             .tenantId(tenantId)
             .myPartition(true)
             .build();
-
-    final FutureCallback<Void> emptyCallback = new FutureCallback<>() {
-        @Override
-        public void onSuccess(Void result) {}
-
-        @Override
-        public void onFailure(@NonNull Throwable t) {}
-    };
 
     ExecutorService wsCallBackExecutor;
     ExecutorService tsCallBackExecutor;
@@ -185,8 +177,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .strategy(new TimeseriesSaveRequest.Strategy(true, false, false))
-                .callback(emptyCallback)
+                .strategy(new TimeseriesSaveRequest.Strategy(true, false, false, false))
                 .build();
 
         // WHEN
@@ -206,7 +197,6 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
                 .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
-                .callback(emptyCallback)
                 .build();
 
         // WHEN
@@ -228,7 +218,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .strategy(TimeseriesSaveRequest.Strategy.SAVE_ALL)
+                .strategy(TimeseriesSaveRequest.Strategy.PROCESS_ALL)
                 .future(future)
                 .build();
 
@@ -287,8 +277,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .strategy(new TimeseriesSaveRequest.Strategy(false, true, false))
-                .callback(emptyCallback)
+                .strategy(new TimeseriesSaveRequest.Strategy(false, true, false, false))
                 .build();
 
         // WHEN
@@ -314,8 +303,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .strategy(new TimeseriesSaveRequest.Strategy(true, false, false))
-                .callback(emptyCallback)
+                .strategy(new TimeseriesSaveRequest.Strategy(true, false, false, false))
                 .build();
 
         // WHEN
@@ -332,7 +320,7 @@ class DefaultTelemetrySubscriptionServiceTest {
 
     @ParameterizedTest
     @MethodSource("booleanCombinations")
-    void shouldCallCorrectApiBasedOnBooleanFlagsInTheSaveRequest(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {
+    void shouldCallCorrectApiBasedOnBooleanFlagsInTheSaveRequest(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate, boolean processCalculatedFields) {
         // GIVEN
         var request = TimeseriesSaveRequest.builder()
                 .tenantId(tenantId)
@@ -340,8 +328,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .strategy(new TimeseriesSaveRequest.Strategy(saveTimeseries, saveLatest, sendWsUpdate))
-                .callback(emptyCallback)
+                .strategy(new TimeseriesSaveRequest.Strategy(saveTimeseries, saveLatest, sendWsUpdate, processCalculatedFields))
                 .build();
 
         // WHEN
@@ -355,6 +342,11 @@ class DefaultTelemetrySubscriptionServiceTest {
         } else if (saveTimeseries) {
             then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTelemetry, sampleTtl);
         }
+
+        if (processCalculatedFields) {
+            then(calculatedFieldQueueService).should().pushRequestToQueue(eq(request), any(), eq(request.getCallback()));
+        }
+
         then(tsService).shouldHaveNoMoreInteractions();
 
         if (sendWsUpdate) {
@@ -366,18 +358,26 @@ class DefaultTelemetrySubscriptionServiceTest {
 
     private static Stream<Arguments> booleanCombinations() {
         return Stream.of(
-                Arguments.of(true, true, true),
-                Arguments.of(true, true, false),
-                Arguments.of(true, false, true),
-                Arguments.of(true, false, false),
-                Arguments.of(false, true, true),
-                Arguments.of(false, true, false),
-                Arguments.of(false, false, true),
-                Arguments.of(false, false, false)
+                Arguments.of(true, true, true, true),
+                Arguments.of(true, true, true, false),
+                Arguments.of(true, true, false, true),
+                Arguments.of(true, true, false, false),
+                Arguments.of(true, false, true, true),
+                Arguments.of(true, false, true, false),
+                Arguments.of(true, false, false, true),
+                Arguments.of(true, false, false, false),
+                Arguments.of(false, true, true, true),
+                Arguments.of(false, true, true, false),
+                Arguments.of(false, true, false, true),
+                Arguments.of(false, true, false, false),
+                Arguments.of(false, false, true, true),
+                Arguments.of(false, false, true, false),
+                Arguments.of(false, false, false, true),
+                Arguments.of(false, false, false, false)
         );
     }
 
-    // used to emulate sequence numbers returned by save latest API
+    // used to emulate versions returned by save latest API
     private static List<Long> listOfNNumbers(int N) {
         return LongStream.range(0, N).boxed().toList();
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                   <li><strong>Time series:</strong> save time series data to a <code>ts_kv</code> table in a DB.</li>
                   <li><strong>Latest values:</strong> save time series data to a <code>ts_kv_latest</code> table in a DB.</li>
                   <li><strong>WebSockets:</strong> notify WebSockets subscriptions about time series data updates.</li>
+                  <li><strong>Calculated fields:</strong> notify calculated fields about time series data updates.</li>
                 </ul>
                 
                 For each <em>action</em>, three <strong>processing strategies</strong> are available:
@@ -90,7 +91,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                 By default, the timestamp is taken from <code>metadata.ts</code>. You can enable
                 <em>Use server timestamp</em> to always use the current server time instead. This is particularly
                 useful in sequential processing scenarios where messages may arrive with out-of-order timestamps from
-                multiple sources. Note that the DB layer may ignore older records for attributes and latest values,
+                multiple sources. Note that the DB layer may ignore "outdated" records for attributes and latest values,
                 so enabling <em>Use server timestamp</em> can ensure correct ordering.
                 <br><br>
                 The TTL is taken first from <code>metadata.TTL</code>. If absent, the node configuration’s default
@@ -137,7 +138,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         TimeseriesSaveRequest.Strategy strategy = determineSaveStrategy(ts, msg.getOriginator().getId());
 
         // short-circuit
-        if (!strategy.saveTimeseries() && !strategy.saveLatest() && !strategy.sendWsUpdate()) {
+        if (!strategy.saveTimeseries() && !strategy.saveLatest() && !strategy.sendWsUpdate() && !strategy.processCalculatedFields()) {
             ctx.tellSuccess(msg);
             return;
         }
@@ -179,20 +180,21 @@ public class TbMsgTimeseriesNode implements TbNode {
 
     private TimeseriesSaveRequest.Strategy determineSaveStrategy(long ts, UUID originatorUuid) {
         if (processingSettings instanceof OnEveryMessage) {
-            return TimeseriesSaveRequest.Strategy.SAVE_ALL;
+            return TimeseriesSaveRequest.Strategy.PROCESS_ALL;
         }
         if (processingSettings instanceof WebSocketsOnly) {
             return TimeseriesSaveRequest.Strategy.WS_ONLY;
         }
         if (processingSettings instanceof Deduplicate deduplicate) {
             boolean isFirstMsgInInterval = deduplicate.getProcessingStrategy().shouldProcess(ts, originatorUuid);
-            return isFirstMsgInInterval ? TimeseriesSaveRequest.Strategy.SAVE_ALL : TimeseriesSaveRequest.Strategy.SKIP_ALL;
+            return isFirstMsgInInterval ? TimeseriesSaveRequest.Strategy.PROCESS_ALL : TimeseriesSaveRequest.Strategy.SKIP_ALL;
         }
         if (processingSettings instanceof Advanced advanced) {
             return new TimeseriesSaveRequest.Strategy(
                     advanced.timeseries().shouldProcess(ts, originatorUuid),
                     advanced.latest().shouldProcess(ts, originatorUuid),
-                    advanced.webSockets().shouldProcess(ts, originatorUuid)
+                    advanced.webSockets().shouldProcess(ts, originatorUuid),
+                    advanced.calculatedFields().shouldProcess(ts, originatorUuid)
             );
         }
         // should not happen
@@ -215,6 +217,7 @@ public class TbMsgTimeseriesNode implements TbNode {
                     var skipLatestProcessingSettings = new Advanced(
                             ProcessingStrategy.onEveryMessage(),
                             ProcessingStrategy.skip(),
+                            ProcessingStrategy.onEveryMessage(),
                             ProcessingStrategy.onEveryMessage()
                     );
                     ((ObjectNode) oldConfiguration).set("processingSettings", JacksonUtil.valueToTree(skipLatestProcessingSettings));

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,11 +43,11 @@ import { MathFunctionConfigComponent } from './math-function-config.component';
 import { DeviceStateConfigComponent } from './device-state-config.component';
 import { SendRestApiCallReplyConfigComponent } from './send-rest-api-call-reply-config.component';
 import {
-  AdvancedPersistenceSettingComponent
-} from '@home/components/rule-node/action/advanced-persistence-setting.component';
+  AdvancedProcessingSettingComponent
+} from '@home/components/rule-node/action/advanced-processing-setting.component';
 import {
-  AdvancedPersistenceSettingRowComponent
-} from '@home/components/rule-node/action/advanced-persistence-setting-row.component';
+  AdvancedProcessingSettingRowComponent
+} from '@home/components/rule-node/action/advanced-processing-setting-row.component';
 
 @NgModule({
   declarations: [
@@ -74,8 +74,8 @@ import {
     PushToCloudConfigComponent,
     MathFunctionConfigComponent,
     DeviceStateConfigComponent,
-    AdvancedPersistenceSettingComponent,
-    AdvancedPersistenceSettingRowComponent,
+    AdvancedProcessingSettingComponent,
+    AdvancedProcessingSettingRowComponent,
   ],
   imports: [
     CommonModule,

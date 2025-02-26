@@ -33,6 +33,7 @@
     "hp_consumers",
     "hp_house",
     "hp_apartments",
-    "hp_manufacture"
+    "hp_manufacture",
+    "hp_electrical_engine"
   ]
 }
