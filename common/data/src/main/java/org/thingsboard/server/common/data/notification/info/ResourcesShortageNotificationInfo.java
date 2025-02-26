@@ -29,7 +29,7 @@ import java.util.Map;
 public class ResourcesShortageNotificationInfo implements RuleOriginatedNotificationInfo {
 
     private String resource;
-    private Integer usage;
+    private Long usage;
 
     @Override
     public Map<String, String> getTemplateData() {

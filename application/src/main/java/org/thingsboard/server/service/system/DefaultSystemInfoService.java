@@ -184,6 +184,11 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private void saveCurrentClusterSystemInfo() {
         long ts = System.currentTimeMillis();
         List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfo());
+        clusterSystemData.forEach(data -> {
+            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(data.getCpuUsage()).build());
+            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(data.getMemoryUsage()).build());
+            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(data.getDiscUsage()).build());
+        });
         BasicTsKvEntry clusterDataKv = new BasicTsKvEntry(ts, new JsonDataEntry("clusterSystemData", JacksonUtil.toString(clusterSystemData)));
         doSave(Arrays.asList(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", true)), clusterDataKv));
     }
@@ -194,15 +199,17 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         tsList.add(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", false)));
         getCpuUsage().ifPresent(v -> {
             tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuUsage", (long) v)));
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(v).build());
+            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage((long) v).build());
         });
         getMemoryUsage().ifPresent(v -> {
-            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", (long) v)));
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(v).build());
+            long value = (long) v;
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", value)));
+            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(value).build());
         });
         getDiscSpaceUsage().ifPresent(v -> {
-            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("discUsage", (long) v)));
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(v).build());
+            long value = (long) v;
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("discUsage", value)));
+            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(value).build());
         });
 
         getCpuCount().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuCount", (long) v))));

@@ -32,7 +32,7 @@ public class ResourcesShortageTrigger implements NotificationRuleTrigger {
     private static final long serialVersionUID = 6024216015202949570L;
 
     private Resource resource;
-    private Integer usage;
+    private Long usage;
 
     @Override
     public TenantId getTenantId() {
