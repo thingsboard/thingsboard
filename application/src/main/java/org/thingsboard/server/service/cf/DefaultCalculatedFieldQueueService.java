@@ -21,7 +21,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
@@ -48,6 +50,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -101,6 +104,23 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         var tenantId = request.getTenantId();
         var entityId = request.getEntityId();
         checkEntityAndPushToQueue(tenantId, entityId, cf -> cf.matches(request.getEntries(), request.getScope()), cf -> cf.linkMatches(entityId, request.getEntries(), request.getScope()),
+                () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
+    }
+
+    @Override
+    public void pushRequestToQueue(AttributesDeleteRequest request, List<String> result, FutureCallback<Void> callback) {
+        var tenantId = request.getTenantId();
+        var entityId = request.getEntityId();
+        checkEntityAndPushToQueue(tenantId, entityId, cf -> cf.matchesKeys(result, request.getScope()), cf -> cf.linkMatchesAttrKeys(entityId, result, request.getScope()),
+                () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
+    }
+
+    @Override
+    public void pushRequestToQueue(TimeseriesDeleteRequest request, List<String> result, FutureCallback<Void> callback) {
+        var tenantId = request.getTenantId();
+        var entityId = request.getEntityId();
+
+        checkEntityAndPushToQueue(tenantId, entityId, cf -> cf.matchesKeys(result), cf -> cf.linkMatchesTsKeys(entityId, result),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
 
@@ -172,6 +192,23 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         msg.setTelemetryMsg(telemetryMsg.build());
 
         return msg.build();
+    }
+
+    private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(AttributesDeleteRequest request, List<String> removedKeys) {
+        CalculatedFieldTelemetryMsgProto telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), new ArrayList<>(), request.getTbMsgId(), request.getTbMsgType())
+                .setScope(AttributeScopeProto.valueOf(request.getScope().name()))
+                .addAllRemovedAttrKeys(removedKeys).build();
+        return ToCalculatedFieldMsg.newBuilder()
+                .setTelemetryMsg(telemetryMsg)
+                .build();
+    }
+
+    private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(TimeseriesDeleteRequest request, List<String> removedKeys) {
+        CalculatedFieldTelemetryMsgProto telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), new ArrayList<>(), request.getTbMsgId(), request.getTbMsgType())
+                .addAllRemovedTsKeys(removedKeys).build();
+        return ToCalculatedFieldMsg.newBuilder()
+                .setTelemetryMsg(telemetryMsg)
+                .build();
     }
 
     private CalculatedFieldTelemetryMsgProto.Builder buildTelemetryMsgProto(TenantId tenantId, EntityId entityId, List<CalculatedFieldId> calculatedFieldIds, UUID tbMsgId, TbMsgType tbMsgType) {

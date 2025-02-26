@@ -76,6 +76,8 @@ public class TbMsgDeleteAttributesNode implements TbNode {
                     .scope(scope)
                     .keys(keysToDelete)
                     .notifyDevice(checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY), scope))
+                    .tbMsgId(msg.getId())
+                    .tbMsgType(msg.getInternalType())
                     .callback(config.isSendAttributesDeletedNotification() ?
                             new AttributesDeleteNodeCallback(ctx, msg, scope.name(), keysToDelete) :
                             new TelemetryNodeCallback(ctx, msg))

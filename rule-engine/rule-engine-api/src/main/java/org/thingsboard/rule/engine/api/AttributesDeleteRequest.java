@@ -24,8 +24,10 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @ToString
@@ -37,6 +39,8 @@ public class AttributesDeleteRequest {
     private final AttributeScope scope;
     private final List<String> keys;
     private final boolean notifyDevice;
+    private final UUID tbMsgId;
+    private final TbMsgType tbMsgType;
     private final FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -50,9 +54,12 @@ public class AttributesDeleteRequest {
         private AttributeScope scope;
         private List<String> keys;
         private boolean notifyDevice;
+        private UUID tbMsgId;
+        private TbMsgType tbMsgType;
         private FutureCallback<Void> callback;
 
-        Builder() {}
+        Builder() {
+        }
 
         public Builder tenantId(TenantId tenantId) {
             this.tenantId = tenantId;
@@ -89,6 +96,16 @@ public class AttributesDeleteRequest {
             return this;
         }
 
+        public Builder tbMsgId(UUID tbMsgId) {
+            this.tbMsgId = tbMsgId;
+            return this;
+        }
+
+        public Builder tbMsgType(TbMsgType tbMsgType) {
+            this.tbMsgType = tbMsgType;
+            return this;
+        }
+
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
@@ -109,7 +126,7 @@ public class AttributesDeleteRequest {
         }
 
         public AttributesDeleteRequest build() {
-            return new AttributesDeleteRequest(tenantId, entityId, scope, keys, notifyDevice, callback);
+            return new AttributesDeleteRequest(tenantId, entityId, scope, keys, notifyDevice, tbMsgId, tbMsgType, callback);
         }
 
     }

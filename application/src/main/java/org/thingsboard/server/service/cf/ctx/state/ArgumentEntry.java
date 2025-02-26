@@ -54,4 +54,8 @@ public interface ArgumentEntry {
 
     TbelCfArg toTbelCfArg();
 
+    boolean isForceResetPrevious();
+
+    void setForceResetPrevious(boolean forceResetPrevious);
+
 }

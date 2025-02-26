@@ -148,6 +148,28 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
     }
 
     @Override
+    public Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments) {
+        Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
+        for (var entry : arguments.entrySet()) {
+            var argEntityId = entry.getValue().getRefEntityId() != null ? entry.getValue().getRefEntityId() : entityId;
+            var argValueFuture = fetchKvEntry(tenantId, argEntityId, entry.getValue());
+            argFutures.put(entry.getKey(), argValueFuture);
+        }
+        return argFutures.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Entry::getKey, // Keep the key as is
+                        entry -> {
+                            try {
+                                // Resolve the future to get the value
+                                return entry.getValue().get();
+                            } catch (ExecutionException | InterruptedException e) {
+                                throw new RuntimeException("Error getting future result for key: " + entry.getKey(), e);
+                            }
+                        }
+                ));
+    }
+
+    @Override
     public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult calculatedFieldResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
         try {
             OutputType type = calculatedFieldResult.getType();
