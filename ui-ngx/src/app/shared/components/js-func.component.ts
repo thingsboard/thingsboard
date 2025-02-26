@@ -37,7 +37,7 @@ import { ActionNotificationHide, ActionNotificationShow } from '@core/notificati
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
-import { deepClone, guid, isUndefined, isUndefinedOrNull } from '@app/core/utils';
+import { deepClone, guid, isEqual, isObject, isUndefined, isUndefinedOrNull } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
@@ -179,26 +179,12 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
               private http: HttpClient) {
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.functionArgs) {
-      this.updateFunctionArgsString();
-      this.updateFunctionLabel();
-    }
-    if (changes.editorCompleter?.previousValue) {
-      this.updateCompleters();
-    }
-    if (changes.highlightRules?.previousValue) {
-      this.updateHighlightRules();
-    }
-  }
-
   ngOnInit(): void {
-    if (this.functionTitle || this.label) {
-      this.hideBrackets = true;
-    }
     if (!this.resultType || this.resultType.length === 0) {
       this.resultType = 'nocheck';
     }
+    this.updateFunctionArgsString()
+    this.updateFunctionLabel();
     const editorElement = this.javascriptEditorElmRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
         mode: 'ace/mode/javascript',
@@ -262,30 +248,22 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
     );
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const { firstChange, currentValue, previousValue } = changes[propName];
+      const isChanged = isObject(currentValue) ? isEqual(currentValue, previousValue) : currentValue !== previousValue;
+      if (!firstChange && isChanged) {
+        this.updateByChangesPropName(propName);
+      }
+    }
+  }
+
   ngOnDestroy(): void {
     if (this.editorResize$) {
       this.editorResize$.disconnect();
     }
     if (this.jsEditor) {
       this.jsEditor.destroy();
-    }
-  }
-
-  private updateHighlightRules(): void {
-    // @ts-ignore
-    if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
-      // @ts-ignore
-      const newMode = new this.jsEditor.session.$mode.constructor();
-      newMode.$highlightRules = new newMode.HighlightRules();
-      for(const group in this.highlightRules) {
-        if(!!newMode.$highlightRules.$rules[group]) {
-          newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
-        } else {
-          newMode.$highlightRules.$rules[group] = this.highlightRules[group];
-        }
-      }
-      // @ts-ignore
-      this.jsEditor.session.$onChangeMode(newMode);
     }
   }
 
@@ -340,6 +318,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   }
 
   private updateFunctionLabel(): void {
+    if (this.functionTitle || this.label) {
+      this.hideBrackets = true;
+    }
     if (this.functionTitle) {
       this.functionLabel = `${this.functionTitle}: f(${this.functionArgsString})`;
     } else if (this.label) {
@@ -349,6 +330,10 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
         `function ${this.functionName ? this.functionName : ''}(${this.functionArgsString})${this.hideBrackets ? '' : ' {'}`;
     }
     this.cd.markForCheck();
+  }
+
+  private updatedScriptLanguage() {
+    this.jsEditor.session.setMode(`ace/mode/${ScriptLanguage.TBEL === this.scriptLanguage ? 'tbel' : 'javascript'}`);
   }
 
   validateOnSubmit(): Observable<void> {
@@ -558,6 +543,52 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
       this.propagateChange(tbFunction);
     } else {
       this.propagateChange(value);
+    }
+  }
+
+  private updateByChangesPropName(propName: string): void {
+    switch (propName) {
+      case 'functionArgs':
+        this.updateFunctionArgsString()
+        this.updateFunctionLabel();
+        this.updateJsWorkerGlobals();
+        break;
+      case 'label':
+      case 'functionTitle':
+      case 'functionName':
+        this.updateFunctionLabel();
+        break;
+      case 'scriptLanguage':
+        this.updatedScriptLanguage();
+        break;
+      case 'disableUndefinedCheck':
+      case 'globalVariables':
+        this.updateJsWorkerGlobals();
+        break;
+      case 'editorCompleter':
+        this.updateCompleters();
+        break;
+      case 'highlightRules':
+        this.updateHighlightRules();
+        break;
+    }
+  }
+
+  private updateHighlightRules(): void {
+    // @ts-ignore
+    if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
+      // @ts-ignore
+      const newMode = new this.jsEditor.session.$mode.constructor();
+      newMode.$highlightRules = new newMode.HighlightRules();
+      for(const group in this.highlightRules) {
+        if(!!newMode.$highlightRules.$rules[group]) {
+          newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
+        } else {
+          newMode.$highlightRules.$rules[group] = this.highlightRules[group];
+        }
+      }
+      // @ts-ignore
+      this.jsEditor.session.$onChangeMode(newMode);
     }
   }
 
