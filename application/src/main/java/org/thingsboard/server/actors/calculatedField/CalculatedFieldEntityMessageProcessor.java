@@ -24,6 +24,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -58,6 +59,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 /**
@@ -166,14 +168,15 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             if (cfIds.contains(ctx.getCfId())) {
                 callback.onSuccess(CALLBACKS_PER_CF);
             } else {
-                if (proto.getRemovedTsKeysCount() > 0) {
-                    processArgumentValuesUpdate(ctx, cfIds, callback, mapDeletedAttributesToDefault(ctx, msg.getEntityId(), proto.getScope(), proto.getRemovedTsKeysList()), toTbMsgId(proto), toTbMsgType(proto));
-                } else if (proto.getRemovedAttrKeysCount() > 0) {
-                    processArgumentValuesUpdate(ctx, cfIds, callback, mapDeletedAttributesToDefault(ctx, msg.getEntityId(), proto.getScope(), proto.getRemovedAttrKeysList()), toTbMsgId(proto), toTbMsgType(proto));
-                } else if (proto.getTsDataCount() > 0) {
+                if (proto.getTsDataCount() > 0) {
                     processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getTsDataList()), toTbMsgId(proto), toTbMsgType(proto));
                 } else if (proto.getAttrDataCount() > 0) {
                     processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getScope(), proto.getAttrDataList()), toTbMsgId(proto), toTbMsgType(proto));
+                }
+                if (proto.getRemovedTsKeysCount() > 0) {
+                    processArgumentValuesUpdate(ctx, cfIds, callback, mapToArgumentsWithFetchedValue(ctx, proto.getRemovedTsKeysList()), toTbMsgId(proto), toTbMsgType(proto));
+                } else if (proto.getRemovedAttrKeysCount() > 0) {
+                    processArgumentValuesUpdate(ctx, cfIds, callback, mapToArgumentsWithDefaultValue(ctx, msg.getEntityId(), proto.getScope(), proto.getRemovedAttrKeysList()), toTbMsgId(proto), toTbMsgType(proto));
                 } else {
                     callback.onSuccess(CALLBACKS_PER_CF);
                 }
@@ -188,14 +191,15 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             if (cfIds.contains(ctx.getCfId())) {
                 callback.onSuccess(CALLBACKS_PER_CF);
             } else {
+                if (proto.getTsDataCount() > 0) {
+                    processTelemetry(ctx, proto, cfIdList, callback);
+                } else if (proto.getAttrDataCount() > 0) {
+                    processAttributes(ctx, proto, cfIdList, callback);
+                }
                 if (proto.getRemovedTsKeysCount() > 0) {
                     processRemovedTelemetry(ctx, proto, cfIdList, callback);
                 } else if (proto.getRemovedAttrKeysCount() > 0) {
                     processRemovedAttributes(ctx, proto, cfIdList, callback);
-                } else if (proto.getTsDataCount() > 0) {
-                    processTelemetry(ctx, proto, cfIdList, callback);
-                } else if (proto.getAttrDataCount() > 0) {
-                    processAttributes(ctx, proto, cfIdList, callback);
                 } else {
                     callback.onSuccess(CALLBACKS_PER_CF);
                 }
@@ -208,32 +212,20 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
-    private void processRemovedTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
-        // reinit cf (consider fetching only removed ts)
-        log.info("Force reinitialization of CF: [{}].", ctx.getCfId());
-        states.remove(ctx.getCfId());
-        try {
-            var state = getOrInitState(ctx);
-            if (state.isSizeOk()) {
-                processStateIfReady(ctx, Collections.singletonList(ctx.getCfId()), state, null, null, callback);
-            } else {
-                throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
-            }
-        } catch (Exception e) {
-            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
-        }
-    }
-
-    private void processRemovedAttributes(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
-        processArgumentValuesUpdate(ctx, cfIdList, callback, mapDeletedAttributesToDefault(ctx, proto.getScope(), proto.getRemovedAttrKeysList()), toTbMsgId(proto), toTbMsgType(proto));
-    }
-
     private void processTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
         processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getTsDataList()), toTbMsgId(proto), toTbMsgType(proto));
     }
 
     private void processAttributes(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
         processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getScope(), proto.getAttrDataList()), toTbMsgId(proto), toTbMsgType(proto));
+    }
+
+    private void processRemovedTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
+        processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArgumentsWithFetchedValue(ctx, proto.getRemovedTsKeysList()), toTbMsgId(proto), toTbMsgType(proto));
+    }
+
+    private void processRemovedAttributes(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
+        processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArgumentsWithDefaultValue(ctx, proto.getScope(), proto.getRemovedAttrKeysList()), toTbMsgId(proto), toTbMsgType(proto));
     }
 
     private void processArgumentValuesUpdate(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback,
@@ -334,7 +326,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArguments(argNames, data);
     }
 
-    private static Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, List<TsKvProto> data) {
+    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, List<TsKvProto> data) {
         if (argNames.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -366,7 +358,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArguments(argNames, scope, attrDataList);
     }
 
-    private static Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (AttributeValueProto item : attrDataList) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
@@ -378,19 +370,19 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return arguments;
     }
 
-    private Map<String, ArgumentEntry> mapDeletedAttributesToDefault(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<String> removedAttrKeys) {
+    private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<String> removedAttrKeys) {
         var argNames = ctx.getLinkedEntityArguments().get(entityId);
         if (argNames.isEmpty()) {
             return Collections.emptyMap();
         }
-        return mapToArgumentsDefaultValue(argNames, ctx.getArguments(), scope, removedAttrKeys);
+        return mapToArgumentsWithDefaultValue(argNames, ctx.getArguments(), scope, removedAttrKeys);
     }
 
-    private Map<String, ArgumentEntry> mapDeletedAttributesToDefault(CalculatedFieldCtx ctx, AttributeScopeProto scope, List<String> removedAttrKeys) {
-        return mapToArgumentsDefaultValue(ctx.getMainEntityArguments(), ctx.getArguments(), scope, removedAttrKeys);
+    private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(CalculatedFieldCtx ctx, AttributeScopeProto scope, List<String> removedAttrKeys) {
+        return mapToArgumentsWithDefaultValue(ctx.getMainEntityArguments(), ctx.getArguments(), scope, removedAttrKeys);
     }
 
-    private static Map<String, ArgumentEntry> mapToArgumentsDefaultValue(Map<ReferencedEntityKey, String> argNames, Map<String, Argument> configArguments, AttributeScopeProto scope, List<String> removedAttrKeys) {
+    private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(Map<ReferencedEntityKey, String> argNames, Map<String, Argument> configArguments, AttributeScopeProto scope, List<String> removedAttrKeys) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (String removedKey : removedAttrKeys) {
             ReferencedEntityKey key = new ReferencedEntityKey(removedKey, ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
@@ -398,13 +390,24 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             if (argName != null) {
                 Argument argument = configArguments.get(argName);
                 String defaultValue = (argument != null) ? argument.getDefaultValue() : null;
-                arguments.put(argName, (defaultValue != null)
+                arguments.put(argName, StringUtils.isNotEmpty(defaultValue)
                         ? new SingleValueArgumentEntry(System.currentTimeMillis(), new StringDataEntry(removedKey, defaultValue), null)
                         : new SingleValueArgumentEntry());
 
             }
         }
         return arguments;
+    }
+
+    private Map<String, ArgumentEntry> mapToArgumentsWithFetchedValue(CalculatedFieldCtx ctx, List<String> removedTelemetryKeys) {
+        Map<String, Argument> deletedArguments = ctx.getArguments().entrySet().stream()
+                .filter(entry -> removedTelemetryKeys.contains(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, entityId, deletedArguments);
+
+        fetchedArgs.values().forEach(arg -> arg.setForceResetPrevious(true));
+        return fetchedArgs;
     }
 
     private static List<CalculatedFieldId> getCalculatedFieldIds(CalculatedFieldTelemetryMsgProto proto) {

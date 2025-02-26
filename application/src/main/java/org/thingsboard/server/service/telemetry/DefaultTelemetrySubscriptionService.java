@@ -211,10 +211,11 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             DonAsynchron.withCallback(deleteFuture, result -> {
                 calculatedFieldQueueService.pushRequestToQueue(request, request.getKeys(), getCalculatedFieldCallback(request.getCallback(), request.getKeys()));
             }, safeCallback(getCalculatedFieldCallback(request.getCallback(), request.getKeys())), tsCallBackExecutor);
-//            addMainCallback(deleteFuture, __ -> request.getCallback().onSuccess(request.getKeys()), request.getCallback()::onFailure);
         } else {
             ListenableFuture<List<String>> deleteFuture = tsService.removeAllLatest(request.getTenantId(), request.getEntityId());
-            addMainCallback(deleteFuture, request.getCallback()::onSuccess, request.getCallback()::onFailure);
+            DonAsynchron.withCallback(deleteFuture, result -> {
+                calculatedFieldQueueService.pushRequestToQueue(request, request.getKeys(), getCalculatedFieldCallback(request.getCallback(), result));
+            }, safeCallback(getCalculatedFieldCallback(request.getCallback(), request.getKeys())), tsCallBackExecutor);
         }
     }
 

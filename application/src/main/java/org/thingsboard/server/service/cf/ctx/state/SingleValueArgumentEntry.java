@@ -38,6 +38,8 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     private BasicKvEntry kvEntryValue;
     private Long version;
 
+    private boolean forceResetPrevious;
+
     public SingleValueArgumentEntry(TsKvProto entry) {
         this.ts = entry.getTs();
         this.version = entry.getVersion();
@@ -59,6 +61,12 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
             this.version = attributeKvEntry.getVersion();
         }
         this.kvEntryValue = ProtoUtils.basicKvEntryFromKvEntry(entry);
+    }
+
+    public SingleValueArgumentEntry(long ts, BasicKvEntry kvEntryValue, Long version) {
+        this.ts = ts;
+        this.kvEntryValue = kvEntryValue;
+        this.version = version;
     }
 
     @Override
