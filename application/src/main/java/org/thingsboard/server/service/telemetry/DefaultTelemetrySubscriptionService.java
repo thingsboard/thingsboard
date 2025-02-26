@@ -53,6 +53,7 @@ import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -165,9 +166,16 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void saveAttributesInternal(AttributesSaveRequest request) {
         log.trace("Executing saveInternal [{}]", request);
-        ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
+        ListenableFuture<List<Long>> saveFuture;
+        if (request.getStrategy().saveAttributes()) {
+            saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
+        } else {
+            saveFuture = Futures.immediateFuture(Collections.emptyList());
+        }
         addMainCallback(saveFuture, request.getCallback());
-        addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
+        if (request.getStrategy().sendWsUpdate()) {
+            addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
+        }
     }
 
     @Override

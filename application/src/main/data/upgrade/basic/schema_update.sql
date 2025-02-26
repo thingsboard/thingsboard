@@ -62,4 +62,32 @@ $$;
 
 -- UPDATE SAVE TIME SERIES NODES END
 
+-- UPDATE SAVE ATTRIBUTES NODES START
+
+DO $$
+    BEGIN
+        -- Check if the rule_node table exists
+        IF EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_name = 'rule_node'
+        ) THEN
+
+            UPDATE rule_node
+            SET configuration = (
+                configuration::jsonb
+                    || jsonb_build_object(
+                        'processingSettings', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
+                       )
+                )::text,
+                configuration_version = 3
+            WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode'
+              AND configuration_version = 2;
+
+        END IF;
+    END;
+$$;
+
+-- UPDATE SAVE ATTRIBUTES NODES END
+
 ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS version BIGINT DEFAULT 1;
