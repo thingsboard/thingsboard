@@ -251,7 +251,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   ngOnChanges(changes: SimpleChanges): void {
     for (const propName of Object.keys(changes)) {
       const { firstChange, currentValue, previousValue } = changes[propName];
-      const isChanged = isObject(currentValue) ? isEqual(currentValue, previousValue) : currentValue !== previousValue;
+      const isChanged = isObject(currentValue) ? !isEqual(currentValue, previousValue) : currentValue !== previousValue;
       if (!firstChange && isChanged) {
         this.updateByChangesPropName(propName);
       }
