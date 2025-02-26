@@ -76,7 +76,7 @@ class TbDateTest {
      *      -timezone Etc/GMT-14
      *      -timezone Etc/GMT+12
      *      -timezone America/New_York
-     *      -timezone Europe/Kyiv
+     *      -timezone Europe/Kiev
      */
     @Test
     void testToISOStringConcurrently() throws ExecutionException, InterruptedException, TimeoutException {
@@ -825,9 +825,9 @@ class TbDateTest {
     @Test
     public void toStringAsJs() {
         TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"-04:00");
-        Assertions.assertEquals("четвер, 1 січня 1976 р. о 06:15:30 за східноєвропейським стандартним часом", d1.toString("uk-UA", "Europe/Kyiv"));
-        Assertions.assertEquals("Thursday, January 1, 1976 at 6:15:30 AM Eastern European Standard Time", d1.toString("en-US", "Europe/Kyiv"));
-        Assertions.assertEquals("1976 Jan 1, Thu 06:15:30 Eastern European Time", d1.toString("UTC", "Europe/Kyiv"));
+        Assertions.assertEquals("четвер, 1 січня 1976 р. о 06:15:30 за східноєвропейським стандартним часом", d1.toString("uk-UA", "Europe/Kiev"));
+        Assertions.assertEquals("Thursday, January 1, 1976 at 6:15:30 AM Eastern European Standard Time", d1.toString("en-US", "Europe/Kiev"));
+        Assertions.assertEquals("1976 Jan 1, Thu 06:15:30 Eastern European Time", d1.toString("UTC", "Europe/Kiev"));
         Assertions.assertEquals("Wednesday, December 31, 1975 at 10:15:30 PM Eastern Standard Time", d1.toString("en-US", "America/New_York"));
         Assertions.assertEquals("1975 Dec 31, Wed 22:15:30 Eastern Standard Time", d1.toString("GMT", "America/New_York"));
         Assertions.assertEquals("1975 Dec 31, Wed 22:15:30 Eastern Standard Time", d1.toString("UTC", "America/New_York"));
@@ -839,23 +839,23 @@ class TbDateTest {
         Assertions.assertEquals("1976-01-01T03:15:30.567Z", d1.toJSON());
         Assertions.assertEquals("1976-01-01T03:15:30.567Z", d1.toISOString());
 
-        Assertions.assertEquals("1976-01-01 06:15:30", d1.toLocaleString("UTC", "Europe/Kyiv"));
-        Assertions.assertEquals("01.01.76, 06:15:30", d1.toLocaleString("uk-UA", "Europe/Kyiv"));
+        Assertions.assertEquals("1976-01-01 06:15:30", d1.toLocaleString("UTC", "Europe/Kiev"));
+        Assertions.assertEquals("01.01.76, 06:15:30", d1.toLocaleString("uk-UA", "Europe/Kiev"));
         Assertions.assertEquals("1975-12-31 22:15:30", d1.toLocaleString("UTC", "America/New_York"));
         Assertions.assertEquals("12/31/75, 10:15:30 PM", d1.toLocaleString("en-US", "America/New_York"));
 
-        Assertions.assertEquals("1976 Jan 1, Thu", d1.toDateString("UTC", "Europe/Kyiv"));
-        Assertions.assertEquals("четвер, 1 січня 1976 р.", d1.toDateString("uk-UA", "Europe/Kyiv"));
+        Assertions.assertEquals("1976 Jan 1, Thu", d1.toDateString("UTC", "Europe/Kiev"));
+        Assertions.assertEquals("четвер, 1 січня 1976 р.", d1.toDateString("uk-UA", "Europe/Kiev"));
         Assertions.assertEquals("1975 Dec 31, Wed", d1.toDateString("UTC", "America/New_York"));
         Assertions.assertEquals("Wednesday, December 31, 1975", d1.toDateString("en-US", "America/New_York"));
 
-        Assertions.assertEquals("06:15:30", d1.toLocaleTimeString("uk-UA", "Europe/Kyiv"));
-        Assertions.assertEquals("06:15:30", d1.toLocaleTimeString("UTC", "Europe/Kyiv"));
+        Assertions.assertEquals("06:15:30", d1.toLocaleTimeString("uk-UA", "Europe/Kiev"));
+        Assertions.assertEquals("06:15:30", d1.toLocaleTimeString("UTC", "Europe/Kiev"));
         Assertions.assertEquals("10:15:30 PM", d1.toLocaleTimeString("en-US", "America/New_York"));
         Assertions.assertEquals("22:15:30", d1.toLocaleTimeString("UTC", "America/New_York"));
 
-        Assertions.assertEquals("06:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA", "Europe/Kyiv"));
-        Assertions.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kyiv"));
+        Assertions.assertEquals("06:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA", "Europe/Kiev"));
+        Assertions.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kiev"));
         Assertions.assertEquals("10:15:30 PM Eastern Standard Time", d1.toTimeString("en-US", "America/New_York"));
         Assertions.assertEquals("22:15:30 Eastern Standard Time", d1.toTimeString("UTC", "America/New_York"));
     }
