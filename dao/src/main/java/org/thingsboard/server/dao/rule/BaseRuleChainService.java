@@ -174,25 +174,18 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     @Transactional
     public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater) {
-        return saveRuleChainMetaData(tenantId, ruleChainMetaData, ruleNodeUpdater, true, true);
+        return saveRuleChainMetaData(tenantId, ruleChainMetaData, ruleNodeUpdater, true);
     }
 
     @Transactional
     @Override
     public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater,
                                                        boolean publishSaveEvent) {
-        return saveRuleChainMetaData(tenantId, ruleChainMetaData, ruleNodeUpdater, publishSaveEvent, true);
-    }
-
-    @Transactional
-    @Override
-    public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater,
-                                                       boolean publishSaveEvent, boolean doValidate) {
         Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
         if (ruleChain == null) {
             return RuleChainUpdateResult.failed();
-        } else if (doValidate && ruleChainMetaData.getVersion() != null && !ruleChainMetaData.getVersion().equals(ruleChain.getVersion())) {
+        } else if (ruleChainMetaData.getVersion() != null && !ruleChainMetaData.getVersion().equals(ruleChain.getVersion())) {
             throw new EntityVersionMismatchException(EntityType.RULE_CHAIN, null);
         }
         RuleChainDataValidator.validateMetaDataFieldsAndConnections(ruleChainMetaData);
@@ -206,14 +199,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (nodes != null) {
             for (RuleNode node : nodes) {
                 setSingletonMode(node);
-                if (doValidate) {
-                    if (node.getId() != null) {
-                        ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
-                    } else {
-                        toAddOrUpdate.add(node);
-                    }
-                } else {
+                if (node.getId() != null) {
                     ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
+                } else {
                     toAddOrUpdate.add(node);
                 }
             }
@@ -226,10 +214,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             Integer index = ruleNodeIndexMap.get(existingNode.getId());
             RuleNode newRuleNode = null;
             if (index != null) {
-                if (doValidate) {
-                    newRuleNode = ruleChainMetaData.getNodes().get(index);
-                    toAddOrUpdate.add(newRuleNode);
-                }
+                newRuleNode = ruleChainMetaData.getNodes().get(index);
+                toAddOrUpdate.add(newRuleNode);
             } else {
                 updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode, null));
                 toDelete.add(existingNode);

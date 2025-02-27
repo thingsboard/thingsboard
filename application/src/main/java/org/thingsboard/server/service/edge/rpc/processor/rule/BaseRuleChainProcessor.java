@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
@@ -70,7 +71,12 @@ public class BaseRuleChainProcessor extends BaseEdgeProcessor {
             throw new RuntimeException("[{" + tenantId + "}] ruleChainMetadataUpdateMsg {" + ruleChainMetadataUpdateMsg + "} cannot be converted to rule chain metadata");
         }
         if (!ruleChainMetadata.getNodes().isEmpty()) {
-            edgeCtx.getRuleChainService().saveRuleChainMetaData(tenantId, ruleChainMetadata, Function.identity(), true, false);
+            ruleChainMetadata.setVersion(null);
+            for (RuleNode ruleNode : ruleChainMetadata.getNodes()) {
+                ruleNode.setRuleChainId(null);
+                ruleNode.setId(null);
+            }
+            edgeCtx.getRuleChainService().saveRuleChainMetaData(tenantId, ruleChainMetadata, Function.identity(), true);
         }
     }
 }
