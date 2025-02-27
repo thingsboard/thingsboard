@@ -355,7 +355,8 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
 
     private void persistAndNotify(BaseApiUsageState state, Map<ApiFeature, ApiUsageStateValue> result) {
         log.info("[{}] Detected update of the API state for {}: {}", state.getEntityId(), state.getEntityType(), result);
-        apiUsageStateService.update(state.getApiUsageState());
+        ApiUsageState updatedState = apiUsageStateService.update(state.getApiUsageState());
+        state.setApiUsageState(updatedState);
         long ts = System.currentTimeMillis();
         List<TsKvEntry> stateTelemetry = new ArrayList<>();
         result.forEach((apiFeature, aState) -> stateTelemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(apiFeature.getApiStateKey(), aState.name()))));

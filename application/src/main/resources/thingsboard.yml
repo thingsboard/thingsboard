@@ -1279,8 +1279,9 @@ transport:
 
 # CoAP server parameters
 coap:
-  # Enable/disable coap server.
-  enabled: "${COAP_SERVER_ENABLED:true}"
+  server:
+    # Enable/disable coap server.
+    enabled: "${COAP_SERVER_ENABLED:true}"
   # CoAP bind address
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   # CoAP bind port
