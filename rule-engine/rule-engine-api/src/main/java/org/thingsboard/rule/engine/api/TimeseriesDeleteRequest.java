@@ -20,6 +20,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
@@ -31,12 +32,13 @@ import java.util.UUID;
 @Getter
 @ToString
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TimeseriesDeleteRequest {
+public class TimeseriesDeleteRequest implements CalculatedFieldSystemAwareRequest {
 
     private final TenantId tenantId;
     private final EntityId entityId;
     private final List<String> keys;
     private final List<DeleteTsKvQuery> deleteHistoryQueries;
+    private final List<CalculatedFieldId> previousCalculatedFieldIds;
     private final UUID tbMsgId;
     private final TbMsgType tbMsgType;
     private final FutureCallback<List<String>> callback;
@@ -51,6 +53,7 @@ public class TimeseriesDeleteRequest {
         private EntityId entityId;
         private List<String> keys;
         private List<DeleteTsKvQuery> deleteHistoryQueries;
+        private List<CalculatedFieldId> previousCalculatedFieldIds;
         private UUID tbMsgId;
         private TbMsgType tbMsgType;
         private FutureCallback<List<String>> callback;
@@ -78,6 +81,11 @@ public class TimeseriesDeleteRequest {
             return this;
         }
 
+        public Builder previousCalculatedFieldIds(List<CalculatedFieldId> previousCalculatedFieldIds) {
+            this.previousCalculatedFieldIds = previousCalculatedFieldIds;
+            return this;
+        }
+
         public Builder tbMsgId(UUID tbMsgId) {
             this.tbMsgId = tbMsgId;
             return this;
@@ -94,7 +102,7 @@ public class TimeseriesDeleteRequest {
         }
 
         public TimeseriesDeleteRequest build() {
-            return new TimeseriesDeleteRequest(tenantId, entityId, keys, deleteHistoryQueries, tbMsgId, tbMsgType, callback);
+            return new TimeseriesDeleteRequest(tenantId, entityId, keys, deleteHistoryQueries, previousCalculatedFieldIds, tbMsgId, tbMsgType, callback);
         }
 
     }

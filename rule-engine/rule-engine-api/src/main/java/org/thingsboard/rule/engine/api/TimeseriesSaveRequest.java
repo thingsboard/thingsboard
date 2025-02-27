@@ -37,7 +37,7 @@ import static java.util.Objects.requireNonNullElse;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TimeseriesSaveRequest {
+public class TimeseriesSaveRequest implements CalculatedFieldSystemAwareRequest {
 
     private final TenantId tenantId;
     private final CustomerId customerId;
