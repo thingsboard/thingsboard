@@ -251,25 +251,21 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             }
         } catch (Exception e) {
             log.error("Failed to delete ZK node {}", nodePath, e);
-            throw new RuntimeException(e);
         }
     }
 
     private void destroyZkClient() {
         stopped = true;
-        try {
-            unpublishCurrentServer();
-        } catch (Exception e) {
-        }
+        unpublishCurrentServer();
         CloseableUtils.closeQuietly(cache);
         CloseableUtils.closeQuietly(client);
         log.info("ZK client disconnected");
     }
 
     @PreDestroy
-    public void destroy() {
-        destroyZkClient();
+    private void destroy() {
         zkExecutorService.shutdownNow();
+        destroyZkClient();
         log.info("Stopped discovery service");
     }
 
