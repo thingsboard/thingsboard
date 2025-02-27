@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.DisableUIListeners;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
@@ -44,6 +45,7 @@ import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -111,16 +113,16 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
         EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
         await("Waiting for total device count")
                 .atMost(30, TimeUnit.SECONDS)
-                .until(() -> testRestClient.postCountDataQuery(query).compareTo(97L * 2) >= 0);
+                .until(() -> testRestClient.postCountDataQuery(query).equals(97L * 2));
 
-        testRestClient.getAndSetUserToken(tenantAdminId.getId().toString());
+        testRestClient.getAndSetUserToken(tenantAdminId);
         await("Waiting for total device count")
                 .atMost(30, TimeUnit.SECONDS)
                 .until(() -> testRestClient.postCountDataQuery(query).equals(97L));
 
         testRestClient.resetToken();
         testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
-        testRestClient.getAndSetUserToken(tenant2AdminId.getId().toString());
+        testRestClient.getAndSetUserToken(tenant2AdminId);
         await("Waiting for total device count")
                 .atMost(30, TimeUnit.SECONDS)
                 .until(() -> testRestClient.postCountDataQuery(query).equals(97L));
@@ -129,17 +131,17 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
     @Test
     public void testRetrieveTenantDevicesByDeviceTypeFilter() {
         // login tenant admin
-        testRestClient.getAndSetUserToken(tenantAdminId.getId().toString());
+        testRestClient.getAndSetUserToken(tenantAdminId);
         checkUserDevices(tenantDevices);
 
         // login customer user
-        testRestClient.getAndSetUserToken(customerUserId.getId().toString());
+        testRestClient.getAndSetUserToken(customerUserId);
         checkUserDevices(tenantDevices.subList(0, 12));
 
         // login other tenant admin
         testRestClient.resetToken();
         testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
-        testRestClient.getAndSetUserToken(tenant2AdminId.getId().toString());
+        testRestClient.getAndSetUserToken(tenant2AdminId);
         checkUserDevices(tenant2Devices);
     }
 
@@ -168,6 +170,13 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
         assertThat(retrievedDevices).hasSize(10);
         List<String> retrievedDeviceNames = retrievedDevices.stream().map(entityData -> entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).toList();
         assertThat(retrievedDeviceNames).containsExactlyInAnyOrderElementsOf(devices.stream().map(Device::getName).toList().subList(0, 10));
+
+        //check temperature
+        for (int i = 0; i < 10; i++) {
+            Map<EntityKeyType, Map<String, TsValue>> latest = retrievedDevices.get(i).getLatest();
+            String name = latest.get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+            //assertThat(latest.get(EntityKeyType.TIME_SERIES).get("temperature").getValue()).isEqualTo(name.substring(name.length() - 1));
+        }
     }
 
     private String createDevices(String deviceType, List<Device> tenantDevices, int deviceCount) throws InterruptedException {

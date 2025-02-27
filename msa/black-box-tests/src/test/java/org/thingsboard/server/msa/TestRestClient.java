@@ -237,6 +237,15 @@ public class TestRestClient {
                 .as(JsonNode.class);
     }
 
+    public JsonNode getLatestTelemetry(EntityId entityId) {
+        return given().spec(requestSpec)
+                .get("/api/plugins/telemetry/" + entityId.getEntityType().name() + "/" + entityId.getId() + "/values/timeseries")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
     public JsonPath postProvisionRequest(String provisionRequest) {
         return given().spec(requestSpec)
                 .body(provisionRequest)
@@ -498,13 +507,13 @@ public class TestRestClient {
 
     public UserId createUserAndLogin(User user, String password) {
         UserId userId = postUser(user).getId();
-        getAndSetUserToken(userId.getId().toString());
+        getAndSetUserToken(userId);
         return userId;
     }
 
-    public void getAndSetUserToken(String id) {
+    public void getAndSetUserToken(UserId id) {
         ObjectNode tokenInfo = given().spec(requestSpec)
-                .get("/api/user/" + id + "/token")
+                .get("/api/user/" + id.getId().toString() + "/token")
                 .then()
                 .extract()
                 .as(ObjectNode.class);
