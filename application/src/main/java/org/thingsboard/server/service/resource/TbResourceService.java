@@ -18,8 +18,9 @@ package org.thingsboard.server.service.resource;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
@@ -37,7 +38,7 @@ public interface TbResourceService {
 
     TbResourceInfo save(TbResource entity, SecurityUser user) throws Exception;
 
-    void delete(TbResource entity, User user);
+    TbResourceDeleteResult delete(TbResourceInfo entity, boolean force, User user);
 
     List<LwM2mObject> findLwM2mObject(TenantId tenantId,
                                       String sortOrder,

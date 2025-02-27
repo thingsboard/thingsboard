@@ -20,37 +20,50 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { ImageReferences, ImageResourceInfo, ImageResourceInfoWithReferences } from '@shared/models/resource.models';
-import { ImagesDatasource } from '@shared/components/image/images-datasource';
+import {
+  ResourceReferences,
+  ResourceInfoWithReferences,
+  ResourceInfo
+} from '@shared/models/resource.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ImageReferencesComponent } from '@shared/components/image/image-references.component';
 import { TranslateService } from '@ngx-translate/core';
+import { Datasource } from "@shared/models/widget.models";
 
-export interface ImagesInUseDialogData {
+interface ResourcesInUseDialogDataConfiguration {
+  title: string;
+  message: string;
+  columns: string[];
+  deleteText: string;
+  selectedText: string;
+  datasource?: Datasource;
+}
+
+export interface ResourcesInUseDialogData {
   multiple: boolean;
-  images: ImageResourceInfoWithReferences[];
+  resources: ResourceInfoWithReferences[];
+  configuration: ResourcesInUseDialogDataConfiguration;
 }
 
 @Component({
-  selector: 'tb-images-in-use-dialog',
-  templateUrl: './images-in-use-dialog.component.html',
-  styleUrls: ['./images-in-use-dialog.component.scss']
+  selector: 'tb-resources-in-use-dialog',
+  templateUrl: './resources-in-use-dialog.component.html',
+  styleUrls: ['./resources-in-use-dialog.component.scss']
 })
-export class ImagesInUseDialogComponent extends
-  DialogComponent<ImagesInUseDialogComponent, ImageResourceInfo[]> implements OnInit {
+export class ResourcesInUseDialogComponent extends
+  DialogComponent<ResourcesInUseDialogComponent, ResourceInfo[]> implements OnInit {
 
-  title: string;
-  message: string;
+  displayPreview: boolean;
+  configuration: ResourcesInUseDialogDataConfiguration;
+  references: ResourceReferences;
 
-  references: ImageReferences;
-
-  dataSource: ImagesDatasource;
+  dataSource: Datasource;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: ImagesInUseDialogData,
-              public dialogRef: MatDialogRef<ImagesInUseDialogComponent, ImageResourceInfo[]>,
+              @Inject(MAT_DIALOG_DATA) public data: ResourcesInUseDialogData,
+              public dialogRef: MatDialogRef<ResourcesInUseDialogComponent, ResourceInfo[]>,
               public translate: TranslateService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
@@ -59,14 +72,12 @@ export class ImagesInUseDialogComponent extends
   }
 
   ngOnInit(): void {
+    this.configuration = this.data.configuration;
+    this.displayPreview = this.data.configuration.columns.includes('preview');
     if (this.data.multiple) {
-      this.title = this.translate.instant('image.images-are-in-use');
-      this.message = this.translate.instant('image.images-are-in-use-text');
-      this.dataSource = new ImagesDatasource(null, this.data.images, entity => true);
+      this.dataSource = this.data.configuration.datasource;
     } else {
-      this.title = this.translate.instant('image.image-is-in-use');
-      this.message = this.translate.instant('image.image-is-in-use-text', {title: this.data.images[0].title});
-      this.references = this.data.images[0].references;
+      this.references = this.data.resources[0].references;
     }
   }
 
@@ -78,11 +89,11 @@ export class ImagesInUseDialogComponent extends
     if (this.data.multiple) {
       this.dialogRef.close(this.dataSource.selection.selected);
     } else {
-      this.dialogRef.close(this.data.images);
+      this.dialogRef.close(this.data.resources);
     }
   }
 
-  toggleShowReferences($event: Event, image: ImageResourceInfoWithReferences, referencesButton: MatButton) {
+  toggleShowReferences($event: Event, resource: ResourceInfoWithReferences, referencesButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -93,7 +104,7 @@ export class ImagesInUseDialogComponent extends
       const referencesPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, ImageReferencesComponent, 'top', true, null,
         {
-          references: image.references
+          references: resource.references
         }, {}, {}, {},
         false,
         visible => {
