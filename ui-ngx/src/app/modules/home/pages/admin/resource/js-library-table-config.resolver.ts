@@ -16,6 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import {
+  CellActionDescriptor,
   checkBoxCell,
   DateEntityTableColumn,
   EntityTableColumn,
@@ -95,6 +96,8 @@ export class JsLibraryTableConfigResolver  {
         entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
     );
 
+    this.config.cellActionDescriptors = this.configureCellActions();
+
     this.config.groupActionDescriptors = [{
       name: this.translate.instant('action.delete'),
       icon: 'delete',
@@ -135,20 +138,6 @@ export class JsLibraryTableConfigResolver  {
     const authUser = getCurrentAuthUser(this.store);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.detailsReadonly = (resource) => this.detailsReadonly(resource, authUser.authority);
-    this.config.cellActionDescriptors.push(
-      {
-        name: this.translate.instant('javascript.download'),
-        icon: 'file_download',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.downloadResource($event, entity)
-      },
-      {
-        name: this.translate.instant('javascript.delete'),
-        icon: 'delete',
-        isEnabled: (resource) => this.isResourceEditable(resource, authUser.authority),
-        onAction: ($event, entity) => this.deleteResource($event, entity)
-      },
-    );
     return this.config;
   }
 
@@ -317,5 +306,24 @@ export class JsLibraryTableConfigResolver  {
         }
       });
     }
+  }
+
+  private configureCellActions(): Array<CellActionDescriptor<ResourceInfo>> {
+    const actions: Array<CellActionDescriptor<ResourceInfo>> = [];
+    actions.push(
+      {
+        name: this.translate.instant('javascript.download'),
+        icon: 'file_download',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.downloadResource($event, entity)
+      },
+      {
+        name: this.translate.instant('javascript.delete'),
+        icon: 'delete',
+        isEnabled: (resource) => this.isResourceEditable(resource, getCurrentAuthUser(this.store).authority),
+        onAction: ($event, entity) => this.deleteResource($event, entity)
+      },
+    );
+    return actions;
   }
 }
