@@ -76,6 +76,7 @@ public class TbMsgDeleteAttributesNode implements TbNode {
                     .scope(scope)
                     .keys(keysToDelete)
                     .notifyDevice(checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY), scope))
+                    .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
                     .tbMsgId(msg.getId())
                     .tbMsgType(msg.getInternalType())
                     .callback(config.isSendAttributesDeletedNotification() ?
