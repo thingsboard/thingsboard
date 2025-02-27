@@ -49,7 +49,7 @@ import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnExpression("'${queue.type:null}'=='kafka'")
+@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine') && '${queue.type:null}'=='kafka'")
 public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldStateService {
 
     private final TbRuleEngineQueueFactory queueFactory;
