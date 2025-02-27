@@ -47,16 +47,17 @@ import { JsLibraryTableHeaderComponent } from '@home/pages/admin/resource/js-lib
 import { JsResourceComponent } from '@home/pages/admin/resource/js-resource.component';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ResourceTabsComponent } from '@home/pages/admin/resource/resource-tabs.component';
-import { forkJoin, of } from "rxjs";
-import { parseHttpErrorMessage } from "@core/utils";
-import { ActionNotificationShow } from "@core/notification/notification.actions";
-import { MatDialog } from "@angular/material/dialog";
-import { DialogService } from "@core/services/dialog.service";
+import { forkJoin, of } from 'rxjs';
+import { parseHttpErrorMessage } from '@core/utils';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from '@core/services/dialog.service';
 import {
   ResourcesInUseDialogComponent,
   ResourcesInUseDialogData
 } from "@shared/components/resource/resources-in-use-dialog.component";
 import { ResourcesDatasource } from "@home/pages/admin/resource/resources-datasource";
+import { AuthUser } from '@shared/models/user.model';
 
 @Injectable()
 export class JsLibraryTableConfigResolver  {
@@ -96,7 +97,7 @@ export class JsLibraryTableConfigResolver  {
         entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
     );
 
-    this.config.cellActionDescriptors = this.configureCellActions();
+    this.config.cellActionDescriptors = this.configureCellActions(getCurrentAuthUser(this.store));
 
     this.config.groupActionDescriptors = [{
       name: this.translate.instant('action.delete'),
@@ -308,7 +309,7 @@ export class JsLibraryTableConfigResolver  {
     }
   }
 
-  private configureCellActions(): Array<CellActionDescriptor<ResourceInfo>> {
+  private configureCellActions(authUser: AuthUser): Array<CellActionDescriptor<ResourceInfo>> {
     const actions: Array<CellActionDescriptor<ResourceInfo>> = [];
     actions.push(
       {
@@ -320,7 +321,7 @@ export class JsLibraryTableConfigResolver  {
       {
         name: this.translate.instant('javascript.delete'),
         icon: 'delete',
-        isEnabled: (resource) => this.isResourceEditable(resource, getCurrentAuthUser(this.store).authority),
+        isEnabled: (resource) => this.isResourceEditable(resource, authUser.authority),
         onAction: ($event, entity) => this.deleteResource($event, entity)
       },
     );
