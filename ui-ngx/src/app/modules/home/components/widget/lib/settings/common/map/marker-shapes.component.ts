@@ -19,12 +19,17 @@ import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { createColorMarkerShapeURI, MarkerShape } from '@home/components/widget/lib/maps/models/marker-shape.models';
+import {
+  createColorMarkerShapeURI,
+  MarkerShape, markerShapes,
+  tripMarkerShapes
+} from '@home/components/widget/lib/maps/models/marker-shape.models';
 import { Observable } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import tinycolor from 'tinycolor2';
 import { map, share } from 'rxjs/operators';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 interface MarkerShapeInfo {
   shape: MarkerShape;
@@ -47,6 +52,10 @@ export class MarkerShapesComponent extends PageComponent implements OnInit {
   color: string;
 
   @Input()
+  @coerceBoolean()
+  trip = false;
+
+  @Input()
   popover: TbPopoverComponent<MarkerShapesComponent>;
 
   @Output()
@@ -61,7 +70,7 @@ export class MarkerShapesComponent extends PageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.shapes = (Object.keys(MarkerShape) as MarkerShape[]).map((shape) => {
+    this.shapes = (this.trip ? tripMarkerShapes : markerShapes).map((shape) => {
       return {
         shape,
         url$: createColorMarkerShapeURI(this.iconRegistry, this.domSanitizer, shape, tinycolor(this.color)).pipe(

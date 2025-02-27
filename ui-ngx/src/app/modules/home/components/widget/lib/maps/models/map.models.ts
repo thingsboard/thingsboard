@@ -157,7 +157,7 @@ export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataL
   }
 })
 
-export type MapDataLayerType = 'markers' | 'polygons' | 'circles';
+export type MapDataLayerType = 'trips' | 'markers' | 'polygons' | 'circles';
 
 export const mapDataLayerValid = (dataLayer: MapDataLayerSettings, type: MapDataLayerType): boolean => {
   if (!dataLayer.dsType || ![DatasourceType.function, DatasourceType.device, DatasourceType.entity].includes(dataLayer.dsType)) {
@@ -307,13 +307,13 @@ const defaultMarkerYPosFunction = 'var value = prevValue || 0.3;\n' +
   '}\n' +
   'return value;';
 
-export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly = false): MarkersDataLayerSettings => mergeDeep({
+const defaultMarkersDataSourceSettings = (mapType: MapType, timeSeries = false, functionsOnly = false): Partial<MarkersDataLayerSettings> => ({
   dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
   dsLabel: functionsOnly ? 'First point' : '',
   xKey: {
     name: functionsOnly ? 'f(x)' : (MapType.geoMap === mapType ? 'latitude' : 'xPos'),
     label: MapType.geoMap === mapType ? 'latitude' : 'xPos',
-    type: functionsOnly ? DataKeyType.function : DataKeyType.attribute,
+    type: functionsOnly ? DataKeyType.function : (timeSeries ? DataKeyType.timeseries : DataKeyType.attribute),
     funcBody: functionsOnly ? (MapType.geoMap === mapType ? defaultMarkerLatitudeFunction : defaultMarkerXPosFunction) : undefined,
     settings: {},
     color: materialColors[0].value
@@ -321,12 +321,16 @@ export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly 
   yKey: {
     name: functionsOnly ? 'f(x)' : (MapType.geoMap === mapType ? 'longitude' : 'yPos'),
     label: MapType.geoMap === mapType ? 'longitude' : 'yPos',
-    type: functionsOnly ? DataKeyType.function : DataKeyType.attribute,
+    type: functionsOnly ? DataKeyType.function : (timeSeries ? DataKeyType.timeseries : DataKeyType.attribute),
     funcBody: functionsOnly ? (MapType.geoMap === mapType ? defaultMarkerLongitudeFunction : defaultMarkerYPosFunction) : undefined,
     settings: {},
     color: materialColors[0].value
   }
-} as MarkersDataLayerSettings, defaultBaseMarkersDataLayerSettings(mapType) as MarkersDataLayerSettings);
+});
+
+export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly = false): MarkersDataLayerSettings => mergeDeep(
+  defaultMarkersDataSourceSettings(mapType, false, functionsOnly) as MarkersDataLayerSettings,
+  defaultBaseMarkersDataLayerSettings(mapType) as MarkersDataLayerSettings);
 
 export const defaultBaseMarkersDataLayerSettings = (mapType: MapType): Partial<MarkersDataLayerSettings> => mergeDeep({
   markerType: MarkerType.shape,
@@ -378,8 +382,8 @@ export const pathDecoratorSymbols = Object.keys(PathDecoratorSymbol) as PathDeco
 
 export const pathDecoratorSymbolTranslationMap = new Map<PathDecoratorSymbol, string>(
   [
-    [PathDecoratorSymbol.arrowHead, 'widgets.maps.data-layer.decorator-symbol-arrow-head'],
-    [PathDecoratorSymbol.dash, 'widgets.maps.data-layer.decorator-symbol-dash']
+    [PathDecoratorSymbol.arrowHead, 'widgets.maps.data-layer.path.decorator-symbol-arrow-head'],
+    [PathDecoratorSymbol.dash, 'widgets.maps.data-layer.path.decorator-symbol-dash']
   ]
 );
 
@@ -402,6 +406,10 @@ export interface TripsDataLayerSettings extends MarkersDataLayerSettings {
   pointTooltip?: DataLayerTooltipSettings;
 }
 
+export const defaultTripsDataLayerSettings = (mapType: MapType, functionsOnly = false): TripsDataLayerSettings => mergeDeep(
+  defaultMarkersDataSourceSettings(mapType, true, functionsOnly) as TripsDataLayerSettings,
+  defaultBaseTripsDataLayerSettings(mapType) as TripsDataLayerSettings);
+
 export const defaultBaseTripsDataLayerSettings = (mapType: MapType): Partial<TripsDataLayerSettings> => mergeDeep(
   defaultBaseMarkersDataLayerSettings(mapType),
   {
@@ -412,6 +420,15 @@ export const defaultBaseTripsDataLayerSettings = (mapType: MapType): Partial<Tri
     },
     rotateMarker: true,
     offsetAngle: 0,
+    markerShape: {
+      shape: MarkerShape.tripMarkerShape1
+    },
+    markerIcon: {
+      icon: 'arrow_forward'
+    },
+    markerImage: {
+      image: '/assets/markers/tripShape1.svg'
+    },
     markerOffsetX: 0.5,
     markerOffsetY: 0.5,
     showPath: true,
@@ -512,6 +529,8 @@ export const defaultBaseCirclesDataLayerSettings = (mapType: MapType): Partial<C
 
 export const defaultMapDataLayerSettings = (mapType: MapType, dataLayerType: MapDataLayerType, functionsOnly = false): MapDataLayerSettings => {
   switch (dataLayerType) {
+    case 'trips':
+      return defaultTripsDataLayerSettings(mapType, functionsOnly);
     case 'markers':
       return defaultMarkersDataLayerSettings(mapType, functionsOnly);
     case 'polygons':
@@ -523,6 +542,8 @@ export const defaultMapDataLayerSettings = (mapType: MapType, dataLayerType: Map
 
 export const defaultBaseMapDataLayerSettings = <T extends MapDataLayerSettings>(mapType: MapType, dataLayerType: MapDataLayerType): T => {
   switch (dataLayerType) {
+    case 'trips':
+      return defaultBaseTripsDataLayerSettings(mapType) as T;
     case 'markers':
       return defaultBaseMarkersDataLayerSettings(mapType) as T;
     case 'polygons':

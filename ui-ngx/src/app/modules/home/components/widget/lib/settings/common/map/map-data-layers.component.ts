@@ -88,6 +88,10 @@ export class MapDataLayersComponent implements ControlValueAccessor, OnInit, Val
 
   ngOnInit() {
     switch (this.dataLayerType) {
+      case 'trips':
+        this.addDataLayerText = 'widgets.maps.data-layer.trip.add-trip';
+        this.noDataLayersText = 'widgets.maps.data-layer.trip.no-trips';
+        break;
       case 'markers':
         this.addDataLayerText = 'widgets.maps.data-layer.marker.add-marker';
         this.noDataLayersText = 'widgets.maps.data-layer.marker.no-markers';

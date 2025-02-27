@@ -50,16 +50,16 @@
   </div>
   <tb-data-key-input
     class="tb-x-pos-field"
-    *ngIf="dataLayerType === 'markers'"
+    *ngIf="['trips', 'markers'].includes(dataLayerType)"
     required
     requiredText="{{ mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.latitude-key-required' : 'widgets.maps.data-layer.marker.x-pos-key-required' }}"
     [datasourceType]="dataLayerFormGroup.get('dsType').value"
     [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
     [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
     [aliasController]="context.aliasController"
-    [widgetType]="widgetType.latest"
+    [widgetType]="dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest"
     [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
-    [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+    [dataKeyTypes]="dataLayerType === 'trips' ? [DataKeyType.timeseries] : [DataKeyType.attribute, DataKeyType.timeseries]"
     [callbacks]="context.callbacks"
     [generateKey]="context.generateDataKey"
     (keyEdit)="editKey('xKey')"
@@ -67,16 +67,16 @@
   </tb-data-key-input>
   <tb-data-key-input
     class="tb-y-pos-field"
-    *ngIf="dataLayerType === 'markers'"
+    *ngIf="['trips', 'markers'].includes(dataLayerType)"
     required
     requiredText="{{ mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key-required' : 'widgets.maps.data-layer.marker.y-pos-key-required' }}"
     [datasourceType]="dataLayerFormGroup.get('dsType').value"
     [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
     [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
     [aliasController]="context.aliasController"
-    [widgetType]="widgetType.latest"
+    [widgetType]="dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest"
     [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
-    [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+    [dataKeyTypes]="dataLayerType === 'trips' ? [DataKeyType.timeseries] : [DataKeyType.attribute, DataKeyType.timeseries]"
     [callbacks]="context.callbacks"
     [generateKey]="context.generateDataKey"
     (keyEdit)="editKey('yKey')"

@@ -116,6 +116,10 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
 
   ngOnInit(): void {
 
+    if (this.trip) {
+      this.dataLayerMode = 'trips';
+    }
+
     this.context = {
       functionsOnly: this.functionsOnly,
       aliasController: this.aliasController,
@@ -142,6 +146,10 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       mapPageSize: [null, [Validators.min(1), Validators.required]],
       mapActionButtons: [null]
     });
+    if (this.trip) {
+      this.mapSettingsFormGroup.addControl('trips', this.fb.control(null));
+      this.mapSettingsFormGroup.addControl('tripTimeline', this.fb.control(null));
+    }
     this.mapSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
@@ -234,7 +242,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
     this.propagateChange(this.modelValue);
   }
 
-  private editKey(key: DataKey, deviceId: string, entityAliasId: string): Observable<DataKey> {
+  private editKey(key: DataKey, deviceId: string, entityAliasId: string, _widgetType = widgetType.latest): Observable<DataKey> {
     return this.dialog.open<DataKeyConfigDialogComponent, DataKeyConfigDialogData, DataKey>(DataKeyConfigDialogComponent,
       {
         disableClose: true,
@@ -243,7 +251,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
           dataKey: deepClone(key),
           dataKeyConfigMode: DataKeyConfigMode.general,
           aliasController: this.aliasController,
-          widgetType: widgetType.latest,
+          widgetType: _widgetType,
           deviceId,
           entityAliasId,
           showPostProcessing: true,

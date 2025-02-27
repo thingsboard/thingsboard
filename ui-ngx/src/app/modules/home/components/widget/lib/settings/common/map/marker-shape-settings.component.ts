@@ -46,6 +46,7 @@ import tinycolor from 'tinycolor2';
 import { map, share } from 'rxjs/operators';
 import { MarkerShapesComponent } from '@home/components/widget/lib/settings/common/map/marker-shapes.component';
 import { MaterialIconsComponent } from '@shared/components/material-icons.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-marker-shape-settings',
@@ -68,6 +69,10 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
 
   @Input()
   markerType: MarkerType;
+
+  @Input()
+  @coerceBoolean()
+  trip = false;
 
   modelValue: MarkerShapeSettings | MarkerIconSettings;
 
@@ -140,7 +145,8 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
       if (this.markerType === MarkerType.shape) {
         const ctx: any = {
           shape: (this.modelValue as MarkerShapeSettings).shape,
-          color: this.modelValue.color.color
+          color: this.modelValue.color.color,
+          trip: this.trip
         };
         const markerShapesPopover = this.popoverService.displayPopover(trigger, this.renderer,
           this.viewContainerRef, MarkerShapesComponent, 'left', true, null,
@@ -193,7 +199,7 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
       );
     } else if (this.markerType === MarkerType.icon) {
       const icon = (this.modelValue as MarkerIconSettings).icon;
-      this.iconPreview$ = createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, icon, tinycolor(color)).pipe(
+      this.iconPreview$ = createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, icon, tinycolor(color), this.trip).pipe(
         map((element) => {
           return this.domSanitizer.bypassSecurityTrustHtml(element.outerHTML);
         }),

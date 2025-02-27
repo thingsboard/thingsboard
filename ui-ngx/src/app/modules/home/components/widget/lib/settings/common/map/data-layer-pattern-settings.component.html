@@ -23,7 +23,7 @@
         <mat-panel-title>
           <div class="flex flex-1 flex-row items-center justify-between">
             <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="show" (click)="$event.stopPropagation()">
-              {{ (patternType === 'label' ? 'widgets.maps.data-layer.label' : 'widgets.maps.data-layer.tooltip') | translate }}
+              {{ patternTitle ? patternTitle : ((patternType === 'label' ? 'widgets.maps.data-layer.label' : 'widgets.maps.data-layer.tooltip') | translate) }}
             </mat-slide-toggle>
             <tb-toggle-select [class.!hidden]="!expansionPanel.expanded" formControlName="type" (click)="$event.stopPropagation()">
               <tb-toggle-option [value]="DataLayerPatternType.pattern">{{ 'widgets.maps.data-layer.pattern-type-pattern' | translate }}</tb-toggle-option>

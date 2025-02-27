@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 .tb-map-timeline-panel {
+  padding-top: 4px;
+  padding-left: 16px;
+  padding-right: 16px;
   display: flex;
   flex-direction: column;
+  .tb-timeline-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
 }

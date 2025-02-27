@@ -7706,6 +7706,14 @@
                 "zoom-double-click": "Double click",
                 "zoom-control-buttons": "Control buttons"
             },
+            "timeline": {
+                "control-panel": "Timeline control panel",
+                "time-step": "Time step",
+                "speed-options": "Speed options",
+                "timestamp": "Timestamp",
+                "snap-to-real-location": "Snap to real location",
+                "location-snap-filter-function": "Location snap filter function"
+            },
             "map-action": {
                 "map-action-buttons": "Map action buttons",
                 "label": "Label",
@@ -7779,6 +7787,7 @@
             },
             "overlays": {
                 "overlays": "Overlays",
+                "trips": "Trips",
                 "markers": "Markers",
                 "polygons": "Polygons",
                 "circles": "Circles"
@@ -7827,7 +7836,14 @@
                 "action-remove": "Remove",
                 "edit-instruments": "Instruments",
                 "enable-snapping": "Enable snapping to other vertices for precision drawing",
+                "trip": {
+                    "no-trips": "No trips configured",
+                    "add-trip": "Add trip",
+                    "trip-configuration": "Trip configuration",
+                    "remove-trip": "Remove trip"
+                },
                 "marker": {
+                    "marker": "Marker",
                     "latitude-key": "Latitude key",
                     "longitude-key": "Longitude key",
                     "x-pos-key": "X position key",
@@ -7857,6 +7873,8 @@
                     "marker-offset": "Marker offset",
                     "offset-horizontal": "Horizontal",
                     "offset-vertical": "Vertical",
+                    "rotate-marker": "Rotate marker",
+                    "offset-angle": "Offset angle",
                     "position-conversion": "Position conversion",
                     "position-conversion-function": "Position conversion function, should return x,y coordinates as double from 0 to 1 each",
                     "clustering": {
@@ -7880,8 +7898,19 @@
                     "place-marker-hint-with-entity": "Click to place '{{entityName}}' entity"
                 },
                 "path": {
+                    "path": "Path",
+                    "path-decorator": "Path decorator",
+                    "decorator-symbol": "Decorator symbol",
                     "decorator-symbol-arrow-head": "Arrow",
-                    "decorator-symbol-dash": "Dash"
+                    "decorator-symbol-dash": "Dash",
+                    "decorator-arrangement": "Decorator arrangement",
+                    "decorator-offset": "Start",
+                    "decorator-end-offset": "End",
+                    "decorator-repeat": "Repeat"
+                },
+                "points": {
+                    "points": "Points",
+                    "point-tooltip": "Point tooltip"
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",

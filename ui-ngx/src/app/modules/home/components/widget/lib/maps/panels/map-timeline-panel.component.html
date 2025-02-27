@@ -23,4 +23,15 @@
     [step]="settings.timeStep">
     <input matSliderThumb [(ngModel)]="currentTime" (valueChange)="onTimeChange()">
   </mat-slider>
+  <div class="tb-timeline-controls">
+    <div class="flex flex-1 flex-row items-center justify-start">
+      <div *ngIf="settings.showTimestamp" [innerHTML]="timestampFormat.formatted"></div>
+    </div>
+    <div class="tb-timeline-buttons flex flex-1 flex-row items-center justify-center gap-3">2</div>
+    <div class="flex flex-1 flex-row items-center justify-end">
+      <mat-select class="w-auto" [(ngModel)]="speed" (selectionChange)="speedUpdated()" aria-label="Speed selector">
+        <mat-option [value]="speedValue" *ngFor="let speedValue of settings.speedOptions">{{speedValue}}x</mat-option>
+      </mat-select>
+    </div>
+  </div>
 </div>

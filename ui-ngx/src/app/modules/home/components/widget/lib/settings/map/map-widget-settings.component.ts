@@ -19,8 +19,9 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
+import { isDefinedAndNotNull, mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
 import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
+import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
 @Component({
   selector: 'tb-map-widget-settings',
@@ -31,6 +32,8 @@ export class MapWidgetSettingsComponent extends WidgetSettingsComponent {
 
   mapWidgetSettingsForm: UntypedFormGroup;
 
+  trip = false;
+
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
     super(store);
@@ -38,6 +41,13 @@ export class MapWidgetSettingsComponent extends WidgetSettingsComponent {
 
   protected settingsForm(): UntypedFormGroup {
     return this.mapWidgetSettingsForm;
+  }
+
+  protected onWidgetConfigSet(widgetConfig: WidgetConfigComponentData) {
+    const params = widgetConfig.typeParameters as any;
+    if (isDefinedAndNotNull(params.trip)) {
+      this.trip = params.trip === true;
+    }
   }
 
   protected defaultSettings(): WidgetSettings {

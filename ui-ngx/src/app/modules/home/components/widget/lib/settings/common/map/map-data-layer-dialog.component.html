@@ -69,7 +69,7 @@
     <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'datakey.keys' | translate }}</div>
       <div class="flex flex-col">
-        <div *ngIf="dataLayerType === 'markers'" class="flex flex-row gap-3">
+        <div *ngIf="['trips', 'markers'].includes(dataLayerType)" class="flex flex-row gap-3">
           <tb-data-key-input
             class="flex-1"
             inlineField="false"
@@ -82,9 +82,9 @@
             [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
             [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
             [aliasController]="context.aliasController"
-            [widgetType]="widgetType.latest"
+            [widgetType]="dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest"
             [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
-            [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+            [dataKeyTypes]="dataLayerType === 'trips' ? [DataKeyType.timeseries] : [DataKeyType.attribute, DataKeyType.timeseries]"
             [callbacks]="context.callbacks"
             [generateKey]="context.generateDataKey"
             (keyEdit)="editKey('xKey')"
@@ -96,16 +96,15 @@
             appearance="outline"
             subscriptSizing="fixed"
             label="{{ (mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key' : 'widgets.maps.data-layer.marker.y-pos-key') | translate }}"
-            *ngIf="dataLayerType === 'markers'"
             required
             requiredText="{{ mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key-required' : 'widgets.maps.data-layer.marker.y-pos-key-required' }}"
             [datasourceType]="dataLayerFormGroup.get('dsType').value"
             [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
             [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
             [aliasController]="context.aliasController"
-            [widgetType]="widgetType.latest"
+            [widgetType]="dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest"
             [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
-            [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+            [dataKeyTypes]="dataLayerType === 'trips' ? [DataKeyType.timeseries] : [DataKeyType.attribute, DataKeyType.timeseries]"
             [callbacks]="context.callbacks"
             [generateKey]="context.generateDataKey"
             (keyEdit)="editKey('yKey')"
@@ -176,10 +175,10 @@
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'widget-config.appearance' | translate }}</div>
-      <ng-container *ngIf="dataLayerType === 'markers'">
+      <ng-container *ngIf="['trips', 'markers'].includes(dataLayerType)">
         <div class="tb-form-panel stroked">
           <div class="flex flex-row items-center justify-between">
-            <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.marker.marker-type' | translate }}</div>
+            <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.marker.marker' | translate }}</div>
             <tb-toggle-select formControlName="markerType">
               <tb-toggle-option [value]="MarkerType.shape">{{ 'widgets.maps.data-layer.marker.marker-type-shape' | translate }}</tb-toggle-option>
               <tb-toggle-option [value]="MarkerType.icon">{{ 'widgets.maps.data-layer.marker.marker-type-icon' | translate }}</tb-toggle-option>
@@ -188,30 +187,42 @@
           </div>
           <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.shape" class="tb-form-row space-between">
             <div translate>widgets.maps.data-layer.marker.shape</div>
-            <tb-marker-shape-settings formControlName="markerShape" [markerType]="MarkerType.shape"></tb-marker-shape-settings>
+            <tb-marker-shape-settings formControlName="markerShape" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.shape"></tb-marker-shape-settings>
           </div>
           <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.icon" class="tb-form-row space-between">
             <div translate>widgets.maps.data-layer.marker.icon</div>
-            <tb-marker-shape-settings formControlName="markerIcon" [markerType]="MarkerType.icon"></tb-marker-shape-settings>
+            <tb-marker-shape-settings formControlName="markerIcon" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.icon"></tb-marker-shape-settings>
           </div>
           <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.image" class="tb-form-row space-between">
             <div translate>widgets.maps.data-layer.marker.image</div>
             <tb-marker-image-settings formControlName="markerImage"></tb-marker-image-settings>
           </div>
-        </div>
-        <div class="tb-form-row space-between column-xs">
-          <div translate>widgets.maps.data-layer.marker.marker-offset</div>
-          <div class="flex flex-row items-center justify-start gap-2">
-            <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-horizontal</div>
-            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-              <input matInput formControlName="markerOffsetX"
-                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
-            </mat-form-field>
-            <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-vertical</div>
-            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-              <input matInput formControlName="markerOffsetY"
-                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
-            </mat-form-field>
+          <div class="tb-form-row space-between column-xs">
+            <div translate>widgets.maps.data-layer.marker.marker-offset</div>
+            <div class="flex flex-row items-center justify-start gap-2">
+              <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-horizontal</div>
+              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                <input matInput formControlName="markerOffsetX"
+                       type="number" placeholder="{{ 'widget-config.set' | translate }}">
+              </mat-form-field>
+              <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-vertical</div>
+              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                <input matInput formControlName="markerOffsetY"
+                       type="number" placeholder="{{ 'widget-config.set' | translate }}">
+              </mat-form-field>
+            </div>
+          </div>
+          <div *ngIf="dataLayerType === 'trips'" class="tb-form-row space-between">
+            <mat-slide-toggle class="mat-slide" formControlName="rotateMarker">
+              {{ 'widgets.maps.data-layer.marker.rotate-marker' | translate }}
+            </mat-slide-toggle>
+            <div class="flex flex-row items-center justify-start gap-2">
+              <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-angle</div>
+              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                <input matInput formControlName="offsetAngle" type="number" min="0" max="360" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+                <div matSuffix>deg</div>
+              </mat-form-field>
+            </div>
           </div>
         </div>
         <div *ngIf="mapType === MapType.image" class="tb-form-panel stroked">
@@ -224,6 +235,115 @@
                       functionTitle="{{ 'widgets.maps.data-layer.marker.position-conversion-function' | translate }}"
                       helpId="widget/lib/map/position_fn">
           </tb-js-func>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="dataLayerType === 'trips'">
+        <div class="tb-form-panel tb-slide-toggle stroked">
+          <mat-expansion-panel class="tb-settings" [expanded]="dataLayerFormGroup.get('showPath').value"
+                               [disabled]="!dataLayerFormGroup.get('showPath').value">
+            <mat-expansion-panel-header class="flex flex-row flex-wrap">
+              <mat-panel-title>
+                <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showPath" (click)="$event.stopPropagation()">
+                  {{ 'widgets.maps.data-layer.path.path' | translate }}
+                </mat-slide-toggle>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <div class="tb-form-row space-between">
+                <div translate>widgets.maps.data-layer.path.path</div>
+                <div class="flex flex-row items-center gap-2">
+                  <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" formControlName="pathStrokeWeight" placeholder="{{ 'widget-config.set' | translate }}">
+                    <span matSuffix>px</span>
+                  </mat-form-field>
+                  <tb-data-layer-color-settings formControlName="pathStrokeColor"></tb-data-layer-color-settings>
+                </div>
+              </div>
+              <div class="tb-form-panel tb-slide-toggle stroked">
+                <mat-expansion-panel class="tb-settings" [expanded]="dataLayerFormGroup.get('usePathDecorator').value"
+                                     [disabled]="!dataLayerFormGroup.get('usePathDecorator').value">
+                  <mat-expansion-panel-header class="flex flex-row flex-wrap">
+                    <mat-panel-title>
+                      <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="usePathDecorator" (click)="$event.stopPropagation()">
+                        {{ 'widgets.maps.data-layer.path.path-decorator' | translate }}
+                      </mat-slide-toggle>
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <ng-template matExpansionPanelContent>
+                    <div class="tb-form-row">
+                      <div class="fixed-title-width" translate>widgets.maps.data-layer.path.decorator-symbol</div>
+                      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+                        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+                          <mat-select formControlName="pathDecoratorSymbol">
+                            <mat-option *ngFor="let symbol of pathDecoratorSymbols" [value]="symbol">
+                              {{ pathDecoratorSymbolTranslationMap.get(symbol) | translate }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                          <input matInput type="number" min="0" formControlName="pathDecoratorSymbolSize" placeholder="{{ 'widget-config.set' | translate }}">
+                          <span matSuffix>px</span>
+                        </mat-form-field>
+                        <tb-color-input asBoxInput
+                                        formControlName="pathDecoratorSymbolColor">
+                        </tb-color-input>
+                      </div>
+                    </div>
+                    <div class="tb-form-row space-between">
+                      <div translate>widgets.maps.data-layer.path.decorator-arrangement</div>
+                      <div class="flex flex-row items-center justify-start gap-2">
+                        <div class="tb-small-label" translate>widgets.maps.data-layer.path.decorator-offset</div>
+                        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                          <input matInput formControlName="pathDecoratorOffset" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+                          <div matSuffix>px</div>
+                        </mat-form-field>
+                        <div class="tb-small-label" translate>widgets.maps.data-layer.path.decorator-end-offset</div>
+                        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                          <input matInput formControlName="pathEndDecoratorOffset" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+                          <div matSuffix>px</div>
+                        </mat-form-field>
+                        <div class="tb-small-label" translate>widgets.maps.data-layer.path.decorator-repeat</div>
+                        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                          <input matInput formControlName="pathDecoratorRepeat" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+                          <div matSuffix>px</div>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                  </ng-template>
+                </mat-expansion-panel>
+              </div>
+            </ng-template>
+          </mat-expansion-panel>
+        </div>
+        <div class="tb-form-panel tb-slide-toggle stroked">
+          <mat-expansion-panel class="tb-settings" [expanded]="dataLayerFormGroup.get('showPoints').value"
+                               [disabled]="!dataLayerFormGroup.get('showPoints').value">
+            <mat-expansion-panel-header class="flex flex-row flex-wrap">
+              <mat-panel-title>
+                <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showPoints" (click)="$event.stopPropagation()">
+                  {{ 'widgets.maps.data-layer.points.points' | translate }}
+                </mat-slide-toggle>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <div class="tb-form-row space-between">
+                <div translate>widgets.maps.data-layer.points.points</div>
+                <div class="flex flex-row items-center gap-2">
+                  <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" formControlName="pointSize" placeholder="{{ 'widget-config.set' | translate }}">
+                    <span matSuffix>px</span>
+                  </mat-form-field>
+                  <tb-data-layer-color-settings formControlName="pointColor"></tb-data-layer-color-settings>
+                </div>
+              </div>
+              <tb-data-layer-pattern-settings
+                patternType="tooltip"
+                patternTitle="{{ 'widgets.maps.data-layer.points.point-tooltip' | translate }}"
+                [context]="context"
+                formControlName="pointTooltip">
+              </tb-data-layer-pattern-settings>
+            </ng-template>
+          </mat-expansion-panel>
         </div>
       </ng-container>
       <ng-container *ngIf="['polygons', 'circles'].includes(dataLayerType)">
@@ -250,7 +370,7 @@
       <tb-data-layer-pattern-settings
         patternType="tooltip"
         [context]="context"
-        [hasTooltipOffset]="dataLayerType === 'markers'"
+        [hasTooltipOffset]="['trips', 'markers'].includes(dataLayerType)"
         formControlName="tooltip">
       </tb-data-layer-pattern-settings>
     </div>
@@ -276,7 +396,7 @@
                             formControlName="groups">
       </tb-string-items-list>
     </div>
-    <div class="tb-form-panel" formGroupName="edit">
+    <div *ngIf="dataLayerType !== 'trips'" class="tb-form-panel" formGroupName="edit">
       <div class="tb-form-panel-title">{{ dataLayerEditTitle | translate }}</div>
       <div class="tb-form-row space-between column-lt-md">
         <div translate>widgets.maps.data-layer.edit-instruments</div>

@@ -72,6 +72,9 @@ export class DataLayerPatternSettingsComponent implements OnInit, ControlValueAc
   patternType: 'label' | 'tooltip' = 'label';
 
   @Input()
+  patternTitle: string;
+
+  @Input()
   @coerceBoolean()
   hasTooltipOffset = false;
 

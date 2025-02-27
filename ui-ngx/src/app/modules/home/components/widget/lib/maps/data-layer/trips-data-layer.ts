@@ -331,7 +331,7 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
     let minTime = Infinity;
     let maxTime = -Infinity;
     this.rawTripsData =
-      tripsData.filter(d => d[0].$datasource.mapDataIds.includes(this.mapDataId)).map(
+      tripsData.filter(d => !!d.length && d[0].$datasource.mapDataIds.includes(this.mapDataId)).map(
         item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
     this.latestTripsData = tripsLatestData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
     this.rawTripsData.forEach((dataSource) => {
@@ -396,7 +396,7 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   }
 
   public createColoredMarkerIcon(icon: string, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
-    return createColorMarkerIconElement(this.getCtx().$injector.get(MatIconRegistry), this.getCtx().$injector.get(DomSanitizer), icon, color).pipe(
+    return createColorMarkerIconElement(this.getCtx().$injector.get(MatIconRegistry), this.getCtx().$injector.get(DomSanitizer), icon, color, true).pipe(
       map((element) => {
         element.style.transform = `rotate(${rotationAngle}deg)`;
         return {

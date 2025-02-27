@@ -19,10 +19,10 @@
   <div class="tb-form-table tb-map-data-layers">
     <div class="tb-form-table-header no-padding-right">
       <div class="tb-form-table-header-cell tb-source-header" translate>widgets.maps.data-layer.source</div>
-      <div *ngIf="dataLayerType === 'markers'" class="tb-form-table-header-cell tb-x-pos-header">
+      <div *ngIf="['trips', 'markers'].includes(dataLayerType)" class="tb-form-table-header-cell tb-x-pos-header">
         {{ (mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.latitude-key' : 'widgets.maps.data-layer.marker.x-pos-key') | translate }}
       </div>
-      <div *ngIf="dataLayerType === 'markers'" class="tb-form-table-header-cell tb-y-pos-header">
+      <div *ngIf="['trips', 'markers'].includes(dataLayerType)" class="tb-form-table-header-cell tb-y-pos-header">
         {{ (mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key' : 'widgets.maps.data-layer.marker.y-pos-key') | translate }}
       </div>
       <div *ngIf="dataLayerType === 'polygons'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.polygon.polygon-key</div>

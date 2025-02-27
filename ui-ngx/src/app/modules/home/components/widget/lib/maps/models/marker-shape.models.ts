@@ -32,7 +32,17 @@ export enum MarkerShape {
   markerShape7 = 'markerShape7',
   markerShape8 = 'markerShape8',
   markerShape9 = 'markerShape9',
-  markerShape10 = 'markerShape10'
+  markerShape10 = 'markerShape10',
+  tripMarkerShape1 = 'tripMarkerShape1',
+  tripMarkerShape2 = 'tripMarkerShape2',
+  tripMarkerShape3 = 'tripMarkerShape3',
+  tripMarkerShape4 = 'tripMarkerShape4',
+  tripMarkerShape5 = 'tripMarkerShape5',
+  tripMarkerShape6 = 'tripMarkerShape6',
+  tripMarkerShape7 = 'tripMarkerShape7',
+  tripMarkerShape8 = 'tripMarkerShape8',
+  tripMarkerShape9 = 'tripMarkerShape9',
+  tripMarkerShape10 = 'tripMarkerShape10'
 }
 
 export const markerShapeMap = new Map<MarkerShape, string>(
@@ -46,9 +56,45 @@ export const markerShapeMap = new Map<MarkerShape, string>(
     [MarkerShape.markerShape7, '/assets/markers/shape7.svg'],
     [MarkerShape.markerShape8, '/assets/markers/shape8.svg'],
     [MarkerShape.markerShape9, '/assets/markers/shape9.svg'],
-    [MarkerShape.markerShape10, '/assets/markers/shape10.svg']
+    [MarkerShape.markerShape10, '/assets/markers/shape10.svg'],
+    [MarkerShape.tripMarkerShape1, '/assets/markers/tripShape1.svg'],
+    [MarkerShape.tripMarkerShape2, '/assets/markers/tripShape2.svg'],
+    [MarkerShape.tripMarkerShape3, '/assets/markers/tripShape3.svg'],
+    [MarkerShape.tripMarkerShape4, '/assets/markers/tripShape4.svg'],
+    [MarkerShape.tripMarkerShape5, '/assets/markers/tripShape5.svg'],
+    [MarkerShape.tripMarkerShape6, '/assets/markers/tripShape6.svg'],
+    [MarkerShape.tripMarkerShape7, '/assets/markers/tripShape7.svg'],
+    [MarkerShape.tripMarkerShape8, '/assets/markers/tripShape8.svg'],
+    [MarkerShape.tripMarkerShape9, '/assets/markers/tripShape9.svg'],
+    [MarkerShape.tripMarkerShape10, '/assets/markers/tripShape10.svg']
   ]
 );
+
+export const markerShapes = [
+  MarkerShape.markerShape1,
+  MarkerShape.markerShape2,
+  MarkerShape.markerShape3,
+  MarkerShape.markerShape4,
+  MarkerShape.markerShape5,
+  MarkerShape.markerShape6,
+  MarkerShape.markerShape7,
+  MarkerShape.markerShape8,
+  MarkerShape.markerShape9,
+  MarkerShape.markerShape10
+];
+
+export const tripMarkerShapes = [
+  MarkerShape.tripMarkerShape1,
+  MarkerShape.tripMarkerShape2,
+  MarkerShape.tripMarkerShape3,
+  MarkerShape.tripMarkerShape4,
+  MarkerShape.tripMarkerShape5,
+  MarkerShape.tripMarkerShape6,
+  MarkerShape.tripMarkerShape7,
+  MarkerShape.tripMarkerShape8,
+  MarkerShape.tripMarkerShape9,
+  MarkerShape.tripMarkerShape10
+];
 
 const createColorMarkerShape = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer, shape: MarkerShape, color: tinycolor.Instance): Observable<SVGElement> => {
   const markerAssetUrl = markerShapeMap.get(shape);
@@ -56,11 +102,17 @@ const createColorMarkerShape = (iconRegistry: MatIconRegistry, domSanitizer: Dom
   return iconRegistry.getSvgIconFromUrl(safeUrl).pipe(
     map((svgElement) => {
       const colorElements = Array.from(svgElement.getElementsByClassName('marker-color'));
+      if (svgElement.classList.contains('marker-color')) {
+        colorElements.push(svgElement);
+      }
       colorElements.forEach(el => {
         el.setAttribute('fill', '#'+color.toHex());
         el.setAttribute('fill-opacity', `${color.getAlpha()}`);
       });
       const strokeElements = Array.from(svgElement.getElementsByClassName('marker-stroke'));
+      if (svgElement.classList.contains('marker-stroke')) {
+        strokeElements.push(svgElement);
+      }
       strokeElements.forEach(el => {
         el.setAttribute('stroke', '#'+color.toHex());
         el.setAttribute('stroke-opacity', `${color.getAlpha()}`);
@@ -80,10 +132,10 @@ export const createColorMarkerShapeURI = (iconRegistry: MatIconRegistry, domSani
   );
 }
 
-const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: number, color: tinycolor.Instance): Observable<Element> => {
+const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: number, color: tinycolor.Instance, trip = false): Observable<Element> => {
   const isSvg = isSvgIcon(icon);
   const iconAlpha = color.getAlpha();
-  const iconColor = tinycolor.mix(color.clone().setAlpha(1), tinycolor('rgba(0,0,0,0.38)'));
+  const iconColor = trip ? color : tinycolor.mix(color.clone().setAlpha(1), tinycolor('rgba(0,0,0,0.38)'));
   if (isSvg) {
     const [namespace, iconName] = splitIconName(icon);
     return iconRegistry
@@ -122,14 +174,19 @@ const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: nu
   }
 }
 
-export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer, icon: string, color: tinycolor.Instance): Observable<SVGElement> => {
-  return createColorMarkerShape(iconRegistry, domSanitizer, MarkerShape.markerShape6, color).pipe(
+const markerIconShape = MarkerShape.markerShape6;
+const tripMarkerIconShape = MarkerShape.tripMarkerShape2;
+
+export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer, icon: string, color: tinycolor.Instance,
+                                             trip = false): Observable<SVGElement> => {
+  return createColorMarkerShape(iconRegistry, domSanitizer, trip ? tripMarkerIconShape : markerIconShape, color).pipe(
     switchMap((svgElement) => {
-      return createIconElement(iconRegistry, icon, 12, color).pipe(
+      return createIconElement(iconRegistry, icon, trip ? 24 : 12, trip ? tinycolor('#fff') : color, trip).pipe(
         map((iconElement) => {
           let elements = svgElement.getElementsByClassName('marker-icon-container');
           if (iconElement && elements.length) {
             const iconContainer = new G(elements[0] as SVGGElement);
+            iconContainer.clear();
             iconContainer.add(iconElement);
             const box = iconElement.bbox();
             iconElement.translate(-box.cx, -box.cy);

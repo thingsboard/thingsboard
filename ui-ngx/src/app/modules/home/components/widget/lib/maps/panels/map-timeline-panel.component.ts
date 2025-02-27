@@ -15,16 +15,18 @@
 ///
 
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
-  EventEmitter,
-  Input,
+  EventEmitter, Injector,
+  Input, OnChanges,
   OnDestroy,
   OnInit,
   Output,
   ViewEncapsulation
 } from '@angular/core';
 import { TripTimelineSettings } from '@home/components/widget/lib/maps/models/map.models';
+import { DateFormatProcessor } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-map-timeline-panel',
@@ -32,7 +34,7 @@ import { TripTimelineSettings } from '@home/components/widget/lib/maps/models/ma
   styleUrls: ['./map-timeline-panel.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class MapTimelinePanelComponent implements OnInit, OnDestroy {
+export class MapTimelinePanelComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input()
   settings: TripTimelineSettings;
@@ -51,18 +53,42 @@ export class MapTimelinePanelComponent implements OnInit, OnDestroy {
 
   currentTime = 0;
 
-  constructor(public element: ElementRef<HTMLElement>) {
+  timestampFormat: DateFormatProcessor;
+
+  speed: number;
+
+  constructor(public element: ElementRef<HTMLElement>,
+              private cd: ChangeDetectorRef,
+              private injector: Injector) {
   }
 
   ngOnInit() {
+    if (this.settings.showTimestamp) {
+      this.timestampFormat = DateFormatProcessor.fromSettings(this.injector, this.settings.timestampFormat);
+      this.timestampFormat.update(this.currentTime);
+    }
+    this.speed = this.settings.speedOptions[0];
+  }
+
+  ngOnChanges() {
+    this.currentTime = this.min === Infinity ? 0 : this.min;
+    if (this.settings.showTimestamp) {
+      this.timestampFormat.update(this.currentTime);
+      this.cd.markForCheck();
+    }
   }
 
   ngOnDestroy() {
   }
 
   public onTimeChange() {
-    //this.updateValueText();
+    if (this.settings.showTimestamp) {
+      this.timestampFormat.update(this.currentTime);
+      this.cd.markForCheck();
+    }
     this.timeChanged.next(this.currentTime);
   }
+
+  public speedUpdated() {}
 
 }

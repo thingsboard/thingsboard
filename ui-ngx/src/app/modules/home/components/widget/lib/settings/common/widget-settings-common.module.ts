@@ -242,6 +242,9 @@ import {
 import {
   MapActionButtonRowComponent
 } from '@home/components/widget/lib/settings/common/map/map-action-button-row.component';
+import {
+  TripTimelineSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/trip-timeline-settings.component';
 
 @NgModule({
   declarations: [
@@ -332,6 +335,7 @@ import {
     MapDataLayersComponent,
     MapDataSourceRowComponent,
     MapDataSourcesComponent,
+    TripTimelineSettingsComponent,
     MapSettingsComponent,
     EntityAliasSelectComponent,
     FilterSelectComponent,

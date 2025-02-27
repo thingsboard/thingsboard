@@ -40,7 +40,8 @@ import {
   MapDataLayerType,
   MapType,
   MarkersDataLayerSettings,
-  PolygonsDataLayerSettings
+  PolygonsDataLayerSettings,
+  TripsDataLayerSettings
 } from '@home/components/widget/lib/maps/models/map.models';
 import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -126,6 +127,12 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
       dsEntityAliasId: [null, [Validators.required]]
     });
     switch (this.dataLayerType) {
+      case 'trips':
+        this.editDataLayerText = 'widgets.maps.data-layer.trip.trip-configuration';
+        this.removeDataLayerText = 'widgets.maps.data-layer.trip.remove-trip';
+        this.dataLayerFormGroup.addControl('xKey', this.fb.control(null, Validators.required));
+        this.dataLayerFormGroup.addControl('yKey', this.fb.control(null, Validators.required));
+        break;
       case 'markers':
         this.editDataLayerText = 'widgets.maps.data-layer.marker.marker-configuration';
         this.removeDataLayerText = 'widgets.maps.data-layer.marker.remove-marker';
@@ -183,6 +190,15 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
       }, {emitEvent: false}
     );
     switch (this.dataLayerType) {
+      case 'trips':
+        const tripsDataLayer = value as TripsDataLayerSettings;
+        this.dataLayerFormGroup.patchValue(
+          {
+            xKey: tripsDataLayer?.xKey,
+            yKey: tripsDataLayer?.yKey
+          }, {emitEvent: false}
+        );
+        break;
       case 'markers':
         const markersDataLayer = value as MarkersDataLayerSettings;
         this.dataLayerFormGroup.patchValue(
@@ -216,7 +232,8 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
   editKey(keyType: 'xKey' | 'yKey' | 'polygonKey' | 'circleKey') {
     const targetDataKey: DataKey = this.dataLayerFormGroup.get(keyType).value;
     this.context.editKey(targetDataKey,
-      this.dataLayerFormGroup.get('dsDeviceId').value, this.dataLayerFormGroup.get('dsEntityAliasId').value).subscribe(
+      this.dataLayerFormGroup.get('dsDeviceId').value, this.dataLayerFormGroup.get('dsEntityAliasId').value,
+      this.dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest).subscribe(
       (updatedDataKey) => {
         if (updatedDataKey) {
           this.dataLayerFormGroup.get(keyType).patchValue(updatedDataKey);
@@ -251,14 +268,15 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
   private onDsTypeChanged(newDsType: DatasourceType) {
     let updateModel = false;
     switch (this.dataLayerType) {
+      case 'trips':
       case 'markers':
         const xKey: DataKey = this.dataLayerFormGroup.get('xKey').value;
-        if (this.updateDataKeyToNewDsType(xKey, newDsType)) {
+        if (this.updateDataKeyToNewDsType(xKey, newDsType, this.dataLayerType === 'trips')) {
           this.dataLayerFormGroup.get('xKey').patchValue(xKey, {emitEvent: false});
           updateModel = true;
         }
         const yKey: DataKey = this.dataLayerFormGroup.get('yKey').value;
-        if (this.updateDataKeyToNewDsType(yKey, newDsType)) {
+        if (this.updateDataKeyToNewDsType(yKey, newDsType, this.dataLayerType === 'trips')) {
           this.dataLayerFormGroup.get('yKey').patchValue(yKey, {emitEvent: false});
           updateModel = true;
         }
@@ -284,7 +302,7 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
     }
   }
 
-  private updateDataKeyToNewDsType(dataKey: DataKey, newDsType: DatasourceType): boolean {
+  private updateDataKeyToNewDsType(dataKey: DataKey, newDsType: DatasourceType, timeSeries = false): boolean {
     if (newDsType === DatasourceType.function) {
       if (dataKey.type !== DataKeyType.function) {
         dataKey.type = DataKeyType.function;
@@ -292,7 +310,7 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
       }
     } else {
       if (dataKey.type === DataKeyType.function) {
-        dataKey.type = DataKeyType.attribute;
+        dataKey.type = timeSeries ? DataKeyType.timeseries : DataKeyType.attribute;
         return true;
       }
     }
