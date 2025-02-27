@@ -105,6 +105,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
 
         // create rule chain on edge
         RuleChain edgeRuleChain = new RuleChain();
+        edgeRuleChain.setTenantId(tenantId);
         edgeRuleChain.setId(new RuleChainId(uuid));
         edgeRuleChain.setName(ruleChainName);
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();

@@ -50,6 +50,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -64,6 +65,7 @@ public class EntityStateSourcingListener {
 
     private final TenantService tenantService;
     private final TbClusterService tbClusterService;
+    private final EdgeSynchronizationManager edgeSynchronizationManager;
 
     @PostConstruct
     public void init() {
@@ -241,6 +243,9 @@ public class EntityStateSourcingListener {
 
     private void onEdgeEvent(TenantId tenantId, EntityId entityId, Object entity, ComponentLifecycleEvent lifecycleEvent) {
         if (entity instanceof Edge) {
+            if (entityId.equals(edgeSynchronizationManager.getEdgeId().get())) {
+                return;
+            }
             tbClusterService.onEdgeStateChangeEvent(new ComponentLifecycleMsg(tenantId, entityId, lifecycleEvent));
         } else if (entity instanceof EdgeEvent edgeEvent) {
             tbClusterService.onEdgeEventUpdate(new EdgeEventUpdateMsg(tenantId, edgeEvent.getEdgeId()));

@@ -57,8 +57,7 @@ public class RuleChainEdgeProcessor extends BaseRuleChainProcessor {
             switch (ruleChainUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
-                    saveOrUpdateRuleChain(tenantId, ruleChainId, ruleChainUpdateMsg, edge);
-                    return Futures.immediateFuture(null);
+                    return saveOrUpdateRuleChain(tenantId, ruleChainId, ruleChainUpdateMsg, edge);
                 case ENTITY_DELETED_RPC_MESSAGE:
                     RuleChain ruleChainToDelete = edgeCtx.getRuleChainService().findRuleChainById(tenantId, ruleChainId);
                     if (ruleChainToDelete != null) {
@@ -81,19 +80,25 @@ public class RuleChainEdgeProcessor extends BaseRuleChainProcessor {
         }
     }
 
-    private void saveOrUpdateRuleChain(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateMsg ruleChainUpdateMsg, Edge edge) {
-        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateRuleChain(tenantId, ruleChainId, ruleChainUpdateMsg, RuleChainType.EDGE);
-        Boolean created = resultPair.getFirst();
-        if (created) {
-            createRelationFromEdge(tenantId, edge.getId(), ruleChainId);
-            pushRuleChainCreatedEventToRuleEngine(tenantId, edge, ruleChainId, ruleChainUpdateMsg.getEntity());
-            edgeCtx.getRuleChainService().assignRuleChainToEdge(tenantId, ruleChainId, edge.getId());
+    private ListenableFuture<Void> saveOrUpdateRuleChain(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateMsg ruleChainUpdateMsg, Edge edge) {
+        try {
+            Pair<Boolean, Boolean> resultPair = super.saveOrUpdateRuleChain(tenantId, ruleChainId, ruleChainUpdateMsg, RuleChainType.EDGE);
+            Boolean created = resultPair.getFirst();
+            if (created) {
+                createRelationFromEdge(tenantId, edge.getId(), ruleChainId);
+                pushRuleChainCreatedEventToRuleEngine(tenantId, edge, ruleChainId, ruleChainUpdateMsg.getEntity());
+                edgeCtx.getRuleChainService().assignRuleChainToEdge(tenantId, ruleChainId, edge.getId());
+            }
+            Boolean isRoot = resultPair.getSecond();
+            if (isRoot) {
+                edge = edgeCtx.getEdgeService().findEdgeById(tenantId, edge.getId());
+                edgeCtx.getEdgeService().setEdgeRootRuleChain(tenantId, edge, ruleChainId);
+            }
+        } catch (Exception e) {
+            log.error("Failed to save or update rule chain", e);
+            return Futures.immediateFailedFuture(e);
         }
-        Boolean isRoot = resultPair.getSecond();
-        if (isRoot) {
-            edge.setRootRuleChainId(ruleChainId);
-            edgeCtx.getEdgeService().saveEdge(edge);
-        }
+        return Futures.immediateFuture(null);
     }
 
     private void pushRuleChainCreatedEventToRuleEngine(TenantId tenantId, Edge edge, RuleChainId ruleChainId, String ruleChainAsString) {

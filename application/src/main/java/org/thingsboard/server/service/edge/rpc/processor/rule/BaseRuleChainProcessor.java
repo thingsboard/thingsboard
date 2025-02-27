@@ -39,24 +39,27 @@ public class BaseRuleChainProcessor extends BaseEdgeProcessor {
 
     protected Pair<Boolean, Boolean> saveOrUpdateRuleChain(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateMsg ruleChainUpdateMsg, RuleChainType ruleChainType) {
         boolean created = false;
-        RuleChain ruleChain = edgeCtx.getRuleChainService().findRuleChainById(tenantId, ruleChainId);
-        if (ruleChain == null) {
+        RuleChain ruleChainFromDb = edgeCtx.getRuleChainService().findRuleChainById(tenantId, ruleChainId);
+        if (ruleChainFromDb == null) {
             created = true;
         }
 
-        ruleChain = JacksonUtil.fromString(ruleChainUpdateMsg.getEntity(), RuleChain.class, true);
+        RuleChain ruleChain = JacksonUtil.fromString(ruleChainUpdateMsg.getEntity(), RuleChain.class, true);
         if (ruleChain == null) {
             throw new RuntimeException("[{" + tenantId + "}] ruleChainUpdateMsg {" + ruleChainUpdateMsg + "} cannot be converted to rule chain");
         }
         boolean isRoot = ruleChain.isRoot();
-        ruleChain.setRoot(false);
+        if (RuleChainType.CORE.equals(ruleChainType)) {
+            ruleChain.setRoot(false);
+        } else {
+            ruleChain.setRoot(ruleChainFromDb == null ? false : ruleChainFromDb.isRoot());
+        }
         ruleChain.setType(ruleChainType);
 
         ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
         if (created) {
             ruleChain.setId(ruleChainId);
         }
-
         edgeCtx.getRuleChainService().saveRuleChain(ruleChain);
         return Pair.of(created, isRoot);
     }

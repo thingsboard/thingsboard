@@ -140,7 +140,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(27);
+        edgeImitator.expectMessageAmount(25);
         edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
         edgeImitator.connect();
@@ -191,8 +191,10 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private RuleChainId getEdgeRootRuleChainId() throws Exception {
-        List<RuleChain> edgeRuleChains = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/ruleChains?",
-                new TypeReference<PageData<RuleChain>>() {}, new PageLink(100)).getData();
+        List<RuleChain> edgeRuleChains = doGetTypedWithPageLink("/api/ruleChains?type={type}&",
+                new TypeReference<PageData<RuleChain>>() {},
+                new PageLink(100, 0, "Edge Root Rule Chain"),
+                "EDGE").getData();
         for (RuleChain edgeRuleChain : edgeRuleChains) {
             if (edgeRuleChain.isRoot()) {
                 return edgeRuleChain.getId();
@@ -243,8 +245,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateMsgsCnt(RuleChainUpdateMsg.class, 1);
         UUID ruleChainUUID = validateRuleChains();
 
-        // 2 messages - 1 from rule chain fetcher and 1 from rule chain controller (it goes along with RuleChainUpdateMsg)
-        validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 2);
+        // 1 from rule chain fetcher
+        validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
         // 4 messages ('general', 'mail', 'connectivity', 'jwt')
@@ -426,17 +428,11 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private void validateRuleChainMetadataUpdates(UUID expectedRuleChainUUID) {
-        List<RuleChainMetadataUpdateMsg> ruleChainMetadataUpdateMsgList = edgeImitator.findAllMessagesByType(RuleChainMetadataUpdateMsg.class);
-        Assert.assertEquals(2, ruleChainMetadataUpdateMsgList.size());
-        // metadata create msg
-        RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsgCreated = ruleChainMetadataUpdateMsgList.get(0);
-        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, ruleChainMetadataUpdateMsgCreated.getMsgType());
-        RuleChainMetaData ruleChainMetaData = JacksonUtil.fromString(ruleChainMetadataUpdateMsgCreated.getEntity(), RuleChainMetaData.class, true);
-        Assert.assertEquals(expectedRuleChainUUID, ruleChainMetaData.getRuleChainId().getId());
-        // metadata update msg
-        RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsgUpdated = ruleChainMetadataUpdateMsgList.get(1);
-        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, ruleChainMetadataUpdateMsgUpdated.getMsgType());
-        ruleChainMetaData = JacksonUtil.fromString(ruleChainMetadataUpdateMsgUpdated.getEntity(), RuleChainMetaData.class, true);
+        Optional<RuleChainMetadataUpdateMsg> ruleChainMetadataUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainMetadataUpdateMsg.class);
+        Assert.assertTrue(ruleChainMetadataUpdateMsgOpt.isPresent());
+        RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = ruleChainMetadataUpdateMsgOpt.get();
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, ruleChainMetadataUpdateMsg.getMsgType());
+        RuleChainMetaData ruleChainMetaData = JacksonUtil.fromString(ruleChainMetadataUpdateMsg.getEntity(), RuleChainMetaData.class, true);
         Assert.assertEquals(expectedRuleChainUUID, ruleChainMetaData.getRuleChainId().getId());
     }
 
