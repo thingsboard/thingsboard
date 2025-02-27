@@ -38,8 +38,6 @@ public interface TbResourceService {
 
     TbResourceInfo save(TbResource entity, SecurityUser user) throws Exception;
 
-    void delete(TbResourceInfo entity, User user);
-
     TbResourceDeleteResult delete(TbResourceInfo entity, boolean force, User user);
 
     List<LwM2mObject> findLwM2mObject(TenantId tenantId,

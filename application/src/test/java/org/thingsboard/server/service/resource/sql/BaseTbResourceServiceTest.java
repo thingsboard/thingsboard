@@ -261,7 +261,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         assertEquals(title, foundResource.getTitle());
         assertArrayEquals(foundResource.getData(), TEST_DATA);
 
-        tbResourceService.delete(foundResource, null);
+        tbResourceService.delete(foundResource, true, null);
     }
 
     @Test
@@ -377,7 +377,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assert.assertNotNull(foundResource);
         assertEquals(savedResource, new TbResourceInfo(foundResource));
         assertArrayEquals(TEST_DATA, foundResource.getData());
-        tbResourceService.delete(foundResource, null);
+        tbResourceService.delete(foundResource, true, null);
     }
 
     @Test
@@ -394,7 +394,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assert.assertNotNull(foundResource);
         assertEquals(savedResource, new TbResourceInfo(foundResource));
         assertArrayEquals(TEST_DATA, foundResource.getData());
-        tbResourceService.delete(foundResource, null);
+        tbResourceService.delete(foundResource, true, null);
     }
 
     @Test

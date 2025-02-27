@@ -90,11 +90,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public void delete(TbResourceInfo entity, User user) {
-        delete(entity, true, user);
-    }
-
-    @Override
     public TbResourceDeleteResult delete(TbResourceInfo tbResource, boolean force, User user) {
         if (tbResource.getResourceType() == ResourceType.IMAGE) {
             throw new IllegalArgumentException("Image resource type is not supported");
