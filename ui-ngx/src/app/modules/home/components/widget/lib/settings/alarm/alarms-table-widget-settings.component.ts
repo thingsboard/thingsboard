@@ -97,8 +97,7 @@ export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent 
   }
 
   protected validatorTriggers(): string[] {
-    return ['useRowStyleFunction', 'displayPagination', 'pageStepCount',
-      'pageStepIncrement'];
+    return ['useRowStyleFunction', 'displayPagination', 'pageStepCount', 'pageStepIncrement'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger: string) {
