@@ -131,11 +131,87 @@ class DefaultTbContextTest {
         defaultTbContext.input(msg, ruleChainId);
 
         // THEN
+        then(clusterService).should().pushMsgToRuleEngine(eq(tpi), eq(msg.getId()), any(), any());
+    }
 
+    @MethodSource
+    @ParameterizedTest
+    public void givenMsgWithQueueName_whenEnqueue_thenVerifyEnqueueWithCorrectTpi(String queueName) {
+        // GIVEN
+        var tpi = resolve(queueName);
+
+        given(mainCtxMock.resolve(eq(ServiceType.TB_RULE_ENGINE), eq(queueName), eq(TENANT_ID), eq(TENANT_ID))).willReturn(tpi);
+        var clusterService = mock(TbClusterService.class);
+        given(mainCtxMock.getClusterService()).willReturn(clusterService);
+        var callbackMock = mock(TbMsgCallback.class);
+        given(callbackMock.isMsgValid()).willReturn(true);
+        var ruleNode = new RuleNode(RULE_NODE_ID);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TENANT_ID)
+                .queueName(queueName)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .callback(callbackMock)
+                .build();
+
+        ruleNode.setRuleChainId(RULE_CHAIN_ID);
+        ruleNode.setDebugSettings(DebugSettings.failures());
+        given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
+
+        // WHEN
+        defaultTbContext.enqueue(msg, () -> {}, t -> {});
+
+        // THEN
+        then(clusterService).should().pushMsgToRuleEngine(eq(tpi), eq(msg.getId()), any(), any());
+    }
+
+    @MethodSource
+    @ParameterizedTest
+    public void givenMsgAndQueueName_whenEnqueue_thenVerifyEnqueueWithCorrectTpi(String queueName) {
+        // GIVEN
+        var tpi = resolve(queueName);
+
+        given(mainCtxMock.resolve(eq(ServiceType.TB_RULE_ENGINE), eq(queueName), eq(TENANT_ID), eq(TENANT_ID))).willReturn(tpi);
+        var clusterService = mock(TbClusterService.class);
+        given(mainCtxMock.getClusterService()).willReturn(clusterService);
+        var callbackMock = mock(TbMsgCallback.class);
+        given(callbackMock.isMsgValid()).willReturn(true);
+        var ruleNode = new RuleNode(RULE_NODE_ID);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .callback(callbackMock)
+                .build();
+
+        ruleNode.setRuleChainId(RULE_CHAIN_ID);
+        ruleNode.setDebugSettings(DebugSettings.failures());
+        given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
+
+        // WHEN
+        defaultTbContext.enqueue(msg, queueName, () -> {}, t -> {});
+
+        // THEN
         then(clusterService).should().pushMsgToRuleEngine(eq(tpi), eq(msg.getId()), any(), any());
     }
 
     private static Stream<String> givenMsgWithQueueName_whenInput_thenVerifyEnqueueWithCorrectTpi() {
+        return testQueueNames();
+    }
+
+    private static Stream<String> givenMsgWithQueueName_whenEnqueue_thenVerifyEnqueueWithCorrectTpi() {
+        return testQueueNames();
+    }
+
+    private static Stream<String> givenMsgAndQueueName_whenEnqueue_thenVerifyEnqueueWithCorrectTpi() {
+        return testQueueNames();
+    }
+
+    private static Stream<String> testQueueNames() {
         return Stream.of("Main", "Test", null);
     }
 
