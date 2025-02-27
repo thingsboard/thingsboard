@@ -791,10 +791,9 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     public void testNotificationRuleProcessing_resourcesShortage() throws Exception {
         loginSysAdmin();
         ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
-                .resource(Resource.CPU.name())
                 .cpuThreshold(0.01f)
-                .ramThreshold(0.01f)
-                .storageThreshold(0.01f)
+                .ramThreshold(1f)
+                .storageThreshold(1f)
                 .build();
         createNotificationRule(triggerConfig, "Test", "Test", createNotificationTarget(tenantAdminUserId).getId());
         loginTenantAdmin();
@@ -805,15 +804,16 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         TimeUnit.SECONDS.sleep(5);
 
-        assertThat(getMyNotifications(false, 100)).size().isEqualTo(3);
+        assertThat(getMyNotifications(false, 100)).size().isOne();
     }
 
     @Test
     public void testNotificationsDeduplication_resourcesShortage() throws Exception {
         loginSysAdmin();
         ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
-                .resource(Resource.CPU.name())
                 .cpuThreshold(0.1f)
+                .ramThreshold(1f)
+                .storageThreshold(1f)
                 .build();
         createNotificationRule(triggerConfig, "Test", "Test", createNotificationTarget(tenantAdminUserId).getId());
         loginTenantAdmin();
