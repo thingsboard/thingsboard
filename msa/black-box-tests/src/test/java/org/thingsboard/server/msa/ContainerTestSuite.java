@@ -51,6 +51,7 @@ public class ContainerTestSuite {
     private static final String TB_CORE_LOG_REGEXP = ".*Starting polling for events.*";
     private static final String TRANSPORTS_LOG_REGEXP = ".*Going to recalculate partitions.*";
     private static final String TB_VC_LOG_REGEXP = TRANSPORTS_LOG_REGEXP;
+    private static final String TB_EDQS_LOG_REGEXP = ".*All partitions processed.*";
     private static final String TB_JS_EXECUTOR_LOG_REGEXP = ".*template started.*";
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(400);
 
@@ -115,6 +116,7 @@ public class ContainerTestSuite {
             List<File> composeFiles = new ArrayList<>(Arrays.asList(
                     new File(targetDir + "docker-compose.yml"),
                     new File(targetDir + "docker-compose.edqs.yml"),
+                    new File(targetDir + "docker-compose.edqs.volumes.yml"),
                     new File(targetDir + "docker-compose.volumes.yml"),
                     new File(targetDir + "docker-compose.mosquitto.yml"),
                     new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid.yml" : "docker-compose.postgres.yml")),
@@ -163,11 +165,6 @@ public class ContainerTestSuite {
                 composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
             }
 
-            // to trigger edqs synchronization
-            addToFile(targetDir, "tb-node.env",
-                    Map.of("TB_EDQS_SYNC_ENABLED", "true",
-                            "TB_EDQS_API_ENABLED", "true"));
-
             testContainer = new DockerComposeContainerImpl<>(composeFiles)
                     .withPull(false)
                     .withLocalCompose(true)
@@ -189,8 +186,8 @@ public class ContainerTestSuite {
                     .waitingFor("tb-vc-executor1", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-vc-executor2", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-js-executor", Wait.forLogMessage(TB_JS_EXECUTOR_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-edqs-1", Wait.forHttp("/api/edqs/ready").withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-edqs-2", Wait.forHttp("/api/edqs/ready").withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
+                    .waitingFor("tb-edqs-1", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-edqs-2", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
             testContainer.start();
             setActive(true);
         } catch (Exception e) {

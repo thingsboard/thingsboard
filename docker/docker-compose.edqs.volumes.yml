@@ -17,35 +17,14 @@
 version: '3.0'
 
 services:
-  tb-core1:
-    env_file:
-      - tb-node-edqs.env
-  tb-core2:
-    env_file:
-      - tb-node-edqs.env
   tb-edqs-1:
-    restart: always
-    image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
-    env_file:
-      - edqs.env
     volumes:
-      - ./edqs/conf:/usr/share/edqs/conf
-      - ./edqs/log:/var/log/edqs
-    ports:
-      - "8080"
-    depends_on:
-      - zookeeper
-      - kafka
+      - tb-edqs-log-volume:/var/log/edqs
   tb-edqs-2:
-    restart: always
-    image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
-    env_file:
-      - edqs.env
     volumes:
-      - ./edqs/conf:/usr/share/edqs/conf
-      - ./edqs/log:/var/log/edqs
-    ports:
-      - "8080"
-    depends_on:
-      - zookeeper
-      - kafka
+      - tb-edqs-log-volume:/var/log/edqs
+
+volumes:
+  tb-edqs-log-volume:
+    external:
+      name: ${TB_EDQS_LOG_VOLUME}
