@@ -143,6 +143,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         } else {
             log.info("Received application ready event. Starting current ZK node.");
         }
+        subscribeToEvents();
         if (client.getState() != CuratorFrameworkState.STARTED) {
             log.debug("Ignoring application ready event, ZK client is not started, ZK client state [{}]", client.getState());
             return;
@@ -212,6 +213,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             try {
                 destroyZkClient();
                 initZkClient();
+                subscribeToEvents();
                 publishCurrentServer();
             } catch (Exception e) {
                 log.error("Failed to reconnect to ZK: {}", e.getMessage(), e);
@@ -227,7 +229,6 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             client.start();
             client.blockUntilConnected();
             cache = new PathChildrenCache(client, zkNodesDir, true);
-            cache.getListenable().addListener(this);
             cache.start();
             stopped = false;
             log.info("ZK client connected");
@@ -237,6 +238,10 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             CloseableUtils.closeQuietly(client);
             throw new RuntimeException(e);
         }
+    }
+
+    private void subscribeToEvents() {
+        cache.getListenable().addListener(this);
     }
 
     private void unpublishCurrentServer() {
