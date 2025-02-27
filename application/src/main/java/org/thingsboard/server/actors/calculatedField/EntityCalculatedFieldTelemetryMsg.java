@@ -32,6 +32,7 @@ public class EntityCalculatedFieldTelemetryMsg implements ToCalculatedFieldSyste
     private final TenantId tenantId;
     private final EntityId entityId;
     private final CalculatedFieldTelemetryMsgProto proto;
+    // Both lists are effectively immutable in CalculatedFieldManagerMessageProcessor and must stay so.
     private final List<CalculatedFieldCtx> entityIdFields;
     private final List<CalculatedFieldCtx> profileIdFields;
     private final TbCallback callback;

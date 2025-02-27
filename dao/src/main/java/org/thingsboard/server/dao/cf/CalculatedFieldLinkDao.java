@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.cf;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,8 +30,6 @@ public interface CalculatedFieldLinkDao extends Dao<CalculatedFieldLink> {
     List<CalculatedFieldLink> findCalculatedFieldLinksByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     List<CalculatedFieldLink> findCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId);
-
-    ListenableFuture<List<CalculatedFieldLink>> findCalculatedFieldLinksByCalculatedFieldIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     List<CalculatedFieldLink> findAll();
 

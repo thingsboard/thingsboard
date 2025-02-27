@@ -16,10 +16,8 @@
 package org.thingsboard.server.service.cf;
 
 import com.google.common.util.concurrent.FutureCallback;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
@@ -40,7 +38,6 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
@@ -59,6 +56,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static org.thingsboard.server.common.util.ProtoUtils.toTsKvProto;
+import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @Service
 @Slf4j
@@ -84,17 +82,10 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
             EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.TENANT
     );
 
-    @Value("${calculatedField.initFetchPackSize:50000}")
-    @Getter
-    private int initFetchPackSize;
-
     @Override
     public void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result, FutureCallback<Void> callback) {
         var tenantId = request.getTenantId();
         var entityId = request.getEntityId();
-        //TODO: 1. check that request entity has calculated fields for entity or profile. If yes - push to corresponding partitions;
-        //TODO: 2. check that request entity has calculated field links. If yes - push to corresponding partitions;
-        //TODO: in 1 and 2 we should do the check as quick as possible. Should we also check the field/link keys?;
         checkEntityAndPushToQueue(tenantId, entityId, cf -> cf.matches(request.getEntries()), cf -> cf.linkMatches(entityId, request.getEntries()),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
@@ -237,13 +228,6 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         }
 
         return telemetryMsg;
-    }
-
-    private CalculatedFieldIdProto toProto(CalculatedFieldId cfId) {
-        return CalculatedFieldIdProto.newBuilder()
-                .setCalculatedFieldIdMSB(cfId.getId().getMostSignificantBits())
-                .setCalculatedFieldIdLSB(cfId.getId().getLeastSignificantBits())
-                .build();
     }
 
     private static TbQueueCallback wrap(FutureCallback<Void> callback) {

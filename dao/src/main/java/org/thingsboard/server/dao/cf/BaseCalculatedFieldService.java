@@ -85,13 +85,6 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
-    public ListenableFuture<CalculatedField> findCalculatedFieldByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        log.trace("Executing findCalculatedFieldByIdAsync [{}]", calculatedFieldId);
-        validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);
-        return calculatedFieldDao.findByIdAsync(tenantId, calculatedFieldId.getId());
-    }
-
-    @Override
     public List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing findCalculatedFieldIdsByEntityId [{}]", entityId);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
@@ -103,12 +96,6 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         log.trace("Executing findCalculatedFieldsByEntityId [{}]", entityId);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
         return calculatedFieldDao.findCalculatedFieldsByEntityId(tenantId, entityId);
-    }
-
-    @Override
-    public List<CalculatedField> findAllCalculatedFields() {
-        log.trace("Executing findAll");
-        return calculatedFieldDao.findAll();
     }
 
     @Override
@@ -177,20 +164,6 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldLink> findCalculatedFieldLinkByIdAsync(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId) {
-        log.trace("Executing findCalculatedFieldLinkByIdAsync [{}]", calculatedFieldLinkId);
-        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validateId(calculatedFieldLinkId, id -> "Incorrect calculatedFieldLinkId " + id);
-        return calculatedFieldLinkDao.findByIdAsync(tenantId, calculatedFieldLinkId.getId());
-    }
-
-    @Override
-    public List<CalculatedFieldLink> findAllCalculatedFieldLinks() {
-        log.trace("Executing findAllCalculatedFieldLinks");
-        return calculatedFieldLinkDao.findAll();
-    }
-
-    @Override
     public List<CalculatedFieldLink> findAllCalculatedFieldLinksById(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
         log.trace("Executing findAllCalculatedFieldLinksById, calculatedFieldId [{}]", calculatedFieldId);
         return calculatedFieldLinkDao.findCalculatedFieldLinksByCalculatedFieldId(tenantId, calculatedFieldId);
@@ -200,12 +173,6 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     public List<CalculatedFieldLink> findAllCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing findAllCalculatedFieldLinksByEntityId, entityId [{}]", entityId);
         return calculatedFieldLinkDao.findCalculatedFieldLinksByEntityId(tenantId, entityId);
-    }
-
-    @Override
-    public ListenableFuture<List<CalculatedFieldLink>> findAllCalculatedFieldLinksByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        log.trace("Executing findAllCalculatedFieldLinksByIdAsync, calculatedFieldId [{}]", calculatedFieldId);
-        return calculatedFieldLinkDao.findCalculatedFieldLinksByCalculatedFieldIdAsync(tenantId, calculatedFieldId);
     }
 
     @Override
@@ -222,19 +189,6 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
                 .map(CalculatedField::getConfiguration)
                 .map(CalculatedFieldConfiguration::getReferencedEntities)
                 .anyMatch(referencedEntities -> referencedEntities.contains(referencedEntityId));
-    }
-
-    @Override
-    public boolean referencedInAnyCalculatedFieldIncludingEntityId(TenantId tenantId, EntityId referencedEntityId) {
-        return calculatedFieldDao.findAllByTenantId(tenantId).stream()
-                .map(CalculatedField::getConfiguration)
-                .map(CalculatedFieldConfiguration::getReferencedEntities)
-                .anyMatch(referencedEntities -> referencedEntities.contains(referencedEntityId));
-    }
-
-    @Override
-    public boolean existsCalculatedFieldByEntityId(TenantId tenantId, EntityId entityId) {
-        return calculatedFieldDao.existsByEntityId(tenantId, entityId);
     }
 
     @Override

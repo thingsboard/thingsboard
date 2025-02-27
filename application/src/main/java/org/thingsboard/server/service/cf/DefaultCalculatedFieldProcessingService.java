@@ -21,11 +21,9 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -103,10 +101,6 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
     private final PartitionService partitionService;
 
     private ListeningExecutorService calculatedFieldCallbackExecutor;
-
-    @Value("${calculatedField.initFetchPackSize:50000}")
-    @Getter
-    private int initFetchPackSize;
 
     @PostConstruct
     public void init() {

@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-//TODO: remove and use TenantEntityProfileCache in each CalculatedFieldManagerMessageProcessor;
+//TODO ashvayka: remove and use TenantEntityProfileCache in each CalculatedFieldManagerMessageProcessor;
 public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEventListener<PartitionChangeEvent> implements CalculatedFieldEntityProfileCache {
 
     private static final Integer UNKNOWN = 0;

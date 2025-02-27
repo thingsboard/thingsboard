@@ -1190,7 +1190,7 @@ message ComponentLifecycleMsgProto {
   int64 entityIdMSB = 4;
   int64 entityIdLSB = 5;
   ComponentLifecycleEvent event = 6;
-  //Since 4.0. To replace the
+  //Since 4.0. TODO: replace the DeviceNameOrTypeUpdateMsgProto
   string oldName = 7;
   string name = 8;
   int64 oldProfileIdMSB = 9;

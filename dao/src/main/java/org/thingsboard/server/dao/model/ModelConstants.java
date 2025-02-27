@@ -739,7 +739,6 @@ public class ModelConstants {
     public static final String CALCULATED_FIELD_LINK_ENTITY_TYPE = ENTITY_TYPE_COLUMN;
     public static final String CALCULATED_FIELD_LINK_ENTITY_ID = ENTITY_ID_COLUMN;
     public static final String CALCULATED_FIELD_LINK_CALCULATED_FIELD_ID = "calculated_field_id";
-    public static final String CALCULATED_FIELD_LINK_CONFIGURATION = "configuration";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

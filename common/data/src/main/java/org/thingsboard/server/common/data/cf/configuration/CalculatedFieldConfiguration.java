@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -52,9 +51,6 @@ public interface CalculatedFieldConfiguration {
 
     @JsonIgnore
     List<EntityId> getReferencedEntities();
-
-    @JsonIgnore
-    CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId);
 
     List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId);
 

@@ -485,7 +485,7 @@ public final class TbMsg implements Serializable {
         }
 
         public TbMsgBuilder previousCalculatedFieldIds(List<CalculatedFieldId> previousCalculatedFieldIds) {
-            this.previousCalculatedFieldIds = previousCalculatedFieldIds;
+            this.previousCalculatedFieldIds = new CopyOnWriteArrayList<>(previousCalculatedFieldIds);
             return this;
         }
 

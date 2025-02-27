@@ -26,7 +26,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
@@ -128,7 +127,6 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 calculatedFieldLink.setTenantId(new TenantId(tenantId));
                 calculatedFieldLink.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
                 calculatedFieldLink.setCalculatedFieldId(new CalculatedFieldId(calculatedFieldId));
-                calculatedFieldLink.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldLinkConfiguration.class));
 
                 return calculatedFieldLink;
             }).collect(Collectors.toList());

@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -53,6 +54,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngi
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -127,6 +129,7 @@ public class CalculatedFieldController extends BaseController {
     public CalculatedField saveCalculatedField(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the calculated field.")
                                                @RequestBody CalculatedField calculatedField) throws Exception {
         calculatedField.setTenantId(getTenantId());
+        checkEntity(calculatedField.getId(), calculatedField, Resource.CALCULATED_FIELD);
         checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
         checkReferencedEntities(calculatedField.getConfiguration(), getCurrentUser());
         return tbCalculatedFieldService.save(calculatedField, getCurrentUser());
@@ -176,7 +179,7 @@ public class CalculatedFieldController extends BaseController {
     public void deleteCalculatedField(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedField) throws Exception {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedField);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedField));
-        CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
+        CalculatedField calculatedField = checkCalculatedFieldId(calculatedFieldId, Operation.DELETE);
         checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
         tbCalculatedFieldService.delete(calculatedField, getCurrentUser());
     }

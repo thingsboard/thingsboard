@@ -17,7 +17,6 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -43,35 +42,6 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     }
 
     @Override
-    public CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId) {
-        CalculatedFieldLinkConfiguration linkConfiguration = new CalculatedFieldLinkConfiguration();
-
-        arguments.entrySet().stream()
-                .filter(entry -> entry.getValue().getRefEntityId() != null && entry.getValue().getRefEntityId().equals(entityId))
-                .forEach(entry -> {
-                    ReferencedEntityKey refEntityKey = entry.getValue().getRefEntityKey();
-                    String argumentName = entry.getKey();
-
-                    switch (refEntityKey.getType()) {
-                        case ATTRIBUTE -> {
-                            switch (refEntityKey.getScope()) {
-                                case CLIENT_SCOPE ->
-                                        linkConfiguration.getClientAttributes().put(refEntityKey.getKey(), argumentName);
-                                case SERVER_SCOPE ->
-                                        linkConfiguration.getServerAttributes().put(refEntityKey.getKey(), argumentName);
-                                case SHARED_SCOPE ->
-                                        linkConfiguration.getSharedAttributes().put(refEntityKey.getKey(), argumentName);
-                            }
-                        }
-                        case TS_LATEST, TS_ROLLING ->
-                                linkConfiguration.getTimeSeries().put(refEntityKey.getKey(), argumentName);
-                    }
-                });
-
-        return linkConfiguration;
-    }
-
-    @Override
     public List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId) {
         return getReferencedEntities().stream()
                 .filter(referencedEntity -> !referencedEntity.equals(cfEntityId))
@@ -85,7 +55,6 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         link.setTenantId(tenantId);
         link.setEntityId(referencedEntityId);
         link.setCalculatedFieldId(calculatedFieldId);
-        link.setConfiguration(getReferencedEntityConfig(referencedEntityId));
         return link;
     }
 

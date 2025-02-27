@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.EntityType;
 import java.util.UUID;
 
 @Schema
-public class CalculatedFieldLinkId  extends UUIDBased implements EntityId {
+public class CalculatedFieldLinkId extends UUIDBased implements EntityId {
 
     private static final long serialVersionUID = 1L;
 
