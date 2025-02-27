@@ -16,6 +16,15 @@
 
 -->
 <ng-container [formGroup]="alarmCountWidgetConfigForm">
+  <tb-datasources
+    [configMode]="basicMode"
+    hideDatasourcesMode
+    hideDatasourceLabel
+    hideDataKeys
+    hideAlarmFilter
+    displayDatasourceFilterForBasicMode
+    formControlName="datasources">
+  </tb-datasources>
   <div class="tb-form-panel">
     <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title" translate>alarm.filter</div>
