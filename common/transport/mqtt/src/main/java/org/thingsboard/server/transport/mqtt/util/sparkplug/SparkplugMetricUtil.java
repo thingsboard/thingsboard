@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
+import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric;
+import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric.Builder;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -44,6 +46,9 @@ import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
  */
 @Slf4j
 public class SparkplugMetricUtil {
+
+    public static final String SPARKPLUG_SEQUENCE_NUMBER_KEY = "seq";
+    public static final String SPARKPLUG_BD_SEQUENCE_NUMBER_KEY = "bdSeq";
 
     public static Optional<TransportProtos.KeyValueProto> fromSparkplugBMetricToKeyValueProto(String key, SparkplugBProto.Payload.Metric protoMetric) throws ThingsboardException {
         // Check if the null flag has been set indicating that the value is null
@@ -141,13 +146,20 @@ public class SparkplugMetricUtil {
             return Optional.empty();
         }
     }
+    public static SparkplugBProto.Payload.Metric createMetric(Object value, long ts, String key, MetricDataType metricDataType, Long alias) throws ThingsboardException {
+        Builder metric = Metric.newBuilder();
+        metric.setTimestamp(ts)
+                .setDatatype(metricDataType.toIntValue());
+        if (alias >= 0) {
+            metric.setAlias(alias);
+        }
+        if (StringUtils.isNotBlank(key)) {
+            metric.setName(key);
+        }
+        return addToMetricValue(value, metric.build(), metricDataType);
+    }
 
-    public static SparkplugBProto.Payload.Metric createMetric(Object value, long ts, String key, MetricDataType metricDataType) throws ThingsboardException {
-        SparkplugBProto.Payload.Metric metric = SparkplugBProto.Payload.Metric.newBuilder()
-                .setTimestamp(ts)
-                .setName(key)
-                .setDatatype(metricDataType.toIntValue())
-                .build();
+    public static SparkplugBProto.Payload.Metric addToMetricValue(Object value, SparkplugBProto.Payload.Metric metric, MetricDataType metricDataType) throws ThingsboardException {
         switch (metricDataType) {
             case Int8:      //  (byte)
                 return metric.toBuilder().setIntValue(((Byte) value).intValue()).build();
@@ -187,6 +199,12 @@ public class SparkplugMetricUtil {
                 throw new ThingsboardException("Invalid value for MetricDataType " + metricDataType.name(), ThingsboardErrorCode.INVALID_ARGUMENTS);
         }
         return metric;
+    }
+
+    public static TransportProtos.TsKvProto getTsKvProtoFromJsonNode(JsonNode kvProto, long ts) throws ThingsboardException {
+        String kvProtoKey = kvProto.fieldNames().next();
+        String kvProtoValue = kvProto.get(kvProtoKey).asText();
+        return getTsKvProto(kvProtoKey, kvProtoValue, ts);
     }
 
     public static TransportProtos.TsKvProto getTsKvProto(String key, Object value, long ts) throws ThingsboardException {
