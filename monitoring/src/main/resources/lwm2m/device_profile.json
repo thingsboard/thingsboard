@@ -12,14 +12,14 @@
     "transportConfiguration": {
       "observeAttr": {
         "observe": [
-          "/3_1.0/0/0"
+          "/3_1.1/0/0"
         ],
         "attribute": [],
         "telemetry": [
-          "/3_1.0/0/0"
+          "/3_1.1/0/0"
         ],
         "keyName": {
-          "/3_1.0/0/0": "testData"
+          "/3_1.1/0/0": "testData"
         },
         "attributeLwm2m": {}
       },
