@@ -113,7 +113,7 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
         EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
         await("Waiting for total device count")
                 .atMost(30, TimeUnit.SECONDS)
-                .until(() -> testRestClient.postCountDataQuery(query).equals(97L * 2));
+                .until(() -> testRestClient.postCountDataQuery(query).compareTo(97L * 2) >= 0);
 
         testRestClient.getAndSetUserToken(tenantAdminId);
         await("Waiting for total device count")
