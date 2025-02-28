@@ -165,6 +165,7 @@
         <weisj-jsvg.version>1.6.1</weisj-jsvg.version>
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
+        <rocksdbjni.version>9.10.0</rocksdbjni.version>
     </properties>
 
     <modules>
@@ -2278,6 +2279,11 @@
                 <groupId>com.drewnoakes</groupId>
                 <artifactId>metadata-extractor</artifactId>
                 <version>${drewnoakes-metadata-extractor.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.rocksdb</groupId>
+                <artifactId>rocksdbjni</artifactId>
+                <version>${rocksdbjni.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -133,8 +133,6 @@ redis:
 transport:
   # Local CoAP transport parameters
   coap:
-    # Enable/disable coap transport protocol.
-    enabled: "${COAP_ENABLED:true}"
     # CoaP processing timeout in milliseconds
     timeout: "${COAP_TIMEOUT:10000}"
     # CoaP piggyback response timeout in milliseconds
@@ -173,8 +171,6 @@ transport:
 
 # CoAP server parameters
 coap:
-  # Enable/disable coap transport protocol.
-  enabled: "${COAP_SERVER_ENABLED:true}"
   # CoAP bind-address
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   # CoAP bind port
