@@ -39,6 +39,7 @@ import { map, startWith, switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'tb-calculated-field-dialog',
@@ -137,9 +138,10 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   onTestScript(): void {
     const calculatedFieldId = this.data.value?.id?.id;
+    let testScriptDialogResult$: Observable<string>;
 
-    (calculatedFieldId
-      ? this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId)
+    if (calculatedFieldId) {
+      testScriptDialogResult$ = this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId)
         .pipe(
           switchMap(event => {
             const args = event?.arguments ? JSON.parse(event.arguments) : null;
@@ -147,11 +149,14 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
           }),
           takeUntilDestroyed(this.destroyRef)
         )
-      : this.data.getTestScriptDialogFn(this.fromGroupValue, null, false))
-      .subscribe(expression => {
-        this.configFormGroup.get('expressionSCRIPT').setValue(expression);
-        this.configFormGroup.get('expressionSCRIPT').markAsDirty();
-      });
+    } else {
+      testScriptDialogResult$ = this.data.getTestScriptDialogFn(this.fromGroupValue, null, false);
+    }
+
+    testScriptDialogResult$.subscribe(expression => {
+      this.configFormGroup.get('expressionSCRIPT').setValue(expression);
+      this.configFormGroup.get('expressionSCRIPT').markAsDirty();
+    });
   }
 
   private applyDialogData(): void {
