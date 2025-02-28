@@ -518,8 +518,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     const latestDataKeys = datasource.latestDataKeys;
     let header: TimeseriesHeader[] = [];
     dataKeys.forEach((dataKey, index) => {
-      const sortable = !dataKey.usePostProcessing;
       const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+      const sortable = !keySettings.disableSorting && !dataKey.usePostProcessing;
       const styleInfo = getCellStyleInfo(this.ctx, keySettings, 'value, rowData, ctx');
       const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, rowData, ctx');
       const columnDefaultVisibility = getColumnDefaultVisibility(keySettings, this.ctx);
@@ -544,8 +544,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if (latestDataKeys) {
       latestDataKeys.forEach((dataKey, latestIndex) => {
         const index = dataKeys.length + latestIndex;
-        const sortable = !dataKey.usePostProcessing;
         const keySettings: TimeseriesWidgetLatestDataKeySettings = dataKey.settings;
+        const sortable = !keySettings.disableSorting && !dataKey.usePostProcessing;
         const styleInfo = getCellStyleInfo(this.ctx, keySettings, 'value, rowData, ctx');
         const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, rowData, ctx');
         const columnDefaultVisibility = getColumnDefaultVisibility(keySettings, this.ctx);
