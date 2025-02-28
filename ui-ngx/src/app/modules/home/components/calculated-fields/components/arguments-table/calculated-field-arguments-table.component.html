@@ -119,9 +119,22 @@
       <tb-error noMargin [error]="errorText | translate" class="flex h-9 items-center pl-3"/>
     }
   </div>
-  <div>
-    <button type="button" mat-stroked-button color="primary" #button (click)="manageArgument($event, button)">
+  <div class="flex h-9 justify-between">
+    <button
+      type="button"
+      mat-stroked-button
+      color="primary"
+      #button
+      (click)="manageArgument($event, button)"
+      [disabled]="maxArgumentsPerCF > 0 && argumentsFormArray.length >= maxArgumentsPerCF"
+    >
       {{ 'calculated-fields.add-argument' | translate }}
     </button>
+    @if (maxArgumentsPerCF && argumentsFormArray.length >= maxArgumentsPerCF) {
+      <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
+        <mat-icon>warning</mat-icon>
+        <span>{{ 'calculated-fields.hint.max-args' | translate }}</span>
+      </div>
+    }
   </div>
 </div>

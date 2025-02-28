@@ -38,7 +38,9 @@ import { EntityFilter } from '@shared/models/query/query.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { merge } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
-import { TimeService } from '@core/services/time.service';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { AppState } from '@core/core.state';
+import { Store } from '@ngrx/store';
 
 @Component({
   selector: 'tb-calculated-field-argument-panel',
@@ -58,7 +60,8 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
   argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
 
-  readonly defaultLimit = Math.max(this.timeService.getMinDatapointsLimit(), Math.floor(this.timeService.getMaxDatapointsLimit() / 10));
+  readonly maxDataPointsPerRollingArg = getCurrentAuthState(this.store).maxDataPointsPerRollingArg;
+  readonly defaultLimit = Math.floor(this.maxDataPointsPerRollingArg / 10);
 
   argumentFormGroup = this.fb.group({
     argumentName: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
@@ -72,7 +75,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
       scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }, [Validators.required]],
     }),
     defaultValue: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-    limit: [this.defaultLimit],
+    limit: [{ value: this.defaultLimit, disabled: !this.maxDataPointsPerRollingArg }],
     timeWindow: [MINUTE * 15],
   });
 
@@ -96,7 +99,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
     private fb: FormBuilder,
     private cd: ChangeDetectorRef,
     private popover: TbPopoverComponent<CalculatedFieldArgumentPanelComponent>,
-    private timeService: TimeService
+    private store: Store<AppState>
   ) {
     this.observeEntityFilterChanges();
     this.observeEntityTypeChanges()
