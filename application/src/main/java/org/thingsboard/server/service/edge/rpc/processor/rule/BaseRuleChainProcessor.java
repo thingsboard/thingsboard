@@ -61,7 +61,7 @@ public class BaseRuleChainProcessor extends BaseEdgeProcessor {
         if (created) {
             ruleChain.setId(ruleChainId);
         }
-        edgeCtx.getRuleChainService().saveRuleChain(ruleChain);
+        edgeCtx.getRuleChainService().saveRuleChain(ruleChain, true, false);
         return Pair.of(created, isRoot);
     }
 
