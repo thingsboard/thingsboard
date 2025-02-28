@@ -161,9 +161,6 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     @Override
     public void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, TbCallback callback) {
         onTimeSeriesUpdate(entityId, ts);
-        if (entityId.getEntityType() == EntityType.DEVICE) {
-            updateDeviceInactivityTimeout(tenantId, entityId, ts);
-        }
         callback.onSuccess();
     }
 

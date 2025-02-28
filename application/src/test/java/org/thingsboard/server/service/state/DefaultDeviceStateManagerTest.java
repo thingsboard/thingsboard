@@ -52,7 +52,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
-public class DefaultRuleEngineDeviceStateManagerTest {
+public class DefaultDeviceStateManagerTest {
 
     @Mock
     private DeviceStateService deviceStateServiceMock;
@@ -71,7 +71,7 @@ public class DefaultRuleEngineDeviceStateManagerTest {
     @Captor
     private ArgumentCaptor<TbQueueCallback> queueCallbackCaptor;
 
-    private DefaultRuleEngineDeviceStateManager deviceStateManager;
+    private DefaultDeviceStateManager deviceStateManager;
 
     private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("57ab2e6c-bc4c-11ee-a506-0242ac120002"));
     private static final DeviceId DEVICE_ID = DeviceId.fromString("74a9053e-bc4c-11ee-a506-0242ac120002");
@@ -82,7 +82,7 @@ public class DefaultRuleEngineDeviceStateManagerTest {
 
     @BeforeEach
     public void setup() {
-        deviceStateManager = new DefaultRuleEngineDeviceStateManager(serviceInfoProviderMock, partitionServiceMock, Optional.of(deviceStateServiceMock), clusterServiceMock);
+        deviceStateManager = new DefaultDeviceStateManager(serviceInfoProviderMock, partitionServiceMock, Optional.of(deviceStateServiceMock), clusterServiceMock);
     }
 
     @ParameterizedTest
@@ -90,7 +90,7 @@ public class DefaultRuleEngineDeviceStateManagerTest {
             "when onDeviceX() is called, then should route event to local service and call onSuccess() callback.")
     @MethodSource
     public void givenRoutedToLocalAndProcessingSuccess_whenOnDeviceAction_thenShouldCallLocalServiceAndSuccessCallback(
-            BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback> onDeviceAction, Consumer<DeviceStateService> actionVerification
+            BiConsumer<DefaultDeviceStateManager, TbCallback> onDeviceAction, Consumer<DeviceStateService> actionVerification
     ) {
         // GIVEN
         given(serviceInfoProviderMock.isService(ServiceType.TB_CORE)).willReturn(true);
@@ -109,20 +109,24 @@ public class DefaultRuleEngineDeviceStateManagerTest {
     private static Stream<Arguments> givenRoutedToLocalAndProcessingSuccess_whenOnDeviceAction_thenShouldCallLocalServiceAndSuccessCallback() {
         return Stream.of(
                 Arguments.of(
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceConnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceConnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceConnect(TENANT_ID, DEVICE_ID, EVENT_TS)
                 ),
                 Arguments.of(
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceActivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceActivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceActivity(TENANT_ID, DEVICE_ID, EVENT_TS)
                 ),
                 Arguments.of(
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceDisconnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceDisconnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceDisconnect(TENANT_ID, DEVICE_ID, EVENT_TS)
                 ),
                 Arguments.of(
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS)
+                ),
+                Arguments.of(
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS)
                 )
         );
     }
@@ -132,7 +136,7 @@ public class DefaultRuleEngineDeviceStateManagerTest {
             "when onDeviceX() is called, then should route event to local service and call onFailure() callback.")
     @MethodSource
     public void givenRoutedToLocalAndProcessingFailure_whenOnDeviceAction_thenShouldCallLocalServiceAndFailureCallback(
-            Consumer<DeviceStateService> exceptionThrowSetup, BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback> onDeviceAction, Consumer<DeviceStateService> actionVerification
+            Consumer<DeviceStateService> exceptionThrowSetup, BiConsumer<DefaultDeviceStateManager, TbCallback> onDeviceAction, Consumer<DeviceStateService> actionVerification
     ) {
         // GIVEN
         given(serviceInfoProviderMock.isService(ServiceType.TB_CORE)).willReturn(true);
@@ -155,23 +159,28 @@ public class DefaultRuleEngineDeviceStateManagerTest {
         return Stream.of(
                 Arguments.of(
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> doThrow(RUNTIME_EXCEPTION).when(deviceStateServiceMock).onDeviceConnect(TENANT_ID, DEVICE_ID, EVENT_TS),
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceConnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceConnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceConnect(TENANT_ID, DEVICE_ID, EVENT_TS)
                 ),
                 Arguments.of(
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> doThrow(RUNTIME_EXCEPTION).when(deviceStateServiceMock).onDeviceActivity(TENANT_ID, DEVICE_ID, EVENT_TS),
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceActivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceActivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceActivity(TENANT_ID, DEVICE_ID, EVENT_TS)
                 ),
                 Arguments.of(
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> doThrow(RUNTIME_EXCEPTION).when(deviceStateServiceMock).onDeviceDisconnect(TENANT_ID, DEVICE_ID, EVENT_TS),
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceDisconnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceDisconnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceDisconnect(TENANT_ID, DEVICE_ID, EVENT_TS)
                 ),
                 Arguments.of(
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> doThrow(RUNTIME_EXCEPTION).when(deviceStateServiceMock).onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS),
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS)
+                ),
+                Arguments.of(
+                        (Consumer<DeviceStateService>) deviceStateServiceMock -> doThrow(RUNTIME_EXCEPTION).when(deviceStateServiceMock).onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS)
                 )
         );
     }
@@ -181,7 +190,7 @@ public class DefaultRuleEngineDeviceStateManagerTest {
             "when onDeviceX() is called, then should send correct queue message to external service with correct callback object.")
     @MethodSource
     public void givenRoutedToExternal_whenOnDeviceAction_thenShouldSendQueueMsgToExternalServiceWithCorrectCallback(
-            BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback> onDeviceAction, BiConsumer<TbClusterService, ArgumentCaptor<TbQueueCallback>> actionVerification
+            BiConsumer<DefaultDeviceStateManager, TbCallback> onDeviceAction, BiConsumer<TbClusterService, ArgumentCaptor<TbQueueCallback>> actionVerification
     ) {
         // WHEN
         ReflectionTestUtils.setField(deviceStateManager, "deviceStateService", Optional.empty());
@@ -203,7 +212,7 @@ public class DefaultRuleEngineDeviceStateManagerTest {
     private static Stream<Arguments> givenRoutedToExternal_whenOnDeviceAction_thenShouldSendQueueMsgToExternalServiceWithCorrectCallback() {
         return Stream.of(
                 Arguments.of(
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceConnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceConnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (BiConsumer<TbClusterService, ArgumentCaptor<TbQueueCallback>>) (clusterServiceMock, queueCallbackCaptor) -> {
                             var deviceConnectMsg = TransportProtos.DeviceConnectProto.newBuilder()
                                     .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
@@ -219,7 +228,7 @@ public class DefaultRuleEngineDeviceStateManagerTest {
                         }
                 ),
                 Arguments.of(
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceActivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceActivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (BiConsumer<TbClusterService, ArgumentCaptor<TbQueueCallback>>) (clusterServiceMock, queueCallbackCaptor) -> {
                             var deviceActivityMsg = TransportProtos.DeviceActivityProto.newBuilder()
                                     .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
@@ -235,7 +244,7 @@ public class DefaultRuleEngineDeviceStateManagerTest {
                         }
                 ),
                 Arguments.of(
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceDisconnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceDisconnect(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (BiConsumer<TbClusterService, ArgumentCaptor<TbQueueCallback>>) (clusterServiceMock, queueCallbackCaptor) -> {
                             var deviceDisconnectMsg = TransportProtos.DeviceDisconnectProto.newBuilder()
                                     .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
@@ -251,7 +260,7 @@ public class DefaultRuleEngineDeviceStateManagerTest {
                         }
                 ),
                 Arguments.of(
-                        (BiConsumer<DefaultRuleEngineDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (BiConsumer<TbClusterService, ArgumentCaptor<TbQueueCallback>>) (clusterServiceMock, queueCallbackCaptor) -> {
                             var deviceInactivityMsg = TransportProtos.DeviceInactivityProto.newBuilder()
                                     .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
@@ -262,6 +271,22 @@ public class DefaultRuleEngineDeviceStateManagerTest {
                                     .build();
                             var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
                                     .setDeviceInactivityMsg(deviceInactivityMsg)
+                                    .build();
+                            then(clusterServiceMock).should().pushMsgToCore(eq(EXTERNAL_TPI), any(UUID.class), eq(toCoreMsg), queueCallbackCaptor.capture());
+                        }
+                ),
+                Arguments.of(
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<TbClusterService, ArgumentCaptor<TbQueueCallback>>) (clusterServiceMock, queueCallbackCaptor) -> {
+                            var deviceInactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                                    .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
+                                    .setTenantIdLSB(TENANT_ID.getId().getLeastSignificantBits())
+                                    .setDeviceIdMSB(DEVICE_ID.getId().getMostSignificantBits())
+                                    .setDeviceIdLSB(DEVICE_ID.getId().getLeastSignificantBits())
+                                    .setInactivityTimeout(EVENT_TS)
+                                    .build();
+                            var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
+                                    .setDeviceInactivityTimeoutUpdateMsg(deviceInactivityTimeoutUpdateMsg)
                                     .build();
                             then(clusterServiceMock).should().pushMsgToCore(eq(EXTERNAL_TPI), any(UUID.class), eq(toCoreMsg), queueCallbackCaptor.capture());
                         }
