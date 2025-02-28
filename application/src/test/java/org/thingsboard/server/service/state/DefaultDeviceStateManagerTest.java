@@ -123,6 +123,10 @@ public class DefaultDeviceStateManagerTest {
                 Arguments.of(
                         (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS)
+                ),
+                Arguments.of(
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS)
                 )
         );
     }
@@ -172,6 +176,11 @@ public class DefaultDeviceStateManagerTest {
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> doThrow(RUNTIME_EXCEPTION).when(deviceStateServiceMock).onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS),
                         (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
                         (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceInactivity(TENANT_ID, DEVICE_ID, EVENT_TS)
+                ),
+                Arguments.of(
+                        (Consumer<DeviceStateService>) deviceStateServiceMock -> doThrow(RUNTIME_EXCEPTION).when(deviceStateServiceMock).onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS),
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (Consumer<DeviceStateService>) deviceStateServiceMock -> then(deviceStateServiceMock).should().onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS)
                 )
         );
     }
@@ -262,6 +271,22 @@ public class DefaultDeviceStateManagerTest {
                                     .build();
                             var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
                                     .setDeviceInactivityMsg(deviceInactivityMsg)
+                                    .build();
+                            then(clusterServiceMock).should().pushMsgToCore(eq(EXTERNAL_TPI), any(UUID.class), eq(toCoreMsg), queueCallbackCaptor.capture());
+                        }
+                ),
+                Arguments.of(
+                        (BiConsumer<DefaultDeviceStateManager, TbCallback>) (deviceStateManager, tbCallbackMock) -> deviceStateManager.onDeviceInactivityTimeoutUpdate(TENANT_ID, DEVICE_ID, EVENT_TS, tbCallbackMock),
+                        (BiConsumer<TbClusterService, ArgumentCaptor<TbQueueCallback>>) (clusterServiceMock, queueCallbackCaptor) -> {
+                            var deviceInactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                                    .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
+                                    .setTenantIdLSB(TENANT_ID.getId().getLeastSignificantBits())
+                                    .setDeviceIdMSB(DEVICE_ID.getId().getMostSignificantBits())
+                                    .setDeviceIdLSB(DEVICE_ID.getId().getLeastSignificantBits())
+                                    .setInactivityTimeout(EVENT_TS)
+                                    .build();
+                            var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
+                                    .setDeviceInactivityTimeoutUpdateMsg(deviceInactivityTimeoutUpdateMsg)
                                     .build();
                             then(clusterServiceMock).should().pushMsgToCore(eq(EXTERNAL_TPI), any(UUID.class), eq(toCoreMsg), queueCallbackCaptor.capture());
                         }

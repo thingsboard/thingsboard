@@ -153,7 +153,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             saveFuture = Futures.immediateFuture(0);
         }
 
-        if (entityId.getEntityType() == EntityType.DEVICE && request.getStrategy().saveLatest()) {
+        if (entityId.getEntityType() == EntityType.DEVICE && request.getStrategy().saveLatest() /* Device State Service reads from the latest values when initializing */) {
             findNewInactivityTimeout(request.getEntries()).ifPresent(newInactivityTimeout ->
                     addMainCallback(saveFuture, __ -> deviceStateManager.onDeviceInactivityTimeoutUpdate(
                             tenantId, new DeviceId(entityId.getId()), newInactivityTimeout, TbCallback.EMPTY)
