@@ -87,8 +87,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 
     private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer;
 
-    private ListeningExecutorService calculatedFieldsExecutor;
-
     public DefaultTbCalculatedFieldConsumerService(TbRuleEngineQueueFactory tbQueueFactory,
                                                    ActorSystemContext actorContext,
                                                    TbDeviceProfileCache deviceProfileCache,
@@ -109,7 +107,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     @PostConstruct
     public void init() {
         super.init("tb-cf");
-        this.calculatedFieldsExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(poolSize, "tb-cf-executor")); // TODO: multiple threads.
 
         this.eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
                 .queueKey(QueueKey.CF)
@@ -127,9 +124,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     @PreDestroy
     public void destroy() {
         super.destroy();
-        if (calculatedFieldsExecutor != null) {
-            calculatedFieldsExecutor.shutdownNow();
-        }
     }
 
     @Override
@@ -197,10 +191,9 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
                 packSubmitFuture.cancel(true);
                 log.info("Timeout to process message: {}", pendingMsgHolder.getMsg());
             }
-//            if (log.isDebugEnabled()) {
-//                ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
-//            }
-            ctx.getAckMap().forEach((id, msg) -> log.warn("[{}] Timeout to process message: {}", id, msg.getValue())); // TODO: replace with commented above after testing
+            if (log.isDebugEnabled()) {
+                ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
+            }
             ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
         }
         consumer.commit();

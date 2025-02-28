@@ -79,9 +79,8 @@ public class TsRollingArgumentEntryTest {
     void testUpdateEntryWhenValueIsNotNumber() {
         SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 10, new StringDataEntry("key", "string"), 123L);
 
-        assertThatThrownBy(() -> entry.updateEntry(newEntry))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Time series rolling arguments supports only numeric values.");
+        assertThat(entry.updateEntry(newEntry)).isTrue();
+        assertThat(entry.getTsRecords().get(ts - 10)).isNaN();
     }
 
     @Test

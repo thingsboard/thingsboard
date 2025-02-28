@@ -56,11 +56,6 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     }
 
     @Override
-    public ListenableFuture<List<CalculatedFieldLink>> findCalculatedFieldLinksByCalculatedFieldIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        return service.submit(() -> findCalculatedFieldLinksByCalculatedFieldId(tenantId, calculatedFieldId));
-    }
-
-    @Override
     public List<CalculatedFieldLink> findAll() {
         return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAll());
     }

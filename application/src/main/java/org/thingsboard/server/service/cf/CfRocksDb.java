@@ -19,10 +19,12 @@ import jakarta.annotation.PreDestroy;
 import org.rocksdb.Options;
 import org.rocksdb.WriteOptions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.utils.TbRocksDb;
 
 @Component
+@ConditionalOnExpression("'${queue.type:null}'=='in-memory'")
 public class CfRocksDb extends TbRocksDb {
 
     public CfRocksDb(@Value("${queue.calculated_fields.rocks_db_path:${user.home}/.rocksdb/cf_states}") String path) throws Exception {

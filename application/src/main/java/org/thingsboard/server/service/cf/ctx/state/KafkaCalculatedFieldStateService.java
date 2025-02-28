@@ -44,15 +44,12 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToString;
-import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToUuid;
-import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.stringToBytes;
-import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.uuidToBytes;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnExpression("'${queue.type:null}'=='kafka'")
+@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-rule-engine') && '${queue.type:null}'=='kafka'")
 public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldStateService {
 
     private final TbRuleEngineQueueFactory queueFactory;

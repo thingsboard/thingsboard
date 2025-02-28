@@ -39,12 +39,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.common.util.SystemUtil.getCpuCount;
-import static org.thingsboard.common.util.SystemUtil.getCpuUsage;
-import static org.thingsboard.common.util.SystemUtil.getDiscSpaceUsage;
-import static org.thingsboard.common.util.SystemUtil.getMemoryUsage;
-import static org.thingsboard.common.util.SystemUtil.getTotalDiscSpace;
-import static org.thingsboard.common.util.SystemUtil.getTotalMemory;
+import static org.thingsboard.common.util.SystemUtil.*;
 
 
 @Component

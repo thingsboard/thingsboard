@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsDoubleValProto;
@@ -41,6 +42,13 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 public class CalculatedFieldUtils {
+
+    public static CalculatedFieldIdProto toProto(CalculatedFieldId cfId) {
+        return CalculatedFieldIdProto.newBuilder()
+                .setCalculatedFieldIdMSB(cfId.getId().getMostSignificantBits())
+                .setCalculatedFieldIdLSB(cfId.getId().getLeastSignificantBits())
+                .build();
+    }
 
     public static CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {
         return CalculatedFieldEntityCtxIdProto.newBuilder()

@@ -169,7 +169,7 @@ public class CalculatedFieldCtx {
         return map != null && matchesTimeSeries(map, values);
     }
 
-    private static boolean matchesAttributes(Map<ReferencedEntityKey, String> argMap, List<AttributeKvEntry> values, AttributeScope scope) {
+    private boolean matchesAttributes(Map<ReferencedEntityKey, String> argMap, List<AttributeKvEntry> values, AttributeScope scope) {
         for (AttributeKvEntry attrKv : values) {
             ReferencedEntityKey attrKey = new ReferencedEntityKey(attrKv.getKey(), ArgumentType.ATTRIBUTE, scope);
             if (argMap.containsKey(attrKey)) {
@@ -193,18 +193,64 @@ public class CalculatedFieldCtx {
         return false;
     }
 
+    public boolean matchesKeys(List<String> keys, AttributeScope scope) {
+        return matchesAttributesKeys(mainEntityArguments, keys, scope);
+    }
+
+    public boolean matchesKeys(List<String> keys) {
+        return matchesTimeSeriesKeys(mainEntityArguments, keys);
+    }
+
+    private boolean matchesAttributesKeys(Map<ReferencedEntityKey, String> argMap, List<String> keys, AttributeScope scope) {
+        for (String key : keys) {
+            ReferencedEntityKey attrKey = new ReferencedEntityKey(key, ArgumentType.ATTRIBUTE, scope);
+            if (argMap.containsKey(attrKey)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean matchesTimeSeriesKeys(Map<ReferencedEntityKey, String> argMap, List<String> keys) {
+        for (String key : keys) {
+            ReferencedEntityKey latestKey = new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null);
+            if (argMap.containsKey(latestKey)) {
+                return true;
+            }
+            ReferencedEntityKey rollingKey = new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null);
+            if (argMap.containsKey(rollingKey)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean linkMatchesAttrKeys(EntityId entityId, List<String> keys, AttributeScope scope) {
+        var map = linkedEntityArguments.get(entityId);
+        return map != null && matchesAttributesKeys(map, keys, scope);
+    }
+
+    public boolean linkMatchesTsKeys(EntityId entityId, List<String> keys) {
+        var map = linkedEntityArguments.get(entityId);
+        return map != null && matchesTimeSeriesKeys(map, keys);
+    }
+
     public boolean linkMatches(EntityId entityId, CalculatedFieldTelemetryMsgProto proto) {
         if (!proto.getTsDataList().isEmpty()) {
             List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
                     .map(ProtoUtils::fromProto)
                     .toList();
             return linkMatches(entityId, updatedTelemetry);
-        } else {
+        } else if (!proto.getAttrDataList().isEmpty()) {
             AttributeScope scope = AttributeScope.valueOf(proto.getScope().name());
             List<AttributeKvEntry> updatedTelemetry = proto.getAttrDataList().stream()
                     .map(ProtoUtils::fromProto)
                     .toList();
             return linkMatches(entityId, updatedTelemetry, scope);
+        } else if (!proto.getRemovedTsKeysList().isEmpty()) {
+            return linkMatchesTsKeys(entityId, proto.getRemovedTsKeysList());
+        } else {
+            return linkMatchesAttrKeys(entityId, proto.getRemovedAttrKeysList(), AttributeScope.valueOf(proto.getScope().name()));
         }
     }
 

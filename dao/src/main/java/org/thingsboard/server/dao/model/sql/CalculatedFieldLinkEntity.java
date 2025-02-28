@@ -22,22 +22,17 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
-import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_LINK_CALCULATED_FIELD_ID;
-import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_LINK_CONFIGURATION;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_LINK_ENTITY_ID;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_LINK_ENTITY_TYPE;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_LINK_TABLE_NAME;
@@ -61,22 +56,8 @@ public class CalculatedFieldLinkEntity extends BaseSqlEntity<CalculatedFieldLink
     @Column(name = CALCULATED_FIELD_LINK_CALCULATED_FIELD_ID)
     private UUID calculatedFieldId;
 
-    @Convert(converter = JsonConverter.class)
-    @Column(name = CALCULATED_FIELD_LINK_CONFIGURATION)
-    private JsonNode configuration;
-
     public CalculatedFieldLinkEntity() {
         super();
-    }
-
-    public CalculatedFieldLinkEntity(CalculatedFieldLink calculatedFieldLink) {
-        this.setUuid(calculatedFieldLink.getUuidId());
-        this.createdTime = calculatedFieldLink.getCreatedTime();
-        this.tenantId = calculatedFieldLink.getTenantId().getId();
-        this.entityType = calculatedFieldLink.getEntityId().getEntityType().name();
-        this.entityId = calculatedFieldLink.getEntityId().getId();
-        this.calculatedFieldId = calculatedFieldLink.getCalculatedFieldId().getId();
-        this.configuration = JacksonUtil.valueToTree(calculatedFieldLink.getConfiguration());
     }
 
     @Override
@@ -86,7 +67,6 @@ public class CalculatedFieldLinkEntity extends BaseSqlEntity<CalculatedFieldLink
         calculatedFieldLink.setTenantId(TenantId.fromUUID(tenantId));
         calculatedFieldLink.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         calculatedFieldLink.setCalculatedFieldId(new CalculatedFieldId(calculatedFieldId));
-        calculatedFieldLink.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldLinkConfiguration.class));
         return calculatedFieldLink;
     }
 

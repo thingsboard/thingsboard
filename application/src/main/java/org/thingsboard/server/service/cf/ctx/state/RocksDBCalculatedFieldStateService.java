@@ -37,7 +37,7 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
 
     private final CfRocksDb cfRocksDb;
 
-    private Set<TopicPartitionInfo> partitions;
+    private boolean initialized;
 
     @Override
     protected void doPersist(CalculatedFieldEntityCtxId stateId, CalculatedFieldStateProto stateMsgProto, TbCallback callback) {
@@ -53,7 +53,7 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
 
     @Override
     public void restore(Set<TopicPartitionInfo> partitions) {
-        if (this.partitions == null) {
+        if (!this.initialized) {
             cfRocksDb.forEach((key, value) -> {
                 try {
                     processRestoredState(CalculatedFieldStateProto.parseFrom(value));
@@ -61,10 +61,9 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
                     log.error("[{}] Failed to process restored state", key, e);
                 }
             });
+            this.initialized = true;
         }
-
         eventConsumer.update(partitions);
-        this.partitions = partitions;
     }
 
     @Override

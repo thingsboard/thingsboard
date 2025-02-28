@@ -196,12 +196,12 @@ public class DefaultTbClusterService implements TbClusterService {
         UUID msgId = UUID.randomUUID();
         TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> toCfProducer = producerProvider.getCalculatedFieldsNotificationsMsgProducer();
         Set<String> tbReServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
+        MultipleTbQueueCallbackWrapper callbackWrapper = new MultipleTbQueueCallbackWrapper(tbReServices.size(), callback);
         for (String serviceId : tbReServices) {
             TopicPartitionInfo tpi = topicService.getCalculatedFieldNotificationsTopic(serviceId);
-            toCfProducer.send(tpi, new TbProtoQueueMsg<>(msgId, toCfMsg), null);
+            toCfProducer.send(tpi, new TbProtoQueueMsg<>(msgId, toCfMsg), callbackWrapper);
             toRuleEngineNfs.incrementAndGet();
         }
-        callback.onSuccess(null); // TODO: refactor to be fair, similar to multi-value callback;
     }
 
     @Override
@@ -697,7 +697,6 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onAssetUpdated(Asset entity, Asset old) {
         var created = old == null;
-        broadcastEntityChangeToTransport(entity.getTenantId(), entity.getId(), entity, null);
         if (old != null) {
             boolean assetTypeChanged = !entity.getAssetProfileId().equals(old.getAssetProfileId());
             if (assetTypeChanged) {

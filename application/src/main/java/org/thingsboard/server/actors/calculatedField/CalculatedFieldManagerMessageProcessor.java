@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
@@ -39,7 +38,6 @@ import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
@@ -53,10 +51,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
 
 
 /**
@@ -66,8 +65,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class CalculatedFieldManagerMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private final Map<CalculatedFieldId, CalculatedFieldCtx> calculatedFields = new HashMap<>();
-    private final Map<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFields = new ConcurrentHashMap<>();
-    private final ConcurrentMap<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new ConcurrentHashMap<>();
+    private final Map<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFields = new HashMap<>();
+    private final Map<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new HashMap<>();
 
     private final CalculatedFieldProcessingService cfExecService;
     private final CalculatedFieldStateService cfStateService;
@@ -106,7 +105,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         calculatedFields.put(cf.getId(), cfCtx);
         // We use copy on write lists to safely pass the reference to another actor for the iteration.
         // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
-        entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new ArrayList<>()).add(cfCtx);
+        entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cfCtx);
         msg.getCallback().onSuccess();
     }
 
@@ -115,7 +114,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         var link = msg.getLink();
         // We use copy on write lists to safely pass the reference to another actor for the iteration.
         // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
-        entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new ArrayList<>()).add(link);
+        entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(link);
         msg.getCallback().onSuccess();
     }
 
@@ -263,7 +262,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 }
                 calculatedFields.put(newCf.getId(), newCfCtx);
                 List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
-                List<CalculatedFieldCtx> newCfList = new ArrayList<>(oldCfList.size());
+                List<CalculatedFieldCtx> newCfList = new CopyOnWriteArrayList<>();
                 boolean found = false;
                 for (CalculatedFieldCtx oldCtx : oldCfList) {
                     if (oldCtx.getCfId().equals(newCf.getId())) {
@@ -300,6 +299,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             log.warn("[{}] CF was already deleted [{}]", tenantId, cfId);
             callback.onSuccess();
         } else {
+            entityIdCalculatedFields.get(cfCtx.getEntityId()).remove(cfCtx);
             deleteLinks(cfCtx);
 
             EntityId entityId = cfCtx.getEntityId();
@@ -349,7 +349,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         var proto = msg.getProto();
         var linksList = proto.getLinksList();
         for (var linkProto : linksList) {
-            var link = toCalculatedFieldEntityCtxId(linkProto);
+            var link = fromProto(linkProto);
             var targetEntityId = link.entityId();
             var targetEntityType = targetEntityId.getEntityType();
             var cf = calculatedFields.get(link.cfId());
@@ -372,12 +372,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 getOrCreateActor(targetEntityId).tell(newMsg);
             }
         }
-    }
-
-    private CalculatedFieldEntityCtxId toCalculatedFieldEntityCtxId(CalculatedFieldEntityCtxIdProto ctxIdProto) {
-        EntityId entityId = EntityIdFactory.getByTypeAndUuid(ctxIdProto.getEntityType(), new UUID(ctxIdProto.getEntityIdMSB(), ctxIdProto.getEntityIdLSB()));
-        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(ctxIdProto.getCalculatedFieldIdMSB(), ctxIdProto.getCalculatedFieldIdLSB()));
-        return new CalculatedFieldEntityCtxId(tenantId, calculatedFieldId, entityId);
     }
 
     private List<CalculatedFieldEntityCtxId> filterCalculatedFieldLinks(CalculatedFieldTelemetryMsg msg) {
@@ -462,13 +456,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void addLinks(CalculatedField newCf) {
         var newLinks = newCf.getConfiguration().buildCalculatedFieldLinks(tenantId, newCf.getEntityId(), newCf.getId());
-        newLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new ArrayList<>()).add(link));
+        newLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(link));
     }
 
     private void deleteLinks(CalculatedFieldCtx cfCtx) {
         var oldCf = cfCtx.getCalculatedField();
         var oldLinks = oldCf.getConfiguration().buildCalculatedFieldLinks(tenantId, oldCf.getEntityId(), oldCf.getId());
-        oldLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new ArrayList<>()).remove(link));
+        oldLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).remove(link));
     }
 
     public void onPartitionChange(CalculatedFieldPartitionChangeMsg msg) {

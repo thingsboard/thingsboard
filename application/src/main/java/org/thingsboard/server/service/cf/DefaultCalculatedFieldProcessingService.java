@@ -21,11 +21,9 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -104,10 +102,6 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
 
     private ListeningExecutorService calculatedFieldCallbackExecutor;
 
-    @Value("${calculatedField.initFetchPackSize:50000}")
-    @Getter
-    private int initFetchPackSize;
-
     @PostConstruct
     public void init() {
         calculatedFieldCallbackExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
@@ -145,6 +139,28 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
                     )));
             return result;
         }, calculatedFieldCallbackExecutor);
+    }
+
+    @Override
+    public Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments) {
+        Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
+        for (var entry : arguments.entrySet()) {
+            var argEntityId = entry.getValue().getRefEntityId() != null ? entry.getValue().getRefEntityId() : entityId;
+            var argValueFuture = fetchKvEntry(tenantId, argEntityId, entry.getValue());
+            argFutures.put(entry.getKey(), argValueFuture);
+        }
+        return argFutures.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Entry::getKey, // Keep the key as is
+                        entry -> {
+                            try {
+                                // Resolve the future to get the value
+                                return entry.getValue().get();
+                            } catch (ExecutionException | InterruptedException e) {
+                                throw new RuntimeException("Error getting future result for key: " + entry.getKey(), e);
+                            }
+                        }
+                ));
     }
 
     @Override

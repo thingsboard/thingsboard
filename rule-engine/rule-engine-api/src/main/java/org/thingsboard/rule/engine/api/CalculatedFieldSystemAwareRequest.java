@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.telemetry;
+package org.thingsboard.rule.engine.api;
 
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
-public interface CalculatedFieldTelemetryUpdateRequest {
-
-    TenantId getTenantId();
-
-    EntityId getEntityId();
-
-    List<? extends KvEntry> getKvEntries();
+public interface CalculatedFieldSystemAwareRequest {
 
     List<CalculatedFieldId> getPreviousCalculatedFieldIds();
 
-    Map<String, KvEntry> getMappedTelemetry(CalculatedFieldCtx ctx, EntityId referencedEntityId);
+    UUID getTbMsgId();
+
+    TbMsgType getTbMsgType();
 
 }
