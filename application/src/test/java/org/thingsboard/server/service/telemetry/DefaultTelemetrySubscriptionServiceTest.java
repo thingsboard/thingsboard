@@ -29,11 +29,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -86,7 +88,7 @@ class DefaultTelemetrySubscriptionServiceTest {
 
     final long sampleTtl = 10_000L;
 
-    final List<TsKvEntry> sampleTelemetry = List.of(
+    final List<TsKvEntry> sampleTimeseries = List.of(
             new BasicTsKvEntry(100L, new DoubleDataEntry("temperature", 65.2)),
             new BasicTsKvEntry(100L, new DoubleDataEntry("humidity", 33.1))
     );
@@ -147,9 +149,9 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         lenient().when(partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId)).thenReturn(tpi);
 
-        lenient().when(tsService.save(tenantId, entityId, sampleTelemetry, sampleTtl)).thenReturn(immediateFuture(sampleTelemetry.size()));
-        lenient().when(tsService.saveWithoutLatest(tenantId, entityId, sampleTelemetry, sampleTtl)).thenReturn(immediateFuture(sampleTelemetry.size()));
-        lenient().when(tsService.saveLatest(tenantId, entityId, sampleTelemetry)).thenReturn(immediateFuture(listOfNNumbers(sampleTelemetry.size())));
+        lenient().when(tsService.save(tenantId, entityId, sampleTimeseries, sampleTtl)).thenReturn(immediateFuture(sampleTimeseries.size()));
+        lenient().when(tsService.saveWithoutLatest(tenantId, entityId, sampleTimeseries, sampleTtl)).thenReturn(immediateFuture(sampleTimeseries.size()));
+        lenient().when(tsService.saveLatest(tenantId, entityId, sampleTimeseries)).thenReturn(immediateFuture(listOfNNumbers(sampleTimeseries.size())));
 
         // mock no entity views
         lenient().when(tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId)).thenReturn(immediateFuture(Collections.emptyList()));
@@ -171,7 +173,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .tenantId(tenantId)
                 .customerId(customerId)
                 .entityId(entityId)
-                .entries(sampleTelemetry)
+                .entries(sampleTimeseries)
                 .ttl(sampleTtl)
                 .strategy(new TimeseriesSaveRequest.Strategy(true, false, false))
                 .callback(emptyCallback)
@@ -181,7 +183,7 @@ class DefaultTelemetrySubscriptionServiceTest {
         telemetryService.saveTimeseries(request);
 
         // THEN
-        then(apiUsageClient).should().report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, sampleTelemetry.size());
+        then(apiUsageClient).should().report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, sampleTimeseries.size());
     }
 
     @Test
@@ -191,7 +193,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .tenantId(tenantId)
                 .customerId(customerId)
                 .entityId(entityId)
-                .entries(sampleTelemetry)
+                .entries(sampleTimeseries)
                 .ttl(sampleTtl)
                 .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
                 .callback(emptyCallback)
@@ -214,7 +216,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .tenantId(tenantId)
                 .customerId(customerId)
                 .entityId(entityId)
-                .entries(sampleTelemetry)
+                .entries(sampleTimeseries)
                 .ttl(sampleTtl)
                 .strategy(TimeseriesSaveRequest.Strategy.SAVE_ALL)
                 .future(future)
@@ -240,7 +242,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .tenantId(tenantId)
                 .customerId(customerId)
                 .entityId(entityId)
-                .entries(sampleTelemetry)
+                .entries(sampleTimeseries)
                 .ttl(sampleTtl)
                 .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
                 .future(future)
@@ -260,12 +262,12 @@ class DefaultTelemetrySubscriptionServiceTest {
         entityView.setTenantId(tenantId);
         entityView.setCustomerId(customerId);
         entityView.setEntityId(entityId);
-        entityView.setKeys(new TelemetryEntityView(sampleTelemetry.stream().map(KvEntry::getKey).toList(), new AttributesEntityView()));
+        entityView.setKeys(new TelemetryEntityView(sampleTimeseries.stream().map(KvEntry::getKey).toList(), new AttributesEntityView()));
 
         // mock that there is one entity view
         given(tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId)).willReturn(immediateFuture(List.of(entityView)));
         // mock that save latest call for entity view is successful
-        given(tsService.saveLatest(tenantId, entityView.getId(), sampleTelemetry)).willReturn(immediateFuture(listOfNNumbers(sampleTelemetry.size())));
+        given(tsService.saveLatest(tenantId, entityView.getId(), sampleTimeseries)).willReturn(immediateFuture(listOfNNumbers(sampleTimeseries.size())));
         // mock TPI for entity view
         given(partitionService.resolve(ServiceType.TB_CORE, tenantId, entityView.getId())).willReturn(tpi);
 
@@ -273,7 +275,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .tenantId(tenantId)
                 .customerId(customerId)
                 .entityId(entityId)
-                .entries(sampleTelemetry)
+                .entries(sampleTimeseries)
                 .ttl(sampleTtl)
                 .strategy(new TimeseriesSaveRequest.Strategy(false, true, false))
                 .callback(emptyCallback)
@@ -284,12 +286,12 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         // THEN
         // should save latest to both the main entity and it's entity view
-        then(tsService).should().saveLatest(tenantId, entityId, sampleTelemetry);
-        then(tsService).should().saveLatest(tenantId, entityView.getId(), sampleTelemetry);
+        then(tsService).should().saveLatest(tenantId, entityId, sampleTimeseries);
+        then(tsService).should().saveLatest(tenantId, entityView.getId(), sampleTimeseries);
         then(tsService).shouldHaveNoMoreInteractions();
 
         // should send WS update only for entity view (WS update for the main entity is disabled in the save request)
-        then(subscriptionManagerService).should().onTimeSeriesUpdate(tenantId, entityView.getId(), sampleTelemetry, TbCallback.EMPTY);
+        then(subscriptionManagerService).should().onTimeSeriesUpdate(tenantId, entityView.getId(), sampleTimeseries, TbCallback.EMPTY);
         then(subscriptionManagerService).shouldHaveNoMoreInteractions();
     }
 
@@ -300,7 +302,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .tenantId(tenantId)
                 .customerId(customerId)
                 .entityId(entityId)
-                .entries(sampleTelemetry)
+                .entries(sampleTimeseries)
                 .ttl(sampleTtl)
                 .strategy(new TimeseriesSaveRequest.Strategy(true, false, false))
                 .callback(emptyCallback)
@@ -311,7 +313,7 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         // THEN
         // should save only time series for the main entity
-        then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTelemetry, sampleTtl);
+        then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTimeseries, sampleTtl);
         then(tsService).shouldHaveNoMoreInteractions();
 
         // should not send any WS updates
@@ -319,14 +321,14 @@ class DefaultTelemetrySubscriptionServiceTest {
     }
 
     @ParameterizedTest
-    @MethodSource("booleanCombinations")
-    void shouldCallCorrectApiBasedOnBooleanFlagsInTheSaveRequest(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {
+    @MethodSource("allCombinationsOfThreeBooleans")
+    void shouldCallCorrectSaveTimeseriesApiBasedOnBooleanFlagsInTheSaveRequest(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {
         // GIVEN
         var request = TimeseriesSaveRequest.builder()
                 .tenantId(tenantId)
                 .customerId(customerId)
                 .entityId(entityId)
-                .entries(sampleTelemetry)
+                .entries(sampleTimeseries)
                 .ttl(sampleTtl)
                 .strategy(new TimeseriesSaveRequest.Strategy(saveTimeseries, saveLatest, sendWsUpdate))
                 .callback(emptyCallback)
@@ -337,22 +339,22 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         // THEN
         if (saveTimeseries && saveLatest) {
-            then(tsService).should().save(tenantId, entityId, sampleTelemetry, sampleTtl);
+            then(tsService).should().save(tenantId, entityId, sampleTimeseries, sampleTtl);
         } else if (saveLatest) {
-            then(tsService).should().saveLatest(tenantId, entityId, sampleTelemetry);
+            then(tsService).should().saveLatest(tenantId, entityId, sampleTimeseries);
         } else if (saveTimeseries) {
-            then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTelemetry, sampleTtl);
+            then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTimeseries, sampleTtl);
         }
         then(tsService).shouldHaveNoMoreInteractions();
 
         if (sendWsUpdate) {
-            then(subscriptionManagerService).should().onTimeSeriesUpdate(tenantId, entityId, sampleTelemetry, TbCallback.EMPTY);
+            then(subscriptionManagerService).should().onTimeSeriesUpdate(tenantId, entityId, sampleTimeseries, TbCallback.EMPTY);
         } else {
             then(subscriptionManagerService).shouldHaveNoInteractions();
         }
     }
 
-    private static Stream<Arguments> booleanCombinations() {
+    private static Stream<Arguments> allCombinationsOfThreeBooleans() {
         return Stream.of(
                 Arguments.of(true, true, true),
                 Arguments.of(true, true, false),
@@ -365,7 +367,49 @@ class DefaultTelemetrySubscriptionServiceTest {
         );
     }
 
-    // used to emulate sequence numbers returned by save latest API
+    @ParameterizedTest
+    @MethodSource("allCombinationsOfTwoBooleans")
+    void shouldCallCorrectSaveAttributesApiBasedOnBooleanFlagsInTheSaveRequest(boolean saveAttributes, boolean sendWsUpdate) {
+        // GIVEN
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entry(new DoubleDataEntry("temperature", 65.2))
+                .notifyDevice(false)
+                .strategy(new AttributesSaveRequest.Strategy(saveAttributes, sendWsUpdate))
+                .callback(emptyCallback)
+                .build();
+
+        lenient().when(attrService.save(tenantId, entityId, request.getScope(), request.getEntries())).thenReturn(immediateFuture(listOfNNumbers(request.getEntries().size())));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        if (saveAttributes) {
+            then(attrService).should().save(tenantId, entityId, request.getScope(), request.getEntries());
+        } else {
+            then(attrService).shouldHaveNoInteractions();
+        }
+
+        if (sendWsUpdate) {
+            then(subscriptionManagerService).should().onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries(), request.isNotifyDevice(), TbCallback.EMPTY);
+        } else {
+            then(subscriptionManagerService).shouldHaveNoInteractions();
+        }
+    }
+
+    static Stream<Arguments> allCombinationsOfTwoBooleans() {
+        return Stream.of(
+                Arguments.of(true, true),
+                Arguments.of(true, false),
+                Arguments.of(false, true),
+                Arguments.of(false, false)
+        );
+    }
+
+    // used to emulate sequence numbers returned by save APIs
     private static List<Long> listOfNNumbers(int N) {
         return LongStream.range(0, N).boxed().toList();
     }

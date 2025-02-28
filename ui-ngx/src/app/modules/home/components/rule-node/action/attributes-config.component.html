@@ -16,6 +16,47 @@
 
 -->
 <section [formGroup]="attributesConfigForm" class="tb-form-panel no-border no-padding">
+  <div class="tb-form-panel stroked no-padding-bottom no-gap" formGroupName="processingSettings">
+    <div class="mb-4 flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'rule-node-config.save-attribute.processing-settings-hint' | translate}}" translate>
+        rule-node-config.save-attribute.processing-settings
+      </div>
+      <tb-toggle-select appearance="fill" selectMediaBreakpoint="xs"
+                        formControlName="isAdvanced">
+        <tb-toggle-option [value]=false>{{ 'rule-node-config.basic-mode' | translate}}</tb-toggle-option>
+        <tb-toggle-option [value]=true>{{ 'rule-node-config.advanced-mode' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    @if(!attributesConfigForm.get('processingSettings.isAdvanced').value) {
+      <mat-form-field>
+        <mat-label translate>rule-node-config.save-attribute.strategy</mat-label>
+        <mat-select formControlName="type">
+          @for (strategy of persistenceStrategies; track strategy) {
+            <mat-option [value]="strategy">{{ PersistenceTypeTranslationMap.get(strategy) | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if(attributesConfigForm.get('processingSettings.type').value === PersistenceType.DEDUPLICATE) {
+        <tb-time-unit-input
+          required
+          labelText="{{ 'rule-node-config.save-attribute.deduplication-interval' | translate }}"
+          requiredText="{{ 'rule-node-config.save-attribute.deduplication-interval-required' | translate }}"
+          minErrorText="{{ 'rule-node-config.save-attribute.deduplication-interval-min-max-range' | translate }}"
+          maxErrorText="{{ 'rule-node-config.save-attribute.deduplication-interval-min-max-range' | translate }}"
+          [maxTime]="maxDeduplicateTime"
+          [minTime]="1"
+          formControlName="deduplicationIntervalSecs">
+        </tb-time-unit-input>
+      }
+    } @else {
+      <tb-advanced-persistence-settings
+        class="mb-4"
+        formControlName="advanced"
+        attribute webSockets
+      ></tb-advanced-persistence-settings>
+    }
+  </div>
   <div class="tb-form-panel stroked">
     <tb-example-hint [hintText]="'rule-node-config.attributes-scope-hint'">
     </tb-example-hint>

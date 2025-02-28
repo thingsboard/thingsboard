@@ -19,12 +19,15 @@ import {
   FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  UntypedFormGroup,
   ValidationErrors,
   Validator
 } from '@angular/forms';
-import { Component, forwardRef } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AdvancedProcessingStrategy } from '@home/components/rule-node/action/timeseries-config.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { AttributeAdvancedProcessingStrategy } from '@home/components/rule-node/action/attributes-config.model';
 
 @Component({
   selector: 'tb-advanced-persistence-settings',
@@ -39,19 +42,48 @@ import { AdvancedProcessingStrategy } from '@home/components/rule-node/action/ti
     multi: true
   }]
 })
-export class AdvancedPersistenceSettingComponent implements ControlValueAccessor, Validator {
+export class AdvancedPersistenceSettingComponent implements OnInit, ControlValueAccessor, Validator {
 
-  persistenceForm = this.fb.group({
-    timeseries: [null],
-    latest: [null],
-    webSockets: [null]
-  });
+  @Input()
+  @coerceBoolean()
+  timeseries = false;
+
+  @Input()
+  @coerceBoolean()
+  attribute = false;
+
+  @Input()
+  @coerceBoolean()
+  latest = false;
+
+  @Input()
+  @coerceBoolean()
+  webSockets = false;
+
+  persistenceForm: UntypedFormGroup;
 
   private propagateChange: (value: any) => void = () => {};
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private destroyRef: DestroyRef) {
+  }
+
+  ngOnInit() {
+    this.persistenceForm = this.fb.group({});
+    if (this.timeseries) {
+      this.persistenceForm.addControl('timeseries', this.fb.control(null, []));
+    }
+    if (this.attribute) {
+      this.persistenceForm.addControl('attribute', this.fb.control(null, []));
+    }
+    if (this.attribute) {
+      this.persistenceForm.addControl('latest', this.fb.control(null, []));
+    }
+    if (this.attribute) {
+      this.persistenceForm.addControl('webSockets', this.fb.control(null, []));
+    }
     this.persistenceForm.valueChanges.pipe(
-      takeUntilDestroyed()
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(value => this.propagateChange(value));
   }
 
@@ -76,7 +108,7 @@ export class AdvancedPersistenceSettingComponent implements ControlValueAccessor
     };
   }
 
-  writeValue(value: AdvancedProcessingStrategy) {
+  writeValue(value: AdvancedProcessingStrategy | AttributeAdvancedProcessingStrategy) {
     this.persistenceForm.patchValue(value, {emitEvent: false});
   }
 }

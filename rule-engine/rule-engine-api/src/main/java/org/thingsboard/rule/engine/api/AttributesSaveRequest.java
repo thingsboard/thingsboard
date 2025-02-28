@@ -40,7 +40,16 @@ public class AttributesSaveRequest {
     private final AttributeScope scope;
     private final List<AttributeKvEntry> entries;
     private final boolean notifyDevice;
+    private final Strategy strategy;
     private final FutureCallback<Void> callback;
+
+    public record Strategy(boolean saveAttributes, boolean sendWsUpdate) {
+
+        public static final Strategy PROCESS_ALL = new Strategy(true, true);
+        public static final Strategy WS_ONLY = new Strategy(false, true);
+        public static final Strategy SKIP_ALL = new Strategy(false, false);
+
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -53,6 +62,7 @@ public class AttributesSaveRequest {
         private AttributeScope scope;
         private List<AttributeKvEntry> entries;
         private boolean notifyDevice = true;
+        private Strategy strategy = Strategy.PROCESS_ALL;
         private FutureCallback<Void> callback;
 
         Builder() {}
@@ -100,6 +110,11 @@ public class AttributesSaveRequest {
             return this;
         }
 
+        public Builder strategy(Strategy strategy) {
+            this.strategy = strategy;
+            return this;
+        }
+
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
@@ -120,7 +135,7 @@ public class AttributesSaveRequest {
         }
 
         public AttributesSaveRequest build() {
-            return new AttributesSaveRequest(tenantId, entityId, scope, entries, notifyDevice, callback);
+            return new AttributesSaveRequest(tenantId, entityId, scope, entries, notifyDevice, strategy, callback);
         }
 
     }
