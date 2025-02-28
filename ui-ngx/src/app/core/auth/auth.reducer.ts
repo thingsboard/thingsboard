@@ -31,6 +31,8 @@ const emptyUserAuthState: AuthPayload = {
   persistDeviceStateToTelemetry: false,
   mobileQrEnabled: false,
   maxResourceSize: 0,
+  maxArgumentsPerCF: 0,
+  maxDataPointsPerRollingArg: 0,
   maxDebugModeDurationMinutes: 0,
   userSettings: initialUserSettings
 };

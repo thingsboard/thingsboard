@@ -35,19 +35,22 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldScriptEngine;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
@@ -61,6 +64,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.controller.ControllerConstants.CF_TEXT_SEARCH_DESCRIPTION;
@@ -84,6 +88,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class CalculatedFieldController extends BaseController {
 
     private final TbCalculatedFieldService tbCalculatedFieldService;
+    private final EventService eventService;
     private final TbelInvokeService tbelInvokeService;
 
     public static final String CALCULATED_FIELD_ID = "calculatedFieldId";
@@ -176,12 +181,29 @@ public class CalculatedFieldController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/calculatedField/{calculatedFieldId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteCalculatedField(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedField) throws Exception {
-        checkParameter(CALCULATED_FIELD_ID, strCalculatedField);
-        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedField));
+    public void deleteCalculatedField(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws Exception {
+        checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
+        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
         CalculatedField calculatedField = checkCalculatedFieldId(calculatedFieldId, Operation.DELETE);
         checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
         tbCalculatedFieldService.delete(calculatedField, getCurrentUser());
+    }
+
+    @ApiOperation(value = "Get latest calculated field debug event (getLatestCalculatedFieldDebugEvent)",
+            notes = "Gets latest calculated field debug event for specified calculated field id. " +
+                    "Referencing non-existing calculated field id will cause an error. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/calculatedField/{calculatedFieldId}/debug", method = RequestMethod.GET)
+    @ResponseBody
+    public JsonNode getLatestCalculatedFieldDebugEvent(@Parameter @PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws ThingsboardException {
+        checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
+        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
+        CalculatedField calculatedField = checkCalculatedFieldId(calculatedFieldId, Operation.READ);
+        checkEntityId(calculatedField.getEntityId(), Operation.READ_CALCULATED_FIELD);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        return Optional.ofNullable(eventService.findLatestEvents(tenantId, calculatedFieldId, EventType.DEBUG_CALCULATED_FIELD, 1))
+                .flatMap(events -> events.stream().map(EventInfo::getBody).findFirst())
+                .orElse(null);
     }
 
     @ApiOperation(value = "Test Script expression",

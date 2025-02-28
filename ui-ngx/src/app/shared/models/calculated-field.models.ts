@@ -29,6 +29,7 @@ import { AliasFilterType } from '@shared/models/alias.models';
 import { Observable } from 'rxjs';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import {
+  AceHighlightRule,
   AceHighlightRules,
   dotOperatorHighlightRule,
   endGroupHighlightRule
@@ -268,12 +269,159 @@ export const CalculatedFieldAttributeValueArgumentAutocomplete = {
     }
   },
 };
+export const CalculatedFieldRollingValueArgumentFunctionsAutocomplete = {
+  max: {
+    meta: 'function',
+    description: 'Computes the maximum value in the list of rolling argument values. Returns NaN if any value is NaN and ignoreNaN is false.',
+    args: [
+      {
+        name: 'ignoreNaN',
+        description: 'Whether to ignore NaN values. Equals true by default.',
+        type: 'boolean',
+        optional: true,
+      }
+    ],
+    return: {
+      description: 'The maximum value, or NaN if applicable',
+      type: 'number'
+    }
+  },
+  min: {
+    meta: 'function',
+    description: 'Computes the minimum value in the list of rolling argument values. Returns NaN if any value is NaN and ignoreNaN is false.',
+    args: [
+      {
+        name: 'ignoreNaN',
+        description: 'Whether to ignore NaN values. Equals true by default.',
+        type: 'boolean',
+        optional: true,
+      }
+    ],
+    return: {
+      description: 'The minimum value, or NaN if applicable',
+      type: 'number'
+    }
+  },
+  mean: {
+    meta: 'function',
+    description: 'Computes the mean value of the rolling argument values list. Returns NaN if any value is NaN and ignoreNaN is false.',
+    args: [
+      {
+        name: 'ignoreNaN',
+        description: 'Whether to ignore NaN values. Equals true by default.',
+        type: 'boolean',
+        optional: true,
+      }
+    ],
+    return: {
+      description: 'The mean value, or NaN if applicable',
+      type: 'number'
+    }
+  },
+  std: {
+    meta: 'function',
+    description: 'Computes the standard deviation in the list of rolling argument values. Returns NaN if any value is NaN and ignoreNaN is false.',
+    args: [
+      {
+        name: 'ignoreNaN',
+        description: 'Whether to ignore NaN values. Equals true by default.',
+        type: 'boolean',
+        optional: true,
+      }
+    ],
+    return: {
+      description: 'The standard deviation, or NaN if applicable',
+      type: 'number'
+    }
+  },
+  median: {
+    meta: 'function',
+    description: 'Computes the median value of the rolling argument values list. Returns NaN if any value is NaN and ignoreNaN is false.',
+    args: [
+      {
+        name: 'ignoreNaN',
+        description: 'Whether to ignore NaN values. Equals true by default.',
+        type: 'boolean',
+        optional: true,
+      }
+    ],
+    return: {
+      description: 'The median value, or NaN if applicable',
+      type: 'number'
+    }
+  },
+  count: {
+    meta: 'function',
+    description: 'Counts values in the list of rolling argument values. Counts non-NaN values if ignoreNaN is true, otherwise - total size.',
+    args: [
+      {
+        name: 'ignoreNaN',
+        description: 'Whether to ignore NaN values. Equals true by default.',
+        type: 'boolean',
+        optional: true,
+      }
+    ],
+    return: {
+      description: 'The count of values',
+      type: 'number'
+    }
+  },
+  last: {
+    meta: 'function',
+    description: 'Returns the last non-NaN value in the list of rolling argument values if ignoreNaN is true, otherwise - the last value.',
+    args: [
+      {
+        name: 'ignoreNaN',
+        description: 'Whether to ignore NaN values. Equals true by default.',
+        type: 'boolean',
+        optional: true,
+      }
+    ],
+    return: {
+      description: 'The last value, or NaN if applicable',
+      type: 'number'
+    }
+  },
+  first: {
+    meta: 'function',
+    description: 'Returns the first non-NaN value in the list of rolling argument values if ignoreNaN is true, otherwise - the first value.',
+    args: [
+      {
+        name: 'ignoreNaN',
+        description: 'Whether to ignore NaN values. Equals true by default.',
+        type: 'boolean',
+        optional: true,
+      }
+    ],
+    return: {
+      description: 'The first value, or NaN if applicable',
+      type: 'number'
+    }
+  },
+  sum: {
+    meta: 'function',
+    description: 'Computes the sum of values in the list of rolling argument values. Returns NaN if any value is NaN and ignoreNaN is false.',
+    args: [
+      {
+        name: 'ignoreNaN',
+        description: 'Whether to ignore NaN values. Equals true by default.',
+        type: 'boolean',
+        optional: true,
+      }
+    ],
+    return: {
+      description: 'The sum of values, or NaN if applicable',
+      type: 'number'
+    }
+  }
+};
 
 export const CalculatedFieldRollingValueArgumentAutocomplete = {
   meta: 'object',
   type: '{ values: { ts: number; value: any; }[]; timeWindow: { startTs: number; endTs: number; limit: number } }; }',
   description: 'Calculated field rolling value argument.',
   children: {
+    ...CalculatedFieldRollingValueArgumentFunctionsAutocomplete,
     values: {
       meta: 'array',
       type: '{ ts: number; value: any; }[]',
@@ -355,6 +503,13 @@ const calculatedFieldSingleArgumentValueHighlightRules: AceHighlightRules = {
   ],
 }
 
+const calculatedFieldRollingArgumentValueFunctionsHighlightRules: Array<AceHighlightRule> =
+  ['max', 'min', 'mean', 'std', 'median', 'count', 'last', 'first', 'sum'].map(funcName => ({
+    token: 'tb.calculated-field-func',
+    regex: `\\b${funcName}\\b`,
+    next: 'no_regex'
+  }));
+
 const calculatedFieldRollingArgumentValueHighlightRules: AceHighlightRules = {
   calculatedFieldRollingArgumentValue: [
     dotOperatorHighlightRule,
@@ -368,6 +523,7 @@ const calculatedFieldRollingArgumentValueHighlightRules: AceHighlightRules = {
       regex: /timeWindow/,
       next: 'calculatedFieldRollingArgumentTimeWindow'
     },
+    ...calculatedFieldRollingArgumentValueFunctionsHighlightRules,
     endGroupHighlightRule
   ],
 }

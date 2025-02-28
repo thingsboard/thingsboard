@@ -1142,7 +1142,9 @@ public class ProtoUtils {
                 .setTbelExecState(apiUsageState.getTbelExecState().name())
                 .setEmailExecState(apiUsageState.getEmailExecState().name())
                 .setSmsExecState(apiUsageState.getSmsExecState().name())
-                .setAlarmExecState(apiUsageState.getAlarmExecState().name()).build();
+                .setAlarmExecState(apiUsageState.getAlarmExecState().name())
+                .setVersion(apiUsageState.getVersion())
+                .build();
     }
 
     public static ApiUsageState fromProto(TransportProtos.ApiUsageStateProto proto) {
@@ -1158,6 +1160,7 @@ public class ProtoUtils {
         apiUsageState.setEmailExecState(ApiUsageStateValue.valueOf(proto.getEmailExecState()));
         apiUsageState.setSmsExecState(ApiUsageStateValue.valueOf(proto.getSmsExecState()));
         apiUsageState.setAlarmExecState(ApiUsageStateValue.valueOf(proto.getAlarmExecState()));
+        apiUsageState.setVersion(proto.getVersion());
         return apiUsageState;
     }
 
