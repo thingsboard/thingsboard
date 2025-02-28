@@ -166,10 +166,19 @@
             formControlName="timeWindow"
           />
         </div>
-        <div class="tb-form-row limit-field-row">
-          <div class="fixed-title-width">{{ 'calculated-fields.limit' | translate }}</div>
-          <tb-datapoints-limit class="w-full flex-1" formControlName="limit"/>
-        </div>
+        @if (maxDataPointsPerRollingArg) {
+          <div class="tb-form-row limit-field-row">
+            <div class="fixed-title-width">{{ 'calculated-fields.limit' | translate }}</div>
+            <div class="limit-slider-container flex w-full flex-1 flex-row items-center justify-start">
+              <mat-slider class="flex-1" min="1" max="{{maxDataPointsPerRollingArg}}">
+                <input matSliderThumb formControlName="limit" [value]="argumentFormGroup.get('limit').value"/>
+              </mat-slider>
+              <mat-form-field class="limit-slider-value" subscriptSizing="dynamic" appearance="outline">
+                <input matInput formControlName="limit" type="number" step="1" [value]="argumentFormGroup.get('limit').value" min="1" max="{{maxDataPointsPerRollingArg}}"/>
+              </mat-form-field>
+            </div>
+          </div>
+        }
       }
     </div>
   </div>

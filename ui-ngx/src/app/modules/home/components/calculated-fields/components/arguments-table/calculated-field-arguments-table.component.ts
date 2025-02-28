@@ -55,6 +55,9 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
 import { EntityService } from '@core/http/entity.service';
 import { MatSort } from '@angular/material/sort';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 @Component({
   selector: 'tb-calculated-field-arguments-table',
@@ -93,6 +96,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   readonly ArgumentEntityType = ArgumentEntityType;
   readonly ArgumentType = ArgumentType;
   readonly CalculatedFieldType = CalculatedFieldType;
+  readonly maxArgumentsPerCF = getCurrentAuthState(this.store).maxArgumentsPerCF;
 
   private popoverComponent: TbPopoverComponent<CalculatedFieldArgumentPanelComponent>;
   private propagateChange: (argumentsObj: Record<string, CalculatedFieldArgument>) => void = () => {};
@@ -105,6 +109,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     private renderer: Renderer2,
     private entityService: EntityService,
     private destroyRef: DestroyRef,
+    private store: Store<AppState>
   ) {
     this.argumentsFormArray.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
       this.updateEntityNameMap(value);
