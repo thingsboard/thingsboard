@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.query;
+package org.thingsboard.server.edqs.data;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.edqs.fields.EntityFields;
 
-@AllArgsConstructor
-public class QuerySecurityContext {
+import java.util.UUID;
 
-    @Getter
-    private final TenantId tenantId;
-    @Getter
-    private final CustomerId customerId;
-    @Getter
+@ToString(callSuper = true)
+public class GenericData extends BaseEntityData<EntityFields> {
+
     private final EntityType entityType;
-    @Getter
-    private final boolean ignorePermissionCheck;
 
-    public QuerySecurityContext(TenantId tenantId, CustomerId customerId, EntityType entityType) {
-        this(tenantId, customerId, entityType, false);
+    public GenericData(EntityType entityType, UUID entityId) {
+        super(entityId);
+        this.entityType = entityType;
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return entityType;
     }
 }

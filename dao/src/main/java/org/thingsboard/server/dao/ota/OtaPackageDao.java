@@ -21,5 +21,7 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 
 public interface OtaPackageDao extends Dao<OtaPackage>, TenantEntityWithDataDao {
+
     Long sumDataSizeByTenantId(TenantId tenantId);
+
 }

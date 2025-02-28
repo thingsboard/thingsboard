@@ -17,5 +17,5 @@ package org.thingsboard.server.dao.sql.query;
 
 public interface QueryLogComponent {
 
-    void logQuery(QueryContext ctx, String query, long duration);
+    void logQuery(SqlQueryContext ctx, String query, long duration);
 }

@@ -159,7 +159,7 @@ class DefaultTelemetrySubscriptionServiceTest {
         }).when(calculatedFieldQueueService).pushRequestToQueue(any(TimeseriesSaveRequest.class), any(), any());
 
         // send partition change event so currentPartitions set is populated
-        telemetryService.onTbApplicationEvent(new PartitionChangeEvent(this, ServiceType.TB_CORE, Map.of(new QueueKey(ServiceType.TB_CORE), Set.of(tpi))));
+        telemetryService.onTbApplicationEvent(new PartitionChangeEvent(this, ServiceType.TB_CORE, Map.of(new QueueKey(ServiceType.TB_CORE), Set.of(tpi)), Collections.emptyMap()));
     }
 
     @AfterEach

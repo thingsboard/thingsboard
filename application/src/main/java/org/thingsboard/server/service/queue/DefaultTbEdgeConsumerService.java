@@ -85,7 +85,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     private final EdgeContextComponent edgeCtx;
     private final EdgeConsumerStats stats;
 
-    private MainQueueConsumerManager<TbProtoQueueMsg<ToEdgeMsg>, EdgeQueueConfig> mainConsumer;
+    private MainQueueConsumerManager<TbProtoQueueMsg<ToEdgeMsg>, QueueConfig> mainConsumer;
 
     public DefaultTbEdgeConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         StatsFactory statsFactory, EdgeContextComponent edgeCtx) {
@@ -100,9 +100,9 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     public void init() {
         super.init("tb-edge");
 
-        this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdgeMsg>, EdgeQueueConfig>builder()
+        this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdgeMsg>, QueueConfig>builder()
                 .queueKey(new QueueKey(ServiceType.TB_CORE).withQueueName(DataConstants.EDGE_QUEUE_NAME))
-                .config(EdgeQueueConfig.of(consumerPerPartition, pollInterval))
+                .config(QueueConfig.of(consumerPerPartition, pollInterval))
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator((config, partitionId) -> queueFactory.createEdgeMsgConsumer())
                 .consumerExecutor(consumersExecutor)
@@ -128,7 +128,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         mainConsumer.update(partitions);
     }
 
-    private void processMsgs(List<TbProtoQueueMsg<ToEdgeMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> consumer, EdgeQueueConfig edgeQueueConfig) throws InterruptedException {
+    private void processMsgs(List<TbProtoQueueMsg<ToEdgeMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> consumer, QueueConfig edgeQueueConfig) throws InterruptedException {
         List<IdMsgPair<ToEdgeMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
         ConcurrentMap<UUID, TbProtoQueueMsg<ToEdgeMsg>> pendingMap = orderedMsgList.stream().collect(
                 Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
@@ -283,12 +283,6 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         super.stopConsumers();
         mainConsumer.stop();
         mainConsumer.awaitStop();
-    }
-
-    @Data(staticConstructor = "of")
-    public static class EdgeQueueConfig implements QueueConfig {
-        private final boolean consumerPerPartition;
-        private final int pollInterval;
     }
 
 }

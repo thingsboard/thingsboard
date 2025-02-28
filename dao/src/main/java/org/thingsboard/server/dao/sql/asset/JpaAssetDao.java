@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.asset;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -25,6 +26,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
+import org.thingsboard.server.common.data.edqs.fields.AssetFields;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -288,6 +290,16 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
     public AssetId getExternalIdByInternal(AssetId internalId) {
         return Optional.ofNullable(assetRepository.getExternalIdById(internalId.getId()))
                 .map(AssetId::new).orElse(null);
+    }
+
+    @Override
+    public PageData<Asset> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<AssetFields> findNextBatch(UUID uuid, int batchSize) {
+        return assetRepository.findAllFields(uuid, Limit.of(batchSize));
     }
 
     @Override

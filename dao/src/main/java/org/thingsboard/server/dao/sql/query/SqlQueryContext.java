@@ -21,6 +21,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.permission.QueryContext;
 
 import java.sql.Types;
 import java.util.HashMap;
@@ -29,14 +30,14 @@ import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
-public class QueryContext implements SqlParameterSource {
+public class SqlQueryContext implements SqlParameterSource {
     private static final UUIDJdbcType UUID_TYPE = UUIDJdbcType.INSTANCE;
 
-    private final QuerySecurityContext securityCtx;
+    private final QueryContext securityCtx;
     private final StringBuilder query;
     private final Map<String, Parameter> params;
 
-    public QueryContext(QuerySecurityContext securityCtx) {
+    public SqlQueryContext(QueryContext securityCtx) {
         this.securityCtx = securityCtx;
         query = new StringBuilder();
         params = new HashMap<>();
@@ -48,7 +49,7 @@ public class QueryContext implements SqlParameterSource {
         if (oldParam != null && oldParam.value != null && !oldParam.value.equals(newParam.value)) {
             throw new RuntimeException("Parameter with name: " + name + " was already registered!");
         }
-        if(value == null){
+        if (value == null) {
             log.warn("[{}][{}][{}] Trying to set null value", getTenantId(), getCustomerId(), name);
         }
     }

@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -38,6 +40,7 @@ import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.query.EntityQueryService;
@@ -55,6 +58,8 @@ public class EntityQueryController extends BaseController {
 
     @Autowired
     private EntityQueryService entityQueryService;
+    @Autowired
+    private EdqsService edqsService;
 
     private static final int MAX_PAGE_SIZE = 100;
 
@@ -131,6 +136,12 @@ public class EntityQueryController extends BaseController {
             pageLink.setPageSize(MAX_PAGE_SIZE);
         }
         return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes, scope);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @PostMapping("/edqs/system/request")
+    public void processSystemEdqsRequest(@RequestBody ToCoreEdqsRequest request) {
+        edqsService.processSystemRequest(request);
     }
 
 }
