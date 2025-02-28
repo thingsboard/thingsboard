@@ -28,9 +28,7 @@ $panel-width: 520px;
       min-width: 120px;
     }
   }
-}
 
-:host ::ng-deep {
   .limit-field-row {
     @media screen and (max-width: $panel-width) {
       display: flex;
@@ -42,7 +40,9 @@ $panel-width: 520px;
       }
     }
   }
+}
 
+:host ::ng-deep {
   .time-interval-field {
     .advanced-input {
       flex-direction: column;
