@@ -772,6 +772,14 @@ message DeviceInactivityProto {
   int64 lastInactivityTime = 5;
 }
 
+message DeviceInactivityTimeoutUpdateProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 inactivityTimeout = 5;
+}
+
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
@@ -1515,6 +1523,7 @@ message ToCoreMsg {
   DeviceConnectProto deviceConnectMsg = 50;
   DeviceDisconnectProto deviceDisconnectMsg = 51;
   DeviceInactivityProto deviceInactivityMsg = 52;
+  DeviceInactivityTimeoutUpdateProto deviceInactivityTimeoutUpdateMsg = 53;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
