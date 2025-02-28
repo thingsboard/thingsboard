@@ -1069,7 +1069,8 @@
             "argument-name-duplicate": "Argument with such name already exists.",
             "argument-name-max-length": "Argument name should be less than 256 characters.",
             "argument-type-required": "Argument type is required.",
-            "max-args": "Maximum number of arguments reached."
+            "max-args": "Maximum number of arguments reached.",
+            "expression": "Default expression demonstrates how to transform a temperature from Fahrenheit to Celsius."
         }
     },
     "confirm-on-exit": {
