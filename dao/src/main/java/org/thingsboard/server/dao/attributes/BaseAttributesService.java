@@ -132,7 +132,9 @@ public class BaseAttributesService implements AttributesService {
             for (TbPair<String, Long> keyVersionPair : result) {
                 String key = keyVersionPair.getFirst();
                 Long version = keyVersionPair.getSecond();
-                edqsService.onDelete(tenantId, ObjectType.ATTRIBUTE_KV, new AttributeKv(entityId, scope, key, version));
+                if (version != null) {
+                    edqsService.onDelete(tenantId, ObjectType.ATTRIBUTE_KV, new AttributeKv(entityId, scope, key, version));
+                }
                 keys.add(key);
             }
             return keys;
