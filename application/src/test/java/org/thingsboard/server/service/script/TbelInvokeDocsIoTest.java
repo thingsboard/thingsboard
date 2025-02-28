@@ -2211,6 +2211,94 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         }).hasMessageContaining("Error: unmodifiable.put(\"temperature1\", 96): Map is unmodifiable");
     }
 
+    @Test
+    public void tbDateFunction_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = String.format("""
+                var d = new Date(2024, 1, 1, 10, 0, 0, 0);              // TZ => "UTC"
+                var dIsoY1 = d.toISOString();                           // return 2024-01-01T08:00:00Z
+                d.addYears(1);
+                var dIsoY2 = d.toISOString();                           // return 2025-01-01T08:00:00Z
+                d.addYears(-2);
+                var dIsoY3 = d.toISOString();                           // return 2023-01-01T08:00:00Z
+                d.addMonths(2);
+                var dIsoM1 = d.toISOString();                           // return 2023-03-01T08:00:00Z
+                d.addMonths(10);
+                var dIsoM2 = d.toISOString();                           // return 2024-01-01T08:00:00Z
+                d.addMonths(-13);
+                var dIsoM3 = d.toISOString();                           // return 2022-12-01T08:00:00Z
+                d.addWeeks(4);
+                var dIsoW1 = d.toISOString();                           // return 2022-12-29T08:00:00Z
+                d.addWeeks(-5);
+                var dIsoW2 = d.toISOString();                           // return 2022-11-24T08:00:00Z
+                d.addDays(6);
+                var dIsoD1 = d.toISOString();                           // return 2022-11-30T08:00:00Z
+                d.addDays(45);
+                var dIsoD2 = d.toISOString();                           // return 2023-01-14T08:00:00Z
+                d.addDays(-50);
+                var dIsoD3 = d.toISOString();                           // return 2022-11-25T08:00:00Z
+                d.addHours(23);
+                var dIsoH1 = d.toISOString();                           // return 2022-11-26T07:00:00Z
+                d.addHours(-47);
+                var dIsoH2 = d.toISOString();                           // return 2022-11-24T08:00:00Z
+                d.addMinutes(59);
+                var dIsoMin1 = d.toISOString();                         // return 2022-11-24T08:59:00Z
+                d.addMinutes(-60);
+                var dIsoMin2 = d.toISOString();                         // return 2022-11-24T07:59:00Z
+                d.addSeconds(59);
+                var dIsoS1 = d.toISOString();                           // return 2022-11-24T07:59:59Z
+                d.addSeconds(-60);
+                var dIsoS2 = d.toISOString();                           // return 2022-11-24T07:58:59Z
+                d.addNanos(999999);
+                var dIsoN1 = d.toISOString();                           // return 2022-11-24T07:58:59.000999999Z
+                d.addNanos(-1000000);
+                var dIsoN2 = d.toISOString();                           // return 2022-11-24T07:58:58.999999999Z
+                    return {
+                        "dIsoY1": dIsoY1,
+                        "dIsoY2": dIsoY2,
+                        "dIsoY3": dIsoY3,
+                        "dIsoM1": dIsoM1,
+                        "dIsoM2": dIsoM2,
+                        "dIsoM3": dIsoM3,
+                        "dIsoW1": dIsoW1,
+                        "dIsoW2": dIsoW2,
+                        "dIsoD1": dIsoD1,
+                        "dIsoD2": dIsoD2,
+                        "dIsoD3": dIsoD3,
+                        "dIsoH1": dIsoH1,
+                        "dIsoH2": dIsoH2,
+                        "dIsoMin1": dIsoMin1,
+                        "dIsoMin2": dIsoMin2,
+                        "dIsoS1": dIsoS1,
+                        "dIsoS2": dIsoS2,
+                        "dIsoN1": dIsoN1,
+                        "dIsoN2": dIsoN2
+                    }
+                """);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("dIsoY1", "2024-01-01T08:00:00Z");
+        expected.put("dIsoY2", "2025-01-01T08:00:00Z");
+        expected.put("dIsoY3", "2023-01-01T08:00:00Z");
+        expected.put("dIsoM1", "2023-03-01T08:00:00Z");
+        expected.put("dIsoM2", "2024-01-01T08:00:00Z");
+        expected.put("dIsoM3", "2022-12-01T08:00:00Z");
+        expected.put("dIsoW1", "2022-12-29T08:00:00Z");
+        expected.put("dIsoW2", "2022-11-24T08:00:00Z");
+        expected.put("dIsoD1", "2022-11-30T08:00:00Z");
+        expected.put("dIsoD2", "2023-01-14T08:00:00Z");
+        expected.put("dIsoD3", "2022-11-25T08:00:00Z");
+        expected.put("dIsoH1", "2022-11-26T07:00:00Z");
+        expected.put("dIsoH2", "2022-11-24T08:00:00Z");
+        expected.put("dIsoMin1", "2022-11-24T08:59:00Z");
+        expected.put("dIsoMin2", "2022-11-24T07:59:00Z");
+        expected.put("dIsoS1", "2022-11-24T07:59:59Z");
+        expected.put("dIsoS2", "2022-11-24T07:58:59Z");
+        expected.put("dIsoN1", "2022-11-24T07:58:59.000999999Z");
+        expected.put("dIsoN2", "2022-11-24T07:58:58.999999999Z");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
         deleteCount = deleteCount < 0 ? 0 : Math.min(deleteCount, (oldList.size() - start));
