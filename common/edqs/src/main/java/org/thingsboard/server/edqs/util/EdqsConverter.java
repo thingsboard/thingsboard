@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.edqs.util;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ObjectType;
@@ -217,16 +220,24 @@ public class EdqsConverter {
     @RequiredArgsConstructor
     private static class JsonConverter<T> implements Converter<T> {
 
+        private static final ObjectMapper mapper = JsonMapper.builder()
+                .visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+                .visibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE)
+                .visibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE)
+                .build();
+
         private final Class<T> type;
 
+        @SneakyThrows
         @Override
         public byte[] serialize(ObjectType objectType, T value) {
-            return JacksonUtil.writeValueAsBytes(value);
+            return mapper.writeValueAsBytes(value);
         }
 
+        @SneakyThrows
         @Override
         public T deserialize(ObjectType objectType, byte[] bytes) {
-            return JacksonUtil.fromBytes(bytes, this.type);
+            return mapper.readValue(bytes, this.type);
         }
 
     }

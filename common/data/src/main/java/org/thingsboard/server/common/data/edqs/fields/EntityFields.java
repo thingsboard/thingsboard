@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.edqs.fields;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -23,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public interface EntityFields {
 
     Logger log = LoggerFactory.getLogger(EntityFields.class);

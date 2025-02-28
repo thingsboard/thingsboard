@@ -54,6 +54,7 @@ public interface ApiUsageStateRepository extends JpaRepository<ApiUsageStateEnti
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.ApiUsageStateFields(a.id, a.createdTime, a.tenantId," +
             "a.entityId, a.entityType, a.transportState, a.dbStorageState, a.reExecState, a.jsExecState, a.tbelExecState, " +
-            "a.emailExecState, a.smsExecState, a.alarmExecState) FROM ApiUsageStateEntity a WHERE a.id > :id ORDER BY a.id")
+            "a.emailExecState, a.smsExecState, a.alarmExecState, a.version) FROM ApiUsageStateEntity a WHERE a.id > :id ORDER BY a.id")
     List<ApiUsageStateFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
 }

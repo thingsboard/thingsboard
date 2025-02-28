@@ -43,8 +43,9 @@ public class ApiUsageStateFields extends AbstractEntityFields {
 
     public ApiUsageStateFields(UUID id, long createdTime, UUID tenantId, UUID entityId, String entityType, ApiUsageStateValue transportState, ApiUsageStateValue dbStorageState,
                                ApiUsageStateValue reExecState, ApiUsageStateValue jsExecState, ApiUsageStateValue tbelExecState,
-                               ApiUsageStateValue emailExecState, ApiUsageStateValue smsExecState, ApiUsageStateValue alarmExecState) {
-        super(id, createdTime, tenantId);
+                               ApiUsageStateValue emailExecState, ApiUsageStateValue smsExecState, ApiUsageStateValue alarmExecState,
+                               Long version) {
+        super(id, createdTime, tenantId, null, null, version);
         this.entityId = (entityType != null && entityId != null) ? EntityIdFactory.getByTypeAndUuid(entityType, entityId) : null;
         this.transportState = transportState;
         this.dbStorageState = dbStorageState;
