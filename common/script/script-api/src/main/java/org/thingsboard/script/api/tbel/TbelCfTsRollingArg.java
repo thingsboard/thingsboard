@@ -267,11 +267,6 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
     }
 
     @Override
-    public void forEach(Consumer<? super TbelCfTsDoubleVal> action) {
-        values.forEach(action);
-    }
-
-    @Override
     public String getType() {
         return "TS_ROLLING";
     }

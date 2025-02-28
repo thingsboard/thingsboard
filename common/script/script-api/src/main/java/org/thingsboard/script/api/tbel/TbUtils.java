@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2025 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 
 import static java.lang.Character.MAX_RADIX;
@@ -367,6 +368,8 @@ public class TbUtils {
                 byte[].class, int.class)));
         parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
                 byte[].class, int.class, int.class)));
+        parserConfig.addImport("merge", new MethodStub(TbUtils.class.getMethod("mergeCfTsRollingArgs",
+                TbelCfTsRollingArg.class, TbelCfTsRollingArg.class)));
     }
 
     public static String btoa(String input) {
@@ -1506,5 +1509,45 @@ public class TbUtils {
         }
         return hex;
     }
+
+    public static TbelCfTsRollingData mergeCfTsRollingArgs(TbelCfTsRollingArg a, TbelCfTsRollingArg b) {
+        return mergeCfTsRollingArgs(Arrays.asList(a, b), null);
+    }
+
+    public static TbelCfTsRollingData mergeCfTsRollingArgs(List<TbelCfTsRollingArg> args, Map<String, Object> settings) {
+        TreeSet<Long> allTimestamps = new TreeSet<>();
+        long startTs = Long.MAX_VALUE;
+        long endTs = Long.MIN_VALUE;
+        for (TbelCfTsRollingArg arg : args) {
+            for (TbelCfTsDoubleVal val : arg.getValues()) {
+                allTimestamps.add(val.getTs());
+            }
+            startTs = Math.min(startTs, arg.getTimeWindow().getStartTs());
+            endTs = Math.max(endTs, arg.getTimeWindow().getEndTs());
+        }
+
+        List<TbelCfTsMultiDoubleVal> data = new ArrayList<>();
+
+        int[] lastIndex = new int[args.size()];
+        double[] result = new double[args.size()];
+        Arrays.fill(result, Double.NaN);
+
+        var tw = new TbTimeWindow(startTs, endTs, allTimestamps.size());
+
+        for (long ts : allTimestamps) {
+            for (int i = 0; i < args.size(); i++) {
+                var arg = args.get(i);
+                var values = arg.getValues();
+                while (lastIndex[i] < values.size() && values.get(lastIndex[i]).getTs() <= ts) {
+                    result[i] = values.get(lastIndex[i]).getValue();
+                    lastIndex[i]++;
+                }
+            }
+            data.add(new TbelCfTsMultiDoubleVal(ts, Arrays.copyOf(result, result.length)));
+        }
+
+        return new TbelCfTsRollingData(tw, data);
+    }
+
 }
 

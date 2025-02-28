@@ -15,24 +15,18 @@
  */
 package org.thingsboard.script.api.tbel;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class TbTimeWindow implements TbelCfObject {
+public class TbelCfTsMultiDoubleVal implements TbelCfObject {
 
-    public static final long OBJ_SIZE = 32L;
+    public static final long OBJ_SIZE = 32L; // Approximate calculation;
 
-    private long startTs;
-    private long endTs;
-    private int limit;
+    private final long ts;
+    private final double[] values;
 
     @Override
     public long memorySize() {
-        return OBJ_SIZE;
+        return OBJ_SIZE + values.length * 8L;
     }
-
 }
