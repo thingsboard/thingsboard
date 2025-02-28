@@ -15,23 +15,27 @@
  */
 package org.thingsboard.server.queue.discovery;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by ashvayka on 23.09.18.
  */
 @Slf4j
-public class ConsistentHashCircle<T> {
-    private final ConcurrentNavigableMap<Long, T> circle = new ConcurrentSkipListMap<>();
+@Getter
+public class ConsistentHashCircle<K extends Comparable<K>, V> {
+    private final ConcurrentNavigableMap<K, V> circle = new ConcurrentSkipListMap<>();
+    private final AtomicLong total = new AtomicLong();
 
-    public void put(long hash, T instance) {
+    public void put(K hash, V instance) {
         circle.put(hash, instance);
     }
 
-    public void remove(long hash) {
+    public void remove(K hash) {
         circle.remove(hash);
     }
 
@@ -39,19 +43,19 @@ public class ConsistentHashCircle<T> {
         return circle.isEmpty();
     }
 
-    public boolean containsKey(Long hash) {
+    public boolean containsKey(K hash) {
         return circle.containsKey(hash);
     }
 
-    public ConcurrentNavigableMap<Long, T> tailMap(Long hash) {
+    public ConcurrentNavigableMap<K, V> tailMap(K hash) {
         return circle.tailMap(hash);
     }
 
-    public Long firstKey() {
+    public K firstKey() {
         return circle.firstKey();
     }
 
-    public T get(Long hash) {
+    public V get(Long hash) {
         return circle.get(hash);
     }
 
