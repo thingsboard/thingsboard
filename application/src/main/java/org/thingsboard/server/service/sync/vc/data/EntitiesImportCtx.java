@@ -19,6 +19,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +56,7 @@ public class EntitiesImportCtx {
     private final Set<EntityId> notFoundIds = new HashSet<>();
 
     private final Set<EntityRelation> relations = new LinkedHashSet<>();
+    private final Map<CalculatedField, Boolean> calculatedFields = new LinkedHashMap<>();
 
     private boolean finalImportAttempt = false;
     private EntityImportSettings settings;
@@ -91,6 +94,10 @@ public class EntitiesImportCtx {
         return getSettings().isSaveCredentials();
     }
 
+    public boolean isSaveCalculatedFields() {
+        return getSettings().isSaveCalculatedFields();
+    }
+
     public EntityId getInternalId(EntityId externalId) {
         var result = externalToInternalIdMap.get(externalId);
         log.debug("[{}][{}] Local cache {} for id", externalId.getEntityType(), externalId.getId(), result != null ? "hit" : "miss");
@@ -120,6 +127,10 @@ public class EntitiesImportCtx {
         relations.addAll(values);
     }
 
+    public void addCalculatedFields(Map<CalculatedField, Boolean> calculatedFieldMap) {
+        calculatedFields.putAll(calculatedFieldMap);
+    }
+
     public void addReferenceCallback(EntityId externalId, ThrowingRunnable tr) {
         if (tr != null) {
             referenceCallbacks.put(externalId, tr);
@@ -139,6 +150,5 @@ public class EntitiesImportCtx {
     public boolean isNotFound(EntityId externalId) {
         return notFoundIds.contains(externalId);
     }
-
 
 }

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
@@ -23,17 +22,22 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.ie.DeviceProfileExportData;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
-public class DeviceProfileImportService extends BaseEntityImportService<DeviceProfileId, DeviceProfile, EntityExportData<DeviceProfile>> {
+public class DeviceProfileImportService extends BaseCalculatedFieldsImportService<DeviceProfileId, DeviceProfile, DeviceProfileExportData> {
 
     private final DeviceProfileService deviceProfileService;
+
+    public DeviceProfileImportService(CalculatedFieldService calculatedFieldService, DeviceProfileService deviceProfileService) {
+        super(calculatedFieldService);
+        this.deviceProfileService = deviceProfileService;
+    }
 
     @Override
     protected void setOwner(TenantId tenantId, DeviceProfile deviceProfile, IdProvider idProvider) {
@@ -41,7 +45,7 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     }
 
     @Override
-    protected DeviceProfile prepare(EntitiesImportCtx ctx, DeviceProfile deviceProfile, DeviceProfile old, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
+    protected DeviceProfile prepare(EntitiesImportCtx ctx, DeviceProfile deviceProfile, DeviceProfile old, DeviceProfileExportData exportData, IdProvider idProvider) {
         deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultEdgeRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultEdgeRuleChainId()));
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
@@ -51,8 +55,8 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     }
 
     @Override
-    protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
-        return deviceProfileService.saveDeviceProfile(deviceProfile);
+    protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, DeviceProfileExportData exportData, IdProvider idProvider) {
+        return saveOrUpdateEntity(ctx, deviceProfile, exportData, idProvider, deviceProfileService::saveDeviceProfile);
     }
 
     @Override

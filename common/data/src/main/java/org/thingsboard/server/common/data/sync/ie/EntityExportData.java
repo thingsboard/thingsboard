@@ -37,7 +37,10 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "entityType", include = As.EXISTING_PROPERTY, visible = true, defaultImpl = EntityExportData.class)
 @JsonSubTypes({
+        @Type(name = "DEVICE_PROFILE", value = DeviceProfileExportData.class),
+        @Type(name = "ASSET_PROFILE", value = AssetProfileExportData.class),
         @Type(name = "DEVICE", value = DeviceExportData.class),
+        @Type(name = "ASSET", value = AssetExportData.class),
         @Type(name = "RULE_CHAIN", value = RuleChainExportData.class),
         @Type(name = "WIDGET_TYPE", value = WidgetTypeExportData.class),
         @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundleExportData.class)
@@ -94,6 +97,11 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     @JsonIgnore
     public boolean hasRelations() {
         return relations != null;
+    }
+
+    @JsonIgnore
+    public boolean hasCalculatedFields() {
+        return false;
     }
 
 }

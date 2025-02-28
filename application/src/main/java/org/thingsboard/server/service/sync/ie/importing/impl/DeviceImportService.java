@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.DeviceExportData;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -29,11 +29,16 @@ import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
-public class DeviceImportService extends BaseEntityImportService<DeviceId, Device, DeviceExportData> {
+public class DeviceImportService extends BaseCalculatedFieldsImportService<DeviceId, Device, DeviceExportData> {
 
     private final DeviceService deviceService;
     private final DeviceCredentialsService credentialsService;
+
+    public DeviceImportService(CalculatedFieldService calculatedFieldService, DeviceService deviceService, DeviceCredentialsService credentialsService) {
+        super(calculatedFieldService);
+        this.deviceService = deviceService;
+        this.credentialsService = credentialsService;
+    }
 
     @Override
     protected void setOwner(TenantId tenantId, Device device, IdProvider idProvider) {
@@ -64,29 +69,42 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
 
     @Override
     protected Device saveOrUpdate(EntitiesImportCtx ctx, Device device, DeviceExportData exportData, IdProvider idProvider) {
+        Device savedDevice;
         if (exportData.getCredentials() != null && ctx.isSaveCredentials()) {
             exportData.getCredentials().setId(null);
             exportData.getCredentials().setDeviceId(null);
-            return deviceService.saveDeviceWithCredentials(device, exportData.getCredentials());
+            savedDevice = deviceService.saveDeviceWithCredentials(device, exportData.getCredentials());
         } else {
-            return deviceService.saveDevice(device);
+            savedDevice = deviceService.saveDevice(device);
         }
+        if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
+            saveCalculatedFields(ctx, savedDevice, exportData, idProvider);
+        }
+        return savedDevice;
     }
 
     @Override
     protected boolean updateRelatedEntitiesIfUnmodified(EntitiesImportCtx ctx, Device prepared, DeviceExportData exportData, IdProvider idProvider) {
         boolean updated = super.updateRelatedEntitiesIfUnmodified(ctx, prepared, exportData, idProvider);
-        var credentials = exportData.getCredentials();
-        if (credentials != null && ctx.isSaveCredentials()) {
-            var existing = credentialsService.findDeviceCredentialsByDeviceId(ctx.getTenantId(), prepared.getId());
-            credentials.setId(existing.getId());
-            credentials.setDeviceId(prepared.getId());
-            if (!existing.equals(credentials)) {
-                credentialsService.updateDeviceCredentials(ctx.getTenantId(), credentials);
-                updated = true;
-            }
-        }
+        updated |= updateCredentials(ctx, prepared, exportData);
         return updated;
+    }
+
+    private boolean updateCredentials(EntitiesImportCtx ctx, Device prepared, DeviceExportData exportData) {
+        var credentials = exportData.getCredentials();
+        if (credentials == null || !ctx.isSaveCredentials()) {
+            return false;
+        }
+
+        var existing = credentialsService.findDeviceCredentialsByDeviceId(ctx.getTenantId(), prepared.getId());
+        credentials.setId(existing.getId());
+        credentials.setDeviceId(prepared.getId());
+
+        if (!existing.equals(credentials)) {
+            credentialsService.updateDeviceCredentials(ctx.getTenantId(), credentials);
+            return true;
+        }
+        return false;
     }
 
     @Override

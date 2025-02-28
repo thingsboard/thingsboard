@@ -19,7 +19,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.ie.AssetExportData;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
@@ -27,12 +28,22 @@ import java.util.Set;
 
 @Service
 @TbCoreComponent
-public class AssetExportService extends BaseEntityExportService<AssetId, Asset, EntityExportData<Asset>> {
+public class AssetExportService extends BaseCalculatedFieldsExportService<AssetId, Asset, AssetExportData> {
+
+    protected AssetExportService(CalculatedFieldService calculatedFieldService) {
+        super(calculatedFieldService);
+    }
 
     @Override
-    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Asset asset, EntityExportData<Asset> exportData) {
+    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Asset asset, AssetExportData exportData) {
         asset.setCustomerId(getExternalIdOrElseInternal(ctx, asset.getCustomerId()));
         asset.setAssetProfileId(getExternalIdOrElseInternal(ctx, asset.getAssetProfileId()));
+        setCalculatedFields(ctx, asset, exportData);
+    }
+
+    @Override
+    protected AssetExportData newExportData() {
+        return new AssetExportData();
     }
 
     @Override

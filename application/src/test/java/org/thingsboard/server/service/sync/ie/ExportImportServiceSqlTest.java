@@ -80,6 +80,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.sync.ie.DeviceExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
@@ -207,11 +208,12 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         CalculatedField calculatedField = createCalculatedField(tenantId1, device.getId(), asset.getId());
 
         Map<EntityType, EntityExportData> entitiesExportData = Stream.of(customer.getId(), asset.getId(), device.getId(),
-                        ruleChain.getId(), dashboard.getId(), assetProfile.getId(), deviceProfile.getId(), calculatedField.getId())
+                        ruleChain.getId(), dashboard.getId(), assetProfile.getId(), deviceProfile.getId())
                 .map(entityId -> {
                     try {
                         return exportEntity(tenantAdmin1, entityId, EntityExportSettings.builder()
                                 .exportCredentials(false)
+                                .exportCalculatedFields(true)
                                 .build());
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -281,23 +283,28 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DEVICE));
         verify(tbClusterService, Mockito.never()).onDeviceUpdated(eq(importedDevice), eq(importedDevice));
 
+        // calculated field of imported device:
+        List<CalculatedField> calculatedFields = calculatedFieldService.findCalculatedFieldsByEntityId(tenantId2, importedDevice.getId());
+        assertThat(calculatedFields.size()).isOne();
+        var importedCalculatedField = calculatedFields.get(0);
+        assertThat(importedCalculatedField.getName()).isEqualTo(calculatedField.getName());
+        assertThat(importedCalculatedField.getExternalId()).isEqualTo(calculatedField.getId());
+
         EntityExportData<Device> updatedDeviceEntity = getAndClone(entitiesExportData, EntityType.DEVICE);
         updatedDeviceEntity.getEntity().setLabel("t" + updatedDeviceEntity.getEntity().getLabel());
         Device updatedDevice = importEntity(tenantAdmin2, updatedDeviceEntity).getSavedEntity();
         verify(tbClusterService).onDeviceUpdated(eq(updatedDevice), eq(importedDevice));
 
-        CalculatedField importedCalculatedField = (CalculatedField) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.CALCULATED_FIELD)).getSavedEntity();
-        verify(entityActionService).logEntityAction(any(), eq(importedCalculatedField.getId()), eq(importedCalculatedField),
-                any(), eq(ActionType.ADDED), isNull());
-        importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.CALCULATED_FIELD));
-        verify(entityActionService, Mockito.never()).logEntityAction(any(), eq(importedCalculatedField.getId()), eq(importedCalculatedField),
-                any(), eq(ActionType.UPDATED), isNull());
+        // update calculated field:
+        DeviceExportData deviceExportData = (DeviceExportData) getAndClone(entitiesExportData, EntityType.DEVICE);
+        deviceExportData.setCalculatedFields(deviceExportData.getCalculatedFields().stream().peek(field -> field.setName("t_" + field.getName())).toList());
+        importEntity(tenantAdmin2, deviceExportData).getSavedEntity();
 
-        EntityExportData<CalculatedField> updatedCalculatedFieldEntity = getAndClone(entitiesExportData, EntityType.CALCULATED_FIELD);
-        updatedCalculatedFieldEntity.getEntity().setName("t" + updatedCalculatedFieldEntity.getEntity().getName());
-        CalculatedField updatedCalculatedField = importEntity(tenantAdmin2, updatedCalculatedFieldEntity).getSavedEntity();
-        verify(entityActionService).logEntityAction(any(), eq(updatedCalculatedField.getId()), eq(updatedCalculatedField),
-                any(), eq(ActionType.UPDATED), isNull());
+        calculatedFields = calculatedFieldService.findCalculatedFieldsByEntityId(tenantId2, importedDevice.getId());
+        assertThat(calculatedFields.size()).isOne();
+        importedCalculatedField = calculatedFields.get(0);
+        assertThat(importedCalculatedField.getExternalId()).isEqualTo(calculatedField.getId());
+        assertThat(importedCalculatedField.getName()).startsWith("t_");
     }
 
     @Test
@@ -320,10 +327,11 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
 
         Map<EntityId, EntityId> ids = new HashMap<>();
         for (EntityId entityId : List.of(customer.getId(), ruleChain.getId(), dashboard.getId(), assetProfile.getId(), asset.getId(),
-                deviceProfile.getId(), device.getId(), entityView.getId(), ruleChain.getId(), dashboard.getId(), calculatedField.getId())) {
+                deviceProfile.getId(), device.getId(), entityView.getId(), ruleChain.getId(), dashboard.getId())) {
             EntityExportData exportData = exportEntity(getSecurityUser(tenantAdmin1), entityId);
             EntityImportResult importResult = importEntity(getSecurityUser(tenantAdmin2), exportData, EntityImportSettings.builder()
                     .saveCredentials(false)
+                    .saveCalculatedFields(true)
                     .build());
             ids.put(entityId, (EntityId) importResult.getSavedEntity().getId());
         }
@@ -353,18 +361,19 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         assertThat(exportedDeviceProfile.getDefaultRuleChainId()).isEqualTo(ruleChain.getId());
         assertThat(exportedDeviceProfile.getDefaultDashboardId()).isEqualTo(dashboard.getId());
 
-        Device exportedDevice = (Device) exportEntity(tenantAdmin2, (DeviceId) ids.get(device.getId())).getEntity();
+        EntityExportData<Device> entityExportData =  exportEntity(tenantAdmin2, (DeviceId) ids.get(device.getId()));
+        Device exportedDevice = entityExportData.getEntity();
         assertThat(exportedDevice.getCustomerId()).isEqualTo(customer.getId());
         assertThat(exportedDevice.getDeviceProfileId()).isEqualTo(deviceProfile.getId());
+
+        List<CalculatedField> calculatedFields = ((DeviceExportData) entityExportData).getCalculatedFields();
+        assertThat(calculatedFields.size()).isOne();
+        CalculatedField field = calculatedFields.get(0);
+        assertThat(field.getName()).isEqualTo(calculatedField.getName());
 
         EntityView exportedEntityView = (EntityView) exportEntity(tenantAdmin2, (EntityViewId) ids.get(entityView.getId())).getEntity();
         assertThat(exportedEntityView.getCustomerId()).isEqualTo(customer.getId());
         assertThat(exportedEntityView.getEntityId()).isEqualTo(device.getId());
-
-        CalculatedField exportedCalculatedField = (CalculatedField) exportEntity(tenantAdmin2, (CalculatedFieldId) ids.get(calculatedField.getId())).getEntity();
-        assertThat(exportedCalculatedField.getName()).isEqualTo(calculatedField.getName());
-        assertThat(exportedCalculatedField.getEntityId()).isEqualTo(device.getId());
-        assertThat(exportedCalculatedField.getConfiguration().getReferencedEntities()).isEqualTo(calculatedField.getConfiguration().getReferencedEntities());
 
         deviceProfile.setDefaultDashboardId(null);
         deviceProfileService.saveDeviceProfile(deviceProfile);
@@ -372,7 +381,6 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         importedDeviceProfile.setDefaultDashboardId(null);
         deviceProfileService.saveDeviceProfile(importedDeviceProfile);
     }
-
 
     protected Device createDevice(TenantId tenantId, CustomerId customerId, DeviceProfileId deviceProfileId, String name) {
         Device device = new Device();
@@ -618,6 +626,7 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
     protected <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(User user, I entityId) throws Exception {
         return exportEntity(user, entityId, EntityExportSettings.builder()
                 .exportCredentials(true)
+                .exportCalculatedFields(true)
                 .build());
     }
 
@@ -628,6 +637,7 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
     protected <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(User user, EntityExportData<E> exportData) throws Exception {
         return importEntity(user, exportData, EntityImportSettings.builder()
                 .saveCredentials(true)
+                .saveCalculatedFields(true)
                 .build());
     }
 

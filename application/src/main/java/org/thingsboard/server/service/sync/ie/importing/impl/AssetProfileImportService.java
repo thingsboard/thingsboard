@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -23,17 +22,22 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.ie.AssetProfileExportData;
 import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
-public class AssetProfileImportService extends BaseEntityImportService<AssetProfileId, AssetProfile, EntityExportData<AssetProfile>> {
+public class AssetProfileImportService extends BaseCalculatedFieldsImportService<AssetProfileId, AssetProfile, AssetProfileExportData> {
 
     private final AssetProfileService assetProfileService;
+
+    public AssetProfileImportService(CalculatedFieldService calculatedFieldService, AssetProfileService assetProfileService) {
+        super(calculatedFieldService);
+        this.assetProfileService = assetProfileService;
+    }
 
     @Override
     protected void setOwner(TenantId tenantId, AssetProfile assetProfile, IdProvider idProvider) {
@@ -41,7 +45,7 @@ public class AssetProfileImportService extends BaseEntityImportService<AssetProf
     }
 
     @Override
-    protected AssetProfile prepare(EntitiesImportCtx ctx, AssetProfile assetProfile, AssetProfile old, EntityExportData<AssetProfile> exportData, IdProvider idProvider) {
+    protected AssetProfile prepare(EntitiesImportCtx ctx, AssetProfile assetProfile, AssetProfile old, AssetProfileExportData exportData, IdProvider idProvider) {
         assetProfile.setDefaultRuleChainId(idProvider.getInternalId(assetProfile.getDefaultRuleChainId()));
         assetProfile.setDefaultDashboardId(idProvider.getInternalId(assetProfile.getDefaultDashboardId()));
         assetProfile.setDefaultEdgeRuleChainId(idProvider.getInternalId(assetProfile.getDefaultEdgeRuleChainId()));
@@ -49,8 +53,8 @@ public class AssetProfileImportService extends BaseEntityImportService<AssetProf
     }
 
     @Override
-    protected AssetProfile saveOrUpdate(EntitiesImportCtx ctx, AssetProfile assetProfile, EntityExportData<AssetProfile> exportData, IdProvider idProvider) {
-        return assetProfileService.saveAssetProfile(assetProfile);
+    protected AssetProfile saveOrUpdate(EntitiesImportCtx ctx, AssetProfile assetProfile, AssetProfileExportData exportData, IdProvider idProvider) {
+        return saveOrUpdateEntity(ctx, assetProfile, exportData, idProvider, assetProfileService::saveAssetProfile);
     }
 
     @Override

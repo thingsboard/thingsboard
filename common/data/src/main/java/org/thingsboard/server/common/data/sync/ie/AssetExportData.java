@@ -15,20 +15,14 @@
  */
 package org.thingsboard.server.common.data.sync.ie;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.thingsboard.server.common.data.asset.Asset;
 
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class EntityExportSettings {
-
-    private boolean exportRelations;
-    private boolean exportAttributes;
-    private boolean exportCredentials;
-    private boolean exportCalculatedFields;
+public class AssetExportData extends CalculatedFieldExportData<Asset> {
 
 }
