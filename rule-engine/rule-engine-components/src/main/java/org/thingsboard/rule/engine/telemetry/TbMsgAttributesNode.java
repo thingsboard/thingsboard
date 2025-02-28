@@ -124,6 +124,9 @@ public class TbMsgAttributesNode implements TbNode {
                 .scope(scope)
                 .entries(attributes)
                 .notifyDevice(config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)))
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .callback(callback)
                 .build());
     }

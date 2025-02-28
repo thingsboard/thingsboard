@@ -208,7 +208,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getEntries()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("ts").containsExactlyElementsOf(expectedList);
             assertThat(request.getTtl()).isEqualTo(extractTtlAsSeconds(tenantProfile));
-            assertThat(request.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.SAVE_ALL);
+            assertThat(request.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.PROCESS_ALL);
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
         verify(ctxMock).tellSuccess(msg);
@@ -223,7 +223,8 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
         var timeseriesStrategy = ProcessingStrategy.onEveryMessage();
         var latestStrategy = ProcessingStrategy.skip();
         var webSockets = ProcessingStrategy.onEveryMessage();
-        var processingSettings = new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(timeseriesStrategy, latestStrategy, webSockets);
+        var calculatedFields = ProcessingStrategy.onEveryMessage();
+        var processingSettings = new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(timeseriesStrategy, latestStrategy, webSockets, calculatedFields);
         config.setProcessingSettings(processingSettings);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -265,7 +266,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getEntries()).containsExactlyElementsOf(expectedList);
             assertThat(request.getTtl()).isEqualTo(config.getDefaultTTL());
-            assertThat(request.getStrategy()).isEqualTo(new TimeseriesSaveRequest.Strategy(true, false, true));
+            assertThat(request.getStrategy()).isEqualTo(new TimeseriesSaveRequest.Strategy(true, false, true, true));
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
         verify(ctxMock).tellSuccess(msg);
@@ -304,7 +305,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
             assertThat(request.getCustomerId()).isNull();
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getTtl()).isEqualTo(expectedTtl);
-            assertThat(request.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.SAVE_ALL);
+            assertThat(request.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.PROCESS_ALL);
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
     }
@@ -353,7 +354,10 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .strategy(TimeseriesSaveRequest.Strategy.SAVE_ALL)
+                .strategy(TimeseriesSaveRequest.Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -388,7 +392,10 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .strategy(TimeseriesSaveRequest.Strategy.SAVE_ALL)
+                .strategy(TimeseriesSaveRequest.Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -424,6 +431,9 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
                 .strategy(TimeseriesSaveRequest.Strategy.WS_ONLY)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -441,6 +451,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     public void givenAdvancedProcessingSettingsWithOnEveryMessageStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenPersistSameMessageTwoTimes() throws TbNodeException {
         // GIVEN
         config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(
+                ProcessingStrategy.onEveryMessage(),
                 ProcessingStrategy.onEveryMessage(),
                 ProcessingStrategy.onEveryMessage(),
                 ProcessingStrategy.onEveryMessage()
@@ -462,7 +473,11 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .strategy(TimeseriesSaveRequest.Strategy.SAVE_ALL)
+                .strategy(TimeseriesSaveRequest.Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
+                .callback(new TelemetryNodeCallback(ctxMock, msg))
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -482,7 +497,8 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(
                 ProcessingStrategy.deduplicate(1),
                 ProcessingStrategy.deduplicate(2),
-                ProcessingStrategy.deduplicate(3)
+                ProcessingStrategy.deduplicate(3),
+                ProcessingStrategy.deduplicate(4)
         ));
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -490,6 +506,8 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
         long ts1 = 500L;
         long ts2 = 1500L;
         long ts3 = 2500L;
+        long ts4 = 3500L;
+        long ts5 = 4500L;
 
         // WHEN-THEN
         node.onMsg(ctxMock, TbMsg.newMsg()
@@ -499,7 +517,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts1))))
                 .build());
         then(telemetryServiceMock).should().saveTimeseries(assertArg(
-                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.SAVE_ALL)
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.PROCESS_ALL)
         ));
 
         clearInvocations(telemetryServiceMock);
@@ -511,7 +529,9 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts2))))
                 .build());
         then(telemetryServiceMock).should().saveTimeseries(assertArg(
-                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new TimeseriesSaveRequest.Strategy(true, false, false))
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(
+                        new TimeseriesSaveRequest.Strategy(true, false, false, false)
+                )
         ));
 
         clearInvocations(telemetryServiceMock);
@@ -523,7 +543,37 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts3))))
                 .build());
         then(telemetryServiceMock).should().saveTimeseries(assertArg(
-                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new TimeseriesSaveRequest.Strategy(true, true, false))
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(
+                        new TimeseriesSaveRequest.Strategy(true, true, false, false)
+                )
+        ));
+
+        clearInvocations(telemetryServiceMock);
+
+        node.onMsg(ctxMock, TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts4))))
+                .build());
+        then(telemetryServiceMock).should().saveTimeseries(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(
+                        new TimeseriesSaveRequest.Strategy(true, false, true, false)
+                )
+        ));
+
+        clearInvocations(telemetryServiceMock);
+
+        node.onMsg(ctxMock, TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts5))))
+                .build());
+        then(telemetryServiceMock).should().saveTimeseries(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(
+                        new TimeseriesSaveRequest.Strategy(true, true, false, true)
+                )
         ));
     }
 
@@ -531,6 +581,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     public void givenAdvancedProcessingSettingsWithSkipStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenSkipsSameMessageTwoTimes() throws TbNodeException {
         // GIVEN
         config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(
+                ProcessingStrategy.skip(),
                 ProcessingStrategy.skip(),
                 ProcessingStrategy.skip(),
                 ProcessingStrategy.skip()
@@ -630,6 +681,9 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                                             "type": "SKIP"
                                         },
                                         "webSockets": {
+                                            "type": "ON_EVERY_MESSAGE"
+                                        },
+                                        "calculatedFields": {
                                             "type": "ON_EVERY_MESSAGE"
                                         }
                                     }

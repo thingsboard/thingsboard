@@ -34,4 +34,7 @@ public class SystemParams {
     boolean mobileQrEnabled;
     int maxDebugModeDurationMinutes;
     String ruleChainDebugPerTenantLimitsConfiguration;
+    String calculatedFieldDebugPerTenantLimitsConfiguration;
+    long maxArgumentsPerCF;
+    long maxDataPointsPerRollingArg;
 }

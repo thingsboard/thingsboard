@@ -83,4 +83,16 @@ public class CollectionsUtil {
         return result;
     }
 
+    public static <V> boolean isOneOf(V value, V... others) {
+        if (value == null) {
+            return false;
+        }
+        for (V other : others) {
+            if (value.equals(other)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

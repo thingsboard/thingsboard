@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -322,12 +323,14 @@ public class TbResourceController extends BaseController {
             notes = "Deletes the Resource. Referencing non-existing Resource Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @DeleteMapping(value = "/resource/{resourceId}")
-    public void deleteResource(@Parameter(description = RESOURCE_ID_PARAM_DESCRIPTION)
-                               @PathVariable("resourceId") String strResourceId) throws ThingsboardException {
+    public ResponseEntity<TbResourceDeleteResult> deleteResource(@Parameter(description = RESOURCE_ID_PARAM_DESCRIPTION)
+                                                                 @PathVariable("resourceId") String strResourceId,
+                                                                 @RequestParam(name = "force", required = false) boolean force) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
         TbResource tbResource = checkResourceId(resourceId, Operation.DELETE);
-        tbResourceService.delete(tbResource, getCurrentUser());
+        TbResourceDeleteResult tbResourceDeleteResult = tbResourceService.delete(tbResource, force, getCurrentUser());
+        return (tbResourceDeleteResult.isSuccess() ? ResponseEntity.ok() : ResponseEntity.badRequest()).body(tbResourceDeleteResult);
     }
 
     private ResponseEntity<ByteArrayResource> downloadResourceIfChanged(String strResourceId, String etag) throws ThingsboardException {

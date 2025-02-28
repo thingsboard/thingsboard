@@ -163,6 +163,13 @@
   .tb-form-panel-title {
     font-weight: 500;
     font-size: 16px;
+
+    &.tb-required::after {
+      font-size: 13px;
+      color: rgba(0, 0, 0, .54);
+      vertical-align: top;
+      content: " *";
+    }
   }
   .tb-form-panel-hint {
     font-size: 12px;

@@ -194,11 +194,6 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public List<String> findWidgetTypesNamesByTenantIdAndResourceLink(UUID tenantId, String link) {
-        return widgetTypeRepository.findNamesByTenantIdAndResourceLink(tenantId, link);
-    }
-
-    @Override
     public List<WidgetTypeId> findWidgetTypeIdsByTenantIdAndFqns(UUID tenantId, List<String> widgetFqns) {
         var idFqnPairs = widgetTypeRepository.findWidgetTypeIdsByTenantIdAndFqns(tenantId, widgetFqns);
         idFqnPairs.sort(Comparator.comparingInt(o -> widgetFqns.indexOf(o.getFqn())));
@@ -271,6 +266,16 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     @Override
     public List<WidgetTypeFields> findNextBatch(UUID id, int batchSize) {
         return widgetTypeRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByTenantIdAndResourceLink(TenantId tenantId, String link, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByTenantIdAndResourceLink(tenantId.getId(), link, limit));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByResourceLink(String link, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByResourceLink(link, limit));
     }
 
     @Override

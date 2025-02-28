@@ -59,6 +59,8 @@ enum EntityTypeProto {
   DOMAIN                = 36;
   MOBILE_APP            = 37;
   MOBILE_APP_BUNDLE     = 38;
+  CALCULATED_FIELD      = 39;
+  CALCULATED_FIELD_LINK = 40;
 }
 
 /**
@@ -807,6 +809,68 @@ message DeviceInactivityProto {
   int64 lastInactivityTime = 5;
 }
 
+message CalculatedFieldTelemetryMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string entityType = 3;
+  int64 entityIdMSB = 4;
+  int64 entityIdLSB = 5;
+  repeated CalculatedFieldIdProto previousCalculatedFields = 7;
+  repeated TsKvProto tsData = 9;
+  AttributeScopeProto scope = 10;
+  repeated AttributeValueProto attrData = 11;
+  repeated string removedTsKeys = 12;
+  repeated string removedAttrKeys = 13;
+  int64 tbMsgIdMSB = 14;
+  int64 tbMsgIdLSB = 15;
+  string tbMsgType = 16;
+}
+
+message CalculatedFieldLinkedTelemetryMsgProto {
+  CalculatedFieldTelemetryMsgProto msg = 1;
+  repeated CalculatedFieldEntityCtxIdProto links = 2;
+}
+
+message CalculatedFieldEntityCtxIdProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 calculatedFieldIdMSB = 3;
+  int64 calculatedFieldIdLSB = 4;
+  string entityType = 5;
+  int64 entityIdMSB = 6;
+  int64 entityIdLSB = 7;
+}
+
+message CalculatedFieldIdProto {
+  int64 calculatedFieldIdMSB = 1;
+  int64 calculatedFieldIdLSB = 2;
+}
+
+message SingleValueArgumentProto {
+  string argName = 1;
+  TsValueProto value = 2;
+  int64 version = 3;
+}
+
+message TsDoubleValProto {
+  int64  ts    = 1;
+  double value = 2;
+}
+
+message TsRollingArgumentProto {
+  string key = 1;
+  int32 limit = 2;
+  int64 timeWindow = 3;
+  repeated TsDoubleValProto tsValue = 4;
+}
+
+message CalculatedFieldStateProto {
+  CalculatedFieldEntityCtxIdProto id = 1;
+  string type = 2;
+  repeated SingleValueArgumentProto singleValueArguments = 3;
+  repeated TsRollingArgumentProto rollingValueArguments = 4;
+}
+
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
@@ -1162,6 +1226,13 @@ message ComponentLifecycleMsgProto {
   int64 entityIdMSB = 4;
   int64 entityIdLSB = 5;
   ComponentLifecycleEvent event = 6;
+  //Since 4.0. TODO: replace the DeviceNameOrTypeUpdateMsgProto
+  string oldName = 7;
+  string name = 8;
+  int64 oldProfileIdMSB = 9;
+  int64 oldProfileIdLSB = 10;
+  int64 profileIdMSB = 11;
+  int64 profileIdLSB = 12;
 }
 
 message EdgeEventMsgProto {
@@ -1587,6 +1658,17 @@ message ToEdgeNotificationMsg {
 
 message ToEdgeEventNotificationMsg {
   EdgeEventMsgProto edgeEventMsg = 1;
+}
+
+message ToCalculatedFieldMsg {
+  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
+  CalculatedFieldTelemetryMsgProto telemetryMsg = 2;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 3;
+}
+
+message ToCalculatedFieldNotificationMsg {
+  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

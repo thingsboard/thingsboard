@@ -167,7 +167,7 @@
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
         <snappy.version>1.1.10.5</snappy.version>
-        <rocksdbjni.version>9.4.0</rocksdbjni.version>
+        <rocksdbjni.version>9.10.0</rocksdbjni.version>
     </properties>
 
     <modules>

@@ -178,6 +178,11 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         return fetchAndConvert(tenantId, entityId, this::getNameLabelAndCustomerDetails);
     }
 
+    @Override
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return fetchAndConvert(tenantId, entityId, Function.identity());
+    }
+
     private <T> Optional<T> fetchAndConvert(TenantId tenantId, EntityId entityId, Function<HasId<?>, T> converter) {
         EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
         Optional<HasId<?>> entityOpt = entityDaoService.findEntity(tenantId, entityId);
