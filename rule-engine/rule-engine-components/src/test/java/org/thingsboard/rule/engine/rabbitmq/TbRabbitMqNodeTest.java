@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class TbRabbitMqNodeTest {
         assertThat(config.getExchangeNamePattern()).isEqualTo("");
         assertThat(config.getRoutingKeyPattern()).isEqualTo("");
         assertThat(config.getMessageProperties()).isNull();
-        assertThat(config.getHost()).isEqualTo(ConnectionFactory.DEFAULT_HOST);
+        assertThat(config.getHost()).isNull();
         assertThat(config.getPort()).isEqualTo(ConnectionFactory.DEFAULT_AMQP_PORT);
         assertThat(config.getVirtualHost()).isEqualTo(ConnectionFactory.DEFAULT_VHOST);
         assertThat(config.getUsername()).isEqualTo(ConnectionFactory.DEFAULT_USER);

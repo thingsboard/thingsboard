@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,10 +118,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         EntityId entityId = request.getEntityId();
         checkInternalEntity(entityId);
         boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
-        if (sysTenant || request.isOnlyLatest() || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
+        if (sysTenant || !request.getStrategy().saveTimeseries() || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
             KvUtils.validate(request.getEntries(), valueNoXssValidation);
             ListenableFuture<Integer> future = saveTimeseriesInternal(request);
-            if (!request.isOnlyLatest()) {
+            if (request.getStrategy().saveTimeseries()) {
                 FutureCallback<Integer> callback = getApiUsageCallback(tenantId, request.getCustomerId(), sysTenant, request.getCallback());
                 Futures.addCallback(future, callback, tsCallBackExecutor);
             }
@@ -134,19 +134,24 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     public ListenableFuture<Integer> saveTimeseriesInternal(TimeseriesSaveRequest request) {
         TenantId tenantId = request.getTenantId();
         EntityId entityId = request.getEntityId();
+        TimeseriesSaveRequest.Strategy strategy = request.getStrategy();
         ListenableFuture<Integer> saveFuture;
-        if (request.isOnlyLatest()) {
-            saveFuture = Futures.transform(tsService.saveLatest(tenantId, entityId, request.getEntries()), result -> 0, MoreExecutors.directExecutor());
-        } else if (request.isSaveLatest()) {
+        if (strategy.saveTimeseries() && strategy.saveLatest()) {
             saveFuture = tsService.save(tenantId, entityId, request.getEntries(), request.getTtl());
-        } else {
+        } else if (strategy.saveLatest()) {
+            saveFuture = Futures.transform(tsService.saveLatest(tenantId, entityId, request.getEntries()), result -> 0, MoreExecutors.directExecutor());
+        } else if (strategy.saveTimeseries()) {
             saveFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
+        } else {
+            saveFuture = Futures.immediateFuture(0);
         }
 
         addMainCallback(saveFuture, request.getCallback());
-        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
-        if (request.isSaveLatest() && !request.isOnlyLatest()) {
-            addEntityViewCallback(tenantId, entityId, request.getEntries());
+        if (strategy.sendWsUpdate()) {
+            addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
+        }
+        if (strategy.saveLatest()) {
+            copyLatestToEntityViews(tenantId, entityId, request.getEntries());
         }
         return saveFuture;
     }
@@ -201,7 +206,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
+    private void copyLatestToEntityViews(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
         if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
             Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
                     new FutureCallback<>() {
@@ -232,7 +237,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                 .tenantId(tenantId)
                                                 .entityId(entityView.getId())
                                                 .entries(entityViewLatest)
-                                                .onlyLatest(true)
+                                                .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
                                                 .callback(new FutureCallback<>() {
                                                     @Override
                                                     public void onSuccess(@Nullable Void tmp) {}

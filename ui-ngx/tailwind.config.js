@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ module.exports = {
         '0.75': '0.1875rem',
         '1.25': '0.3125rem',
         '3.75': '0.9375rem',
+        '5.5': '1.375rem',
         '6.25': '1.5625rem'
       },
       minHeight: {
@@ -152,6 +153,7 @@ module.exports = {
         '7.5': '1.875rem',
         '25': '6.25rem',
         '37.5': '9.375rem',
+        '50': '12.5rem',
         '62.5': '15.625rem',
         '72.5': '18.125rem'
       },

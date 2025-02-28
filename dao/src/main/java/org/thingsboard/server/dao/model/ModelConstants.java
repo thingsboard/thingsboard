@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.ArrayUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.mobile.app.MobileAppVersionInfo;
+import org.thingsboard.server.common.data.mobile.app.StoreInfo;
 
 import java.util.UUID;
 
@@ -310,6 +312,7 @@ public class ModelConstants {
     public static final String WIDGETS_BUNDLE_SCADA_PROPERTY = "scada";
     public static final String WIDGETS_BUNDLE_DESCRIPTION = "description";
     public static final String WIDGETS_BUNDLE_ORDER = "widgets_bundle_order";
+    public static final String WIDGET_BUNDLES_PROPERTY = "bundles";
 
     /**
      * Widget_type constants.
@@ -454,6 +457,8 @@ public class ModelConstants {
     public static final String MOBILE_APP_STATUS_PROPERTY = "status";
     public static final String MOBILE_APP_VERSION_INFO_PROPERTY = "version_info";
     public static final String MOBILE_APP_STORE_INFO_PROPERTY = "store_info";
+    public static final MobileAppVersionInfo MOBILE_APP_VERSION_INFO_EMPTY_OBJECT = new MobileAppVersionInfo();
+    public static final StoreInfo MOBILE_APP_STORE_INFO_EMPTY_OBJECT = new StoreInfo();
 
     /**
      * Mobile application bundle constants.

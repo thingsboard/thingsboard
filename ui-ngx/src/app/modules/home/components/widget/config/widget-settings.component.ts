@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import {
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicFormData, IWidgetSettingsComponent, Widget, WidgetSettings } from '@shared/models/widget.models';
-import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { WidgetService } from '@core/http/widget.service';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -215,7 +214,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
       this.definedSettingsComponent = null;
     }
     if (this.settingsDirective && this.settingsDirective.length) {
-      const componentType = widgetSettingsComponentsMap[this.settingsDirective];
+      const componentType = this.widgetService.getWidgetSettingsComponentTypeBySelector(this.settingsDirective);
       if (!componentType) {
         this.definedDirectiveError = this.translate.instant('widget-config.settings-component-not-found',
           {selector: this.settingsDirective});

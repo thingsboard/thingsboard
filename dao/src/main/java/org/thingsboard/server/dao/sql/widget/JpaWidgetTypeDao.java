@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,11 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     @Override
     public boolean existsByTenantIdAndId(TenantId tenantId, UUID widgetTypeId) {
         return widgetTypeRepository.existsByTenantIdAndId(tenantId.getId(), widgetTypeId);
+    }
+
+    @Override
+    public WidgetTypeInfo findWidgetTypeInfoById(TenantId tenantId, UUID widgetTypeId) {
+        return DaoUtil.getData(widgetTypeInfoRepository.findById(widgetTypeId));
     }
 
     @Override
@@ -186,11 +191,6 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public List<String> findWidgetTypesNamesByTenantIdAndResourceLink(UUID tenantId, String link) {
-        return widgetTypeRepository.findNamesByTenantIdAndResourceLink(tenantId, link);
-    }
-
-    @Override
     public List<WidgetTypeId> findWidgetTypeIdsByTenantIdAndFqns(UUID tenantId, List<String> widgetFqns) {
         var idFqnPairs = widgetTypeRepository.findWidgetTypeIdsByTenantIdAndFqns(tenantId, widgetFqns);
         idFqnPairs.sort(Comparator.comparingInt(o -> widgetFqns.indexOf(o.getFqn())));
@@ -260,5 +260,15 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
         return EntityType.WIDGET_TYPE;
     }
 
+
+    @Override
+    public List<WidgetTypeInfo> findByTenantIdAndResourceLink(TenantId tenantId, String link, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByTenantIdAndResourceLink(tenantId.getId(), link, limit));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByResourceLink(String link, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByResourceLink(link, limit));
+    }
 
 }
