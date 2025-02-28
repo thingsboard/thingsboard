@@ -17,7 +17,7 @@ package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.thingsboard.server.common.data.StringUtils;
 
@@ -54,7 +54,7 @@ public class ContainerTestSuite {
     private static final String TB_JS_EXECUTOR_LOG_REGEXP = ".*template started.*";
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(400);
 
-    private  DockerComposeContainer<?> testContainer;
+    private  ComposeContainer testContainer;
     private  ThingsBoardDbInstaller installTb;
     private boolean isActive;
 
@@ -94,8 +94,9 @@ public class ContainerTestSuite {
 
             FileUtils.copyDirectory(new File("src/test/resources"), new File(targetDir));
 
-            class DockerComposeContainerImpl<SELF extends DockerComposeContainer<SELF>> extends DockerComposeContainer<SELF> {
-                public DockerComposeContainerImpl(List<File> composeFiles) {
+            class ComposeContainerImpl extends ComposeContainer {
+
+                public ComposeContainerImpl(List<File> composeFiles) {
                     super(composeFiles);
                 }
 
@@ -162,10 +163,8 @@ public class ContainerTestSuite {
                 composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
             }
 
-            testContainer = new DockerComposeContainerImpl<>(composeFiles)
+            testContainer = new ComposeContainerImpl(composeFiles)
                     .withPull(false)
-                    .withLocalCompose(true)
-                    .withOptions("--compatibility")
                     .withTailChildContainers(!skipTailChildContainers)
                     .withEnv(installTb.getEnv())
                     .withEnv(queueEnv)
@@ -282,7 +281,7 @@ public class ContainerTestSuite {
         }
     }
 
-    public DockerComposeContainer<?> getTestContainer() {
+    public ComposeContainer getTestContainer() {
         return testContainer;
     }
 }
