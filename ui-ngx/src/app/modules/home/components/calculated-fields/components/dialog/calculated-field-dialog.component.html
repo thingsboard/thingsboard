@@ -89,11 +89,10 @@
                     {{ 'calculated-fields.hint.expression-max-length' | translate }}
                   }
                 </mat-error>
+              } @else {
+                <mat-hint>{{ 'calculated-fields.hint.expression' | translate }}</mat-hint>
               }
             </mat-form-field>
-            @if (!configFormGroup.get('expressionSIMPLE').errors || !configFormGroup.get('expressionSIMPLE').touched) {
-              <span class="tb-form-hint expression-hint">{{ 'calculated-fields.hint.expression' | translate }}</span>
-            }
           } @else {
             <tb-js-func
               required
