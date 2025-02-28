@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Data;
@@ -58,6 +56,15 @@ public class CalculatedFieldLinkEntity extends BaseSqlEntity<CalculatedFieldLink
 
     public CalculatedFieldLinkEntity() {
         super();
+    }
+
+    public CalculatedFieldLinkEntity(CalculatedFieldLink calculatedFieldLink) {
+        this.setUuid(calculatedFieldLink.getUuidId());
+        this.createdTime = calculatedFieldLink.getCreatedTime();
+        this.tenantId = calculatedFieldLink.getTenantId().getId();
+        this.entityType = calculatedFieldLink.getEntityId().getEntityType().name();
+        this.entityId = calculatedFieldLink.getEntityId().getId();
+        this.calculatedFieldId = calculatedFieldLink.getCalculatedFieldId().getId();
     }
 
     @Override
