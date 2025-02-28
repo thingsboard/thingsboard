@@ -848,6 +848,8 @@
                             <exclude>.run/**</exclude>
                             <exclude>**/NetworkReceive.java</exclude>
                             <exclude>**/lwm2m-registry/**</exclude>
+                            <exclude>**/test/resources/lwm2m/**</exclude>
+                            <exclude>**/resources/lwm2m/models/**</exclude>
                             <exclude>src/main/data/resources/**</exclude>
                         </excludes>
                         <mapping>
