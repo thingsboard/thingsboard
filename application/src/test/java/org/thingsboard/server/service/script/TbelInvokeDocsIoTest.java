@@ -21,6 +21,7 @@ import org.thingsboard.script.api.tbel.TbDate;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
@@ -660,14 +661,13 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 """;
         decoderStr = """
                 var list = msg.list;
-                var listAdd = ["thigsboard", 4, 67];
                 return {
                         list: list.clone(),
                         length: list.length(),
                         memorySize: list.memorySize(),
                         indOf1: list.indexOf("B", 1),
                         indOf2: list.indexOf(2, 2),
-                        sStr: list.validateClazzInArrayIsOnlyString()
+                        sStr: list.validateClazzInArrayIsOnlyNumber()
                        }
                 """;
         ArrayList list = new ArrayList<>(List.of(67, 2, 2, 2));
@@ -677,7 +677,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("memorySize", 32L);
         expected.put("indOf1", -1);
         expected.put("indOf2", 2);
-        expected.put("sStr", false);
+        expected.put("sStr", true);
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
@@ -2148,6 +2148,68 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertEquals(expected, actual);
     }
 
+    @Test
+    public void toUnmodifiableExecutionArrayList_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = String.format("""
+                var original = [];
+                original.add(0x35);
+                var unmodifiable = original.toUnmodifiable();
+                msg.result = unmodifiable;
+                return {msg: msg};
+                """);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        List expectedList = Arrays.asList(0x35);
+        LinkedHashMap<String, Object> expectedResult = new LinkedHashMap<>();
+        expectedResult.put("result", expectedList);
+        expected.put("msg", expectedResult);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+
+        decoderStr = String.format("""
+                var original = [];
+                original.add(0x67);
+                var unmodifiable = original.toUnmodifiable();
+                unmodifiable.add(0x35);                                
+                msg.result = unmodifiable;
+                return {msg: msg};
+                """);
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: unmodifiable.add(0x35): List is unmodifiable");
+    }
+
+
+    @Test
+    public void toUnmodifiableExecutionHashMap_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = String.format("""
+                var original = {};
+                original.putIfAbsent("entry1", 73);
+                var unmodifiable = original.toUnmodifiable();
+                msg.result = unmodifiable;
+                return {msg: msg};
+                """);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        LinkedHashMap<String, Object> expectedMap = new LinkedHashMap<>(Map.of("entry1", 73));
+        LinkedHashMap<String, Object> expectedResult = new LinkedHashMap<>();
+        expectedResult.put("result", expectedMap);
+        expected.put("msg", expectedResult);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+
+        decoderStr = String.format("""
+                var original = {};
+                original.humidity = 73;
+                var unmodifiable = original.toUnmodifiable();
+                unmodifiable.put("temperature1", 96);
+                msg.result = unmodifiable;
+                return {msg: msg};
+                """);
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: unmodifiable.put(\"temperature1\", 96): Map is unmodifiable");
+    }
 
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
