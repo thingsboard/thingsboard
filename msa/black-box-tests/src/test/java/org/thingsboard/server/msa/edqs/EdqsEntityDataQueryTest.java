@@ -175,7 +175,7 @@ public class EdqsEntityDataQueryTest extends AbstractContainerTest {
         for (int i = 0; i < 10; i++) {
             Map<EntityKeyType, Map<String, TsValue>> latest = retrievedDevices.get(i).getLatest();
             String name = latest.get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
-            //assertThat(latest.get(EntityKeyType.TIME_SERIES).get("temperature").getValue()).isEqualTo(name.substring(name.length() - 1));
+            assertThat(latest.get(EntityKeyType.TIME_SERIES).get("temperature").getValue()).isEqualTo(name.substring(name.length() - 1));
         }
     }
 
