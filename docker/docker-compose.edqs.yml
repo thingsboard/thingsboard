@@ -19,10 +19,16 @@ version: '3.0'
 services:
   tb-core1:
     env_file:
-      - tb-node-edqs.env
+      - tb-core-edqs.env
   tb-core2:
     env_file:
-      - tb-node-edqs.env
+      - tb-core-edqs.env
+  tb-rule-engine1:
+    env_file:
+      - tb-rule-engine-edqs.env
+  tb-rule-engine2:
+    env_file:
+      - tb-rule-engine-edqs.env
   tb-edqs-1:
     restart: always
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
