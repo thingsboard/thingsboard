@@ -389,7 +389,6 @@ class DefaultTelemetrySubscriptionServiceTest {
         );
     }
 
-    // used to emulate versions returned by save latest API
     @Test
     void shouldThrowErrorWhenTryingToSaveTimeseriesForApiUsageState() {
         // GIVEN
@@ -477,7 +476,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .strategy(new TimeseriesSaveRequest.Strategy(true, false, true, true))
                 .build();
 
-        given(tsService.saveWithoutLatest(tenantId, deviceId, List.of(inactivityTimeout), 0L)).willReturn(immediateFuture(TimeseriesSaveResult.of(1, listOfNNumbers(1))));
+        given(tsService.saveWithoutLatest(tenantId, deviceId, List.of(inactivityTimeout), 0L)).willReturn(immediateFuture(TimeseriesSaveResult.of(1, null)));
 
         // WHEN
         telemetryService.saveTimeseries(request);
