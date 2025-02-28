@@ -21,22 +21,36 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 
+import java.util.Comparator;
+import java.util.List;
+
+@Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-@Data
-public class DeviceExportData extends CalculatedFieldExportData<Device> {
+public class CalculatedFieldExportData<E extends ExportableEntity<?>> extends EntityExportData<E> {
 
-    @JsonProperty(index = 3)
-    @JsonIgnoreProperties({"id", "deviceId", "createdTime", "version"})
-    private DeviceCredentials credentials;
+    public static final Comparator<CalculatedField> calculatedFieldsComparator = Comparator.comparing(CalculatedField::getName);
+
+    @JsonProperty(index = 102)
+    @JsonIgnoreProperties({"entityId", "createdTime", "version"})
+    private List<CalculatedField> calculatedFields;
 
     @JsonIgnore
     @Override
-    public boolean hasCredentials() {
-        return credentials != null;
+    public boolean hasCalculatedFields() {
+        return calculatedFields != null;
+    }
+
+    @Override
+    public CalculatedFieldExportData<E> sort() {
+        super.sort();
+        if (calculatedFields != null && !calculatedFields.isEmpty()) {
+            calculatedFields.sort(calculatedFieldsComparator);
+        }
+        return this;
     }
 
 }

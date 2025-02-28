@@ -69,6 +69,7 @@ public abstract class EntitiesExportCtx<R extends VersionCreateRequest> {
                 .exportRelations(config.isSaveRelations())
                 .exportAttributes(config.isSaveAttributes())
                 .exportCredentials(config.isSaveCredentials())
+                .exportCalculatedFields(config.isSaveCalculatedFields())
                 .build();
     }
 
@@ -85,4 +86,5 @@ public abstract class EntitiesExportCtx<R extends VersionCreateRequest> {
         log.debug("[{}][{}] Local cache put: {}", internalId.getEntityType(), internalId.getId(), externalId);
         externalIdMap.put(internalId, externalId != null ? externalId : internalId);
     }
+
 }
