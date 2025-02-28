@@ -14,14 +14,37 @@
  * limitations under the License.
  */
 .tb-map-timeline-panel {
-  padding-top: 4px;
-  padding-left: 16px;
-  padding-right: 16px;
+  height: 100px;
+  padding: 4px 16px 8px;
   display: flex;
   flex-direction: column;
   .tb-timeline-controls {
     display: flex;
     flex-direction: row;
     align-items: center;
+    .tb-map-timeline-timestamp {
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(0,0,0,0.76);
+    }
+    .tb-timeline-buttons {
+      .mat-mdc-mini-fab.mat-primary {
+        --mdc-fab-small-container-color:  rgba(0,0,0,0);
+        --mat-fab-small-foreground-color: rgba(0,0,0,0.54);
+        --mdc-fab-small-container-elevation-shadow: 4px 4px 4px 0px rgba(0, 0, 0, 0.15);
+        &:before {
+          opacity: 0.1;
+        }
+      }
+      .tb-timeline-button-32 {
+        width: 32px;
+        height: 32px;
+      }
+    }
+  }
+  .tb-map-timeline-no-data {
+    font-size: 18px;
+    font-weight: 400;
+    color: rgba(0,0,0,0.76);
   }
 }

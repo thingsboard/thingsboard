@@ -33,7 +33,7 @@ import {
   formattedDataArrayFromDatasourceData,
   formattedDataFormDatasourceData,
   isDefined,
-  isDefinedAndNotNull,
+  isDefinedAndNotNull, isUndefined,
   mergeDeepIgnoreArray
 } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
@@ -90,6 +90,12 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected tripDataLayers: TbTripsDataLayer[];
   protected dsData: FormattedData<TbMapDatasource>[];
 
+  protected timeline = false;
+  protected minTime: number;
+  protected maxTime: number;
+  protected timeStep: number;
+  protected currentTime: number;
+
   protected selectedDataItem: TbDataLayerItem;
 
   protected mapLayoutElement: HTMLElement;
@@ -108,9 +114,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected timeLineComponentRef: ComponentRef<MapTimelinePanelComponent>;
   protected timeLineComponent: MapTimelinePanelComponent;
 
-  protected addMarkerDataLayers: TbMapDataLayer<any,any>[];
-  protected addPolygonDataLayers: TbMapDataLayer<any,any>[];
-  protected addCircleDataLayers: TbMapDataLayer<any,any>[];
+  protected addMarkerDataLayers: TbMapDataLayer<any>[];
+  protected addPolygonDataLayers: TbMapDataLayer<any>[];
+  protected addCircleDataLayers: TbMapDataLayer<any>[];
 
   private readonly mapResize$: ResizeObserver;
 
@@ -135,11 +141,14 @@ export abstract class TbMap<S extends BaseMapSettings> {
     $(containerElement).append(mapLayoutElement);
 
     if (this.settings.tripTimeline?.showTimelineControl) {
+      this.timeline = true;
+      this.timeStep = this.settings.tripTimeline.timeStep;
       this.timeLineComponentRef = this.ctx.widgetContentContainer.createComponent(MapTimelinePanelComponent);
       this.timeLineComponent = this.timeLineComponentRef.instance;
       this.timeLineComponent.settings = this.settings.tripTimeline;
       this.timeLineComponent.timeChanged.subscribe((time) => {
-        console.log(`Time updated: ${time}`);
+        this.currentTime = time;
+        this.updateTripsTime();
       });
       const parentElement = this.timeLineComponentRef.instance.element.nativeElement;
       const content = parentElement.firstChild;
@@ -740,7 +749,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
     this.dataLayers.forEach(dl => dl.updateData(this.dsData));
     this.updateTripsAppearance();
-    this.updateTripsTimeline();
+    this.updateTripsAnchors();
     this.updateBounds();
     this.updateAddButtonsStates();
   }
@@ -757,8 +766,23 @@ export abstract class TbMap<S extends BaseMapSettings> {
       minTime = Math.min(minMax.minTime, minTime);
       maxTime = Math.max(minMax.maxTime, maxTime);
     }
-    this.tripDataLayers.forEach(dl => dl.updateTrips(minTime, maxTime));
-    this.updateTripsTimeline(minTime, maxTime);
+    const prevMinTime = this.minTime;
+    const prevMaxTime = this.maxTime;
+    this.minTime = minTime;
+    this.maxTime = maxTime;
+    if (this.timeline) {
+      this.timeLineComponent.min = this.minTime;
+      this.timeLineComponent.max = this.maxTime;
+      const currentTime = this.calculateCurrentTime(prevMinTime, prevMaxTime);
+      if (currentTime !== this.currentTime) {
+        this.currentTime = currentTime;
+        this.timeLineComponent.currentTime = currentTime;
+      }
+    } else {
+      this.currentTime = this.maxTime;
+    }
+    this.tripDataLayers.forEach(dl => dl.updateTrips());
+    this.updateTripsAnchors();
     this.updateBounds();
   }
 
@@ -766,22 +790,43 @@ export abstract class TbMap<S extends BaseMapSettings> {
     const tripsLatestData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.latestData,
       undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
     this.tripDataLayers.forEach(dl => dl.updateTripsLatestData(tripsLatestData));
-    this.updateTripsAppearance();
-    this.updateTripsTimeline();
+    this.updateTripsAnchors();
   }
 
-  private updateTripsAppearance() {}
+  private updateTripsAppearance() {
+    this.tripDataLayers.forEach(dl => dl.updateAppearance());
+  }
+  private updateTripsTime() {
+    this.tripDataLayers.forEach(dl => dl.updateCurrentTime());
+  }
 
-  private updateTripsTimeline(minTime?: number, maxTime?: number) {
-    if (this.settings.tripTimeline?.showTimelineControl) {
-      if (isDefinedAndNotNull(minTime) && isDefinedAndNotNull(maxTime)) {
-        this.timeLineComponent.min = minTime;
-        this.timeLineComponent.max = maxTime;
-      }
+  private updateTripsAnchors() {
+    if (this.timeline) {
       if (this.settings.tripTimeline.snapToRealLocation) {
         // Recalculate anchors only for enabled layers
+        let anchors: number[] = [];
+        const enableTrips = this.tripDataLayers.filter(dl => dl.isEnabled());
+        for (const tripsDataLayer of enableTrips) {
+          const tripsAnchors = tripsDataLayer.calculateAnchors();
+          anchors = [...new Set([...anchors, ...tripsAnchors])];
+        }
+        anchors.sort((a, b) => a - b);
+        this.timeLineComponent.anchors = anchors;
       }
     }
+  }
+
+  private calculateCurrentTime(minTime: number, maxTime: number): number {
+    if (minTime !== this.minTime || maxTime !== this.maxTime) {
+      if (this.minTime >= this.currentTime || isUndefined(this.currentTime)) {
+        return this.minTime;
+      } else if (this.maxTime <= this.currentTime) {
+        return this.maxTime;
+      } else {
+        return this.minTime + Math.ceil((this.currentTime - this.minTime) / this.settings.tripTimeline.timeStep) * this.settings.tripTimeline.timeStep;
+      }
+    }
+    return this.currentTime;
   }
 
   private resize() {
@@ -793,6 +838,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private updateBounds() {
     const enabledDataLayers = this.dataLayers.filter(dl => dl.isEnabled());
     const dataLayersBounds = enabledDataLayers.map(dl => dl.getBounds()).filter(b => b.isValid());
+    const enabledTripsDataLayers = this.tripDataLayers.filter(dl => dl.isEnabled());
+    const tripsDataLayersBounds = enabledTripsDataLayers.map(dl => dl.getBounds()).filter(b => b.isValid());
+    dataLayersBounds.push(...tripsDataLayersBounds);
     let bounds: L.LatLngBounds;
     if (dataLayersBounds.length) {
       bounds = new L.LatLngBounds(null, null);
@@ -902,7 +950,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public enabledDataLayersUpdated() {
     this.updateAddButtonsStates();
-    this.updateTripsTimeline();
+    this.updateTripsAnchors();
   }
 
   public dataItemClick($event: Event, action: WidgetAction, entityInfo: TbMapDatasource) {
@@ -991,6 +1039,28 @@ export abstract class TbMap<S extends BaseMapSettings> {
     } else {
       return of(null);
     }
+  }
+
+  // Timeline methods
+
+  public hasTimeline(): boolean {
+    return this.timeline;
+  }
+
+  public getMinTime(): number {
+    return this.minTime;
+  }
+
+  public getMaxTime(): number {
+    return this.maxTime;
+  }
+
+  public getTimeStep(): number {
+    return this.timeStep;
+  }
+
+  public getCurrentTime(): number {
+    return this.currentTime;
   }
 
   public destroy() {

@@ -7712,7 +7712,8 @@
                 "speed-options": "Speed options",
                 "timestamp": "Timestamp",
                 "snap-to-real-location": "Snap to real location",
-                "location-snap-filter-function": "Location snap filter function"
+                "location-snap-filter-function": "Location snap filter function",
+                "no-trips-data-available": "No trips data available"
             },
             "map-action": {
                 "map-action-buttons": "Map action buttons",

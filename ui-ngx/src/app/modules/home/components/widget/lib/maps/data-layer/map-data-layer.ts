@@ -44,6 +44,7 @@ import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { map } from 'rxjs/operators';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { createTooltip, updateTooltip } from './data-layer-utils';
 
 export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLayerSettings,
   D extends TbMapDataLayer<S,D> = TbMapDataLayer<any, any>, L extends L.Layer = L.Layer> {
@@ -60,8 +61,12 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
     this.data = data;
     this.layer = this.create(data, dsData);
     if (this.settings.tooltip?.show) {
-      this.createTooltip();
-      this.updateTooltip(data, dsData);
+      this.tooltip = createTooltip(this.dataLayer.getMap(),
+        this.layer, this.settings.tooltip, this.data, () => {
+        return !this.isEditing();
+      });
+      updateTooltip(this.dataLayer.getMap(), this.tooltip,
+        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, data, dsData);
     }
     this.bindEvents();
     try {
@@ -220,12 +225,8 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
 
   protected updateTooltip(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
     if (this.settings.tooltip.show) {
-      let tooltipTemplate = this.dataLayer.dataLayerTooltipProcessor.processPattern(data, dsData);
-      tooltipTemplate = processTooltipTemplate(tooltipTemplate);
-      this.tooltip.setContent(tooltipTemplate);
-      if (this.tooltip.isOpen() && this.tooltip.getElement()) {
-        this.bindTooltipActions();
-      }
+      updateTooltip(this.dataLayer.getMap(), this.tooltip,
+        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, data, dsData);
     }
   }
 
@@ -253,56 +254,6 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
 
   protected abstract removeDataItem(): Observable<any>;
 
-  private createTooltip() {
-    this.tooltip = L.popup();
-    this.layer.bindPopup(this.tooltip, {autoClose: this.settings.tooltip.autoclose, closeOnClick: false});
-    this.layer.off('click');
-    if (this.settings.tooltip.trigger === DataLayerTooltipTrigger.click) {
-      this.layer.on('click', () => {
-        if (this.tooltip.isOpen()) {
-          this.layer.closePopup();
-        } else if (!this.isEditing()) {
-          this.layer.openPopup();
-        }
-      });
-    } else if (this.settings.tooltip.trigger === DataLayerTooltipTrigger.hover) {
-      this.layer.on('mouseover', () => {
-        if (!this.isEditing()) {
-          this.layer.openPopup();
-        }
-      });
-      this.layer.on('mousemove', (e) => {
-        this.tooltip.setLatLng(e.latlng);
-      });
-      this.layer.on('mouseout', () => {
-        this.layer.closePopup();
-      });
-    }
-    this.layer.on('popupopen', () => {
-      this.bindTooltipActions();
-      (this.layer as any)._popup._closeButton.addEventListener('click', (event: Event) => {
-        event.preventDefault();
-      });
-    });
-  }
-
-  private bindTooltipActions() {
-    const actions = this.tooltip.getElement().getElementsByClassName('tb-custom-action');
-    Array.from(actions).forEach(
-      (element: HTMLElement) => {
-        const actionName = element.getAttribute('data-action-name');
-        if (this.settings.tooltip?.tagActions) {
-          const action = this.settings.tooltip.tagActions.find(action => action.name === actionName);
-          if (action) {
-            element.onclick = ($event) =>
-            {
-              this.dataLayer.getMap().dataItemClick($event, action, this.data.$datasource);
-              return false;
-            };
-          }
-        }
-      });
-  }
 }
 
 export enum MapDataLayerType {

@@ -23,7 +23,7 @@ import {
   WidgetActionType
 } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { guid, hashCode, isDefinedAndNotNull, isNotEmptyStr, isString, mergeDeep } from '@core/utils';
+import { guid, hashCode, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined, mergeDeep } from '@core/utils';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { materialColors } from '@shared/models/material.models';
 import L from 'leaflet';
@@ -414,6 +414,7 @@ export const defaultBaseTripsDataLayerSettings = (mapType: MapType): Partial<Tri
   defaultBaseMarkersDataLayerSettings(mapType),
   {
     tooltip: {
+      offsetY: -0.5,
       pattern: mapType === MapType.geoMap ?
         '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}<br/><b>End Time:</b> ${maxTime}<br/><b>Start Time:</b> ${minTime}'
         : '<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}<br/><b>End Time:</b> ${maxTime}<br/><b>Start Time:</b> ${minTime}',
@@ -1274,7 +1275,7 @@ export const processTooltipTemplate = (template: string): string => {
   return template;
 }
 
-export function calculateNewPointCoordinate(coordinate: number, imageSize: number): number {
+export const calculateNewPointCoordinate = (coordinate: number, imageSize: number): number => {
   let pointCoordinate = coordinate / imageSize;
   if (pointCoordinate < 0) {
     pointCoordinate = 0;
@@ -1284,7 +1285,7 @@ export function calculateNewPointCoordinate(coordinate: number, imageSize: numbe
   return pointCoordinate;
 }
 
-export function checkLngLat(point: L.LatLng, southWest: L.LatLng, northEast: L.LatLng, offset = 0): L.LatLng {
+export const checkLngLat = (point: L.LatLng, southWest: L.LatLng, northEast: L.LatLng, offset = 0): L.LatLng => {
   const maxLngMap = northEast.lng - offset;
   const minLngMap = southWest.lng + offset;
   const maxLatMap = northEast.lat - offset;
@@ -1300,4 +1301,49 @@ export function checkLngLat(point: L.LatLng, southWest: L.LatLng, northEast: L.L
     point.lat = minLatMap;
   }
   return point;
+}
+
+export type TripRouteData = {[time: number]: FormattedData<TbMapDatasource>};
+
+export const calculateInterpolationRatio = (firsMoment: number, secondMoment: number, intermediateMoment: number): number => {
+  return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
+}
+
+export const interpolateLineSegment = (
+  pointA: FormattedData,
+  pointB: FormattedData,
+  xKey: string,
+  yKey: string,
+  ratio: number
+): { [key: string]: number } => {
+  return {
+    [xKey]: (pointA[xKey] + (pointB[xKey] - pointA[xKey]) * ratio),
+    [yKey]: (pointA[yKey] + (pointB[yKey] - pointA[yKey]) * ratio)
+  };
+}
+
+export const findRotationAngle = (startPoint: FormattedData, endPoint: FormattedData, xKey: string, yKey: string): number => {
+  if (isUndefined(startPoint) || isUndefined(endPoint)) {
+    return 0;
+  }
+  let angle = -Math.atan2(endPoint[xKey] - startPoint[xKey], endPoint[yKey] - startPoint[yKey]);
+  angle = angle * 180 / Math.PI;
+  return parseInt(angle.toFixed(2), 10);
+}
+
+export const calculateLastPoints = (routeData: TripRouteData, time: number): FormattedData<TbMapDatasource> => {
+  const timeArr = Object.keys(routeData);
+  let index = timeArr.findIndex((dtime) => {
+    return Number(dtime) >= time;
+  });
+
+  if (index !== -1) {
+    if (Number(timeArr[index]) !== time && index !== 0) {
+      index--;
+    }
+  } else {
+    index = timeArr.length - 1;
+  }
+
+  return routeData[timeArr[index]];
 }

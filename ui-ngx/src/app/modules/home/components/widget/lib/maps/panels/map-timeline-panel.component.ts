@@ -16,17 +16,20 @@
 
 import {
   ChangeDetectorRef,
-  Component,
+  Component, DestroyRef,
   ElementRef,
-  EventEmitter, Injector,
-  Input, OnChanges,
-  OnDestroy,
+  EventEmitter,
+  Injector,
+  Input,
   OnInit,
   Output,
   ViewEncapsulation
 } from '@angular/core';
 import { TripTimelineSettings } from '@home/components/widget/lib/maps/models/map.models';
 import { DateFormatProcessor } from '@shared/models/widget-settings.models';
+import { interval, Observable, Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-map-timeline-panel',
@@ -34,7 +37,7 @@ import { DateFormatProcessor } from '@shared/models/widget-settings.models';
   styleUrls: ['./map-timeline-panel.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class MapTimelinePanelComponent implements OnInit, OnChanges, OnDestroy {
+export class MapTimelinePanelComponent implements OnInit {
 
   @Input()
   settings: TripTimelineSettings;
@@ -43,22 +46,70 @@ export class MapTimelinePanelComponent implements OnInit, OnChanges, OnDestroy {
   disabled = false;
 
   @Input()
-  min = 0;
+  set min(value: number) {
+    if (this.minValue !== value) {
+      this.minValue = value;
+      this.maxTimeIndex = Math.ceil((this.maxValue - this.minValue) / this.settings.timeStep);
+      this.cd.markForCheck();
+    }
+  }
+
+  get min(): number {
+    return this.minValue;
+  }
 
   @Input()
-  max = 10000;
+  set max(value: number) {
+    if (this.maxValue !== value) {
+      this.maxValue = value;
+      this.maxTimeIndex = Math.ceil((this.maxValue - this.minValue) / this.settings.timeStep);
+      this.cd.markForCheck();
+    }
+  }
+
+  get max(): number {
+    return this.maxValue;
+  }
+
+  @Input()
+  set currentTime(time: number) {
+    if (this.currentTimeValue !== time) {
+      this.currentTimeValue = time;
+      this.updateTimestampDisplayValue();
+      this.cd.markForCheck();
+    }
+  }
+
+  get currentTime(): number {
+    return this.currentTimeValue;
+  }
+
+  get hasData(): boolean {
+    return !!this.currentTimeValue && this.currentTimeValue !== Infinity;
+  }
+
+  @Input()
+  anchors: number[] = [];
 
   @Output()
   timeChanged = new EventEmitter<number>();
 
-  currentTime = 0;
-
   timestampFormat: DateFormatProcessor;
 
+  minTimeIndex = 0;
+  maxTimeIndex = 0;
+  index = 0;
+  playing = false;
+  interval: Subscription;
   speed: number;
+
+  private minValue: number;
+  private maxValue: number;
+  private currentTimeValue: number = null;
 
   constructor(public element: ElementRef<HTMLElement>,
               private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef,
               private injector: Injector) {
   }
 
@@ -70,25 +121,110 @@ export class MapTimelinePanelComponent implements OnInit, OnChanges, OnDestroy {
     this.speed = this.settings.speedOptions[0];
   }
 
-  ngOnChanges() {
-    this.currentTime = this.min === Infinity ? 0 : this.min;
-    if (this.settings.showTimestamp) {
+  public onIndexChange(index: number) {
+    this.index = index;
+    this.updateCurrentTime();
+  }
+
+  public play() {
+    this.playing = true;
+    if (!this.interval) {
+      this.interval = interval(1000 / this.speed)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter(() => this.playing)
+      ).subscribe(
+        {
+          next: () => {
+            if (this.index < this.maxTimeIndex) {
+              this.index++;
+              this.updateCurrentTime();
+            } else {
+              this.playing = false;
+              this.cd.markForCheck();
+              this.interval.unsubscribe();
+              this.interval = null;
+            }
+          },
+          error: (err) => {
+            console.error(err);
+          }
+        }
+      );
+    }
+  }
+
+  public pause() {
+    this.playing = false;
+    this.updateCurrentTime();
+  }
+
+  public fastRewind() {
+    this.index = this.minTimeIndex;
+    this.pause();
+  }
+
+  public fastForward() {
+    this.index = this.maxTimeIndex;
+    this.pause();
+  }
+
+  public moveNext() {
+    if (this.index < this.maxTimeIndex) {
+      if (this.settings.snapToRealLocation) {
+        const anchorIndex = this.findIndex(this.currentTime, this.anchors) + 1;
+        this.index = Math.floor((this.anchors[anchorIndex] - this.minValue) / this.settings.timeStep);
+      } else {
+        this.index++;
+      }
+    }
+    this.pause();
+  }
+
+  public movePrev() {
+    if (this.index > this.minTimeIndex) {
+      if (this.settings.snapToRealLocation) {
+        const anchorIndex = this.findIndex(this.currentTime, this.anchors) - 1;
+        this.index = Math.floor((this.anchors[anchorIndex] - this.minValue) / this.settings.timeStep);
+      } else {
+        this.index--;
+      }
+    }
+    this.pause();
+  }
+
+  public speedUpdated() {
+    if (this.interval) {
+      this.interval.unsubscribe();
+      this.interval = null;
+    }
+    if (this.playing) {
+      this.play();
+    }
+  }
+
+  private updateCurrentTime() {
+    const newTime = this.minValue + this.index * this.settings.timeStep;
+    if (this.currentTime !== newTime) {
+      this.currentTime = newTime;
+      this.timeChanged.emit(this.currentTime);
+      this.updateTimestampDisplayValue();
+    }
+  }
+
+  private updateTimestampDisplayValue() {
+    if (this.settings.showTimestamp && this.hasData) {
       this.timestampFormat.update(this.currentTime);
       this.cd.markForCheck();
     }
   }
 
-  ngOnDestroy() {
-  }
-
-  public onTimeChange() {
-    if (this.settings.showTimestamp) {
-      this.timestampFormat.update(this.currentTime);
-      this.cd.markForCheck();
+  private findIndex(value: number, array: number[]): number {
+    let i = 0;
+    while (array[i] < value) {
+      i++;
     }
-    this.timeChanged.next(this.currentTime);
+    return i;
   }
-
-  public speedUpdated() {}
 
 }
