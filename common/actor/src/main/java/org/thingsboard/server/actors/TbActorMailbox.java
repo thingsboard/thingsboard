@@ -153,7 +153,7 @@ public final class TbActorMailbox implements TbActorCtx {
             }
             if (msg != null) {
                 try {
-                    log.debug("[{}] Going to process message: {}", selfId, msg);
+                    log.trace("[{}] Going to process message: {}", selfId, msg);
                     actor.process(msg);
                 } catch (TbRuleNodeUpdateException updateException) {
                     stopReason = TbActorStopReason.INIT_FAILED;

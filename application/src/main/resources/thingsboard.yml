@@ -437,6 +437,8 @@ actors:
     device_dispatcher_pool_size: "${ACTORS_SYSTEM_DEVICE_DISPATCHER_POOL_SIZE:4}" # Thread pool size for actor system dispatcher that process messages for device actors
     rule_dispatcher_pool_size: "${ACTORS_SYSTEM_RULE_DISPATCHER_POOL_SIZE:8}" # Thread pool size for actor system dispatcher that process messages for rule engine (chain/node) actors
     edge_dispatcher_pool_size: "${ACTORS_SYSTEM_EDGE_DISPATCHER_POOL_SIZE:4}" # Thread pool size for actor system dispatcher that process messages for edge actors
+    cfm_dispatcher_pool_size: "${ACTORS_SYSTEM_CFM_DISPATCHER_POOL_SIZE:2}" # Thread pool size for actor system dispatcher that process messages for CalculatedField manager actors
+    cfe_dispatcher_pool_size: "${ACTORS_SYSTEM_CFE_DISPATCHER_POOL_SIZE:8}" # Thread pool size for actor system dispatcher that process messages for CalculatedField entity actors
   tenant:
     create_components_on_init: "${ACTORS_TENANT_CREATE_COMPONENTS_ON_INIT:true}" # Create components in initialization
   session:
@@ -504,6 +506,12 @@ actors:
     js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
     # Actors statistic persistence frequency in milliseconds
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
+  calculated_fields:
+    debug_mode_rate_limits_per_tenant:
+      # Enable/Disable the rate limit of persisted debug events for all calculated fields per tenant
+      enabled: "${ACTORS_CALCULATED_FIELD_DEBUG_MODE_RATE_LIMITS_PER_TENANT_ENABLED:true}"
+      # The value of DEBUG mode rate limit. By default, no more than 50 thousand events per hour
+      configuration: "${ACTORS_CALCULATED_FIELD_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:50000:3600}"
 
 debug:
   settings:
@@ -1618,6 +1626,10 @@ queue:
       edge: "${TB_QUEUE_KAFKA_EDGE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for Edge event topic
       edge-event: "${TB_QUEUE_KAFKA_EDGE_EVENT_TOPIC_PROPERTIES:retention.ms:2592000000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Calculated Field topics
+      calculated-field: "${TB_QUEUE_KAFKA_CF_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Calculated Field State topics
+      calculated-field-state: "${TB_QUEUE_KAFKA_CF_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:104857600000;partitions:1;min.insync.replicas:1;cleanup.policy:compact}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1691,7 +1703,6 @@ queue:
         enabled: "${TB_HOUSEKEEPER_STATS_ENABLED:true}"
         # Statistics printing interval for Housekeeper
         print-interval-ms: "${TB_HOUSEKEEPER_STATS_PRINT_INTERVAL_MS:60000}"
-
   vc:
     # Default topic name
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
@@ -1738,6 +1749,21 @@ queue:
     topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:15}"
     # Size of the thread pool that handles such operations as partition changes, config updates, queue deletion
     management-thread-pool-size: "${TB_QUEUE_RULE_ENGINE_MGMT_THREAD_POOL_SIZE:12}"
+  calculated_fields:
+    # Topic name for Calculated Field (CF) events from Rule Engine
+    event_topic: "${TB_QUEUE_CF_EVENT_TOPIC:tb_cf_event}"
+    # Topic name for Calculated Field (CF) compacted states
+    state_topic: "${TB_QUEUE_CF_STATE_TOPIC:tb_cf_state}"
+    # Interval in milliseconds to poll messages by CF (Rule Engine) microservices
+    poll_interval: "${TB_QUEUE_CF_POLL_INTERVAL_MS:25}"
+    # Amount of partitions used by CF microservices
+    partitions: "${TB_QUEUE_CF_PARTITIONS:10}"
+    # Timeout for processing a message pack by CF microservices
+    pack_processing_timeout: "${TB_QUEUE_CF_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    # Thread pool size for processing of the incoming messages
+    pool_size: "${TB_QUEUE_CF_POOL_SIZE:8}"
+    # RocksDB path for storing CF states
+    rocks_db_path: "${TB_QUEUE_CF_ROCKS_DB_PATH:${user.home}/.rocksdb/cf_states}"
   transport:
     # For high-priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"

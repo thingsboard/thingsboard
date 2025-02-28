@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -35,12 +36,15 @@ import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.device.NativeAssetRepository;
+import org.thingsboard.server.dao.sql.device.NativeDeviceRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityInfosToDto;
 
@@ -54,6 +58,9 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
 
     @Autowired
     private AssetRepository assetRepository;
+
+    @Autowired
+    private NativeAssetRepository nativeAssetRepository;
 
     @Autowired
     private AssetProfileRepository assetProfileRepository;
@@ -160,6 +167,16 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
     }
 
     @Override
+    public PageData<AssetId> findAssetIdsByTenantIdAndAssetProfileId(UUID tenantId, UUID assetProfileId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(assetRepository.findAssetIdsByTenantIdAndAssetProfileId(
+                        tenantId,
+                        assetProfileId,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)))
+                .mapData(AssetId::new);
+    }
+
+    @Override
     public PageData<Asset> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink) {
         return DaoUtil.toPageData(assetRepository
                 .findByTenantIdAndCustomerIdAndType(
@@ -239,6 +256,12 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
         log.debug("Try to find all asset types and pageLink [{}]", pageLink);
         return DaoUtil.pageToPageData(assetRepository.getAllAssetTypes(
                 DaoUtil.toPageable(pageLink, Arrays.asList(new SortOrder("tenantId"), new SortOrder("type")))));
+    }
+
+    @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink) {
+        log.debug("Find profile device id infos by pageLink [{}]", pageLink);
+        return nativeAssetRepository.findProfileEntityIdInfos(DaoUtil.toPageable(pageLink));
     }
 
     @Override

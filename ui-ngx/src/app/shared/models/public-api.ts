@@ -61,3 +61,4 @@ export * from './widgets-bundle.model';
 export * from './window-message.model';
 export * from './usage.models';
 export * from './query/query.models';
+export * from './regex.constants';
