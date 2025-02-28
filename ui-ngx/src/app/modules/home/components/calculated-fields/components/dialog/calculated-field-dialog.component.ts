@@ -35,7 +35,7 @@ import {
 import { noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { map, startWith } from 'rxjs/operators';
+import { map, startWith, switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
@@ -136,10 +136,22 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   }
 
   onTestScript(): void {
-    this.data.getTestScriptDialogFn(this.fromGroupValue, null, false).subscribe(expression => {
-      this.configFormGroup.get('expressionSCRIPT').setValue(expression);
-      this.configFormGroup.get('expressionSCRIPT').markAsDirty();
-    });
+    const calculatedFieldId = this.data.value?.id?.id;
+
+    (calculatedFieldId
+      ? this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId)
+        .pipe(
+          switchMap(event => {
+            const args = event?.arguments ? JSON.parse(event.arguments) : null;
+            return this.data.getTestScriptDialogFn(this.fromGroupValue, args, false);
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+      : this.data.getTestScriptDialogFn(this.fromGroupValue, null, false))
+      .subscribe(expression => {
+        this.configFormGroup.get('expressionSCRIPT').setValue(expression);
+        this.configFormGroup.get('expressionSCRIPT').markAsDirty();
+      });
   }
 
   private applyDialogData(): void {
