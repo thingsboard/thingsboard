@@ -60,6 +60,15 @@ public class CalculatedFieldLinkEntity extends BaseSqlEntity<CalculatedFieldLink
         super();
     }
 
+    public CalculatedFieldLinkEntity(CalculatedFieldLink calculatedFieldLink) {
+        this.setUuid(calculatedFieldLink.getUuidId());
+        this.createdTime = calculatedFieldLink.getCreatedTime();
+        this.tenantId = calculatedFieldLink.getTenantId().getId();
+        this.entityType = calculatedFieldLink.getEntityId().getEntityType().name();
+        this.entityId = calculatedFieldLink.getEntityId().getId();
+        this.calculatedFieldId = calculatedFieldLink.getCalculatedFieldId().getId();
+    }
+
     @Override
     public CalculatedFieldLink toData() {
         CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink(new CalculatedFieldLinkId(id));
