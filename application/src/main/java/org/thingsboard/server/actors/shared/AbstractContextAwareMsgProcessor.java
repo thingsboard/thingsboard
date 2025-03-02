@@ -21,6 +21,7 @@ import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 
 @Slf4j
 public abstract class AbstractContextAwareMsgProcessor {
@@ -36,8 +37,8 @@ public abstract class AbstractContextAwareMsgProcessor {
         return systemContext.getScheduler();
     }
 
-    protected void schedulePeriodicMsgWithDelay(TbActorCtx ctx, TbActorMsg msg, long delayInMs, long periodInMs) {
-        systemContext.schedulePeriodicMsgWithDelay(ctx, msg, delayInMs, periodInMs);
+    protected ScheduledFuture<?> schedulePeriodicMsgWithDelay(TbActorCtx ctx, TbActorMsg msg, long delayInMs, long periodInMs) {
+        return systemContext.schedulePeriodicMsgWithDelay(ctx, msg, delayInMs, periodInMs);
     }
 
     protected void scheduleMsgWithDelay(TbActorCtx ctx, TbActorMsg msg, long delayInMs) {
