@@ -34,6 +34,7 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { MarkerShape } from '@home/components/widget/lib/maps/models/marker-shape.models';
 import { UnplacedMapDataItem } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -1033,8 +1034,10 @@ export interface MarkerIconInfo {
 }
 
 export interface CustomActionData {
-  button: L.TB.TopToolbarButton;
+  button?: L.TB.TopToolbarButton;
   action: WidgetAction;
+  afterPlaceItemCallback: ($event: Event, descriptor: WidgetAction, entityId?: EntityId, entityName?: string,
+                           additionalParams?: any, entityLabel?: string) => void
 }
 
 export type MapStringFunction = (data: FormattedData<TbMapDatasource>,

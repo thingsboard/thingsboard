@@ -125,6 +125,7 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
+import type { MapWidgetComponent } from '@home/components/widget/lib/maps/map-widget.component';
 
 @Component({
   selector: 'tb-widget',
@@ -1150,44 +1151,17 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         }
         break;
       case WidgetActionType.placeMapItem:
-      case WidgetActionType.customPretty:
-        const customPrettyFunction = descriptor.customFunction;
-        const customHtml = descriptor.customHtml;
-        const customCss = descriptor.customCss;
-        const customResources = descriptor.customResources;
-        const actionNamespace = `custom-action-pretty-${guid()}`;
-        let htmlTemplate = '';
-        if (isDefined(customHtml) && customHtml.length > 0) {
-          htmlTemplate = customHtml;
+        const mapWidget: MapWidgetComponent = this.widgetContext.$scope.mapWidget
+        if (mapWidget) {
+          mapWidget.map.placeMapItem({
+            action: descriptor,
+            afterPlaceItemCallback: this.executeCustomPrettyAction.bind(this),
+            button: additionalParams?.button
+          });
         }
-        this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe({
-          next: () => {
-            if (isNotEmptyTbFunction(customPrettyFunction)) {
-              compileTbFunction(this.http, customPrettyFunction, '$event', 'widgetContext', 'entityId',
-                'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel').subscribe(
-                {
-                  next: (compiled) => {
-                    try {
-                      if (!additionalParams) {
-                        additionalParams = {};
-                      }
-                      this.widgetContext.customDialog.setAdditionalImports(descriptor.customImports);
-                      compiled.execute($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
-                    } catch (e) {
-                      console.error(e);
-                    }
-                  },
-                  error: (err) => {
-                    console.error(err);
-                  }
-                }
-              )
-            }
-          },
-          error: (errorMessages: string[]) => {
-            this.processResourcesLoadErrors(errorMessages);
-          }
-        });
+        break;
+      case WidgetActionType.customPretty:
+        this.executeCustomPrettyAction($event, descriptor, entityId, entityName, additionalParams, entityLabel);
         break;
       case WidgetActionType.mobileAction:
         const mobileAction = descriptor.mobileAction;
@@ -1557,6 +1531,45 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     const entityName = entityInfo ? entityInfo.entityName : null;
     const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
     this.handleWidgetAction($event, action, entityId, entityName, null, entityLabel);
+  }
+
+  private executeCustomPrettyAction($event: Event, descriptor: WidgetAction, entityId?: EntityId,
+                                    entityName?: string, additionalParams?: any, entityLabel?: string) {
+    const customPrettyFunction = descriptor.customFunction;
+    const customHtml = descriptor.customHtml;
+    const customCss = descriptor.customCss;
+    const customResources = descriptor.customResources;
+    const actionNamespace = `custom-action-pretty-${guid()}`;
+    let htmlTemplate = '';
+    if (isDefined(customHtml) && customHtml.length > 0) {
+      htmlTemplate = customHtml;
+    }
+    this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe({
+      next: () => {
+        if (isNotEmptyTbFunction(customPrettyFunction)) {
+          compileTbFunction(this.http, customPrettyFunction, '$event', 'widgetContext', 'entityId',
+            'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel').subscribe({
+            next: (compiled) => {
+              try {
+                if (!additionalParams) {
+                  additionalParams = {};
+                }
+                this.widgetContext.customDialog.setAdditionalImports(descriptor.customImports);
+                compiled.execute($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
+              } catch (e) {
+                console.error(e);
+              }
+            },
+            error: (err) => {
+              console.error(err);
+            }
+          });
+        }
+      },
+      error: (errorMessages: string[]) => {
+        this.processResourcesLoadErrors(errorMessages);
+      }
+    });
   }
 
   private loadCustomActionResources(actionNamespace: string, customCss: string, customResources: Array<WidgetResource>,

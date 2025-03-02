@@ -64,7 +64,7 @@ export class MapWidgetComponent implements OnInit, OnDestroy {
   overlayStyle: ComponentStyle = {};
   padding: string;
 
-  private map: TbMap<MapSetting>;
+  map: TbMap<MapSetting>;
 
   constructor(public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
