@@ -50,6 +50,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -143,8 +144,7 @@ public interface TbContext {
     void tellFailure(TbMsg msg, Throwable th);
 
     /**
-     * Puts new message to queue for processing by the Root Rule Chain
-     * WARNING: message is put to the Main queue. To specify other queue name - use {@link #enqueue(TbMsg, String, Runnable, Consumer)}
+     * Puts new message to queue from TbMsg for processing by the Root Rule Chain
      *
      * @param msg - message
      */
@@ -357,6 +357,8 @@ public interface TbContext {
     MobileAppBundleService getMobileAppBundleService();
 
     SlackService getSlackService();
+
+    CalculatedFieldService getCalculatedFieldService();
 
     boolean isExternalNodeForceAck();
 

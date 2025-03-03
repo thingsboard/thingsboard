@@ -144,6 +144,9 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entry(new DoubleDataEntry("temperature", 22.3))
                 .notifyDevice(false)
                 .strategy(Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -186,6 +189,9 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entry(new DoubleDataEntry("temperature", 22.3))
                 .notifyDevice(false)
                 .strategy(Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -225,6 +231,9 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entry(new DoubleDataEntry("temperature", 22.3))
                 .notifyDevice(false)
                 .strategy(Strategy.WS_ONLY)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -250,6 +259,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setUpdateAttributesOnlyOnValueChange(false);
         config.setProcessingSettings(new Advanced(
                 ProcessingStrategy.onEveryMessage(),
+                ProcessingStrategy.onEveryMessage(),
                 ProcessingStrategy.onEveryMessage()
         ));
 
@@ -270,6 +280,9 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entry(new DoubleDataEntry("temperature", 22.3))
                 .notifyDevice(false)
                 .strategy(Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -295,7 +308,8 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setUpdateAttributesOnlyOnValueChange(false);
         config.setProcessingSettings(new Advanced(
                 ProcessingStrategy.deduplicate(1),
-                ProcessingStrategy.deduplicate(2)
+                ProcessingStrategy.deduplicate(2),
+                ProcessingStrategy.deduplicate(3)
         ));
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -303,6 +317,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         long ts1 = 500L;
         long ts2 = 1500L;
         long ts3 = 2500L;
+        long ts4 = 3500L;
 
         // WHEN-THEN
         node.onMsg(ctxMock, TbMsg.newMsg()
@@ -324,7 +339,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts2))))
                 .build());
         then(telemetryServiceMock).should().saveAttributes(assertArg(
-                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new Strategy(true, false))
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new Strategy(true, false, false))
         ));
 
         clearInvocations(telemetryServiceMock);
@@ -336,7 +351,19 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts3))))
                 .build());
         then(telemetryServiceMock).should().saveAttributes(assertArg(
-                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(Strategy.PROCESS_ALL)
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new Strategy(true, true, false))
+        ));
+
+        clearInvocations(telemetryServiceMock);
+
+        node.onMsg(ctxMock, TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts4))))
+                .build());
+        then(telemetryServiceMock).should().saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new Strategy(true, false, true))
         ));
     }
 
@@ -344,6 +371,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     public void givenAdvancedProcessingSettingsWithSkipStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenSkipsSameMessageTwoTimes() throws TbNodeException {
         // GIVEN
         config.setProcessingSettings(new Advanced(
+                ProcessingStrategy.skip(),
                 ProcessingStrategy.skip(),
                 ProcessingStrategy.skip()
         ));

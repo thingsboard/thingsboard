@@ -37,14 +37,15 @@ import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessin
         @JsonSubTypes.Type(value = Deduplicate.class, name = "DEDUPLICATE"),
         @JsonSubTypes.Type(value = Advanced.class, name = "ADVANCED")
 })
-public sealed interface TimeseriesProcessingSettings extends BaseProcessingSettings permits OnEveryMessage, Deduplicate, WebSocketsOnly, Advanced {
+public sealed interface TimeseriesProcessingSettings extends ProcessingSettings permits OnEveryMessage, Deduplicate, WebSocketsOnly, Advanced {
 
-    record Advanced(ProcessingStrategy timeseries, ProcessingStrategy latest, ProcessingStrategy webSockets) implements TimeseriesProcessingSettings {
+    record Advanced(ProcessingStrategy timeseries, ProcessingStrategy latest, ProcessingStrategy webSockets, ProcessingStrategy calculatedFields) implements TimeseriesProcessingSettings {
 
         public Advanced {
             Objects.requireNonNull(timeseries);
             Objects.requireNonNull(latest);
             Objects.requireNonNull(webSockets);
+            Objects.requireNonNull(calculatedFields);
         }
 
     }

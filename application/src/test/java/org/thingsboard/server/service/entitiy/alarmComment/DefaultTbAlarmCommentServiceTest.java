@@ -35,10 +35,17 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.entitiy.alarm.DefaultTbAlarmCommentService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.util.UUID;
@@ -72,6 +79,20 @@ public class DefaultTbAlarmCommentServiceTest {
     protected CustomerService customerService;
     @MockBean
     protected TbClusterService tbClusterService;
+    @MockBean
+    private AccessControlService accessControlService;
+    @MockBean
+    private TenantService tenantService;
+    @MockBean
+    private AssetService assetService;
+    @MockBean
+    private DeviceService deviceService;
+    @MockBean
+    private AssetProfileService assetProfileService;
+    @MockBean
+    private DeviceProfileService deviceProfileService;
+    @MockBean
+    private EntityService entityService;
     @SpyBean
     DefaultTbAlarmCommentService service;
 

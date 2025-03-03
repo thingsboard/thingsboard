@@ -138,7 +138,7 @@ public class TbMsgAttributesNode implements TbNode {
         AttributesSaveRequest.Strategy strategy = determineSaveStrategy(msg.getMetaDataTs(), msg.getOriginator().getId());
 
         // short-circuit
-        if (!strategy.saveAttributes() && !strategy.sendWsUpdate()) {
+        if (!strategy.saveAttributes() && !strategy.sendWsUpdate() && !strategy.processCalculatedFields()) {
             ctx.tellSuccess(msg);
             return;
         }
@@ -177,7 +177,8 @@ public class TbMsgAttributesNode implements TbNode {
         if (processingSettings instanceof Advanced advanced) {
             return new AttributesSaveRequest.Strategy(
                     advanced.attributes().shouldProcess(ts, originatorUuid),
-                    advanced.webSockets().shouldProcess(ts, originatorUuid)
+                    advanced.webSockets().shouldProcess(ts, originatorUuid),
+                    advanced.calculatedFields().shouldProcess(ts, originatorUuid)
             );
         }
         // should not happen
@@ -206,6 +207,9 @@ public class TbMsgAttributesNode implements TbNode {
                 .entries(attributes)
                 .notifyDevice(config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)))
                 .strategy(strategy)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .callback(callback)
                 .build());
     }

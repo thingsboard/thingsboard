@@ -29,7 +29,7 @@ import {
 import {
   AttributeNodeConfiguration,
   AttributeNodeConfigurationForm,
-  defaultAttributeAdvancedPersistenceStrategy
+  defaultAttributeAdvancedProcessingStrategy
 } from '@home/components/rule-node/action/attributes-config.model';
 
 @Component({
@@ -43,9 +43,9 @@ export class AttributesConfigComponent extends RuleNodeConfigurationComponent {
   attributeScopes = Object.keys(AttributeScope);
   telemetryTypeTranslationsMap = telemetryTypeTranslations;
 
-  PersistenceType = ProcessingType;
-  persistenceStrategies = [ProcessingType.ON_EVERY_MESSAGE, ProcessingType.DEDUPLICATE, ProcessingType.WEBSOCKETS_ONLY];
-  PersistenceTypeTranslationMap = ProcessingTypeTranslationMap;
+  ProcessingType = ProcessingType;
+  processingStrategies = [ProcessingType.ON_EVERY_MESSAGE, ProcessingType.DEDUPLICATE, ProcessingType.WEBSOCKETS_ONLY];
+  ProcessingTypeTranslationMap = ProcessingTypeTranslationMap;
 
   maxDeduplicateTime = maxDeduplicateTimeSecs;
 
@@ -71,14 +71,14 @@ export class AttributesConfigComponent extends RuleNodeConfigurationComponent {
         type: isAdvanced ? ProcessingType.ON_EVERY_MESSAGE : config.processingSettings.type,
         isAdvanced: isAdvanced,
         deduplicationIntervalSecs: config.processingSettings?.deduplicationIntervalSecs ?? 60,
-        advanced: isAdvanced ? config.processingSettings : defaultAttributeAdvancedPersistenceStrategy
+        advanced: isAdvanced ? config.processingSettings : defaultAttributeAdvancedProcessingStrategy
       }
     } else {
       processingSettings = {
         type: ProcessingType.ON_EVERY_MESSAGE,
         isAdvanced: false,
         deduplicationIntervalSecs: 60,
-        advanced: defaultAttributeAdvancedPersistenceStrategy
+        advanced: defaultAttributeAdvancedProcessingStrategy
       };
     }
     return {

@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-import { DAY, SECOND } from '@shared/models/time/time.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { BasicProcessingSettings, ProcessingType } from '@home/components/rule-node/action/timeseries-config.models';
 
@@ -38,13 +37,14 @@ export type AttributeProcessingSettingsForm = Omit<AttributeProcessingSettings, 
   type: ProcessingType;
 };
 
-export interface AttributeDeduplicateProcessingStrategy extends BasicProcessingSettings{
+export interface AttributeDeduplicateProcessingStrategy extends BasicProcessingSettings {
   deduplicationIntervalSecs: number;
 }
 
-export interface AttributeAdvancedProcessingStrategy extends BasicProcessingSettings{
+export interface AttributeAdvancedProcessingStrategy extends BasicProcessingSettings {
   attribute: AttributeAdvancedProcessingConfig;
   webSockets: AttributeAdvancedProcessingConfig;
+  calculatedFields: AttributeAdvancedProcessingConfig;
 }
 
 export type AttributeAdvancedProcessingConfig = WithOptional<AttributeDeduplicateProcessingStrategy, 'deduplicationIntervalSecs'>;
@@ -53,7 +53,8 @@ export const defaultAdvancedProcessingConfig: AttributeAdvancedProcessingConfig 
   type: ProcessingType.ON_EVERY_MESSAGE
 }
 
-export const defaultAttributeAdvancedPersistenceStrategy: Omit<AttributeAdvancedProcessingStrategy, 'type'> = {
+export const defaultAttributeAdvancedProcessingStrategy: Omit<AttributeAdvancedProcessingStrategy, 'type'> = {
   attribute: defaultAdvancedProcessingConfig,
   webSockets: defaultAdvancedProcessingConfig,
+  calculatedFields: defaultAdvancedProcessingConfig,
 }

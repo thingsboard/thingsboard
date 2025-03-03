@@ -23,6 +23,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.io.Serial;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,6 +51,10 @@ public class PartitionChangeEvent extends TbApplicationEvent {
 
     public Set<TopicPartitionInfo> getEdgePartitions() {
         return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_CORE, DataConstants.EDGE_QUEUE_NAME);
+    }
+
+    public Set<TopicPartitionInfo> getCfPartitions() {
+        return partitionsMap.getOrDefault(QueueKey.CF, Collections.emptySet());
     }
 
     private Set<TopicPartitionInfo> getPartitionsByServiceTypeAndQueueName(ServiceType serviceType, String queueName) {

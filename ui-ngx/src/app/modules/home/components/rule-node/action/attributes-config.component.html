@@ -31,13 +31,13 @@
       <mat-form-field>
         <mat-label translate>rule-node-config.save-attribute.strategy</mat-label>
         <mat-select formControlName="type">
-          @for (strategy of persistenceStrategies; track strategy) {
-            <mat-option [value]="strategy">{{ PersistenceTypeTranslationMap.get(strategy) | translate }}</mat-option>
+          @for (strategy of processingStrategies; track strategy) {
+            <mat-option [value]="strategy">{{ ProcessingTypeTranslationMap.get(strategy) | translate }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
 
-      @if(attributesConfigForm.get('processingSettings.type').value === PersistenceType.DEDUPLICATE) {
+      @if(attributesConfigForm.get('processingSettings.type').value === ProcessingType.DEDUPLICATE) {
         <tb-time-unit-input
           required
           labelText="{{ 'rule-node-config.save-attribute.deduplication-interval' | translate }}"
@@ -50,18 +50,20 @@
         </tb-time-unit-input>
       }
     } @else {
-      <tb-advanced-persistence-settings
+      <tb-advanced-processing-settings
         class="mb-4"
         formControlName="advanced"
-        attribute webSockets
-      ></tb-advanced-persistence-settings>
+        attribute webSockets calculatedFields
+      ></tb-advanced-processing-settings>
     }
   </div>
+
   <div class="tb-form-panel stroked">
-    <tb-example-hint [hintText]="'rule-node-config.attributes-scope-hint'">
-    </tb-example-hint>
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'rule-node-config.attributes-scope-hint' | translate}}" translate>
+      rule-node-config.save-attribute.scope
+    </div>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" subscriptSizing="dynamic">
         <mat-label>{{ 'rule-node-config.attributes-scope' | translate }}</mat-label>
         <mat-select required
                     class="tb-entity-type-select" matInput formControlName="scope">
@@ -70,7 +72,7 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" subscriptSizing="dynamic">
         <mat-label>{{ 'rule-node-config.attributes-scope-value' | translate }}</mat-label>
         <input type="text" matInput readonly disabled [ngModel]="attributesConfigForm.get('scope').value" [ngModelOptions]="{standalone: true}">
         <button type="button"
