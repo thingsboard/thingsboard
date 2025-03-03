@@ -13,39 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@use '../../../../../../../scss/constants' as constants;
+package org.thingsboard.server.dao;
 
-$panel-width: 520px;
+import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-:host {
-  display: flex;
-  width: $panel-width;
-  max-width: 100%;
-  max-height: 100vh;
+import java.util.List;
 
-  .fixed-title-width {
-    @media #{constants.$mat-xs} {
-      min-width: 120px;
-    }
-  }
+public interface ResourceContainerDao<T extends HasId<?>> {
 
-  .limit-field-row {
-    @media screen and (max-width: $panel-width) {
-      display: flex;
-      flex-direction: column;
+    List<T> findByTenantIdAndResourceLink(TenantId tenantId, String link, int limit);
 
-      .fixed-title-width {
-        align-self: flex-start;
-        padding-top: 8px;
-      }
-    }
-  }
-}
+    List<T> findByResourceLink(String link, int limit);
 
-:host ::ng-deep {
-  .time-interval-field {
-    .advanced-input {
-      flex-direction: column;
-    }
-  }
 }

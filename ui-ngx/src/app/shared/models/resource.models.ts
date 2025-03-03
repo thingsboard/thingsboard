@@ -120,28 +120,28 @@ export interface ImageExportData {
 export type ImageResourceType = 'tenant' | 'system';
 export type TBResourceScope = 'tenant' | 'system';
 
-export type ImageReferences = {[entityType: string]: Array<BaseData<HasId> & HasTenantId>};
+export type ResourceReferences = {[entityType: string]: Array<BaseData<HasId> & HasTenantId>};
 
-export interface ImageResourceInfoWithReferences extends ImageResourceInfo {
-  references: ImageReferences;
+export interface ResourceInfoWithReferences extends ResourceInfo {
+  references: ResourceReferences;
 }
 
-export interface ImageDeleteResult {
-  image: ImageResourceInfo;
+export interface ResourceDeleteResult {
+  resource: TbResourceInfo<any>;
   success: boolean;
-  imageIsReferencedError?: boolean;
+  resourceIsReferencedError?: boolean;
   error?: any;
-  references?: ImageReferences;
+  references?: ResourceReferences;
 }
 
-export const toImageDeleteResult = (image: ImageResourceInfo, e?: any): ImageDeleteResult => {
+export const toResourceDeleteResult = (resource: ResourceInfo, e?: any): ResourceDeleteResult => {
   if (!e) {
-    return {image, success: true};
+    return {resource, success: true};
   } else {
-    const result: ImageDeleteResult = {image, success: false, error: e};
+    const result: ResourceDeleteResult = {resource, success: false, error: e};
     if (e?.status === 400 && e?.error?.success === false && e?.error?.references) {
-      const references: ImageReferences = e?.error?.references;
-      result.imageIsReferencedError = true;
+      const references: ResourceReferences = e?.error?.references;
+      result.resourceIsReferencedError = true;
       result.references = references;
     }
     return result;

@@ -13,39 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@use '../../../../../../../scss/constants' as constants;
+package org.thingsboard.server.common.data;
 
-$panel-width: 520px;
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.HasId;
 
-:host {
-  display: flex;
-  width: $panel-width;
-  max-width: 100%;
-  max-height: 100vh;
+import java.util.List;
+import java.util.Map;
 
-  .fixed-title-width {
-    @media #{constants.$mat-xs} {
-      min-width: 120px;
-    }
-  }
+@Data
+@Builder
+public class TbResourceDeleteResult {
 
-  .limit-field-row {
-    @media screen and (max-width: $panel-width) {
-      display: flex;
-      flex-direction: column;
+    private boolean success;
+    private Map<String, List<? extends HasId<?>>> references;
 
-      .fixed-title-width {
-        align-self: flex-start;
-        padding-top: 8px;
-      }
-    }
-  }
-}
-
-:host ::ng-deep {
-  .time-interval-field {
-    .advanced-input {
-      flex-direction: column;
-    }
-  }
 }

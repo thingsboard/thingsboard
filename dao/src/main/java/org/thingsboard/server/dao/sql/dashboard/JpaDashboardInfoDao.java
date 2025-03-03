@@ -133,4 +133,15 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
     public List<DashboardInfo> findByImageLink(String imageLink, int limit) {
         return DaoUtil.convertDataList(dashboardInfoRepository.findByImageLink(imageLink, limit));
     }
+
+    @Override
+    public List<DashboardInfo> findByTenantIdAndResourceLink(TenantId tenantId, String url, int limit) {
+        return DaoUtil.convertDataList(dashboardInfoRepository.findDashboardInfosByTenantIdAndResourceLink(tenantId.getId(), url, limit));
+    }
+
+    @Override
+    public List<DashboardInfo> findByResourceLink(String link, int limit) {
+        return DaoUtil.convertDataList(dashboardInfoRepository.findDashboardInfosByResourceLink(link, limit));
+    }
+
 }

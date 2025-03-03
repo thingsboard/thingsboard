@@ -201,7 +201,7 @@ import { ImageGalleryComponent } from '@shared/components/image/image-gallery.co
 import { UploadImageDialogComponent } from '@shared/components/image/upload-image-dialog.component';
 import { ImageDialogComponent } from '@shared/components/image/image-dialog.component';
 import { ImageReferencesComponent } from '@shared/components/image/image-references.component';
-import { ImagesInUseDialogComponent } from '@shared/components/image/images-in-use-dialog.component';
+import { ResourcesInUseDialogComponent } from '@shared/components/resource/resources-in-use-dialog.component';
 import { GalleryImageInputComponent } from '@shared/components/image/gallery-image-input.component';
 import { MultipleGalleryImageInputComponent } from '@shared/components/image/multiple-gallery-image-input.component';
 import { EmbedImageDialogComponent } from '@shared/components/image/embed-image-dialog.component';
@@ -426,7 +426,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UploadImageDialogComponent,
     ImageDialogComponent,
     ImageReferencesComponent,
-    ImagesInUseDialogComponent,
+    ResourcesInUseDialogComponent,
     GalleryImageInputComponent,
     MultipleGalleryImageInputComponent,
     EmbedImageDialogComponent,
@@ -690,7 +690,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UploadImageDialogComponent,
     ImageDialogComponent,
     ImageReferencesComponent,
-    ImagesInUseDialogComponent,
+    ResourcesInUseDialogComponent,
     GalleryImageInputComponent,
     MultipleGalleryImageInputComponent,
     EmbedImageDialogComponent,
