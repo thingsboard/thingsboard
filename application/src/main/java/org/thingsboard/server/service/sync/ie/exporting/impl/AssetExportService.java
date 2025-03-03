@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -28,18 +27,12 @@ import java.util.Set;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
 public class AssetExportService extends BaseEntityExportService<AssetId, Asset, EntityExportData<Asset>> {
 
     @Override
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Asset asset, EntityExportData<Asset> exportData) {
         asset.setCustomerId(getExternalIdOrElseInternal(ctx, asset.getCustomerId()));
         asset.setAssetProfileId(getExternalIdOrElseInternal(ctx, asset.getAssetProfileId()));
-    }
-
-    @Override
-    protected EntityExportData<Asset> newExportData() {
-        return new EntityExportData<>();
     }
 
     @Override
