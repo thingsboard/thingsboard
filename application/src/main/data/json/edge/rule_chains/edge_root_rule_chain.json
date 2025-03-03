@@ -119,7 +119,7 @@
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
         "configuration": {
-          "scope": "SERVER_SCOPE"
+          "scope": "CLIENT_SCOPE"
         },
         "externalId": null
       },
