@@ -151,7 +151,6 @@ function permissionList() {
       799  799  tb-transports/coap/log
       799  799  tb-vc-executor/log
       999  999  tb-node/postgres
-      799  799  edqs/log
       "
 
     source .env
@@ -159,6 +158,12 @@ function permissionList() {
     if [ "$DATABASE" = "hybrid" ]; then
       PERMISSION_LIST="$PERMISSION_LIST
       999  999  tb-node/cassandra
+      "
+    fi
+
+    if [ "$EDQS_ENABLED" = true ]; then
+      PERMISSION_LIST="$PERMISSION_LIST
+      799  799  edqs/log
       "
     fi
 
