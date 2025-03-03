@@ -40,6 +40,7 @@ import { EntityDebugSettingsService } from '@home/components/entity/debug/entity
   templateUrl: './calculated-fields-table.component.html',
   styleUrls: ['./calculated-fields-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [EntityDebugSettingsService]
 })
 export class CalculatedFieldsTableComponent {
 

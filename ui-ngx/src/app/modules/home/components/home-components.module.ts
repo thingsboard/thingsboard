@@ -203,7 +203,6 @@ import {
 import {
   CalculatedFieldTestArgumentsComponent
 } from '@home/components/calculated-fields/components/test-arguments/calculated-field-test-arguments.component';
-import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 
 @NgModule({
   declarations:
@@ -504,7 +503,6 @@ import { EntityDebugSettingsService } from '@home/components/entity/debug/entity
   providers: [
     WidgetComponentService,
     CustomDialogService,
-    EntityDebugSettingsService,
     {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent},
     {provide: COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN, useValue: ComplexFilterPredicateDialogComponent},
     {provide: DASHBOARD_PAGE_COMPONENT_TOKEN, useValue: DashboardPageComponent},
