@@ -288,7 +288,6 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         assertThat(calculatedFields.size()).isOne();
         var importedCalculatedField = calculatedFields.get(0);
         assertThat(importedCalculatedField.getName()).isEqualTo(calculatedField.getName());
-        assertThat(importedCalculatedField.getExternalId()).isEqualTo(calculatedField.getId());
 
         EntityExportData<Device> updatedDeviceEntity = getAndClone(entitiesExportData, EntityType.DEVICE);
         updatedDeviceEntity.getEntity().setLabel("t" + updatedDeviceEntity.getEntity().getLabel());
@@ -303,7 +302,6 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         calculatedFields = calculatedFieldService.findCalculatedFieldsByEntityId(tenantId2, importedDevice.getId());
         assertThat(calculatedFields.size()).isOne();
         importedCalculatedField = calculatedFields.get(0);
-        assertThat(importedCalculatedField.getExternalId()).isEqualTo(calculatedField.getId());
         assertThat(importedCalculatedField.getName()).startsWith("t_");
     }
 

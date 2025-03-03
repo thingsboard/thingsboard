@@ -729,7 +729,6 @@ public class ModelConstants {
     public static final String CALCULATED_FIELD_CONFIGURATION_VERSION = "configuration_version";
     public static final String CALCULATED_FIELD_CONFIGURATION = "configuration";
     public static final String CALCULATED_FIELD_VERSION = "version";
-    public static final String CALCULATED_FIELD_EXTERNAL_ID = "external_id";
 
     /**
      * Calculated field links constants.

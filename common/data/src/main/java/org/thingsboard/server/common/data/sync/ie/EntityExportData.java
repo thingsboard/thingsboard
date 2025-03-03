@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.JsonTbEntity;
@@ -37,10 +38,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "entityType", include = As.EXISTING_PROPERTY, visible = true, defaultImpl = EntityExportData.class)
 @JsonSubTypes({
-        @Type(name = "DEVICE_PROFILE", value = DeviceProfileExportData.class),
-        @Type(name = "ASSET_PROFILE", value = AssetProfileExportData.class),
         @Type(name = "DEVICE", value = DeviceExportData.class),
-        @Type(name = "ASSET", value = AssetExportData.class),
         @Type(name = "RULE_CHAIN", value = RuleChainExportData.class),
         @Type(name = "WIDGET_TYPE", value = WidgetTypeExportData.class),
         @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundleExportData.class)
@@ -58,6 +56,8 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     public static final Comparator<AttributeExportData> attrComparator = Comparator
             .comparing(AttributeExportData::getKey).thenComparing(AttributeExportData::getLastUpdateTs);
 
+    public static final Comparator<CalculatedField> calculatedFieldsComparator = Comparator.comparing(CalculatedField::getName);
+
     @JsonProperty(index = 2)
     @JsonTbEntity
     private E entity;
@@ -68,6 +68,9 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     private List<EntityRelation> relations;
     @JsonProperty(index = 101)
     private Map<String, List<AttributeExportData>> attributes;
+    @JsonProperty(index = 102)
+    @JsonIgnoreProperties({"id", "entityId", "createdTime", "version"})
+    private List<CalculatedField> calculatedFields;
 
     public EntityExportData<E> sort() {
         if (relations != null && !relations.isEmpty()) {
@@ -75,6 +78,9 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
         }
         if (attributes != null && !attributes.isEmpty()) {
             attributes.values().forEach(list -> list.sort(attrComparator));
+        }
+        if (calculatedFields != null && !calculatedFields.isEmpty()) {
+            calculatedFields.sort(calculatedFieldsComparator);
         }
         return this;
     }
@@ -101,7 +107,7 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
     @JsonIgnore
     public boolean hasCalculatedFields() {
-        return false;
+        return calculatedFields != null;
     }
 
 }

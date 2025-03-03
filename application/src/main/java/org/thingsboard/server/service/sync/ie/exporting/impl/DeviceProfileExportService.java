@@ -19,8 +19,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.sync.ie.DeviceProfileExportData;
-import org.thingsboard.server.dao.cf.CalculatedFieldService;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
 
@@ -28,23 +27,13 @@ import java.util.Set;
 
 @Service
 @TbCoreComponent
-public class DeviceProfileExportService extends BaseCalculatedFieldsExportService<DeviceProfileId, DeviceProfile, DeviceProfileExportData> {
-
-    protected DeviceProfileExportService(CalculatedFieldService calculatedFieldService) {
-        super(calculatedFieldService);
-    }
+public class DeviceProfileExportService extends BaseEntityExportService<DeviceProfileId, DeviceProfile, EntityExportData<DeviceProfile>> {
 
     @Override
-    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, DeviceProfile deviceProfile, DeviceProfileExportData exportData) {
+    protected void setRelatedEntities(EntitiesExportCtx<?> ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData) {
         deviceProfile.setDefaultDashboardId(getExternalIdOrElseInternal(ctx, deviceProfile.getDefaultDashboardId()));
         deviceProfile.setDefaultRuleChainId(getExternalIdOrElseInternal(ctx, deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultEdgeRuleChainId(getExternalIdOrElseInternal(ctx, deviceProfile.getDefaultEdgeRuleChainId()));
-        setCalculatedFields(ctx, deviceProfile, exportData);
-    }
-
-    @Override
-    protected DeviceProfileExportData newExportData() {
-        return new DeviceProfileExportData();
     }
 
     @Override

@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Data
-public class DeviceExportData extends CalculatedFieldExportData<Device> {
+public class DeviceExportData extends EntityExportData<Device> {
 
     @JsonProperty(index = 3)
     @JsonIgnoreProperties({"id", "deviceId", "createdTime", "version"})

@@ -89,26 +89,6 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
-    public PageData<CalculatedField> findByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(calculatedFieldRepository.findByTenantId(tenantId, DaoUtil.toPageable(pageLink)));
-    }
-
-    @Override
-    public CalculatedField findByTenantIdAndName(UUID tenantId, String name) {
-        return DaoUtil.getData(calculatedFieldRepository.findByTenantIdAndName(tenantId, name));
-    }
-
-    @Override
-    public CalculatedField findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
-        return DaoUtil.getData(calculatedFieldRepository.findByTenantIdAndExternalId(tenantId, externalId));
-    }
-
-    @Override
-    public CalculatedFieldId getExternalIdByInternal(CalculatedFieldId internalId) {
-        return calculatedFieldRepository.findExternalIdById(internalId.getId());
-    }
-
-    @Override
     protected Class<CalculatedFieldEntity> getEntityClass() {
         return CalculatedFieldEntity.class;
     }

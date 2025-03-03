@@ -15,27 +15,23 @@
  */
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.ie.AssetExportData;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
 @Service
 @TbCoreComponent
-public class AssetImportService extends BaseCalculatedFieldsImportService<AssetId, Asset, AssetExportData> {
+@RequiredArgsConstructor
+public class AssetImportService extends BaseEntityImportService<AssetId, Asset, EntityExportData<Asset>> {
 
     private final AssetService assetService;
-
-    public AssetImportService(CalculatedFieldService calculatedFieldService, AssetService assetService) {
-        super(calculatedFieldService);
-        this.assetService = assetService;
-    }
 
     @Override
     protected void setOwner(TenantId tenantId, Asset asset, IdProvider idProvider) {
@@ -44,14 +40,18 @@ public class AssetImportService extends BaseCalculatedFieldsImportService<AssetI
     }
 
     @Override
-    protected Asset prepare(EntitiesImportCtx ctx, Asset asset, Asset old, AssetExportData exportData, IdProvider idProvider) {
+    protected Asset prepare(EntitiesImportCtx ctx, Asset asset, Asset old, EntityExportData<Asset> exportData, IdProvider idProvider) {
         asset.setAssetProfileId(idProvider.getInternalId(asset.getAssetProfileId()));
         return asset;
     }
 
     @Override
-    protected Asset saveOrUpdate(EntitiesImportCtx ctx, Asset asset, AssetExportData exportData, IdProvider idProvider) {
-        return saveOrUpdateEntity(ctx, asset, exportData, idProvider, assetService::saveAsset);
+    protected Asset saveOrUpdate(EntitiesImportCtx ctx, Asset asset, EntityExportData<Asset> exportData, IdProvider idProvider) {
+        Asset savedAsset = assetService.saveAsset(asset);
+        if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
+            importCalculatedFields(ctx, savedAsset, exportData, idProvider);
+        }
+        return savedAsset;
     }
 
     @Override

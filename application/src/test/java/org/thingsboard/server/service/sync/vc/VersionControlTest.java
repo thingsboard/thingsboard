@@ -575,7 +575,7 @@ public class VersionControlTest extends AbstractControllerTest {
     public void testVcWithCalculatedFields_betweenTenants() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
         Device device = createDevice(null, null, "Device 1", "test1");
-        CalculatedField calculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
+        createCalculatedField("CalculatedField1", device.getId(), asset.getId());
         String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
 
         loginTenant2();
@@ -588,13 +588,13 @@ public class VersionControlTest extends AbstractControllerTest {
         CalculatedField importedCalculatedField = findCalculatedFieldByEntityId(importedDevice.getId());
         checkImportedEntity(tenantId1, device, tenantId2, importedDevice);
         checkImportedEntity(tenantId1, asset, tenantId2, importedAsset);
-        checkImportedEntity(tenantId1, calculatedField, tenantId2, importedCalculatedField);
 
         List<CalculatedField> importedCalculatedFields = findCalculatedFieldsByEntityId(importedDevice.getId());
         assertThat(importedCalculatedFields).size().isOne();
         assertThat(importedCalculatedFields.get(0)).satisfies(importedField -> {
             assertThat(importedField.getName()).isEqualTo(importedCalculatedField.getName());
             assertThat(importedField.getType()).isEqualTo(importedCalculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(importedCalculatedField.getId());
         });
     }
 
@@ -606,7 +606,7 @@ public class VersionControlTest extends AbstractControllerTest {
 
         loadVersion(versionId, EntityType.ASSET);
         CalculatedField importedCalculatedField = findCalculatedFieldByEntityId(asset.getId());
-        checkImportedEntity(tenantId1, calculatedField, tenantId1, importedCalculatedField);
+        assertThat(importedCalculatedField.getId()).isEqualTo(calculatedField.getId());
         assertThat(importedCalculatedField.getName()).isEqualTo(calculatedField.getName());
         assertThat(importedCalculatedField.getConfiguration()).isEqualTo(calculatedField.getConfiguration());
         assertThat(importedCalculatedField.getType()).isEqualTo(calculatedField.getType());

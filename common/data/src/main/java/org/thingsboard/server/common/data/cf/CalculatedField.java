@@ -23,7 +23,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -42,7 +41,7 @@ import java.io.Serial;
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, ExportableEntity<CalculatedFieldId>, HasDebugSettings {
+public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, HasDebugSettings {
 
     @Serial
     private static final long serialVersionUID = 4491966747773381420L;
@@ -69,9 +68,6 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
     @Getter
     @Setter
     private Long version;
-    @Getter
-    @Setter
-    private CalculatedFieldId externalId;
 
     public CalculatedField() {
         super();
@@ -81,21 +77,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
         super(id);
     }
 
-    public CalculatedField(CalculatedField other) {
-        super(other);
-        this.tenantId = other.tenantId;
-        this.entityId = other.entityId;
-        this.type = other.type;
-        this.name = other.name;
-        this.configurationVersion = other.configurationVersion;
-        this.configuration = other.configuration;
-        this.version = other.version;
-        this.externalId = other.externalId;
-        this.debugMode = other.debugMode;
-        this.debugSettings = other.debugSettings;
-    }
-
-    public CalculatedField(TenantId tenantId, EntityId entityId, CalculatedFieldType type, String name, int configurationVersion, CalculatedFieldConfiguration configuration, Long version, CalculatedFieldId externalId) {
+    public CalculatedField(TenantId tenantId, EntityId entityId, CalculatedFieldType type, String name, int configurationVersion, CalculatedFieldConfiguration configuration, Long version) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.type = type;
@@ -103,7 +85,19 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
         this.configurationVersion = configurationVersion;
         this.configuration = configuration;
         this.version = version;
-        this.externalId = externalId;
+    }
+
+    public CalculatedField(CalculatedField calculatedField) {
+        super(calculatedField);
+        this.tenantId = calculatedField.tenantId;
+        this.entityId = calculatedField.entityId;
+        this.type = calculatedField.type;
+        this.name = calculatedField.name;
+        this.debugMode = calculatedField.debugMode;
+        this.debugSettings = calculatedField.debugSettings;
+        this.configurationVersion = calculatedField.configurationVersion;
+        this.configuration = calculatedField.configuration;
+        this.version = calculatedField.version;
     }
 
     @Schema(description = "JSON object with the Calculated Field Id. Referencing non-existing Calculated Field Id will cause error.")
@@ -129,7 +123,6 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
                 .append(", configurationVersion=").append(configurationVersion)
                 .append(", configuration=").append(configuration)
                 .append(", version=").append(version)
-                .append(", externalId=").append(externalId)
                 .append(", createdTime=").append(createdTime)
                 .append(", id=").append(id).append(']')
                 .toString();

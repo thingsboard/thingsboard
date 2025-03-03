@@ -56,7 +56,7 @@ public class EntitiesImportCtx {
     private final Set<EntityId> notFoundIds = new HashSet<>();
 
     private final Set<EntityRelation> relations = new LinkedHashSet<>();
-    private final Map<CalculatedField, Boolean> calculatedFields = new LinkedHashMap<>();
+    private final Set<CalculatedField> calculatedFields = new LinkedHashSet<>();
 
     private boolean finalImportAttempt = false;
     private EntityImportSettings settings;
@@ -127,8 +127,8 @@ public class EntitiesImportCtx {
         relations.addAll(values);
     }
 
-    public void addCalculatedFields(Map<CalculatedField, Boolean> calculatedFieldMap) {
-        calculatedFields.putAll(calculatedFieldMap);
+    public void addCalculatedFields(Collection<CalculatedField> values) {
+        calculatedFields.addAll(values);
     }
 
     public void addReferenceCallback(EntityId externalId, ThrowingRunnable tr) {

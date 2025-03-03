@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.sync.ie.DeviceExportData;
-import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
@@ -29,14 +29,10 @@ import java.util.Set;
 
 @Service
 @TbCoreComponent
-public class DeviceExportService extends BaseCalculatedFieldsExportService<DeviceId, Device, DeviceExportData> {
+@RequiredArgsConstructor
+public class DeviceExportService extends BaseEntityExportService<DeviceId, Device, DeviceExportData> {
 
     private final DeviceCredentialsService deviceCredentialsService;
-
-    public DeviceExportService(CalculatedFieldService calculatedFieldService, DeviceCredentialsService deviceCredentialsService) {
-        super(calculatedFieldService);
-        this.deviceCredentialsService = deviceCredentialsService;
-    }
 
     @Override
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Device device, DeviceExportData exportData) {
@@ -48,7 +44,6 @@ public class DeviceExportService extends BaseCalculatedFieldsExportService<Devic
             credentials.setDeviceId(null);
             exportData.setCredentials(credentials);
         }
-        setCalculatedFields(ctx, device, exportData);
     }
 
     @Override
