@@ -16,78 +16,52 @@
 
 -- UPDATE SAVE TIME SERIES NODES START
 
-DO $$
-    BEGIN
-        -- Check if the rule_node table exists
-        IF EXISTS (
-            SELECT 1
-            FROM information_schema.tables
-            WHERE table_name = 'rule_node'
-        ) THEN
+UPDATE rule_node
+SET configuration = (
+    (configuration::jsonb - 'skipLatestPersistence')
+        || jsonb_build_object(
+            'processingSettings', jsonb_build_object(
+                    'type',       'ADVANCED',
+                    'timeseries',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
+                    'latest',           jsonb_build_object('type', 'SKIP'),
+                    'webSockets',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
+                    'calculatedFields', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
+                                   )
+           )
+    )::text,
+    configuration_version = 1
+WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
+  AND configuration_version = 0
+  AND configuration::jsonb ->> 'skipLatestPersistence' = 'true';
 
-            UPDATE rule_node
-            SET configuration = (
-                (configuration::jsonb - 'skipLatestPersistence')
-                    || jsonb_build_object(
-                        'processingSettings', jsonb_build_object(
-                                'type',       'ADVANCED',
-                                'timeseries',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
-                                'latest',           jsonb_build_object('type', 'SKIP'),
-                                'webSockets',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
-                                'calculatedFields', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
-                                               )
-                       )
-                )::text,
-                configuration_version = 1
-            WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
-              AND configuration_version = 0
-              AND configuration::jsonb ->> 'skipLatestPersistence' = 'true';
-
-            UPDATE rule_node
-            SET configuration = (
-                (configuration::jsonb - 'skipLatestPersistence')
-                    || jsonb_build_object(
-                        'processingSettings', jsonb_build_object(
-                                'type', 'ON_EVERY_MESSAGE'
-                                               )
-                       )
-                )::text,
-                configuration_version = 1
-            WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
-              AND configuration_version = 0
-              AND (configuration::jsonb ->> 'skipLatestPersistence' != 'true' OR configuration::jsonb ->> 'skipLatestPersistence' IS NULL);
-
-        END IF;
-    END;
-$$;
+UPDATE rule_node
+SET configuration = (
+    (configuration::jsonb - 'skipLatestPersistence')
+        || jsonb_build_object(
+            'processingSettings', jsonb_build_object(
+                    'type', 'ON_EVERY_MESSAGE'
+                                   )
+           )
+    )::text,
+    configuration_version = 1
+WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
+  AND configuration_version = 0
+  AND (configuration::jsonb ->> 'skipLatestPersistence' != 'true' OR configuration::jsonb ->> 'skipLatestPersistence' IS NULL);
 
 -- UPDATE SAVE TIME SERIES NODES END
 
 -- UPDATE SAVE ATTRIBUTES NODES START
 
-DO $$
-    BEGIN
-        -- Check if the rule_node table exists
-        IF EXISTS (
-            SELECT 1
-            FROM information_schema.tables
-            WHERE table_name = 'rule_node'
-        ) THEN
-
-            UPDATE rule_node
-            SET configuration = (
-                configuration::jsonb
-                    || jsonb_build_object(
-                        'processingSettings', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
-                       )
-                )::text,
-                configuration_version = 3
-            WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode'
-              AND configuration_version = 2;
-
-        END IF;
-    END;
-$$;
+UPDATE rule_node
+SET configuration = (
+    configuration::jsonb
+        || jsonb_build_object(
+            'processingSettings', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
+           )
+    )::text,
+    configuration_version = 3
+WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode'
+  AND configuration_version = 2;
 
 -- UPDATE SAVE ATTRIBUTES NODES END
 

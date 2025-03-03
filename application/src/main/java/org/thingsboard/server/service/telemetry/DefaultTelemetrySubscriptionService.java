@@ -211,7 +211,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
 
         if (strategy.sendWsUpdate()) {
-            addWsCallback(resultFuture, success -> onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
+            addWsCallback(resultFuture, success -> onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries()));
         }
     }
 
@@ -223,11 +223,25 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void deleteAttributesInternal(AttributesDeleteRequest request) {
-        ListenableFuture<List<String>> deleteFuture = attrService.removeAll(request.getTenantId(), request.getEntityId(), request.getScope(), request.getKeys());
-        DonAsynchron.withCallback(deleteFuture, result -> {
-            calculatedFieldQueueService.pushRequestToQueue(request, result, request.getCallback());
-        }, safeCallback(request.getCallback()), tsCallBackExecutor);
-        addWsCallback(deleteFuture, success -> onAttributesDelete(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getKeys(), request.isNotifyDevice()));
+        TenantId tenantId = request.getTenantId();
+        EntityId entityId = request.getEntityId();
+
+        ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, request.getScope(), request.getKeys());
+
+        addMainCallback(deleteFuture,
+                result -> calculatedFieldQueueService.pushRequestToQueue(request, result, request.getCallback()),
+                t -> request.getCallback().onFailure(t)
+        );
+
+        if (entityId.getEntityType() == EntityType.DEVICE
+                && TbAttributeSubscriptionScope.SHARED_SCOPE.name().equalsIgnoreCase(request.getScope().name())
+                && request.isNotifyDevice()) {
+            addMainCallback(deleteFuture, success -> clusterService.pushMsgToCore(
+                    DeviceAttributesEventNotificationMsg.onDelete(tenantId, new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, request.getKeys()), null
+            ));
+        }
+
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, request.getScope().name(), request.getKeys()));
     }
 
     @Override
@@ -312,16 +326,16 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice) {
+    private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         forwardToSubscriptionManagerService(tenantId, entityId,
-                subscriptionManagerService -> subscriptionManagerService.onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice, TbCallback.EMPTY),
+                subscriptionManagerService -> subscriptionManagerService.onAttributesUpdate(tenantId, entityId, scope, attributes, TbCallback.EMPTY),
                 () -> TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes));
     }
 
-    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
+    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
         forwardToSubscriptionManagerService(tenantId, entityId,
-                subscriptionManagerService -> subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice, TbCallback.EMPTY),
-                () -> TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice));
+                subscriptionManagerService -> subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY),
+                () -> TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys));
     }
 
     private void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {

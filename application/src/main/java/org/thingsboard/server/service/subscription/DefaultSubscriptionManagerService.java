@@ -20,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -37,7 +35,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -77,7 +74,6 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     private final TbQueueProducerProvider producerProvider;
     private final TbLocalSubscriptionService localSubscriptionService;
     private final DeviceStateService deviceStateService;
-    private final TbClusterService clusterService;
     private final SubscriptionSchedulerComponent scheduler;
 
     private final Lock subsLock = new ReentrantLock();
@@ -207,11 +203,6 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
 
     @Override
     public void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, TbCallback callback) {
-        onAttributesUpdate(tenantId, entityId, scope, attributes, true, callback);
-    }
-
-    @Override
-    public void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, TbCallback callback) {
         getEntityUpdatesInfo(entityId).attributesUpdateTs = System.currentTimeMillis();
         processAttributesUpdate(entityId, scope, attributes);
         if (entityId.getEntityType() == EntityType.DEVICE) {
@@ -223,16 +214,13 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     @Override
-    public void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, TbCallback callback) {
+    public void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, TbCallback callback) {
         processAttributesUpdate(entityId, scope,
                 keys.stream().map(key -> new BaseAttributeKvEntry(0, new StringDataEntry(key, ""))).collect(Collectors.toList()));
         if (entityId.getEntityType() == EntityType.DEVICE) {
             if (TbAttributeSubscriptionScope.SERVER_SCOPE.name().equalsIgnoreCase(scope)
                     || TbAttributeSubscriptionScope.ANY_SCOPE.name().equalsIgnoreCase(scope)) {
                 deleteDeviceInactivityTimeout(tenantId, entityId, keys);
-            } else if (TbAttributeSubscriptionScope.SHARED_SCOPE.name().equalsIgnoreCase(scope) && notifyDevice) {
-                clusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onDelete(tenantId,
-                        new DeviceId(entityId.getId()), scope, keys), null);
             }
         }
         callback.onSuccess();

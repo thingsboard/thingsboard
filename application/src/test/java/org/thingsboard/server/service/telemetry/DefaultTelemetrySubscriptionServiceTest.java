@@ -29,6 +29,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -421,7 +422,7 @@ class DefaultTelemetrySubscriptionServiceTest {
         }
 
         if (sendWsUpdate) {
-            then(subscriptionManagerService).should().onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries(), request.isNotifyDevice(), TbCallback.EMPTY);
+            then(subscriptionManagerService).should().onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries(), TbCallback.EMPTY);
         } else {
             then(subscriptionManagerService).shouldHaveNoInteractions();
         }
@@ -628,6 +629,155 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         // WHEN
         telemetryService.saveAttributes(request);
+
+        // THEN
+        then(clusterService).should(never()).pushMsgToCore(any(), any());
+    }
+
+    /* --- Delete attributes API --- */
+
+    @Test
+    void shouldThrowErrorWhenTryingToDeleteAttributesForApiUsageState() {
+        // GIVEN
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(new ApiUsageStateId(UUID.randomUUID()))
+                .scope(AttributeScope.SHARED_SCOPE)
+                .keys(List.of("attributeKeyToDelete1", "attributeKeyToDelete2"))
+                .notifyDevice(true)
+                .build();
+
+        // WHEN
+        assertThatThrownBy(() -> telemetryService.deleteAttributes(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Can't update API Usage State!");
+
+        // THEN
+        then(attrService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldSendAttributesDeletedNotificationWhenDeviceSharedAttributesAreDeletedAndNotifyDeviceIsTrue() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        List<String> keys = List.of("attributeKeyToDelete1", "attributeKeyToDelete2");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SHARED_SCOPE)
+                .keys(keys)
+                .notifyDevice(true)
+                .build();
+
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), keys)).willReturn(immediateFuture(keys));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        var expectedAttributesDeletedMsg = DeviceAttributesEventNotificationMsg.onDelete(tenantId, deviceId, "SHARED_SCOPE", List.of("attributeKeyToDelete1", "attributeKeyToDelete2"));
+
+        then(clusterService).should().pushMsgToCore(eq(expectedAttributesDeletedMsg), isNull());
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = EntityType.class,
+            names = {"DEVICE", "API_USAGE_STATE"}, // API usage state excluded due to coverage in another test
+            mode = EnumSource.Mode.EXCLUDE
+    )
+    void shouldNotSendAttributesDeletedNotificationWhenEntityIsNotDevice(EntityType entityType) {
+        // GIVEN
+        var nonDeviceId = EntityIdFactory.getByTypeAndUuid(entityType, "cc51e450-53e1-11ee-883e-e56b48fd2088");
+        List<String> keys = List.of("attributeKeyToDelete1", "attributeKeyToDelete2");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(nonDeviceId)
+                .scope(AttributeScope.SHARED_SCOPE)
+                .keys(keys)
+                .notifyDevice(true)
+                .build();
+
+        given(attrService.removeAll(tenantId, nonDeviceId, request.getScope(), keys)).willReturn(immediateFuture(keys));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(clusterService).should(never()).pushMsgToCore(any(), any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = AttributeScope.class,
+            names = "SHARED_SCOPE",
+            mode = EnumSource.Mode.EXCLUDE
+    )
+    void shouldNotSendAttributesDeletedNotificationWhenAttributesAreNotShared(AttributeScope notSharedScope) {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        List<String> keys = List.of("attributeKeyToDelete1", "attributeKeyToDelete2");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(notSharedScope)
+                .keys(keys)
+                .notifyDevice(true)
+                .build();
+
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), keys)).willReturn(immediateFuture(keys));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(clusterService).should(never()).pushMsgToCore(any(), any());
+    }
+
+    @Test
+    void shouldNotSendAttributesDeletedNotificationWhenNotifyDeviceIsFalse() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        List<String> keys = List.of("attributeKeyToDelete1", "attributeKeyToDelete2");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SHARED_SCOPE)
+                .keys(keys)
+                .notifyDevice(false)
+                .build();
+
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), keys)).willReturn(immediateFuture(keys));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(clusterService).should(never()).pushMsgToCore(any(), any());
+    }
+
+    @Test
+    void shouldNotSendAttributesDeletedNotificationWhenAttributesDeleteFailed() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        List<String> keys = List.of("attributeKeyToDelete1", "attributeKeyToDelete2");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SHARED_SCOPE)
+                .keys(keys)
+                .notifyDevice(true)
+                .build();
+
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), keys)).willReturn(immediateFailedFuture(new RuntimeException("failed to delete")));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
 
         // THEN
         then(clusterService).should(never()).pushMsgToCore(any(), any());
