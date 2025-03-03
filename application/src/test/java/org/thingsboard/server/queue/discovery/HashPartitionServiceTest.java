@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -426,6 +426,9 @@ public class HashPartitionServiceTest {
                 topicService);
         ReflectionTestUtils.setField(partitionService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(partitionService, "corePartitions", 10);
+        ReflectionTestUtils.setField(partitionService, "cfEventTopic", "tb_cf_event");
+        ReflectionTestUtils.setField(partitionService, "cfStateTopic", "tb_cf_state");
+        ReflectionTestUtils.setField(partitionService, "cfPartitions", 10);
         ReflectionTestUtils.setField(partitionService, "vcTopic", "tb.vc");
         ReflectionTestUtils.setField(partitionService, "vcPartitions", 10);
         ReflectionTestUtils.setField(partitionService, "hashFunctionName", hashFunctionName);

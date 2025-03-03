@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ type FieldAlignment = 'row' | 'column';
 type MultipleInputWidgetDataKeyType = 'server' | 'shared' | 'timeseries';
 export type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
                                                   'JSON' | 'booleanCheckbox' | 'booleanSwitch' |
-                                                  'dateTime' | 'date' | 'time' | 'select' | 'color';
+                                                  'dateTime' | 'date' | 'time' | 'select' | 'radio' | 'color';
 export type MultipleInputWidgetDataKeyEditableType = 'editable' | 'disabled' | 'readonly';
 
 type ConvertGetValueFunction = (value: any, ctx: WidgetContext) => any;
@@ -86,6 +86,9 @@ interface MultipleInputWidgetDataKeySettings {
   dataKeyValueType: MultipleInputWidgetDataKeyValueType;
   slideToggleLabelPosition?: 'after' | 'before';
   selectOptions: MultipleInputWidgetSelectOption[];
+  radioColor: string;
+  radioColumns: number;
+  radioLabelPosition?: 'after' | 'before';
   required: boolean;
   isEditable: MultipleInputWidgetDataKeyEditableType;
   disabledOnDataKey: string;
@@ -300,7 +303,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
             // For backward compatibility
 
-            if (dataKey.settings.dataKeyValueType === 'select') {
+            if (dataKey.settings.dataKeyValueType === 'select' || dataKey.settings.dataKeyValueType === 'radio') {
               dataKey.settings.selectOptions.forEach((option) => {
                 if (option.value.toLowerCase() === 'null') {
                   option.value = null;
@@ -444,6 +447,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               }
               break;
             case 'select':
+            case 'radio':
               value = keyValue !== null ? keyValue.toString() : null;
               break;
             case 'JSON':
@@ -564,6 +568,12 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         return '';
     }
     return this.getTranslatedErrorText(errorMessage, defaultMessage, messageValues);
+  }
+
+  public radioButtonSelectedColor(radioColor: string) {
+    if (isDefinedAndNotNull(radioColor)) {
+      return `--mdc-radio-selected-icon-color: ${radioColor}; --mdc-radio-selected-focus-icon-color: ${radioColor}; --mdc-radio-selected-hover-icon-color: ${radioColor}; --mdc-radio-selected-pressed-icon-color: ${radioColor}; --mat-radio-checked-ripple-color: ${radioColor};`
+    }
   }
 
   public getTranslatedErrorText(errorMessage: string, defaultMessage: string, messageValues?: object): string {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,7 @@ import java.util.concurrent.TimeUnit;
         nodeDescription = "Process device messages based on device profile settings",
         nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. The output relation type is either " +
                 "'Alarm Created', 'Alarm Updated', 'Alarm Severity Updated' and 'Alarm Cleared' or simply 'Success' if no alarms were affected.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbDeviceProfileConfig"
+        configDirective = "tbActionNodeDeviceProfileConfig"
 )
 public class TbDeviceProfileNode implements TbNode {
 

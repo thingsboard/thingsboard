@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.msg.plugin;
 
+import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -37,6 +38,25 @@ public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
     private final TenantId tenantId;
     private final EntityId entityId;
     private final ComponentLifecycleEvent event;
+    private final String oldName;
+    private final String name;
+    private final EntityId oldProfileId;
+    private final EntityId profileId;
+
+    public ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event) {
+        this(tenantId, entityId, event, null, null, null, null);
+    }
+
+    @Builder
+    private ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event, String oldName, String name, EntityId oldProfileId, EntityId profileId) {
+        this.tenantId = tenantId;
+        this.entityId = entityId;
+        this.event = event;
+        this.oldName = oldName;
+        this.name = name;
+        this.oldProfileId = oldProfileId;
+        this.profileId = profileId;
+    }
 
     public Optional<RuleChainId> getRuleChainId() {
         return entityId.getEntityType() == EntityType.RULE_CHAIN ? Optional.of((RuleChainId) entityId) : Optional.empty();

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import {
   LinkLabel,
   RuleNodeComponentDescriptor,
   RuleNodeConfiguration,
+  RuleNodeConfigurationComponent,
   ScriptLanguage,
   TestScriptInputParams,
   TestScriptResult
@@ -180,6 +181,10 @@ export class RuleChainService {
     return this.http.post<TestScriptResult>(url, inputParams, defaultHttpOptionsFromConfig(config));
   }
 
+  public registerSystemRuleNodeConfigModule(module: any) {
+    Object.assign(this.ruleNodeConfigComponents, this.resourcesService.extractComponentsFromModule<IRuleNodeConfigurationComponent>(module, RuleNodeConfigurationComponent, true));
+  }
+
   private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
     return this.componentDescriptorService.getComponentDescriptorsByTypes(ruleNodeTypeComponentTypes, ruleChainType, config).pipe(
       map((components) => {
@@ -211,7 +216,7 @@ export class RuleChainService {
     Observable<RuleNodeComponentDescriptor> {
     const nodeDefinition = component.configurationDescriptor.nodeDefinition;
     const uiResources = nodeDefinition.uiResources;
-    if (uiResources && uiResources.length) {
+    if (!this.ruleNodeConfigComponents[nodeDefinition.configDirective] && uiResources && uiResources.length) {
       const commonResources = uiResources.filter((resource) => !resource.endsWith('.js'));
       const moduleResource = uiResources.find((resource) => resource.endsWith('.js'));
       const tasks: Observable<any>[] = [];

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,9 +97,12 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
 
     @Override
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
+        send(tpi, msg.getKey().toString(), msg, callback);
+    }
+
+    public void send(TopicPartitionInfo tpi, String key, T msg, TbQueueCallback callback) {
         try {
             createTopicIfNotExist(tpi);
-            String key = msg.getKey().toString();
             byte[] data = msg.getData();
             ProducerRecord<String, byte[]> record;
             List<Header> headers = msg.getHeaders().getData().entrySet().stream().map(e -> new RecordHeader(e.getKey(), e.getValue())).collect(Collectors.toList());
@@ -116,7 +119,7 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
                     if (callback != null) {
                         callback.onFailure(exception);
                     } else {
-                        log.warn("Producer template failure: {}", exception.getMessage(), exception);
+                        log.warn("Producer template failure", exception);
                     }
                 }
             });

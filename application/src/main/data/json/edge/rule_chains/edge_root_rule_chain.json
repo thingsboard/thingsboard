@@ -33,8 +33,13 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
+        "configurationVersion": 1,
         "configuration": {
-          "defaultTTL": 0
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         },
         "externalId": null
       },
@@ -114,7 +119,7 @@
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
         "configuration": {
-          "scope": "SERVER_SCOPE"
+          "scope": "CLIENT_SCOPE"
         },
         "externalId": null
       },
