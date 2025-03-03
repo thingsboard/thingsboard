@@ -108,7 +108,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
     const clickAction = this.settings.click;
     if (clickAction && clickAction.type !== WidgetActionType.doNothing) {
       this.layer.on('click', (event) => {
-        this.dataLayer.getMap().dataItemClick(event.originalEvent, clickAction, this.data.$datasource);
+        this.dataLayer.getMap().dataItemClick(event.originalEvent, clickAction, this.data);
       });
     }
   }

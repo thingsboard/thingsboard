@@ -155,7 +155,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.addControl('usePathDecorator', this.fb.control(tripsDataLayer.usePathDecorator));
         this.dataLayerFormGroup.addControl('pathDecoratorSymbol', this.fb.control(tripsDataLayer.pathDecoratorSymbol, Validators.required));
         this.dataLayerFormGroup.addControl('pathDecoratorSymbolSize', this.fb.control(tripsDataLayer.pathDecoratorSymbolSize, [Validators.required, Validators.min(0)]));
-        this.dataLayerFormGroup.addControl('pathDecoratorSymbolColor', this.fb.control(tripsDataLayer.pathDecoratorSymbolColor, Validators.required));
+        this.dataLayerFormGroup.addControl('pathDecoratorSymbolColor', this.fb.control(tripsDataLayer.pathDecoratorSymbolColor));
         this.dataLayerFormGroup.addControl('pathDecoratorOffset', this.fb.control(tripsDataLayer.pathDecoratorOffset, [Validators.required, Validators.min(0)]));
         this.dataLayerFormGroup.addControl('pathEndDecoratorOffset', this.fb.control(tripsDataLayer.pathEndDecoratorOffset, [Validators.required, Validators.min(0)]));
         this.dataLayerFormGroup.addControl('pathDecoratorRepeat', this.fb.control(tripsDataLayer.pathDecoratorRepeat, [Validators.required, Validators.min(0)]));

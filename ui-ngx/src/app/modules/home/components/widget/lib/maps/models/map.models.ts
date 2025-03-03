@@ -23,7 +23,16 @@ import {
   WidgetActionType
 } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { guid, hashCode, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined, mergeDeep } from '@core/utils';
+import {
+  guid,
+  hashCode,
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isString,
+  isUndefined,
+  isUndefinedOrNull,
+  mergeDeep
+} from '@core/utils';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { materialColors } from '@shared/models/material.models';
 import L from 'leaflet';
@@ -1040,6 +1049,9 @@ export interface CustomActionData {
 export type MapStringFunction = (data: FormattedData<TbMapDatasource>,
                                  dsData: FormattedData<TbMapDatasource>[]) => string;
 
+export type MapBooleanFunction = (data: FormattedData<TbMapDatasource>,
+                                 dsData: FormattedData<TbMapDatasource>[]) => boolean;
+
 export type MarkerImageFunction = (data: FormattedData<TbMapDatasource>, markerImages: string[],
                                    dsData: FormattedData<TbMapDatasource>[]) => MarkerImageInfo;
 
@@ -1322,11 +1334,11 @@ export const interpolateLineSegment = (
   };
 }
 
-export const findRotationAngle = (startPoint: FormattedData, endPoint: FormattedData, xKey: string, yKey: string): number => {
-  if (isUndefined(startPoint) || isUndefined(endPoint)) {
+export const findRotationAngle = (startPoint: L.LatLng, endPoint: L.LatLng): number => {
+  if (isUndefinedOrNull(startPoint) || isUndefinedOrNull(endPoint)) {
     return 0;
   }
-  let angle = -Math.atan2(endPoint[xKey] - startPoint[xKey], endPoint[yKey] - startPoint[yKey]);
+  let angle = -Math.atan2(endPoint.lat - startPoint.lat, endPoint.lng - startPoint.lng);
   angle = angle * 180 / Math.PI;
   return parseInt(angle.toFixed(2), 10);
 }

@@ -18,7 +18,7 @@ import {
   additionalMapDataSourcesToDatasources,
   BaseMapSettings,
   CustomActionData,
-  DataKeyValuePair,
+  DataKeyValuePair, MapBooleanFunction, MapStringFunction,
   MapType,
   mergeMapDatasources,
   mergeUnplacedDataItemsArrays,
@@ -34,12 +34,12 @@ import {
   formattedDataFormDatasourceData,
   isDefined,
   isDefinedAndNotNull, isUndefined,
-  mergeDeepIgnoreArray
+  mergeDeepIgnoreArray, parseTbFunction
 } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
 import {
   MapDataLayerType,
@@ -71,6 +71,7 @@ import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/panels/map-timeline-panel.component';
 import { ComponentRef } from '@angular/core';
 import { TbTripsDataLayer } from '@home/components/widget/lib/maps/data-layer/trips-data-layer';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
 
 type TooltipInstancesData = {root: HTMLElement, instances: ITooltipsterInstance[]};
 
@@ -88,7 +89,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected dataLayers: TbMapDataLayer<any>[];
   protected tripDataLayers: TbTripsDataLayer[];
-  protected dsData: FormattedData<TbMapDatasource>[];
+  protected dsData: FormattedData<TbMapDatasource>[] = [];
 
   protected timeline = false;
   protected minTime: number;
@@ -113,6 +114,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected timeLineComponentRef: ComponentRef<MapTimelinePanelComponent>;
   protected timeLineComponent: MapTimelinePanelComponent;
+  protected locationSnapFilterFunction: CompiledTbFunction<MapBooleanFunction>;
 
   protected addMarkerDataLayers: TbMapDataLayer<any>[];
   protected addPolygonDataLayers: TbMapDataLayer<any>[];
@@ -183,7 +185,16 @@ export abstract class TbMap<S extends BaseMapSettings> {
     if (this.map.zoomControl) {
       this.map.zoomControl.setPosition(this.settings.controlsPosition);
     }
-    return this.doSetupControls();
+    const setup = [this.doSetupControls()];
+    if (this.timeline && this.settings.tripTimeline.snapToRealLocation) {
+      setup.push(parseTbFunction<MapBooleanFunction>(this.getCtx().http, this.settings.tripTimeline.locationSnapFilter, ['data', 'dsData']).pipe(
+        map((parsed) => {
+          this.locationSnapFilterFunction = parsed;
+          return null;
+        })
+      ));
+    }
+    return forkJoin(setup);
   }
 
   private initMap() {
@@ -263,7 +274,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
           this.updateBounds();
         });
       }
-
       const setup = allDataLayers.map(dl => dl.setup());
       forkJoin(setup).subscribe(
         () => {
@@ -919,6 +929,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected invalidateDataLayersCoordinates(): void {
     this.dataLayers.forEach(dl => dl.invalidateCoordinates());
+    this.tripDataLayers.forEach(dl => dl.invalidateCoordinates());
   }
 
   protected getSidebar(): L.TB.SidebarControl {
@@ -953,16 +964,16 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.updateTripsAnchors();
   }
 
-  public dataItemClick($event: Event, action: WidgetAction, entityInfo: TbMapDatasource) {
+  public dataItemClick($event: Event, action: WidgetAction, data: FormattedData<TbMapDatasource>) {
     if ($event) {
       $event.preventDefault();
       $event.stopPropagation();
     }
-    const { entityId, entityName, entityLabel, entityType } = entityInfo;
+    const { entityId, entityName, entityLabel, entityType } = data.$datasource;
     this.ctx.actionsApi.handleWidgetAction($event, action, {
       entityType,
       id: entityId
-    }, entityName, null, entityLabel);
+    }, entityName, data, entityLabel);
   }
 
   public selectItem(item: TbDataLayerItem, cancel = false, force = false): boolean {
@@ -1061,6 +1072,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public getCurrentTime(): number {
     return this.currentTime;
+  }
+
+  public getLocationSnapFilterFunction(): CompiledTbFunction<MapBooleanFunction> {
+    return this.locationSnapFilterFunction;
   }
 
   public destroy() {

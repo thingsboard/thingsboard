@@ -17,19 +17,20 @@
 import {
   DataLayerColorProcessor,
   DataLayerPatternProcessor,
-  MapDataLayerType, TbDataLayerItem,
+  MapDataLayerType,
+  TbDataLayerItem,
   TbMapDataLayer,
   UnplacedMapDataItem
 } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import {
   BaseMarkerShapeSettings,
-  calculateInterpolationRatio, calculateLastPoints,
-  ClusterMarkerColorFunction,
+  calculateInterpolationRatio,
+  calculateLastPoints,
   DataLayerColorType,
-  defaultBaseMarkersDataLayerSettings,
   defaultBaseTripsDataLayerSettings,
   findRotationAngle,
-  interpolateLineSegment, isValidLatLng,
+  interpolateLineSegment,
+  isValidLatLng,
   loadImageWithAspect,
   MapStringFunction,
   MapType,
@@ -40,14 +41,13 @@ import {
   MarkerImageSettings,
   MarkerImageType,
   MarkerPositionFunction,
-  MarkersDataLayerSettings,
   MarkerShapeSettings,
   MarkerType,
   TbMapDatasource,
   TripsDataLayerSettings
 } from '@home/components/widget/lib/maps/models/map.models';
 import { forkJoin, Observable, of } from 'rxjs';
-import { FormattedData } from '@shared/models/widget.models';
+import { FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import {
   createColorMarkerIconElement,
   createColorMarkerShapeURI,
@@ -57,7 +57,7 @@ import tinycolor from 'tinycolor2';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import L, { PolylineDecorator } from 'leaflet';
+import L from 'leaflet';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import {
   deepClone,
@@ -74,6 +74,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import moment from 'moment/moment';
 import { TbImageMap } from '@home/components/widget/lib/maps/image-map';
 import { createTooltip, updateTooltip } from '@home/components/widget/lib/maps/data-layer/data-layer-utils';
+import _ from 'lodash';
 
 type TripRouteData = {[time: number]: FormattedData<TbMapDatasource>};
 
@@ -88,11 +89,12 @@ class TbTripDataItem {
   private labelOffset: L.PointTuple;
 
   private polyline: L.Polyline;
-  private polylineDecorator: PolylineDecorator;
+  private polylineDecorator: L.PolylineDecorator;
   private points: L.FeatureGroup;
 
   private currentTime: number;
   private currentPositionData: FormattedData<TbMapDatasource>;
+  private pointData: FormattedData<TbMapDatasource>;
 
   constructor(private rawRouteData: FormattedData<TbMapDatasource>[],
               private latestData: FormattedData<TbMapDatasource>,
@@ -105,11 +107,13 @@ class TbTripDataItem {
   private create() {
     this.updateCurrentPosition();
     this.layer = L.featureGroup();
-    let pointData = this.currentPositionData;
+    this.pointData = this.currentPositionData;
     if (this.latestData) {
-      pointData = {...pointData, ...this.latestData};
+      this.pointData = {...this.pointData, ...this.latestData};
     }
-    this.createMarker(pointData);
+    this.createPath();
+    this.updatePoints();
+    this.createMarker();
     try {
       this.dataLayer.getDataLayerContainer().addLayer(this.layer);
     } catch (e) {
@@ -121,38 +125,50 @@ class TbTripDataItem {
     this.rawRouteData = rawRouteData;
     this.tripRouteData = this.prepareTripRouteData();
     this.updateCurrentPosition(true);
-    let pointData = this.currentPositionData;
+    this.pointData = this.currentPositionData;
     if (this.latestData) {
-      pointData = {...pointData, ...this.latestData};
+      this.pointData = {...this.pointData, ...this.latestData};
     }
-    this.updateMarker(pointData);
+    this.updatePath();
+    this.updatePoints();
+    this.updateMarker();
   }
 
   public updateLatestData(latestData: FormattedData<TbMapDatasource>) {
     this.latestData = latestData;
+    this.pointData = this.currentPositionData;
+    if (this.latestData) {
+      this.pointData = {...this.pointData, ...this.latestData};
+    }
     this.updateAppearance();
   }
 
   public updateAppearance() {
-    let data = this.currentPositionData;
-    if (this.latestData) {
-      data = {...data, ...this.latestData};
-    }
+    this.updatePathAppearance();
     const dsData = this.dataLayer.getMap().getData();
     if (this.settings.tooltip.show) {
       updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
-        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, data, dsData);
+        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
     }
-    this.updateMarkerIcon(data, dsData);
+    this.updatePoints();
+    this.updateMarkerIcon(this.pointData, dsData);
   }
 
   public updateCurrentTime() {
     this.updateCurrentPosition();
-    let pointData = this.currentPositionData;
+    this.pointData = this.currentPositionData;
     if (this.latestData) {
-      pointData = {...pointData, ...this.latestData};
+      this.pointData = {...this.pointData, ...this.latestData};
     }
-    this.updateMarker(pointData);
+    this.updatePath();
+    this.updateMarker();
+  }
+
+  public invalidateCoordinates(): void {
+    this.tripRouteData = this.prepareTripRouteData();
+    this.updatePath();
+    this.updatePoints();
+    this.updateMarker();
   }
 
   public remove() {
@@ -164,32 +180,117 @@ class TbTripDataItem {
     return this.layer;
   }
 
-  private createMarker(data: FormattedData<TbMapDatasource>) {
+  public calculateAnchors(): number[] {
+    const entries = Object.entries(this.tripRouteData);
     const dsData = this.dataLayer.getMap().getData();
-    const location = this.dataLayer.extractLocation(data, dsData);
+    return entries.filter(data => this.dataLayer.getMap().getLocationSnapFilterFunction().execute(data[1], dsData))
+                  .map(data => parseInt(data[0], 10));
+  }
+
+  private createMarker() {
+    const dsData = this.dataLayer.getMap().getData();
+    const location = this.dataLayer.extractLocation(this.pointData, dsData);
     this.marker = L.marker(location, {
-      tbMarkerData: data,
+      tbMarkerData: this.pointData,
       snapIgnore: true
     });
     this.marker.addTo(this.layer);
-    this.updateMarkerIcon(data, dsData);
+    this.updateMarkerIcon(this.pointData, dsData);
     if (this.settings.tooltip?.show) {
       this.markerTooltip = createTooltip(this.dataLayer.getMap(),
-        this.marker, this.settings.tooltip, data, () => true);
+        this.marker, this.settings.tooltip, this.pointData, () => true);
       updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
-        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, data, dsData);
+        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
+    }
+    const clickAction = this.settings.click;
+    if (clickAction && clickAction.type !== WidgetActionType.doNothing) {
+      this.marker.on('click', (event) => {
+        this.dataLayer.getMap().dataItemClick(event.originalEvent, clickAction, this.pointData);
+      });
     }
   }
 
-  private updateMarker(data: FormattedData<TbMapDatasource>) {
+  private updateMarker() {
     const dsData = this.dataLayer.getMap().getData();
-    this.marker.options.tbMarkerData = data;
-    this.updateMarkerLocation(data, dsData);
+    this.marker.options.tbMarkerData = this.pointData;
+    this.updateMarkerLocation(this.pointData, dsData);
     if (this.settings.tooltip.show) {
       updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
-        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, data, dsData);
+        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
     }
-    this.updateMarkerIcon(data, dsData);
+    this.updateMarkerIcon(this.pointData, dsData);
+  }
+
+  private createPath() {
+    if (this.settings.showPath) {
+      const formattedRouteData = _.values(this.tripRouteData);
+      const dsData = this.dataLayer.getMap().getData();
+      const locations = formattedRouteData.map(data => this.dataLayer.extractLocation(data, dsData));
+      const pathStyle = this.dataLayer.getPathStyle(this.pointData, dsData);
+      this.polyline = L.polyline(locations, pathStyle);
+      this.polyline.addTo(this.layer);
+      if (this.settings.usePathDecorator) {
+        this.polylineDecorator = new L.PolylineDecorator(this.polyline, this.dataLayer.getPathDecoratorStyle(pathStyle.color));
+        this.polylineDecorator.addTo(this.layer);
+      }
+    }
+  }
+
+  private updatePath() {
+    if (this.settings.showPath) {
+      const formattedRouteData = _.values(this.tripRouteData);
+      const dsData = this.dataLayer.getMap().getData();
+      const locations = formattedRouteData.map(data => this.dataLayer.extractLocation(data, dsData));
+      this.polyline.setLatLngs(locations);
+      if (this.settings.usePathDecorator) {
+        this.polylineDecorator.setPaths(this.polyline);
+      }
+      this.updatePathAppearance();
+    }
+  }
+
+  private updatePoints() {
+    if (this.settings.showPoints) {
+      if (!this.points) {
+        this.points = L.featureGroup();
+        this.points.addTo(this.layer);
+      }
+      this.points.clearLayers();
+      const formattedRouteData = _.values(this.tripRouteData);
+      const dsData = this.dataLayer.getMap().getData();
+      const pointsList = formattedRouteData.filter(data => !!this.dataLayer.extractLocationData(data));
+      for (const pData of pointsList) {
+        let pointData = pData;
+        if (this.latestData) {
+          pointData = {...pointData, ...this.latestData};
+        }
+        const pointColor = this.dataLayer.pointColorProcessor.processColor(pointData, dsData);
+        const point = L.circleMarker(this.dataLayer.extractLocation(pointData, dsData), {
+          stroke: false,
+          fillOpacity: 1,
+          fillColor: pointColor,
+          radius: this.settings.pointSize
+        });
+        if (this.settings.pointTooltip?.show) {
+          const pointTooltip = createTooltip(this.dataLayer.getMap(),
+            point, this.settings.pointTooltip, pointData, () => true);
+          updateTooltip(this.dataLayer.getMap(), pointTooltip,
+            this.settings.pointTooltip, this.dataLayer.pointTooltipProcessor, pointData, dsData);
+        }
+        this.points.addLayer(point);
+      }
+    }
+  }
+
+  private updatePathAppearance() {
+    if (this.settings.showPath) {
+      const dsData = this.dataLayer.getMap().getData();
+      const pathStyle = this.dataLayer.getPathStyle(this.pointData, dsData);
+      this.polyline.setStyle(pathStyle);
+      if (this.settings.usePathDecorator) {
+        this.polylineDecorator.setPatterns(this.dataLayer.getPathDecoratorStyle(pathStyle.color).patterns)
+      }
+    }
   }
 
   private updateMarkerLocation(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
@@ -231,6 +332,7 @@ class TbTripDataItem {
     const maxTime = this.dataLayer.getMap().getMaxTime();
     const timeStep = this.dataLayer.getMap().getTimeStep();
     const timeline = this.dataLayer.getMap().hasTimeline();
+    const dsData = this.dataLayer.getMap().getData();
     for (const data of this.rawRouteData) {
       const currentTime = data.time;
       const normalizeTime = timeline ? (minTime
@@ -260,7 +362,9 @@ class TbTripDataItem {
           }
         }
         if (this.settings.rotateMarker) {
-          result[timeStamp[i]].rotationAngle += findRotationAngle(result[timeStamp[i]], result[timeStamp[i + 1]], xKey, yKey);
+          const startPoint = this.dataLayer.extractLocation(result[timeStamp[i]], dsData);
+          const endPoint = this.dataLayer.extractLocation(result[timeStamp[i + 1]], dsData);
+          result[timeStamp[i]].rotationAngle += findRotationAngle(startPoint, endPoint);
         }
       }
     }
@@ -584,10 +688,6 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   }
 
   public updateTrips() {
-    const minTime = this.map.getMinTime();
-    const maxTime = this.map.getMaxTime();
-    const currentTime = this.map.getCurrentTime();
-    console.log(`Update trips: min(${minTime}), max(${maxTime}), current(${currentTime})`);
     const toDelete = new Set(Array.from(this.tripItems.keys()));
     this.rawTripsData.forEach(rawTripData => {
       const entityId = rawTripData[0].entityId;
@@ -614,9 +714,12 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
     }
   }
 
+  public invalidateCoordinates(): void {
+    this.tripItems.forEach(item => item.invalidateCoordinates());
+  }
+
   public updateTripsLatestData(tripsLatestData: FormattedData<TbMapDatasource>[]) {
     this.latestTripsData = tripsLatestData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
-    console.log(`Update trips latest data`);
     this.tripItems.forEach((item, entityId) => {
       const latestData = this.latestTripsData.find(d => d.entityId === entityId);
       item.updateLatestData(latestData);
@@ -624,22 +727,24 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
   }
 
   public updateCurrentTime() {
-    const currentTime = this.map.getCurrentTime();
-    console.log(`Update trips current time: current(${currentTime})`);
     this.tripItems.forEach(item => {
       item.updateCurrentTime();
     });
   }
 
   public updateAppearance() {
-    console.log(`Update trips appearance`);
     this.tripItems.forEach(item => {
       item.updateAppearance();
     });
   }
 
   public calculateAnchors(): number[] {
-    return [];
+    let anchors: number[] = [];
+    this.tripItems.forEach(item => {
+      const tripAnchors = item.calculateAnchors();
+      anchors = [...new Set([...anchors, ...tripAnchors])];
+    });
+    return anchors;
   }
 
   private clearIncorrectFirsLastDatapoint(dataSource: FormattedData<TbMapDatasource>[]): FormattedData<TbMapDatasource>[] {
@@ -705,7 +810,7 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
     );
   }
 
-  private extractLocationData(data: FormattedData<TbMapDatasource>):  {x: number; y: number} {
+  public extractLocationData(data: FormattedData<TbMapDatasource>):  {x: number; y: number} {
     if (data) {
       const xKeyVal = data[this.settings.xKey.label];
       const yKeyVal = data[this.settings.yKey.label];
@@ -738,6 +843,38 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
     } else {
       return null;
     }
+  }
+
+  public getPathStyle(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.PolylineOptions {
+    const pathStroke = this.pathStrokeColorProcessor.processColor(data, dsData);
+    return {
+      interactive: false,
+      color: pathStroke,
+      opacity: 1,
+      weight: this.settings.pathStrokeWeight,
+      pmIgnore: true
+    };
+  }
+
+  public getPathDecoratorStyle(pathStroke: string): L.PolylineDecoratorOptions {
+    const symbolConstructor = L.Symbol[this.settings.pathDecoratorSymbol];
+    return {
+      patterns: [
+        {
+          offset: this.settings.pathDecoratorOffset,
+          endOffset: this.settings.pathEndDecoratorOffset,
+          repeat: this.settings.pathDecoratorRepeat,
+          symbol: symbolConstructor({
+            pixelSize: this.settings.pathDecoratorSymbolSize,
+            polygon: false,
+            pathOptions: {
+              color: this.settings.pathDecoratorSymbolColor ? this.settings.pathDecoratorSymbolColor : pathStroke,
+              stroke: true
+            }
+          })
+        }
+      ]
+    };
   }
 
 }

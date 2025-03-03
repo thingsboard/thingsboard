@@ -86,7 +86,7 @@ const bindTooltipActions = (map: TbMap<any>, tooltip: L.Popup, settings: DataLay
         if (action) {
           element.onclick = ($event) =>
           {
-            map.dataItemClick($event, action, data.$datasource);
+            map.dataItemClick($event, action, data);
             return false;
           };
         }
