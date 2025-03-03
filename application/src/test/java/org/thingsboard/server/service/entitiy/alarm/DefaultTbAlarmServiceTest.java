@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,17 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
@@ -81,6 +88,20 @@ public class DefaultTbAlarmServiceTest {
     protected TbClusterService tbClusterService;
     @MockBean
     private EntitiesVersionControlService vcService;
+    @MockBean
+    private AccessControlService accessControlService;
+    @MockBean
+    private TenantService tenantService;
+    @MockBean
+    private AssetService assetService;
+    @MockBean
+    private DeviceService deviceService;
+    @MockBean
+    private AssetProfileService assetProfileService;
+    @MockBean
+    private DeviceProfileService deviceProfileService;
+    @MockBean
+    private EntityService entityService;
     @SpyBean
     DefaultTbAlarmService service;
 

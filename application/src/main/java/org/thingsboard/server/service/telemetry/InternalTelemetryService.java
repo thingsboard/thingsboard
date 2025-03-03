@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@ import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 
 /**
  * Created by ashvayka on 27.03.18.
  */
 public interface InternalTelemetryService extends RuleEngineTelemetryService {
 
-    ListenableFuture<Integer> saveTimeseriesInternal(TimeseriesSaveRequest request);
+    ListenableFuture<TimeseriesSaveResult> saveTimeseriesInternal(TimeseriesSaveRequest request);
 
     void saveAttributesInternal(AttributesSaveRequest request);
 

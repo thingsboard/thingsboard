@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,9 +120,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                 if (record != null) {
                     result.add(decode(record));
                 }
-            } catch (IOException e) {
-                log.error("Failed decode record: [{}]", record);
-                throw new RuntimeException("Failed to decode record: ", e);
+            } catch (Exception e) {
+                log.error("Failed to decode record {}", record, e);
+                throw new RuntimeException("Failed to decode record " + record, e);
             }
         });
         return result;
@@ -149,6 +149,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     @Override
     public void commit() {
         if (consumerLock.isLocked()) {
+            if (stopped) {
+                return;
+            }
             log.error("commit. consumerLock is locked. will wait with no timeout. it looks like a race conditions or deadlock topic " + topic, new RuntimeException("stacktrace"));
         }
         consumerLock.lock();

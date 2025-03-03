@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
@@ -138,6 +139,15 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
                                                                     @Param("assetProfileId") UUID assetProfileId,
                                                                     @Param("textSearch") String textSearch,
                                                                     Pageable pageable);
+
+    @Query("SELECT a.id FROM AssetEntity a " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.assetProfileId = :assetProfileId " +
+            "AND (:textSearch IS NULL OR ilike(a.type, CONCAT('%', :textSearch, '%')) = true) ")
+    Page<UUID> findAssetIdsByTenantIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
+                                                       @Param("assetProfileId") UUID assetProfileId,
+                                                       @Param("textSearch") String textSearch,
+                                                       Pageable pageable);
 
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +

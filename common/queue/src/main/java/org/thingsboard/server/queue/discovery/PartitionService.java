@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,15 @@ public interface PartitionService {
 
     TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 
+    TopicPartitionInfo resolve(QueueKey queueKey, EntityId entityId);
+
     List<TopicPartitionInfo> resolveAll(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId);
 
     boolean isMyPartition(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 
     List<Integer> getMyPartitions(QueueKey queueKey);
+
+    String getTopic(QueueKey queueKey);
 
     /**
      * Received from the Discovery service when network topology is changed.
@@ -74,5 +78,7 @@ public interface PartitionService {
     void removeTenant(TenantId tenantId);
 
     boolean isManagedByCurrentService(TenantId tenantId);
+
+    int getTotalCalculatedFieldPartitions();
 
 }

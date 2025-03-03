@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,10 +88,10 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         boolean flushed = false;
         EntityManager entityManager = getEntityManager();
         if (isNew) {
+            entityManager.persist(entity);
             if (entity instanceof HasVersion versionedEntity) {
                 versionedEntity.setVersion(1L);
             }
-            entityManager.persist(entity);
         } else {
             if (entity instanceof HasVersion versionedEntity) {
                 if (versionedEntity.getVersion() == null) {
@@ -106,22 +106,24 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
                     }
                 }
                 versionedEntity = entityManager.merge(versionedEntity);
+                entity = (E) versionedEntity;
                 /*
                  * by default, Hibernate doesn't issue an update query and thus version increment
                  * if the entity was not modified. to bypass this and always increment the version, we do it manually
                  * */
                 versionedEntity.setVersion(versionedEntity.getVersion() + 1);
-                /*
-                 * flushing and then removing the entity from the persistence context so that it is not affected
-                 * by next flushes (e.g. when a transaction is committed) to avoid double version increment
-                 * */
-                entityManager.flush();
-                entityManager.detach(versionedEntity);
-                flushed = true;
-                entity = (E) versionedEntity;
             } else {
                 entity = entityManager.merge(entity);
             }
+        }
+        if (entity instanceof HasVersion versionedEntity) {
+            /*
+             * flushing and then removing the entity from the persistence context so that it is not affected
+             * by next flushes (e.g. when a transaction is committed) to avoid double version increment
+             * */
+            entityManager.flush();
+            entityManager.detach(versionedEntity);
+            flushed = true;
         }
         if (flush && !flushed) {
             entityManager.flush();

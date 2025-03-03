@@ -15,6 +15,20 @@
     "hp_preventer",
     "hp_drill",
     "hp_drilling_line",
-    "hp_platform"
+    "hp_platform",
+    "hp_electrical_engine",
+    "hp_oil_pump",
+    "hp_gas_wellhead",
+    "hp_gas_preventer",
+    "hp_heat_exchanger",
+    "hp_turbine",
+    "hp_large_vertical_separator",
+    "hp_large_vertical_separator_with_connector",
+    "hp_large_horizontal_separator",
+    "hp_large_horizontal_separator_with_connector",
+    "hp_small_vertical_separator",
+    "hp_small_vertical_separator_with_connector",
+    "hp_small_horizontal_separator",
+    "hp_small_horizontal_separator_with_connector"
   ]
 }

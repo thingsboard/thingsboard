@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,6 +132,11 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     public Optional<NameLabelAndCustomerDetails> fetchNameLabelAndCustomerDetails(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchNameLabelAndCustomerDetails [{}]", entityId);
         return fetchAndConvert(tenantId, entityId, this::getNameLabelAndCustomerDetails);
+    }
+
+    @Override
+    public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
+        return fetchAndConvert(tenantId, entityId, Function.identity());
     }
 
     private <T> Optional<T> fetchAndConvert(TenantId tenantId, EntityId entityId, Function<HasId<?>, T> converter) {

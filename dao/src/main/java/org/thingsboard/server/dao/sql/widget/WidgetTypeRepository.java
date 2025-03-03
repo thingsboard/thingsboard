@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,12 +68,6 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
                                                     @Param("fqn") String fqn);
 
     WidgetTypeDetailsEntity findByTenantIdAndFqn(UUID tenantId, String fqn);
-
-    @Query(value = "SELECT name FROM widget_type wt " +
-            "WHERE wt.tenant_id = :tenantId AND cast(wt.descriptor as json) ->> 'resources' LIKE concat('%', :resourceLink, '%')",
-            nativeQuery = true)
-    List<String> findNamesByTenantIdAndResourceLink(@Param("tenantId") UUID tenantId,
-                                                    @Param("resourceLink") String resourceLink);
 
     @Query("SELECT externalId FROM WidgetTypeDetailsEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);

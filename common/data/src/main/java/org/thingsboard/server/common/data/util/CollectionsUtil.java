@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,18 @@ public class CollectionsUtil {
 
     public static <V> boolean emptyOrContains(Collection<V> collection, V element) {
         return isEmpty(collection) || collection.contains(element);
+    }
+
+    public static <V> boolean isOneOf(V value, V... others) {
+        if (value == null) {
+            return false;
+        }
+        for (V other : others) {
+            if (value.equals(other)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

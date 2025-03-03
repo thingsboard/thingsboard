@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ export enum EntityType {
   OAUTH2_CLIENT = 'OAUTH2_CLIENT',
   DOMAIN = 'DOMAIN',
   MOBILE_APP_BUNDLE = 'MOBILE_APP_BUNDLE',
-  MOBILE_APP = 'MOBILE_APP'
+  MOBILE_APP = 'MOBILE_APP',
+  CALCULATED_FIELD = 'CALCULATED_FIELD',
 }
 
 export enum AliasEntityType {
@@ -477,6 +478,18 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         add: 'mobile.add-bundle',
         noEntities: 'mobile.no-bundles',
         search: 'mobile.search-bundles'
+      }
+    ],
+    [
+      EntityType.CALCULATED_FIELD,
+      {
+        type: 'entity.type-calculated-field',
+        typePlural: 'entity.type-calculated-fields',
+        list: 'calculated-fields.list',
+        add: 'action.add',
+        noEntities: 'calculated-fields.no-found',
+        search: 'action.search',
+        selectedEntities: 'calculated-fields.selected-fields'
       }
     ]
   ]

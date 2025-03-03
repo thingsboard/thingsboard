@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package org.thingsboard.server.common.data.widget;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasImage;
@@ -32,58 +32,45 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serial;
+
 @Schema
+@Data
 @EqualsAndHashCode(callSuper = true)
 public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName, HasTenantId, ExportableEntity<WidgetsBundleId>, HasTitle, HasImage, HasVersion {
 
+    @Serial
     private static final long serialVersionUID = -7627368878362410489L;
 
-    @Getter
-    @Setter
     @Schema(description = "JSON object with Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
 
     @NoXss
     @Length(fieldName = "alias")
-    @Getter
-    @Setter
     @Schema(description = "Unique alias that is used in widget types as a reference widget bundle", accessMode = Schema.AccessMode.READ_ONLY)
     private String alias;
 
     @NoXss
     @Length(fieldName = "title")
-    @Getter
-    @Setter
     @Schema(description = "Title used in search and UI", accessMode = Schema.AccessMode.READ_ONLY)
     private String title;
 
-    @Getter
-    @Setter
     @Schema(description = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.", accessMode = Schema.AccessMode.READ_ONLY)
+    @ToString.Exclude
     private String image;
 
-    @Getter
-    @Setter
     @Schema(description = "Whether widgets bundle contains SCADA symbol widget types.", accessMode = Schema.AccessMode.READ_ONLY)
     private boolean scada;
 
     @NoXss
     @Length(fieldName = "description", max = 1024)
-    @Getter
-    @Setter
     @Schema(description = "Description", accessMode = Schema.AccessMode.READ_ONLY)
     private String description;
 
-    @Getter
-    @Setter
     @Schema(description = "Order", accessMode = Schema.AccessMode.READ_ONLY)
     private Integer order;
 
-    @Getter
-    @Setter
     private WidgetsBundleId externalId;
-    @Getter
-    @Setter
     private Long version;
 
     public WidgetsBundle() {
@@ -128,16 +115,4 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     public String getName() {
         return title;
     }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("WidgetsBundle{");
-        sb.append("tenantId=").append(tenantId);
-        sb.append(", alias='").append(alias).append('\'');
-        sb.append(", title='").append(title).append('\'');
-        sb.append(", description='").append(description).append('\'');
-        sb.append('}');
-        return sb.toString();
-    }
-
 }
