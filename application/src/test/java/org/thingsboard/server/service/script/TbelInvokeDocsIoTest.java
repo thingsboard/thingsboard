@@ -148,6 +148,31 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     }
 
     @Test
+    public void mapsImplicitIterationWithoutEntrySet() throws ExecutionException, InterruptedException {
+        msgStr = msgMapStr;
+        decoderStr = """
+                foreach(element : msg){
+                  if(element.getKey() == null){
+                    return raiseError("Bad getKey");
+                  }
+                  if(element.key == null){
+                    return raiseError("Bad key");
+                  }
+                  if(element.getValue() == null){
+                    return raiseError("Bad getValue");
+                  }
+                  if(element.value == null){
+                    return raiseError("Bad value");
+                  }
+                }
+                return msg;
+                """;
+        LinkedHashMap<String, Object> expected = expectedMap;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void mapsGetInfoSize_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
         decoderStr = """
