@@ -462,7 +462,6 @@ public class EntityServiceTest extends AbstractControllerTest {
         deviceService.deleteDevicesByTenantId(tenantId);
     }
 
-    // fails for sql implementation until we fix the issue with the relation query
     @Test
     public void testCountHierarchicalEntitiesByMultiRootQuery() throws InterruptedException {
         List<Asset> buildings = new ArrayList<>();
@@ -489,7 +488,7 @@ public class EntityServiceTest extends AbstractControllerTest {
         filter.setFilters(Lists.newArrayList(
                 new RelationEntityTypeFilter("buildingToApt", Collections.singletonList(EntityType.ASSET)),
                 new RelationEntityTypeFilter("AptToEnergy", Collections.singletonList(EntityType.DEVICE))));
-        countByQueryAndCheck(countQuery, 3);
+        countByQueryAndCheck(countQuery, 9);
 
         deviceService.deleteDevicesByTenantId(tenantId);
         assetService.deleteAssetsByTenantId(tenantId);
@@ -1572,46 +1571,18 @@ public class EntityServiceTest extends AbstractControllerTest {
         for (EntityKeyType currentAttributeKeyType : attributesEntityTypes) {
             List<EntityKey> latestValues = Collections.singletonList(new EntityKey(currentAttributeKeyType, "temperature"));
             EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
-            PageData<EntityData> data = findByQueryAndCheck(query, 67);
-            List<EntityData> loadedEntities = new ArrayList<>(data.getData());
-            while (data.hasNext()) {
-                query = query.next();
-                data = findByQuery(query);
-                loadedEntities.addAll(data.getData());
-            }
-            Assert.assertEquals(67, loadedEntities.size());
-            List<String> loadedTemperatures = new ArrayList<>();
-            for (Device device : devices) {
-                loadedTemperatures.add(loadedEntities.stream().filter(entityData -> entityData.getEntityId().equals(device.getId())).findFirst().orElse(null)
-                        .getLatest().get(currentAttributeKeyType).get("temperature").getValue());
-            }
-            List<String> deviceTemperatures = temperatures.stream().map(aLong -> Long.toString(aLong)).collect(Collectors.toList());
-            assertThat(loadedTemperatures).containsExactlyInAnyOrderElementsOf(deviceTemperatures);
+            List<String> deviceTemperatures = temperatures.stream().map(aLong -> Long.toString(aLong)).toList();
+            findByQueryAndCheckTelemetry(query, currentAttributeKeyType, "temperature", deviceTemperatures);
 
             pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
             KeyFilter highTemperatureFilter = createNumericKeyFilter("temperature", currentAttributeKeyType, NumericFilterPredicate.NumericOperation.GREATER, 45);
             List<KeyFilter> keyFiltersHighTemperature = Collections.singletonList(highTemperatureFilter);
 
             query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, keyFiltersHighTemperature);
-            data = findByQueryAndCheck(query, highTemperatures.size());
-
-            loadedEntities = new ArrayList<>(data.getData());
-            while (data.hasNext()) {
-                query = query.next();
-                data = findByQuery(query);
-                loadedEntities.addAll(data.getData());
-            }
-            Assert.assertEquals(highTemperatures.size(), loadedEntities.size());
-
-            List<String> loadedHighTemperatures = loadedEntities.stream().map(entityData ->
-                    entityData.getLatest().get(currentAttributeKeyType).get("temperature").getValue()).collect(Collectors.toList());
-            List<String> deviceHighTemperatures = highTemperatures.stream().map(aLong -> Long.toString(aLong)).collect(Collectors.toList());
-
-            assertThat(loadedHighTemperatures).containsExactlyInAnyOrderElementsOf(deviceHighTemperatures);
+            findByQueryAndCheckTelemetry(query, currentAttributeKeyType, "temperature", highTemperatures.stream().map(Object::toString).toList());
         }
         deviceService.deleteDevicesByTenantId(tenantId);
     }
-
 
     @Test
     public void testBuildNumericPredicateQueryOperations() throws ExecutionException, InterruptedException {
@@ -2520,7 +2491,7 @@ public class EntityServiceTest extends AbstractControllerTest {
         findByQueryAndCheck(new CustomerId(EntityId.NULL_UUID), query, 0);
     }
 
-    private PageData<EntityData> findByQuery(EntityDataQuery query) {
+    protected PageData<EntityData> findByQuery(EntityDataQuery query) {
         return findByQuery(new CustomerId(CustomerId.NULL_UUID), query);
     }
 
@@ -2528,7 +2499,7 @@ public class EntityServiceTest extends AbstractControllerTest {
         return entityService.findEntityDataByQuery(tenantId, customerId, query);
     }
 
-    private PageData<EntityData> findByQueryAndCheck(EntityDataQuery query, long expectedResultSize) {
+    protected PageData<EntityData> findByQueryAndCheck(EntityDataQuery query, long expectedResultSize) {
         return findByQueryAndCheck(new CustomerId(CustomerId.NULL_UUID), query, expectedResultSize);
     }
 
@@ -2536,6 +2507,23 @@ public class EntityServiceTest extends AbstractControllerTest {
         PageData<EntityData> result = entityService.findEntityDataByQuery(tenantId, customerId, query);
         assertThat(result.getTotalElements()).isEqualTo(expectedResultSize);
         return result;
+    }
+
+    protected List<String> findByQueryAndCheckTelemetry(EntityDataQuery query, EntityKeyType entityKeyType, String key, List<String> expectedTelemetry) {
+        List<String> entitiesTelemetry = findEntitiesTelemetry(query, entityKeyType, key, expectedTelemetry);
+        assertThat(entitiesTelemetry).containsExactlyInAnyOrderElementsOf(expectedTelemetry);
+        return entitiesTelemetry;
+    }
+
+    protected List<String> findEntitiesTelemetry(EntityDataQuery query, EntityKeyType entityKeyType, String key, List<String> expectedTelemetries) {
+        PageData<EntityData> data = findByQueryAndCheck(query, expectedTelemetries.size());
+        List<EntityData> loadedEntities = new ArrayList<>(data.getData());
+        while (data.hasNext()) {
+            query = query.next();
+            data = findByQuery(query);
+            loadedEntities.addAll(data.getData());
+        }
+        return loadedEntities.stream().map(entityData -> entityData.getLatest().get(entityKeyType).get(key).getValue()).toList();
     }
 
     protected long countByQuery(CustomerId customerId, EntityCountQuery query) {
