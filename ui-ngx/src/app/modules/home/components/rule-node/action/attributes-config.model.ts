@@ -42,7 +42,7 @@ export interface AttributeDeduplicateProcessingStrategy extends BasicProcessingS
 }
 
 export interface AttributeAdvancedProcessingStrategy extends BasicProcessingSettings {
-  attribute: AttributeAdvancedProcessingConfig;
+  attributes: AttributeAdvancedProcessingConfig;
   webSockets: AttributeAdvancedProcessingConfig;
   calculatedFields: AttributeAdvancedProcessingConfig;
 }
@@ -54,7 +54,7 @@ export const defaultAdvancedProcessingConfig: AttributeAdvancedProcessingConfig 
 }
 
 export const defaultAttributeAdvancedProcessingStrategy: Omit<AttributeAdvancedProcessingStrategy, 'type'> = {
-  attribute: defaultAdvancedProcessingConfig,
+  attributes: defaultAdvancedProcessingConfig,
   webSockets: defaultAdvancedProcessingConfig,
   calculatedFields: defaultAdvancedProcessingConfig,
 }

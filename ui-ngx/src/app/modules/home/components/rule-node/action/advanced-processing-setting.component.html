@@ -25,8 +25,8 @@
     formControlName="timeseries"
     title="{{ 'rule-node-config.save-time-series.time-series' | translate }}"
   ></tb-advanced-processing-setting-row>
-  <tb-advanced-processing-setting-row *ngIf="attribute"
-    formControlName="attribute"
+  <tb-advanced-processing-setting-row *ngIf="attributes"
+    formControlName="attributes"
     title="{{ 'rule-node-config.save-attribute.attribute' | translate }}"
   ></tb-advanced-processing-setting-row>
   <tb-advanced-processing-setting-row *ngIf="latest"

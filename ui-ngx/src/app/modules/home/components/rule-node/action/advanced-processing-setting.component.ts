@@ -50,7 +50,7 @@ export class AdvancedProcessingSettingComponent implements OnInit, ControlValueA
 
   @Input()
   @coerceBoolean()
-  attribute = false;
+  attributes = false;
 
   @Input()
   @coerceBoolean()
@@ -77,13 +77,13 @@ export class AdvancedProcessingSettingComponent implements OnInit, ControlValueA
     if (this.timeseries) {
       this.processingForm.addControl('timeseries', this.fb.control(null, []));
     }
-    if (this.attribute) {
-      this.processingForm.addControl('attribute', this.fb.control(null, []));
+    if (this.attributes) {
+      this.processingForm.addControl('attributes', this.fb.control(null, []));
     }
-    if (this.attribute) {
+    if (this.latest) {
       this.processingForm.addControl('latest', this.fb.control(null, []));
     }
-    if (this.attribute) {
+    if (this.webSockets) {
       this.processingForm.addControl('webSockets', this.fb.control(null, []));
     }
     if (this.calculatedFields) {
