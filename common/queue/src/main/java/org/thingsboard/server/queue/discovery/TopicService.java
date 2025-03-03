@@ -47,7 +47,7 @@ public class TopicService {
     @Value("${queue.edge.event-notifications-topic:tb_edge_event.notifications}")
     private String tbEdgeEventNotificationsTopic;
 
-    @Value("${queue.calculated_fields.notifications-topic:calculated_field}")
+    @Value("${queue.calculated_fields.notifications-topic:calculated_field.notifications}")
     private String tbCalculatedFieldNotificationsTopic;
 
     private final ConcurrentMap<String, TopicPartitionInfo> tbCoreNotificationTopics = new ConcurrentHashMap<>();
