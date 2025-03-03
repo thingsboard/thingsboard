@@ -18,7 +18,7 @@
 <section [formGroup]="processingForm" class="tb-form-panel no-border no-padding">
   <tb-example-hint
     [hintText]="'rule-node-config.save-time-series.advanced-settings-hint'"
-    [popupHelpLink]="timeseries ? 'rulenode/save_timeseries_node_advanced' : null"
+    [popupHelpLink]="timeseries ? 'rulenode/save_timeseries_node_advanced' : 'rulenode/save_attributes_node_advanced'"
   >
   </tb-example-hint>
   <tb-advanced-processing-setting-row *ngIf="timeseries"
@@ -27,7 +27,7 @@
   ></tb-advanced-processing-setting-row>
   <tb-advanced-processing-setting-row *ngIf="attributes"
     formControlName="attributes"
-    title="{{ 'rule-node-config.save-attribute.attribute' | translate }}"
+    title="{{ 'rule-node-config.save-attribute.attributes' | translate }}"
   ></tb-advanced-processing-setting-row>
   <tb-advanced-processing-setting-row *ngIf="latest"
     formControlName="latest"

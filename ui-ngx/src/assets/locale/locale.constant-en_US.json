@@ -5275,7 +5275,7 @@
                 "deduplicate": "Deduplicate",
                 "web-sockets-only": "WebSockets only"
             },
-            "attribute": "Attribute"
+            "attributes": "Attributes"
         },
         "key-val": {
             "key": "Key",
