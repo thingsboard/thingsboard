@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.ApiUsageStateFilter;
@@ -1767,7 +1768,7 @@ public class EntityServiceTest extends AbstractControllerTest {
             }
         }
 
-        List<ListenableFuture<Integer>> timeseriesFutures = new ArrayList<>();
+        List<ListenableFuture<TimeseriesSaveResult>> timeseriesFutures = new ArrayList<>();
         for (int i = 0; i < devices.size(); i++) {
             Device device = devices.get(i);
             timeseriesFutures.add(saveLongTimeseries(device.getId(), "temperature", temperatures.get(i)));
@@ -2371,7 +2372,7 @@ public class EntityServiceTest extends AbstractControllerTest {
         return attributesService.save(tenantId, entityId, scope, Collections.singletonList(attr));
     }
 
-    private ListenableFuture<Integer> saveLongTimeseries(EntityId entityId, String key, Double value) {
+    private ListenableFuture<TimeseriesSaveResult> saveLongTimeseries(EntityId entityId, String key, Double value) {
         TsKvEntity tsKv = new TsKvEntity();
         tsKv.setStrKey(key);
         tsKv.setDoubleValue(value);

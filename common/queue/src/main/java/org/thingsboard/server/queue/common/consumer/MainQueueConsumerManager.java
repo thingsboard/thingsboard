@@ -250,7 +250,9 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     }
 
     protected void processMsgs(List<M> msgs, TbQueueConsumer<M> consumer, C config) throws Exception {
+        log.trace("Processing {} messages", msgs.size());
         msgPackProcessor.process(msgs, consumer, config);
+        log.trace("Processed {} messages", msgs.size());
     }
 
     public void stop() {

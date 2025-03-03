@@ -140,6 +140,9 @@ public class EdgeEventSourcingListener {
         if (EntityType.DEVICE.equals(event.getEntityId().getEntityType()) && ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType())) {
             return;
         }
+        if (EntityType.ALARM.equals(event.getEntityId().getEntityType())) {
+            return;
+        }
         try {
             if (event.getEntityId().getEntityType().equals(EntityType.RULE_CHAIN) && event.getEdgeId() != null && event.getActionType().equals(ActionType.ASSIGNED_TO_EDGE)) {
                 try {

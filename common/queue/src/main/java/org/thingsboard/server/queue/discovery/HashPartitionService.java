@@ -63,6 +63,12 @@ public class HashPartitionService implements PartitionService {
     private String coreTopic;
     @Value("${queue.core.partitions:10}")
     private Integer corePartitions;
+    @Value("${queue.calculated_fields.event_topic:tb_cf_event}")
+    private String cfEventTopic;
+    @Value("${queue.calculated_fields.state_topic:tb_cf_state}")
+    private String cfStateTopic;
+    @Value("${queue.calculated_fields.partitions:10}")
+    private Integer cfPartitions;
     @Value("${queue.vc.topic:tb_version_control}")
     private String vcTopic;
     @Value("${queue.vc.partitions:10}")
@@ -111,9 +117,15 @@ public class HashPartitionService implements PartitionService {
     @PostConstruct
     public void init() {
         this.hashFunction = forName(hashFunctionName);
+
         QueueKey coreKey = new QueueKey(ServiceType.TB_CORE);
         partitionSizesMap.put(coreKey, corePartitions);
         partitionTopicsMap.put(coreKey, coreTopic);
+
+        partitionSizesMap.put(QueueKey.CF, cfPartitions);
+        partitionTopicsMap.put(QueueKey.CF, cfEventTopic);
+        partitionSizesMap.put(QueueKey.CF_STATES, cfPartitions);
+        partitionTopicsMap.put(QueueKey.CF_STATES, cfStateTopic);
 
         QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
         partitionSizesMap.put(vcKey, vcPartitions);
@@ -142,6 +154,11 @@ public class HashPartitionService implements PartitionService {
     @Override
     public List<Integer> getMyPartitions(QueueKey queueKey) {
         return myPartitions.get(queueKey);
+    }
+
+    @Override
+    public String getTopic(QueueKey queueKey) {
+        return partitionTopicsMap.get(queueKey);
     }
 
     private void doInitRuleEnginePartitions() {
@@ -319,7 +336,8 @@ public class HashPartitionService implements PartitionService {
         }
     }
 
-    private TopicPartitionInfo resolve(QueueKey queueKey, EntityId entityId) {
+    @Override
+    public TopicPartitionInfo resolve(QueueKey queueKey, EntityId entityId) {
         Integer partitionSize = partitionSizesMap.get(queueKey);
         if (partitionSize == null) {
             throw new IllegalStateException("Partitions info for queue " + queueKey + " is missing");
@@ -517,7 +535,6 @@ public class HashPartitionService implements PartitionService {
         return result;
     }
 
-
     @Override
     public int resolvePartitionIndex(UUID entityId, int partitions) {
         int hash = hash(entityId);
@@ -533,6 +550,11 @@ public class HashPartitionService implements PartitionService {
     public int countTransportsByType(String type) {
         var list = tbTransportServicesByType.get(type);
         return list == null ? 0 : list.size();
+    }
+
+    @Override
+    public int getTotalCalculatedFieldPartitions() {
+        return cfPartitions;
     }
 
     private Map<QueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {

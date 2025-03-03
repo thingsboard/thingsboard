@@ -162,6 +162,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         log.trace("Executing save [{}]", apiUsageState.getTenantId());
         validateId(apiUsageState.getTenantId(), id -> INCORRECT_TENANT_ID + id);
         validateId(apiUsageState.getId(), "Can't save new usage state. Only update is allowed!");
+        apiUsageState.setVersion(null);
         ApiUsageState savedState = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedState.getTenantId()).entityId(savedState.getId())
                 .entity(savedState).build());
