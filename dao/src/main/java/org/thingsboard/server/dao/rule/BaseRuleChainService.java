@@ -118,7 +118,16 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent) {
-        ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
+        return saveRuleChain(ruleChain, publishSaveEvent, true);
+    }
+
+    @Override
+    @Transactional
+    public RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent, boolean doValidate) {
+        log.trace("Executing doSaveRuleChain [{}]", ruleChain);
+        if (doValidate) {
+            ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
+        }
         try {
             RuleChain savedRuleChain = ruleChainDao.saveAndFlush(ruleChain.getTenantId(), ruleChain);
             if (ruleChain.getId() == null) {
