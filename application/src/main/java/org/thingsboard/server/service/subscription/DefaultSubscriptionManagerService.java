@@ -217,10 +217,6 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         if (entityId.getEntityType() == EntityType.DEVICE) {
             if (TbAttributeSubscriptionScope.SERVER_SCOPE.name().equalsIgnoreCase(scope)) {
                 updateDeviceInactivityTimeout(tenantId, entityId, attributes);
-            } else if (TbAttributeSubscriptionScope.SHARED_SCOPE.name().equalsIgnoreCase(scope) && notifyDevice) {
-                clusterService.pushMsgToCore(DeviceAttributesEventNotificationMsg.onUpdate(tenantId,
-                                new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, new ArrayList<>(attributes))
-                        , null);
             }
         }
         callback.onSuccess();
