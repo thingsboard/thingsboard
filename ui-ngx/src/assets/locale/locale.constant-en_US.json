@@ -6534,16 +6534,7 @@
         "URL": "URL",
         "url-required": "URL is required.",
         "mobile": {
-          "provisioning-device": {
-              "label": "Provisioning device",
-              "type": "Provisioning device type",
-              "select-type": "Select provisioning device type",
-              "type-required": "Provisioning device type is required",
-              "smart-config-esp-touch": "Smart Config ESP-Touch",
-              "smart-config-esp-touch-v2": "Smart Config ESP-Touch v2",
-              "wifi": "Wi-Fi Provisioning via Bluetooth Low Energy BLE/QR code",
-              "soft-ap": "SoftAP"
-          },
+          "provision-device": "Provision device",
           "action-type": "Mobile action type",
           "select-action-type": "Select mobile action type",
           "action-type-required": "Mobile action type is required",

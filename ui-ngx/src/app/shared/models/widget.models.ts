@@ -588,24 +588,8 @@ export enum WidgetMobileActionType {
   makePhoneCall = 'makePhoneCall',
   getLocation = 'getLocation',
   takeScreenshot = 'takeScreenshot',
-  provisioningDevice = 'provisioningDevice',
+  provisionDevice = 'provisionDevice',
 }
-
-export enum WidgetMobileProvisionType {
-  smartConfigEspTouch = 'SmartConfigEspTouch',
-  smartConfigEspTouchV2 = 'SmartConfigEspTouchV2',
-  wifi = 'wifi',
-  softAp = 'SoftAp',
-}
-
-export const widgetMobileProvisionTypeTranslationMap = new Map<WidgetMobileProvisionType, string>(
-  [
-    [ WidgetMobileProvisionType.smartConfigEspTouch, 'widget-action.mobile.provisioning-device.smart-config-esp-touch' ],
-    [ WidgetMobileProvisionType.smartConfigEspTouchV2, 'widget-action.mobile.provisioning-device.smart-config-esp-touch-v2' ],
-    [ WidgetMobileProvisionType.wifi, 'widget-action.mobile.provisioning-device.wifi' ],
-    [ WidgetMobileProvisionType.softAp, 'widget-action.mobile.provisioning-device.soft-ap' ]
-  ]
-);
 
 export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
 
@@ -632,7 +616,7 @@ export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionTy
     [ WidgetMobileActionType.makePhoneCall, 'widget-action.mobile.make-phone-call' ],
     [ WidgetMobileActionType.getLocation, 'widget-action.mobile.get-location' ],
     [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ],
-    [ WidgetMobileActionType.provisioningDevice, 'widget-action.mobile.provisioning-device.label' ]
+    [ WidgetMobileActionType.provisionDevice, 'widget-action.mobile.provision-device' ]
   ]
 );
 
@@ -673,7 +657,6 @@ export interface WidgetMobileActionResult<T extends MobileActionResult> {
 
 export interface ProvisionSuccessDescriptor {
   handleProvisionSuccessFunction: TbFunction;
-  provisionType: WidgetMobileProvisionType;
 }
 
 export interface ProcessImageDescriptor {

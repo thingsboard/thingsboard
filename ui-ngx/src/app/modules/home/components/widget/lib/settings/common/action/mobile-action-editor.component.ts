@@ -24,12 +24,10 @@ import {
 } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
-  WidgetMobileProvisionType,
   WidgetActionType,
   WidgetMobileActionDescriptor,
   WidgetMobileActionType,
   widgetMobileActionTypeTranslationMap,
-  widgetMobileProvisionTypeTranslationMap
 } from '@shared/models/widget.models';
 import { CustomActionEditorCompleter } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import {
@@ -62,9 +60,6 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   mobileActionTypes = Object.keys(WidgetMobileActionType);
   mobileActionTypeTranslations = widgetMobileActionTypeTranslationMap;
   mobileActionType = WidgetMobileActionType;
-  mobileProvisionType = WidgetMobileProvisionType;
-  mobileProvisionTypes = Object.keys(WidgetMobileProvisionType);
-  widgetMobileProvisionTypeTranslationMap = widgetMobileProvisionTypeTranslationMap;
 
   customActionEditorCompleter = CustomActionEditorCompleter;
 
@@ -260,7 +255,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
             this.fb.control(processLocationFunction, [Validators.required])
           );
           break;
-        case WidgetMobileActionType.provisioningDevice:
+        case WidgetMobileActionType.provisionDevice:
           let handleProvisionSuccessFunction = action?.handleProvisionSuccessFunction;
           if (changed) {
             const defaultProvisioningSuccessFunction = getDefaultProvisioningSuccessFunction();
@@ -271,10 +266,6 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
           this.mobileActionTypeFormGroup.addControl(
             'handleProvisionSuccessFunction',
             this.fb.control(handleProvisionSuccessFunction, [Validators.required])
-          );
-          this.mobileActionTypeFormGroup.addControl(
-            'provisionType',
-            this.fb.control(null, [Validators.required])
           );
       }
     }

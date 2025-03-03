@@ -1203,10 +1203,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       case WidgetMobileActionType.scanQrCode:
       case WidgetMobileActionType.getLocation:
       case WidgetMobileActionType.takeScreenshot:
+      case WidgetMobileActionType.provisionDevice:
         argsObservable = of([]);
-        break;
-      case WidgetMobileActionType.provisioningDevice:
-        argsObservable = of([mobileAction.provisionType]);
         break;
       case WidgetMobileActionType.mapDirection:
       case WidgetMobileActionType.mapLocation:
@@ -1295,7 +1293,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                         );
                       }
                       break;
-                    case WidgetMobileActionType.provisioningDevice:
+                    case WidgetMobileActionType.provisionDevice:
                       const deviceName = actionResult.device.name;
                       if (isNotEmptyTbFunction(mobileAction.handleProvisionSuccessFunction)) {
                         compileTbFunction(this.http, mobileAction.handleProvisionSuccessFunction, 'deviceName', '$event', 'widgetContext', 'entityId',

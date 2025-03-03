@@ -283,7 +283,7 @@ export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType
     case WidgetMobileActionType.takeScreenshot:
       message = 'Take screenshot action was cancelled!';
       break;
-    case WidgetMobileActionType.provisioningDevice:
+    case WidgetMobileActionType.provisionDevice:
       message = 'Provisioning device was not invoked!';
       break;
   }
@@ -317,8 +317,8 @@ export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): TbF
     case WidgetMobileActionType.takeScreenshot:
       title = 'Failed to take screenshot';
       break;
-    case WidgetMobileActionType.provisioningDevice:
-      title = 'Failed to make device provisioning';
+    case WidgetMobileActionType.provisionDevice:
+      title = 'Failed to make device provision';
       break;
   }
   return handleErrorFunctionTemplate.replace('--TITLE--', title);
