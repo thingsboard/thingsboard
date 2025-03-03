@@ -1079,7 +1079,7 @@ message TbAttributeDeleteProto {
   int64 tenantIdLSB = 5;
   string scope = 6;
   repeated string keys = 7;
-  // not used anymore since device notification are now handled in DefaultTelemetrySubscriptionService instead of DefaultSubscriptionManagerService
+  // Deprecated since 4.0, not used anymore since device notification are now handled in DefaultTelemetrySubscriptionService instead of DefaultSubscriptionManagerService
   bool notifyDevice = 8 [deprecated = true];
 }
 
