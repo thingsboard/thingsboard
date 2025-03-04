@@ -1294,7 +1294,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                       }
                       break;
                     case WidgetMobileActionType.provisionDevice:
-                      const deviceName = actionResult.device.name;
+                      const deviceName = actionResult.deviceName;
                       if (isNotEmptyTbFunction(mobileAction.handleProvisionSuccessFunction)) {
                         compileTbFunction(this.http, mobileAction.handleProvisionSuccessFunction, 'deviceName', '$event', 'widgetContext', 'entityId',
                           'entityName', 'additionalParams', 'entityLabel').subscribe(

@@ -639,7 +639,7 @@ export interface MobileLocationResult {
 }
 
 export interface MobileDeviceProvisioningResult {
-  device: Device;
+  deviceName: string;
 }
 
 export type MobileActionResult = MobileLaunchResult &
