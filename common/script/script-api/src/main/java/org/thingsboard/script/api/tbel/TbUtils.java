@@ -368,16 +368,6 @@ public class TbUtils {
                 byte[].class, int.class)));
         parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
                 byte[].class, int.class, int.class)));
-        parserConfig.addImport("merge", new MethodStub(TbUtils.class.getMethod("merge",
-                TbelCfTsRollingArg.class, TbelCfTsRollingArg.class)));
-        parserConfig.addImport("merge", new MethodStub(TbUtils.class.getMethod("merge",
-                TbelCfTsRollingArg.class, TbelCfTsRollingArg.class, TbTimeWindow.class)));
-        parserConfig.addImport("merge", new MethodStub(TbUtils.class.getMethod("merge",
-                TbelCfTsRollingArg.class, TbelCfTsRollingArg.class, TbTimeWindow.class, Map.class)));
-        parserConfig.addImport("merge", new MethodStub(TbUtils.class.getMethod("merge",
-                List.class, TbTimeWindow.class)));
-        parserConfig.addImport("merge", new MethodStub(TbUtils.class.getMethod("merge",
-                List.class, TbTimeWindow.class, Map.class)));
     }
 
     public static String btoa(String input) {
@@ -1516,77 +1506,6 @@ public class TbUtils {
             throw new NumberFormatException("Value: \"" + value + "\" is not numeric or hexDecimal format!");
         }
         return hex;
-    }
-
-    public static TbelCfTsRollingData merge(TbelCfTsRollingArg a, TbelCfTsRollingArg b) {
-        return merge(Arrays.asList(a, b), null, null);
-    }
-
-    public static TbelCfTsRollingData merge(TbelCfTsRollingArg a, TbelCfTsRollingArg b, TbTimeWindow timeWindow) {
-        return merge(Arrays.asList(a, b), timeWindow, null);
-    }
-
-    public static TbelCfTsRollingData merge(TbelCfTsRollingArg a, TbelCfTsRollingArg b, TbTimeWindow timeWindow, Map<String, Object> settings) {
-        return merge(Arrays.asList(a, b), timeWindow, settings);
-    }
-
-    public static TbelCfTsRollingData merge(List<TbelCfTsRollingArg> args, TbTimeWindow timeWindow) {
-        return merge(args, timeWindow, null);
-    }
-
-    public static TbelCfTsRollingData merge(List<TbelCfTsRollingArg> args, TbTimeWindow timeWindow, Map<String, Object> settings) {
-        boolean ignoreNaN = true;
-        if (settings != null && settings.containsKey("ignoreNaN")) {
-            ignoreNaN = Boolean.parseBoolean(settings.get("ignoreNaN").toString());
-        }
-
-        TreeSet<Long> allTimestamps = new TreeSet<>();
-        long startTs = Long.MAX_VALUE;
-        long endTs = Long.MIN_VALUE;
-        for (TbelCfTsRollingArg arg : args) {
-            for (TbelCfTsDoubleVal val : arg.getValues()) {
-                allTimestamps.add(val.getTs());
-            }
-            startTs = Math.min(startTs, arg.getTimeWindow().getStartTs());
-            endTs = Math.max(endTs, arg.getTimeWindow().getEndTs());
-        }
-
-        List<TbelCfTsMultiDoubleVal> data = new ArrayList<>();
-
-        int[] lastIndex = new int[args.size()];
-        double[] result = new double[args.size()];
-        Arrays.fill(result, Double.NaN);
-
-        var tw = timeWindow != null ? timeWindow : new TbTimeWindow(startTs, endTs, allTimestamps.size());
-
-        for (long ts : allTimestamps) {
-            for (int i = 0; i < args.size(); i++) {
-                var arg = args.get(i);
-                var values = arg.getValues();
-                while (lastIndex[i] < values.size() && values.get(lastIndex[i]).getTs() <= ts) {
-                    result[i] = values.get(lastIndex[i]).getValue();
-                    lastIndex[i]++;
-                }
-            }
-            if (tw.matches(ts)) {
-                if (ignoreNaN) {
-                    boolean skip = false;
-                    for (int i = 0; i < args.size(); i++) {
-                        if (Double.isNaN(result[i])) {
-                            skip = true;
-                            break;
-                        }
-                    }
-                    if (!skip) {
-                        data.add(new TbelCfTsMultiDoubleVal(ts, Arrays.copyOf(result, result.length)));
-                    }
-                } else {
-                    data.add(new TbelCfTsMultiDoubleVal(ts, Arrays.copyOf(result, result.length)));
-                }
-            }
-        }
-
-        return new TbelCfTsRollingData(tw, data);
     }
 
 }

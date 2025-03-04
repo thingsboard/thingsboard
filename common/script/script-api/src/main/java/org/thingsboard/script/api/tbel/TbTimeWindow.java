@@ -28,7 +28,6 @@ public class TbTimeWindow implements TbelCfObject {
 
     private long startTs;
     private long endTs;
-    private int limit;
 
     @Override
     public long memorySize() {
