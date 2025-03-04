@@ -376,5 +376,7 @@ export const endGroupHighlightRule: AceHighlightRule = {
   next: 'no_regex'
 };
 
+export const identifierRe = /[a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*/;
+
 
 
