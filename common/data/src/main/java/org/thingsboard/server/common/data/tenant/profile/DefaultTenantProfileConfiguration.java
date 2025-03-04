@@ -135,11 +135,11 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     private double warnThreshold;
 
-    private long maxCalculatedFieldsPerEntity;
-    private long maxArgumentsPerCF;
-    private long maxDataPointsPerRollingArg;
-    private long maxStateSizeInKBytes;
-    private long maxSingleValueArgumentSizeInKBytes;
+    private long maxCalculatedFieldsPerEntity = 5;
+    private long maxArgumentsPerCF = 10;
+    private long maxDataPointsPerRollingArg = 1000;
+    private long maxStateSizeInKBytes = 32;
+    private long maxSingleValueArgumentSizeInKBytes = 2;
 
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {
