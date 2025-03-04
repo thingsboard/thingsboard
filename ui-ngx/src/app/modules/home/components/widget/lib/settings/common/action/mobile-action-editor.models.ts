@@ -138,6 +138,17 @@ const processLocationFunction: TbFunction =
   '    }, 100);\n' +
   '}';
 
+const provisioningSuccessFunction: TbFunction =
+  '// Function body to handle device provision success. \n' +
+  '// - deviceName - name of device that was successfully provisioned.\n' +
+  'showDeviceProvisioningSuccess(deviceName);\n' +
+  '\n' +
+  'function showDeviceProvisioningSuccess(deviceName) {\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.showSuccessToast(`Device ` + deviceName + ` was successfully provisioned`).subscribe();\n' +
+  '    }, 100);\n' +
+  '}\n';
+
 const handleEmptyResultFunctionTemplate: TbFunction =
   '// Optional function body to handle empty result. \n' +
   '// Usually this happens when user cancels the action (for ex. by pressing phone back button). \n\n' +
@@ -145,7 +156,7 @@ const handleEmptyResultFunctionTemplate: TbFunction =
   '\n' +
   'function showEmptyResultDialog(message) {\n' +
   '    setTimeout(function() {\n' +
-  '        widgetContext.dialogs.alert(\'Empty result\', message).subscribe();\n' +
+  '        widgetContext.showInfoToast(message).subscribe();\n' +
   '    }, 100);\n' +
   '}\n';
 
@@ -241,6 +252,8 @@ export const getDefaultProcessQrCodeFunction = () => processQrCodeFunction;
 
 export const getDefaultProcessLocationFunction = () => processLocationFunction;
 
+export const getDefaultProvisioningSuccessFunction = () => provisioningSuccessFunction;
+
 export const getDefaultGetLocationFunction = () => getLocationFunctionTemplate;
 
 export const getDefaultGetPhoneNumberFunction = () => getPhoneNumberFunctionTemplate;
@@ -272,6 +285,9 @@ export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType
     case WidgetMobileActionType.takeScreenshot:
       message = 'Take screenshot action was cancelled!';
       break;
+    case WidgetMobileActionType.provisionDevice:
+      message = 'Provisioning device was not invoked!';
+      break;
   }
   return handleEmptyResultFunctionTemplate.replace('--MESSAGE--', message);
 };
@@ -302,6 +318,9 @@ export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): TbF
       break;
     case WidgetMobileActionType.takeScreenshot:
       title = 'Failed to take screenshot';
+      break;
+    case WidgetMobileActionType.provisionDevice:
+      title = 'Failed to make device provision';
       break;
   }
   return handleErrorFunctionTemplate.replace('--TITLE--', title);
