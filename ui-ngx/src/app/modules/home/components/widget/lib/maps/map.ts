@@ -17,7 +17,6 @@
 import {
   additionalMapDataSourcesToDatasources,
   BaseMapSettings,
-  CustomActionData,
   DataKeyValuePair,
   MapBooleanFunction,
   mapDataLayerTypes,
@@ -49,7 +48,7 @@ import {
   TbLatestMapDataLayer,
   UnplacedMapDataItem,
 } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
-import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { IWidgetSubscription, PlaceMapItemActionData, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { FormattedData, MapItemType, WidgetAction, WidgetActionType, widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
@@ -64,10 +63,9 @@ import {
   SelectMapEntityPanelComponent
 } from '@home/components/widget/lib/maps/panels/select-map-entity-panel.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { createColorMarkerShapeURI, MarkerShape } from '@home/components/widget/lib/maps/models/marker-shape.models';
+import { createPlaceItemIcon } from '@home/components/widget/lib/maps/models/marker-shape.models';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import tinycolor from 'tinycolor2';
 import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/panels/map-timeline-panel.component';
 import { ComponentRef } from '@angular/core';
 import { TbTripsDataLayer } from '@home/components/widget/lib/maps/data-layer/trips-data-layer';
@@ -138,6 +136,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<S>,
                         protected containerElement: HTMLElement) {
+    this.ctx.actionsApi.placeMapItem = this.placeMapItem.bind(this);
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultSettings(), this.inputSettings as S);
 
     $(containerElement).empty();
@@ -550,90 +549,95 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private setupCustomActions() {
-    if (!this.settings.mapActionButtons) {
+    const widgetHeaderActions = this.ctx.actionsApi.getActionDescriptors('headerButton');
+    const mapActionButtons = this.settings.mapActionButtons;
+
+    const hasMarkerAction =
+      mapActionButtons?.some(actionButton => actionButton.action.mapItemType === MapItemType.marker) ||
+      widgetHeaderActions.some(action => action.type === WidgetActionType.placeMapItem && action.mapItemType === MapItemType.marker);
+
+    if (hasMarkerAction) {
+      this.setPlaceMarkerStyle();
+    }
+
+    if (!mapActionButtons?.length) {
       return;
     }
+
     this.customActionsToolbar = L.TB.topToolbar({
       mapElement: $(this.mapElement),
       iconRegistry: this.ctx.$injector.get(MatIconRegistry)
     });
 
-    const mapActionButtons = this.settings.mapActionButtons;
+    const customTranslate = this.ctx.$injector.get(CustomTranslatePipe);
 
-    if (mapActionButtons.length) {
-      const customTranslate = this.ctx.$injector.get(CustomTranslatePipe);
+    mapActionButtons.forEach(actionButton => {
+      const actionButtonConfig = {
+        icon: actionButton.icon,
+        color: actionButton.color,
+        title: customTranslate.transform(actionButton.label)
+      };
+      const toolbarButton = this.customActionsToolbar.toolbarButton(actionButtonConfig);
+      toolbarButton.onClick((e, button) => this.ctx.actionsApi.handleWidgetAction(e, actionButton.action, null, null, {button}));
+    });
+  }
 
-      if (mapActionButtons.some(actionButton => actionButton.action.mapItemType === MapItemType.marker)) {
-        this.setPlaceMarkerStyle();
-      }
-
-      mapActionButtons.forEach(actionButton => {
-        const actionButtonConfig = {
-          icon: actionButton.icon,
-          color: actionButton.color,
-          title: customTranslate.transform(actionButton.label)
-        };
-        const toolbarButton = this.customActionsToolbar.toolbarButton(actionButtonConfig);
-        if (actionButton.action.type !== WidgetActionType.placeMapItem) {
-          toolbarButton.onClick((e) => this.ctx.actionsApi.handleWidgetAction(e, actionButton.action));
-        } else {
-          switch (actionButton.action.mapItemType) {
-            case MapItemType.marker:
-              toolbarButton.onClick((e, button) => this.createMarker(e, {button, action: actionButton.action}));
-              break;
-            case MapItemType.polygon:
-              toolbarButton.onClick((e, button) => this.createPolygon(e, {button, action: actionButton.action}));
-              break;
-            case MapItemType.rectangle:
-              toolbarButton.onClick((e, button) => this.createRectangle(e, {button, action: actionButton.action}));
-              break;
-            case MapItemType.circle:
-              toolbarButton.onClick((e, button) => this.createCircle(e, {button, action: actionButton.action}));
-              break;
-          }
-        }
-      });
+  public placeMapItem(actionData: PlaceMapItemActionData): void {
+    switch (actionData.action.mapItemType) {
+      case MapItemType.marker:
+        this.createMarker(actionData);
+        break;
+      case MapItemType.polygon:
+        this.createPolygon(actionData);
+        break;
+      case MapItemType.rectangle:
+        this.createRectangle(actionData);
+        break;
+      case MapItemType.circle:
+        this.createCircle(actionData);
+        break;
     }
   }
 
-  private createMarker(e: MouseEvent, actionData: CustomActionData) {
-    this.createItem(e, actionData, () => this.prepareDrawMode('Marker', {
+  private createMarker(actionData: PlaceMapItemActionData) {
+    this.createItem(actionData, () => this.prepareDrawMode('Marker', {
       placeMarker: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint')
     }));
   }
 
-  private createRectangle(e: MouseEvent, actionData: CustomActionData): void {
-    this.createItem(e, actionData, () => this.prepareDrawMode('Rectangle', {
+  private createRectangle(actionData: PlaceMapItemActionData): void {
+    this.createItem(actionData, () => this.prepareDrawMode('Rectangle', {
       firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.rectangle-place-first-point-hint'),
       finishRect: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-rectangle-hint')
     }));
   }
 
-  private createPolygon(e: MouseEvent, actionData: CustomActionData): void {
-    this.createItem(e, actionData, () => this.prepareDrawMode('Polygon', {
+  private createPolygon(actionData: PlaceMapItemActionData): void {
+    this.createItem(actionData, () => this.prepareDrawMode('Polygon', {
       firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-hint'),
       continueLine: this.ctx.translate.instant('widgets.maps.data-layer.polygon.continue-polygon-hint'),
       finishPoly: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-polygon-hint')
     }));
   }
 
-  private createCircle(e: MouseEvent, actionData: CustomActionData): void {
-    this.createItem(e, actionData, () => this.prepareDrawMode('Circle', {
+  private createCircle(actionData: PlaceMapItemActionData): void {
+    this.createItem(actionData, () => this.prepareDrawMode('Circle', {
       startCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.place-circle-center-hint'),
       finishCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.finish-circle-hint')
     }));
   }
 
-  private createItem(_e: MouseEvent, actionData: CustomActionData, prepareDrawMode: () => void) {
+  private createItem(actionData: PlaceMapItemActionData, prepareDrawMode: () => void) {
     if (this.isPlacingItem) {
       return;
     }
-    this.updatePlaceItemState(actionData.button);
+    this.updatePlaceItemState(actionData.additionalParams?.button, true);
 
     this.map.once('pm:create', (e) => {
-      this.ctx.actionsApi.handleWidgetAction(e as any, actionData.action, null, null, {
+      actionData.afterPlaceItemCallback(e as any, actionData.action, null, null, {
         coordinates: convertLayerToCoordinates(actionData.action.mapItemType, e.layer),
-        layer: e.layer
+        layer: e.layer,
+        button: actionData.additionalParams?.button
       });
 
       // @ts-ignore
@@ -702,7 +706,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     L.DomUtil.addClass(this.map.pm.Draw[shape]._hintMarker.getTooltip()._container, 'tb-place-item-label');
   }
 
-  private updatePlaceItemState(addButton?: L.TB.ToolbarButton): void {
+  private updatePlaceItemState(addButton?: L.TB.ToolbarButton, disabled = false): void {
     if (addButton) {
       this.deselectItem(false, true);
       addButton.setActive(true);
@@ -710,7 +714,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       this.currentAddButton.setActive(false);
     }
     this.currentAddButton = addButton;
-    this.updateAddButtonsStates();
+    this.updateAddButtonsStates(disabled);
   }
 
   private createdControlButtonTooltip(root: HTMLElement, side: TooltipPositioningSide) {
@@ -882,8 +886,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
   }
 
-  private updateAddButtonsStates() {
-    if (this.currentAddButton) {
+  private updateAddButtonsStates(disabled = false) {
+    if (this.currentAddButton || disabled) {
       if (this.addMarkerButton && this.addMarkerButton !== this.currentAddButton) {
         this.addMarkerButton.setDisabled(true);
       }
@@ -915,7 +919,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private setPlaceMarkerStyle() {
-    createColorMarkerShapeURI(this.getCtx().$injector.get(MatIconRegistry), this.getCtx().$injector.get(DomSanitizer), MarkerShape.markerShape1, tinycolor('rgba(255,255,255,0.75)')).subscribe(
+    createPlaceItemIcon(this.getCtx().$injector.get(MatIconRegistry), this.getCtx().$injector.get(DomSanitizer)).subscribe(
       ((iconUrl) => {
         const icon = L.icon({
           iconUrl,

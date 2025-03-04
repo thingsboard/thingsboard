@@ -1034,11 +1034,6 @@ export interface MarkerIconInfo {
   size: [number, number];
 }
 
-export interface CustomActionData {
-  button: L.TB.TopToolbarButton;
-  action: WidgetAction;
-}
-
 export type MapStringFunction = (data: FormattedData<TbMapDatasource>,
                                  dsData: FormattedData<TbMapDatasource>[]) => string;
 
