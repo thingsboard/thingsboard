@@ -275,9 +275,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) throws CalculatedFieldException {
         CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
         boolean stateSizeOk;
-        if (ctx.isInitialized() && state.isReady()) {
-            try {
-                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
+        try {
+            if (ctx.isInitialized() && state.isReady()) {
+                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(systemContext.getCfCalculationResultTimeout(), TimeUnit.SECONDS);
                 state.checkStateSize(ctxId, ctx.getMaxStateSize());
                 stateSizeOk = state.isSizeOk();
                 if (stateSizeOk) {
@@ -286,20 +286,17 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                         systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
                     }
                 }
-            } catch (Exception e) {
-                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(tbMsgId).msgType(tbMsgType).arguments(state.getArguments()).cause(e).build();
             }
-        } else {
+        } catch (Exception e) {
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(tbMsgId).msgType(tbMsgType).arguments(state.getArguments()).cause(e).build();
+        } finally {
             state.checkStateSize(ctxId, ctx.getMaxStateSize());
             stateSizeOk = state.isSizeOk();
             if (stateSizeOk) {
-                callback.onSuccess(); // State was updated but no calculation performed;
+                cfStateService.persistState(ctxId, state, callback);
+            } else {
+                removeStateAndRaiseSizeException(ctxId, CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build(), callback);
             }
-        }
-        if (stateSizeOk) {
-            cfStateService.persistState(ctxId, state, callback);
-        } else {
-            removeStateAndRaiseSizeException(ctxId, CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build(), callback);
         }
     }
 

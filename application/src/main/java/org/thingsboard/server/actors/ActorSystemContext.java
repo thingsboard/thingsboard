@@ -644,6 +644,10 @@ public class ActorSystemContext {
     @Getter
     private String deviceStateNodeRateLimitConfig;
 
+    @Value("${actors.calculated_fields.calculation_result_timeout:5}")
+    @Getter
+    private long cfCalculationResultTimeout;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;

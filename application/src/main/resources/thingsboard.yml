@@ -512,6 +512,8 @@ actors:
       enabled: "${ACTORS_CALCULATED_FIELD_DEBUG_MODE_RATE_LIMITS_PER_TENANT_ENABLED:true}"
       # The value of DEBUG mode rate limit. By default, no more than 50 thousand events per hour
       configuration: "${ACTORS_CALCULATED_FIELD_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:50000:3600}"
+    # Time in seconds to receive calculation result.
+    calculation_result_timeout: "${ACTORS_CALCULATION_RESULT_TIMEOUT_SEC:5}"
 
 debug:
   settings:
