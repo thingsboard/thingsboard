@@ -1031,6 +1031,7 @@
         "argument-type": "Argument type",
         "see-debug-events": "See debug events",
         "attribute": "Attribute",
+        "copy-argument-name": "Copy argument name",
         "timeseries-key": "Time series key",
         "device-name": "Device name",
         "latest-telemetry": "Latest telemetry",
