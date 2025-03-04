@@ -140,10 +140,12 @@ const processLocationFunction: TbFunction =
 
 const provisioningSuccessFunction: TbFunction =
   '// Function body to handle device provision success. \n' +
-  '// - device - device that was successfully provisioned.\n' +
-  'function showDeviceProvisioningSuccess(deviceName, message) {\n' +
+  '// - deviceName - name of device that was successfully provisioned.\n' +
+  'showDeviceProvisioningSuccess(deviceName);\n' +
+  '\n' +
+  'function showDeviceProvisioningSuccess(deviceName) {\n' +
   '    setTimeout(function() {\n' +
-  '        widgetContext.dialogs.alert(`Device ` + deviceName + ` was successfully provisioned`, message).subscribe();\n' +
+  '        widgetContext.showSuccessToast(`Device ` + deviceName + ` was successfully provisioned`).subscribe();\n' +
   '    }, 100);\n' +
   '}\n';
 
@@ -154,7 +156,7 @@ const handleEmptyResultFunctionTemplate: TbFunction =
   '\n' +
   'function showEmptyResultDialog(message) {\n' +
   '    setTimeout(function() {\n' +
-  '        widgetContext.dialogs.alert(\'Empty result\', message).subscribe();\n' +
+  '        widgetContext.showInfoToast(message).subscribe();\n' +
   '    }, 100);\n' +
   '}\n';
 
