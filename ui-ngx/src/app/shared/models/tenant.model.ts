@@ -156,11 +156,11 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           rpcTtlDays: 0,
           queueStatsTtlDays: 0,
           ruleEngineExceptionsTtlDays: 0,
-          maxCalculatedFieldsPerEntity: 0,
-          maxArgumentsPerCF: 0,
-          maxDataPointsPerRollingArg: 0,
-          maxStateSizeInKBytes: 0,
-          maxSingleValueArgumentSizeInKBytes: 0,
+          maxCalculatedFieldsPerEntity: 5,
+          maxArgumentsPerCF: 10,
+          maxDataPointsPerRollingArg: 1000,
+          maxStateSizeInKBytes: 32,
+          maxSingleValueArgumentSizeInKBytes: 2,
           calculatedFieldDebugEventsRateLimit: ''
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
