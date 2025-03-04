@@ -102,20 +102,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveCalculatedFieldWithExistingExternalId() {
-        Device device = createTestDevice();
-        CalculatedField calculatedField = getCalculatedField(device.getId(), device.getId());
-        calculatedField.setExternalId(new CalculatedFieldId(UUID.fromString("2ef69d0a-89cf-4868-86f8-c50551d87ebe")));
-
-        calculatedFieldService.save(calculatedField);
-
-        calculatedField.setName("Test 2");
-        assertThatThrownBy(() -> calculatedFieldService.save(calculatedField))
-                .isInstanceOf(DataValidationException.class)
-                .hasMessage("Calculated Field with such external id already exists!");
-    }
-
-    @Test
     public void testFindCalculatedFieldById() {
         CalculatedField savedCalculatedField = saveValidCalculatedField();
         CalculatedField fetchedCalculatedField = calculatedFieldService.findById(tenantId, savedCalculatedField.getId());

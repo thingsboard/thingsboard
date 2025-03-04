@@ -92,7 +92,6 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
                 calculatedField.setVersion(version);
                 calculatedField.setDebugSettings(JacksonUtil.fromString(debugSettings, DebugSettings.class));
-                calculatedField.setExternalId(externalIdObj != null ? new CalculatedFieldId(UUID.fromString((String) externalIdObj)) : null);
 
                 return calculatedField;
             }).collect(Collectors.toList());

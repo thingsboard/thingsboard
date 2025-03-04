@@ -31,7 +31,8 @@ import { PageComponent } from '@shared/components/page.component';
 import {
   entityTypesWithoutRelatedData,
   EntityTypeVersionLoadConfig,
-  exportableEntityTypes
+  exportableEntityTypes,
+  typesWithCalculatedFields
 } from '@shared/models/vc.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -74,6 +75,8 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
   entityTypesWithoutRelatedData = entityTypesWithoutRelatedData;
 
   loading = true;
+
+  readonly typesWithCalculatedFields = typesWithCalculatedFields;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
@@ -145,6 +148,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
           loadRelations: [config.loadRelations, []],
           loadAttributes: [config.loadAttributes, []],
           loadCredentials: [config.loadCredentials, []],
+          loadCalculatedFields: [config.loadCalculatedFields, []],
           removeOtherEntities: [config.removeOtherEntities, []],
           findExistingEntityByName: [config.findExistingEntityByName, []]
         })
@@ -180,6 +184,7 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
       loadAttributes: true,
       loadRelations: true,
       loadCredentials: true,
+      loadCalculatedFields: true,
       removeOtherEntities: false,
       findExistingEntityByName: true
     };

@@ -36,6 +36,9 @@
         <mat-checkbox *ngIf="entityDataInfo.hasRelations" formControlName="loadRelations" style="margin-bottom: 16px;">
           {{ 'version-control.load-relations' | translate }}
         </mat-checkbox>
+        <mat-checkbox *ngIf="entityDataInfo.hasCalculatedFields" formControlName="loadCalculatedFields" class="mb-4">
+          {{ 'version-control.load-calculated-fields' | translate }}
+        </mat-checkbox>
       </div>
     </fieldset>
   </form>

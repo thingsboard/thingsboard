@@ -50,7 +50,11 @@ public class AssetProfileImportService extends BaseEntityImportService<AssetProf
 
     @Override
     protected AssetProfile saveOrUpdate(EntitiesImportCtx ctx, AssetProfile assetProfile, EntityExportData<AssetProfile> exportData, IdProvider idProvider) {
-        return assetProfileService.saveAssetProfile(assetProfile);
+        AssetProfile saved = assetProfileService.saveAssetProfile(assetProfile);
+        if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
+            importCalculatedFields(ctx, saved, exportData, idProvider);
+        }
+        return saved;
     }
 
     @Override

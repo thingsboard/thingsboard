@@ -32,7 +32,6 @@ public interface EntitiesExportImportService {
 
     <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(EntitiesImportCtx ctx, EntityExportData<E> exportData) throws ThingsboardException;
 
-
     void saveReferencesAndRelations(EntitiesImportCtx ctx) throws ThingsboardException;
 
     Comparator<EntityType> getEntityTypeComparatorForImport();
