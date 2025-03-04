@@ -108,9 +108,9 @@ public class EdqsEntityServiceTest extends EntityServiceTest {
     }
 
     @Override
-    protected List<String> findByQueryAndCheckTelemetry(EntityDataQuery query, EntityKeyType entityKeyType, String key, List<String> expectedTelemetries) {
+    protected List<EntityData> findByQueryAndCheckTelemetry(EntityDataQuery query, EntityKeyType entityKeyType, String key, List<String> expectedTelemetries) {
         return await().atMost(15, TimeUnit.SECONDS).until(() -> findEntitiesTelemetry(query, entityKeyType, key, expectedTelemetries),
-                loadedTelemetry -> loadedTelemetry.containsAll(expectedTelemetries));
+                loadedEntities -> loadedEntities.stream().map(entityData -> entityData.getLatest().get(entityKeyType).get(key).getValue()).toList().containsAll(expectedTelemetries));
     }
 
     @Override
