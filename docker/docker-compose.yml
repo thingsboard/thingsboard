@@ -20,7 +20,7 @@ version: '3.0'
 services:
   zookeeper:
     restart: always
-    image: "zookeeper:3.8.0"
+    image: "zookeeper:3.8.1"
     ports:
       - "2181"
     environment:

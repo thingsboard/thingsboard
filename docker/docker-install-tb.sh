@@ -51,8 +51,6 @@ ADDITIONAL_CACHE_ARGS=$(additionalComposeCacheArgs) || exit $?
 
 ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
 
-checkFolders --create || exit $?
-
 if [ ! -z "${ADDITIONAL_STARTUP_SERVICES// }" ]; then
 
     COMPOSE_ARGS="\
