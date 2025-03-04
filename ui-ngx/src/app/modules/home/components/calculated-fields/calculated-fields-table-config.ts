@@ -44,7 +44,7 @@ import {
   CalculatedFieldTestScriptDialogData,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
-  CalculatedFieldTypeTranslations,
+  CalculatedFieldTypeTranslations, CalculatedFieldType,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -109,8 +109,17 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.defaultSortOrder = {property: 'name', direction: Direction.DESC};
 
-    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '33%', entity => entity.configuration?.expression);
+    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '300px');
     expressionColumn.sortable = false;
+    expressionColumn.cellContentFunction = entity => {
+      const expressionLabel = this.getExpressionLabel(entity);
+      return expressionLabel.length < 50
+        ? expressionLabel : `<span style="display: inline-block; width: 50ch">${expressionLabel.substring(0, 49)}…</span>`;
+    }
+    expressionColumn.cellTooltipFunction = entity => {
+      const expressionLabel = this.getExpressionLabel(entity);
+      return expressionLabel.length < 50 ? null : expressionLabel
+    };
 
     this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
     this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '50px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type))));
@@ -144,6 +153,14 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         onAction: (_, entity) => this.editCalculatedField(entity),
       }
     );
+  }
+
+  private getExpressionLabel(entity: CalculatedField): string {
+    if (entity.type === CalculatedFieldType.SCRIPT) {
+      return 'function calculate(' + Object.keys(entity.configuration.arguments).join(', ') + ')';
+    } else {
+      return entity.configuration.expression;
+    }
   }
 
   fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedField>> {

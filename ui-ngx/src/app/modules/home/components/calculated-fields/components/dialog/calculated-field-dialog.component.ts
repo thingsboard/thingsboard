@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, Inject } from '@angular/core';
+import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -45,6 +45,7 @@ import { Observable } from 'rxjs';
   selector: 'tb-calculated-field-dialog',
   templateUrl: './calculated-field-dialog.component.html',
   styleUrls: ['./calculated-field-dialog.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> {
 
