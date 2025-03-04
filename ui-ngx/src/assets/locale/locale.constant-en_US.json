@@ -3217,6 +3217,7 @@
             "top-fluid-color": "Top fluid color",
             "bottom-fluid-color": "Bottom fluid color",
             "display": "Display",
+            "display-format": "Display format",
             "value": "Value",
             "decimals": "Decimals",
             "units": "Units",

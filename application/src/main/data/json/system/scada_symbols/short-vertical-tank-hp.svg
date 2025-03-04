@@ -38,7 +38,7 @@
     },
     {
       "tag": "scale",
-      "stateRenderFunction": "if (!ctx.properties.scale) {\n        element.hide();\n} else {\n    var scaleSet = element.remember('scaleSet');\n    if (!scaleSet) {\n        element.remember('scaleSet', true);\n        element.clear();\n        \n        var majorIntervals = ctx.properties.majorIntervals;\n        var minorIntervals = ctx.properties.minorIntervals;\n        \n        var start = 3;\n        var majorIntervalLength = 594 / majorIntervals;\n        var minorIntervalLength = majorIntervalLength / minorIntervals;\n        for (var i = 0; i < majorIntervals + 1; i++) {\n            var y = start + i * majorIntervalLength;\n            var line = ctx.svg.line(170, y, 202, y).stroke({ width: 3 }).attr({class: 'majorTick'});\n            element.add(line);\n            var majorText = (100 - i * (100/majorIntervals)).toFixed(0);\n            var majorTickText = ctx.svg.text(majorText);\n            if (i === 0) {\n                majorTickText.attr({x: 160, y: y + 10, 'text-anchor': 'end', class: 'majorTickText'});\n            } else if (i === majorIntervals) {\n                majorTickText.attr({x: 160, y: y - 5, 'text-anchor': 'end', class: 'majorTickText'});\n            } else {\n                majorTickText.attr({x: 160, y: y + 2, 'text-anchor': 'end', class: 'majorTickText'});\n            }\n            majorTickText.first().attr({'dominant-baseline': 'middle'});\n            element.add(majorTickText);\n            if (i < majorIntervals) {\n                drawMinorTicks(y, minorIntervals, minorIntervalLength);\n            }\n        }\n    }\n    \n    var majorFont = ctx.properties.majorFont;\n    var majorColor = ctx.properties.majorColor;\n    var minorColor = ctx.properties.minorColor;\n    \n    var majorTicks = element.find('line.majorTick');\n    majorTicks.forEach(t => t.attr({stroke: majorColor}));\n    \n    var majorTicksText = element.find('text.majorTickText');\n    ctx.api.font(majorTicksText, majorFont, majorColor);\n    \n    var minorTicks = element.find('line.minorTick');\n    minorTicks.forEach(t => t.attr({stroke: minorColor}));\n}\n\nfunction drawMinorTicks(start, minorIntervals, minorIntervalLength) {\n    for (var i = 1; i < minorIntervals; i++) {\n        var minorY = start + i * minorIntervalLength;\n        var minorLine = ctx.svg.line(182, minorY, 202, minorY).stroke({ width: 3 }).attr({class: 'minorTick'});\n        element.add(minorLine);\n    }\n}",
+      "stateRenderFunction": "if (!ctx.properties.scale) {\n        element.hide();\n} else {\n    var scaleSet = element.remember('scaleSet');\n    if (!scaleSet) {\n        element.remember('scaleSet', true);\n        element.clear();\n        \n        var majorIntervals = ctx.properties.majorIntervals;\n        var minorIntervals = ctx.properties.minorIntervals;\n        \n        var start = 3;\n        var majorIntervalLength = 594 / majorIntervals;\n        var minorIntervalLength = majorIntervalLength / minorIntervals;\n        var tankCapacity = ctx.properties.scaleDisplayFormat ? 100 : (ctx.values.tankCapacity || 100);\n        for (var i = 0; i < majorIntervals + 1; i++) {\n            var y = start + i * majorIntervalLength;\n            var line = ctx.svg.line(170, y, 202, y).stroke({ width: 3 }).attr({class: 'majorTick'});\n            element.add(line);\n            var majorText = ctx.api.formatValue((tankCapacity - i * (tankCapacity/majorIntervals)).toFixed(0), 0, ctx.properties.majorUnits, false);\n            var majorTickText = ctx.svg.text(majorText);\n            if (i === 0) {\n                majorTickText.attr({x: 160, y: y + 10, 'text-anchor': 'end', class: 'majorTickText'});\n            } else if (i === majorIntervals) {\n                majorTickText.attr({x: 160, y: y - 5, 'text-anchor': 'end', class: 'majorTickText'});\n            } else {\n                majorTickText.attr({x: 160, y: y + 2, 'text-anchor': 'end', class: 'majorTickText'});\n            }\n            majorTickText.first().attr({'dominant-baseline': 'middle'});\n            element.add(majorTickText);\n            if (i < majorIntervals) {\n                drawMinorTicks(y, minorIntervals, minorIntervalLength);\n            }\n        }\n    }\n    \n    var majorFont = ctx.properties.majorFont;\n    var majorColor = ctx.properties.majorColor;\n    var minorColor = ctx.properties.minorColor;\n    \n    var majorTicks = element.find('line.majorTick');\n    majorTicks.forEach(t => t.attr({stroke: majorColor}));\n    \n    var majorTicksText = element.find('text.majorTickText');\n    ctx.api.font(majorTicksText, majorFont, majorColor);\n    \n    var minorTicks = element.find('line.minorTick');\n    minorTicks.forEach(t => t.attr({stroke: minorColor}));\n}\n\nfunction drawMinorTicks(start, minorIntervals, minorIntervalLength) {\n    for (var i = 1; i < minorIntervals; i++) {\n        var minorY = start + i * minorIntervalLength;\n        var minorLine = ctx.svg.line(182, minorY, 202, minorY).stroke({ width: 3 }).attr({class: 'minorTick'});\n        element.add(minorLine);\n    }\n}",
       "actions": null
     },
     {
@@ -307,64 +307,67 @@
       "name": "{i18n:scada.symbol.tank-color}",
       "type": "color",
       "default": "#EBEBEB",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "fluidColor",
       "name": "{i18n:scada.symbol.fluid-color}",
       "type": "color",
       "default": "#C8DFF7",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "scale",
       "name": "{i18n:scada.symbol.scale}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "scaleDisplayFormat",
+      "name": "{i18n:scada.symbol.scale}",
+      "type": "select",
+      "default": true,
+      "subLabel": "{i18n:scada.symbol.display-format}",
+      "disableOnProperty": "scale",
+      "items": [
+        {
+          "value": true,
+          "label": "Percentage"
+        },
+        {
+          "value": false,
+          "label": "Metric"
+        }
+      ],
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorIntervals",
       "name": "{i18n:scada.symbol.major-ticks}",
       "type": "number",
       "default": 10,
-      "required": null,
       "subLabel": "{i18n:scada.symbol.intervals}",
       "divider": false,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
       "min": 1,
-      "max": null,
-      "step": 1
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "majorUnits",
+      "name": "{i18n:scada.symbol.major-ticks}",
+      "type": "units",
+      "subLabel": "{i18n:scada.symbol.units}",
+      "divider": true,
+      "disableOnProperty": "scale",
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorFont",
@@ -377,96 +380,57 @@
         "weight": "500",
         "style": "normal"
       },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorColor",
       "name": "{i18n:scada.symbol.major-ticks}",
       "type": "color",
       "default": "#00000061",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minorIntervals",
       "name": "{i18n:scada.symbol.minor-ticks}",
       "type": "number",
       "default": 5,
-      "required": null,
       "subLabel": "{i18n:scada.symbol.intervals}",
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
       "min": 1,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minorColor",
       "name": "{i18n:scada.symbol.minor-ticks}",
       "type": "color",
       "default": "#0000001F",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "warningColor",
       "name": "{i18n:scada.symbol.alarm-colors}",
       "type": "color",
       "default": "#FAA405",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.warning}",
       "divider": true,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "criticalColor",
       "name": "{i18n:scada.symbol.alarm-colors}",
       "type": "color",
       "default": "#D12730",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.critical}",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     }
   ]
 }]]></tb:metadata>
