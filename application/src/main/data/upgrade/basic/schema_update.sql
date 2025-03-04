@@ -64,3 +64,33 @@ $$;
 -- UPDATE SAVE TIME SERIES NODES END
 
 ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS version BIGINT DEFAULT 1;
+
+-- UPDATE TENANT PROFILE CALCULATED FIELD LIMITS START
+
+DO $$
+    BEGIN
+        -- Check if the tenant_profile table exists
+        IF EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_name = 'tenant_profile'
+        ) THEN
+
+            UPDATE tenant_profile
+            SET profile_data = profile_data
+                || jsonb_build_object(
+                    'configuration', profile_data->'configuration' || jsonb_build_object(
+                    'maxCalculatedFieldsPerEntity', COALESCE(profile_data->'configuration'->>'maxCalculatedFieldsPerEntity', '5')::bigint,
+                    'maxArgumentsPerCF', COALESCE(profile_data->'configuration'->>'maxArgumentsPerCF', '10')::bigint,
+                    'maxDataPointsPerRollingArg', COALESCE(profile_data->'configuration'->>'maxDataPointsPerRollingArg', '1000')::bigint,
+                    'maxStateSizeInKBytes', COALESCE(profile_data->'configuration'->>'maxStateSizeInKBytes', '32')::bigint,
+                    'maxSingleValueArgumentSizeInKBytes', COALESCE(profile_data->'configuration'->>'maxSingleValueArgumentSizeInKBytes', '2')::bigint
+                    )
+                )
+            WHERE profile_data->'configuration' IS NOT NULL;
+
+END IF;
+    END;
+$$;
+
+-- UPDATE TENANT PROFILE CALCULATED FIELD LIMITS END
