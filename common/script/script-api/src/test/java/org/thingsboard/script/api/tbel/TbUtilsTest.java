@@ -1109,7 +1109,7 @@ public class TbUtilsTest {
         String validInput = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3, 4, 5});
         ExecutionArrayList<Byte> actual = TbUtils.base64ToBytesList(ctx, validInput);
         ExecutionArrayList<Byte> expected = new ExecutionArrayList<>(ctx);
-        expected.addAll(List.of((byte) 1, (byte)2, (byte)3, (byte)4, (byte)5));
+        expected.addAll(List.of((byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5));
         Assertions.assertEquals(expected, actual);
 
         String emptyInput = Base64.getEncoder().encodeToString(new byte[]{});
@@ -1123,6 +1123,7 @@ public class TbUtilsTest {
             TbUtils.base64ToBytesList(ctx, null);
         });
     }
+
     @Test
     public void bytesToHex_Test() {
         byte[] bb = {(byte) 0xBB, (byte) 0xAA};
@@ -1134,6 +1135,75 @@ public class TbUtilsTest {
         expected = "BB53";
         actual = TbUtils.bytesToHex(expectedList);
         Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void merge_two_rolling_args_ts_match_test() {
+        TbTimeWindow tw = new TbTimeWindow(0, 60000, 1000);
+        TbelCfTsRollingArg arg1 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(1000, 1), new TbelCfTsDoubleVal(5000, 2), new TbelCfTsDoubleVal(15000, 3)));
+        TbelCfTsRollingArg arg2 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(1000, 11), new TbelCfTsDoubleVal(5000, 12), new TbelCfTsDoubleVal(15000, 13)));
+
+        var result = TbUtils.merge(arg1, arg2);
+        Assertions.assertEquals(3, result.getSize());
+        Assertions.assertNotNull(result.getValues());
+        Assertions.assertNotNull(result.getValues().get(0));
+        Assertions.assertEquals(1000L, result.getValues().get(0).getTs());
+        Assertions.assertEquals(1, result.getValues().get(0).getValues()[0]);
+        Assertions.assertEquals(11, result.getValues().get(0).getValues()[1]);
+    }
+
+    @Test
+    public void merge_two_rolling_args_with_timewindow_test() {
+        TbTimeWindow tw = new TbTimeWindow(0, 60000, 1000);
+        TbelCfTsRollingArg arg1 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(1000, 1), new TbelCfTsDoubleVal(5000, 2), new TbelCfTsDoubleVal(15000, 3)));
+        TbelCfTsRollingArg arg2 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(1000, 11), new TbelCfTsDoubleVal(5000, 12), new TbelCfTsDoubleVal(15000, 13)));
+
+        var result = TbUtils.merge(arg1, arg2, new TbTimeWindow(0, 10000, 1000));
+        Assertions.assertEquals(2, result.getSize());
+        Assertions.assertNotNull(result.getValues());
+        Assertions.assertNotNull(result.getValues().get(0));
+        Assertions.assertEquals(1000L, result.getValues().get(0).getTs());
+        Assertions.assertEquals(1, result.getValues().get(0).getValues()[0]);
+        Assertions.assertEquals(11, result.getValues().get(0).getValues()[1]);
+    }
+
+    @Test
+    public void merge_two_rolling_args_ts_mismatch_default_test() {
+        TbTimeWindow tw = new TbTimeWindow(0, 60000, 1000);
+        TbelCfTsRollingArg arg1 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(100, 1), new TbelCfTsDoubleVal(5000, 2), new TbelCfTsDoubleVal(15000, 3)));
+        TbelCfTsRollingArg arg2 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(200, 11), new TbelCfTsDoubleVal(5000, 12), new TbelCfTsDoubleVal(15000, 13)));
+
+        var result = TbUtils.merge(arg1, arg2);
+        Assertions.assertEquals(3, result.getSize());
+        Assertions.assertNotNull(result.getValues());
+
+        TbelCfTsMultiDoubleVal item0 = result.getValues().get(0);
+        Assertions.assertNotNull(item0);
+        Assertions.assertEquals(200L, item0.getTs());
+        Assertions.assertEquals(1, item0.getValues()[0]);
+        Assertions.assertEquals(11, item0.getValues()[1]);
+    }
+
+    @Test
+    public void merge_two_rolling_args_ts_mismatch_ignore_nan_disabled_test() {
+        TbTimeWindow tw = new TbTimeWindow(0, 60000, 1000);
+        TbelCfTsRollingArg arg1 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(100, 1), new TbelCfTsDoubleVal(5000, 2), new TbelCfTsDoubleVal(15000, 3)));
+        TbelCfTsRollingArg arg2 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(200, 11), new TbelCfTsDoubleVal(5000, 12), new TbelCfTsDoubleVal(15000, 13)));
+
+        var result = TbUtils.merge(Arrays.asList(arg1, arg2), new TbTimeWindow(0, 60000, 1000), Collections.singletonMap("ignoreNaN", false));
+        Assertions.assertEquals(4, result.getSize());
+        Assertions.assertNotNull(result.getValues());
+
+        TbelCfTsMultiDoubleVal item0 = result.getValues().get(0);
+        Assertions.assertNotNull(item0);
+        Assertions.assertEquals(100L, item0.getTs());
+        Assertions.assertEquals(1, item0.getValues()[0]);
+        Assertions.assertEquals(Double.NaN, item0.getValues()[1]);
+
+        TbelCfTsMultiDoubleVal item1 = result.getValues().get(1);
+        Assertions.assertEquals(200L, item1.getTs());
+        Assertions.assertEquals(1, item1.getValues()[0]);
+        Assertions.assertEquals(11, item1.getValues()[1]);
     }
 
     private static List<Byte> toList(byte[] data) {

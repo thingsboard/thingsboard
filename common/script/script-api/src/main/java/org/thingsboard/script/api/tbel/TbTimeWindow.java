@@ -35,4 +35,7 @@ public class TbTimeWindow implements TbelCfObject {
         return OBJ_SIZE;
     }
 
+    public boolean matches(long ts) {
+        return ts >= startTs && ts < endTs;
+    }
 }
