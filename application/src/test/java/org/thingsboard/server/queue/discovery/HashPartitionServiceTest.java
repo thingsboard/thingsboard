@@ -153,7 +153,7 @@ public class HashPartitionServiceTest {
             for (int queueIndex = 0; queueIndex < queueCount; queueIndex++) {
                 QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, "queue" + queueIndex, tenantId);
                 for (int partition = 0; partition < partitionCount; partition++) {
-                    ServiceInfo serviceInfo = partitionService.resolveByPartitionIdx(services, queueKey, partition, Collections.emptyMap());
+                    ServiceInfo serviceInfo = partitionService.resolveByPartitionIdx(services, queueKey, partition, Collections.emptyMap()).get(0);
                     String serviceId = serviceInfo.getServiceId();
                     map.put(serviceId, map.get(serviceId) + 1);
                 }
@@ -308,7 +308,7 @@ public class HashPartitionServiceTest {
         partitionService_common.recalculatePartitions(commonRuleEngine, List.of(dedicatedRuleEngine));
         verifyPartitionChangeEvent(event -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, TenantId.SYS_TENANT_ID);
-            return event.getPartitionsMap().get(queueKey).size() == systemQueue.getPartitions();
+            return event.getNewPartitions().get(queueKey).size() == systemQueue.getPartitions();
         });
 
         Mockito.reset(applicationEventPublisher);
@@ -336,14 +336,14 @@ public class HashPartitionServiceTest {
         // expecting event about no partitions for isolated queue key
         verifyPartitionChangeEvent(event -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
-            return event.getPartitionsMap().get(queueKey).isEmpty();
+            return event.getNewPartitions().get(queueKey).isEmpty();
         });
 
         partitionService_dedicated.updateQueues(List.of(queueUpdateMsg));
         partitionService_dedicated.recalculatePartitions(dedicatedRuleEngine, List.of(commonRuleEngine));
         verifyPartitionChangeEvent(event -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
-            return event.getPartitionsMap().get(queueKey).size() == isolatedQueue.getPartitions();
+            return event.getNewPartitions().get(queueKey).size() == isolatedQueue.getPartitions();
         });
 
 
@@ -361,7 +361,7 @@ public class HashPartitionServiceTest {
         partitionService_dedicated.removeQueues(List.of(queueDeleteMsg));
         verifyPartitionChangeEvent(event -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
-            return event.getPartitionsMap().get(queueKey).isEmpty();
+            return event.getNewPartitions().get(queueKey).isEmpty();
         });
     }
 
@@ -381,12 +381,12 @@ public class HashPartitionServiceTest {
         Stream.concat(Stream.of(TenantId.SYS_TENANT_ID), Stream.generate(UUID::randomUUID).map(TenantId::new).limit(10)).forEach(tenantId -> {
             List<QueueKey> queues = Stream.generate(() -> RandomStringUtils.randomAlphabetic(10))
                     .map(queueName -> new QueueKey(ServiceType.TB_RULE_ENGINE, queueName, tenantId))
-                    .limit(100).collect(Collectors.toList());
+                    .limit(100).toList();
 
             for (int partition = 0; partition < 10; partition++) {
-                ServiceInfo expectedAssignedRuleEngine = partitionService.resolveByPartitionIdx(ruleEngines, new QueueKey(ServiceType.TB_RULE_ENGINE, tenantId), partition, Collections.emptyMap());
+                ServiceInfo expectedAssignedRuleEngine = partitionService.resolveByPartitionIdx(ruleEngines, new QueueKey(ServiceType.TB_RULE_ENGINE, tenantId), partition, Collections.emptyMap()).get(0);
                 for (QueueKey queueKey : queues) {
-                    ServiceInfo assignedRuleEngine = partitionService.resolveByPartitionIdx(ruleEngines, queueKey, partition, Collections.emptyMap());
+                    ServiceInfo assignedRuleEngine = partitionService.resolveByPartitionIdx(ruleEngines, queueKey, partition, Collections.emptyMap()).get(0);
                     assertThat(assignedRuleEngine).as(queueKey + "[" + partition + "] should be assigned to " + expectedAssignedRuleEngine.getServiceId())
                             .isEqualTo(expectedAssignedRuleEngine);
                 }
@@ -434,6 +434,7 @@ public class HashPartitionServiceTest {
         ReflectionTestUtils.setField(partitionService, "hashFunctionName", hashFunctionName);
         ReflectionTestUtils.setField(partitionService, "edgeTopic", "tb.edge");
         ReflectionTestUtils.setField(partitionService, "edgePartitions", 10);
+        ReflectionTestUtils.setField(partitionService, "edqsPartitions", 12);
         partitionService.init();
         partitionService.partitionsInit();
         return partitionService;

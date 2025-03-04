@@ -17,6 +17,7 @@ package org.thingsboard.server.dao;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.fields.EntityFields;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Collection;
@@ -45,6 +46,12 @@ public interface Dao<T> {
 
     List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit);
 
-    default EntityType getEntityType() { return null; }
+    default List<? extends EntityFields> findNextBatch(UUID id, int batchSize) {
+        throw new UnsupportedOperationException();
+    }
+
+    default EntityType getEntityType() {
+        return null;
+    }
 
 }

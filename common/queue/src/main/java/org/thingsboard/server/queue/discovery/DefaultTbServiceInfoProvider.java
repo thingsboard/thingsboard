@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
+import org.thingsboard.server.queue.edqs.EdqsConfig;
 import org.thingsboard.server.queue.util.AfterContextReady;
 
 import java.net.InetAddress;
@@ -59,6 +60,9 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     private Set<UUID> assignedTenantProfiles;
 
     @Autowired
+    private EdqsConfig edqsConfig;
+
+    @Autowired
     private ApplicationContext applicationContext;
 
     private List<ServiceType> serviceTypes;
@@ -81,6 +85,11 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         }
         if (!serviceTypes.contains(ServiceType.TB_RULE_ENGINE) || assignedTenantProfiles == null) {
             assignedTenantProfiles = Collections.emptySet();
+        }
+        if (serviceTypes.contains(ServiceType.EDQS)) {
+            if (StringUtils.isBlank(edqsConfig.getLabel())) {
+                edqsConfig.setLabel(serviceId);
+            }
         }
 
         generateNewServiceInfoWithCurrentSystemInfo();
@@ -118,6 +127,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         if (CollectionsUtil.isNotEmpty(assignedTenantProfiles)) {
             builder.addAllAssignedTenantProfiles(assignedTenantProfiles.stream().map(UUID::toString).collect(Collectors.toList()));
         }
+        builder.setLabel(edqsConfig.getLabel());
         return serviceInfo = builder.build();
     }
 

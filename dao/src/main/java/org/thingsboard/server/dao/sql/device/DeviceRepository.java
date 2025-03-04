@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.edqs.fields.DeviceFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
 import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
@@ -201,5 +203,10 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
 
     @Query("SELECT externalId FROM DeviceEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.DeviceFields(d.id, d.createdTime, d.tenantId, d.customerId," +
+            "d.name, d.version, d.type, d.label, d.deviceProfileId, d.additionalInfo) FROM DeviceEntity d WHERE d.id > :id ORDER BY d.id")
+    List<DeviceFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
 }
