@@ -15,12 +15,19 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings;
 import org.thingsboard.server.common.data.DataConstants;
+
+import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.OnEveryMessage;
 
 @Data
 public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsgAttributesNodeConfiguration> {
+
+    @NotNull
+    private AttributesProcessingSettings processingSettings;
 
     private String scope;
 
@@ -31,6 +38,7 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
     @Override
     public TbMsgAttributesNodeConfiguration defaultConfiguration() {
         TbMsgAttributesNodeConfiguration configuration = new TbMsgAttributesNodeConfiguration();
+        configuration.setProcessingSettings(new OnEveryMessage());
         configuration.setScope(DataConstants.SERVER_SCOPE);
         configuration.setNotifyDevice(false);
         configuration.setSendAttributesUpdatedNotification(false);
@@ -38,4 +46,5 @@ public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsg
         configuration.setUpdateAttributesOnlyOnValueChange(true);
         return configuration;
     }
+
 }

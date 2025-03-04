@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.telemetry;
+package org.thingsboard.rule.engine.api;
 
 import org.junit.jupiter.api.Test;
+import org.thingsboard.common.util.NoOpFutureCallback;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TbMsgAttributesNodeConfigurationTest {
+class AttributesDeleteRequestTest {
 
     @Test
-    void testDefaultConfig_givenUpdateAttributesOnlyOnValueChange_thenTrue_sinceVersion1() {
-        assertThat(new TbMsgAttributesNodeConfiguration().defaultConfiguration().isUpdateAttributesOnlyOnValueChange()).isTrue();
+    void testDefaultCallbackIsNoOp() {
+        var request = AttributesDeleteRequest.builder().build();
+
+        assertThat(request.getCallback()).isEqualTo(NoOpFutureCallback.instance());
+    }
+
+    @Test
+    void testNullCallbackIsNoOp() {
+        var request = AttributesDeleteRequest.builder().callback(null).build();
+
+        assertThat(request.getCallback()).isEqualTo(NoOpFutureCallback.instance());
     }
 
 }

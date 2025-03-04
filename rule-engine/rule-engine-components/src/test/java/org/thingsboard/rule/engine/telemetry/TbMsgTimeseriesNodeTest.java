@@ -73,6 +73,10 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.Advanced;
+import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.Deduplicate;
+import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.OnEveryMessage;
+import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.WebSocketsOnly;
 
 @ExtendWith(MockitoExtension.class)
 public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
@@ -110,7 +114,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void verifyDefaultConfig() {
         assertThat(config.getDefaultTTL()).isEqualTo(0L);
-        assertThat(config.getProcessingSettings()).isInstanceOf(TbMsgTimeseriesNodeConfiguration.ProcessingSettings.OnEveryMessage.class);
+        assertThat(config.getProcessingSettings()).isInstanceOf(OnEveryMessage.class);
         assertThat(config.isUseServerTs()).isFalse();
     }
 
@@ -220,11 +224,11 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
         config.setDefaultTTL(10L);
 
-        var timeseriesStrategy = ProcessingStrategy.onEveryMessage();
-        var latestStrategy = ProcessingStrategy.skip();
+        var timeseries = ProcessingStrategy.onEveryMessage();
+        var latest = ProcessingStrategy.skip();
         var webSockets = ProcessingStrategy.onEveryMessage();
         var calculatedFields = ProcessingStrategy.onEveryMessage();
-        var processingSettings = new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(timeseriesStrategy, latestStrategy, webSockets, calculatedFields);
+        var processingSettings = new Advanced(timeseries, latest, webSockets, calculatedFields);
         config.setProcessingSettings(processingSettings);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -336,7 +340,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenOnEveryMessageProcessingSettingsAndSameMessageTwoTimes_whenOnMsg_thenPersistSameMessageTwoTimes() throws TbNodeException {
         // GIVEN
-        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.OnEveryMessage());
+        config.setProcessingSettings(new OnEveryMessage());
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -374,7 +378,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenDeduplicateProcessingSettingsAndSameMessageTwoTimes_whenOnMsg_thenPersistThisMessageOnlyFirstTime() throws TbNodeException {
         // GIVEN
-        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Deduplicate(10));
+        config.setProcessingSettings(new Deduplicate(10));
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -412,7 +416,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenWebSocketsOnlyProcessingSettingsAndSameMessageTwoTimes_whenOnMsg_thenSendsOnlyWsUpdateTwoTimes() throws TbNodeException {
         // GIVEN
-        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.WebSocketsOnly());
+        config.setProcessingSettings(new WebSocketsOnly());
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -450,7 +454,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenAdvancedProcessingSettingsWithOnEveryMessageStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenPersistSameMessageTwoTimes() throws TbNodeException {
         // GIVEN
-        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(
+        config.setProcessingSettings(new Advanced(
                 ProcessingStrategy.onEveryMessage(),
                 ProcessingStrategy.onEveryMessage(),
                 ProcessingStrategy.onEveryMessage(),
@@ -477,7 +481,6 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
                 .tbMsgId(msg.getId())
                 .tbMsgType(msg.getInternalType())
-                .callback(new TelemetryNodeCallback(ctxMock, msg))
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -494,7 +497,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenAdvancedProcessingSettingsWithDifferentDeduplicateStrategyForEachAction_whenOnMsg_thenEvaluatesStrategiesForEachActionsIndependently() throws TbNodeException {
         // GIVEN
-        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(
+        config.setProcessingSettings(new Advanced(
                 ProcessingStrategy.deduplicate(1),
                 ProcessingStrategy.deduplicate(2),
                 ProcessingStrategy.deduplicate(3),
@@ -580,7 +583,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenAdvancedProcessingSettingsWithSkipStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenSkipsSameMessageTwoTimes() throws TbNodeException {
         // GIVEN
-        config.setProcessingSettings(new TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced(
+        config.setProcessingSettings(new Advanced(
                 ProcessingStrategy.skip(),
                 ProcessingStrategy.skip(),
                 ProcessingStrategy.skip(),

@@ -36,6 +36,9 @@ public class DonAsynchron {
         FutureCallback<T> callback = new FutureCallback<T>() {
             @Override
             public void onSuccess(T result) {
+                if (onSuccess == null) {
+                    return;
+                }
                 try {
                     onSuccess.accept(result);
                 } catch (Throwable th) {
@@ -45,6 +48,9 @@ public class DonAsynchron {
 
             @Override
             public void onFailure(Throwable t) {
+                if (onFailure == null) {
+                    return;
+                }
                 onFailure.accept(t);
             }
         };
