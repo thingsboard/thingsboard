@@ -19,9 +19,10 @@ import L from 'leaflet';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { forkJoin, Observable } from 'rxjs';
 import { FormattedData } from '@shared/models/widget.models';
-import { DataLayerColorProcessor, TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import { TbLatestMapDataLayer } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
+import { DataLayerColorProcessor } from './map-data-layer';
 
-export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L extends TbMapDataLayer<S,L>> extends TbMapDataLayer<S, L> {
+export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L extends TbLatestMapDataLayer<S,L>> extends TbLatestMapDataLayer<S, L> {
 
   public fillColorProcessor: DataLayerColorProcessor;
   public strokeColorProcessor: DataLayerColorProcessor;
@@ -29,12 +30,6 @@ export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L exte
   protected constructor(protected map: TbMap<any>,
                         inputSettings: S) {
     super(map, inputSettings);
-  }
-
-  protected doSetup(): Observable<any> {
-    this.fillColorProcessor = new DataLayerColorProcessor(this, this.settings.fillColor);
-    this.strokeColorProcessor = new DataLayerColorProcessor(this, this.settings.strokeColor);
-    return forkJoin([this.fillColorProcessor.setup(), this.strokeColorProcessor.setup()]);
   }
 
   public getShapeStyle(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.PathOptions {
@@ -49,4 +44,11 @@ export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L exte
       opacity: 1
     };
   }
+
+  protected doSetup(): Observable<any> {
+    this.fillColorProcessor = new DataLayerColorProcessor(this, this.settings.fillColor);
+    this.strokeColorProcessor = new DataLayerColorProcessor(this, this.settings.strokeColor);
+    return forkJoin([this.fillColorProcessor.setup(), this.strokeColorProcessor.setup()]);
+  }
+
 }

@@ -19,9 +19,10 @@ import {
   BaseMapSettings,
   CustomActionData,
   DataKeyValuePair,
+  MapBooleanFunction,
+  mapDataLayerTypes,
   MapType,
   mergeMapDatasources,
-  mergeUnplacedDataItemsArrays,
   parseCenterPosition,
   TbCircleData,
   TbMapDatasource,
@@ -35,19 +36,19 @@ import {
   isDefined,
   isDefinedAndNotNull,
   isUndefined,
-  mergeDeepIgnoreArray
+  mergeDeepIgnoreArray,
+  parseTbFunction
 } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
 import {
-  MapDataLayerType,
-  TbDataLayerItem,
-  TbMapDataLayer,
+  TbLatestDataLayerItem,
+  TbLatestMapDataLayer,
   UnplacedMapDataItem,
-} from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+} from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { FormattedData, MapItemType, WidgetAction, widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
@@ -67,11 +68,13 @@ import { createColorMarkerShapeURI, MarkerShape } from '@home/components/widget/
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import tinycolor from 'tinycolor2';
-import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
-import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/panels/map-timeline-panel.component';
 import { ComponentRef } from '@angular/core';
 import { TbTripsDataLayer } from '@home/components/widget/lib/maps/data-layer/trips-data-layer';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
+import { TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 
 type TooltipInstancesData = {root: HTMLElement, instances: ITooltipsterInstance[]};
 
@@ -87,9 +90,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected southWest = new L.LatLng(-L.Projection.SphericalMercator['MAX_LATITUDE'], -180);
   protected northEast = new L.LatLng(L.Projection.SphericalMercator['MAX_LATITUDE'], 180);
 
-  protected dataLayers: TbMapDataLayer<any>[];
+  protected dataLayers: TbMapDataLayer[];
+  protected latestDataLayers: TbLatestMapDataLayer[];
   protected tripDataLayers: TbTripsDataLayer[];
-  protected dsData: FormattedData<TbMapDatasource>[];
+  protected dsData: FormattedData<TbMapDatasource>[] = [];
 
   protected timeline = false;
   protected minTime: number;
@@ -97,7 +101,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected timeStep: number;
   protected currentTime: number;
 
-  protected selectedDataItem: TbDataLayerItem;
+  protected selectedDataItem: TbLatestDataLayerItem;
 
   protected mapLayoutElement: HTMLElement;
   protected mapElement: HTMLElement;
@@ -114,10 +118,11 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected timeLineComponentRef: ComponentRef<MapTimelinePanelComponent>;
   protected timeLineComponent: MapTimelinePanelComponent;
+  protected locationSnapFilterFunction: CompiledTbFunction<MapBooleanFunction>;
 
-  protected addMarkerDataLayers: TbMapDataLayer<any>[];
-  protected addPolygonDataLayers: TbMapDataLayer<any>[];
-  protected addCircleDataLayers: TbMapDataLayer<any>[];
+  protected addMarkerDataLayers: TbLatestMapDataLayer<any>[];
+  protected addPolygonDataLayers: TbLatestMapDataLayer<any>[];
+  protected addCircleDataLayers: TbLatestMapDataLayer<any>[];
 
   private readonly mapResize$: ResizeObserver;
 
@@ -184,7 +189,16 @@ export abstract class TbMap<S extends BaseMapSettings> {
     if (this.map.zoomControl) {
       this.map.zoomControl.setPosition(this.settings.controlsPosition);
     }
-    return this.doSetupControls();
+    const setup = [this.doSetupControls()];
+    if (this.timeline && this.settings.tripTimeline.snapToRealLocation) {
+      setup.push(parseTbFunction<MapBooleanFunction>(this.getCtx().http, this.settings.tripTimeline.locationSnapFilter, ['data', 'dsData']).pipe(
+        map((parsed) => {
+          this.locationSnapFilterFunction = parsed;
+          return null;
+        })
+      ));
+    }
+    return forkJoin(setup);
   }
 
   private initMap() {
@@ -216,24 +230,32 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   private setupDataLayers() {
     this.dataLayers = [];
+    this.latestDataLayers = [];
     this.tripDataLayers = [];
     if (this.settings.markers) {
-      this.dataLayers.push(...this.settings.markers.map(settings => new TbMarkersDataLayer(this, settings)));
+      const markersDataLayers = this.settings.markers.map(settings => new TbMarkersDataLayer(this, settings));
+      this.dataLayers.push(...markersDataLayers);
+      this.latestDataLayers.push(...markersDataLayers);
     }
     if (this.settings.polygons) {
-      this.dataLayers.push(...this.settings.polygons.map(settings => new TbPolygonsDataLayer(this, settings)));
+      const polygonsDataLayers = this.settings.polygons.map(settings => new TbPolygonsDataLayer(this, settings));
+      this.dataLayers.push(...polygonsDataLayers);
+      this.latestDataLayers.push(...polygonsDataLayers);
     }
     if (this.settings.circles) {
-      this.dataLayers.push(...this.settings.circles.map(settings => new TbCirclesDataLayer(this, settings)));
+      const circlesDataLayers = this.settings.circles.map(settings => new TbCirclesDataLayer(this, settings));
+      this.dataLayers.push(...circlesDataLayers);
+      this.latestDataLayers.push(...circlesDataLayers);
     }
     if (this.settings.trips) {
-      this.tripDataLayers.push(...this.settings.trips.map(settings => new TbTripsDataLayer(this, settings)));
+      const tripsDataLayers = this.settings.trips.map(settings => new TbTripsDataLayer(this, settings));
+      this.dataLayers.push(...tripsDataLayers);
+      this.tripDataLayers.push(...tripsDataLayers);
     }
-    if (this.dataLayers.length || this.tripDataLayers.length) {
+    if (this.dataLayers.length) {
       const groupsMap = new Map<string, L.TB.GroupData>();
       const customTranslate = this.ctx.$injector.get(CustomTranslatePipe);
-      const allDataLayers = [...this.dataLayers, ...this.tripDataLayers];
-      allDataLayers.forEach(dl => {
+      this.dataLayers.forEach(dl => {
         dl.getGroups().forEach(group => {
           let groupData = groupsMap.get(group);
           if (!groupData) {
@@ -264,13 +286,12 @@ export abstract class TbMap<S extends BaseMapSettings> {
           this.updateBounds();
         });
       }
-
-      const setup = allDataLayers.map(dl => dl.setup());
+      const setup = this.dataLayers.map(dl => dl.setup());
       forkJoin(setup).subscribe(
         () => {
           let datasources: TbMapDatasource[];
-          for (const layerType of (Object.keys(MapDataLayerType) as MapDataLayerType[])) {
-            const typeDatasources = this.dataLayers.filter(dl => dl.dataLayerType() === layerType).map(dl => dl.getDatasource());
+          for (const layerType of mapDataLayerTypes) {
+            const typeDatasources = this.latestDataLayers.filter(dl => dl.dataLayerType() === layerType).map(dl => dl.getDatasource());
             if (!datasources) {
               datasources = typeDatasources;
             } else {
@@ -368,18 +389,18 @@ export abstract class TbMap<S extends BaseMapSettings> {
        this.deselectItem();
      });
 
-     if (this.dataLayers.some(dl => dl.isEditable())) {
+     if (this.latestDataLayers.some(dl => dl.isEditable())) {
        this.map.pm.setGlobalOptions({ snappable: false });
        this.map.pm.applyGlobalOptions();
      }
 
-     const addSupportedDataLayers = this.dataLayers.filter(dl => dl.isAddEnabled());
+     const addSupportedDataLayers = this.latestDataLayers.filter(dl => dl.isAddEnabled());
 
      if (addSupportedDataLayers.length) {
        const drawToolbar = L.TB.toolbar({
          position: this.settings.controlsPosition
        }).addTo(this.map);
-       this.addMarkerDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === MapDataLayerType.marker);
+       this.addMarkerDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === 'markers');
        if (this.addMarkerDataLayers.length) {
          this.addMarkerButton = drawToolbar.toolbarButton({
            id: 'addMarker',
@@ -392,7 +413,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
          this.addMarkerButton.setDisabled(true);
          this.setPlaceMarkerStyle();
        }
-       this.addPolygonDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === MapDataLayerType.polygon);
+       this.addPolygonDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === 'polygons');
        if (this.addPolygonDataLayers.length) {
          this.addRectangleButton = drawToolbar.toolbarButton({
            id: 'addRectangle',
@@ -413,7 +434,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
          });
          this.addPolygonButton.setDisabled(true);
        }
-       this.addCircleDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === MapDataLayerType.circle);
+       this.addCircleDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === 'circles');
        if (this.addCircleDataLayers.length) {
          this.addCircleButton = drawToolbar.toolbarButton({
            id: 'addCircle',
@@ -456,13 +477,20 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }));
   }
 
-  private placeItem(e: MouseEvent, button: L.TB.ToolbarButton, dataLayers: TbMapDataLayer[],
+  private placeItem(e: MouseEvent, button: L.TB.ToolbarButton, dataLayers: TbLatestMapDataLayer[],
                     prepareDrawMode: (entity: UnplacedMapDataItem) => void): void {
     if (this.isPlacingItem) {
       return;
     }
     this.updatePlaceItemState(button);
-    const items = mergeUnplacedDataItemsArrays(dataLayers.filter(dl => dl.isEnabled()).map(dl => dl.getUnplacedItems())).sort((entity1, entity2) => {
+    const itemsMap = new Map<string, UnplacedMapDataItem>();
+    const dataItemsArrays = dataLayers.filter(dl => dl.isEnabled()).map(dl => dl.getUnplacedItems());
+    dataItemsArrays.forEach(dataItems => {
+      dataItems.forEach(dataItem => {
+        itemsMap.set(dataItem.entity.$datasource.entityId, dataItem);
+      });
+    });
+    const items = Array.from(itemsMap.values()).sort((entity1, entity2) => {
       return entity1.entity.entityDisplayName.localeCompare(entity2.entity.entityDisplayName);
     });
     this.selectEntityToPlace(e, items).subscribe((entity) => {
@@ -477,7 +505,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
         prepareDrawMode(entity);
 
-        this.dataLayers.forEach(dl => dl.disableEditMode());
+        this.latestDataLayers.forEach(dl => dl.disableEditMode());
 
         this.editToolbar.open([
           {
@@ -617,7 +645,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
     prepareDrawMode();
 
-    this.dataLayers.forEach(dl => dl.disableEditMode());
+    this.latestDataLayers.forEach(dl => dl.disableEditMode());
 
     this.editToolbar.open([
       {
@@ -663,7 +691,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private finishAdd = () => {
     this.map.off('pm:create');
     this.map.pm.disableDraw();
-    this.dataLayers.forEach(dl => dl.enableEditMode());
+    this.latestDataLayers.forEach(dl => dl.enableEditMode());
     this.updatePlaceItemState();
     this.editToolbar.close();
   }
@@ -749,7 +777,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private update(subscription: IWidgetSubscription) {
     this.dsData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.data,
       undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
-    this.dataLayers.forEach(dl => dl.updateData(this.dsData));
+    this.latestDataLayers.forEach(dl => dl.updateData(this.dsData));
     this.updateTripsAppearance();
     this.updateTripsAnchors();
     this.updateBounds();
@@ -840,9 +868,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private updateBounds() {
     const enabledDataLayers = this.dataLayers.filter(dl => dl.isEnabled());
     const dataLayersBounds = enabledDataLayers.map(dl => dl.getBounds()).filter(b => b.isValid());
-    const enabledTripsDataLayers = this.tripDataLayers.filter(dl => dl.isEnabled());
-    const tripsDataLayersBounds = enabledTripsDataLayers.map(dl => dl.getBounds()).filter(b => b.isValid());
-    dataLayersBounds.push(...tripsDataLayersBounds);
     let bounds: L.LatLngBounds;
     if (dataLayersBounds.length) {
       bounds = new L.LatLngBounds(null, null);
@@ -955,19 +980,19 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.updateTripsAnchors();
   }
 
-  public dataItemClick($event: Event, action: WidgetAction, entityInfo: TbMapDatasource) {
+  public dataItemClick($event: Event, action: WidgetAction, data: FormattedData<TbMapDatasource>) {
     if ($event) {
       $event.preventDefault();
       $event.stopPropagation();
     }
-    const { entityId, entityName, entityLabel, entityType } = entityInfo;
+    const { entityId, entityName, entityLabel, entityType } = data.$datasource;
     this.ctx.actionsApi.handleWidgetAction($event, action, {
       entityType,
       id: entityId
-    }, entityName, null, entityLabel);
+    }, entityName, data, entityLabel);
   }
 
-  public selectItem(item: TbDataLayerItem, cancel = false, force = false): boolean {
+  public selectItem(item: TbLatestDataLayerItem, cancel = false, force = false): boolean {
     if (this.isPlacingItem) {
       return false;
     }
@@ -1063,6 +1088,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public getCurrentTime(): number {
     return this.currentTime;
+  }
+
+  public getLocationSnapFilterFunction(): CompiledTbFunction<MapBooleanFunction> {
+    return this.locationSnapFilterFunction;
   }
 
   public destroy() {

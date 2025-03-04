@@ -27,7 +27,7 @@ import {
 } from '@angular/core';
 import { TripTimelineSettings } from '@home/components/widget/lib/maps/models/map.models';
 import { DateFormatProcessor } from '@shared/models/widget-settings.models';
-import { interval, Observable, Subscription } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -75,6 +75,11 @@ export class MapTimelinePanelComponent implements OnInit {
   set currentTime(time: number) {
     if (this.currentTimeValue !== time) {
       this.currentTimeValue = time;
+      if (this.hasData) {
+        this.index = Math.ceil((this.currentTimeValue - this.minValue) / this.settings.timeStep);
+      } else {
+        this.index = 0;
+      }
       this.updateTimestampDisplayValue();
       this.cd.markForCheck();
     }

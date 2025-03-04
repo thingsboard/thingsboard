@@ -20,7 +20,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { UnplacedMapDataItem } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import { UnplacedMapDataItem } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 
 @Component({
   selector: 'tb-select-map-entity-panel',

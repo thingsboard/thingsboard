@@ -17,7 +17,7 @@
 import {
   CirclesDataLayerSettings,
   defaultBaseCirclesDataLayerSettings,
-  isJSON,
+  isJSON, MapDataLayerType,
   TbCircleData,
   TbMapDatasource
 } from '@home/components/widget/lib/maps/models/map.models';
@@ -28,13 +28,12 @@ import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable } from 'rxjs';
 import { isNotEmptyStr } from '@core/utils';
 import {
-  MapDataLayerType,
-  TbDataLayerItem,
+  TbLatestDataLayerItem,
   UnplacedMapDataItem
-} from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+} from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 import { map } from 'rxjs/operators';
 
-class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, TbCirclesDataLayer> {
+class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettings, TbCirclesDataLayer> {
 
   private circle: L.Circle;
   private circleStyle: L.PathOptions;
@@ -45,6 +44,14 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
               protected settings: CirclesDataLayerSettings,
               protected dataLayer: TbCirclesDataLayer) {
     super(data, dsData, settings, dataLayer);
+  }
+
+  public isEditing() {
+    return this.editing;
+  }
+
+  public updateBubblingMouseEvents() {
+    this.circle.options.bubblingMouseEvents =  !this.dataLayer.isEditMode();
   }
 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
@@ -141,14 +148,6 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     return this.dataLayer.saveCircleCoordinates(this.data, null, null);
   }
 
-  public isEditing() {
-    return this.editing;
-  }
-
-  public updateBubblingMouseEvents() {
-    this.circle.options.bubblingMouseEvents =  !this.dataLayer.isEditMode();
-  }
-
   private saveCircleCoordinates() {
     const center = this.circle.getLatLng();
     const radius = this.circle.getRadius();
@@ -178,7 +177,7 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
   }
 
   public dataLayerType(): MapDataLayerType {
-    return MapDataLayerType.circle;
+    return 'circles';
   }
 
   public placeItem(item: UnplacedMapDataItem, layer: L.Layer): void {
@@ -194,6 +193,24 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
     } else {
       console.warn('Unable to place item, layer is not a circle.');
     }
+  }
+
+  public extractCircleCoordinates(data: FormattedData<TbMapDatasource>) {
+    const circleData: TbCircleData = JSON.parse(data[this.settings.circleKey.label]);
+    return this.map.circleDataToCoordinates(circleData);
+  }
+
+  public saveCircleCoordinates(data: FormattedData<TbMapDatasource>, center: L.LatLng, radius: number): Observable<TbCircleData> {
+    const converted = center ? this.map.coordinatesToCircleData(center, radius) : null;
+    const circleData = [
+      {
+        dataKey: this.settings.circleKey,
+        value: converted
+      }
+    ];
+    return this.map.saveItemData(data.$datasource, circleData).pipe(
+      map(() => converted)
+    );
   }
 
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
@@ -213,25 +230,8 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
     return layerData && isNotEmptyStr(layerData[this.settings.circleKey.label]) && isJSON(layerData[this.settings.circleKey.label]);
   }
 
-  protected createLayerItem(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): TbDataLayerItem<CirclesDataLayerSettings, TbCirclesDataLayer> {
+  protected createLayerItem(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): TbLatestDataLayerItem<CirclesDataLayerSettings, TbCirclesDataLayer> {
     return new TbCircleDataLayerItem(data, dsData, this.settings, this);
   }
 
-  public extractCircleCoordinates(data: FormattedData<TbMapDatasource>) {
-    const circleData: TbCircleData = JSON.parse(data[this.settings.circleKey.label]);
-    return this.map.circleDataToCoordinates(circleData);
-  }
-
-  public saveCircleCoordinates(data: FormattedData<TbMapDatasource>, center: L.LatLng, radius: number): Observable<TbCircleData> {
-    const converted = center ? this.map.coordinatesToCircleData(center, radius) : null;
-    const circleData = [
-      {
-        dataKey: this.settings.circleKey,
-        value: converted
-      }
-    ];
-   return this.map.saveItemData(data.$datasource, circleData).pipe(
-     map(() => converted)
-   );
-  }
 }

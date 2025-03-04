@@ -23,7 +23,15 @@ import {
   WidgetActionType
 } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { guid, hashCode, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined, mergeDeep } from '@core/utils';
+import {
+  guid,
+  hashCode,
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isString,
+  isUndefinedOrNull,
+  mergeDeep
+} from '@core/utils';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { materialColors } from '@shared/models/material.models';
 import L from 'leaflet';
@@ -32,7 +40,6 @@ import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { MarkerShape } from '@home/components/widget/lib/maps/models/marker-shape.models';
-import { UnplacedMapDataItem } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -159,6 +166,8 @@ export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataL
 })
 
 export type MapDataLayerType = 'trips' | 'markers' | 'polygons' | 'circles';
+
+export const mapDataLayerTypes: MapDataLayerType[] = ['trips', 'markers', 'polygons', 'circles'];
 
 export const mapDataLayerValid = (dataLayer: MapDataLayerSettings, type: MapDataLayerType): boolean => {
   if (!dataLayer.dsType || ![DatasourceType.function, DatasourceType.device, DatasourceType.entity].includes(dataLayer.dsType)) {
@@ -736,10 +745,10 @@ export const mapLayerValid = (layer: MapLayerSettings): boolean => {
       return !!openStreetLayer.layerType;
     case MapProvider.google:
       const googleLayer = layer as GoogleMapLayerSettings;
-      return !!googleLayer.layerType && !!googleLayer.apiKey;
+      return !!googleLayer.layerType;
     case MapProvider.here:
       const hereLayer = layer as HereMapLayerSettings;
-      return !!hereLayer.layerType && !!hereLayer.apiKey;
+      return !!hereLayer.layerType;
     case MapProvider.tencent:
       const tencentLayer = layer as TencentMapLayerSettings;
       return !!tencentLayer.layerType;
@@ -926,30 +935,23 @@ export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings
   }
 };
 
-export const defaultMapLayers: MapLayerSettings[] = (Object.keys(OpenStreetLayerType) as OpenStreetLayerType[]).map(type => ({
-  provider: MapProvider.openstreet,
-  layerType: OpenStreetLayerType[type]
-} as MapLayerSettings));
-/*.concat((Object.keys(GoogleLayerType) as GoogleLayerType[]).map(type =>
-  mergeDeep({} as MapLayerSettings, defaultGoogleMapLayerSettings, {layerType: GoogleLayerType[type]} as GoogleMapLayerSettings)).concat(
-  (Object.keys(TencentLayerType) as TencentLayerType[]).map(type => ({
-    provider: MapProvider.tencent,
-    layerType: TencentLayerType[type]
-  } as MapLayerSettings))
-)).concat(
-  (Object.keys(HereLayerType) as HereLayerType[]).map(type =>
-    mergeDeep({} as MapLayerSettings, defaultHereMapLayerSettings, {layerType: HereLayerType[type]} as HereMapLayerSettings))
-).concat([
-  mergeDeep({} as MapLayerSettings, defaultCustomMapLayerSettings, {label: 'Custom 1'} as CustomMapLayerSettings),
-  mergeDeep({} as MapLayerSettings, defaultCustomMapLayerSettings, {
-    tileUrl: 'http://a.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png',
-    label: 'Custom 2'
-  } as CustomMapLayerSettings),
-  mergeDeep({} as MapLayerSettings, defaultCustomMapLayerSettings, {
-    tileUrl: 'http://b.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png',
-    label: 'Custom 3'
-  } as CustomMapLayerSettings)
-]);*/
+export const defaultMapLayers: MapLayerSettings[] = [
+  {
+    label: '{i18n:widgets.maps.layer.roadmap}',
+    provider: MapProvider.openstreet,
+    layerType: OpenStreetLayerType.openStreetMapnik,
+  } as OpenStreetMapLayerSettings,
+  {
+    label: '{i18n:widgets.maps.layer.satellite}',
+    provider: MapProvider.openstreet,
+    layerType: OpenStreetLayerType.esriWorldImagery,
+  } as OpenStreetMapLayerSettings,
+  {
+    label: '{i18n:widgets.maps.layer.hybrid}',
+    provider: MapProvider.google,
+    layerType: GoogleLayerType.hybrid,
+  } as GoogleMapLayerSettings
+];
 
 export interface GeoMapSettings extends BaseMapSettings {
   layers?: MapLayerSettings[];
@@ -1043,6 +1045,9 @@ export interface CustomActionData {
 export type MapStringFunction = (data: FormattedData<TbMapDatasource>,
                                  dsData: FormattedData<TbMapDatasource>[]) => string;
 
+export type MapBooleanFunction = (data: FormattedData<TbMapDatasource>,
+                                 dsData: FormattedData<TbMapDatasource>[]) => boolean;
+
 export type MarkerImageFunction = (data: FormattedData<TbMapDatasource>, markerImages: string[],
                                    dsData: FormattedData<TbMapDatasource>[]) => MarkerImageInfo;
 
@@ -1092,24 +1097,6 @@ export const isValidLatLng = (latitude: any, longitude: any): boolean =>
 
 export const isCutPolygon = (data: TbPolygonCoordinates | TbPolygonRawCoordinates): boolean => {
   return data.length > 1 && Array.isArray(data[0]) && (Array.isArray(data[0][0]) || data[0][0] instanceof L.LatLng);
-}
-
-export const latLngPointToBounds = (point: L.LatLng, southWest: L.LatLng, northEast: L.LatLng, offset = 0): L.LatLng => {
-  const maxLngMap = northEast.lng - offset;
-  const minLngMap = southWest.lng + offset;
-  const maxLatMap = northEast.lat - offset;
-  const minLatMap = southWest.lat + offset;
-  if (point.lng > maxLngMap) {
-    point.lng = maxLngMap;
-  } else if (point.lng < minLngMap) {
-    point.lng = minLngMap;
-  }
-  if (point.lat > maxLatMap) {
-    point.lat = maxLatMap;
-  } else if (point.lat < minLatMap) {
-    point.lat = minLatMap;
-  }
-  return point;
 }
 
 export const parseCenterPosition = (position: string | [number, number]): [number, number] => {
@@ -1176,16 +1163,6 @@ const mergeMapDatasource = (target: TbMapDatasource, source: TbMapDatasource): T
   }
   target.dataKeys.push(...appendKeys);
   return target;
-}
-
-export const mergeUnplacedDataItemsArrays = (dataItemsArrays: UnplacedMapDataItem[][]): UnplacedMapDataItem[] => {
-  const itemsMap = new Map<string, UnplacedMapDataItem>();
-  dataItemsArrays.forEach(dataItems => {
-    dataItems.forEach(dataItem => {
-      itemsMap.set(dataItem.entity.$datasource.entityId, dataItem);
-    });
-  });
-  return Array.from(itemsMap.values());
 }
 
 const imageAspectMap: {[key: string]: ImageWithAspect} = {};
@@ -1288,7 +1265,7 @@ export const calculateNewPointCoordinate = (coordinate: number, imageSize: numbe
   return pointCoordinate;
 }
 
-export const checkLngLat = (point: L.LatLng, southWest: L.LatLng, northEast: L.LatLng, offset = 0): L.LatLng => {
+export const latLngPointToBounds = (point: L.LatLng, southWest: L.LatLng, northEast: L.LatLng, offset = 0): L.LatLng => {
   const maxLngMap = northEast.lng - offset;
   const minLngMap = southWest.lng + offset;
   const maxLatMap = northEast.lat - offset;
@@ -1325,11 +1302,11 @@ export const interpolateLineSegment = (
   };
 }
 
-export const findRotationAngle = (startPoint: FormattedData, endPoint: FormattedData, xKey: string, yKey: string): number => {
-  if (isUndefined(startPoint) || isUndefined(endPoint)) {
+export const findRotationAngle = (startPoint: L.LatLng, endPoint: L.LatLng): number => {
+  if (isUndefinedOrNull(startPoint) || isUndefinedOrNull(endPoint)) {
     return 0;
   }
-  let angle = -Math.atan2(endPoint[xKey] - startPoint[xKey], endPoint[yKey] - startPoint[yKey]);
+  let angle = -Math.atan2(endPoint.lat - startPoint.lat, endPoint.lng - startPoint.lng);
   angle = angle * 180 / Math.PI;
   return parseInt(angle.toFixed(2), 10);
 }

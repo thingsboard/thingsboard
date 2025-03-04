@@ -15,7 +15,6 @@
 ///
 
 import {
-  checkLngLat,
   DEFAULT_ZOOM_LEVEL,
   defaultGeoMapSettings,
   GeoMapSettings,
@@ -127,7 +126,7 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
   }
 
   public latLngToLocationData(position: L.LatLng): {x: number; y: number} {
-    position = position ? checkLngLat(position, this.southWest, this.northEast, 0) : {lat: null, lng: null} as L.LatLng;
+    position = position ? latLngPointToBounds(position, this.southWest, this.northEast, 0) : {lat: null, lng: null} as L.LatLng;
     return {
       x: position.lat,
       y: position.lng
@@ -152,7 +151,7 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
         if (Array.isArray(point)) {
           return this.coordinatesToPolygonData(point) as TbPolygonRawCoordinate;
         } else {
-          const convertPoint = checkLngLat(point, this.southWest, this.northEast);
+          const convertPoint = latLngPointToBounds(point, this.southWest, this.northEast);
           return [convertPoint.lat, convertPoint.lng];
         }
       });
@@ -170,7 +169,7 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
   public coordinatesToCircleData(center: L.LatLng, radius: number): TbCircleData {
     let circleData: TbCircleData = null;
     if (center) {
-      const position = checkLngLat(center, this.southWest, this.northEast);
+      const position = latLngPointToBounds(center, this.southWest, this.northEast);
       circleData = {
         latitude: position.lat,
         longitude: position.lng,
