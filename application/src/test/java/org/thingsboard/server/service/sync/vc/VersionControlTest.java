@@ -575,7 +575,7 @@ public class VersionControlTest extends AbstractControllerTest {
     public void testVcWithCalculatedFields_betweenTenants() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
         Device device = createDevice(null, null, "Device 1", "test1");
-        createCalculatedField("CalculatedField1", device.getId(), asset.getId());
+        CalculatedField calculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
         String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
 
         loginTenant2();
@@ -585,16 +585,15 @@ public class VersionControlTest extends AbstractControllerTest {
 
         Asset importedAsset = findAsset(asset.getName());
         Device importedDevice = findDevice(device.getName());
-        CalculatedField importedCalculatedField = findCalculatedFieldByEntityId(importedDevice.getId());
         checkImportedEntity(tenantId1, device, tenantId2, importedDevice);
         checkImportedEntity(tenantId1, asset, tenantId2, importedAsset);
 
         List<CalculatedField> importedCalculatedFields = findCalculatedFieldsByEntityId(importedDevice.getId());
         assertThat(importedCalculatedFields).size().isOne();
         assertThat(importedCalculatedFields.get(0)).satisfies(importedField -> {
-            assertThat(importedField.getName()).isEqualTo(importedCalculatedField.getName());
-            assertThat(importedField.getType()).isEqualTo(importedCalculatedField.getType());
-            assertThat(importedField.getId()).isNotEqualTo(importedCalculatedField.getId());
+            assertThat(importedField.getName()).isEqualTo(calculatedField.getName());
+            assertThat(importedField.getType()).isEqualTo(calculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(calculatedField.getId());
         });
     }
 
