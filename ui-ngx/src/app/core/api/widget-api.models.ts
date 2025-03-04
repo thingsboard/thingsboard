@@ -90,6 +90,13 @@ export interface IWidgetUtils {
   getEntityDetailsPageURL: (id: string, entityType: EntityType) => string;
 }
 
+export interface PlaceMapItemActionData {
+  action: WidgetAction;
+  additionalParams?: any;
+  afterPlaceItemCallback: ($event: Event, descriptor: WidgetAction, entityId?: EntityId, entityName?: string,
+                           additionalParams?: any, entityLabel?: string) => void;
+}
+
 export interface WidgetActionsApi {
   actionDescriptorsBySourceId: {[sourceId: string]: Array<WidgetActionDescriptor>};
   getActionDescriptors: (actionSourceId: string) => Array<WidgetActionDescriptor>;
@@ -106,6 +113,7 @@ export interface WidgetActionsApi {
                                 hideDashboardToolbar?: boolean, preferredPlacement?: PopoverPlacement,
                                 hideOnClickOutside?: boolean, popoverWidth?: string,
                                 popoverHeight?: string, popoverStyle?: { [klass: string]: any }) => void;
+  placeMapItem: (action: PlaceMapItemActionData) => void;
 }
 
 export interface AliasInfo {

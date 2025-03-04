@@ -125,7 +125,6 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
-import type { MapWidgetComponent } from '@home/components/widget/lib/maps/map-widget.component';
 
 @Component({
   selector: 'tb-widget',
@@ -274,7 +273,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       click: this.click.bind(this),
       getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
       openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
-      openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this)
+      openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this),
+      placeMapItem: () => {}
     };
 
     this.widgetContext.customHeaderActions = [];
@@ -1151,14 +1151,11 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         }
         break;
       case WidgetActionType.placeMapItem:
-        const mapWidget: MapWidgetComponent = this.widgetContext.$scope.mapWidget
-        if (mapWidget) {
-          mapWidget.map.placeMapItem({
-            action: descriptor,
-            afterPlaceItemCallback: this.executeCustomPrettyAction.bind(this),
-            button: additionalParams?.button
-          });
-        }
+        this.widgetContext.actionsApi.placeMapItem({
+          action: descriptor,
+          afterPlaceItemCallback: this.executeCustomPrettyAction.bind(this),
+          additionalParams: additionalParams
+        });
         break;
       case WidgetActionType.customPretty:
         this.executeCustomPrettyAction($event, descriptor, entityId, entityName, additionalParams, entityLabel);

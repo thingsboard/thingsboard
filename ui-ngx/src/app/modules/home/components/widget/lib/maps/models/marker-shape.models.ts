@@ -17,10 +17,10 @@
 import tinycolor from 'tinycolor2';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { Observable, of, switchMap } from 'rxjs';
+import { Observable, of, shareReplay, switchMap } from 'rxjs';
 import { catchError, map, take } from 'rxjs/operators';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
-import { Element, Text, G } from '@svgdotjs/svg.js';
+import { Element, G, Text } from '@svgdotjs/svg.js';
 
 export enum MarkerShape {
   markerShape1 = 'markerShape1',
@@ -203,3 +203,14 @@ export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domS
   );
 }
 
+let placeItemIconURI$: Observable<string>;
+
+export const createPlaceItemIcon= (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer): Observable<string> => {
+  if (placeItemIconURI$) {
+    return placeItemIconURI$;
+  }
+  placeItemIconURI$ = createColorMarkerShapeURI(iconRegistry, domSanitizer, MarkerShape.markerShape1, tinycolor('rgba(255,255,255,0.75)')).pipe(
+    shareReplay({refCount: true, bufferSize: 1})
+  );
+  return placeItemIconURI$;
+}
