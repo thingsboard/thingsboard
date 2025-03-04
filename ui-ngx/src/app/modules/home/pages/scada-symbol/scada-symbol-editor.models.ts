@@ -36,7 +36,6 @@ import {
   AceHighlightRules,
   dotOperatorHighlightRule,
   endGroupHighlightRule,
-  identifierRe
 } from '@shared/models/ace/ace.models';
 import { HelpLinks, ValueType } from '@shared/models/constants';
 import { formPropertyCompletions } from '@shared/models/dynamic-form.models';
@@ -924,6 +923,8 @@ export class ScadaSymbolElement {
   }
 
 }
+
+const identifierRe = /[a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*/;
 
 const scadaSymbolCtxObjectHighlightRule: AceHighlightRule = {
   token: 'tb.scada-symbol-ctx',

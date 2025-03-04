@@ -33,7 +33,6 @@ import {
   AceHighlightRules,
   dotOperatorHighlightRule,
   endGroupHighlightRule,
-  identifierRe
 } from '@shared/models/ace/ace.models';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
@@ -536,17 +535,6 @@ export const getCalculatedFieldArgumentsHighlights = (
         ? 'calculatedFieldRollingArgumentValue'
         : 'calculatedFieldSingleArgumentValue'
     })),
-    no_regex: [
-      {
-        token: 'tb.identifier',
-        regex: identifierRe,
-      },
-      {
-        token: 'tb.paren.lparen',
-        regex: '\\(',
-        next: 'start'
-      }
-    ],
     ...calculatedFieldSingleArgumentValueHighlightRules,
     ...calculatedFieldRollingArgumentValueHighlightRules,
     ...calculatedFieldTimeWindowArgumentValueHighlightRules

@@ -44,7 +44,8 @@ import {
   CalculatedFieldTestScriptDialogData,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
-  CalculatedFieldTypeTranslations, CalculatedFieldType,
+  CalculatedFieldTypeTranslations,
+  CalculatedFieldType,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
