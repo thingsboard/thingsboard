@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [formGroup]="fieldFormGroup" class="dialog-container flex size-full max-w-4xl flex-col">
+<div [formGroup]="fieldFormGroup" class="calculated-field-dialog-container flex size-full max-w-4xl flex-col">
   <mat-toolbar color="primary">
     <h2>{{ 'entity.type-calculated-field' | translate}}</h2>
     <span class="flex-1"></span>
@@ -98,7 +98,6 @@
               required
               formControlName="expressionSCRIPT"
               functionName="calculate"
-              class="expression-edit"
               [functionArgs]="functionArgs$ | async"
               [disableUndefinedCheck]="true"
               [scriptLanguage]="ScriptLanguage.TBEL"
@@ -106,7 +105,7 @@
               [editorCompleter]="argumentsEditorCompleter$ | async"
               helpId="calculated-field/expression_fn"
             >
-              <div toolbarPrefixButton class="tb-primary-background script-lang-chip">{{ 'api-usage.tbel' | translate }}</div>
+              <div toolbarPrefixButton class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}</div>
               <button toolbarSuffixButton
                       mat-icon-button
                       matTooltip="{{ 'common.test-function' | translate }}"

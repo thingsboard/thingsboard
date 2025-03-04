@@ -50,7 +50,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { getEntityDetailsPageURL, isDefined, isDefinedAndNotNull } from '@core/utils';
+import { getEntityDetailsPageURL, isDefined, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
 import { EntityService } from '@core/http/entity.service';
@@ -144,8 +144,9 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     return this.errorText ? { argumentsFormArray: false } : null;
   }
 
-  onDelete($event: Event, index: number): void {
+  onDelete($event: Event, argument: CalculatedFieldArgumentValue): void {
     $event.stopPropagation();
+    const index = this.argumentsFormArray.controls.findIndex(control => isEqual(control.value, argument));
     this.argumentsFormArray.removeAt(index);
     this.argumentsFormArray.markAsDirty();
   }

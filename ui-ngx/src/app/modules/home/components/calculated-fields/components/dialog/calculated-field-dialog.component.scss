@@ -13,39 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .dialog-container {
-    width: 869px;
-    max-width: 100%;
-  }
 
-  .script-lang-chip {
-    line-height: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
-    border-radius: 100px;
-    width: 70px;
-    display: flex;
-    justify-content: center;
-    margin-top: 2px;
-    margin-right: 4px;
-  }
+.calculated-field-dialog-container {
+  width: 869px;
+  max-width: 100%;
 }
 
-:host ::ng-deep {
-  .expression-edit {
-    .ace_tb {
-      &.ace_calculated-field {
-        &-key {
-          color: #C52F00;
-        }
-        &-ts, &-time-window, &-values, &-value, &-func {
-          color: #7214D0;
-        }
-        &-start-ts, &-end-ts, &-limit {
-          color: #185F2A;
-        }
+.tbel-script-lang-chip {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  border-radius: 100px;
+  width: 70px;
+  min-width: 70px;
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+  margin-right: 4px;
+}
+
+.tb-js-func {
+  .ace_tb {
+    &.ace_calculated-field {
+      &-key {
+        color: #C52F00;
+      }
+      &-ts, &-time-window, &-values, &-value, &-func {
+        color: #7214D0;
+      }
+      &-start-ts, &-end-ts, &-limit {
+        color: #185F2A;
       }
     }
   }

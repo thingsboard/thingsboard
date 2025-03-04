@@ -587,6 +587,10 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
           newMode.$highlightRules.$rules[group] = this.highlightRules[group];
         }
       }
+      const identifierRule = newMode.$highlightRules.$rules.no_regex.find(rule => rule.token?.includes('identifier'));
+      if (identifierRule) {
+        identifierRule.next = 'start';
+      }
       // @ts-ignore
       this.jsEditor.session.$onChangeMode(newMode);
     }
