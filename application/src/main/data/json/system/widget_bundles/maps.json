@@ -12,6 +12,7 @@
     "map",
     "image_map",
     "trip_map",
+    "route_map",
     "maps_v2.openstreetmap",
     "maps_v2.google_maps",
     "maps_v2.image_map",

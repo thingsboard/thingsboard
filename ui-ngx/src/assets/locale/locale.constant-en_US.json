@@ -7743,6 +7743,9 @@
                 "layer-settings": "Layer settings",
                 "remove-layer": "Remove layer",
                 "no-layers": "No layers configured",
+                "roadmap": "Roadmap",
+                "satellite": "Satellite",
+                "hybrid": "Hybrid",
                 "provider": {
                     "provider": "Provider",
                     "openstreet": {
@@ -7754,7 +7757,6 @@
                         "esri-imagery": "WorldImagery",
                         "cartodb-positron": "Positron",
                         "cartodb-dark-matter": "DarkMatter"
-
                     },
                     "google": {
                         "title": "Google",

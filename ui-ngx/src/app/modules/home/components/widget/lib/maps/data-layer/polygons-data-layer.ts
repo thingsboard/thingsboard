@@ -16,7 +16,7 @@
 
 import {
   defaultBasePolygonsDataLayerSettings,
-  isCutPolygon, isJSON,
+  isCutPolygon, isJSON, MapDataLayerType,
   PolygonsDataLayerSettings,
   TbMapDatasource, TbPolyData, TbPolygonCoordinates, TbPolygonRawCoordinates
 } from '@home/components/widget/lib/maps/models/map.models';
@@ -27,13 +27,12 @@ import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable } from 'rxjs';
 import { isNotEmptyStr, isString } from '@core/utils';
 import {
-  MapDataLayerType,
-  TbDataLayerItem,
+  TbLatestDataLayerItem,
   UnplacedMapDataItem
-} from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+} from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 import { map } from 'rxjs/operators';
 
-class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
+class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
 
   private polygonContainer: L.FeatureGroup;
   private polygon: L.Polygon;
@@ -45,6 +44,14 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
               protected settings: PolygonsDataLayerSettings,
               protected dataLayer: TbPolygonsDataLayer) {
     super(data, dsData, settings, dataLayer);
+  }
+
+  public isEditing() {
+    return this.editing;
+  }
+
+  public updateBubblingMouseEvents() {
+    this.polygon.options.bubblingMouseEvents = !this.dataLayer.isEditMode();
   }
 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
@@ -197,14 +204,6 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
 
   protected removeDataItem(): Observable<any> {
     return this.dataLayer.savePolygonCoordinates(this.data, null);
-  }
-
-  public isEditing() {
-    return this.editing;
-  }
-
-  public updateBubblingMouseEvents() {
-    this.polygon.options.bubblingMouseEvents = !this.dataLayer.isEditMode();
   }
 
   private enablePolygonEditMode() {
@@ -364,7 +363,7 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
   }
 
   public dataLayerType(): MapDataLayerType {
-    return MapDataLayerType.polygon;
+    return 'polygons';
   }
 
   public placeItem(item: UnplacedMapDataItem, layer: L.Layer): void {
@@ -390,6 +389,27 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
     }
   }
 
+  public extractPolygonCoordinates(data: FormattedData<TbMapDatasource>): TbPolygonRawCoordinates {
+    let rawPolyData = data[this.settings.polygonKey.label];
+    if (isString(rawPolyData)) {
+      rawPolyData = JSON.parse(rawPolyData);
+    }
+    return this.map.polygonDataToCoordinates(rawPolyData);
+  }
+
+  public savePolygonCoordinates(data: FormattedData<TbMapDatasource>, coordinates: TbPolygonCoordinates): Observable<TbPolygonRawCoordinates> {
+    const converted = coordinates ? this.map.coordinatesToPolygonData(coordinates) : null;
+    const polygonData = [
+      {
+        dataKey: this.settings.polygonKey,
+        value: converted
+      }
+    ];
+    return this.map.saveItemData(data.$datasource, polygonData).pipe(
+      map(() => converted)
+    );
+  }
+
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     datasource.dataKeys.push(this.settings.polygonKey);
     return datasource;
@@ -412,24 +432,4 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
     return new TbPolygonDataLayerItem(data, dsData, this.settings, this);
   }
 
-  public extractPolygonCoordinates(data: FormattedData<TbMapDatasource>): TbPolygonRawCoordinates {
-    let rawPolyData = data[this.settings.polygonKey.label];
-    if (isString(rawPolyData)) {
-      rawPolyData = JSON.parse(rawPolyData);
-    }
-    return this.map.polygonDataToCoordinates(rawPolyData);
-  }
-
-  public savePolygonCoordinates(data: FormattedData<TbMapDatasource>, coordinates: TbPolygonCoordinates): Observable<TbPolygonRawCoordinates> {
-    const converted = coordinates ? this.map.coordinatesToPolygonData(coordinates) : null;
-    const polygonData = [
-      {
-        dataKey: this.settings.polygonKey,
-        value: converted
-      }
-    ];
-    return this.map.saveItemData(data.$datasource, polygonData).pipe(
-      map(() => converted)
-    );
-  }
 }

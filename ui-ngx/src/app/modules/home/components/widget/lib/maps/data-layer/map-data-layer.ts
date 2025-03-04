@@ -15,260 +15,34 @@
 ///
 
 import {
-  DataLayerColorSettings,
-  DataLayerColorType,
-  DataLayerEditAction,
-  DataLayerPatternSettings,
-  DataLayerPatternType,
-  DataLayerTooltipTrigger,
-  MapDataLayerSettings,
-  mapDataSourceSettingsToDatasource,
-  MapStringFunction,
-  MapType,
-  processTooltipTemplate,
+  DataLayerColorSettings, DataLayerColorType,
+  DataLayerPatternSettings, DataLayerPatternType,
+  MapDataLayerSettings, MapDataLayerType, mapDataSourceSettingsToDatasource,
+  MapStringFunction, MapType,
   TbMapDatasource
 } from '@home/components/widget/lib/maps/models/map.models';
-import { TbMap } from '@home/components/widget/lib/maps/map';
-import { FormattedData, WidgetActionType } from '@shared/models/widget.models';
-import { forkJoin, Observable, of } from 'rxjs';
 import {
   createLabelFromPattern,
-  guid,
-  isDefined,
+  guid, isDefined,
   mergeDeepIgnoreArray,
   parseTbFunction,
   safeExecuteTbFunction
 } from '@core/utils';
 import L from 'leaflet';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
+import { forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { WidgetContext } from '@home/models/widget-component.models';
+import { FormattedData } from '@shared/models/widget.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
-import { createTooltip, updateTooltip } from './data-layer-utils';
-
-export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLayerSettings,
-  D extends TbMapDataLayer<S,D> = TbMapDataLayer<any, any>, L extends L.Layer = L.Layer> {
-
-  protected layer: L;
-  protected tooltip: L.Popup;
-  protected data: FormattedData<TbMapDatasource>;
-  protected selected = false;
-
-  protected constructor(data: FormattedData<TbMapDatasource>,
-                        dsData: FormattedData<TbMapDatasource>[],
-                        protected settings: S,
-                        protected dataLayer: D) {
-    this.data = data;
-    this.layer = this.create(data, dsData);
-    if (this.settings.tooltip?.show) {
-      this.tooltip = createTooltip(this.dataLayer.getMap(),
-        this.layer, this.settings.tooltip, this.data, () => {
-        return !this.isEditing();
-      });
-      updateTooltip(this.dataLayer.getMap(), this.tooltip,
-        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, data, dsData);
-    }
-    this.bindEvents();
-    try {
-      this.dataLayer.getDataLayerContainer().addLayer(this.layer);
-      this.editModeUpdated();
-    } catch (e) {
-      console.warn(e);
-    }
-  }
-
-  protected abstract create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L;
-
-  protected abstract doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
-
-  protected abstract doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
-
-  protected abstract unbindLabel(): void;
-
-  protected abstract bindLabel(content: L.Content): void;
-
-  protected abstract addItemClass(clazz: string): void;
-
-  protected abstract removeItemClass(clazz: string): void;
-
-  protected abstract enableDrag(): void;
-
-  protected abstract disableDrag(): void;
-
-  protected abstract updateBubblingMouseEvents(): void;
-
-  protected bindEvents(): void {
-    if (this.dataLayer.isSelectable()) {
-      this.layer.on('click', () => {
-        if (!this.isEditing()) {
-          this.dataLayer.getMap().selectItem(this);
-        }
-      });
-    }
-    const clickAction = this.settings.click;
-    if (clickAction && clickAction.type !== WidgetActionType.doNothing) {
-      this.layer.on('click', (event) => {
-        this.dataLayer.getMap().dataItemClick(event.originalEvent, clickAction, this.data);
-      });
-    }
-  }
-
-  protected enableEdit(): void {
-    if (this.dataLayer.isHoverable()) {
-      this.addItemClass('tb-hoverable');
-    }
-    if (this.dataLayer.isDragEnabled()) {
-      this.enableDrag();
-      this.addItemClass('tb-draggable');
-    }
-  }
-
-  protected disableEdit(): void {
-    if (this.dataLayer.isHoverable()) {
-      this.removeItemClass('tb-hoverable');
-    }
-    if (this.dataLayer.isDragEnabled()) {
-      this.disableDrag();
-      this.removeItemClass('tb-draggable');
-    }
-  }
-
-  protected updateSelectedState() {
-    if (this.selected) {
-      this.addItemClass('tb-selected');
-    } else {
-      this.removeItemClass('tb-selected');
-    }
-  }
-
-  public invalidateCoordinates(): void {
-    this.doInvalidateCoordinates(this.data, this.dataLayer.getMap().getData());
-  }
-
-  public select(): L.TB.ToolbarButtonOptions[] {
-    if (!this.selected) {
-      this.selected = true;
-      this.disableEdit();
-      this.updateSelectedState();
-      const buttons = this.onSelected();
-      if (this.dataLayer.isRemoveEnabled()) {
-        buttons.push({
-          id: 'remove',
-          title: this.removeDataItemTitle(),
-          click: () => {
-            this.removeDataItem().subscribe(
-              () => this.dataLayer.removeItem(this.data.entityId)
-            );
-          },
-          iconClass: 'tb-remove'
-        });
-      }
-      return buttons;
-    } else {
-      return [];
-    }
-  }
-
-  public deselect(cancel = false, force = false): boolean {
-    if (this.selected) {
-      if (this.canDeselect(cancel) || force) {
-        this.selected = false;
-        this.layer.closePopup();
-        this.updateSelectedState();
-        this.onDeselected();
-        this.editModeUpdated();
-      } else {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public isSelected() {
-    return this.selected;
-  }
-
-  public editModeUpdated() {
-    if (this.dataLayer.isEditMode() && !this.selected) {
-      this.enableEdit();
-    } else {
-      this.disableEdit();
-    }
-    this.updateSelectedState();
-    this.updateBubblingMouseEvents();
-  }
-
-  public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.data = data;
-    this.doUpdate(data, dsData);
-  }
-
-  public remove() {
-    if (this.selected) {
-      this.dataLayer.getMap().deselectItem(false, true);
-    }
-    this.dataLayer.getDataLayerContainer().removeLayer(this.layer);
-    this.layer.off();
-  }
-
-  public getLayer(): L {
-    return this.layer;
-  }
-
-  public getDataLayer(): D {
-    return this.dataLayer;
-  }
-
-  public isEditing() {
-    return false;
-  }
-
-  protected updateTooltip(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    if (this.settings.tooltip.show) {
-      updateTooltip(this.dataLayer.getMap(), this.tooltip,
-        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, data, dsData);
-    }
-  }
-
-  protected updateLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    if (this.settings.label.show) {
-      this.unbindLabel();
-      const label = this.dataLayer.dataLayerLabelProcessor.processPattern(data, dsData);
-      const labelColor = this.dataLayer.getCtx().widgetConfig.color;
-      const content: L.Content = `<div style="color: ${labelColor};"><b>${label}</b></div>`;
-      this.bindLabel(content);
-    }
-  }
-
-  protected canDeselect(cancel = false): boolean {
-    return true;
-  }
-
-  protected onSelected(): L.TB.ToolbarButtonOptions[] {
-    return [];
-  }
-
-  protected onDeselected(): void {}
-
-  protected abstract removeDataItemTitle(): string;
-
-  protected abstract removeDataItem(): Observable<any>;
-
-}
-
-export enum MapDataLayerType {
-   trip = 'trip',
-   marker = 'marker',
-   polygon = 'polygon',
-   circle = 'circle'
-}
+import { TbMap } from '@home/components/widget/lib/maps/map';
+import { WidgetContext } from '@home/models/widget-component.models';
 
 export class DataLayerPatternProcessor {
 
   private patternFunction: CompiledTbFunction<MapStringFunction>;
   private pattern: string;
 
-  constructor(private dataLayer: TbMapDataLayer<any, any>,
+  constructor(private dataLayer: TbMapDataLayer,
               private settings: DataLayerPatternSettings) {}
 
   public setup(): Observable<void> {
@@ -304,7 +78,7 @@ export class DataLayerColorProcessor {
   private colorFunction: CompiledTbFunction<MapStringFunction>;
   private color: string;
 
-  constructor(private dataLayer: TbMapDataLayer<any, any>,
+  constructor(private dataLayer: TbMapDataLayer,
               private settings: DataLayerColorSettings) {}
 
   public setup(): Observable<void> {
@@ -333,12 +107,28 @@ export class DataLayerColorProcessor {
 
 }
 
-export interface UnplacedMapDataItem {
-  entity: FormattedData<TbMapDatasource>;
-  dataLayer: TbMapDataLayer;
+export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLayerSettings, D extends TbMapDataLayer = TbMapDataLayer, L extends L.Layer = L.Layer> {
+
+  protected layer: L;
+
+  protected constructor(protected settings: S,
+                        protected dataLayer: D) {}
+
+  public getLayer(): L {
+    return this.layer;
+  }
+
+  public getDataLayer(): D {
+    return this.dataLayer;
+  }
+
+  public abstract remove(): void;
+
+  public abstract invalidateCoordinates(): void;
+
 }
 
-export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLayerSettings, D extends TbMapDataLayer<S,D> = any, L extends L.Layer = L.Layer> implements L.TB.DataLayer {
+export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLayerSettings, I extends TbDataLayerItem = any> {
 
   protected settings: S;
 
@@ -348,25 +138,13 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   protected dataLayerContainer: L.FeatureGroup;
 
-  protected layerItems = new Map<string, TbDataLayerItem<S,D,L>>();
+  protected layerItems = new Map<string, I>();
 
   protected groupsState: {[group: string]: boolean} = {};
 
   protected enabled = true;
 
-  protected addEnabled = false;
-  protected dragEnabled = false;
-  protected editEnabled = false;
-  protected removeEnabled = false;
-
-  protected editable = false;
-  protected selectable = false;
-  protected hoverable = false;
   protected snappable = false;
-
-  private editMode = false;
-
-  private unplacedItems: UnplacedMapDataItem[] = [];
 
   public dataLayerLabelProcessor: DataLayerPatternProcessor;
   public dataLayerTooltipProcessor: DataLayerPatternProcessor;
@@ -379,24 +157,10 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
         this.groupsState[group] = true;
       });
     }
-
-    if (this.settings.edit?.enabledActions) {
-      this.addEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.add);
-      this.dragEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.move);
-      this.editEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.edit);
-      this.removeEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.remove);
-
-      this.editable = this.addEnabled || this.dragEnabled || this.editEnabled || this.removeEnabled;
-      this.selectable = this.removeEnabled || this.editEnabled;
-      this.hoverable = this.selectable || this.dragEnabled;
-      this.snappable = this.settings.edit.snappable;
-    }
-
     this.dataLayerContainer = this.createDataLayerContainer();
     this.dataLayerLabelProcessor = this.settings.label.show ? new DataLayerPatternProcessor(this, this.settings.label) : null;
     this.dataLayerTooltipProcessor = this.settings.tooltip.show ? new DataLayerPatternProcessor(this, this.settings.tooltip): null;
     this.map.getMap().addLayer(this.dataLayerContainer);
-    this.enableEditMode();
   }
 
   public setup(): Observable<any> {
@@ -410,6 +174,30 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
         this.dataLayerTooltipProcessor ? this.dataLayerTooltipProcessor.setup() : of(null),
         this.doSetup()
       ]);
+  }
+
+  public removeItem(key: string): void {
+    const item = this.layerItems.get(key);
+    if (item) {
+      item.remove();
+      this.layerItems.delete(key);
+    }
+  }
+
+  public invalidateCoordinates(): void {
+    this.layerItems.forEach(item => item.invalidateCoordinates());
+  }
+
+  public getCtx(): WidgetContext {
+    return this.map.getCtx();
+  }
+
+  public getMap(): TbMap<any> {
+    return this.map;
+  }
+
+  public mapType(): MapType {
+    return this.map.type();
   }
 
   public getDatasource(): TbMapDatasource {
@@ -428,42 +216,6 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
     return this.enabled;
   }
 
-  public isEditMode(): boolean {
-    return this.editMode;
-  }
-
-  public isAddEnabled(): boolean {
-    return this.addEnabled;
-  }
-
-  public isDragEnabled(): boolean {
-    return this.dragEnabled;
-  }
-
-  public isEditEnabled(): boolean {
-    return this.editEnabled;
-  }
-
-  public isRemoveEnabled(): boolean {
-    return this.removeEnabled;
-  }
-
-  public isEditable(): boolean {
-    return this.editable;
-  }
-
-  public isHoverable(): boolean {
-    return this.hoverable;
-  }
-
-  public isSelectable(): boolean {
-    return this.selectable;
-  }
-
-  public isSnappable(): boolean {
-    return this.snappable;
-  }
-
   public getGroups(): string[] {
     return this.settings.groups || [];
   }
@@ -476,14 +228,9 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
         this.enabled = enabled;
         if (this.enabled) {
           this.map.getMap().addLayer(this.dataLayerContainer);
-          this.updateItemsEditMode();
+          this.onDataLayerEnabled();
         } else {
-          for (const item of this.layerItems) {
-            if (item[1].isSelected()) {
-              this.getMap().deselectItem(false, true);
-              break;
-            }
-          }
+          this.onDataLayerDisabled();
           this.map.getMap().removeLayer(this.dataLayerContainer);
         }
         this.map.enabledDataLayersUpdated();
@@ -493,136 +240,23 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
     return false;
   }
 
-  public updateData(dsData: FormattedData<TbMapDatasource>[]) {
-    this.unplacedItems.length = 0;
-    const layerData = dsData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
-    const toDelete = new Set(Array.from(this.layerItems.keys()));
-    const updatedItems: TbDataLayerItem<S,D,L>[] = [];
-    layerData.forEach((data) => {
-      if (this.isValidLayerData(data)) {
-        let layerItem = this.layerItems.get(data.entityId);
-        if (layerItem) {
-          layerItem.update(data, dsData);
-          updatedItems.push(layerItem);
-        } else {
-          layerItem = this.createLayerItem(data, dsData);
-          this.layerItems.set(data.entityId, layerItem);
-        }
-        toDelete.delete(data.entityId);
-      } else {
-        this.unplacedItems.push({
-          entity: data,
-          dataLayer: this
-        });
-      }
-    });
-    toDelete.forEach((key) => {
-      this.removeItem(key);
-    });
-    if (updatedItems.length) {
-      this.layerItemsUpdated(updatedItems);
-    }
-  }
-
-  public removeItem(key: string): void {
-    const item = this.layerItems.get(key);
-    if (item) {
-      item.remove();
-      this.layerItems.delete(key);
-    }
-  }
-
-  protected createItemFromUnplaced(unplacedItem: UnplacedMapDataItem): void {
-    const index = this.unplacedItems.indexOf(unplacedItem);
-    if (index > -1) {
-      this.unplacedItems.splice(index, 1);
-      const layerItem = this.createLayerItem(unplacedItem.entity, this.map.getData());
-      this.layerItems.set(unplacedItem.entity.entityId, layerItem);
-      this.map.enabledDataLayersUpdated();
-    }
-  }
-
-  public invalidateCoordinates(): void {
-    this.layerItems.forEach(item => item.invalidateCoordinates());
-  }
-
-  public getCtx(): WidgetContext {
-    return this.map.getCtx();
-  }
-
-  public getMap(): TbMap<any> {
-    return this.map;
-  }
-
-  public hasUnplacedItems(): boolean {
-    return !!this.unplacedItems.length;
-  }
-
-  private prepareUnplacedItems(): UnplacedMapDataItem[] {
-    const div = document.createElement('div');
-    for (const item of this.unplacedItems) {
-      if (!item.entity.entityDisplayName) {
-        if (this.settings.label.show) {
-          div.innerHTML = this.dataLayerLabelProcessor.processPattern(item.entity, this.getMap().getData());
-          item.entity.entityDisplayName = div.textContent || div.innerText || '';
-        } else {
-          item.entity.entityDisplayName = item.entity.entityName;
-        }
-      }
-    }
-    return this.unplacedItems;
-  }
-
-  public getUnplacedItems(): UnplacedMapDataItem[] {
-    return this.prepareUnplacedItems();
-  }
-
   protected createDataLayerContainer(): L.FeatureGroup {
-    return L.featureGroup([], {snapIgnore: !this.snappable});
+    return L.featureGroup([], {snapIgnore: true});
   }
 
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     return datasource;
   }
 
-  protected layerItemsUpdated(_updatedItems: TbDataLayerItem<S,D,L>[]): void {
-  }
+  protected onDataLayerEnabled(): void {}
 
-  protected mapType(): MapType {
-    return this.map.type();
-  }
-
-  public enableEditMode() {
-    if (this.editable) {
-      if (!this.editMode) {
-        this.editMode = true;
-        this.updateItemsEditMode();
-      }
-    }
-  }
-
-  public disableEditMode() {
-    if (this.editMode) {
-      this.editMode = false;
-      this.updateItemsEditMode();
-    }
-  }
-
-  private updateItemsEditMode() {
-    this.layerItems.forEach(item => item.editModeUpdated());
-  }
+  protected onDataLayerDisabled(): void {}
 
   public abstract dataLayerType(): MapDataLayerType;
-
-  public abstract placeItem(item: UnplacedMapDataItem, layer: L.Layer): void;
 
   protected abstract defaultBaseSettings(map: TbMap<any>): Partial<S>;
 
   protected abstract doSetup(): Observable<any>;
-
-  protected abstract isValidLayerData(layerData: FormattedData<TbMapDatasource>): boolean;
-
-  protected abstract createLayerItem(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): TbDataLayerItem<S,D,L>;
 
 }
 

@@ -166,7 +166,7 @@ class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
       return of(true);
     } else {
       const resourceService = this.ctx.$injector.get(ResourcesService);
-      return resourceService.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}`).pipe(
+      return resourceService.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`).pipe(
         map(() => {
           TbGoogleMapLayer.loadedApiKeysGlobal[apiKey] = true;
           return true;
