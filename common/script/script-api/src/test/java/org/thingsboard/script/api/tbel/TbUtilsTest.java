@@ -1109,7 +1109,7 @@ public class TbUtilsTest {
         String validInput = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3, 4, 5});
         ExecutionArrayList<Byte> actual = TbUtils.base64ToBytesList(ctx, validInput);
         ExecutionArrayList<Byte> expected = new ExecutionArrayList<>(ctx);
-        expected.addAll(List.of((byte) 1, (byte)2, (byte)3, (byte)4, (byte)5));
+        expected.addAll(List.of((byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5));
         Assertions.assertEquals(expected, actual);
 
         String emptyInput = Base64.getEncoder().encodeToString(new byte[]{});
@@ -1123,6 +1123,7 @@ public class TbUtilsTest {
             TbUtils.base64ToBytesList(ctx, null);
         });
     }
+
     @Test
     public void bytesToHex_Test() {
         byte[] bb = {(byte) 0xBB, (byte) 0xAA};
