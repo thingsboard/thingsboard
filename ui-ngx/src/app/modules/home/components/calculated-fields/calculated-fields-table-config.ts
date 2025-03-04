@@ -114,8 +114,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     expressionColumn.sortable = false;
     expressionColumn.cellContentFunction = entity => {
       const expressionLabel = this.getExpressionLabel(entity);
-      return expressionLabel.length < 50
-        ? expressionLabel : `<span style="display: inline-block; width: 50ch">${expressionLabel.substring(0, 49)}…</span>`;
+      return expressionLabel.length < 50 ? expressionLabel : `<span style="display: inline-block; width: 50ch">${expressionLabel.substring(0, 49)}…</span>`;
     }
     expressionColumn.cellTooltipFunction = entity => {
       const expressionLabel = this.getExpressionLabel(entity);

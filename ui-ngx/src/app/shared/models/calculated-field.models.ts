@@ -32,7 +32,7 @@ import {
   AceHighlightRule,
   AceHighlightRules,
   dotOperatorHighlightRule,
-  endGroupHighlightRule,
+  endGroupHighlightRule
 } from '@shared/models/ace/ace.models';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {

@@ -35,7 +35,7 @@ import {
   AceHighlightRule,
   AceHighlightRules,
   dotOperatorHighlightRule,
-  endGroupHighlightRule,
+  endGroupHighlightRule
 } from '@shared/models/ace/ace.models';
 import { HelpLinks, ValueType } from '@shared/models/constants';
 import { formPropertyCompletions } from '@shared/models/dynamic-form.models';
