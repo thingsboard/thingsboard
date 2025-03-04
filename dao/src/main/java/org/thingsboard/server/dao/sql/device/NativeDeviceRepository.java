@@ -24,5 +24,4 @@ public interface NativeDeviceRepository extends NativeProfileEntityRepository {
 
     PageData<DeviceIdInfo> findDeviceIdInfos(Pageable pageable);
 
-
 }

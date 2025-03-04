@@ -58,8 +58,7 @@ public class TimeseriesDeleteRequest implements CalculatedFieldSystemAwareReques
         private TbMsgType tbMsgType;
         private FutureCallback<List<String>> callback;
 
-        Builder() {
-        }
+        Builder() {}
 
         public Builder tenantId(TenantId tenantId) {
             this.tenantId = tenantId;

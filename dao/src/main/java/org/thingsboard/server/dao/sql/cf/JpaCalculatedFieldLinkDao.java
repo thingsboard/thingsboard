@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.cf;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
