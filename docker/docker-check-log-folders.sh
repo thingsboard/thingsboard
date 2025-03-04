@@ -21,6 +21,8 @@ if checkFolders "$@" ; then
     echo "------"
     echo "All checks have passed"
 else
+    CHECK_EXIT_CODE=$?
     echo "------"
     echo "Some checks did not pass - check the output"
+    exit $CHECK_EXIT_CODE
 fi
