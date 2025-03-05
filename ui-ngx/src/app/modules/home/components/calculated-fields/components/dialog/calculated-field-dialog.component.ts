@@ -32,7 +32,7 @@ import {
   OutputType,
   OutputTypeTranslations
 } from '@shared/models/calculated-field.models';
-import { noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
+import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, startWith, switchMap } from 'rxjs/operators';
@@ -50,15 +50,15 @@ import { Observable } from 'rxjs';
 export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> {
 
   fieldFormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex), Validators.maxLength(255)]],
+    name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
     type: [CalculatedFieldType.SIMPLE],
     debugSettings: [],
     configuration: this.fb.group({
       arguments: this.fb.control({}),
-      expressionSIMPLE: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex), Validators.maxLength(255)]],
+      expressionSIMPLE: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
       expressionSCRIPT: [],
       output: this.fb.group({
-        name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex), Validators.maxLength(255)]],
+        name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
         scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }],
         type: [OutputType.Timeseries]
       }),
@@ -120,9 +120,18 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   }
 
   get fromGroupValue(): CalculatedField {
-    const { configuration, type, ...rest } = this.fieldFormGroup.value;
-    const { expressionSIMPLE, expressionSCRIPT, ...restConfig } = configuration;
-    return { configuration: { ...restConfig, type, expression: configuration['expression'+type] }, ...rest, type } as CalculatedField;
+    const { configuration, type, name, ...rest } = this.fieldFormGroup.value;
+    const { expressionSIMPLE, expressionSCRIPT, output, ...restConfig } = configuration;
+    return {
+      configuration: {
+        ...restConfig,
+        type, expression: configuration['expression'+type].trim(),
+        output: { ...output, name: output.name.trim() }
+      },
+      name: name.trim(),
+      type,
+      ...rest,
+    } as CalculatedField;
   }
 
   cancel(): void {
