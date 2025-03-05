@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
+
 @Data
 @AllArgsConstructor
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
@@ -43,7 +45,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public boolean updateState(Map<String, ArgumentEntry> argumentValues) {
+    public boolean updateState(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
@@ -53,6 +55,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         for (Map.Entry<String, ArgumentEntry> entry : argumentValues.entrySet()) {
             String key = entry.getKey();
             ArgumentEntry newEntry = entry.getValue();
+
+            checkArgumentSize(key, newEntry, ctx);
+
             ArgumentEntry existingEntry = arguments.get(key);
 
             if (existingEntry == null || newEntry.isForceResetPrevious()) {
@@ -78,6 +83,16 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         if (!sizeExceedsLimit && maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
             arguments.clear();
             sizeExceedsLimit = true;
+        }
+    }
+
+    @Override
+    public void checkArgumentSize(String name, ArgumentEntry entry, CalculatedFieldCtx ctx) {
+        if (entry instanceof TsRollingArgumentEntry) {
+            return;
+        }
+        if (ctx.getMaxSingleValueArgumentSize() > 0 && toSingleValueArgumentProto(name, (SingleValueArgumentEntry) entry).getSerializedSize() > ctx.getMaxSingleValueArgumentSize()) {
+            throw new IllegalArgumentException("Single value size exceeds the maximum allowed limit. The argument will not be used for calculation.");
         }
     }
 
