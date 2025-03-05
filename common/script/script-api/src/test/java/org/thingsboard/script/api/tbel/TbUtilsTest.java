@@ -1137,6 +1137,13 @@ public class TbUtilsTest {
         Assertions.assertEquals(expected, actual);
     }
 
+    @Test
+    void toInt() {
+        Assertions.assertEquals(1729, TbUtils.toInt(doubleVal));
+        Assertions.assertEquals(13, TbUtils.toInt(12.8));
+        Assertions.assertEquals(28, TbUtils.toInt(28.0));
+    }
+
     private static List<Byte> toList(byte[] data) {
         List<Byte> result = new ArrayList<>(data.length);
         for (Byte b : data) {
