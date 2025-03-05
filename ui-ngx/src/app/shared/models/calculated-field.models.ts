@@ -604,3 +604,8 @@ const calculatedFieldTimeWindowArgumentValueHighlightRules: AceHighlightRules = 
     endGroupHighlightRule
   ]
 }
+
+export const calculatedFieldDefaultScript = 'return {\n' +
+  '    // Convert Fahrenheit to Celsius\n' +
+  '    "temperatureC": (temperature - 32) / 1.8\n' +
+  '};'

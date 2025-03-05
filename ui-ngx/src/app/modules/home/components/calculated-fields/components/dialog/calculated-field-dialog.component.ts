@@ -24,6 +24,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import {
   CalculatedField,
   CalculatedFieldConfiguration,
+  calculatedFieldDefaultScript,
   CalculatedFieldDialogData,
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
@@ -56,7 +57,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     configuration: this.fb.group({
       arguments: this.fb.control({}),
       expressionSIMPLE: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
-      expressionSCRIPT: [],
+      expressionSCRIPT: [calculatedFieldDefaultScript],
       output: this.fb.group({
         name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
         scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }],
