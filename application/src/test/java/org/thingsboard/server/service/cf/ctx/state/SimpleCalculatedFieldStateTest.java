@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedField
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
@@ -138,7 +139,7 @@ public class SimpleCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 49.0)));
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 49)));
     }
 
     @Test
@@ -152,6 +153,26 @@ public class SimpleCalculatedFieldStateTest {
         assertThatThrownBy(() -> state.performCalculation(ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Argument 'key2' is not a number.");
+    }
+
+    @Test
+    void testPerformCalculationWhenDecimalsByDefault() throws ExecutionException, InterruptedException {
+        state.arguments = new HashMap<>(Map.of(
+                "key1", new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new DoubleDataEntry("key1", 11.3456), 145L),
+                "key2", new SingleValueArgumentEntry(System.currentTimeMillis() - 6, new DoubleDataEntry("key2", 15.1), 165L),
+                "key3", new SingleValueArgumentEntry(System.currentTimeMillis() - 3, new DoubleDataEntry("key3", 23.1), 184L)
+        ));
+
+        Output output = getCalculatedFieldConfig().getOutput();
+        output.setDecimalsByDefault(3);
+        ctx.setOutput(output);
+
+        CalculatedFieldResult result = state.performCalculation(ctx).get();
+
+        assertThat(result).isNotNull();
+        assertThat(result.getType()).isEqualTo(output.getType());
+        assertThat(result.getScope()).isEqualTo(output.getScope());
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 49.546)));
     }
 
     @Test
@@ -219,6 +240,7 @@ public class SimpleCalculatedFieldStateTest {
         output.setName("output");
         output.setType(OutputType.ATTRIBUTES);
         output.setScope(AttributeScope.SERVER_SCOPE);
+        output.setDecimalsByDefault(0);
 
         config.setOutput(output);
 

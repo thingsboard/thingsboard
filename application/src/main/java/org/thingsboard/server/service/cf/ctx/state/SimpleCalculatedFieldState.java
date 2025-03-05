@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
@@ -64,7 +65,19 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         double expressionResult = expr.evaluate();
 
         Output output = ctx.getOutput();
-        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), JacksonUtil.valueToTree(Map.of(output.getName(), expressionResult))));
+        Object result;
+        Integer decimals = output.getDecimalsByDefault();
+        if (decimals != null) {
+            if (decimals.equals(0)) {
+                result = TbUtils.toInt(expressionResult);
+            } else {
+                result = TbUtils.toFixed(expressionResult, decimals);
+            }
+        } else {
+            result = expressionResult;
+        }
+
+        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), JacksonUtil.valueToTree(Map.of(output.getName(), result))));
     }
 
 }
