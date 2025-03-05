@@ -31,6 +31,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.CalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
@@ -543,6 +544,11 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private CalculatedFieldStateService calculatedFieldStateService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private CalculatedFieldQueueService calculatedFieldQueueService;
 
     @Lazy
     @Autowired(required = false)

@@ -23,6 +23,7 @@ import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.CalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -900,6 +901,11 @@ public class DefaultTbContext implements TbContext {
     @Override
     public CalculatedFieldService getCalculatedFieldService() {
         return mainCtx.getCalculatedFieldService();
+    }
+
+    @Override
+    public CalculatedFieldQueueService getCalculatedFieldQueueService() {
+        return mainCtx.getCalculatedFieldQueueService();
     }
 
     @Override
