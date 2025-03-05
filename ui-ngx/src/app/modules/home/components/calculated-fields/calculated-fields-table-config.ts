@@ -120,11 +120,11 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     expressionColumn.sortable = false;
     expressionColumn.cellContentFunction = entity => {
       const expressionLabel = this.getExpressionLabel(entity);
-      return expressionLabel.length < 50 ? expressionLabel : `<span style="display: inline-block; width: 50ch">${expressionLabel.substring(0, 49)}…</span>`;
+      return expressionLabel.length < 45 ? expressionLabel : `<span style="display: inline-block; width: 45ch">${expressionLabel.substring(0, 44)}…</span>`;
     }
     expressionColumn.cellTooltipFunction = entity => {
       const expressionLabel = this.getExpressionLabel(entity);
-      return expressionLabel.length < 50 ? null : expressionLabel
+      return expressionLabel.length < 45 ? null : expressionLabel
     };
 
     this.columns.push(new DateEntityTableColumn<CalculatedField>('createdTime', 'common.created-time', this.datePipe, '150px'));
