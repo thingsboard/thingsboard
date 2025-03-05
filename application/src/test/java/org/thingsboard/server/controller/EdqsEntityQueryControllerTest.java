@@ -37,7 +37,8 @@ import static org.awaitility.Awaitility.await;
 //        "queue.type=kafka", // uncomment to use Kafka
 //        "queue.kafka.bootstrap.servers=10.7.1.254:9092",
         "queue.edqs.sync.enabled=true",
-        "queue.edqs.api_enabled=true",
+        "queue.edqs.api.supported=true",
+        "queue.edqs.api.auto_enable=true",
         "queue.edqs.mode=local"
 })
 public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {

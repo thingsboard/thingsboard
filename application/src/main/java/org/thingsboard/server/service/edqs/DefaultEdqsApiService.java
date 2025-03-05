@@ -22,6 +22,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -43,12 +44,15 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@ConditionalOnExpression("'${queue.edqs.api_enabled:true}' == 'true' && ('${service.type:null}' == 'monolith' || '${service.type:null}' == 'tb-core')")
+@ConditionalOnExpression("'${queue.edqs.api.supported:true}' == 'true' && ('${service.type:null}' == 'monolith' || '${service.type:null}' == 'tb-core')")
 public class DefaultEdqsApiService implements EdqsApiService {
 
     private final EdqsPartitionService edqsPartitionService;
     private final EdqsClientQueueFactory queueFactory;
     private TbQueueRequestTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> requestTemplate;
+
+    @Value("${queue.edqs.api.auto_enable:true}")
+    private boolean autoEnable;
 
     private Boolean apiEnabled = null;
 
@@ -98,6 +102,11 @@ public class DefaultEdqsApiService implements EdqsApiService {
     @Override
     public boolean isSupported() {
         return true;
+    }
+
+    @Override
+    public boolean isAutoEnable() {
+        return autoEnable;
     }
 
     @PreDestroy

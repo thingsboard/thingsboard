@@ -50,4 +50,9 @@ public class DummyEdqsApiService implements EdqsApiService {
         return false;
     }
 
+    @Override
+    public boolean isAutoEnable() {
+        return false;
+    }
+
 }
