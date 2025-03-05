@@ -26,5 +26,6 @@ public class Output {
     private String name;
     private OutputType type;
     private AttributeScope scope;
+    private Integer decimalsByDefault;
 
 }
