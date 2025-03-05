@@ -15,10 +15,15 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.thingsboard.common.util.JacksonUtil;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,7 +38,7 @@ public class TbelCfTsRollingArgTest {
     @BeforeEach
     void setUp() {
         rollingArg = new TbelCfTsRollingArg(
-                new TbTimeWindow(ts - 30000, ts - 10, 10),
+                new TbTimeWindow(ts - 30000, ts - 10),
                 List.of(
                         new TbelCfTsDoubleVal(ts - 10, Double.NaN),
                         new TbelCfTsDoubleVal(ts - 20, 2.0),
@@ -98,7 +103,7 @@ public class TbelCfTsRollingArgTest {
     void testFirstAndLastWhenOnlyNaNAndIgnoreNaNIsFalse() {
         assertThat(rollingArg.first()).isEqualTo(2.0);
         rollingArg = new TbelCfTsRollingArg(
-                new TbTimeWindow(ts - 30000, ts - 10, 10),
+                new TbTimeWindow(ts - 30000, ts - 10),
                 List.of(
                         new TbelCfTsDoubleVal(ts - 10, Double.NaN),
                         new TbelCfTsDoubleVal(ts - 40, Double.NaN),
@@ -117,7 +122,7 @@ public class TbelCfTsRollingArgTest {
 
     @Test
     void testEmptyValues() {
-        rollingArg = new TbelCfTsRollingArg(new TbTimeWindow(0, 10, 10), List.of());
+        rollingArg = new TbelCfTsRollingArg(new TbTimeWindow(0, 10), List.of());
         assertThatThrownBy(rollingArg::sum).isInstanceOf(IllegalArgumentException.class).hasMessage("Rolling argument values are empty.");
         assertThatThrownBy(rollingArg::max).isInstanceOf(IllegalArgumentException.class).hasMessage("Rolling argument values are empty.");
         assertThatThrownBy(rollingArg::min).isInstanceOf(IllegalArgumentException.class).hasMessage("Rolling argument values are empty.");
@@ -126,6 +131,83 @@ public class TbelCfTsRollingArgTest {
         assertThatThrownBy(rollingArg::median).isInstanceOf(IllegalArgumentException.class).hasMessage("Rolling argument values are empty.");
         assertThatThrownBy(rollingArg::first).isInstanceOf(IllegalArgumentException.class).hasMessage("Rolling argument values are empty.");
         assertThatThrownBy(rollingArg::last).isInstanceOf(IllegalArgumentException.class).hasMessage("Rolling argument values are empty.");
+    }
+
+    @Test
+    public void merge_two_rolling_args_ts_match_test() {
+        TbTimeWindow tw = new TbTimeWindow(0, 60000);
+        TbelCfTsRollingArg arg1 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(1000, 1), new TbelCfTsDoubleVal(5000, 2), new TbelCfTsDoubleVal(15000, 3)));
+        TbelCfTsRollingArg arg2 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(1000, 11), new TbelCfTsDoubleVal(5000, 12), new TbelCfTsDoubleVal(15000, 13)));
+
+        var result = arg1.merge(arg2);
+        Assertions.assertEquals(3, result.getSize());
+        Assertions.assertNotNull(result.getValues());
+        Assertions.assertNotNull(result.getValues().get(0));
+        Assertions.assertEquals(1000L, result.getValues().get(0).getTs());
+        Assertions.assertEquals(1, result.getValues().get(0).getValues()[0]);
+        Assertions.assertEquals(11, result.getValues().get(0).getValues()[1]);
+    }
+
+    @Test
+    public void merge_two_rolling_args_with_timewindow_test() {
+        TbTimeWindow tw = new TbTimeWindow(0, 60000);
+        TbelCfTsRollingArg arg1 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(1000, 1), new TbelCfTsDoubleVal(5000, 2), new TbelCfTsDoubleVal(15000, 3)));
+        TbelCfTsRollingArg arg2 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(1000, 11), new TbelCfTsDoubleVal(5000, 12), new TbelCfTsDoubleVal(15000, 13)));
+
+        var result = arg1.merge(arg2, Collections.singletonMap("timeWindow", new TbTimeWindow(0, 10000)));
+        Assertions.assertEquals(2, result.getSize());
+        Assertions.assertNotNull(result.getValues());
+        Assertions.assertNotNull(result.getValues().get(0));
+        Assertions.assertEquals(1000L, result.getValues().get(0).getTs());
+        Assertions.assertEquals(1, result.getValues().get(0).getValues()[0]);
+        Assertions.assertEquals(11, result.getValues().get(0).getValues()[1]);
+
+        result = arg1.merge(arg2, Collections.singletonMap("timeWindow", Map.of("startTs", 0L, "endTs", 10000)));
+        Assertions.assertEquals(2, result.getSize());
+        Assertions.assertNotNull(result.getValues());
+        Assertions.assertNotNull(result.getValues().get(0));
+        Assertions.assertEquals(1000L, result.getValues().get(0).getTs());
+        Assertions.assertEquals(1, result.getValues().get(0).getValues()[0]);
+        Assertions.assertEquals(11, result.getValues().get(0).getValues()[1]);
+    }
+
+    @Test
+    public void merge_two_rolling_args_ts_mismatch_default_test() {
+        TbTimeWindow tw = new TbTimeWindow(0, 60000);
+        TbelCfTsRollingArg arg1 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(100, 1), new TbelCfTsDoubleVal(5000, 2), new TbelCfTsDoubleVal(15000, 3)));
+        TbelCfTsRollingArg arg2 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(200, 11), new TbelCfTsDoubleVal(5000, 12), new TbelCfTsDoubleVal(15000, 13)));
+
+        var result = arg1.merge(arg2);
+        Assertions.assertEquals(3, result.getSize());
+        Assertions.assertNotNull(result.getValues());
+
+        TbelCfTsMultiDoubleVal item0 = result.getValues().get(0);
+        Assertions.assertNotNull(item0);
+        Assertions.assertEquals(200L, item0.getTs());
+        Assertions.assertEquals(1, item0.getValues()[0]);
+        Assertions.assertEquals(11, item0.getValues()[1]);
+    }
+
+    @Test
+    public void merge_two_rolling_args_ts_mismatch_ignore_nan_disabled_test() {
+        TbTimeWindow tw = new TbTimeWindow(0, 60000);
+        TbelCfTsRollingArg arg1 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(100, 1), new TbelCfTsDoubleVal(5000, 2), new TbelCfTsDoubleVal(15000, 3)));
+        TbelCfTsRollingArg arg2 = new TbelCfTsRollingArg(tw, Arrays.asList(new TbelCfTsDoubleVal(200, 11), new TbelCfTsDoubleVal(5000, 12), new TbelCfTsDoubleVal(15000, 13)));
+
+        var result = arg1.merge(arg2, Collections.singletonMap("ignoreNaN", false));
+        Assertions.assertEquals(4, result.getSize());
+        Assertions.assertNotNull(result.getValues());
+
+        TbelCfTsMultiDoubleVal item0 = result.getValues().get(0);
+        Assertions.assertNotNull(item0);
+        Assertions.assertEquals(100L, item0.getTs());
+        Assertions.assertEquals(1, item0.getValues()[0]);
+        Assertions.assertEquals(Double.NaN, item0.getValues()[1]);
+
+        TbelCfTsMultiDoubleVal item1 = result.getValues().get(1);
+        Assertions.assertEquals(200L, item1.getTs());
+        Assertions.assertEquals(1, item1.getValues()[0]);
+        Assertions.assertEquals(11, item1.getValues()[1]);
     }
 
 }
