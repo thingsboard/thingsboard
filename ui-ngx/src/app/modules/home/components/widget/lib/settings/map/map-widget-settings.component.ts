@@ -19,7 +19,7 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { isDefinedAndNotNull, mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
+import { isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
 import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 

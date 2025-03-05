@@ -24,7 +24,7 @@ import {
   ValidationErrors,
   Validator
 } from '@angular/forms';
-import { MapActionButtonSettings } from '@home/components/widget/lib/maps/models/map.models';
+import { MapActionButtonSettings } from '@shared/models/widget/maps/map.models';
 import { WidgetAction, WidgetActionType, widgetType } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEmptyStr } from '@core/utils';

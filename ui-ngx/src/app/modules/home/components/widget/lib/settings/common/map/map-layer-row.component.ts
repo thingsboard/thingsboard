@@ -53,7 +53,7 @@ import {
   openStreetMapLayerTranslationMap,
   tencentLayerTranslationMap,
   tencentLayerTypes
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { deepClone } from '@core/utils';
 import {
   MapLayerSettingsPanelComponent

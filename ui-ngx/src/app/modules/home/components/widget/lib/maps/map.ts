@@ -27,7 +27,7 @@ import {
   TbMapDatasource,
   TbPolygonCoordinates,
   TbPolygonRawCoordinates
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   formattedDataArrayFromDatasourceData,
@@ -63,7 +63,7 @@ import {
   SelectMapEntityPanelComponent
 } from '@home/components/widget/lib/maps/panels/select-map-entity-panel.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { createPlaceItemIcon } from '@home/components/widget/lib/maps/models/marker-shape.models';
+import { createPlaceItemIcon } from '@shared/models/widget/maps/marker-shape.models';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/panels/map-timeline-panel.component';
@@ -464,7 +464,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
      }
   }
 
-  private toggleDragMode(e: MouseEvent, button: L.TB.ToolbarButton): void {
+  private toggleDragMode(_e: MouseEvent, button: L.TB.ToolbarButton): void {
     if (this.dragMode) {
       this.disableDragMode();
     } else {

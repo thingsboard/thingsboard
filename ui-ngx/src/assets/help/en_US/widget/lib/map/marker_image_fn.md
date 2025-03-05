@@ -3,14 +3,14 @@
 <div class="divider"></div>
 <br/>
 
-*function (data, images, dsData, dsIndex): {url: string, size: number}*
+*function (data, images, dsData): {url: string, size: number}*
 
 A JavaScript function used to compute marker image.
 
 **Parameters:**
 
 <ul>
-  {% include widget/lib/map/map_fn_args %}
+  {% include widget/lib/map/marker_image_fn_args %}
 </ul>
 
 **Returns:**
@@ -18,14 +18,18 @@ A JavaScript function used to compute marker image.
 Should return marker image data having the following structure:
 
 ```typescript
-{ 
-   url: string,
-   size: number
+{
+  url: string;
+  size: number;
+  markerOffset?: [number, number];
+  tooltipOffset?: [number, number];
 }
 ```
 
 - *url* - marker image url;
 - *size* - marker image size;
+- *markerOffset* - optional array of two numbers presenting relative horizontal and vertical offset of the marker image;
+- *tooltipOffset* - optional array of two numbers presenting relative horizontal and vertical offset of the marker image tooltip;
 
 In case no data is returned, default marker image will be used. 
 
@@ -41,13 +45,13 @@ Let's assume 4 images are defined in <b>Marker images</b> section. Each image co
 </ul>
 
 ```javascript
-var type = data['Type'];
+var type = data.Type;
 if (type == 'thermometer') {
   var res = {
     url: images[0],
     size: 40
   }
-  var temperature = data['temperature'];
+  var temperature = data.temperature;
   if (typeof temperature !== undefined) {
     var percent = (temperature + 60)/120;
     var index = Math.min(3, Math.floor(4 * percent));

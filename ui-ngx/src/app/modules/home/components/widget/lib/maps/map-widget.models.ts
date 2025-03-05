@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { defaultMapSettings, MapSetting, MapType } from '@home/components/widget/lib/maps/models/map.models';
+import { defaultMapSettings, MapSetting, MapType } from '@shared/models/widget/maps/map.models';
 import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';
 import { mergeDeep } from '@core/utils';
 import { WidgetContext } from '@home/models/widget-component.models';

@@ -38,7 +38,7 @@ import {
   MapType,
   mapZoomActions,
   mapZoomActionTranslationMap
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { merge, Observable } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -254,7 +254,6 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
 
   private updateDragButtonModeSettings() {
     const markers: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('markers').value;
-    const circles: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('circles').value;
     let dragModeButtonSettingsEnabled = markers.some(d => d.edit && d.edit.enabledActions && d.edit.enabledActions.includes(DataLayerEditAction.move));
     if (!dragModeButtonSettingsEnabled) {
       const polygons: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('polygons').value;

@@ -33,7 +33,7 @@ import {
   Validators
 } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AdditionalMapDataSourceSettings } from '@home/components/widget/lib/maps/models/map.models';
+import { AdditionalMapDataSourceSettings } from '@shared/models/widget/maps/map.models';
 import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';

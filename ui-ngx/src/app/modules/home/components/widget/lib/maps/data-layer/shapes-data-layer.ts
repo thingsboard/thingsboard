@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ShapeDataLayerSettings, TbMapDatasource } from '@home/components/widget/lib/maps/models/map.models';
+import { ShapeDataLayerSettings, TbMapDatasource } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { forkJoin, Observable } from 'rxjs';

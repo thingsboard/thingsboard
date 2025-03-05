@@ -256,7 +256,7 @@
                     <input matInput type="number" min="0" formControlName="pathStrokeWeight" placeholder="{{ 'widget-config.set' | translate }}">
                     <span matSuffix>px</span>
                   </mat-form-field>
-                  <tb-data-layer-color-settings formControlName="pathStrokeColor"></tb-data-layer-color-settings>
+                  <tb-data-layer-color-settings helpId="widget/lib/map/path_color_fn" formControlName="pathStrokeColor"></tb-data-layer-color-settings>
                 </div>
               </div>
               <div class="tb-form-panel tb-slide-toggle stroked">
@@ -334,13 +334,14 @@
                     <input matInput type="number" min="0" formControlName="pointSize" placeholder="{{ 'widget-config.set' | translate }}">
                     <span matSuffix>px</span>
                   </mat-form-field>
-                  <tb-data-layer-color-settings formControlName="pointColor"></tb-data-layer-color-settings>
+                  <tb-data-layer-color-settings helpId="widget/lib/map/path_point_color_fn" formControlName="pointColor"></tb-data-layer-color-settings>
                 </div>
               </div>
               <tb-data-layer-pattern-settings
                 patternType="tooltip"
                 patternTitle="{{ 'widgets.maps.data-layer.points.point-tooltip' | translate }}"
                 [context]="context"
+                helpId="widget/lib/map/path_point_tooltip_fn"
                 formControlName="pointTooltip">
               </tb-data-layer-pattern-settings>
             </ng-template>
@@ -350,7 +351,7 @@
       <ng-container *ngIf="['polygons', 'circles'].includes(dataLayerType)">
         <div class="tb-form-row space-between">
           <div translate>widgets.maps.data-layer.fill-color</div>
-          <tb-data-layer-color-settings formControlName="fillColor"></tb-data-layer-color-settings>
+          <tb-data-layer-color-settings helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_fill_color_fn' : 'widget/lib/map/circle_fill_color_fn' }}" formControlName="fillColor"></tb-data-layer-color-settings>
         </div>
         <div class="tb-form-row space-between">
           <div translate>widgets.maps.data-layer.stroke</div>
@@ -359,18 +360,20 @@
               <input matInput type="number" min="0" formControlName="strokeWeight" placeholder="{{ 'widget-config.set' | translate }}">
               <span matSuffix>px</span>
             </mat-form-field>
-            <tb-data-layer-color-settings formControlName="strokeColor"></tb-data-layer-color-settings>
+            <tb-data-layer-color-settings helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_stroke_color_fn' : 'widget/lib/map/circle_stroke_color_fn' }}" formControlName="strokeColor"></tb-data-layer-color-settings>
           </div>
         </div>
       </ng-container>
       <tb-data-layer-pattern-settings
         patternType="label"
         [context]="context"
+        [helpId]="labelHelpId"
         formControlName="label">
       </tb-data-layer-pattern-settings>
       <tb-data-layer-pattern-settings
         patternType="tooltip"
         [context]="context"
+        [helpId]="tooltipHelpId"
         [hasTooltipOffset]="['trips', 'markers'].includes(dataLayerType)"
         formControlName="tooltip">
       </tb-data-layer-pattern-settings>

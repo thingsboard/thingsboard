@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -26,7 +26,7 @@ import {
   Validators
 } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ImageMapSourceSettings, ImageSourceType } from '@home/components/widget/lib/maps/models/map.models';
+import { ImageMapSourceSettings, ImageSourceType } from '@shared/models/widget/maps/map.models';
 import { DataKey, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';

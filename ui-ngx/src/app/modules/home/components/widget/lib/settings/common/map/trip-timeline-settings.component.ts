@@ -29,16 +29,8 @@ import { merge } from 'rxjs';
 import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  DataLayerPatternSettings,
-  DataLayerPatternType,
-  DataLayerTooltipSettings,
-  dataLayerTooltipTriggers,
-  dataLayerTooltipTriggerTranslationMap,
-  pathDecoratorSymbols, pathDecoratorSymbolTranslationMap,
   TripTimelineSettings
-} from '@home/components/widget/lib/maps/models/map.models';
-import { coerceBoolean } from '@shared/decorators/coercion';
-import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
+} from '@shared/models/widget/maps/map.models';
 
 @Component({
   selector: 'tb-trip-timeline-settings',
@@ -166,7 +158,4 @@ export class TripTimelineSettingsComponent implements OnInit, ControlValueAccess
     this.modelValue = this.tripTimelineSettingsFormGroup.getRawValue();
     this.propagateChange(this.modelValue);
   }
-
-  protected readonly pathDecoratorSymbols = pathDecoratorSymbols;
-  protected readonly pathDecoratorSymbolTranslationMap = pathDecoratorSymbolTranslationMap;
 }

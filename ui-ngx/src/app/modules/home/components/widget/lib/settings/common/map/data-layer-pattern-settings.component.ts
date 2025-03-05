@@ -32,7 +32,7 @@ import {
   DataLayerPatternSettings,
   DataLayerPatternType,
   DataLayerTooltipSettings, dataLayerTooltipTriggers, dataLayerTooltipTriggerTranslationMap
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
@@ -70,6 +70,9 @@ export class DataLayerPatternSettingsComponent implements OnInit, ControlValueAc
 
   @Input()
   patternType: 'label' | 'tooltip' = 'label';
+
+  @Input()
+  helpId = 'widget/lib/map/label_fn';
 
   @Input()
   patternTitle: string;

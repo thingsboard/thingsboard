@@ -18,7 +18,7 @@ import {
   DataLayerEditAction,
   MapDataLayerSettings,
   TbMapDatasource
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import { Observable } from 'rxjs';

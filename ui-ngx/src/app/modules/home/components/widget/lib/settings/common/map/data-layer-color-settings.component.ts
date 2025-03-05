@@ -19,7 +19,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ComponentStyle } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { DataLayerColorSettings, DataLayerColorType } from '@home/components/widget/lib/maps/models/map.models';
+import { DataLayerColorSettings, DataLayerColorType } from '@shared/models/widget/maps/map.models';
 import {
   DataLayerColorSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/map/data-layer-color-settings-panel.component';
@@ -40,6 +40,9 @@ export class DataLayerColorSettingsComponent implements ControlValueAccessor {
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  helpId = 'widget/lib/map/color_fn';
 
   DataLayerColorType = DataLayerColorType;
 
@@ -82,6 +85,7 @@ export class DataLayerColorSettingsComponent implements ControlValueAccessor {
     } else {
       const ctx: any = {
         colorSettings: this.modelValue,
+        helpId: this.helpId
       };
       const colorSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, DataLayerColorSettingsPanelComponent, 'left', true, null,

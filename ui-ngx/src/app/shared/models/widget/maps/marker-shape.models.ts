@@ -205,7 +205,7 @@ export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domS
 
 let placeItemIconURI$: Observable<string>;
 
-export const createPlaceItemIcon= (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer): Observable<string> => {
+export const createPlaceItemIcon = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer): Observable<string> => {
   if (placeItemIconURI$) {
     return placeItemIconURI$;
   }

@@ -23,7 +23,7 @@ import {
   createColorMarkerShapeURI,
   MarkerShape, markerShapes,
   tripMarkerShapes
-} from '@home/components/widget/lib/maps/models/marker-shape.models';
+} from '@shared/models/widget/maps/marker-shape.models';
 import { Observable } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';

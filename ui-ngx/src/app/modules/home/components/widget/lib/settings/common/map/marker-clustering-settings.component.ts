@@ -27,7 +27,7 @@ import {
 } from '@angular/forms';
 import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MarkerClusteringSettings } from '@home/components/widget/lib/maps/models/map.models';
+import { MarkerClusteringSettings } from '@shared/models/widget/maps/map.models';
 import { merge } from 'rxjs';
 
 @Component({

@@ -307,23 +307,23 @@ export class ImportExportService {
                             }
                           }
                           return this.addImportedWidget(dashboard, targetState, targetLayoutFunction, widget,
-                            aliasesInfo, filtersInfo, onAliasesUpdateFunction, onFiltersUpdateFunction, originalColumns, originalSize);
+                            aliasesInfo, filtersInfo, onAliasesUpdateFunction, onFiltersUpdateFunction, originalColumns, originalSize, widgetItem.widgetExportInfo);
                         }
                       ));
                     } else {
                       return this.addImportedWidget(dashboard, targetState, targetLayoutFunction, widget,
-                        aliasesInfo, filtersInfo, onAliasesUpdateFunction, onFiltersUpdateFunction, originalColumns, originalSize);
+                        aliasesInfo, filtersInfo, onAliasesUpdateFunction, onFiltersUpdateFunction, originalColumns, originalSize, widgetItem.widgetExportInfo);
                     }
                   }
                 )
               );
             } else {
               return this.addImportedWidget(dashboard, targetState, targetLayoutFunction, widget,
-                aliasesInfo, filtersInfo, onAliasesUpdateFunction, onFiltersUpdateFunction, originalColumns, originalSize);
+                aliasesInfo, filtersInfo, onAliasesUpdateFunction, onFiltersUpdateFunction, originalColumns, originalSize, widgetItem.widgetExportInfo);
             }
           } else {
             return this.addImportedWidget(dashboard, targetState, targetLayoutFunction, widget,
-              aliasesInfo, filtersInfo, onAliasesUpdateFunction, onFiltersUpdateFunction, originalColumns, originalSize);
+              aliasesInfo, filtersInfo, onAliasesUpdateFunction, onFiltersUpdateFunction, originalColumns, originalSize, widgetItem.widgetExportInfo);
           }
         }
       }),
@@ -1033,11 +1033,11 @@ export class ImportExportService {
                             filtersInfo: FiltersInfo,
                             onAliasesUpdateFunction: () => void,
                             onFiltersUpdateFunction: () => void,
-                            originalColumns: number, originalSize: WidgetSize): Observable<ImportWidgetResult> {
+                            originalColumns: number, originalSize: WidgetSize, widgetExportInfo: any): Observable<ImportWidgetResult> {
     return targetLayoutFunction().pipe(
       mergeMap((targetLayout) => this.itembuffer.addWidgetToDashboard(dashboard, targetState, targetLayout,
           widget, aliasesInfo, filtersInfo, onAliasesUpdateFunction, onFiltersUpdateFunction,
-          originalColumns, originalSize, -1, -1).pipe(
+          originalColumns, originalSize, -1, -1, 'default', widgetExportInfo).pipe(
           map(() => ({widget, layoutId: targetLayout} as ImportWidgetResult))
         )
     ));

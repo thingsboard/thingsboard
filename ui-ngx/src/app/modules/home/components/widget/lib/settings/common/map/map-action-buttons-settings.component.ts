@@ -26,7 +26,7 @@ import {
 import {
   defaultMapActionButtonSettings,
   MapActionButtonSettings
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 

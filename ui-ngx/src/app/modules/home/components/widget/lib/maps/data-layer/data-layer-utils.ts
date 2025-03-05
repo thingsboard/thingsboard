@@ -18,7 +18,7 @@ import {
   DataLayerTooltipSettings,
   DataLayerTooltipTrigger, processTooltipTemplate,
   TbMapDatasource
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { FormattedData } from '@shared/models/widget.models';
 import L from 'leaflet';

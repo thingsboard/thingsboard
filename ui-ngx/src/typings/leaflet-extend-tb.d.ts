@@ -15,8 +15,8 @@
 ///
 
 import { FormattedData } from '@shared/models/widget.models';
-import L, { Control, ControlOptions } from 'leaflet';
-import { TbMapDatasource } from '@home/components/widget/lib/maps/models/map.models';
+import L from 'leaflet';
+import { TbMapDatasource } from '@shared/models/widget/maps/map.models';
 import { MatIconRegistry } from '@angular/material/icon';
 
 // redeclare module, maintains compatibility with @types/leaflet

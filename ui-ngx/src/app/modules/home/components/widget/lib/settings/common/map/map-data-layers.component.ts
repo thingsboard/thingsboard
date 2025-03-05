@@ -35,7 +35,7 @@ import {
   mapDataLayerValid,
   mapDataLayerValidator,
   MapType
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { MapSettingsComponent } from '@home/components/widget/lib/settings/common/map/map-settings.component';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 

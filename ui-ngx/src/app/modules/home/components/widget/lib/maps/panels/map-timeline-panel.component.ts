@@ -25,7 +25,7 @@ import {
   Output,
   ViewEncapsulation
 } from '@angular/core';
-import { TripTimelineSettings } from '@home/components/widget/lib/maps/models/map.models';
+import { TripTimelineSettings } from '@shared/models/widget/maps/map.models';
 import { DateFormatProcessor } from '@shared/models/widget-settings.models';
 import { interval, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';

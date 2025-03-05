@@ -20,7 +20,7 @@ import {
   MapDataLayerSettings, MapDataLayerType, mapDataSourceSettingsToDatasource,
   MapStringFunction, MapType,
   TbMapDatasource
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import {
   createLabelFromPattern,
   guid, isDefined,
@@ -82,6 +82,7 @@ export class DataLayerColorProcessor {
               private settings: DataLayerColorSettings) {}
 
   public setup(): Observable<void> {
+    this.color = this.settings.color;
     if (this.settings.type === DataLayerColorType.function) {
       return parseTbFunction<MapStringFunction>(this.dataLayer.getCtx().http, this.settings.colorFunction, ['data', 'dsData']).pipe(
         map((parsed) => {
@@ -90,7 +91,6 @@ export class DataLayerColorProcessor {
         })
       );
     } else {
-      this.color = this.settings.color;
       return of(null)
     }
   }
@@ -99,6 +99,9 @@ export class DataLayerColorProcessor {
     let color: string;
     if (this.settings.type === DataLayerColorType.function) {
       color = safeExecuteTbFunction(this.colorFunction, [data, dsData]);
+      if (!color) {
+        color = this.color;
+      }
     } else {
       color = this.color;
     }

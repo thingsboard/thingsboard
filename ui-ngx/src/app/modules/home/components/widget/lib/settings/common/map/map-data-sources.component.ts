@@ -33,7 +33,7 @@ import {
   additionalMapDataSourceValid,
   additionalMapDataSourceValidator,
   defaultAdditionalMapDataSourceSettings
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({

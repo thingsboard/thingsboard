@@ -50,7 +50,7 @@
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.label-function' | translate }}"
-                      helpId="widget/lib/map/label_fn">
+                      helpId="widget/lib/map-legacy/label_fn">
           </tb-js-func>
         </ng-template>
       </mat-expansion-panel>
@@ -84,7 +84,7 @@
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'images', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.marker-image-function' | translate }}"
-                      helpId="widget/lib/map/marker_image_fn">
+                      helpId="widget/lib/map-legacy/marker_image_fn">
           </tb-js-func>
           <tb-multiple-gallery-image-input [class.!hidden]="!tripAnimationMarkerSettingsFormGroup.get('useMarkerImageFunction').value"
                                            label="{{ 'widgets.maps.marker-images' | translate }}"

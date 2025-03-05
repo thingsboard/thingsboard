@@ -29,7 +29,7 @@ import {
   MarkerType, pathDecoratorSymbols, pathDecoratorSymbolTranslationMap,
   PolygonsDataLayerSettings,
   ShapeDataLayerSettings, TripsDataLayerSettings
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
@@ -93,6 +93,36 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
   dialogTitle: string;
+
+  get labelHelpId(): string {
+    switch (this.dataLayerType) {
+      case 'trips':
+        return 'widget/lib/map/label_fn';
+      case 'markers':
+        return 'widget/lib/map/label_fn';
+      case 'polygons':
+        return 'widget/lib/map/polygon_label_fn';
+      case 'circles':
+        return 'widget/lib/map/circle_label_fn';
+      default:
+        return 'widget/lib/map/label_fn';
+    }
+  }
+
+  get tooltipHelpId(): string {
+    switch (this.dataLayerType) {
+      case 'trips':
+        return 'widget/lib/map/tooltip_fn';
+      case 'markers':
+        return 'widget/lib/map/tooltip_fn';
+      case 'polygons':
+        return 'widget/lib/map/polygon_tooltip_fn';
+      case 'circles':
+        return 'widget/lib/map/circle_tooltip_fn';
+      default:
+        return 'widget/lib/map/tooltip_fn';
+    }
+  }
 
   constructor(protected store: Store<AppState>,
               protected router: Router,

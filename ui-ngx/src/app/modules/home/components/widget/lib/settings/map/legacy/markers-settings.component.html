@@ -35,7 +35,7 @@
                 [globalVariables]="functionScopeVariables"
                 [functionArgs]="['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']"
                 functionTitle="{{ 'widgets.maps.position-function' | translate }}"
-                helpId="widget/lib/map/position_fn">
+                helpId="widget/lib/map-legacy/position_fn">
     </tb-js-func>
     <mat-checkbox formControlName="draggableMarker">
       {{ 'widgets.maps.draggable-marker' | translate }}
@@ -68,7 +68,7 @@
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.label-function' | translate }}"
-                      helpId="widget/lib/map/label_fn">
+                      helpId="widget/lib/map-legacy/label_fn">
           </tb-js-func>
         </ng-template>
       </mat-expansion-panel>
@@ -112,7 +112,7 @@
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.tooltip-function' | translate }}"
-                      helpId="widget/lib/map/tooltip_fn">
+                      helpId="widget/lib/map-legacy/tooltip_fn">
           </tb-js-func>
           <section class="flex flex-row xs:flex-col gt-xs:gap-2">
             <mat-form-field class="flex-1">
@@ -151,7 +151,7 @@
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.color-function' | translate }}"
-                      helpId="widget/lib/map/color_fn">
+                      helpId="widget/lib/map-legacy/color_fn">
           </tb-js-func>
         </ng-template>
       </mat-expansion-panel>
@@ -185,7 +185,7 @@
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'images', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.marker-image-function' | translate }}"
-                      helpId="widget/lib/map/marker_image_fn">
+                      helpId="widget/lib/map-legacy/marker_image_fn">
           </tb-js-func>
           <tb-multiple-gallery-image-input [class.!hidden]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
                                            label="{{ 'widgets.maps.marker-images' | translate }}"

@@ -22,7 +22,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MarkerImageSettings, MarkerImageType } from '@home/components/widget/lib/maps/models/map.models';
+import { MarkerImageSettings, MarkerImageType } from '@shared/models/widget/maps/map.models';
 
 @Component({
   selector: 'tb-marker-image-settings-panel',

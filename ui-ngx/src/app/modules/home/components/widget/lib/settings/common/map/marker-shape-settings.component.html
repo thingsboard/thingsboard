@@ -30,5 +30,5 @@
     <div *ngIf="markerType === MarkerType.icon" matButtonIcon style="object-fit: contain; width: 24px; height: 24px;" [innerHTML]="iconPreview$ | async" [class.disabled]="disabled">
     </div>
   </button>
-  <tb-data-layer-color-settings formControlName="color"></tb-data-layer-color-settings>
+  <tb-data-layer-color-settings helpId="widget/lib/map/color_fn" formControlName="color"></tb-data-layer-color-settings>
 </div>

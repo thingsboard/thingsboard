@@ -19,7 +19,7 @@ import {
   isCutPolygon, isJSON, MapDataLayerType,
   PolygonsDataLayerSettings,
   TbMapDatasource, TbPolyData, TbPolygonCoordinates, TbPolygonRawCoordinates
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { FormattedData } from '@shared/models/widget.models';
 import { TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';

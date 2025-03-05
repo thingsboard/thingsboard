@@ -15,14 +15,12 @@
 ///
 
 import {
-  AfterViewInit,
   ChangeDetectorRef,
   Component,
   ElementRef,
   Input,
   OnDestroy,
   OnInit,
-  Renderer2,
   TemplateRef,
   ViewChild,
   ViewEncapsulation
@@ -36,7 +34,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { MapSetting } from '@home/components/widget/lib/maps/models/map.models';
+import { MapSetting } from '@shared/models/widget/maps/map.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -69,7 +67,6 @@ export class MapWidgetComponent implements OnInit, OnDestroy {
   constructor(public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
-              private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
 

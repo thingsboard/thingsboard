@@ -24,7 +24,7 @@ import {
   loadImageWithAspect,
   MapZoomAction,
   TbCircleData, TbPolygonCoordinate, TbPolygonCoordinates, TbPolygonRawCoordinate, TbPolygonRawCoordinates
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { Observable, of, ReplaySubject, switchMap } from 'rxjs';

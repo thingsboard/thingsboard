@@ -42,7 +42,7 @@ import {
   MarkersDataLayerSettings,
   PolygonsDataLayerSettings,
   TripsDataLayerSettings
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';

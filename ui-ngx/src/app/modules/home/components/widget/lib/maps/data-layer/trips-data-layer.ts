@@ -23,7 +23,7 @@ import {
   MapDataLayerType,
   TbMapDatasource,
   TripsDataLayerSettings
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import { forkJoin, Observable } from 'rxjs';
 import { FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import { map } from 'rxjs/operators';

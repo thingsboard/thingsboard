@@ -34,7 +34,7 @@ import {
   MarkerShapeSettings,
   MarkerType,
   TbMapDatasource
-} from '@home/components/widget/lib/maps/models/map.models';
+} from '@shared/models/widget/maps/map.models';
 import L, { FeatureGroup } from 'leaflet';
 import { FormattedData } from '@shared/models/widget.models';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -55,7 +55,7 @@ import {
   createColorMarkerIconElement,
   createColorMarkerShapeURI,
   MarkerShape
-} from '@home/components/widget/lib/maps/models/marker-shape.models';
+} from '@shared/models/widget/maps/marker-shape.models';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
