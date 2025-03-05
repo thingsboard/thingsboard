@@ -21,9 +21,15 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public class EntitiesRelatedEntityIdAsyncLoader {
 
@@ -32,21 +38,45 @@ public class EntitiesRelatedEntityIdAsyncLoader {
             EntityId originator,
             RelationsQuery relationsQuery
     ) {
+        return findEntitiesAsync(ctx, originator, relationsQuery, ((entityRelations, entitySearchDirection) -> {
+            if (CollectionUtils.isNotEmpty(entityRelations)) {
+                EntityRelation entityRelation = entityRelations.get(0);
+                return EntitySearchDirection.TO.equals(entitySearchDirection) ? entityRelation.getFrom() : entityRelation.getTo();
+            }
+            return null;
+        }));
+    }
+
+    public static ListenableFuture<List<EntityId>> findEntitiesAsync(
+            TbContext ctx,
+            EntityId originator,
+            RelationsQuery relationsQuery
+    ) {
+        return findEntitiesAsync(ctx, originator, relationsQuery, (entityRelations, direction) -> {
+            if (direction == EntitySearchDirection.FROM) {
+                return entityRelations.stream().map(EntityRelation::getTo).collect(Collectors.toList());
+            } else if (direction == EntitySearchDirection.TO) {
+                return entityRelations.stream().map(EntityRelation::getFrom).collect(Collectors.toList());
+            }
+            return Collections.emptyList();
+        });
+    }
+
+    private static <R> ListenableFuture<R> findEntitiesAsync(
+            TbContext ctx,
+            EntityId originator,
+            RelationsQuery relationsQuery,
+            BiFunction<List<EntityRelation>, EntitySearchDirection, R> entitiesExtractor
+    ) {
         var relationService = ctx.getRelationService();
         var query = buildQuery(originator, relationsQuery);
         var relationListFuture = relationService.findByQuery(ctx.getTenantId(), query);
-        if (relationsQuery.getDirection() == EntitySearchDirection.FROM) {
-            return Futures.transformAsync(relationListFuture,
-                    relationList -> CollectionUtils.isNotEmpty(relationList) ?
-                            Futures.immediateFuture(relationList.get(0).getTo())
-                            : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
-        } else if (relationsQuery.getDirection() == EntitySearchDirection.TO) {
-            return Futures.transformAsync(relationListFuture,
-                    relationList -> CollectionUtils.isNotEmpty(relationList) ?
-                            Futures.immediateFuture(relationList.get(0).getFrom())
-                            : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
+        if (relationsQuery.getDirection() == null) {
+            return Futures.immediateFailedFuture(new IllegalStateException("Unknown direction"));
         }
-        return Futures.immediateFailedFuture(new IllegalStateException("Unknown direction"));
+        return Futures.transformAsync(relationListFuture,
+                entityRelations -> Futures.immediateFuture(entitiesExtractor.apply(entityRelations, relationsQuery.getDirection())),
+                ctx.getDbCallbackExecutor());
     }
 
     private static EntityRelationsQuery buildQuery(EntityId originator, RelationsQuery relationsQuery) {
