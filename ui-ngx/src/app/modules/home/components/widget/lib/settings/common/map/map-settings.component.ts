@@ -26,10 +26,13 @@ import {
   Validators
 } from '@angular/forms';
 import {
+  DataLayerEditAction,
   defaultImageMapSourceSettings,
-  ImageMapSourceSettings, imageMapSourceSettingsValidator,
+  ImageMapSourceSettings,
+  imageMapSourceSettingsValidator,
   mapControlPositions,
   mapControlsPositionTranslationMap,
+  MapDataLayerSettings,
   MapDataLayerType,
   MapSetting,
   MapType,
@@ -109,6 +112,8 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
 
   dataLayerMode: MapDataLayerType = 'markers';
 
+  showDragButtonModeButtonSettings = false;
+
   constructor(private fb: UntypedFormBuilder,
               private dialog: MatDialog,
               private destroyRef: DestroyRef) {
@@ -139,6 +144,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       additionalDataSources: [null, []],
       controlsPosition: [null, []],
       zoomActions: [null, []],
+      dragModeButton: [null, []],
       fitMapBounds: [null, []],
       useDefaultCenterPosition: [null, []],
       defaultCenterPosition: [null, []],
@@ -167,6 +173,14 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
     ).subscribe((mapType: MapType) => {
       this.mapTypeChanged(mapType);
     });
+    merge(this.mapSettingsFormGroup.get('markers').valueChanges,
+          this.mapSettingsFormGroup.get('polygons').valueChanges,
+          this.mapSettingsFormGroup.get('circles').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateDragButtonModeSettings();
+    });
   }
 
   registerOnChange(fn: any): void {
@@ -192,6 +206,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       value, {emitEvent: false}
     );
     this.updateValidators();
+    this.updateDragButtonModeSettings();
   }
 
   public validate(_c: UntypedFormControl) {
@@ -234,6 +249,26 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
         imageSource = mergeDeep({} as ImageMapSourceSettings, defaultImageMapSourceSettings);
         this.mapSettingsFormGroup.get('imageSource').patchValue(imageSource);
       }
+    }
+  }
+
+  private updateDragButtonModeSettings() {
+    const markers: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('markers').value;
+    const circles: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('circles').value;
+    let dragModeButtonSettingsEnabled = markers.some(d => d.edit && d.edit.enabledActions && d.edit.enabledActions.includes(DataLayerEditAction.move));
+    if (!dragModeButtonSettingsEnabled) {
+      const polygons: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('polygons').value;
+      dragModeButtonSettingsEnabled = polygons.some(d => d.edit && d.edit.enabledActions && d.edit.enabledActions.includes(DataLayerEditAction.move));
+    }
+    if (!dragModeButtonSettingsEnabled) {
+      const circles: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('circles').value;
+      dragModeButtonSettingsEnabled = circles.some(d => d.edit && d.edit.enabledActions && d.edit.enabledActions.includes(DataLayerEditAction.move));
+    }
+    this.showDragButtonModeButtonSettings = dragModeButtonSettingsEnabled;
+    if (dragModeButtonSettingsEnabled) {
+      this.mapSettingsFormGroup.get('dragModeButton').enable({emitEvent: false});
+    } else {
+      this.mapSettingsFormGroup.get('dragModeButton').disable({emitEvent: false});
     }
   }
 

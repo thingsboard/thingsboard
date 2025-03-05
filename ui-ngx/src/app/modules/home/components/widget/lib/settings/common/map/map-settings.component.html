@@ -99,6 +99,11 @@
         </mat-chip-option>
       </mat-chip-listbox>
     </div>
+    <div *ngIf="showDragButtonModeButtonSettings" class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="dragModeButton">
+        {{ 'widgets.maps.control.switch-to-drag-mode-using-button' | translate }}
+      </mat-slide-toggle>
+    </div>
     <tb-trip-timeline-settings *ngIf="trip"
                                formControlName="tripTimeline"></tb-trip-timeline-settings>
   </div>

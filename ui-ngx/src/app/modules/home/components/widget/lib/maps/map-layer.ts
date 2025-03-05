@@ -161,7 +161,7 @@ class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
   }
 
   private loadGoogle(): Observable<boolean> {
-    const apiKey = this.settings.apiKey;
+    const apiKey = this.settings.apiKey || defaultGoogleMapLayerSettings.apiKey;
     if (TbGoogleMapLayer.loadedApiKeysGlobal[apiKey]) {
       return of(true);
     } else {
@@ -213,7 +213,8 @@ class TbHereMapLayer extends TbMapLayer<HereMapLayerSettings> {
   }
 
   protected createLayer(): Observable<L.Layer> {
-    const layer = L.tileLayer.provider(this.settings.layerType, {useV3: true, apiKey: this.settings.apiKey} as any);
+    const apiKey = this.settings.apiKey || defaultHereMapLayerSettings.apiKey;
+    const layer = L.tileLayer.provider(this.settings.layerType, {useV3: true, apiKey} as any);
     return of(layer);
   }
 

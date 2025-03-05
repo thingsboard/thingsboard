@@ -114,6 +114,18 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
     this.updateBubblingMouseEvents();
   }
 
+  public dragModeUpdated() {
+    if (this.dataLayer.isEditMode() && !this.selected) {
+      if (this.dataLayer.allowDrag()) {
+        this.enableDrag();
+        this.addItemClass('tb-draggable');
+      } else {
+        this.disableDrag();
+        this.removeItemClass('tb-draggable');
+      }
+    }
+  }
+
   public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
     this.data = data;
     this.doUpdate(data, dsData);
@@ -151,7 +163,7 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
     if (this.dataLayer.isHoverable()) {
       this.addItemClass('tb-hoverable');
     }
-    if (this.dataLayer.isDragEnabled()) {
+    if (this.dataLayer.allowDrag()) {
       this.enableDrag();
       this.addItemClass('tb-draggable');
     }
@@ -278,6 +290,10 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
     return this.dragEnabled;
   }
 
+  public allowDrag(): boolean {
+    return this.dragEnabled && (!this.map.useDragModeButton() || this.map.dragModeEnabled());
+  }
+
   public isEditEnabled(): boolean {
     return this.editEnabled;
   }
@@ -357,6 +373,10 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
     }
   }
 
+  public dragModeUpdated() {
+    this.updateItemsDragMode();
+  }
+
   protected createDataLayerContainer(): L.FeatureGroup {
     return L.featureGroup([], {snapIgnore: !this.settings.edit?.snappable});
   }
@@ -404,6 +424,10 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
 
   private updateItemsEditMode() {
     this.layerItems.forEach(item => item.editModeUpdated());
+  }
+
+  private updateItemsDragMode() {
+    this.layerItems.forEach(item => item.dragModeUpdated());
   }
 
   public abstract placeItem(item: UnplacedMapDataItem, layer: L.Layer): void;

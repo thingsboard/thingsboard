@@ -660,6 +660,7 @@ export interface BaseMapSettings {
   additionalDataSources: AdditionalMapDataSourceSettings[];
   controlsPosition: MapControlsPosition;
   zoomActions: MapZoomAction[];
+  dragModeButton: boolean;
   fitMapBounds: boolean;
   useDefaultCenterPosition: boolean;
   defaultCenterPosition?: string;
@@ -682,6 +683,7 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   additionalDataSources: [],
   controlsPosition: MapControlsPosition.topleft,
   zoomActions: [MapZoomAction.scroll, MapZoomAction.doubleClick, MapZoomAction.controlButtons],
+  dragModeButton: false,
   fitMapBounds: true,
   useDefaultCenterPosition: false,
   defaultCenterPosition: '0,0',

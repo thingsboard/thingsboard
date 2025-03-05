@@ -109,6 +109,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected customActionsToolbar: L.TB.TopToolbarControl;
   protected editToolbar: L.TB.BottomToolbarControl;
 
+  protected dragModeButton: L.TB.ToolbarButton;
   protected addMarkerButton: L.TB.ToolbarButton;
   protected addRectangleButton: L.TB.ToolbarButton;
   protected addPolygonButton: L.TB.ToolbarButton;
@@ -127,10 +128,12 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private tooltipInstances: TooltipInstancesData[] = [];
 
   private currentPopover: TbPopoverComponent;
-  private currentAddButton: L.TB.ToolbarButton;
+  private currentEditButton: L.TB.ToolbarButton;
+
+  private dragMode = true;
 
   private get isPlacingItem(): boolean {
-    return !!this.currentAddButton;
+    return !!this.currentEditButton;
   }
 
   protected constructor(protected ctx: WidgetContext,
@@ -188,6 +191,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     if (this.map.zoomControl) {
       this.map.zoomControl.setPosition(this.settings.controlsPosition);
     }
+    this.dragMode = !this.settings.dragModeButton;
     const setup = [this.doSetupControls()];
     if (this.timeline && this.settings.tripTimeline.snapToRealLocation) {
       setup.push(parseTbFunction<MapBooleanFunction>(this.getCtx().http, this.settings.tripTimeline.locationSnapFilter, ['data', 'dsData']).pipe(
@@ -393,12 +397,24 @@ export abstract class TbMap<S extends BaseMapSettings> {
        this.map.pm.applyGlobalOptions();
      }
 
+     const dragSupportedDataLayers = this.latestDataLayers.filter(dl => dl.isDragEnabled());
+     const showDragModeButton = this.settings.dragModeButton && dragSupportedDataLayers.length;
      const addSupportedDataLayers = this.latestDataLayers.filter(dl => dl.isAddEnabled());
 
-     if (addSupportedDataLayers.length) {
+     if (showDragModeButton || addSupportedDataLayers.length) {
        const drawToolbar = L.TB.toolbar({
          position: this.settings.controlsPosition
        }).addTo(this.map);
+       if (showDragModeButton) {
+         this.dragModeButton = drawToolbar.toolbarButton({
+           id: 'dragMode',
+           title: this.ctx.translate.instant('widgets.maps.data-layer.drag-drop-mode'),
+           iconClass: 'tb-drag-mode',
+           click: (e, button) => {
+             this.toggleDragMode(e, button);
+           }
+         });
+       }
        this.addMarkerDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === 'markers');
        if (this.addMarkerDataLayers.length) {
          this.addMarkerButton = drawToolbar.toolbarButton({
@@ -448,6 +464,32 @@ export abstract class TbMap<S extends BaseMapSettings> {
      }
   }
 
+  private toggleDragMode(e: MouseEvent, button: L.TB.ToolbarButton): void {
+    if (this.dragMode) {
+      this.disableDragMode();
+    } else {
+      this.dragMode = true;
+      this.latestDataLayers.forEach(dl => dl.dragModeUpdated());
+      this.updatePlaceItemState(button);
+      this.editToolbar.open([
+        {
+          id: 'cancel',
+          iconClass: 'tb-close',
+          title: this.ctx.translate.instant('action.cancel'),
+          showText: true,
+          click: this.disableDragMode
+        }
+      ], false);
+    }
+  }
+
+  private disableDragMode = () => {
+    this.dragMode = false;
+    this.latestDataLayers.forEach(dl => dl.dragModeUpdated());
+    this.updatePlaceItemState();
+    this.editToolbar.close();
+  }
+
   private placeMarker(e: MouseEvent, button: L.TB.ToolbarButton): void {
     this.placeItem(e, button, this.addMarkerDataLayers, (entity) => this.prepareDrawMode('Marker', {
       placeMarker: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint-with-entity', {entityName: entity.entity.entityDisplayName})
@@ -479,6 +521,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private placeItem(e: MouseEvent, button: L.TB.ToolbarButton, dataLayers: TbLatestMapDataLayer[],
                     prepareDrawMode: (entity: UnplacedMapDataItem) => void): void {
     if (this.isPlacingItem) {
+      this.finishAdd();
       return;
     }
     this.updatePlaceItemState(button);
@@ -692,6 +735,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private finishAdd = () => {
+    if (this.currentPopover) {
+      this.currentPopover.hide();
+      this.currentPopover = null;
+    }
     this.map.off('pm:create');
     this.map.pm.disableDraw();
     this.latestDataLayers.forEach(dl => dl.enableEditMode());
@@ -706,15 +753,15 @@ export abstract class TbMap<S extends BaseMapSettings> {
     L.DomUtil.addClass(this.map.pm.Draw[shape]._hintMarker.getTooltip()._container, 'tb-place-item-label');
   }
 
-  private updatePlaceItemState(addButton?: L.TB.ToolbarButton, disabled = false): void {
-    if (addButton) {
+  private updatePlaceItemState(editButton?: L.TB.ToolbarButton, disabled = false): void {
+    if (editButton) {
       this.deselectItem(false, true);
-      addButton.setActive(true);
-    } else if (this.currentAddButton) {
-      this.currentAddButton.setActive(false);
+      editButton.setActive(true);
+    } else if (this.currentEditButton) {
+      this.currentEditButton.setActive(false);
     }
-    this.currentAddButton = addButton;
-    this.updateAddButtonsStates(disabled);
+    this.currentEditButton = editButton;
+    this.updateEditButtonsStates(disabled);
   }
 
   private createdControlButtonTooltip(root: HTMLElement, side: TooltipPositioningSide) {
@@ -784,7 +831,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.updateTripsAppearance();
     this.updateTripsAnchors();
     this.updateBounds();
-    this.updateAddButtonsStates();
+    this.updateEditButtonsStates();
   }
 
   private updateTrips(subscription: IWidgetSubscription) {
@@ -886,22 +933,28 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
   }
 
-  private updateAddButtonsStates(disabled = false) {
-    if (this.currentAddButton || disabled) {
-      if (this.addMarkerButton && this.addMarkerButton !== this.currentAddButton) {
+  private updateEditButtonsStates(disabled = false) {
+    if (this.currentEditButton || disabled) {
+      if (this.dragModeButton && this.dragModeButton !== this.currentEditButton) {
+        this.dragModeButton.setDisabled(true);
+      }
+      if (this.addMarkerButton && this.addMarkerButton !== this.currentEditButton) {
         this.addMarkerButton.setDisabled(true);
       }
-      if (this.addRectangleButton && this.addRectangleButton !== this.currentAddButton) {
+      if (this.addRectangleButton && this.addRectangleButton !== this.currentEditButton) {
         this.addRectangleButton.setDisabled(true);
       }
-      if (this.addPolygonButton && this.addPolygonButton !== this.currentAddButton) {
+      if (this.addPolygonButton && this.addPolygonButton !== this.currentEditButton) {
         this.addPolygonButton.setDisabled(true);
       }
-      if (this.addCircleButton && this.addCircleButton !== this.currentAddButton) {
+      if (this.addCircleButton && this.addCircleButton !== this.currentEditButton) {
         this.addCircleButton.setDisabled(true);
       }
-      this.customActionsToolbar.setDisabled(true);
+      this.customActionsToolbar?.setDisabled(true);
     } else {
+      if (this.dragModeButton) {
+        this.dragModeButton.setDisabled(false);
+      }
       if (this.addMarkerButton) {
         this.addMarkerButton.setDisabled(!this.addMarkerDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
       }
@@ -914,7 +967,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       if (this.addCircleButton) {
         this.addCircleButton.setDisabled(!this.addCircleDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
       }
-      this.customActionsToolbar.setDisabled(false);
+      this.customActionsToolbar?.setDisabled(false);
     }
   }
 
@@ -979,7 +1032,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   public enabledDataLayersUpdated() {
-    this.updateAddButtonsStates();
+    this.updateEditButtonsStates();
     this.updateTripsAnchors();
   }
 
@@ -1025,6 +1078,14 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public getEditToolbar(): L.TB.BottomToolbarControl {
     return this.editToolbar;
+  }
+
+  public useDragModeButton(): boolean {
+    return this.settings.dragModeButton;
+  }
+
+  public dragModeEnabled(): boolean {
+    return this.dragMode;
   }
 
   public saveItemData(datasource: TbMapDatasource, data: DataKeyValuePair[]): Observable<any> {

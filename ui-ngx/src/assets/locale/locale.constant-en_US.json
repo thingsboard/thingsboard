@@ -7704,7 +7704,8 @@
                 "zoom-actions": "Zoom actions",
                 "zoom-scroll": "Scroll",
                 "zoom-double-click": "Double click",
-                "zoom-control-buttons": "Control buttons"
+                "zoom-control-buttons": "Control buttons",
+                "switch-to-drag-mode-using-button": "Switch to drag mode using button"
             },
             "timeline": {
                 "control-panel": "Timeline control panel",
@@ -7839,6 +7840,7 @@
                 "action-remove": "Remove",
                 "edit-instruments": "Instruments",
                 "enable-snapping": "Enable snapping to other vertices for precision drawing",
+                "drag-drop-mode": "Drag-drop mode",
                 "trip": {
                     "no-trips": "No trips configured",
                     "add-trip": "Add trip",
