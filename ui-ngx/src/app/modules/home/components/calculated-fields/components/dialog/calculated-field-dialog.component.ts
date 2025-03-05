@@ -33,7 +33,7 @@ import {
   OutputType,
   OutputTypeTranslations
 } from '@shared/models/calculated-field.models';
-import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
+import { digitsRegex, oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, startWith, switchMap } from 'rxjs/operators';
@@ -61,7 +61,8 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       output: this.fb.group({
         name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
         scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }],
-        type: [OutputType.Timeseries]
+        type: [OutputType.Timeseries],
+        decimalsByDefault: [null as number, [Validators.min(0), Validators.max(15), Validators.pattern(digitsRegex)]],
       }),
     }),
   });

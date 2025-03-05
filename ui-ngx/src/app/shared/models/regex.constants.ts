@@ -17,3 +17,5 @@
 export const oneSpaceInsideRegex = /^\s*\S+(?:\s\S+)*\s*$/;
 
 export const charsWithNumRegex = /^[a-zA-Z]+[a-zA-Z0-9]*$/;
+
+export const digitsRegex = /^\d*$/;

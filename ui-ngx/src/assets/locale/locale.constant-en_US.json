@@ -1015,6 +1015,7 @@
             "script": "Script"
         },
         "arguments": "Arguments",
+        "decimals-by-default": "Decimals by default",
         "debugging": "Calculated field debugging",
         "argument-name": "Argument name",
         "datasource": "Datasource",
@@ -1071,6 +1072,7 @@
             "argument-name-max-length": "Argument name should be less than 256 characters.",
             "argument-type-required": "Argument type is required.",
             "max-args": "Maximum number of arguments reached.",
+            "decimals-range": "Decimals by default should be a number between 0 and 15.",
             "expression": "Default expression demonstrates how to transform a temperature from Fahrenheit to Celsius."
         }
     },

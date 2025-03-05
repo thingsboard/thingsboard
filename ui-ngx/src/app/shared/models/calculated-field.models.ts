@@ -64,6 +64,7 @@ export interface CalculatedFieldOutput {
   type: OutputType;
   name: string;
   scope?: AttributeScope;
+  decimalsByDefault?: number;
 }
 
 export enum ArgumentEntityType {
