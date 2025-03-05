@@ -128,7 +128,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       configuration: {
         ...restConfig,
         type, expression: configuration['expression'+type].trim(),
-        output: { ...output, name: output.name.trim() }
+        output: { ...output, name: output.name?.trim() ?? '' }
       },
       name: name.trim(),
       type,
