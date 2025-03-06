@@ -47,6 +47,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -90,11 +91,21 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
     }
 
     @Override
+    public void pushRequestToQueue(TimeseriesSaveRequest request, FutureCallback<Void> callback) {
+        pushRequestToQueue(request, null, callback);
+    }
+
+    @Override
     public void pushRequestToQueue(AttributesSaveRequest request, List<Long> result, FutureCallback<Void> callback) {
         var tenantId = request.getTenantId();
         var entityId = request.getEntityId();
         checkEntityAndPushToQueue(tenantId, entityId, cf -> cf.matches(request.getEntries(), request.getScope()), cf -> cf.linkMatches(entityId, request.getEntries(), request.getScope()),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
+    }
+
+    @Override
+    public void pushRequestToQueue(AttributesSaveRequest request, FutureCallback<Void> callback) {
+        pushRequestToQueue(request, null, callback);
     }
 
     @Override
@@ -156,15 +167,19 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         ToCalculatedFieldMsg.Builder msg = ToCalculatedFieldMsg.newBuilder();
 
         CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds(), request.getTbMsgId(), request.getTbMsgType());
-        List<TsKvEntry> entries = request.getEntries();
-        List<Long> versions = result.getVersions();
-        for (int i = 0; i < entries.size(); i++) {
-            long tsVersion = versions.get(i);
-            TsKvProto tsProto = toTsKvProto(entries.get(i)).toBuilder().setVersion(tsVersion).build();
-            telemetryMsg.addTsData(tsProto);
-        }
-        msg.setTelemetryMsg(telemetryMsg.build());
 
+        List<TsKvEntry> entries = request.getEntries();
+        List<Long> versions = result != null ? result.getVersions() : Collections.emptyList();
+
+        for (int i = 0; i < entries.size(); i++) {
+            TsKvProto.Builder tsProtoBuilder = toTsKvProto(entries.get(i)).toBuilder();
+            if (result != null) {
+                tsProtoBuilder.setVersion(versions.get(i));
+            }
+            telemetryMsg.addTsData(tsProtoBuilder.build());
+        }
+
+        msg.setTelemetryMsg(telemetryMsg.build());
         return msg.build();
     }
 
@@ -175,9 +190,11 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         telemetryMsg.setScope(AttributeScopeProto.valueOf(request.getScope().name()));
         List<AttributeKvEntry> entries = request.getEntries();
         for (int i = 0; i < entries.size(); i++) {
-            long attrVersion = versions.get(i);
-            AttributeValueProto attrProto = ProtoUtils.toProto(entries.get(i)).toBuilder().setVersion(attrVersion).build();
-            telemetryMsg.addAttrData(attrProto);
+            AttributeValueProto.Builder attrProtoBuilder = ProtoUtils.toProto(entries.get(i)).toBuilder();
+            if (versions != null) {
+                attrProtoBuilder.setVersion(versions.get(i));
+            }
+            telemetryMsg.addAttrData(attrProtoBuilder.build());
         }
         msg.setTelemetryMsg(telemetryMsg.build());
 
