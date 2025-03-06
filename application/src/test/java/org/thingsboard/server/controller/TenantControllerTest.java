@@ -102,8 +102,6 @@ import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_TOPIC;
 @DaoSqlTest
 public class TenantControllerTest extends AbstractControllerTest {
 
-    private static final int TIMEOUT = 60;
-
     static final TypeReference<PageData<Tenant>> PAGE_DATA_TENANT_TYPE_REF = new TypeReference<>() {
     };
     static final TypeReference<PageData<TenantInfo>> PAGE_DATA_TENANT_INFO_TYPE_REF = new TypeReference<>() {
