@@ -83,7 +83,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "server.ws.alarms_per_alarm_status_subscription_cache_size=5"
+        "server.ws.alarms_per_alarm_status_subscription_cache_size=5",
+        "server.ws.dynamic_page_link.refresh_interval=15"
 })
 public class WebsocketApiTest extends AbstractControllerTest {
     @Autowired

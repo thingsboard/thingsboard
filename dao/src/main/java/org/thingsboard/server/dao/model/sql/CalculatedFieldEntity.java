@@ -40,7 +40,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_C
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_CONFIGURATION_VERSION;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_ENTITY_ID;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_ENTITY_TYPE;
-import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_EXTERNAL_ID;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_TENANT_ID_COLUMN;
@@ -82,9 +81,6 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
     @Column(name = DEBUG_SETTINGS)
     private String debugSettings;
 
-    @Column(name = CALCULATED_FIELD_EXTERNAL_ID)
-    private UUID externalId;
-
     public CalculatedFieldEntity() {
         super();
     }
@@ -101,9 +97,6 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
         this.configuration = JacksonUtil.valueToTree(calculatedField.getConfiguration());
         this.version = calculatedField.getVersion();
         this.debugSettings = JacksonUtil.toString(calculatedField.getDebugSettings());
-        if (calculatedField.getExternalId() != null) {
-            this.externalId = calculatedField.getExternalId().getId();
-        }
     }
 
     @Override
@@ -118,9 +111,6 @@ public class CalculatedFieldEntity extends BaseVersionedEntity<CalculatedField> 
         calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
         calculatedField.setVersion(version);
         calculatedField.setDebugSettings(JacksonUtil.fromString(debugSettings, DebugSettings.class));
-        if (externalId != null) {
-            calculatedField.setExternalId(new CalculatedFieldId(externalId));
-        }
         return calculatedField;
     }
 
