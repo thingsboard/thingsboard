@@ -74,6 +74,7 @@
         <fasterxml-classmate.version>1.7.0</fasterxml-classmate.version>
         <auth0-jwt.version>4.4.0</auth0-jwt.version>
         <json-schema-validator.version>2.2.14</json-schema-validator.version>
+        <milo.version>0.6.12</milo.version>
         <californium.version>3.12.1</californium.version>
         <leshan.version>2.0.0-M15</leshan.version>
         <gson.version>2.10.1</gson.version>
@@ -165,7 +166,7 @@
         <weisj-jsvg.version>1.6.1</weisj-jsvg.version>
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
-
+        <snappy.version>1.1.10.5</snappy.version>
         <rocksdbjni.version>9.10.0</rocksdbjni.version>
     </properties>
 
@@ -174,6 +175,7 @@
         <module>common</module>
         <module>rule-engine</module>
         <module>dao</module>
+        <module>edqs</module>
         <module>transport</module>
         <module>ui-ngx</module>
         <module>tools</module>
@@ -1033,6 +1035,11 @@
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>coap-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>edqs</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -2282,6 +2289,11 @@
                 <groupId>com.drewnoakes</groupId>
                 <artifactId>metadata-extractor</artifactId>
                 <version>${drewnoakes-metadata-extractor.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>${snappy.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.rocksdb</groupId>

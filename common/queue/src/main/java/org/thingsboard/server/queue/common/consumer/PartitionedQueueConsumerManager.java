@@ -43,8 +43,8 @@ public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQ
     public PartitionedQueueConsumerManager(QueueKey queueKey, String topic, long pollInterval, MsgPackProcessor<M, QueueConfig> msgPackProcessor,
                                            BiFunction<QueueConfig, Integer, TbQueueConsumer<M>> consumerCreator,
                                            ExecutorService consumerExecutor, ScheduledExecutorService scheduler,
-                                           ExecutorService taskExecutor) {
-        super(queueKey, QueueConfig.of(true, pollInterval), msgPackProcessor, consumerCreator, consumerExecutor, scheduler, taskExecutor);
+                                           ExecutorService taskExecutor, Consumer<Throwable> uncaughtErrorHandler) {
+        super(queueKey, QueueConfig.of(true, pollInterval), msgPackProcessor, consumerCreator, consumerExecutor, scheduler, taskExecutor, uncaughtErrorHandler);
         this.topic = topic;
         this.consumerWrapper = (ConsumerPerPartitionWrapper) super.consumerWrapper;
     }
@@ -52,10 +52,10 @@ public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQ
     @Override
     protected void processTask(TbQueueConsumerManagerTask task) {
         if (task instanceof AddPartitionsTask addPartitionsTask) {
-            log.info("[{}] Added partitions: {}", queueKey, partitionsToString(addPartitionsTask.partitions()));
+            log.info("[{}] Added partitions: {}", queueKey, addPartitionsTask.partitions());
             consumerWrapper.addPartitions(addPartitionsTask.partitions(), addPartitionsTask.onStop());
         } else if (task instanceof RemovePartitionsTask removePartitionsTask) {
-            log.info("[{}] Removed partitions: {}", queueKey, partitionsToString(removePartitionsTask.partitions()));
+            log.info("[{}] Removed partitions: {}", queueKey, removePartitionsTask.partitions());
             consumerWrapper.removePartitions(removePartitionsTask.partitions());
         }
     }

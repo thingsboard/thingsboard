@@ -62,6 +62,12 @@ public class QueueKey {
         this.tenantId = TenantId.SYS_TENANT_ID;
     }
 
+    public QueueKey(ServiceType type, String queueName) {
+        this.type = type;
+        this.queueName = queueName;
+        this.tenantId = TenantId.SYS_TENANT_ID;
+    }
+
     @Override
     public String toString() {
         return "QK(" + queueName + "," + type + "," +

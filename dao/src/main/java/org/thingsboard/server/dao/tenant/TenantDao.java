@@ -37,10 +37,10 @@ public interface TenantDao extends Dao<Tenant> {
      * @return saved tenant object
      */
     Tenant save(TenantId tenantId, Tenant tenant);
-    
+
     /**
      * Find tenants by page link.
-     * 
+     *
      * @param pageLink the page link
      * @return the list of tenant objects
      */
@@ -51,4 +51,5 @@ public interface TenantDao extends Dao<Tenant> {
     PageData<TenantId> findTenantsIds(PageLink pageLink);
 
     List<TenantId> findTenantIdsByTenantProfileId(TenantProfileId tenantProfileId);
+
 }

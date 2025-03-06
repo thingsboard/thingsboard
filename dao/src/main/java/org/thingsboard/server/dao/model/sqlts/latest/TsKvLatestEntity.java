@@ -26,6 +26,7 @@ import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.SqlResultSetMappings;
 import jakarta.persistence.Table;
 import lombok.Data;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 
@@ -91,4 +92,12 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity {
         this.strKey = strKey;
         this.version = version;
     }
+
+    @Override
+    public TsKvEntry toData() {
+        TsKvEntry tsKvEntry = super.toData();
+        tsKvEntry.setVersion(version);
+        return tsKvEntry;
+    }
+
 }

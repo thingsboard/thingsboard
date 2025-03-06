@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils;
+package org.thingsboard.server.edqs.util;
 
 import lombok.SneakyThrows;
 import org.rocksdb.Options;
@@ -29,18 +29,24 @@ import java.util.function.BiConsumer;
 public class TbRocksDb {
 
     protected final String path;
+    private final Options dbOptions;
     private final WriteOptions writeOptions;
-    protected final RocksDB db;
+    protected RocksDB db;
 
     static {
         RocksDB.loadLibrary();
     }
 
-    public TbRocksDb(String path, Options dbOptions, WriteOptions writeOptions) throws Exception {
+    public TbRocksDb(String path, Options dbOptions, WriteOptions writeOptions) {
         this.path = path;
+        this.dbOptions = dbOptions;
         this.writeOptions = writeOptions;
+    }
+
+    @SneakyThrows
+    public void init() {
         Files.createDirectories(Path.of(path).getParent());
-        this.db = RocksDB.open(dbOptions, path);
+        db = RocksDB.open(dbOptions, path);
     }
 
     @SneakyThrows

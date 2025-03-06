@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.query;
+package org.thingsboard.server.common.msg.edqs;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.thingsboard.server.common.data.EntityType;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.edqs.query.EdqsRequest;
+import org.thingsboard.server.common.data.edqs.query.EdqsResponse;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@AllArgsConstructor
-public class QuerySecurityContext {
+public interface EdqsApiService {
 
-    @Getter
-    private final TenantId tenantId;
-    @Getter
-    private final CustomerId customerId;
-    @Getter
-    private final EntityType entityType;
-    @Getter
-    private final boolean ignorePermissionCheck;
+    ListenableFuture<EdqsResponse> processRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request);
 
-    public QuerySecurityContext(TenantId tenantId, CustomerId customerId, EntityType entityType) {
-        this(tenantId, customerId, entityType, false);
-    }
+    boolean isEnabled();
+
+    void setEnabled(boolean enabled);
+
+    boolean isSupported();
+
+    boolean isAutoEnable();
+
 }
