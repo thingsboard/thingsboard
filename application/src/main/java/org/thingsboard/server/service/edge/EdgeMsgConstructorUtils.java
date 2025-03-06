@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -24,6 +25,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -89,6 +91,7 @@ import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationRuleUpdateMsg;
@@ -417,8 +420,37 @@ public class EdgeMsgConstructorUtils {
                 .setIdLSB(ruleChainId.getId().getLeastSignificantBits()).build();
     }
 
-    public static RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData) {
-        return RuleChainMetadataUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChainMetaData)).build();
+    public static RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
+        String metaData = prepareMetaDataForEdgeVersion(ruleChainMetaData, edgeVersion);
+
+        return RuleChainMetadataUpdateMsg.newBuilder()
+                .setMsgType(msgType)
+                .setEntity(metaData)
+                .build();
+    }
+
+    private static String prepareMetaDataForEdgeVersion(RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
+        if (edgeVersion == EdgeVersion.V_3_7_0 || edgeVersion == EdgeVersion.V_3_8_0) {
+            JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
+            JsonNode nodes = jsonNode.get("nodes");
+
+            for (JsonNode node : nodes) {
+                if (node.isObject())
+                    prepareRuleNodeForOldEdgeVersion((ObjectNode) node);
+            }
+            return JacksonUtil.toString(jsonNode);
+        } else {
+            return JacksonUtil.toString(ruleChainMetaData);
+        }
+    }
+
+    private static void prepareRuleNodeForOldEdgeVersion(ObjectNode node) {
+        if (TbMsgTimeseriesNode.class.getName().equals(node.get("type").asText())) {
+            JsonNode configurationNode = node.get("configuration");
+            if (configurationNode != null && configurationNode.isObject()) {
+                ((ObjectNode) configurationNode).remove("processingSettings");
+            }
+        }
     }
 
     public static EntityDataProto constructEntityDataMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType actionType, JsonElement entityData) {
@@ -467,7 +499,7 @@ public class EdgeMsgConstructorUtils {
                     AttributeDeleteMsg.Builder attributeDeleteMsg = AttributeDeleteMsg.newBuilder();
                     attributeDeleteMsg.setScope(entityData.getAsJsonObject().getAsJsonPrimitive("scope").getAsString());
                     JsonArray jsonArray = entityData.getAsJsonObject().getAsJsonArray("keys");
-                    List<String> keys = new Gson().fromJson(jsonArray.toString(), new TypeToken<>(){}.getType());
+                    List<String> keys = new Gson().fromJson(jsonArray.toString(), new TypeToken<>() {}.getType());
                     attributeDeleteMsg.addAllAttributeNames(keys);
                     attributeDeleteMsg.build();
                     builder.setAttributeDeleteMsg(attributeDeleteMsg);

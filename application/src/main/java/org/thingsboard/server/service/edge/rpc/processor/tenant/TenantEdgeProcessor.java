@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -38,7 +39,7 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 public class TenantEdgeProcessor extends BaseEdgeProcessor {
 
     @Override
-    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         TenantId tenantId = TenantId.fromUUID(edgeEvent.getEntityId());
         if (EdgeEventActionType.UPDATED.equals(edgeEvent.getAction())) {
             Tenant tenant = edgeCtx.getTenantService().findTenantById(tenantId);
