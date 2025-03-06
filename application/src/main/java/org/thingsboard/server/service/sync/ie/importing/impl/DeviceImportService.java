@@ -91,7 +91,6 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
                 updated = true;
             }
         }
-        updated |= importCalculatedFields(ctx, prepared, exportData, idProvider);
         return updated;
     }
 
