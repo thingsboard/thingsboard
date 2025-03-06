@@ -23,7 +23,6 @@ import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -128,11 +127,6 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         for (EntityRelation relation : ctx.getRelations()) {
             logEntityActionService.logEntityRelationAction(ctx.getTenantId(), null,
                     relation, ctx.getUser(), ActionType.RELATION_ADD_OR_UPDATE, null, relation);
-        }
-
-        for (CalculatedField calculatedField : ctx.getCalculatedFields()) {
-            var savedCalculatedField = calculatedFieldService.save(calculatedField);
-            logEntityActionService.logEntityAction(ctx.getTenantId(), savedCalculatedField.getId(), savedCalculatedField, ActionType.ADDED, ctx.getUser());
         }
     }
 

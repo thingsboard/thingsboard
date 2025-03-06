@@ -19,7 +19,6 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -32,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +54,6 @@ public class EntitiesImportCtx {
     private final Set<EntityId> notFoundIds = new HashSet<>();
 
     private final Set<EntityRelation> relations = new LinkedHashSet<>();
-    private final Set<CalculatedField> calculatedFields = new LinkedHashSet<>();
 
     private boolean finalImportAttempt = false;
     private EntityImportSettings settings;
@@ -125,10 +122,6 @@ public class EntitiesImportCtx {
 
     public void addRelations(Collection<EntityRelation> values) {
         relations.addAll(values);
-    }
-
-    public void addCalculatedFields(Collection<CalculatedField> values) {
-        calculatedFields.addAll(values);
     }
 
     public void addReferenceCallback(EntityId externalId, ThrowingRunnable tr) {

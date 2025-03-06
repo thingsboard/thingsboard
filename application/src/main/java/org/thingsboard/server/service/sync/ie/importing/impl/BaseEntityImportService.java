@@ -295,7 +295,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                     calculatedField.setEntityId(savedEntity.getId());
                     calculatedField.getConfiguration().getArguments().values().forEach(argument -> {
                         if (argument.getRefEntityId() != null) {
-                            argument.setRefEntityId(idProvider.getInternalId(argument.getRefEntityId(), false));
+                            argument.setRefEntityId(idProvider.getInternalId(argument.getRefEntityId(), ctx.isFinalImportAttempt()));
                         }
                     });
                 }).toList();

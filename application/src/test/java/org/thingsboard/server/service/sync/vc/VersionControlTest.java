@@ -598,6 +598,41 @@ public class VersionControlTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testVcWithReferencedCalculatedFields_betweenTenants() throws Exception {
+        Asset asset = createAsset(null, null, "Asset 1");
+        Device device = createDevice(null, null, "Device 1", "test1");
+        CalculatedField deviceCalculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
+        CalculatedField assetCalculatedField = createCalculatedField("CalculatedField2", asset.getId(), device.getId());
+        String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        loginTenant2();
+        loadVersion(versionId, config -> {
+            config.setLoadCredentials(false);
+        }, EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        Asset importedAsset = findAsset(asset.getName());
+        Device importedDevice = findDevice(device.getName());
+        checkImportedEntity(tenantId1, device, tenantId2, importedDevice);
+        checkImportedEntity(tenantId1, asset, tenantId2, importedAsset);
+
+        List<CalculatedField> importedDeviceCalculatedFields = findCalculatedFieldsByEntityId(importedDevice.getId());
+        assertThat(importedDeviceCalculatedFields).size().isOne();
+        assertThat(importedDeviceCalculatedFields.get(0)).satisfies(importedField -> {
+            assertThat(importedField.getName()).isEqualTo(deviceCalculatedField.getName());
+            assertThat(importedField.getType()).isEqualTo(deviceCalculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(deviceCalculatedField.getId());
+        });
+
+        List<CalculatedField> importedAssetCalculatedFields = findCalculatedFieldsByEntityId(importedAsset.getId());
+        assertThat(importedAssetCalculatedFields).size().isOne();
+        assertThat(importedAssetCalculatedFields.get(0)).satisfies(importedField -> {
+            assertThat(importedField.getName()).isEqualTo(assetCalculatedField.getName());
+            assertThat(importedField.getType()).isEqualTo(assetCalculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(assetCalculatedField.getId());
+        });
+    }
+
+    @Test
     public void testVcWithCalculatedFields_sameTenant() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
         CalculatedField calculatedField = createCalculatedField("CalculatedField", asset.getId(), asset.getId());

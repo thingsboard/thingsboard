@@ -60,7 +60,6 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -288,6 +287,7 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         assertThat(calculatedFields.size()).isOne();
         var importedCalculatedField = calculatedFields.get(0);
         assertThat(importedCalculatedField.getName()).isEqualTo(calculatedField.getName());
+        verify(tbClusterService).onCalculatedFieldUpdated(eq(importedCalculatedField), isNull(), any());
 
         EntityExportData<Device> updatedDeviceEntity = getAndClone(entitiesExportData, EntityType.DEVICE);
         updatedDeviceEntity.getEntity().setLabel("t" + updatedDeviceEntity.getEntity().getLabel());
