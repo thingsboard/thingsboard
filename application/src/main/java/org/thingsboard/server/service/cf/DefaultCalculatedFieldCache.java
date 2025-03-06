@@ -117,11 +117,6 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                     CalculatedField calculatedField = getCalculatedField(calculatedFieldId);
                     if (calculatedField != null) {
                         ctx = new CalculatedFieldCtx(calculatedField, tbelInvokeService, apiLimitService);
-                        try {
-                            ctx.init();
-                        } catch (Exception e) {
-                            log.warn("Failed to initialize CF context.");
-                        }
                         calculatedFieldsCtx.put(calculatedFieldId, ctx);
                         log.debug("[{}] Put calculated field ctx into cache: {}", calculatedFieldId, ctx);
                     }

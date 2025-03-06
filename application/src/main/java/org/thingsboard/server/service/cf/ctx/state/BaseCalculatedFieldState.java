@@ -91,8 +91,10 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         if (entry instanceof TsRollingArgumentEntry) {
             return;
         }
-        if (ctx.getMaxSingleValueArgumentSize() > 0 && toSingleValueArgumentProto(name, (SingleValueArgumentEntry) entry).getSerializedSize() > ctx.getMaxSingleValueArgumentSize()) {
-            throw new IllegalArgumentException("Single value size exceeds the maximum allowed limit. The argument will not be used for calculation.");
+        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            if (ctx.getMaxSingleValueArgumentSize() > 0 && toSingleValueArgumentProto(name, singleValueArgumentEntry).getSerializedSize() > ctx.getMaxSingleValueArgumentSize()) {
+                throw new IllegalArgumentException("Single value size exceeds the maximum allowed limit. The argument will not be used for calculation.");
+            }
         }
     }
 
