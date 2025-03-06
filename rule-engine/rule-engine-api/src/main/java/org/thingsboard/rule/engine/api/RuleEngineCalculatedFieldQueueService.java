@@ -16,28 +16,11 @@
 package org.thingsboard.rule.engine.api;
 
 import com.google.common.util.concurrent.FutureCallback;
-import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 
-import java.util.List;
-
-public interface CalculatedFieldQueueService {
-
-    /**
-     * Filter CFs based on the request entity. Push to the queue if any matching CF exist;
-     *
-     * @param request - telemetry save request;
-     * @param callback
-     */
-    void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result, FutureCallback<Void> callback);
+public interface RuleEngineCalculatedFieldQueueService {
 
     void pushRequestToQueue(TimeseriesSaveRequest request, FutureCallback<Void> callback);
 
-    void pushRequestToQueue(AttributesSaveRequest request, List<Long> result, FutureCallback<Void> callback);
-
     void pushRequestToQueue(AttributesSaveRequest request, FutureCallback<Void> callback);
-
-    void pushRequestToQueue(AttributesDeleteRequest request, List<String> result, FutureCallback<Void> callback);
-
-    void pushRequestToQueue(TimeseriesDeleteRequest request, List<String> result, FutureCallback<Void> callback);
 
 }

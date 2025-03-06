@@ -28,7 +28,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.rule.engine.api.CalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -57,6 +56,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 

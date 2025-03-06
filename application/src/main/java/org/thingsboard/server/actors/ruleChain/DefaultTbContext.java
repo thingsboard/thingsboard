@@ -23,12 +23,12 @@ import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.api.CalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
+import org.thingsboard.rule.engine.api.RuleEngineCalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
@@ -904,7 +904,7 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public CalculatedFieldQueueService getCalculatedFieldQueueService() {
+    public RuleEngineCalculatedFieldQueueService getCalculatedFieldQueueService() {
         return mainCtx.getCalculatedFieldQueueService();
     }
 

@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
-import org.thingsboard.rule.engine.api.CalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;

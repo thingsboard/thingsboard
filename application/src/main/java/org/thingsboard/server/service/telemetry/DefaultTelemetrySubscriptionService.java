@@ -31,7 +31,6 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
-import org.thingsboard.rule.engine.api.CalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
@@ -51,6 +50,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
