@@ -115,6 +115,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -430,7 +431,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     private static String prepareMetaDataForEdgeVersion(RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
-        if (edgeVersion == EdgeVersion.V_3_7_0 || edgeVersion == EdgeVersion.V_3_8_0) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_8_0)) {
             JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
             JsonNode nodes = jsonNode.get("nodes");
 
