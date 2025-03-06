@@ -149,37 +149,41 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   }
 
   private createMarker() {
-    const dsData = this.dataLayer.getMap().getData();
-    const location = this.dataLayer.dataProcessor.extractLocation(this.pointData, dsData);
-    this.marker = L.marker(location, {
-      tbMarkerData: this.pointData,
-      snapIgnore: true
-    });
-    this.marker.addTo(this.layer);
-    this.updateMarkerIcon(this.pointData, dsData);
-    if (this.settings.tooltip?.show) {
-      this.markerTooltip = createTooltip(this.dataLayer.getMap(),
-        this.marker, this.settings.tooltip, this.pointData, () => true);
-      updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
-        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
-    }
-    const clickAction = this.settings.click;
-    if (clickAction && clickAction.type !== WidgetActionType.doNothing) {
-      this.marker.on('click', (event) => {
-        this.dataLayer.getMap().dataItemClick(event.originalEvent, clickAction, this.pointData);
+    if (this.settings.showMarker) {
+      const dsData = this.dataLayer.getMap().getData();
+      const location = this.dataLayer.dataProcessor.extractLocation(this.pointData, dsData);
+      this.marker = L.marker(location, {
+        tbMarkerData: this.pointData,
+        snapIgnore: true
       });
+      this.marker.addTo(this.layer);
+      this.updateMarkerIcon(this.pointData, dsData);
+      if (this.settings.tooltip?.show) {
+        this.markerTooltip = createTooltip(this.dataLayer.getMap(),
+          this.marker, this.settings.tooltip, this.pointData, () => true);
+        updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
+          this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
+      }
+      const clickAction = this.settings.click;
+      if (clickAction && clickAction.type !== WidgetActionType.doNothing) {
+        this.marker.on('click', (event) => {
+          this.dataLayer.getMap().dataItemClick(event.originalEvent, clickAction, this.pointData);
+        });
+      }
     }
   }
 
   private updateMarker() {
-    const dsData = this.dataLayer.getMap().getData();
-    this.marker.options.tbMarkerData = this.pointData;
-    this.updateMarkerLocation(this.pointData, dsData);
-    if (this.settings.tooltip.show) {
-      updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
-        this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
+    if (this.settings.showMarker) {
+      const dsData = this.dataLayer.getMap().getData();
+      this.marker.options.tbMarkerData = this.pointData;
+      this.updateMarkerLocation(this.pointData, dsData);
+      if (this.settings.tooltip.show) {
+        updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
+          this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
+      }
+      this.updateMarkerIcon(this.pointData, dsData);
     }
-    this.updateMarkerIcon(this.pointData, dsData);
   }
 
   private createPath() {
@@ -262,19 +266,21 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   }
 
   private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    this.dataLayer.dataProcessor.createMarkerIcon(data, dsData, data.rotationAngle).subscribe(
-      (iconInfo) => {
-        const options = deepClone(iconInfo.icon.options);
-        this.marker.setIcon(iconInfo.icon);
-        const anchor = options.iconAnchor;
-        if (anchor && Array.isArray(anchor)) {
-          this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
-        } else {
-          this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
+    if (this.settings.showMarker) {
+      this.dataLayer.dataProcessor.createMarkerIcon(data, dsData, data.rotationAngle).subscribe(
+        (iconInfo) => {
+          const options = deepClone(iconInfo.icon.options);
+          this.marker.setIcon(iconInfo.icon);
+          const anchor = options.iconAnchor;
+          if (anchor && Array.isArray(anchor)) {
+            this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
+          } else {
+            this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
+          }
+          this.updateMarkerLabel(data, dsData);
         }
-        this.updateMarkerLabel(data, dsData);
-      }
-    );
+      );
+    }
   }
 
   private updateMarkerLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
@@ -382,6 +388,10 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
 
   public dataLayerType(): MapDataLayerType {
     return 'trips';
+  }
+
+  public showMarker(): boolean {
+    return this.settings.showMarker;
   }
 
   public prepareTripsData(tripsData: FormattedData<TbMapDatasource>[][], tripsLatestData: FormattedData<TbMapDatasource>[]): {minTime: number; maxTime: number} {

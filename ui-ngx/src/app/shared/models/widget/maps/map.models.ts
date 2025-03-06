@@ -400,6 +400,7 @@ export const pathDecoratorSymbolTranslationMap = new Map<PathDecoratorSymbol, st
 );
 
 export interface TripsDataLayerSettings extends MarkersDataLayerSettings {
+  showMarker: boolean;
   rotateMarker: boolean;
   offsetAngle: number;
   showPath: boolean;
@@ -425,6 +426,7 @@ export const defaultTripsDataLayerSettings = (mapType: MapType, functionsOnly = 
 export const defaultBaseTripsDataLayerSettings = (mapType: MapType): Partial<TripsDataLayerSettings> => mergeDeep(
   defaultBaseMarkersDataLayerSettings(mapType),
   {
+    showMarker: true,
     tooltip: {
       offsetY: -0.5,
       pattern: mapType === MapType.geoMap ?

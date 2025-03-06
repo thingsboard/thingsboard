@@ -168,6 +168,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         const tripsDataLayer = this.settings as TripsDataLayerSettings;
         this.dataLayerFormGroup.addControl('xKey', this.fb.control(tripsDataLayer.xKey, Validators.required));
         this.dataLayerFormGroup.addControl('yKey', this.fb.control(tripsDataLayer.yKey, Validators.required));
+        this.dataLayerFormGroup.addControl('showMarker', this.fb.control(tripsDataLayer.showMarker));
         this.dataLayerFormGroup.addControl('markerType', this.fb.control(tripsDataLayer.markerType, Validators.required));
         this.dataLayerFormGroup.addControl('markerShape', this.fb.control(tripsDataLayer.markerShape, Validators.required));
         this.dataLayerFormGroup.addControl('markerIcon', this.fb.control(tripsDataLayer.markerIcon, Validators.required));
@@ -193,7 +194,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.addControl('pointSize', this.fb.control(tripsDataLayer.pointSize, [Validators.required, Validators.min(0)]));
         this.dataLayerFormGroup.addControl('pointColor', this.fb.control(tripsDataLayer.pointColor, Validators.required));
         this.dataLayerFormGroup.addControl('pointTooltip', this.fb.control(tripsDataLayer.pointTooltip));
-        merge(this.dataLayerFormGroup.get('markerType').valueChanges,
+        merge(this.dataLayerFormGroup.get('showMarker').valueChanges,
+              this.dataLayerFormGroup.get('markerType').valueChanges,
               this.dataLayerFormGroup.get('rotateMarker').valueChanges,
               this.dataLayerFormGroup.get('showPath').valueChanges,
               this.dataLayerFormGroup.get('usePathDecorator').valueChanges,
@@ -323,54 +325,54 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       this.dataLayerFormGroup.get('dsDeviceId').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').enable({emitEvent: false});
     }
-    if (['trips', 'markers'].includes(this.dataLayerType)) {
-      const markerType: MarkerType = this.dataLayerFormGroup.get('markerType').value;
-      if (markerType === MarkerType.shape) {
-        this.dataLayerFormGroup.get('markerShape').enable({emitEvent: false});
-        this.dataLayerFormGroup.get('markerIcon').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('markerImage').disable({emitEvent: false});
-      } else if (markerType === MarkerType.icon) {
-        this.dataLayerFormGroup.get('markerShape').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('markerIcon').enable({emitEvent: false});
-        this.dataLayerFormGroup.get('markerImage').disable({emitEvent: false});
-      } else {
-        this.dataLayerFormGroup.get('markerShape').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('markerIcon').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('markerImage').enable({emitEvent: false});
-      }
-      if (this.dataLayerType === 'trips') {
+    if (this.dataLayerType === 'markers') {
+      this.updateMarkerTypeValidators();
+    }
+    if (this.dataLayerType === 'trips') {
+      const showMarker: boolean = this.dataLayerFormGroup.get('showMarker').value;
+      if (showMarker) {
+        this.dataLayerFormGroup.get('markerType').enable({emitEvent: false});
+        this.updateMarkerTypeValidators();
+        this.dataLayerFormGroup.get('markerOffsetX').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerOffsetY').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('rotateMarker').enable({emitEvent: false});
         const rotateMarker: boolean = this.dataLayerFormGroup.get('rotateMarker').value;
-        const showPath: boolean = this.dataLayerFormGroup.get('showPath').value;
-        const usePathDecorator: boolean = this.dataLayerFormGroup.get('usePathDecorator').value;
-        const showPoints: boolean = this.dataLayerFormGroup.get('showPoints').value;
         if (rotateMarker) {
           this.dataLayerFormGroup.get('offsetAngle').enable({emitEvent: false});
         } else {
           this.dataLayerFormGroup.get('offsetAngle').disable({emitEvent: false});
         }
-        if (showPath) {
-          this.dataLayerFormGroup.get('pathStrokeWeight').enable({emitEvent: false});
-          this.dataLayerFormGroup.get('pathStrokeColor').enable({emitEvent: false});
-          this.dataLayerFormGroup.get('usePathDecorator').enable({emitEvent: false});
-          if (usePathDecorator) {
-            this.dataLayerFormGroup.get('pathDecoratorSymbol').enable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathDecoratorSymbolSize').enable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathDecoratorSymbolColor').enable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathDecoratorOffset').enable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathEndDecoratorOffset').enable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathDecoratorRepeat').enable({emitEvent: false});
-          } else {
-            this.dataLayerFormGroup.get('pathDecoratorSymbol').disable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathDecoratorSymbolSize').disable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathDecoratorSymbolColor').disable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathDecoratorOffset').disable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathEndDecoratorOffset').disable({emitEvent: false});
-            this.dataLayerFormGroup.get('pathDecoratorRepeat').disable({emitEvent: false});
-          }
+        this.dataLayerFormGroup.get('label').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('tooltip').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('click').enable({emitEvent: false});
+      } else {
+        this.dataLayerFormGroup.get('markerType').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerShape').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerIcon').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerImage').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerOffsetX').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerOffsetY').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('rotateMarker').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('offsetAngle').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('label').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('tooltip').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('click').disable({emitEvent: false});
+      }
+      const showPath: boolean = this.dataLayerFormGroup.get('showPath').value;
+      const usePathDecorator: boolean = this.dataLayerFormGroup.get('usePathDecorator').value;
+      const showPoints: boolean = this.dataLayerFormGroup.get('showPoints').value;
+      if (showPath) {
+        this.dataLayerFormGroup.get('pathStrokeWeight').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathStrokeColor').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('usePathDecorator').enable({emitEvent: false});
+        if (usePathDecorator) {
+          this.dataLayerFormGroup.get('pathDecoratorSymbol').enable({emitEvent: false});
+          this.dataLayerFormGroup.get('pathDecoratorSymbolSize').enable({emitEvent: false});
+          this.dataLayerFormGroup.get('pathDecoratorSymbolColor').enable({emitEvent: false});
+          this.dataLayerFormGroup.get('pathDecoratorOffset').enable({emitEvent: false});
+          this.dataLayerFormGroup.get('pathEndDecoratorOffset').enable({emitEvent: false});
+          this.dataLayerFormGroup.get('pathDecoratorRepeat').enable({emitEvent: false});
         } else {
-          this.dataLayerFormGroup.get('pathStrokeWeight').disable({emitEvent: false});
-          this.dataLayerFormGroup.get('pathStrokeColor').disable({emitEvent: false});
-          this.dataLayerFormGroup.get('usePathDecorator').disable({emitEvent: false});
           this.dataLayerFormGroup.get('pathDecoratorSymbol').disable({emitEvent: false});
           this.dataLayerFormGroup.get('pathDecoratorSymbolSize').disable({emitEvent: false});
           this.dataLayerFormGroup.get('pathDecoratorSymbolColor').disable({emitEvent: false});
@@ -378,16 +380,43 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
           this.dataLayerFormGroup.get('pathEndDecoratorOffset').disable({emitEvent: false});
           this.dataLayerFormGroup.get('pathDecoratorRepeat').disable({emitEvent: false});
         }
-        if (showPoints) {
-          this.dataLayerFormGroup.get('pointSize').enable({emitEvent: false});
-          this.dataLayerFormGroup.get('pointColor').enable({emitEvent: false});
-          this.dataLayerFormGroup.get('pointTooltip').enable({emitEvent: false});
-        } else {
-          this.dataLayerFormGroup.get('pointSize').disable({emitEvent: false});
-          this.dataLayerFormGroup.get('pointColor').disable({emitEvent: false});
-          this.dataLayerFormGroup.get('pointTooltip').disable({emitEvent: false});
-        }
+      } else {
+        this.dataLayerFormGroup.get('pathStrokeWeight').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathStrokeColor').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('usePathDecorator').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorSymbol').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorSymbolSize').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorSymbolColor').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorOffset').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathEndDecoratorOffset').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorRepeat').disable({emitEvent: false});
       }
+      if (showPoints) {
+        this.dataLayerFormGroup.get('pointSize').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pointColor').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pointTooltip').enable({emitEvent: false});
+      } else {
+        this.dataLayerFormGroup.get('pointSize').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pointColor').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pointTooltip').disable({emitEvent: false});
+      }
+    }
+  }
+
+  private updateMarkerTypeValidators(): void {
+    const markerType: MarkerType = this.dataLayerFormGroup.get('markerType').value;
+    if (markerType === MarkerType.shape) {
+      this.dataLayerFormGroup.get('markerShape').enable({emitEvent: false});
+      this.dataLayerFormGroup.get('markerIcon').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('markerImage').disable({emitEvent: false});
+    } else if (markerType === MarkerType.icon) {
+      this.dataLayerFormGroup.get('markerShape').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('markerIcon').enable({emitEvent: false});
+      this.dataLayerFormGroup.get('markerImage').disable({emitEvent: false});
+    } else {
+      this.dataLayerFormGroup.get('markerShape').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('markerIcon').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('markerImage').enable({emitEvent: false});
     }
   }
 

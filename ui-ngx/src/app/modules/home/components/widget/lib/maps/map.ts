@@ -148,23 +148,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.mapLayoutElement = mapLayoutElement[0];
     $(containerElement).append(mapLayoutElement);
 
-    if (this.settings.tripTimeline?.showTimelineControl) {
-      this.timeline = true;
-      this.timeStep = this.settings.tripTimeline.timeStep;
-      this.timeLineComponentRef = this.ctx.widgetContentContainer.createComponent(MapTimelinePanelComponent);
-      this.timeLineComponent = this.timeLineComponentRef.instance;
-      this.timeLineComponent.settings = this.settings.tripTimeline;
-      this.timeLineComponent.timeChanged.subscribe((time) => {
-        this.currentTime = time;
-        this.updateTripsTime();
-      });
-      const parentElement = this.timeLineComponentRef.instance.element.nativeElement;
-      const content = parentElement.firstChild;
-      parentElement.removeChild(content);
-      parentElement.style.display = 'none';
-      containerElement.append(content);
-    }
-
     const mapElement = $('<div class="tb-map"></div>');
     mapLayoutElement.append(mapElement);
 
@@ -380,6 +363,27 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private setupEditMode() {
+
+    const tripsWithMarkers = this.tripDataLayers.filter(dl => dl.showMarker());
+    const showTimeline = this.settings.tripTimeline?.showTimelineControl && tripsWithMarkers.length;
+
+    if (showTimeline) {
+      this.timeline = true;
+      this.timeStep = this.settings.tripTimeline.timeStep;
+      this.timeLineComponentRef = this.ctx.widgetContentContainer.createComponent(MapTimelinePanelComponent);
+      this.timeLineComponent = this.timeLineComponentRef.instance;
+      this.timeLineComponent.settings = this.settings.tripTimeline;
+      this.timeLineComponent.timeChanged.subscribe((time) => {
+        this.currentTime = time;
+        this.updateTripsTime();
+      });
+      const parentElement = this.timeLineComponentRef.instance.element.nativeElement;
+      const content = parentElement.firstChild;
+      parentElement.removeChild(content);
+      parentElement.style.display = 'none';
+      this.containerElement.append(content);
+    }
+
      this.editToolbar = L.TB.bottomToolbar({
        mapElement: $(this.mapElement),
        closeTitle: this.ctx.translate.instant('action.cancel'),

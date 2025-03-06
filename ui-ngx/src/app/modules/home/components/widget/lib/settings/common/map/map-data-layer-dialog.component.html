@@ -176,58 +176,73 @@
     <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'widget-config.appearance' | translate }}</div>
       <ng-container *ngIf="['trips', 'markers'].includes(dataLayerType)">
-        <div class="tb-form-panel stroked">
-          <div class="flex flex-row items-center justify-between">
-            <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.marker.marker' | translate }}</div>
-            <tb-toggle-select formControlName="markerType">
-              <tb-toggle-option [value]="MarkerType.shape">{{ 'widgets.maps.data-layer.marker.marker-type-shape' | translate }}</tb-toggle-option>
-              <tb-toggle-option [value]="MarkerType.icon">{{ 'widgets.maps.data-layer.marker.marker-type-icon' | translate }}</tb-toggle-option>
-              <tb-toggle-option [value]="MarkerType.image">{{ 'widgets.maps.data-layer.marker.marker-type-image' | translate }}</tb-toggle-option>
-            </tb-toggle-select>
-          </div>
-          <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.shape" class="tb-form-row space-between">
-            <div translate>widgets.maps.data-layer.marker.shape</div>
-            <tb-marker-shape-settings formControlName="markerShape" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.shape"></tb-marker-shape-settings>
-          </div>
-          <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.icon" class="tb-form-row space-between">
-            <div translate>widgets.maps.data-layer.marker.icon</div>
-            <tb-marker-shape-settings formControlName="markerIcon" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.icon"></tb-marker-shape-settings>
-          </div>
-          <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.image" class="tb-form-row space-between">
-            <div translate>widgets.maps.data-layer.marker.image</div>
-            <tb-marker-image-settings formControlName="markerImage"></tb-marker-image-settings>
-          </div>
-          <div class="tb-form-row space-between column-xs">
-            <div translate>widgets.maps.data-layer.marker.marker-offset</div>
-            <div class="flex flex-row items-center justify-start gap-2">
-              <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-horizontal</div>
-              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                <input matInput formControlName="markerOffsetX"
-                       type="number" placeholder="{{ 'widget-config.set' | translate }}">
-              </mat-form-field>
-              <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-vertical</div>
-              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                <input matInput formControlName="markerOffsetY"
-                       type="number" placeholder="{{ 'widget-config.set' | translate }}">
-              </mat-form-field>
-            </div>
-          </div>
-          <div *ngIf="dataLayerType === 'trips'" class="tb-form-row space-between">
-            <mat-slide-toggle class="mat-slide" formControlName="rotateMarker">
-              {{ 'widgets.maps.data-layer.marker.rotate-marker' | translate }}
-            </mat-slide-toggle>
-            <div class="flex flex-row items-center justify-start gap-2">
-              <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-angle</div>
-              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                <input matInput formControlName="offsetAngle" type="number" min="0" max="360" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-                <div matSuffix>deg</div>
-              </mat-form-field>
-            </div>
-          </div>
-          @if (dataLayerType === 'trips') {
-            <ng-container *ngTemplateOutlet="dataLayerLabelAndTooltip"></ng-container>
-            <ng-container *ngTemplateOutlet="behavior; context: {stroked: true}"></ng-container>
-          }
+        <div class="tb-form-panel tb-slide-toggle stroked">
+          <mat-expansion-panel #markerExpansionPanel class="tb-settings" [expanded]="dataLayerType === 'markers' || dataLayerFormGroup.get('showMarker').value"
+                               [disabled]="dataLayerType === 'trips' && !dataLayerFormGroup.get('showMarker').value">
+            <mat-expansion-panel-header class="flex flex-row flex-wrap">
+              <mat-panel-title>
+                <div class="flex flex-1 flex-row items-center justify-between">
+                  @if (dataLayerType === 'markers') {
+                    <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.marker.marker' | translate }}</div>
+                  } @else {
+                    <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showMarker" (click)="$event.stopPropagation()">
+                      <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.marker.marker' | translate }}</div>
+                    </mat-slide-toggle>
+                  }
+                  <tb-toggle-select [class.!hidden]="!markerExpansionPanel.expanded" formControlName="markerType" (click)="$event.stopPropagation()">
+                    <tb-toggle-option [value]="MarkerType.shape">{{ 'widgets.maps.data-layer.marker.marker-type-shape' | translate }}</tb-toggle-option>
+                    <tb-toggle-option [value]="MarkerType.icon">{{ 'widgets.maps.data-layer.marker.marker-type-icon' | translate }}</tb-toggle-option>
+                    <tb-toggle-option [value]="MarkerType.image">{{ 'widgets.maps.data-layer.marker.marker-type-image' | translate }}</tb-toggle-option>
+                  </tb-toggle-select>
+                </div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.shape" class="tb-form-row space-between">
+                <div translate>widgets.maps.data-layer.marker.shape</div>
+                <tb-marker-shape-settings formControlName="markerShape" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.shape"></tb-marker-shape-settings>
+              </div>
+              <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.icon" class="tb-form-row space-between">
+                <div translate>widgets.maps.data-layer.marker.icon</div>
+                <tb-marker-shape-settings formControlName="markerIcon" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.icon"></tb-marker-shape-settings>
+              </div>
+              <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.image" class="tb-form-row space-between">
+                <div translate>widgets.maps.data-layer.marker.image</div>
+                <tb-marker-image-settings formControlName="markerImage"></tb-marker-image-settings>
+              </div>
+              <div class="tb-form-row space-between column-xs">
+                <div translate>widgets.maps.data-layer.marker.marker-offset</div>
+                <div class="flex flex-row items-center justify-start gap-2">
+                  <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-horizontal</div>
+                  <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                    <input matInput formControlName="markerOffsetX"
+                           type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                  </mat-form-field>
+                  <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-vertical</div>
+                  <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                    <input matInput formControlName="markerOffsetY"
+                           type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                  </mat-form-field>
+                </div>
+              </div>
+              <div *ngIf="dataLayerType === 'trips'" class="tb-form-row space-between">
+                <mat-slide-toggle class="mat-slide" formControlName="rotateMarker">
+                  {{ 'widgets.maps.data-layer.marker.rotate-marker' | translate }}
+                </mat-slide-toggle>
+                <div class="flex flex-row items-center justify-start gap-2">
+                  <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-angle</div>
+                  <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                    <input matInput formControlName="offsetAngle" type="number" min="0" max="360" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+                    <div matSuffix>deg</div>
+                  </mat-form-field>
+                </div>
+              </div>
+              @if (dataLayerType === 'trips') {
+                <ng-container *ngTemplateOutlet="dataLayerLabelAndTooltip"></ng-container>
+                <ng-container *ngTemplateOutlet="behavior; context: {stroked: true}"></ng-container>
+              }
+            </ng-template>
+          </mat-expansion-panel>
         </div>
         <div *ngIf="mapType === MapType.image" class="tb-form-panel stroked">
           <div class="tb-form-panel-title" translate>widgets.maps.data-layer.marker.position-conversion</div>
