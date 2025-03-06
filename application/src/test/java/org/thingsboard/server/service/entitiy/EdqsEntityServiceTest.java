@@ -104,13 +104,13 @@ public class EdqsEntityServiceTest extends EntityServiceTest {
 
     @Override
     protected PageData<EntityData> findByQueryAndCheck(CustomerId customerId, EntityDataQuery query, long expectedResultSize) {
-        return await().atMost(15, TimeUnit.SECONDS).until(() -> findByQuery(customerId, query),
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> findByQuery(customerId, query),
                 result -> result.getTotalElements() == expectedResultSize);
     }
 
     @Override
     protected List<EntityData> findByQueryAndCheckTelemetry(EntityDataQuery query, EntityKeyType entityKeyType, String key, List<String> expectedTelemetries) {
-        return await().atMost(15, TimeUnit.SECONDS).until(() -> findEntitiesTelemetry(query, entityKeyType, key, expectedTelemetries),
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> findEntitiesTelemetry(query, entityKeyType, key, expectedTelemetries),
                 loadedEntities -> loadedEntities.stream().map(entityData -> entityData.getLatest().get(entityKeyType).get(key).getValue()).toList().containsAll(expectedTelemetries));
     }
 
@@ -121,7 +121,7 @@ public class EdqsEntityServiceTest extends EntityServiceTest {
 
     @Override
     protected long countByQueryAndCheck(CustomerId customerId, EntityCountQuery query, int expectedResult) {
-        return await().atMost(15, TimeUnit.SECONDS).until(() -> countByQuery(customerId, query),
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countByQuery(customerId, query),
                 result -> result == expectedResult);
     }
 
