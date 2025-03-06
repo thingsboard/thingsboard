@@ -44,7 +44,7 @@ public interface CalculatedFieldState {
 
     void setRequiredArguments(List<String> requiredArguments);
 
-    boolean updateState(Map<String, ArgumentEntry> argumentValues);
+    boolean updateState(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx);
 
     ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
 
@@ -59,5 +59,7 @@ public interface CalculatedFieldState {
     }
 
     void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize);
+
+    void checkArgumentSize(String name, ArgumentEntry entry, CalculatedFieldCtx ctx);
 
 }

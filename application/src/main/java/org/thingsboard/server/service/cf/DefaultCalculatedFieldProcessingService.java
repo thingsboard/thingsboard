@@ -136,7 +136,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
                                     throw new RuntimeException("Error getting future result for key: " + entry.getKey(), e);
                                 }
                             }
-                    )));
+                    )), ctx);
             return result;
         }, calculatedFieldCallbackExecutor);
     }

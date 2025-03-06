@@ -242,7 +242,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             justRestored = true;
         }
         if (state.isSizeOk()) {
-            if (state.updateState(newArgValues) || justRestored) {
+            if (state.updateState(newArgValues, ctx) || justRestored) {
                 cfIdList = new ArrayList<>(cfIdList);
                 cfIdList.add(ctx.getCfId());
                 processStateIfReady(ctx, cfIdList, state, tbMsgId, tbMsgType, callback);
@@ -301,7 +301,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
-    private void removeStateAndRaiseSizeException(CalculatedFieldEntityCtxId ctxId, CalculatedFieldException ex, TbCallback callback) {
+    private void removeStateAndRaiseSizeException(CalculatedFieldEntityCtxId ctxId, CalculatedFieldException ex, TbCallback callback) throws CalculatedFieldException {
         // We remove the state, but remember that it is over-sized in a local map.
         cfStateService.removeState(ctxId, new TbCallback() {
             @Override
@@ -314,6 +314,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 callback.onFailure(ex);
             }
         });
+        throw ex;
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {
