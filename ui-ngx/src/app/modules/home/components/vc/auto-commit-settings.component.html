@@ -84,6 +84,9 @@
                         <mat-checkbox formControlName="saveRelations">
                           {{ 'version-control.export-relations' | translate }}
                         </mat-checkbox>
+                        <mat-checkbox *ngIf="typesWithCalculatedFields.has(entityTypeFormGroup.get('entityType').value)" formControlName="saveCalculatedFields">
+                          {{ 'version-control.export-calculated-fields' | translate }}
+                        </mat-checkbox>
                       </div>
                     </div>
                   </div>

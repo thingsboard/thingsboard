@@ -100,10 +100,6 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
             if (newVersion == null || this.version == null || newVersion > this.version) {
                 this.ts = singleValueEntry.getTs();
                 this.version = newVersion;
-                BasicKvEntry newValue = singleValueEntry.getKvEntryValue();
-                if (this.kvEntryValue != null && this.kvEntryValue.getValue().equals(newValue.getValue())) {
-                    return false;
-                }
                 this.kvEntryValue = singleValueEntry.getKvEntryValue();
                 return true;
             }
