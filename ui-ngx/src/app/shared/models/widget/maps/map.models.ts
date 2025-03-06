@@ -28,18 +28,19 @@ import {
   hashCode,
   isDefinedAndNotNull,
   isNotEmptyStr,
+  isNumber,
   isString,
   isUndefinedOrNull,
   mergeDeep
 } from '@core/utils';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { materialColors } from '@shared/models/material.models';
-import L from 'leaflet';
+import type L from 'leaflet';
 import { TbFunction } from '@shared/models/js-function.models';
 import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
-import { MarkerShape } from '@shared/models/widget/maps/marker-shape.models';
+import { MarkerIconContainer, MarkerShape } from '@shared/models/widget/maps/marker-shape.models';
 import { DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
 
 export enum MapType {
@@ -262,6 +263,7 @@ export interface MarkerShapeSettings extends BaseMarkerShapeSettings {
 }
 
 export interface MarkerIconSettings extends BaseMarkerShapeSettings {
+  iconContainer?: MarkerIconContainer;
   icon: string;
 }
 export interface MarkerClusteringSettings {
@@ -352,6 +354,7 @@ export const defaultBaseMarkersDataLayerSettings = (mapType: MapType): Partial<M
     }
   },
   markerIcon: {
+    iconContainer: MarkerIconContainer.iconContainer1,
     icon: 'mdi:lightbulb-on',
     size: 48,
     color: {
@@ -434,6 +437,7 @@ export const defaultBaseTripsDataLayerSettings = (mapType: MapType): Partial<Tri
       shape: MarkerShape.tripMarkerShape1
     },
     markerIcon: {
+      iconContainer: MarkerIconContainer.tripIconContainer1,
       icon: 'arrow_forward'
     },
     markerImage: {
@@ -1090,7 +1094,7 @@ export const isValidLatLng = (latitude: any, longitude: any): boolean =>
   isValidLatitude(latitude) && isValidLongitude(longitude);
 
 export const isCutPolygon = (data: TbPolygonCoordinates | TbPolygonRawCoordinates): boolean => {
-  return data.length > 1 && Array.isArray(data[0]) && (Array.isArray(data[0][0]) || data[0][0] instanceof L.LatLng);
+  return data.length > 1 && Array.isArray(data[0]) && (Array.isArray(data[0][0]) || (isNumber((data[0][0] as any).lat) && isNumber((data[0][0] as any).lng)) );
 }
 
 export const parseCenterPosition = (position: string | [number, number]): [number, number] => {

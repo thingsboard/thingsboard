@@ -15,6 +15,14 @@
  */
 @import '../../../../../../../scss/constants';
 
+div.tb-widget .tb-widget-content.tb-no-interaction {
+  .tb-map {
+    .leaflet-interactive, .leaflet-control {
+      pointer-events: none;
+    }
+  }
+}
+
 .tb-map-container, .tb-map-layout {
   position: relative;
   display: flex;

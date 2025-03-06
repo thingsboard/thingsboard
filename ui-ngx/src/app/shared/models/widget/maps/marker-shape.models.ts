@@ -20,7 +20,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Observable, of, shareReplay, switchMap } from 'rxjs';
 import { catchError, map, take } from 'rxjs/operators';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
-import { Element, G, Text } from '@svgdotjs/svg.js';
+import { Element, G, SVG, Text } from '@svgdotjs/svg.js';
 
 export enum MarkerShape {
   markerShape1 = 'markerShape1',
@@ -45,6 +45,11 @@ export enum MarkerShape {
   tripMarkerShape10 = 'tripMarkerShape10'
 }
 
+export enum MarkerIconContainer {
+  iconContainer1 = 'iconContainer1',
+  tripIconContainer1 = 'tripIconContainer1'
+}
+
 export const markerShapeMap = new Map<MarkerShape, string>(
   [
     [MarkerShape.markerShape1, '/assets/markers/shape1.svg'],
@@ -67,6 +72,13 @@ export const markerShapeMap = new Map<MarkerShape, string>(
     [MarkerShape.tripMarkerShape8, '/assets/markers/tripShape8.svg'],
     [MarkerShape.tripMarkerShape9, '/assets/markers/tripShape9.svg'],
     [MarkerShape.tripMarkerShape10, '/assets/markers/tripShape10.svg']
+  ]
+);
+
+export const markerIconContainerMap = new Map<MarkerIconContainer, string>(
+  [
+    [MarkerIconContainer.iconContainer1, '/assets/markers/iconContainer1.svg'],
+    [MarkerIconContainer.tripIconContainer1, '/assets/markers/tripIconContainer1.svg']
   ]
 );
 
@@ -96,9 +108,11 @@ export const tripMarkerShapes = [
   MarkerShape.tripMarkerShape10
 ];
 
-const createColorMarkerShape = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer, shape: MarkerShape, color: tinycolor.Instance): Observable<SVGElement> => {
-  const markerAssetUrl = markerShapeMap.get(shape);
-  const safeUrl = domSanitizer.bypassSecurityTrustResourceUrl(markerAssetUrl);
+export const markerIconContainers = [ MarkerIconContainer.iconContainer1 ];
+export const tripMarkerIconContainers = [ MarkerIconContainer.tripIconContainer1 ];
+
+const createColorMarkerShape = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer, assetUrl: string, color: tinycolor.Instance): Observable<SVGElement> => {
+  const safeUrl = domSanitizer.bypassSecurityTrustResourceUrl(assetUrl);
   return iconRegistry.getSvgIconFromUrl(safeUrl).pipe(
     map((svgElement) => {
       const colorElements = Array.from(svgElement.getElementsByClassName('marker-color'));
@@ -124,7 +138,8 @@ const createColorMarkerShape = (iconRegistry: MatIconRegistry, domSanitizer: Dom
 
 
 export const createColorMarkerShapeURI = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer, shape: MarkerShape, color: tinycolor.Instance): Observable<string> => {
-  return createColorMarkerShape(iconRegistry, domSanitizer, shape, color).pipe(
+  const assetUrl = markerShapeMap.get(shape);
+  return createColorMarkerShape(iconRegistry, domSanitizer, assetUrl, color).pipe(
     map((svgElement) => {
       const svg = svgElement.outerHTML;
       return 'data:image/svg+xml;base64,' + btoa(svg);
@@ -174,29 +189,38 @@ const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: nu
   }
 }
 
-const markerIconShape = MarkerShape.markerShape6;
-const tripMarkerIconShape = MarkerShape.tripMarkerShape2;
-
-export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer, icon: string, color: tinycolor.Instance,
+export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer,
+                                             iconContainer: MarkerIconContainer, icon: string, color: tinycolor.Instance,
                                              trip = false): Observable<SVGElement> => {
-  return createColorMarkerShape(iconRegistry, domSanitizer, trip ? tripMarkerIconShape : markerIconShape, color).pipe(
+  const markerShape$: Observable<SVGElement> = iconContainer ?
+    createColorMarkerShape(iconRegistry, domSanitizer, markerIconContainerMap.get(iconContainer), color) : of(null);
+  return markerShape$.pipe(
     switchMap((svgElement) => {
-      return createIconElement(iconRegistry, icon, trip ? 24 : 12, trip ? tinycolor('#fff') : color, trip).pipe(
+      const iconSize = svgElement ? (trip ? 24 : 12) : 24;
+      const iconColor = svgElement ? (trip ? tinycolor('#fff') : color) : color;
+      return createIconElement(iconRegistry, icon, iconSize, iconColor, trip || !svgElement).pipe(
         map((iconElement) => {
-          let elements = svgElement.getElementsByClassName('marker-icon-container');
-          if (iconElement && elements.length) {
-            const iconContainer = new G(elements[0] as SVGGElement);
-            iconContainer.clear();
+          if (svgElement) {
+            const elements = svgElement.getElementsByClassName('marker-icon-container');
+            if (iconElement && elements.length) {
+              const iconContainer = new G(elements[0] as SVGGElement);
+              iconContainer.clear();
+              iconContainer.add(iconElement);
+              const box = iconElement.bbox();
+              iconElement.translate(-box.cx, -box.cy);
+            }
+            return svgElement;
+          } else {
+            const svg = SVG();
+            svg.viewbox(0,0,iconSize,iconSize);
+            const iconContainer = new G();
+            iconContainer.translate(iconSize/2,iconSize/2);
             iconContainer.add(iconElement);
             const box = iconElement.bbox();
             iconElement.translate(-box.cx, -box.cy);
+            svg.add(iconContainer);
+            return svg.node;
           }
-          elements = svgElement.getElementsByClassName('marker-icon-background');
-          if (elements.length) {
-            (elements[0] as SVGGElement).style.display = '';
-            (elements[0] as SVGGElement).setAttribute('fill-opacity', `${color.getAlpha()}`);
-          }
-          return svgElement;
         })
       );
     })

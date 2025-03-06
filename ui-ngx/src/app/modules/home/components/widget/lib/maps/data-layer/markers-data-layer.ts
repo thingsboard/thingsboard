@@ -53,7 +53,7 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import {
   createColorMarkerIconElement,
-  createColorMarkerShapeURI,
+  createColorMarkerShapeURI, MarkerIconContainer,
   MarkerShape
 } from '@shared/models/widget/maps/marker-shape.models';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -168,8 +168,10 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
     );
   }
 
-  public createColoredMarkerIcon(icon: string, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
-    return createColorMarkerIconElement(this.dataLayer.getCtx().$injector.get(MatIconRegistry), this.dataLayer.getCtx().$injector.get(DomSanitizer), icon, color, this.trip).pipe(
+  public createColoredMarkerIcon(iconContainer: MarkerIconContainer,
+                                 icon: string, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
+    return createColorMarkerIconElement(this.dataLayer.getCtx().$injector.get(MatIconRegistry), this.dataLayer.getCtx().$injector.get(DomSanitizer),
+      iconContainer, icon, color, this.trip).pipe(
       map((element) => {
         if (rotationAngle !== 0) {
           element.style.transform = `rotate(${rotationAngle}deg)`;
@@ -289,7 +291,7 @@ class IconMarkerIconProcessor extends BaseColorMarkerShapeProcessor<MarkerIconSe
   }
 
   protected createMarkerShape(color: tinycolor.Instance, rotationAngle: number, size: number): Observable<MarkerIconInfo> {
-    return this.dataProcessor.createColoredMarkerIcon(this.settings.icon, color, rotationAngle, size);
+    return this.dataProcessor.createColoredMarkerIcon(this.settings.iconContainer, this.settings.icon, color, rotationAngle, size);
   }
 
 }

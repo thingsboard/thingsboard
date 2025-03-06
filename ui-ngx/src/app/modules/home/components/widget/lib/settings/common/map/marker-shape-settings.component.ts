@@ -45,8 +45,10 @@ import {
 import tinycolor from 'tinycolor2';
 import { map, share } from 'rxjs/operators';
 import { MarkerShapesComponent } from '@home/components/widget/lib/settings/common/map/marker-shapes.component';
-import { MaterialIconsComponent } from '@shared/components/material-icons.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import {
+  MarkerIconShapesComponent
+} from '@home/components/widget/lib/settings/common/map/marker-icon-shapes.component';
 
 @Component({
   selector: 'tb-marker-shape-settings',
@@ -89,7 +91,6 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
               private iconRegistry: MatIconRegistry,
               private domSanitizer: DomSanitizer,
               private renderer: Renderer2,
-              private cd: ChangeDetectorRef,
               private viewContainerRef: ViewContainerRef) {}
 
   ngOnInit(): void {
@@ -101,6 +102,7 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
       this.shapeSettingsFormGroup.addControl('shape', this.fb.control(null, [Validators.required]));
     }
     if (this.markerType === MarkerType.icon) {
+      this.shapeSettingsFormGroup.addControl('iconContainer', this.fb.control(null, []));
       this.shapeSettingsFormGroup.addControl('icon', this.fb.control(null, [Validators.required]));
     }
     this.shapeSettingsFormGroup.valueChanges.pipe(
@@ -162,20 +164,26 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
         });
       } else if (this.markerType === MarkerType.icon) {
         const ctx: any = {
-          selectedIcon: (this.modelValue as MarkerIconSettings).icon,
-          iconClearButton: false
+          iconContainer: (this.modelValue as MarkerIconSettings).iconContainer,
+          icon: (this.modelValue as MarkerIconSettings).icon,
+          color: this.modelValue.color.color,
+          trip: this.trip
         };
-        const materialIconsPopover = this.popoverService.displayPopover(trigger, this.renderer,
-          this.viewContainerRef, MaterialIconsComponent, 'left', true, null,
+        const markerIconShapesPopover = this.popoverService.displayPopover(trigger, this.renderer,
+          this.viewContainerRef, MarkerIconShapesComponent, 'left', true, null,
           ctx,
           {},
           {}, {}, true);
-        materialIconsPopover.tbComponentRef.instance.popover = materialIconsPopover;
-        materialIconsPopover.tbComponentRef.instance.iconSelected.subscribe((icon) => {
-          materialIconsPopover.hide();
-          this.shapeSettingsFormGroup.get('icon').patchValue(
-            icon
+        markerIconShapesPopover.tbComponentRef.instance.popover = markerIconShapesPopover;
+        markerIconShapesPopover.tbComponentRef.instance.markerIconSelected.subscribe((iconInfo) => {
+          markerIconShapesPopover.hide();
+          this.shapeSettingsFormGroup.get('iconContainer').patchValue(
+            iconInfo.iconContainer, {emitEvent: false}
           );
+          this.shapeSettingsFormGroup.get('icon').patchValue(
+            iconInfo.icon, {emitEvent: false}
+          );
+          this.updateModel();
         });
       }
     }
@@ -198,8 +206,9 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
         share()
       );
     } else if (this.markerType === MarkerType.icon) {
+      const iconContainer = (this.modelValue as MarkerIconSettings).iconContainer;
       const icon = (this.modelValue as MarkerIconSettings).icon;
-      this.iconPreview$ = createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, icon, tinycolor(color), this.trip).pipe(
+      this.iconPreview$ = createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, iconContainer, icon, tinycolor(color), this.trip).pipe(
         map((element) => {
           return this.domSanitizer.bypassSecurityTrustHtml(element.outerHTML);
         }),

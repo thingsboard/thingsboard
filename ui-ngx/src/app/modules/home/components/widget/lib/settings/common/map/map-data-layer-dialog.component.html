@@ -224,6 +224,10 @@
               </mat-form-field>
             </div>
           </div>
+          @if (dataLayerType === 'trips') {
+            <ng-container *ngTemplateOutlet="dataLayerLabelAndTooltip"></ng-container>
+            <ng-container *ngTemplateOutlet="behavior; context: {stroked: true}"></ng-container>
+          }
         </div>
         <div *ngIf="mapType === MapType.image" class="tb-form-panel stroked">
           <div class="tb-form-panel-title" translate>widgets.maps.data-layer.marker.position-conversion</div>
@@ -244,7 +248,7 @@
             <mat-expansion-panel-header class="flex flex-row flex-wrap">
               <mat-panel-title>
                 <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showPath" (click)="$event.stopPropagation()">
-                  {{ 'widgets.maps.data-layer.path.path' | translate }}
+                  <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.path.path' | translate }}</div>
                 </mat-slide-toggle>
               </mat-panel-title>
             </mat-expansion-panel-header>
@@ -322,7 +326,7 @@
             <mat-expansion-panel-header class="flex flex-row flex-wrap">
               <mat-panel-title>
                 <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showPoints" (click)="$event.stopPropagation()">
-                  {{ 'widgets.maps.data-layer.points.points' | translate }}
+                  <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.points.points' | translate }}</div>
                 </mat-slide-toggle>
               </mat-panel-title>
             </mat-expansion-panel-header>
@@ -364,32 +368,13 @@
           </div>
         </div>
       </ng-container>
-      <tb-data-layer-pattern-settings
-        patternType="label"
-        [context]="context"
-        [helpId]="labelHelpId"
-        formControlName="label">
-      </tb-data-layer-pattern-settings>
-      <tb-data-layer-pattern-settings
-        patternType="tooltip"
-        [context]="context"
-        [helpId]="tooltipHelpId"
-        [hasTooltipOffset]="['trips', 'markers'].includes(dataLayerType)"
-        formControlName="tooltip">
-      </tb-data-layer-pattern-settings>
+      @if (dataLayerType !== 'trips') {
+        <ng-container *ngTemplateOutlet="dataLayerLabelAndTooltip"></ng-container>
+      }
     </div>
-    <div class="tb-form-panel">
-      <div class="tb-form-panel-title" translate>widgets.maps.data-layer.behavior</div>
-      <div class="tb-form-row">
-        <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.maps.data-layer.on-click-hint' | translate}}" translate>widgets.maps.data-layer.on-click</div>
-        <tb-widget-action-settings class="flex-1"
-                                   panelTitle="{{ 'widgets.maps.data-layer.on-click' | translate }}"
-                                   [callbacks]="context.callbacks"
-                                   [widgetType]="widgetType.latest"
-                                   formControlName="click">
-        </tb-widget-action-settings>
-      </div>
-    </div>
+    @if (dataLayerType !== 'trips') {
+      <ng-container *ngTemplateOutlet="behavior"></ng-container>
+    }
     <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.groups' | translate }}</div>
       <tb-string-items-list class="tb-inline-chips"
@@ -435,3 +420,38 @@
     </button>
   </div>
 </form>
+
+<ng-template #dataLayerLabelAndTooltip>
+  <ng-container [formGroup]="dataLayerFormGroup">
+    <tb-data-layer-pattern-settings
+      patternType="label"
+      [context]="context"
+      [helpId]="labelHelpId"
+      formControlName="label">
+    </tb-data-layer-pattern-settings>
+    <tb-data-layer-pattern-settings
+      patternType="tooltip"
+      [context]="context"
+      [helpId]="tooltipHelpId"
+      [hasTooltipOffset]="['trips', 'markers'].includes(dataLayerType)"
+      formControlName="tooltip">
+    </tb-data-layer-pattern-settings>
+  </ng-container>
+</ng-template>
+
+<ng-template #behavior let-stroked="stroked">
+  <ng-container [formGroup]="dataLayerFormGroup">
+    <div class="tb-form-panel" [class.stroked]="stroked">
+      <div class="tb-form-panel-title" translate>widgets.maps.data-layer.behavior</div>
+      <div class="tb-form-row">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.maps.data-layer.on-click-hint' | translate}}" translate>widgets.maps.data-layer.on-click</div>
+        <tb-widget-action-settings class="flex-1"
+                                   panelTitle="{{ 'widgets.maps.data-layer.on-click' | translate }}"
+                                   [callbacks]="context.callbacks"
+                                   [widgetType]="widgetType.latest"
+                                   formControlName="click">
+        </tb-widget-action-settings>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>

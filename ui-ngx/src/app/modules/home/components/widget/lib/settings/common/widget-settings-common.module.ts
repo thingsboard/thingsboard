@@ -245,6 +245,9 @@ import {
 import {
   TripTimelineSettingsComponent
 } from '@home/components/widget/lib/settings/common/map/trip-timeline-settings.component';
+import {
+  MarkerIconShapesComponent
+} from '@home/components/widget/lib/settings/common/map/marker-icon-shapes.component';
 
 @NgModule({
   declarations: [
@@ -327,6 +330,7 @@ import {
     DataLayerPatternSettingsComponent,
     MarkerShapeSettingsComponent,
     MarkerShapesComponent,
+    MarkerIconShapesComponent,
     MarkerImageSettingsComponent,
     MarkerImageSettingsPanelComponent,
     MarkerClusteringSettingsComponent,

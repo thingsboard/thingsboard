@@ -7869,6 +7869,8 @@
                     "icon": "Icon",
                     "image": "Image",
                     "marker-shapes": "Marker shapes",
+                    "marker-icon": "Marker icon",
+                    "marker-appearance": "Marker appearance",
                     "marker-image": "Marker image",
                     "marker-image-type-image": "Image",
                     "marker-image-type-function": "Function",
