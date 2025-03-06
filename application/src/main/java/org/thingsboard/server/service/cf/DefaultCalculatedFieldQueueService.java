@@ -93,10 +93,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
 
     @Override
     public void pushRequestToQueue(TimeseriesSaveRequest request, FutureCallback<Void> callback) {
-        var tenantId = request.getTenantId();
-        var entityId = request.getEntityId();
-        checkEntityAndPushToQueue(tenantId, entityId, cf -> cf.matches(request.getEntries()), cf -> cf.linkMatches(entityId, request.getEntries()),
-                () -> toCalculatedFieldTelemetryMsgProto(request), callback);
+        pushRequestToQueue(request, null, callback);
     }
 
     @Override
@@ -109,10 +106,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
 
     @Override
     public void pushRequestToQueue(AttributesSaveRequest request, FutureCallback<Void> callback) {
-        var tenantId = request.getTenantId();
-        var entityId = request.getEntityId();
-        checkEntityAndPushToQueue(tenantId, entityId, cf -> cf.matches(request.getEntries(), request.getScope()), cf -> cf.linkMatches(entityId, request.getEntries(), request.getScope()),
-                () -> toCalculatedFieldTelemetryMsgProto(request), callback);
+        pushRequestToQueue(request, null, callback);
     }
 
     @Override
@@ -170,10 +164,6 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         };
     }
 
-    private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(TimeseriesSaveRequest request) {
-        return toCalculatedFieldTelemetryMsgProto(request, null);
-    }
-
     private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(TimeseriesSaveRequest request, TimeseriesSaveResult result) {
         ToCalculatedFieldMsg.Builder msg = ToCalculatedFieldMsg.newBuilder();
 
@@ -192,10 +182,6 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
 
         msg.setTelemetryMsg(telemetryMsg.build());
         return msg.build();
-    }
-
-    private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(AttributesSaveRequest request) {
-        return toCalculatedFieldTelemetryMsgProto(request, null);
     }
 
     private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(AttributesSaveRequest request, List<Long> versions) {
