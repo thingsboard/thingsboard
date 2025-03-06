@@ -44,7 +44,7 @@ public interface CalculatedFieldState {
 
     void setRequiredArguments(List<String> requiredArguments);
 
-    boolean updateState(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx);
+    boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues);
 
     ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
 

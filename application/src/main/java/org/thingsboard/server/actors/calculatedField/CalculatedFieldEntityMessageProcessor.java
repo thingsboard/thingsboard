@@ -242,7 +242,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             justRestored = true;
         }
         if (state.isSizeOk()) {
-            if (state.updateState(newArgValues, ctx) || justRestored) {
+            if (state.updateState(ctx, newArgValues) || justRestored) {
                 cfIdList = new ArrayList<>(cfIdList);
                 cfIdList.add(ctx.getCfId());
                 processStateIfReady(ctx, cfIdList, state, tbMsgId, tbMsgType, callback);

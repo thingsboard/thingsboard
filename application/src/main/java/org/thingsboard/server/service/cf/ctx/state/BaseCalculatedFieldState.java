@@ -45,7 +45,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public boolean updateState(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
+    public boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
