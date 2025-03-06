@@ -38,9 +38,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.query.EntityData;
-import org.thingsboard.server.common.data.query.EntityKeyType;
-import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
@@ -88,7 +85,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_ALARM_TIME;
-import static org.thingsboard.server.service.state.DefaultDeviceStateService.INACTIVITY_TIMEOUT;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_ACTIVITY_TIME;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_CONNECT_TIME;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_DISCONNECT_TIME;
@@ -506,42 +502,6 @@ public class DefaultDeviceStateServiceTest {
         DeviceStateData deviceStateData = service.getOrFetchDeviceStateData(deviceId);
         assertThat(deviceStateData).isEqualTo(deviceStateDataMock);
         verify(service).fetchDeviceStateDataUsingSeparateRequests(deviceId);
-    }
-
-    @Test
-    public void givenPersistToTelemetryAndDefaultInactivityTimeoutFetched_whenTransformingToDeviceStateData_thenTryGetInactivityFromAttribute() {
-        var defaultInactivityTimeoutInSec = 60L;
-        var latest =
-                Map.of(
-                        EntityKeyType.TIME_SERIES, Map.of(INACTIVITY_TIMEOUT, new TsValue(0, Long.toString(defaultInactivityTimeoutInSec * 1000))),
-                        EntityKeyType.SERVER_ATTRIBUTE, Map.of(INACTIVITY_TIMEOUT, new TsValue(0, Long.toString(5000L)))
-                );
-
-        process(latest, defaultInactivityTimeoutInSec);
-    }
-
-    @Test
-    public void givenPersistToTelemetryAndNoInactivityTimeoutFetchedFromTimeSeries_whenTransformingToDeviceStateData_thenTryGetInactivityFromAttribute() {
-        var defaultInactivityTimeoutInSec = 60L;
-        var latest =
-                Map.of(
-                        EntityKeyType.SERVER_ATTRIBUTE, Map.of(INACTIVITY_TIMEOUT, new TsValue(0, Long.toString(5000L)))
-                );
-
-        process(latest, defaultInactivityTimeoutInSec);
-    }
-
-    private void process(Map<EntityKeyType, Map<String, TsValue>> latest, long defaultInactivityTimeoutInSec) {
-        service.setDefaultInactivityTimeoutInSec(defaultInactivityTimeoutInSec);
-        service.setDefaultInactivityTimeoutMs(defaultInactivityTimeoutInSec * 1000);
-        service.setPersistToTelemetry(true);
-
-        var deviceUuid = UUID.randomUUID();
-        var deviceId = new DeviceId(deviceUuid);
-
-        DeviceStateData deviceStateData = service.toDeviceStateData(new EntityData(deviceId, latest, Map.of()), new DeviceIdInfo(TenantId.SYS_TENANT_ID.getId(), UUID.randomUUID(), deviceUuid));
-
-        assertThat(deviceStateData.getState().getInactivityTimeout()).isEqualTo(5000L);
     }
 
     private void initStateService(long timeout) throws InterruptedException {

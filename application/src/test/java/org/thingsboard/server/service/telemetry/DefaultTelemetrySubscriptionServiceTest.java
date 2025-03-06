@@ -24,30 +24,25 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
@@ -78,17 +73,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultTelemetrySubscriptionServiceTest {
@@ -132,14 +124,12 @@ class DefaultTelemetrySubscriptionServiceTest {
     TbApiUsageStateService apiUsageStateService;
     @Mock
     CalculatedFieldQueueService calculatedFieldQueueService;
-    @Mock
-    DeviceStateManager deviceStateManager;
 
     DefaultTelemetrySubscriptionService telemetryService;
 
     @BeforeEach
     void setup() {
-        telemetryService = new DefaultTelemetrySubscriptionService(attrService, tsService, tbEntityViewService, apiUsageClient, apiUsageStateService, calculatedFieldQueueService, deviceStateManager);
+        telemetryService = new DefaultTelemetrySubscriptionService(attrService, tsService, tbEntityViewService, apiUsageClient, apiUsageStateService, calculatedFieldQueueService);
         ReflectionTestUtils.setField(telemetryService, "clusterService", clusterService);
         ReflectionTestUtils.setField(telemetryService, "partitionService", partitionService);
         ReflectionTestUtils.setField(telemetryService, "subscriptionManagerService", Optional.of(subscriptionManagerService));
@@ -178,6 +168,28 @@ class DefaultTelemetrySubscriptionServiceTest {
     void cleanup() {
         wsCallBackExecutor.shutdownNow();
         tsCallBackExecutor.shutdownNow();
+    }
+
+    /* --- Save time series API --- */
+
+    @Test
+    void shouldThrowErrorWhenTryingToSaveTimeseriesForApiUsageState() {
+        // GIVEN
+        var request = TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .customerId(customerId)
+                .entityId(new ApiUsageStateId(UUID.randomUUID()))
+                .entries(sampleTelemetry)
+                .strategy(TimeseriesSaveRequest.Strategy.PROCESS_ALL)
+                .build();
+
+        // WHEN
+        assertThatThrownBy(() -> telemetryService.saveTimeseries(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Can't update API Usage State!");
+
+        // THEN
+        then(tsService).shouldHaveNoInteractions();
     }
 
     @Test
@@ -387,148 +399,6 @@ class DefaultTelemetrySubscriptionServiceTest {
                 Arguments.of(false, false, false, true),
                 Arguments.of(false, false, false, false)
         );
-    }
-
-    @Test
-    void shouldThrowErrorWhenTryingToSaveTimeseriesForApiUsageState() {
-        // GIVEN
-        var request = TimeseriesSaveRequest.builder()
-                .tenantId(tenantId)
-                .customerId(customerId)
-                .entityId(new ApiUsageStateId(UUID.randomUUID()))
-                .entries(sampleTelemetry)
-                .strategy(TimeseriesSaveRequest.Strategy.PROCESS_ALL)
-                .build();
-
-        // WHEN
-        assertThatThrownBy(() -> telemetryService.saveTimeseries(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Can't update API Usage State!");
-
-        // THEN
-        then(tsService).shouldHaveNoInteractions();
-        then(deviceStateManager).shouldHaveNoInteractions();
-    }
-
-    @Test
-    void shouldNotifyDeviceStateManagerWhenDeviceInactivityTimeoutTimeseriesWasSavedToLatest() {
-        // GIVEN
-        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
-        var inactivityTimeout = new BasicTsKvEntry(123L, new LongDataEntry("inactivityTimeout", 5000L));
-
-        var request = TimeseriesSaveRequest.builder()
-                .tenantId(tenantId)
-                .customerId(customerId)
-                .entityId(deviceId)
-                .entry(inactivityTimeout)
-                .strategy(new TimeseriesSaveRequest.Strategy(false, true, false, false))
-                .build();
-
-        given(tsService.saveLatest(tenantId, deviceId, List.of(inactivityTimeout))).willReturn(immediateFuture(TimeseriesSaveResult.of(1, listOfNNumbers(1))));
-
-        // WHEN
-        telemetryService.saveTimeseries(request);
-
-        // THEN
-        then(deviceStateManager).should().onDeviceInactivityTimeoutUpdate(tenantId, deviceId, 5000L, TbCallback.EMPTY);
-    }
-
-    @ParameterizedTest
-    @EnumSource(
-            value = EntityType.class,
-            names = {"DEVICE", "API_USAGE_STATE"}, // API usage state excluded due to coverage in another test
-            mode = EnumSource.Mode.EXCLUDE
-    )
-    void shouldNotNotifyDeviceStateManagerWhenInactivityTimeoutTimeseriesWasUpdatedButEntityTypeIsNotDevice(EntityType entityType) {
-        // GIVEN
-        var nonDeviceId = EntityIdFactory.getByTypeAndUuid(entityType, "cc51e450-53e1-11ee-883e-e56b48fd2088");
-        var inactivityTimeout = new BasicTsKvEntry(123L, new LongDataEntry("inactivityTimeout", 5000L));
-
-        var request = TimeseriesSaveRequest.builder()
-                .tenantId(tenantId)
-                .customerId(customerId)
-                .entityId(nonDeviceId)
-                .entry(inactivityTimeout)
-                .strategy(new TimeseriesSaveRequest.Strategy(false, true, false, false))
-                .build();
-
-        given(tsService.saveLatest(tenantId, nonDeviceId, List.of(inactivityTimeout))).willReturn(immediateFuture(TimeseriesSaveResult.of(1, listOfNNumbers(1))));
-        lenient().when(tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, nonDeviceId)).thenReturn(immediateFuture(Collections.emptyList()));
-
-        // WHEN
-        telemetryService.saveTimeseries(request);
-
-        // THEN
-        then(deviceStateManager).should(never()).onDeviceInactivityTimeoutUpdate(any(), any(), anyLong(), any());
-    }
-
-    @Test
-    void shouldNotNotifyDeviceStateManagerWhenDeviceInactivityTimeoutTimeseriesWasNotSavedToLatest() {
-        // GIVEN
-        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
-        var inactivityTimeout = new BasicTsKvEntry(123L, new LongDataEntry("inactivityTimeout", 5000L));
-
-        var request = TimeseriesSaveRequest.builder()
-                .tenantId(tenantId)
-                .customerId(customerId)
-                .entityId(deviceId)
-                .entry(inactivityTimeout)
-                .strategy(new TimeseriesSaveRequest.Strategy(true, false, true, true))
-                .build();
-
-        given(tsService.saveWithoutLatest(tenantId, deviceId, List.of(inactivityTimeout), 0L)).willReturn(immediateFuture(TimeseriesSaveResult.of(1, null)));
-
-        // WHEN
-        telemetryService.saveTimeseries(request);
-
-        // THEN
-        then(deviceStateManager).should(never()).onDeviceInactivityTimeoutUpdate(any(), any(), anyLong(), any());
-    }
-
-    @Test
-    void shouldNotNotifyDeviceStateManagerWhenInactivityTimeoutTimeseriesWasNotUpdated() {
-        // GIVEN
-        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
-        var notInactivityTimeout = new BasicTsKvEntry(123L, new LongDataEntry("notInactivityTimeout", 5000L));
-
-        var request = TimeseriesSaveRequest.builder()
-                .tenantId(tenantId)
-                .customerId(customerId)
-                .entityId(deviceId)
-                .entry(notInactivityTimeout)
-                .strategy(new TimeseriesSaveRequest.Strategy(false, true, false, false))
-                .build();
-
-        given(tsService.saveLatest(tenantId, deviceId, List.of(notInactivityTimeout))).willReturn(immediateFuture(TimeseriesSaveResult.of(1, listOfNNumbers(1))));
-
-        // WHEN
-        telemetryService.saveTimeseries(request);
-
-        // THEN
-        then(deviceStateManager).should(never()).onDeviceInactivityTimeoutUpdate(any(), any(), anyLong(), any());
-    }
-
-    @Test
-    void shouldNotNotifyDeviceStateManagerWhenDeviceInactivityTimeoutTimeseriesSaveFailed() {
-        // GIVEN
-        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
-        var inactivityTimeout = new BasicTsKvEntry(123L, new LongDataEntry("inactivityTimeout", 5000L));
-
-        var request = TimeseriesSaveRequest.builder()
-                .tenantId(tenantId)
-                .customerId(customerId)
-                .entityId(deviceId)
-                .entry(inactivityTimeout)
-                .strategy(new TimeseriesSaveRequest.Strategy(false, true, false, false))
-                .build();
-
-        given(tsService.saveLatest(tenantId, deviceId, List.of(inactivityTimeout))).willReturn(immediateFailedFuture(new RuntimeException("failed to save")));
-
-        // WHEN
-        telemetryService.saveTimeseries(request);
-
-        // THEN
-        then(deviceStateManager).should(never()).onDeviceInactivityTimeoutUpdate(any(), any(), anyLong(), any());
     }
 
     // used to emulate sequence numbers returned by save latest API

@@ -96,6 +96,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -129,11 +130,10 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private static final List<EntityKey> PERSISTENT_TELEMETRY_KEYS = Arrays.asList(
             new EntityKey(EntityKeyType.TIME_SERIES, LAST_ACTIVITY_TIME),
             new EntityKey(EntityKeyType.TIME_SERIES, INACTIVITY_ALARM_TIME),
-            new EntityKey(EntityKeyType.TIME_SERIES, INACTIVITY_TIMEOUT),
             new EntityKey(EntityKeyType.TIME_SERIES, ACTIVITY_STATE),
             new EntityKey(EntityKeyType.TIME_SERIES, LAST_CONNECT_TIME),
             new EntityKey(EntityKeyType.TIME_SERIES, LAST_DISCONNECT_TIME),
-            new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT));
+            new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT)); // inactivity timeout is always a server attribute, even when activity data is stored as time series
 
     private static final List<EntityKey> PERSISTENT_ATTRIBUTE_KEYS = Arrays.asList(
             new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, LAST_ACTIVITY_TIME),
@@ -143,8 +143,14 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, LAST_CONNECT_TIME),
             new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, LAST_DISCONNECT_TIME));
 
-    public static final List<String> PERSISTENT_ATTRIBUTES = Arrays.asList(ACTIVITY_STATE, LAST_CONNECT_TIME,
-            LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME, INACTIVITY_TIMEOUT);
+    public static final List<String> ACTIVITY_KEYS_WITHOUT_INACTIVITY_TIMEOUT = List.of(
+            ACTIVITY_STATE, LAST_CONNECT_TIME, LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME
+    );
+
+    public static final List<String> ACTIVITY_KEYS_WITH_INACTIVITY_TIMEOUT = List.of(
+            ACTIVITY_STATE, LAST_CONNECT_TIME, LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME, INACTIVITY_TIMEOUT
+    );
+
     private static final List<EntityKey> PERSISTENT_ENTITY_FIELDS = Arrays.asList(
             new EntityKey(EntityKeyType.ENTITY_FIELD, "name"),
             new EntityKey(EntityKeyType.ENTITY_FIELD, "type"),
@@ -643,41 +649,45 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         deviceStates.remove(deviceId);
     }
 
-
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
         ListenableFuture<DeviceStateData> future;
         if (persistToTelemetry) {
-            ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
-            future = Futures.transform(tsData, extractDeviceStateData(device), MoreExecutors.directExecutor());
+            ListenableFuture<List<TsKvEntry>> timeseriesActivityDataFuture = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), ACTIVITY_KEYS_WITHOUT_INACTIVITY_TIMEOUT);
+            ListenableFuture<Optional<AttributeKvEntry>> inactivityTimeoutAttributeFuture = attributesService.find(
+                    TenantId.SYS_TENANT_ID, device.getId(), AttributeScope.SERVER_SCOPE, INACTIVITY_TIMEOUT
+            );
+
+            ListenableFuture<List<? extends KvEntry>> fullActivityDataFuture = Futures.whenAllSucceed(timeseriesActivityDataFuture, inactivityTimeoutAttributeFuture).call(() -> {
+                List<TsKvEntry> activityTimeseries = Futures.getDone(timeseriesActivityDataFuture);
+                Optional<AttributeKvEntry> inactivityTimeoutAttribute = Futures.getDone(inactivityTimeoutAttributeFuture);
+
+                List<KvEntry> result;
+                if (inactivityTimeoutAttribute.isPresent()) {
+                    result = new ArrayList<>(activityTimeseries.size() + 1);
+                    result.addAll(activityTimeseries);
+                    inactivityTimeoutAttribute.ifPresent(result::add);
+                } else {
+                    return activityTimeseries;
+                }
+
+                return result;
+            }, deviceStateCallbackExecutor);
+
+            future = Futures.transform(fullActivityDataFuture, extractDeviceStateData(device), MoreExecutors.directExecutor());
         } else {
-            ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), AttributeScope.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
-            future = Futures.transform(attrData, extractDeviceStateData(device), MoreExecutors.directExecutor());
+            ListenableFuture<List<AttributeKvEntry>> attributesActivityDataFuture = attributesService.find(
+                    TenantId.SYS_TENANT_ID, device.getId(), AttributeScope.SERVER_SCOPE, ACTIVITY_KEYS_WITH_INACTIVITY_TIMEOUT
+            );
+            future = Futures.transform(attributesActivityDataFuture, extractDeviceStateData(device), MoreExecutors.directExecutor());
         }
-        return transformInactivityTimeout(future);
+        return future;
     }
 
-    private ListenableFuture<DeviceStateData> transformInactivityTimeout(ListenableFuture<DeviceStateData> future) {
-        return Futures.transformAsync(future, deviceStateData -> {
-            if (!persistToTelemetry || deviceStateData.getState().getInactivityTimeout() != defaultInactivityTimeoutMs) {
-                return future; //fail fast
-            }
-            var attributesFuture = attributesService.find(TenantId.SYS_TENANT_ID, deviceStateData.getDeviceId(), AttributeScope.SERVER_SCOPE, INACTIVITY_TIMEOUT);
-            return Futures.transform(attributesFuture, attributes -> {
-                attributes.flatMap(KvEntry::getLongValue).ifPresent((inactivityTimeout) -> {
-                    if (inactivityTimeout > 0) {
-                        deviceStateData.getState().setInactivityTimeout(inactivityTimeout);
-                    }
-                });
-                return deviceStateData;
-            }, MoreExecutors.directExecutor());
-        }, deviceStateCallbackExecutor);
-    }
-
-    private <T extends KvEntry> Function<List<T>, DeviceStateData> extractDeviceStateData(Device device) {
+    private Function<List<? extends KvEntry>, DeviceStateData> extractDeviceStateData(Device device) {
         return new Function<>() {
             @Nonnull
             @Override
-            public DeviceStateData apply(@Nullable List<T> data) {
+            public DeviceStateData apply(@Nullable List<? extends KvEntry> data) {
                 try {
                     long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
                     long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
@@ -690,7 +700,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                             .lastDisconnectTime(getEntryValue(data, LAST_DISCONNECT_TIME, 0L))
                             .lastActivityTime(lastActivityTime)
                             .lastInactivityAlarmTime(inactivityAlarmTime)
-                            .inactivityTimeout(inactivityTimeout)
+                            .inactivityTimeout(inactivityTimeout > 0 ? inactivityTimeout : defaultInactivityTimeoutMs)
                             .build();
                     TbMsgMetaData md = new TbMsgMetaData();
                     md.putValue("deviceName", device.getName());
@@ -761,12 +771,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     DeviceStateData toDeviceStateData(EntityData ed, DeviceIdInfo deviceIdInfo) {
         long lastActivityTime = getEntryValue(ed, getKeyType(), LAST_ACTIVITY_TIME, 0L);
         long inactivityAlarmTime = getEntryValue(ed, getKeyType(), INACTIVITY_ALARM_TIME, 0L);
-        long inactivityTimeout = getEntryValue(ed, getKeyType(), INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
-        if (persistToTelemetry && inactivityTimeout == defaultInactivityTimeoutMs) {
-            log.trace("[{}] default value for inactivity timeout fetched {}, going to fetch inactivity timeout from attributes",
-                    deviceIdInfo.getDeviceId(), inactivityTimeout);
-            inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
-        }
+        long inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
         // Actual active state by wall-clock will be updated outside this method. This method is only for fetching persistent state
         final boolean active = getEntryValue(ed, getKeyType(), ACTIVITY_STATE, false);
         DeviceState deviceState = DeviceState.builder()
