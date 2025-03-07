@@ -162,7 +162,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
             }
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCustomer.getTenantId())
-                    .entityId(savedCustomer.getId()).created(customer.getId() == null).build());
+                    .entityId(savedCustomer.getId()).entity(savedCustomer).created(customer.getId() == null).build());
             return savedCustomer;
         } catch (Exception e) {
             handleEvictEvent(evictEvent);

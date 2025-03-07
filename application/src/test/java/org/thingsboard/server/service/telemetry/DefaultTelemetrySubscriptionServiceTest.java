@@ -174,13 +174,35 @@ class DefaultTelemetrySubscriptionServiceTest {
         }).when(calculatedFieldQueueService).pushRequestToQueue(any(TimeseriesSaveRequest.class), any(), any());
 
         // send partition change event so currentPartitions set is populated
-        telemetryService.onTbApplicationEvent(new PartitionChangeEvent(this, ServiceType.TB_CORE, Map.of(new QueueKey(ServiceType.TB_CORE), Set.of(tpi))));
+        telemetryService.onTbApplicationEvent(new PartitionChangeEvent(this, ServiceType.TB_CORE, Map.of(new QueueKey(ServiceType.TB_CORE), Set.of(tpi)), Collections.emptyMap()));
     }
 
     @AfterEach
     void cleanup() {
         wsCallBackExecutor.shutdownNow();
         tsCallBackExecutor.shutdownNow();
+    }
+
+    /* --- Save time series API --- */
+
+    @Test
+    void shouldThrowErrorWhenTryingToSaveTimeseriesForApiUsageState() {
+        // GIVEN
+        var request = TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .customerId(customerId)
+                .entityId(new ApiUsageStateId(UUID.randomUUID()))
+                .entries(sampleTimeseries)
+                .strategy(TimeseriesSaveRequest.Strategy.PROCESS_ALL)
+                .build();
+
+        // WHEN
+        assertThatThrownBy(() -> telemetryService.saveTimeseries(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Can't update API Usage State!");
+
+        // THEN
+        then(tsService).shouldHaveNoInteractions();
     }
 
     @Test
@@ -391,6 +413,8 @@ class DefaultTelemetrySubscriptionServiceTest {
                 Arguments.of(false, false, false, false)
         );
     }
+
+    /* --- Save attributes API --- */
 
     @ParameterizedTest
     @MethodSource("allCombinationsOfThreeBooleans")

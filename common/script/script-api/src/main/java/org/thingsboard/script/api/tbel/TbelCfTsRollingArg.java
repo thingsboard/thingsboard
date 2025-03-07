@@ -19,11 +19,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
+import org.thingsboard.common.util.JacksonUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import static org.thingsboard.script.api.tbel.TbelCfTsDoubleVal.OBJ_SIZE;
@@ -44,9 +48,9 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
         this.values = Collections.unmodifiableList(values);
     }
 
-    public TbelCfTsRollingArg(int limit, long timeWindow, List<TbelCfTsDoubleVal> values) {
+    public TbelCfTsRollingArg(long timeWindow, List<TbelCfTsDoubleVal> values) {
         long ts = System.currentTimeMillis();
-        this.timeWindow = new TbTimeWindow(ts - timeWindow, ts, limit);
+        this.timeWindow = new TbTimeWindow(ts - timeWindow, ts);
         this.values = Collections.unmodifiableList(values);
     }
 
@@ -102,6 +106,14 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
             }
         }
         return min;
+    }
+
+    public double avg() {
+        return avg(true);
+    }
+
+    public double avg(boolean ignoreNaN) {
+        return mean(ignoreNaN);
     }
 
     public double mean() {
@@ -256,6 +268,88 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
         return sum;
     }
 
+    public TbelCfTsRollingData merge(TbelCfTsRollingArg other) {
+        return mergeAll(Collections.singletonList(other), null);
+    }
+
+    public TbelCfTsRollingData merge(TbelCfTsRollingArg other, Map<String, Object> settings) {
+        return mergeAll(Collections.singletonList(other), settings);
+    }
+
+    public TbelCfTsRollingData mergeAll(List<TbelCfTsRollingArg> others) {
+        return mergeAll(others, null);
+    }
+
+    public TbelCfTsRollingData mergeAll(List<TbelCfTsRollingArg> others, Map<String, Object> settings) {
+        List<TbelCfTsRollingArg> args = new ArrayList<>(others.size() + 1);
+        args.add(this);
+        args.addAll(others);
+
+        boolean ignoreNaN = true;
+        if (settings != null && settings.containsKey("ignoreNaN")) {
+            ignoreNaN = Boolean.parseBoolean(settings.get("ignoreNaN").toString());
+        }
+
+        TbTimeWindow timeWindow = null;
+        if (settings != null && settings.containsKey("timeWindow")) {
+            var twVar = settings.get("timeWindow");
+            if (twVar instanceof TbTimeWindow) {
+                timeWindow = (TbTimeWindow) settings.get("timeWindow");
+            } else if (twVar instanceof Map twMap) {
+                timeWindow = new TbTimeWindow(Long.valueOf(twMap.get("startTs").toString()), Long.valueOf(twMap.get("endTs").toString()));
+            } else {
+                timeWindow = JacksonUtil.fromString(settings.get("timeWindow").toString(), TbTimeWindow.class);
+            }
+        }
+
+        TreeSet<Long> allTimestamps = new TreeSet<>();
+        long startTs = Long.MAX_VALUE;
+        long endTs = Long.MIN_VALUE;
+        for (TbelCfTsRollingArg arg : args) {
+            for (TbelCfTsDoubleVal val : arg.getValues()) {
+                allTimestamps.add(val.getTs());
+            }
+            startTs = Math.min(startTs, arg.getTimeWindow().getStartTs());
+            endTs = Math.max(endTs, arg.getTimeWindow().getEndTs());
+        }
+
+        List<TbelCfTsMultiDoubleVal> data = new ArrayList<>();
+
+        int[] lastIndex = new int[args.size()];
+        double[] result = new double[args.size()];
+        Arrays.fill(result, Double.NaN);
+
+        for (long ts : allTimestamps) {
+            for (int i = 0; i < args.size(); i++) {
+                var arg = args.get(i);
+                var values = arg.getValues();
+                while (lastIndex[i] < values.size() && values.get(lastIndex[i]).getTs() <= ts) {
+                    result[i] = values.get(lastIndex[i]).getValue();
+                    lastIndex[i]++;
+                }
+            }
+            if (timeWindow == null || timeWindow.matches(ts)) {
+                if (ignoreNaN) {
+                    boolean skip = false;
+                    for (int i = 0; i < args.size(); i++) {
+                        if (Double.isNaN(result[i])) {
+                            skip = true;
+                            break;
+                        }
+                    }
+                    if (!skip) {
+                        data.add(new TbelCfTsMultiDoubleVal(ts, Arrays.copyOf(result, result.length)));
+                    }
+                } else {
+                    data.add(new TbelCfTsMultiDoubleVal(ts, Arrays.copyOf(result, result.length)));
+                }
+            }
+        }
+
+        return new TbelCfTsRollingData(timeWindow != null ? timeWindow : new TbTimeWindow(startTs, endTs), data);
+    }
+
+
     @JsonIgnore
     public int getSize() {
         return values.size();
@@ -264,11 +358,6 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
     @Override
     public Iterator<TbelCfTsDoubleVal> iterator() {
         return values.iterator();
-    }
-
-    @Override
-    public void forEach(Consumer<? super TbelCfTsDoubleVal> action) {
-        values.forEach(action);
     }
 
     @Override

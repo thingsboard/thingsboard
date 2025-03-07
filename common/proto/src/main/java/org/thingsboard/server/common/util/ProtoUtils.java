@@ -135,7 +135,7 @@ public class ProtoUtils {
             builder.setName(msg.getName());
         }
         if (msg.getOldName() != null) {
-            builder.setName(msg.getOldName());
+            builder.setOldName(msg.getOldName());
         }
         return builder.build();
     }
@@ -170,7 +170,6 @@ public class ProtoUtils {
     public static EntityType fromProto(TransportProtos.EntityTypeProto entityType) {
         return entityTypeByProtoNumber[entityType.getNumber()];
     }
-
 
     public static TransportProtos.ToEdgeSyncRequestMsgProto toProto(ToEdgeSyncRequest request) {
         return TransportProtos.ToEdgeSyncRequestMsgProto.newBuilder()

@@ -125,7 +125,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         }
         return Futures.whenAllComplete(argFutures.values()).call(() -> {
             var result = createStateByType(ctx);
-            result.updateState(argFutures.entrySet().stream()
+            result.updateState(ctx, argFutures.entrySet().stream()
                     .collect(Collectors.toMap(
                             Entry::getKey, // Keep the key as is
                             entry -> {

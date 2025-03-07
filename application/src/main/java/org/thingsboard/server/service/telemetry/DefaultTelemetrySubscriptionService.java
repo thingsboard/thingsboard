@@ -370,7 +370,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private <S> void addMainCallback(ListenableFuture<S> saveFuture, Consumer<S> onSuccess) {
-        DonAsynchron.withCallback(saveFuture, onSuccess, null, tsCallBackExecutor);
+        addMainCallback(saveFuture, onSuccess, null);
     }
 
     private <S> void addMainCallback(ListenableFuture<S> saveFuture, Consumer<S> onSuccess, Consumer<Throwable> onFailure) {

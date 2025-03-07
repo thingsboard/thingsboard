@@ -920,9 +920,7 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     configuration varchar(1000000),
     version BIGINT DEFAULT 1,
     debug_settings varchar(1024),
-    external_id UUID,
-    CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, name),
-    CONSTRAINT calculated_field_external_id_unq_key UNIQUE (tenant_id, external_id)
+    CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS calculated_field_link (
