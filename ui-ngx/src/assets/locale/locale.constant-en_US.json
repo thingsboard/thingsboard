@@ -7705,6 +7705,9 @@
                 "zoom-scroll": "Scroll",
                 "zoom-double-click": "Double click",
                 "zoom-control-buttons": "Control buttons",
+                "scale": "Scale",
+                "scale-metric": "Metric",
+                "scale-imperial": "Imperial",
                 "switch-to-drag-mode-using-button": "Switch to drag mode using button"
             },
             "timeline": {

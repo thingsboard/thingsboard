@@ -33,7 +33,7 @@ import {
   mapControlPositions,
   mapControlsPositionTranslationMap,
   MapDataLayerSettings,
-  MapDataLayerType,
+  MapDataLayerType, mapScales, mapScaleTranslationMap,
   MapSetting,
   MapType,
   mapZoomActions,
@@ -74,11 +74,15 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
 
   mapControlPositions = mapControlPositions;
 
-  mapZoomActions = mapZoomActions;
-
   mapControlsPositionTranslationMap = mapControlsPositionTranslationMap;
 
+  mapZoomActions = mapZoomActions;
+
   mapZoomActionTranslationMap = mapZoomActionTranslationMap;
+
+  mapScales = mapScales;
+
+  mapScaleTranslationMap = mapScaleTranslationMap;
 
   MapType = MapType;
 
@@ -144,6 +148,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       additionalDataSources: [null, []],
       controlsPosition: [null, []],
       zoomActions: [null, []],
+      scales: [null, []],
       dragModeButton: [null, []],
       fitMapBounds: [null, []],
       useDefaultCenterPosition: [null, []],

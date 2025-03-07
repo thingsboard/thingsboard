@@ -99,6 +99,14 @@
         </mat-chip-option>
       </mat-chip-listbox>
     </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widgets.maps.control.scale</div>
+      <mat-chip-listbox multiple formControlName="scales">
+        <mat-chip-option *ngFor="let scale of mapScales" [value]="scale">
+          {{ mapScaleTranslationMap.get(scale) | translate }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
     <div *ngIf="showDragButtonModeButtonSettings" class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="dragModeButton">
         {{ 'widgets.maps.control.switch-to-drag-mode-using-button' | translate }}

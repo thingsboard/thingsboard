@@ -640,6 +640,20 @@ export const mapZoomActionTranslationMap = new Map<MapZoomAction, string>(
   ]
 );
 
+export enum MapScale {
+  metric = 'metric',
+  imperial = 'imperial'
+}
+
+export const mapScales = Object.keys(MapScale) as MapScale[];
+
+export const mapScaleTranslationMap = new Map<MapScale, string>(
+  [
+    [MapScale.metric, 'widgets.maps.control.scale-metric'],
+    [MapScale.imperial, 'widgets.maps.control.scale-imperial'],
+  ]
+);
+
 export interface MapActionButtonSettings {
   label?: string;
   icon?: string;
@@ -666,6 +680,7 @@ export interface BaseMapSettings {
   additionalDataSources: AdditionalMapDataSourceSettings[];
   controlsPosition: MapControlsPosition;
   zoomActions: MapZoomAction[];
+  scales: MapScale[];
   dragModeButton: boolean;
   fitMapBounds: boolean;
   useDefaultCenterPosition: boolean;
@@ -689,6 +704,7 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   additionalDataSources: [],
   controlsPosition: MapControlsPosition.topleft,
   zoomActions: [MapZoomAction.scroll, MapZoomAction.doubleClick, MapZoomAction.controlButtons],
+  scales: [],
   dragModeButton: false,
   fitMapBounds: true,
   useDefaultCenterPosition: false,

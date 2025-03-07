@@ -20,6 +20,7 @@ import {
   DataKeyValuePair,
   MapBooleanFunction,
   mapDataLayerTypes,
+  MapScale,
   MapType,
   mergeMapDatasources,
   parseCenterPosition,
@@ -171,7 +172,12 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private setupControls(): Observable<any> {
-    //L.control.scale().addTo(this.map);
+    if (this.settings.scales?.length) {
+      L.control.scale({
+        metric: this.settings.scales.includes(MapScale.metric),
+        imperial: this.settings.scales.includes(MapScale.imperial)
+      }).addTo(this.map);
+    }
     if (this.map.zoomControl) {
       this.map.zoomControl.setPosition(this.settings.controlsPosition);
     }
