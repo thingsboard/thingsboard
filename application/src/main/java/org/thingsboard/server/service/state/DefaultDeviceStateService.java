@@ -661,16 +661,14 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 List<TsKvEntry> activityTimeseries = Futures.getDone(timeseriesActivityDataFuture);
                 Optional<AttributeKvEntry> inactivityTimeoutAttribute = Futures.getDone(inactivityTimeoutAttributeFuture);
 
-                List<KvEntry> result;
                 if (inactivityTimeoutAttribute.isPresent()) {
-                    result = new ArrayList<>(activityTimeseries.size() + 1);
+                    List<KvEntry> result = new ArrayList<>(activityTimeseries.size() + 1);
                     result.addAll(activityTimeseries);
-                    inactivityTimeoutAttribute.ifPresent(result::add);
+                    result.add(inactivityTimeoutAttribute.get());
+                    return result;
                 } else {
                     return activityTimeseries;
                 }
-
-                return result;
             }, deviceStateCallbackExecutor);
 
             future = Futures.transform(fullActivityDataFuture, extractDeviceStateData(device), MoreExecutors.directExecutor());
