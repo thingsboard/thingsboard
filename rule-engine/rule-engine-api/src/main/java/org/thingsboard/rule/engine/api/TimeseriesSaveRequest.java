@@ -70,7 +70,7 @@ public class TimeseriesSaveRequest implements CalculatedFieldSystemAwareRequest 
         private EntityId entityId;
         private List<TsKvEntry> entries;
         private long ttl;
-        private Strategy strategy = Strategy.PROCESS_ALL;
+        private Strategy strategy;
         private List<CalculatedFieldId> previousCalculatedFieldIds;
         private UUID tbMsgId;
         private TbMsgType tbMsgType;
@@ -152,7 +152,7 @@ public class TimeseriesSaveRequest implements CalculatedFieldSystemAwareRequest 
 
         public TimeseriesSaveRequest build() {
             return new TimeseriesSaveRequest(
-                    tenantId, customerId, entityId, entries, ttl, strategy,
+                    tenantId, customerId, entityId, entries, ttl, requireNonNullElse(strategy, Strategy.PROCESS_ALL),
                     previousCalculatedFieldIds, tbMsgId, tbMsgType, requireNonNullElse(callback, NoOpFutureCallback.instance())
             );
         }

@@ -5264,6 +5264,23 @@
             "web-sockets": "WebSockets",
             "calculated-fields": "Calculated fields"
         },
+        "save-attribute": {
+            "processing-settings": "Processing settings",
+            "processing-settings-hint": "Define how incoming messages are processed. In Basic mode, select a preconfigured processing strategy or enable only WebSocket updates. Advanced mode allows you to select individual processing strategies for each action.",
+            "advanced-settings-hint": "Be cautious when configuring processing strategies. Certain combinations can lead to unexpected behavior.",
+            "strategy": "Strategy",
+            "deduplication-interval": "Deduplication interval",
+            "deduplication-interval-required": "Deduplication interval is required",
+            "deduplication-interval-min-max-range": "Deduplication interval should be at least 1 second and at most 1 day",
+            "scope": "Scope",
+            "strategy-type": {
+                "every-message": "On every message",
+                "skip": "Skip",
+                "deduplicate": "Deduplicate",
+                "web-sockets-only": "WebSockets only"
+            },
+            "attributes": "Attributes"
+        },
         "key-val": {
             "key": "Key",
             "value": "Value",

@@ -1122,7 +1122,11 @@ message TbAttributeDeleteProto {
   int64 tenantIdLSB = 5;
   string scope = 6;
   repeated string keys = 7;
-  bool notifyDevice = 8;
+  // DEPRECATED. FOR REMOVAL
+  // Since 4.0, this field is no longer used.
+  // Device notifications are now handled directly by DefaultTelemetrySubscriptionService,
+  // eliminating the need to pass this parameter through the queue and proto to DefaultSubscriptionManagerService.
+  optional bool notifyDevice = 8 [deprecated = true];
 }
 
 message TbTimeSeriesDeleteProto {
