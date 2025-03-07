@@ -67,10 +67,11 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
                 Saves attribute data with a configurable scope and according to configured processing strategies.
                 """,
         nodeDetails = """
-                Node performs two <strong>actions:</strong>
+                Node performs three <strong>actions:</strong>
                 <ul>
                   <li><strong>Attributes:</strong> save attribute data to a database.</li>
                   <li><strong>WebSockets:</strong> notify WebSockets subscriptions about attribute data updates.</li>
+                  <li><strong>Calculated fields:</strong> notify calculated fields about attribute data updates.</li>
                 </ul>
                 
                 For each <em>action</em>, three <strong>processing strategies</strong> are available:
@@ -86,12 +87,15 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
                     <ul>
                       <li><strong>On every message:</strong> applies the "On every message" strategy to all actions.</li>
                       <li><strong>Deduplicate:</strong> applies the "Deduplicate" strategy (with a specified interval) to all actions.</li>
-                      <li><strong>WebSockets only:</strong> applies the "Skip" strategy to Attributes, and the "On every message" strategy to WebSockets.</li>
+                      <li><strong>WebSockets only:</strong> for all actions except WebSocket notifications, the "Skip" strategy is applied, while WebSocket notifications use the "On every message" strategy.</li>
                     </ul>
                   </li>
                   <li><strong>Advanced:</strong> configure each action’s strategy independently.</li>
                 </ul>
                 
+                The node supports three attribute scopes: <strong>Client attributes</strong>, <strong>Shared attributes</strong>, and <strong>Server attributes</strong>.
+                You can set the default scope in the node configuration, or override it by specifying a valid <code>scope</code> property in the message metadata.
+                <br><br>
                 Additionally:
                 <ul>
                   <li>If <b>Save attributes only if the value changes</b> is enabled, the rule node compares the received attribute value with the current stored value and skips the save operation if they match.</li>
