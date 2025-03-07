@@ -58,8 +58,6 @@ export class CalculatedFieldsTableComponent {
               private dialog: MatDialog,
               private store: Store<AppState>,
               private datePipe: DatePipe,
-              private durationLeft: DurationLeftPipe,
-              private popoverService: TbPopoverService,
               private cd: ChangeDetectorRef,
               private renderer: Renderer2,
               private importExportService: ImportExportService,
