@@ -338,8 +338,7 @@ import * as AggregationOptionsConfigComponent from '@shared/components/time/aggr
 import * as IntervalOptionsConfigPanelComponent from '@shared/components/time/interval-options-config-panel.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
-import { Observable, map, of } from 'rxjs';
-import { getFlexLayout } from '@shared/legacy/flex-layout.models';
+import { Observable, of } from 'rxjs';
 import { isJSResourceUrl } from '@shared/public-api';
 
 class ModulesMap implements IModulesMap {
@@ -352,10 +351,6 @@ class ModulesMap implements IModulesMap {
     '@angular/common': AngularCommon,
     '@angular/common/http': HttpClientModule,
     '@angular/forms': AngularForms,
-    '@angular/flex-layout': {},
-    '@angular/flex-layout/flex': {},
-    '@angular/flex-layout/grid': {},
-    '@angular/flex-layout/extended': {},
     '@angular/platform-browser': AngularPlatformBrowser,
     '@angular/platform-browser/animations': AngularPlatformBrowserAnimations,
     '@angular/router': AngularRouter,
@@ -678,39 +673,30 @@ class ModulesMap implements IModulesMap {
 
   init(): Observable<any> {
     if (!this.initialized) {
-      return getFlexLayout().pipe(
-        map((flexLayout) => {
-          this.modulesMap['@angular/flex-layout'] = flexLayout;
-          this.modulesMap['@angular/flex-layout/flex'] = flexLayout;
-          this.modulesMap['@angular/flex-layout/grid'] = flexLayout;
-          this.modulesMap['@angular/flex-layout/extended'] = flexLayout;
-          System.constructor.prototype.resolve = (id: string) => {
-            try {
-              if (this.modulesMap[id]) {
-                return 'app:' + id;
-              } else {
-                return id;
-              }
-            } catch (err) {
-              return id;
-            }
-          };
-          for (const moduleId of Object.keys(this.modulesMap)) {
-            System.set('app:' + moduleId, this.modulesMap[moduleId]);
+      System.constructor.prototype.resolve = (id: string) => {
+        try {
+          if (this.modulesMap[id]) {
+            return 'app:' + id;
+          } else {
+            return id;
           }
-          System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download') || isJSResourceUrl(url);
-          System.constructor.prototype.fetch = (url: string, options: RequestInit & {meta?: any}) => {
-            if (options?.meta?.additionalHeaders) {
-              options.headers = { ...options.headers, ...options.meta.additionalHeaders };
-            }
-            return fetch(url, options);
-          };
-          this.initialized = true;
-        })
-      );
-    } else {
-      return of(null);
+        } catch (err) {
+          return id;
+        }
+      };
+      for (const moduleId of Object.keys(this.modulesMap)) {
+        System.set('app:' + moduleId, this.modulesMap[moduleId]);
+      }
+      System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download') || isJSResourceUrl(url);
+      System.constructor.prototype.fetch = (url: string, options: RequestInit & {meta?: any}) => {
+        if (options?.meta?.additionalHeaders) {
+          options.headers = { ...options.headers, ...options.meta.additionalHeaders };
+        }
+        return fetch(url, options);
+      };
+      this.initialized = true;
     }
+    return of(null);
   }
 }
 
