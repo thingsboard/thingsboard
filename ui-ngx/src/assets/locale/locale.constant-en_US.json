@@ -6557,6 +6557,7 @@
         "URL": "URL",
         "url-required": "URL is required.",
         "mobile": {
+          "provision-device": "Provision device",
           "action-type": "Mobile action type",
           "select-action-type": "Select mobile action type",
           "action-type-required": "Mobile action type is required",
