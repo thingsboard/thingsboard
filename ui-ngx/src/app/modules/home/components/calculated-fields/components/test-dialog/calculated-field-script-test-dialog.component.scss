@@ -71,20 +71,4 @@
       background-image: url("../../../../../../../assets/split.js/grips/vertical.png");
     }
   }
-
-  .expression-edit {
-    .ace_tb {
-      &.ace_calculated-field {
-        &-key {
-          color: #C52F00;
-        }
-        &-ts, &-time-window, &-values, &-value, &-func {
-          color: #7214D0;
-        }
-        &-start-ts, &-end-ts, &-limit {
-          color: #185F2A;
-        }
-      }
-    }
-  }
 }
