@@ -73,8 +73,7 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   constructor(public dataLayer: TbMapDataLayer,
               private settings: S,
               public markerOffset: L.LatLngTuple,
-              public tooltipOffset: L.LatLngTuple,
-              private trip = false) {
+              public tooltipOffset: L.LatLngTuple) {
   }
 
   public setup(): Observable<any> {
@@ -171,7 +170,7 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   public createColoredMarkerIcon(iconContainer: MarkerIconContainer,
                                  icon: string, color: tinycolor.Instance, rotationAngle = 0, size = 34): Observable<MarkerIconInfo> {
     return createColorMarkerIconElement(this.dataLayer.getCtx().$injector.get(MatIconRegistry), this.dataLayer.getCtx().$injector.get(DomSanitizer),
-      iconContainer, icon, color, this.trip).pipe(
+      iconContainer, icon, color).pipe(
       map((element) => {
         if (rotationAngle !== 0) {
           element.style.transform = `rotate(${rotationAngle}deg)`;

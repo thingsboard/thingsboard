@@ -171,6 +171,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private setupControls(): Observable<any> {
+    //L.control.scale().addTo(this.map);
     if (this.map.zoomControl) {
       this.map.zoomControl.setPosition(this.settings.controlsPosition);
     }

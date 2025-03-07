@@ -553,7 +553,7 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
       isDefined(this.settings.tooltip?.offsetX) ? this.settings.tooltip?.offsetX : 0,
       isDefined(this.settings.tooltip?.offsetY) ? this.settings.tooltip?.offsetY : -0.5,
     ];
-    this.dataProcessor = new MarkerDataProcessor(this, this.settings, this.markerOffset, this.tooltipOffset, true);
+    this.dataProcessor = new MarkerDataProcessor(this, this.settings, this.markerOffset, this.tooltipOffset);
     const setup$: Observable<void>[] = [this.dataProcessor.setup()];
     if (this.settings.showPath) {
       this.pathStrokeColorProcessor = new DataLayerColorProcessor(this, this.settings.pathStrokeColor);

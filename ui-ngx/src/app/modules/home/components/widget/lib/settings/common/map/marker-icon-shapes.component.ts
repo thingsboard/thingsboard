@@ -115,7 +115,7 @@ export class MarkerIconShapesComponent extends PageComponent implements OnInit {
     this.iconContainers = containersList.map((iconContainer) => {
       return {
         iconContainer,
-        html$: createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, iconContainer, this.icon, tinycolor(this.color), this.trip).pipe(
+        html$: createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, iconContainer, this.icon, tinycolor(this.color)).pipe(
           map((element) => {
             return this.domSanitizer.bypassSecurityTrustHtml(element.outerHTML);
           }),

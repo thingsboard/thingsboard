@@ -21,6 +21,7 @@ import { Observable, of, shareReplay, switchMap } from 'rxjs';
 import { catchError, map, take } from 'rxjs/operators';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { Element, G, SVG, Text } from '@svgdotjs/svg.js';
+import { guid } from '@core/utils';
 
 export enum MarkerShape {
   markerShape1 = 'markerShape1',
@@ -47,10 +48,14 @@ export enum MarkerShape {
 
 export enum MarkerIconContainer {
   iconContainer1 = 'iconContainer1',
-  tripIconContainer1 = 'tripIconContainer1'
+  iconContainer2 = 'iconContainer2',
+  iconContainer3 = 'iconContainer3',
+  tripIconContainer1 = 'tripIconContainer1',
+  tripIconContainer2 = 'tripIconContainer2',
+  tripIconContainer3 = 'tripIconContainer3'
 }
 
-export const markerShapeMap = new Map<MarkerShape, string>(
+const markerShapeMap = new Map<MarkerShape, string>(
   [
     [MarkerShape.markerShape1, '/assets/markers/shape1.svg'],
     [MarkerShape.markerShape2, '/assets/markers/shape2.svg'],
@@ -75,10 +80,69 @@ export const markerShapeMap = new Map<MarkerShape, string>(
   ]
 );
 
-export const markerIconContainerMap = new Map<MarkerIconContainer, string>(
+const markerIconContainerMap = new Map<MarkerIconContainer, string>(
   [
     [MarkerIconContainer.iconContainer1, '/assets/markers/iconContainer1.svg'],
-    [MarkerIconContainer.tripIconContainer1, '/assets/markers/tripIconContainer1.svg']
+    [MarkerIconContainer.iconContainer2, '/assets/markers/iconContainer2.svg'],
+    [MarkerIconContainer.iconContainer3, '/assets/markers/iconContainer3.svg'],
+    [MarkerIconContainer.tripIconContainer1, '/assets/markers/tripIconContainer1.svg'],
+    [MarkerIconContainer.tripIconContainer2, '/assets/markers/tripIconContainer2.svg'],
+    [MarkerIconContainer.tripIconContainer3, '/assets/markers/tripIconContainer3.svg']
+  ]
+);
+
+interface MarkerIconContainerDefinition {
+  iconSize: number;
+  iconColor: (color: tinycolor.Instance) => tinycolor.Instance;
+  iconAlpha: (color: tinycolor.Instance) => number;
+  appendIcon?: (svgElement: SVGElement, iconElement: Element) => void;
+}
+
+const emptyIconContainerDefinition: MarkerIconContainerDefinition = {
+  iconSize: 24,
+  iconColor: (color) => color,
+  iconAlpha: color => color.getAlpha()
+}
+
+const defaultIconContainerDefinition: MarkerIconContainerDefinition = {
+  iconSize: 12,
+  iconColor: (color) => tinycolor.mix(color.clone().setAlpha(1), tinycolor('rgba(0,0,0,0.38)')),
+  iconAlpha: color => color.getAlpha()
+}
+
+const defaultTripIconContainerDefinition: MarkerIconContainerDefinition = {
+  iconSize: 24,
+  iconColor: () => tinycolor('#000'),
+  iconAlpha: () => 1,
+  appendIcon: (svgElement, iconElement) => {
+    const box = iconElement.bbox();
+    let elements = svgElement.getElementsByClassName('icon-mask-exclude');
+    if (elements.length) {
+      elements = elements[0].getElementsByClassName('marker-icon-container');
+      if (elements.length) {
+        const iconContainer = new G(elements[0] as SVGGElement);
+        iconContainer.add(iconElement.clone().fill('#000').translate(-box.cx, -box.cy));
+      }
+    }
+    elements = svgElement.getElementsByClassName('icon-mask-overlay');
+    if (elements.length) {
+      elements = elements[0].getElementsByClassName('marker-icon-container');
+      if (elements.length) {
+        const iconContainer = new G(elements[0] as SVGGElement);
+        iconContainer.add(iconElement.clone().fill('#fff').translate(-box.cx, -box.cy));
+      }
+    }
+  }
+}
+
+const markerIconContainerDefinitionMap = new Map<MarkerIconContainer, MarkerIconContainerDefinition>(
+  [
+    [MarkerIconContainer.iconContainer1, defaultIconContainerDefinition],
+    [MarkerIconContainer.iconContainer2, defaultIconContainerDefinition],
+    [MarkerIconContainer.iconContainer3, defaultIconContainerDefinition],
+    [MarkerIconContainer.tripIconContainer1, defaultTripIconContainerDefinition],
+    [MarkerIconContainer.tripIconContainer2, {...defaultTripIconContainerDefinition, iconSize: 16}],
+    [MarkerIconContainer.tripIconContainer3, {...defaultTripIconContainerDefinition, iconSize: 16}]
   ]
 );
 
@@ -108,8 +172,45 @@ export const tripMarkerShapes = [
   MarkerShape.tripMarkerShape10
 ];
 
-export const markerIconContainers = [ MarkerIconContainer.iconContainer1 ];
-export const tripMarkerIconContainers = [ MarkerIconContainer.tripIconContainer1 ];
+export const markerIconContainers = [
+  MarkerIconContainer.iconContainer1,
+  MarkerIconContainer.iconContainer2,
+  MarkerIconContainer.iconContainer3
+];
+
+export const tripMarkerIconContainers = [
+  MarkerIconContainer.tripIconContainer1,
+  MarkerIconContainer.tripIconContainer2,
+  MarkerIconContainer.tripIconContainer3
+];
+
+const generateElementId = () => {
+  const id = guid();
+  const firstChar = id.charAt(0);
+  if (firstChar >= '0' && firstChar <= '9') {
+    return 'a' + id;
+  } else {
+    return id;
+  }
+};
+
+const prepareSvgIds = (element: SVGElement): SVGElement => {
+  let svgContent = element.outerHTML;
+  const regexp = /\sid="([^"]*)"[\s>]/g;
+  const unique_id_suffix = '_' + generateElementId();
+  const ids: string[] = [];
+  let match = regexp.exec(svgContent);
+  while (match !== null) {
+    ids.push(match[1]);
+    match = regexp.exec(svgContent);
+  }
+  for (const id of ids) {
+    const newId = id + unique_id_suffix;
+    svgContent = svgContent.replace(new RegExp('id="'+id+'"', 'g'), 'id="'+newId+'"');
+    svgContent = svgContent.replace(new RegExp('url\\(#'+id+'\\)', 'g'), 'url(#'+newId+')');
+  }
+  return SVG(svgContent).node;
+};
 
 const createColorMarkerShape = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer, assetUrl: string, color: tinycolor.Instance): Observable<SVGElement> => {
   const safeUrl = domSanitizer.bypassSecurityTrustResourceUrl(assetUrl);
@@ -131,7 +232,14 @@ const createColorMarkerShape = (iconRegistry: MatIconRegistry, domSanitizer: Dom
         el.setAttribute('stroke', '#'+color.toHex());
         el.setAttribute('stroke-opacity', `${color.getAlpha()}`);
       });
-      return svgElement;
+      const opacityElements = Array.from(svgElement.getElementsByClassName('marker-opacity'));
+      if (svgElement.classList.contains('marker-opacity')) {
+        opacityElements.push(svgElement);
+      }
+      opacityElements.forEach(el => {
+        el.setAttribute('opacity', `${color.getAlpha()}`);
+      });
+      return prepareSvgIds(svgElement);
     })
   );
 }
@@ -147,10 +255,8 @@ export const createColorMarkerShapeURI = (iconRegistry: MatIconRegistry, domSani
   );
 }
 
-const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: number, color: tinycolor.Instance, trip = false): Observable<Element> => {
+const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: number, iconColor: tinycolor.Instance, iconAlpha: number): Observable<Element> => {
   const isSvg = isSvgIcon(icon);
-  const iconAlpha = color.getAlpha();
-  const iconColor = trip ? color : tinycolor.mix(color.clone().setAlpha(1), tinycolor('rgba(0,0,0,0.38)'));
   if (isSvg) {
     const [namespace, iconName] = splitIconName(icon);
     return iconRegistry
@@ -190,24 +296,30 @@ const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: nu
 }
 
 export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domSanitizer: DomSanitizer,
-                                             iconContainer: MarkerIconContainer, icon: string, color: tinycolor.Instance,
-                                             trip = false): Observable<SVGElement> => {
+                                             iconContainer: MarkerIconContainer, icon: string, color: tinycolor.Instance): Observable<SVGElement> => {
   const markerShape$: Observable<SVGElement> = iconContainer ?
     createColorMarkerShape(iconRegistry, domSanitizer, markerIconContainerMap.get(iconContainer), color) : of(null);
   return markerShape$.pipe(
     switchMap((svgElement) => {
-      const iconSize = svgElement ? (trip ? 24 : 12) : 24;
-      const iconColor = svgElement ? (trip ? tinycolor('#fff') : color) : color;
-      return createIconElement(iconRegistry, icon, iconSize, iconColor, trip || !svgElement).pipe(
+      const definition = iconContainer ? markerIconContainerDefinitionMap.get(iconContainer) : emptyIconContainerDefinition;
+      const iconSize = definition.iconSize;
+      const iconColor = definition.iconColor(color);
+      const iconAlpha = definition.iconAlpha(color);
+      return createIconElement(iconRegistry, icon, iconSize, iconColor, iconAlpha).pipe(
         map((iconElement) => {
           if (svgElement) {
-            const elements = svgElement.getElementsByClassName('marker-icon-container');
-            if (iconElement && elements.length) {
-              const iconContainer = new G(elements[0] as SVGGElement);
-              iconContainer.clear();
-              iconContainer.add(iconElement);
-              const box = iconElement.bbox();
-              iconElement.translate(-box.cx, -box.cy);
+            if (iconElement) {
+              if (definition.appendIcon) {
+                definition.appendIcon(svgElement, iconElement);
+              } else {
+                const elements = svgElement.getElementsByClassName('marker-icon-container');
+                if (elements.length) {
+                  const iconContainer = new G(elements[0] as SVGGElement);
+                  iconContainer.add(iconElement);
+                  const box = iconElement.bbox();
+                  iconElement.translate(-box.cx, -box.cy);
+                }
+              }
             }
             return svgElement;
           } else {

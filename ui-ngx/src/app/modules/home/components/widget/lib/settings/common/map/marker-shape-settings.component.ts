@@ -208,7 +208,7 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
     } else if (this.markerType === MarkerType.icon) {
       const iconContainer = (this.modelValue as MarkerIconSettings).iconContainer;
       const icon = (this.modelValue as MarkerIconSettings).icon;
-      this.iconPreview$ = createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, iconContainer, icon, tinycolor(color), this.trip).pipe(
+      this.iconPreview$ = createColorMarkerIconElement(this.iconRegistry, this.domSanitizer, iconContainer, icon, tinycolor(color)).pipe(
         map((element) => {
           return this.domSanitizer.bypassSecurityTrustHtml(element.outerHTML);
         }),
