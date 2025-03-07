@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.tenant.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -135,10 +136,16 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     private double warnThreshold;
 
+    @Schema(example = "5")
     private long maxCalculatedFieldsPerEntity = 5;
+    @Schema(example = "10")
     private long maxArgumentsPerCF = 10;
+    @Min(value = 0, message = "must be at least 0")
+    @Schema(example = "1000")
     private long maxDataPointsPerRollingArg = 1000;
+    @Schema(example = "32")
     private long maxStateSizeInKBytes = 32;
+    @Schema(example = "2")
     private long maxSingleValueArgumentSizeInKBytes = 2;
 
     @Override

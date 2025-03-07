@@ -134,14 +134,20 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     public void process(CalculatedFieldEntityDeleteMsg msg) {
         log.info("[{}] Processing CF entity delete msg.", msg.getEntityId());
         if (this.entityId.equals(msg.getEntityId())) {
-            MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
-            states.forEach((cfId, state) -> cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
-            ctx.stop(ctx.getSelf());
+            if (states.isEmpty()) {
+                msg.getCallback().onSuccess();
+            } else {
+                MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
+                states.forEach((cfId, state) -> cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
+                ctx.stop(ctx.getSelf());
+            }
         } else {
             var cfId = new CalculatedFieldId(msg.getEntityId().getId());
             var state = states.remove(cfId);
             if (state != null) {
                 cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
+            } else {
+                msg.getCallback().onSuccess();
             }
         }
     }

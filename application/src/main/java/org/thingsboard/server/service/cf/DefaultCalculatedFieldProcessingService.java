@@ -273,7 +273,8 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         long timeWindow = argument.getTimeWindow() == 0 ? System.currentTimeMillis() : argument.getTimeWindow();
         long startTs = currentTime - timeWindow;
         long maxDataPoints = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
-        int limit = argument.getLimit() == 0 ? (int) maxDataPoints : argument.getLimit();
+        int argumentLimit = argument.getLimit();
+        int limit = argumentLimit == 0 || argumentLimit > maxDataPoints ? (int) maxDataPoints : argument.getLimit();
 
         ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, currentTime, 0, limit, Aggregation.NONE);
         ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));

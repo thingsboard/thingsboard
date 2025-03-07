@@ -199,7 +199,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             if (fieldsCount > 0) {
                 MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsCount, callback);
                 var entityId = msg.getEntityId();
-                oldProfileCfs.forEach(ctx -> deleteCfForEntity(entityId, ctx.getCfId(), callback));
+                oldProfileCfs.forEach(ctx -> deleteCfForEntity(entityId, ctx.getCfId(), multiCallback));
                 newProfileCfs.forEach(ctx -> initCfForEntity(entityId, ctx, true, multiCallback));
             } else {
                 callback.onSuccess();
@@ -306,7 +306,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 if (!entityIds.isEmpty()) {
                     //TODO: no need to do this if we cache all created actors and know which one belong to us;
                     var multiCallback = new MultipleTbCallback(entityIds.size(), callback);
-                    entityIds.forEach(id -> deleteCfForEntity(entityId, cfId, multiCallback));
+                    entityIds.forEach(id -> deleteCfForEntity(id, cfId, multiCallback));
                 } else {
                     callback.onSuccess();
                 }
