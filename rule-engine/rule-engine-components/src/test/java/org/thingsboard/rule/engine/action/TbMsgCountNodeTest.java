@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,12 @@ public class TbMsgCountNodeTest {
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("1b21c7cc-0c9e-4ab1-b867-99451599e146"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("04dfbd38-10e5-47b7-925f-11e795db89e1"));
 
-    private final TbMsg tickMsg = TbMsg.newMsg(TbMsgType.MSG_COUNT_SELF_MSG, RULE_NODE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+    private final TbMsg tickMsg = TbMsg.newMsg()
+            .type(TbMsgType.MSG_COUNT_SELF_MSG)
+            .originator(RULE_NODE_ID)
+            .copyMetaData(TbMsgMetaData.EMPTY)
+            .data(TbMsg.EMPTY_STRING)
+            .build();
 
     private ScheduledExecutorService executorService;
     private TbMsgCountNode node;
@@ -120,7 +125,12 @@ public class TbMsgCountNodeTest {
 
         var expectedProcessedMsgs = new ArrayList<TbMsg>();
         for (int i = 0; i < msgCount; i++) {
-            var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+            var msg = TbMsg.newMsg()
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(DEVICE_ID)
+                    .copyMetaData(TbMsgMetaData.EMPTY)
+                    .data(TbMsg.EMPTY_STRING)
+                    .build();
             if (msgWithCounterSent.get()) {
                 break;
             }
@@ -142,7 +152,12 @@ public class TbMsgCountNodeTest {
         then(ctxMock).should().enqueueForTellNext(msgWithCounterCaptor.capture(), eq(TbNodeConnectionType.SUCCESS));
         TbMsg resultedMsg = msgWithCounterCaptor.getValue();
         String expectedData = "{\"messageCount_tb-rule-engine\":" + currentMsgNumber + "}";
-        TbMsg expectedMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TENANT_ID, TbMsgMetaData.EMPTY, expectedData);
+        TbMsg expectedMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(expectedData)
+                .build();
         assertThat(resultedMsg).usingRecursiveComparison()
                 .ignoringFields("id", "ts", "ctx", "metaData")
                 .isEqualTo(expectedMsg);

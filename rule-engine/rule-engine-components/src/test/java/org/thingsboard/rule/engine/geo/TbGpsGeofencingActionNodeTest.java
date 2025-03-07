@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,12 @@ class TbGpsGeofencingActionNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private TbMsg getTbMsg(EntityId entityId, TbMsgMetaData metadata, double latitude, double longitude) {
         String data = "{\"latitude\": " + latitude + ", \"longitude\": " + longitude + "}";
-        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, metadata, data);
+        return TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(entityId)
+                .copyMetaData(metadata)
+                .data(data)
+                .build();
     }
 
     private TbMsgMetaData getMetadataForNewVersionPolygonPerimeter() {

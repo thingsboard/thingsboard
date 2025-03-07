@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, DestroyRef } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
@@ -37,6 +37,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-security-settings',
@@ -59,7 +60,8 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
               private authService: AuthService,
               private dialogService: DialogService,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
     this.buildSecuritySettingsForm();
     this.buildJwtSecuritySettingsForm();
@@ -102,7 +104,9 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
       tokenExpirationTime: [0, [Validators.required, Validators.min(60), Validators.max(2147483647)]],
       refreshTokenExpTime: [0, [Validators.required, Validators.min(900), Validators.max(2147483647)]]
     }, {validators: this.refreshTokenTimeGreatTokenTime.bind(this)});
-    this.jwtSecuritySettingsFormGroup.get('tokenExpirationTime').valueChanges.subscribe(
+    this.jwtSecuritySettingsFormGroup.get('tokenExpirationTime').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').updateValueAndValidity({onlySelf: true})
     );
   }

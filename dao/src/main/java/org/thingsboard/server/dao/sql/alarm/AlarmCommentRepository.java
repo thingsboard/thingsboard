@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,5 +35,9 @@ public interface AlarmCommentRepository extends JpaRepository<AlarmCommentEntity
                     "FROM AlarmCommentEntity a " +
                     "WHERE a.alarmId = :alarmId ")
     Page<AlarmCommentInfoEntity> findAllByAlarmId(@Param("alarmId") UUID alarmId,
-                                             Pageable pageable);
+                                                  Pageable pageable);
+
+    @Query("SELECT c FROM AlarmCommentEntity c WHERE c.userId IN (SELECT u.id FROM UserEntity u WHERE u.tenantId = :tenantId)")
+    Page<AlarmCommentEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+
 }

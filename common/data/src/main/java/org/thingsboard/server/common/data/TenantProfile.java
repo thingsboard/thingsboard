@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -58,6 +59,7 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
     @Schema(description = "If enabled, will push all messages related to this tenant and processed by the rule engine into separate queue. " +
             "Useful for complex microservices deployments, to isolate processing of the data for specific tenants", example = "false")
     private boolean isolatedTbRuleEngine;
+    @Valid
     @Schema(description = "Complex JSON object that contains profile settings: queue configs, max devices, max assets, rate limits, etc.")
     private transient TenantProfileData profileData;
     @JsonIgnore

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   forwardRef,
@@ -58,6 +59,7 @@ import {
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
   if (!behavior.id || !behavior.name || !behavior.type) {
@@ -143,7 +145,8 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
-              private behaviorsComponent: ScadaSymbolBehaviorsComponent) {
+              private behaviorsComponent: ScadaSymbolBehaviorsComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -152,10 +155,14 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
       name: [null, [Validators.required]],
       type: [null, [Validators.required]]
     });
-    this.behaviorRowFormGroup.valueChanges.subscribe(
+    this.behaviorRowFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.behaviorRowFormGroup.get('type').valueChanges.subscribe((newType: ScadaSymbolBehaviorType) => {
+    this.behaviorRowFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((newType: ScadaSymbolBehaviorType) => {
       this.onTypeChanged(newType);
     });
   }

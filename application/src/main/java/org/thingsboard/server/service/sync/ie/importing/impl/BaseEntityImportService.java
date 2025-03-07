@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.HasDefaultOption;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -49,6 +51,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.sync.ie.AttributeExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.action.EntityActionService;
@@ -76,6 +79,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Autowired
     @Lazy
     private ExportableEntitiesService entitiesService;
+    @Autowired
+    private CalculatedFieldService calculatedFieldService;
     @Autowired
     private RelationService relationService;
     @Autowired
@@ -133,7 +138,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     }
 
     protected boolean updateRelatedEntitiesIfUnmodified(EntitiesImportCtx ctx, E prepared, D exportData, IdProvider idProvider) {
-        return false;
+        return importCalculatedFields(ctx, prepared, exportData, idProvider);
     }
 
     @Override
@@ -257,25 +262,78 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         })
                         .collect(Collectors.toList());
                 // fixme: attributes are saved outside the transaction
-                tsSubService.saveAndNotify(user.getTenantId(), entity.getId(), scope, attributeKvEntries, new FutureCallback<Void>() {
-                    @Override
-                    public void onSuccess(@Nullable Void unused) {
-                    }
+                tsSubService.saveAttributes(AttributesSaveRequest.builder()
+                        .tenantId(user.getTenantId())
+                        .entityId(entity.getId())
+                        .scope(scope)
+                        .entries(attributeKvEntries)
+                        .callback(new FutureCallback<>() {
+                            @Override
+                            public void onSuccess(@Nullable Void unused) {
+                            }
 
-                    @Override
-                    public void onFailure(Throwable thr) {
-                        log.error("Failed to import attributes for {} {}", entity.getId().getEntityType(), entity.getId(), thr);
-                    }
-                });
+                            @Override
+                            public void onFailure(Throwable thr) {
+                                log.error("Failed to import attributes for {} {}", entity.getId().getEntityType(), entity.getId(), thr);
+                            }
+                        })
+                        .build());
             });
         });
+    }
+
+    protected boolean importCalculatedFields(EntitiesImportCtx ctx, E savedEntity, D exportData, IdProvider idProvider) {
+        if (exportData.getCalculatedFields() == null || !ctx.isSaveCalculatedFields()) {
+            return false;
+        }
+
+        boolean updated = false;
+        List<CalculatedField> existing = calculatedFieldService.findCalculatedFieldsByEntityId(ctx.getTenantId(), savedEntity.getId());
+        List<CalculatedField> fieldsToSave = exportData.getCalculatedFields().stream()
+                .peek(calculatedField -> {
+                    calculatedField.setTenantId(ctx.getTenantId());
+                    calculatedField.setEntityId(savedEntity.getId());
+                    calculatedField.getConfiguration().getArguments().values().forEach(argument -> {
+                        if (argument.getRefEntityId() != null) {
+                            argument.setRefEntityId(idProvider.getInternalId(argument.getRefEntityId(), ctx.isFinalImportAttempt()));
+                        }
+                    });
+                }).toList();
+
+        for (CalculatedField existingField : existing) {
+            boolean found = fieldsToSave.stream().anyMatch(importedField -> compareCalculatedFields(existingField, importedField));
+            if (!found) {
+                calculatedFieldService.deleteCalculatedField(ctx.getTenantId(), existingField.getId());
+                updated = true;
+            }
+        }
+
+        for (CalculatedField calculatedField : fieldsToSave) {
+            boolean found = existing.stream().anyMatch(existingField -> compareCalculatedFields(existingField, calculatedField));
+            if (!found) {
+                calculatedFieldService.save(calculatedField);
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
+    private boolean compareCalculatedFields(CalculatedField existingField, CalculatedField newField) {
+        CalculatedField oldCopy = new CalculatedField(existingField);
+        CalculatedField newCopy = new CalculatedField(newField);
+        oldCopy.setId(null);
+        newCopy.setId(null);
+        oldCopy.setVersion(null);
+        newCopy.setVersion(null);
+        oldCopy.setCreatedTime(0);
+        newCopy.setCreatedTime(0);
+        return oldCopy.equals(newCopy);
     }
 
     protected void onEntitySaved(User user, E savedEntity, E oldEntity) throws ThingsboardException {
         logEntityActionService.logEntityAction(user.getTenantId(), savedEntity.getId(), savedEntity, null,
                 oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
-
 
     @SuppressWarnings("unchecked")
     protected E findExistingEntity(EntitiesImportCtx ctx, E entity, IdProvider idProvider) {
@@ -306,10 +364,10 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 .orElseThrow(() -> new MissingEntityException(externalId));
     }
 
-
     @SuppressWarnings("unchecked")
     @RequiredArgsConstructor
     protected class IdProvider {
+
         private final EntitiesImportCtx ctx;
         private final EntityImportResult<E> importResult;
 

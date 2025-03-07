@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
     List<UUID> findAllIdsByStatusAndRuleId(@Param("status") NotificationRequestStatus status,
                                            @Param("ruleId") UUID ruleId);
 
-    List<NotificationRequestEntity> findAllByRuleIdAndOriginatorEntityIdAndOriginatorEntityType(UUID ruleId, UUID originatorEntityId, EntityType originatorEntityType);
+    List<NotificationRequestEntity> findAllByRuleIdAndOriginatorEntityIdAndOriginatorEntityTypeAndStatus(UUID ruleId, UUID originatorEntityId, EntityType originatorEntityType, NotificationRequestStatus status);
 
     Page<NotificationRequestEntity> findAllByStatus(NotificationRequestStatus status, Pageable pageable);
 

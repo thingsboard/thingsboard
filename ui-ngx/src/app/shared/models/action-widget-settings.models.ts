@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ export enum GetValueAction {
   GET_ATTRIBUTE = 'GET_ATTRIBUTE',
   GET_TIME_SERIES = 'GET_TIME_SERIES',
   GET_ALARM_STATUS = 'GET_ALARM_STATUS',
-  GET_DASHBOARD_STATE = 'GET_DASHBOARD_STATE'
+  GET_DASHBOARD_STATE = 'GET_DASHBOARD_STATE',
+  GET_DASHBOARD_STATE_OBJECT = 'GET_DASHBOARD_STATE_OBJECT',
 }
 
 export const getValueActions = Object.keys(GetValueAction) as GetValueAction[];
@@ -45,7 +46,8 @@ export const getValueActionTranslations = new Map<GetValueAction, string>(
     [GetValueAction.GET_ATTRIBUTE, 'widgets.value-action.get-attribute'],
     [GetValueAction.GET_TIME_SERIES, 'widgets.value-action.get-time-series'],
     [GetValueAction.GET_ALARM_STATUS, 'widgets.value-action.get-alarm-status'],
-    [GetValueAction.GET_DASHBOARD_STATE, 'widgets.value-action.get-dashboard-state']
+    [GetValueAction.GET_DASHBOARD_STATE, 'widgets.value-action.get-dashboard-state'],
+    [GetValueAction.GET_DASHBOARD_STATE_OBJECT, 'widgets.value-action.get-dashboard-state-object'],
   ]
 );
 

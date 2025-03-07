@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -413,7 +413,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   private updateTimewindowForm() {
-    this.timewindowForm.patchValue(this.timewindow);
+    this.timewindowForm.patchValue(this.timewindow, {emitEvent: false});
+    this.updateValidators(this.timewindowForm.get('aggregation.type').value);
 
     if (this.timewindow.realtime.hideInterval) {
       this.timewindowForm.get('realtime.realtimeType').disable({emitEvent: false});

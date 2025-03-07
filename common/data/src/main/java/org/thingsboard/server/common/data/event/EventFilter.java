@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
         @JsonSubTypes.Type(value = RuleChainDebugEventFilter.class, name = "DEBUG_RULE_CHAIN"),
         @JsonSubTypes.Type(value = ErrorEventFilter.class, name = "ERROR"),
         @JsonSubTypes.Type(value = LifeCycleEventFilter.class, name = "LC_EVENT"),
-        @JsonSubTypes.Type(value = StatisticsEventFilter.class, name = "STATS")
+        @JsonSubTypes.Type(value = StatisticsEventFilter.class, name = "STATS"),
+        @JsonSubTypes.Type(value = CalculatedFieldDebugEventFilter.class, name = "DEBUG_CALCULATED_FIELD")
 })
 public interface EventFilter {
 

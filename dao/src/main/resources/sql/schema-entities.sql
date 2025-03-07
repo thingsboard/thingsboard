@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2024 The Thingsboard Authors
+-- Copyright © 2016-2025 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -702,6 +702,7 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     email_exec varchar(32),
     sms_exec varchar(32),
     alarm_exec varchar(32),
+    version BIGINT DEFAULT 1,
     CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
 );
 
@@ -906,3 +907,44 @@ CREATE TABLE IF NOT EXISTS qr_code_settings (
     qr_code_config VARCHAR(100000),
     CONSTRAINT qr_code_settings_tenant_id_unq_key UNIQUE (tenant_id)
 );
+
+CREATE TABLE IF NOT EXISTS calculated_field (
+    id uuid NOT NULL CONSTRAINT calculated_field_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    entity_type VARCHAR(32),
+    entity_id uuid NOT NULL,
+    type varchar(32) NOT NULL,
+    name varchar(255) NOT NULL,
+    configuration_version int DEFAULT 0,
+    configuration varchar(1000000),
+    version BIGINT DEFAULT 1,
+    debug_settings varchar(1024),
+    CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS calculated_field_link (
+    id uuid NOT NULL CONSTRAINT calculated_field_link_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    entity_type VARCHAR(32),
+    entity_id uuid NOT NULL,
+    calculated_field_id uuid NOT NULL,
+    CONSTRAINT fk_calculated_field_id FOREIGN KEY (calculated_field_id) REFERENCES calculated_field(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cf_debug_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL ,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL, -- calculated field id
+    service_id varchar,
+    cf_id uuid NOT NULL,
+    e_entity_id uuid, -- target entity id
+    e_entity_type varchar,
+    e_msg_id uuid,
+    e_msg_type varchar,
+    e_args varchar,
+    e_result varchar,
+    e_error varchar
+) PARTITION BY RANGE (ts);

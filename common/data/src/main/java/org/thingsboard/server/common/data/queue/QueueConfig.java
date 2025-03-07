@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,22 @@
  */
 package org.thingsboard.server.common.data.queue;
 
+import lombok.Data;
+
 public interface QueueConfig {
 
     boolean isConsumerPerPartition();
 
     int getPollInterval();
+
+    static QueueConfig of(boolean consumerPerPartition, long pollInterval) {
+        return new BasicQueueConfig(consumerPerPartition, (int) pollInterval);
+    }
+
+    @Data
+    class BasicQueueConfig implements QueueConfig {
+        private final boolean consumerPerPartition;
+        private final int pollInterval;
+    }
 
 }

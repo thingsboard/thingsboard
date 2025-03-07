@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelScript;
-import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DaoSqlTest
 @TestPropertySource(properties = {
         "tbel.max_script_body_size=100",
         "tbel.max_total_args_size=50",
@@ -120,9 +119,9 @@ class TbelInvokeServiceTest extends AbstractTbelInvokeTest {
             scriptsIds.add(scriptId);
         }
 
-        Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
-        Map<String, TbelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
-        Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
+        Map<UUID, String> scriptIdToHash = (Map<UUID, String>) ReflectionTestUtils.getField(invokeService, "scriptIdToHash");
+        Map<String, TbelScript> scriptMap = (Map<String, TbelScript>) ReflectionTestUtils.getField(invokeService, "scriptMap");
+        Cache<String, Serializable> compiledScriptsCache = (Cache<String, Serializable>) ReflectionTestUtils.getField(invokeService, "compiledScriptsCache");
 
         String scriptHash = scriptIdToHash.get(scriptsIds.get(0));
 
@@ -140,9 +139,9 @@ class TbelInvokeServiceTest extends AbstractTbelInvokeTest {
             scriptsIds.add(scriptId);
         }
 
-        Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
-        Map<String, TbelScript> scriptMap = getFieldValue(invokeService, "scriptMap");
-        Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
+        Map<UUID, String> scriptIdToHash = (Map<UUID, String>) ReflectionTestUtils.getField(invokeService, "scriptIdToHash");
+        Map<String, TbelScript> scriptMap = (Map<String, TbelScript>) ReflectionTestUtils.getField(invokeService, "scriptMap");
+        Cache<String, Serializable> compiledScriptsCache = (Cache<String, Serializable>) ReflectionTestUtils.getField(invokeService, "compiledScriptsCache");
 
         String scriptHash = scriptIdToHash.get(scriptsIds.get(0));
         for (int i = 0; i < 9; i++) {
@@ -163,8 +162,8 @@ class TbelInvokeServiceTest extends AbstractTbelInvokeTest {
     @Ignore("This test is based on assumption that Caffeine cache is LRU based but in fact it is based on " +
             "Tiny LFU which is the cause that the tests fail sometime: https://arxiv.org/pdf/1512.00727.pdf")
     public void whenCompiledScriptsCacheIsTooBig_thenRemoveRarelyUsedScripts() throws Exception {
-        Map<UUID, String> scriptIdToHash = getFieldValue(invokeService, "scriptIdToHash");
-        Cache<String, Serializable> compiledScriptsCache = getFieldValue(invokeService, "compiledScriptsCache");
+        Map<UUID, String> scriptIdToHash = (Map<UUID, String>) ReflectionTestUtils.getField(invokeService, "scriptIdToHash");
+        Cache<String, Serializable> compiledScriptsCache = (Cache<String, Serializable>) ReflectionTestUtils.getField(invokeService, "compiledScriptsCache");
 
         List<UUID> scriptsIds = new ArrayList<>();
         for (int i = 0; i < 110; i++) { // tbel.compiled_scripts_cache_size = 100

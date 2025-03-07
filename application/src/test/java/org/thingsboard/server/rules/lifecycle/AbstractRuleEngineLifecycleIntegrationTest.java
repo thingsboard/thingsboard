@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,13 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         log.warn("attr updated");
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
         Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
-        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, device.getId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, tbMsgCallback);
+        TbMsg tbMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(device.getId())
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .callback(tbMsgCallback)
+                .build();
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(tenantId, tbMsg, null, null);
         // Pushing Message to the system
         log.warn("before tell tbMsgCallback");

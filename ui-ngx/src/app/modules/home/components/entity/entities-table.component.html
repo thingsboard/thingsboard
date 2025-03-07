@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -46,22 +46,41 @@
             </div>
             <span class="flex-1"></span>
             <div [class.!hidden]="!addEnabled()">
-              <button mat-icon-button [disabled]="isLoading$ | async"
-                      *ngIf="!entitiesTableConfig.addActionDescriptors.length; else addActions"
-                      (click)="addEntity($event)"
-                      matTooltip="{{ translations.add | translate }}"
-                      matTooltipPosition="above">
-                <mat-icon>add</mat-icon>
-              </button>
-              <ng-template #addActions>
-                <button mat-icon-button [disabled]="isLoading$ | async"
-                        *ngIf="entitiesTableConfig.addActionDescriptors.length === 1; else addActionsMenu"
-                        [class.!hidden]="!entitiesTableConfig.addActionDescriptors[0].isEnabled()"
-                        (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)"
-                        matTooltip="{{ entitiesTableConfig.addActionDescriptors[0].name }}"
+              <ng-container *ngIf="!entitiesTableConfig.addActionDescriptors.length; else addActions">
+                <button *ngIf="!entitiesTableConfig.addAsTextButton"
+                        mat-icon-button
+                        [disabled]="isLoading$ | async"
+                        (click)="addEntity($event)"
+                        matTooltip="{{ translations.add | translate }}"
                         matTooltipPosition="above">
-                  <tb-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
+                  <mat-icon>add</mat-icon>
                 </button>
+                <button *ngIf="entitiesTableConfig.addAsTextButton"
+                        mat-stroked-button color="primary"
+                        [disabled]="isLoading$ | async"
+                        (click)="addEntity($event)">
+                  <mat-icon>add</mat-icon>
+                  {{ translations.add | translate }}
+                </button>
+              </ng-container>
+              <ng-template #addActions>
+                <ng-container *ngIf="entitiesTableConfig.addActionDescriptors.length === 1; else addActionsMenu">
+                  <button *ngIf="!entitiesTableConfig.addAsTextButton && entitiesTableConfig.addActionDescriptors[0].isEnabled()"
+                          mat-icon-button
+                          [disabled]="isLoading$ | async"
+                          (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)"
+                          matTooltip="{{ entitiesTableConfig.addActionDescriptors[0].name }}"
+                          matTooltipPosition="above">
+                    <tb-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
+                  </button>
+                  <button *ngIf="entitiesTableConfig.addAsTextButton && entitiesTableConfig.addActionDescriptors[0].isEnabled()"
+                          mat-stroked-button color="primary"
+                          [disabled]="isLoading$ | async"
+                          (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)">
+                    <tb-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
+                    {{ entitiesTableConfig.addActionDescriptors[0].name }}
+                  </button>
+                </ng-container>
                 <ng-template #addActionsMenu>
                   <button mat-icon-button [disabled]="isLoading$ | async"
                           matTooltip="{{ translations.add | translate }}"
@@ -164,6 +183,7 @@
                         [class.lt-lg:!hidden]="column.mobileHide"
                         *matCellDef="let entity; let row = index"
                         [matTooltip]="cellTooltip(entity, column, row)"
+                        #cellMatTooltip="matTooltip"
                         matTooltipPosition="above"
                         [style]="cellStyle(entity, column, row)">
                 <ng-container [ngSwitch]="column.type">
@@ -173,7 +193,8 @@
                        (click)="$event.stopPropagation();"></a>
                   </ng-template>
                   <ng-template [ngSwitchCase]="'entityChips'">
-                    <tb-entity-chips [entity]="entity" [key]="column.key"></tb-entity-chips>
+                    <tb-entity-chips [entity]="entity" [key]="column.key"
+                                     [detailsPagePrefixUrl]="column.entityURL ? column.entityURL(entity) : ''"></tb-entity-chips>
                   </ng-template>
                   <ng-template #defaultContent ngSwitchDefault>
                     <span [innerHTML]="cellContent(entity, column, row)"></span>
@@ -189,6 +210,8 @@
                         [copyText]="column.actionCell.onAction(null, entity)"
                         tooltipText="{{ column.actionCell.nameFunction ? column.actionCell.nameFunction(entity) : column.actionCell.name }}"
                         tooltipPosition="above"
+                        (mouseover)="cellMatTooltip.hide()"
+                        (mouseleave)="cellMatTooltip.show()"
                         [icon]="column.actionCell.icon"
                         [style]="column.actionCell.style">
                       </tb-copy-button>

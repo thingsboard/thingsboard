@@ -40,31 +40,24 @@ The **Widget Editor** will be opened, pre-populated with the content of the defa
 {:copy-code}
 ```
 
- - Put the following JSON content inside the "Settings schema" tab of **Settings schema section**:
+ - Import the following JSON content inside the "Settings form" tab by clicking on 'Import form from JSON' button:
 
 ```json
-{
-    "schema": {
-        "type": "object",
-        "title": "AlarmTableSettings",
-        "properties": {
-            "alarmSeverityColorFunction": {
-                "title": "Alarm severity color function: f(severity)",
-                "type": "string",
-                "default": "if(severity == 'CRITICAL') {return 'red';} else if (severity == 'MAJOR') {return 'orange';} else return 'green'; "
-            }
-        },
-        "required": []
-    },
-    "form": [
-        {
-            "key": "alarmSeverityColorFunction",
-            "type": "javascript"
-        }
-    ]
-}
+[
+  {
+    "id": "alarmSeverityColorFunction",
+    "name": "Alarm severity color function: f(severity)",
+    "type": "javascript",
+    "default": "if (severity == 'CRITICAL') {\n    return 'red';\n} else if (severity == 'MAJOR') {\n    return 'orange';\n} else return 'green';",
+    "required": false
+  }
+]
 {:copy-code}
 ```
+
+ - Clear all 'form selector' fields in the "Widget settings" tab.
+
+ - Turn off 'Has basic mode' switch in the "Widget settings" tab.
 
  - Put the following JavaScript code inside the "JavaScript" section:
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -44,6 +44,7 @@ import {
 } from '@home/components/widget/lib/maps/map-models';
 import { extractType } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-map-provider-settings',
@@ -87,7 +88,8 @@ export class MapProviderSettingsComponent extends PageComponent implements OnIni
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -103,10 +105,14 @@ export class MapProviderSettingsComponent extends PageComponent implements OnIni
       imageMapProviderSettings: [null, []],
       tencentMapProviderSettings: [null, []]
     });
-    this.providerSettingsFormGroup.valueChanges.subscribe(() => {
+    this.providerSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.providerSettingsFormGroup.get('provider').valueChanges.subscribe(() => {
+    this.providerSettingsFormGroup.get('provider').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
     this.updateValidators(false);

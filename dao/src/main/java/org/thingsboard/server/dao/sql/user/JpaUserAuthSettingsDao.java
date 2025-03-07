@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserAuthSettings;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.UserAuthSettingsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.user.UserAuthSettingsDao;
@@ -31,7 +32,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @SqlDao
-public class JpaUserAuthSettingsDao extends JpaAbstractDao<UserAuthSettingsEntity, UserAuthSettings> implements UserAuthSettingsDao {
+public class JpaUserAuthSettingsDao extends JpaAbstractDao<UserAuthSettingsEntity, UserAuthSettings> implements UserAuthSettingsDao, TenantEntityDao<UserAuthSettings> {
 
     private final UserAuthSettingsRepository repository;
 

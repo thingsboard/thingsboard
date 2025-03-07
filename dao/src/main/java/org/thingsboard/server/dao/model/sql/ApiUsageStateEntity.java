@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
@@ -40,7 +40,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.API_USAGE_STATE_TABLE_NAME)
-public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements BaseEntity<ApiUsageState> {
+public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> implements BaseEntity<ApiUsageState> {
 
     @Column(name = ModelConstants.API_USAGE_STATE_TENANT_ID_COLUMN)
     private UUID tenantId;
@@ -77,10 +77,7 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
     }
 
     public ApiUsageStateEntity(ApiUsageState ur) {
-        if (ur.getId() != null) {
-            this.setUuid(ur.getId().getId());
-        }
-        this.setCreatedTime(ur.getCreatedTime());
+        super(ur);
         if (ur.getTenantId() != null) {
             this.tenantId = ur.getTenantId().getId();
         }
@@ -116,6 +113,7 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         ur.setEmailExecState(emailExecState);
         ur.setSmsExecState(smsExecState);
         ur.setAlarmExecState(alarmExecState);
+        ur.setVersion(version);
         return ur;
     }
 

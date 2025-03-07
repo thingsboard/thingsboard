@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
     private long logQueriesThreshold;
 
     @Override
-    public void logQuery(QueryContext ctx, String query, long duration) {
+    public void logQuery(SqlQueryContext ctx, String query, long duration) {
         if (logSqlQueries && duration > logQueriesThreshold) {
 
             String sqlToUse = substituteParametersInSqlString(query, ctx);
