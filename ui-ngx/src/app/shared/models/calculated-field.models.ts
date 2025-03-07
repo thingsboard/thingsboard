@@ -235,10 +235,10 @@ export type CalculatedFieldArgumentEventValue<ValueType = unknown> = CalculatedF
 
 export type CalculatedFieldEventArguments<ValueType = unknown> = Record<string, CalculatedFieldArgumentEventValue<ValueType>>;
 
-export const CalculatedFieldLatestTelemetryArgumentAutocomplete = {
+export const CalculatedFieldCtxLatestTelemetryArgumentAutocomplete = {
   meta: 'object',
   type: '{ ts: number; value: any; }',
-  description: 'Calculated field latest telemetry value argument.',
+  description: 'Calculated field context latest telemetry value argument.',
   children: {
     ts: {
       meta: 'number',
@@ -253,10 +253,10 @@ export const CalculatedFieldLatestTelemetryArgumentAutocomplete = {
   },
 };
 
-export const CalculatedFieldAttributeValueArgumentAutocomplete = {
+export const CalculatedFieldCtxAttributeValueArgumentAutocomplete = {
   meta: 'object',
   type: '{ ts: number; value: any; }',
-  description: 'Calculated field attribute value argument.',
+  description: 'Calculated field context attribute value argument.',
   children: {
     ts: {
       meta: 'number',
@@ -270,6 +270,19 @@ export const CalculatedFieldAttributeValueArgumentAutocomplete = {
     }
   },
 };
+
+export const CalculatedFieldLatestTelemetryArgumentAutocomplete = {
+  meta: 'any',
+  type: 'any',
+  description: 'Calculated field latest telemetry argument value.',
+};
+
+export const CalculatedFieldAttributeValueArgumentAutocomplete = {
+  meta: 'any',
+  type: 'any',
+  description: 'Calculated field attribute argument value.',
+};
+
 export const CalculatedFieldRollingValueArgumentFunctionsAutocomplete = {
   max: {
     meta: 'function',
@@ -513,34 +526,83 @@ export const getCalculatedFieldArgumentsEditorCompleter = (argumentsObj: Record<
     switch (argumentsObj[key].refEntityKey.type) {
       case ArgumentType.Attribute:
         acc[key] = CalculatedFieldAttributeValueArgumentAutocomplete;
+        acc.ctx.children.args.children[key] = CalculatedFieldCtxAttributeValueArgumentAutocomplete;
         break;
       case ArgumentType.LatestTelemetry:
-        acc[key] = CalculatedFieldLatestTelemetryArgumentAutocomplete;
+        acc[key] = { ...CalculatedFieldLatestTelemetryArgumentAutocomplete, children: {} };
+        acc.ctx.children.args.children[key] = CalculatedFieldCtxLatestTelemetryArgumentAutocomplete;
         break;
       case ArgumentType.Rolling:
         acc[key] = CalculatedFieldRollingValueArgumentAutocomplete;
+        acc.ctx.children.args.children[key] = CalculatedFieldRollingValueArgumentAutocomplete;
         break;
     }
     return acc;
-  }, {}));
+  }, {
+    ctx: {
+      meta: 'object',
+      type: '{ args: { [key: string]: object } }',
+      description: 'Calculated field context.',
+      children: {
+        args: {
+          meta: 'object',
+          type: '{ [key: string]: object }',
+          description: 'Calculated field context arguments.',
+          children: {}
+        }
+      }
+    }
+  }));
 }
 
 export const getCalculatedFieldArgumentsHighlights = (
   argumentsObj: Record<string, CalculatedFieldArgument>
 ): AceHighlightRules => {
+  const calculatedFieldArgumentsKeys = Object.keys(argumentsObj).map(key => ({
+    token: 'tb.calculated-field-key',
+    regex: `\\b${key}\\b`,
+    next: argumentsObj[key].refEntityKey.type === ArgumentType.Rolling
+      ? 'calculatedFieldRollingArgumentValue'
+      : 'start'
+  }));
+  const calculatedFieldCtxArgumentsHighlightRules = {
+    calculatedFieldCtxArgs: [
+      dotOperatorHighlightRule,
+      ...calculatedFieldArgumentsKeys.map(argumentRule => argumentRule.next === 'start' ? {...argumentRule, next: 'calculatedFieldSingleArgumentValue' } : argumentRule),
+      endGroupHighlightRule
+    ]
+  };
+
   return {
-    start: Object.keys(argumentsObj).map(key => ({
-      token: 'tb.calculated-field-key',
-      regex: `\\b${key}\\b`,
-      next: argumentsObj[key].refEntityKey.type === ArgumentType.Rolling
-        ? 'calculatedFieldRollingArgumentValue'
-        : 'calculatedFieldSingleArgumentValue'
-    })),
+    start: [
+      calculatedFieldArgumentsContextHighlightRules,
+      ...calculatedFieldArgumentsKeys,
+    ],
+    ...calculatedFieldArgumentsContextValueHighlightRules,
+    ...calculatedFieldCtxArgumentsHighlightRules,
     ...calculatedFieldSingleArgumentValueHighlightRules,
     ...calculatedFieldRollingArgumentValueHighlightRules,
     ...calculatedFieldTimeWindowArgumentValueHighlightRules
   };
 };
+
+const calculatedFieldArgumentsContextHighlightRules: AceHighlightRule = {
+  token: 'tb.calculated-field-ctx',
+  regex: /ctx/,
+  next: 'calculatedFieldCtxValue'
+}
+
+const calculatedFieldArgumentsContextValueHighlightRules: AceHighlightRules = {
+  calculatedFieldCtxValue: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.calculated-field-args',
+      regex: /args/,
+      next: 'calculatedFieldCtxArgs'
+    },
+    endGroupHighlightRule
+  ]
+}
 
 const calculatedFieldSingleArgumentValueHighlightRules: AceHighlightRules = {
   calculatedFieldSingleArgumentValue: [
@@ -597,16 +659,11 @@ const calculatedFieldTimeWindowArgumentValueHighlightRules: AceHighlightRules = 
       regex: /endTs/,
       next: 'no_regex'
     },
-    {
-      token: 'tb.calculated-field-limit',
-      regex: /limit/,
-      next: 'no_regex'
-    },
     endGroupHighlightRule
   ]
 }
 
 export const calculatedFieldDefaultScript = 'return {\n' +
   '    // Convert Fahrenheit to Celsius\n' +
-  '    "temperatureCelsius": (temperature.value - 32) / 1.8\n' +
+  '    "temperatureCelsius": (temperature - 32) / 1.8\n' +
   '};'
