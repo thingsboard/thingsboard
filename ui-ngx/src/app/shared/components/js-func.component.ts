@@ -50,6 +50,7 @@ import { JsFuncModulesComponent } from '@shared/components/js-func-modules.compo
 import { HttpClient } from '@angular/common/http';
 import { map, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { tbelUtilsAutocompletes, tbelUtilsFuncHighlightRules } from '@shared/models/ace/tbel-utils.models';
 
 @Component({
   selector: 'tb-js-func',
@@ -587,6 +588,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
           newMode.$highlightRules.$rules[group] = this.highlightRules[group];
         }
       }
+      if (this.scriptLanguage === ScriptLanguage.TBEL) {
+        newMode.$highlightRules.$rules.start = [...tbelUtilsFuncHighlightRules, ...newMode.$highlightRules.$rules.start];
+      }
       const identifierRule = newMode.$highlightRules.$rules.no_regex.find(rule => rule.token?.includes('identifier'));
       if (identifierRule) {
         identifierRule.next = 'start';
@@ -640,6 +644,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
       }
       if (modulesCompleter) {
         completers.push(modulesCompleter);
+      }
+      if (this.scriptLanguage === ScriptLanguage.TBEL) {
+        completers.push(tbelUtilsAutocompletes);
       }
       completers.push(...this.initialCompleters);
       this.jsEditor.completers = completers;
