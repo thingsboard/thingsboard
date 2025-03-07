@@ -47,14 +47,22 @@ import {
 } from 'echarts/charts';
 import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers';
-import { CallbackDataParams } from 'echarts/types/dist/shared';
+import { CallbackDataParams, ZRColor } from 'echarts/types/dist/shared';
 import GlobalModel from 'echarts/types/src/model/Global';
 import Axis2D from 'echarts/types/src/coord/cartesian/Axis2D';
 import SeriesModel from 'echarts/types/src/model/Series';
 import { MarkLine2DDataItemOption } from 'echarts/types/src/component/marker/MarkLineModel';
 import { measureSymbolOffset } from '@home/components/widget/lib/chart/chart.models';
+import {
+  cssUnits,
+  fontStyles,
+  fontWeights
+} from '@shared/models/widget-settings.models';
+import { TimeSeriesChartTooltipWidgetSettings } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
+import { Renderer2, SecurityContext } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 
-class EChartsModule {
+export class EChartsModule {
   private initialized = false;
 
   init() {
@@ -262,3 +270,101 @@ export const getFocusedSeriesIndex = (chart: ECharts): number => {
   }
   return -1;
 };
+
+export const defaultTooltipSettings: Partial<TimeSeriesChartTooltipWidgetSettings> = {
+  tooltipDateFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: cssUnits[0],
+    style: fontStyles[0],
+    weight: fontWeights[0],
+    lineHeight: '16px'
+  },
+  tooltipDateColor: 'rgba(0, 0, 0, 0.76)'
+}
+
+export const defaultValueSettings: Partial<TimeSeriesChartTooltipWidgetSettings> = {
+  tooltipDateFont: {
+    family: 'Roboto',
+    size: 11,
+    sizeUnit: cssUnits[0],
+    style: fontStyles[0],
+    weight: '500',
+    lineHeight: '16px'
+  },
+  tooltipDateColor: 'rgba(0, 0, 0, 0.76)'
+}
+
+export const getTooltipDateElement = (renderer: Renderer2, dateText: string, settings = defaultTooltipSettings): HTMLElement => {
+  const dateElement: HTMLElement = renderer.createElement('div');
+  renderer.appendChild(dateElement, renderer.createText(dateText));
+  renderer.setStyle(dateElement, 'font-family', settings.tooltipDateFont.family);
+  renderer.setStyle(dateElement, 'font-size', settings.tooltipDateFont.size + settings.tooltipDateFont.sizeUnit);
+  renderer.setStyle(dateElement, 'font-style', settings.tooltipDateFont.style);
+  renderer.setStyle(dateElement, 'font-weight', settings.tooltipDateFont.weight);
+  renderer.setStyle(dateElement, 'line-height', settings.tooltipDateFont.lineHeight);
+  renderer.setStyle(dateElement, 'color', settings.tooltipDateColor);
+  return dateElement
+}
+
+export const getTooltipElement = (renderer: Renderer2, gapSize: string): HTMLElement => {
+  const tooltipElement: HTMLElement = renderer.createElement('div');
+  renderer.setStyle(tooltipElement, 'display', 'flex');
+  renderer.setStyle(tooltipElement, 'flex-direction', 'column');
+  renderer.setStyle(tooltipElement, 'align-items', 'flex-start');
+  renderer.setStyle(tooltipElement, 'gap', gapSize);
+  return tooltipElement;
+}
+
+export const getLabelValueElement = (renderer: Renderer2): HTMLElement => {
+  const labelValueElement: HTMLElement = renderer.createElement('div');
+  renderer.setStyle(labelValueElement, 'display', 'flex');
+  renderer.setStyle(labelValueElement, 'flex-direction', 'row');
+  renderer.setStyle(labelValueElement, 'align-items', 'center');
+  renderer.setStyle(labelValueElement, 'align-self', 'stretch');
+  renderer.setStyle(labelValueElement, 'gap', '12px');
+  return labelValueElement;
+}
+
+export const getLabelElement = (renderer: Renderer2): HTMLElement => {
+  const labelElement: HTMLElement = renderer.createElement('div');
+  renderer.setStyle(labelElement, 'display', 'flex');
+  renderer.setStyle(labelElement, 'align-items', 'center');
+  renderer.setStyle(labelElement, 'gap', '8px');
+  return labelElement;
+}
+
+export const getCircleElement = (renderer: Renderer2, color: ZRColor): HTMLElement => {
+  const circleElement: HTMLElement = renderer.createElement('div');
+  renderer.setStyle(circleElement, 'width', '8px');
+  renderer.setStyle(circleElement, 'height', '8px');
+  renderer.setStyle(circleElement, 'border-radius', '50%');
+  renderer.setStyle(circleElement, 'background', color);
+  return circleElement;
+}
+
+export const getLabelTextElement = (renderer: Renderer2, sanitizer: DomSanitizer, seriesName: string): HTMLElement => {
+  const labelTextElement: HTMLElement = renderer.createElement('div');
+  renderer.setProperty(labelTextElement, 'innerHTML', sanitizer.sanitize(SecurityContext.HTML, seriesName));
+  renderer.setStyle(labelTextElement, 'font-family', 'Roboto');
+  renderer.setStyle(labelTextElement, 'font-size', '12px');
+  renderer.setStyle(labelTextElement, 'font-style', 'normal');
+  renderer.setStyle(labelTextElement, 'font-weight', 400);
+  renderer.setStyle(labelTextElement, 'line-height', '16px');
+  renderer.setStyle(labelTextElement, 'color', 'rgba(0, 0, 0, 0.76)');
+  return labelTextElement;
+}
+
+export const getValueElement = (renderer: Renderer2, sanitizer: DomSanitizer, value: string, settings = defaultValueSettings): HTMLElement => {
+  const valueElement: HTMLElement = renderer.createElement('div');
+  renderer.setProperty(valueElement, 'innerHTML', sanitizer.sanitize(SecurityContext.HTML, value));
+  renderer.setStyle(valueElement, 'flex', '1');
+  renderer.setStyle(valueElement, 'text-align', 'end');
+  renderer.setStyle(valueElement, 'font-family', settings.tooltipDateFont.family);
+  renderer.setStyle(valueElement, 'font-size', settings.tooltipDateFont.size + settings.tooltipDateFont.sizeUnit);
+  renderer.setStyle(valueElement, 'font-style', settings.tooltipDateFont.style);
+  renderer.setStyle(valueElement, 'font-weight', settings.tooltipDateFont.weight);
+  renderer.setStyle(valueElement, 'line-height', settings.tooltipDateFont.lineHeight);
+  renderer.setStyle(valueElement, 'color', settings.tooltipDateColor);
+  return valueElement;
+}
