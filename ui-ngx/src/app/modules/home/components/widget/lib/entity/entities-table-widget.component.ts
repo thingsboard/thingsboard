@@ -42,7 +42,7 @@ import {
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, hashCode, isDefined, isNumber, isObject, isUndefined } from '@core/utils';
+import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isNumber, isObject, isUndefined } from '@core/utils';
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -139,7 +139,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public enableStickyHeader = true;
   public enableStickyAction = true;
   public showCellActionsMenu = true;
-  public pageSizeOptions;
+  public pageSizeOptions = [];
   public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
@@ -161,7 +161,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private widgetResize$: ResizeObserver;
   private destroy$ = new Subject<void>();
 
-  private defaultPageSize = 10;
+  private defaultPageSize;
   private defaultSortOrder = 'entityName';
 
   private contentsInfo: {[key: string]: CellContentInfo} = {};
@@ -311,10 +311,25 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'entity, ctx');
 
     const pageSize = this.settings.defaultPageSize;
+    let pageStepIncrement = this.settings.pageStepIncrement;
+    let pageStepCount = this.settings.pageStepCount;
+
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
+
+    if (!this.defaultPageSize) {
+      this.defaultPageSize = pageStepIncrement ?? 10;
+    }
+
+    if (!isDefinedAndNotNull(pageStepIncrement) || !isDefinedAndNotNull(pageStepCount)) {
+      pageStepIncrement = this.defaultPageSize;
+      pageStepCount = 3;
+    }
+
+    for (let i = 1; i <= pageStepCount; i++) {
+      this.pageSizeOptions.push(pageStepIncrement * i);
+    }
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : 1024;
 
     this.noDataDisplayMessageText =
