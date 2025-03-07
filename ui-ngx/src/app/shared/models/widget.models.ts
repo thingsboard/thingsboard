@@ -587,15 +587,6 @@ export const widgetHeaderActionButtonTypeTranslationMap = new Map<WidgetHeaderAc
   [WidgetHeaderActionButtonType.miniFab, 'widget-config.header-button.button-type-mini-fab']
 ]);
 
-export const widgetHeaderActionButtonTypeMap = new Map<WidgetHeaderActionButtonType, string>([
-  [WidgetHeaderActionButtonType.basic, 'mat-button'],
-  [WidgetHeaderActionButtonType.raised, 'mat-raised-button'],
-  [WidgetHeaderActionButtonType.stroked, 'mat-stroked-button'],
-  [WidgetHeaderActionButtonType.flat, 'mat-flat-button'],
-  [WidgetHeaderActionButtonType.icon, 'mat-icon-button'],
-  [WidgetHeaderActionButtonType.miniFab, 'mat-mini-fab']
-]);
-
 export enum WidgetActionType {
   doNothing = 'doNothing',
   openDashboardState = 'openDashboardState',

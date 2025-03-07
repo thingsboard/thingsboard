@@ -44,7 +44,6 @@ import {
   defaultWidgetAction,
   WidgetActionSource,
   WidgetHeaderActionButtonType,
-  widgetHeaderActionButtonTypeMap,
   WidgetHeaderActionButtonTypes,
   widgetHeaderActionButtonTypeTranslationMap,
   widgetType
@@ -92,7 +91,6 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   widgetHeaderActionButtonType = WidgetHeaderActionButtonType
   widgetHeaderActionButtonTypes = WidgetHeaderActionButtonTypes;
   widgetHeaderActionButtonTypeTranslationMap = widgetHeaderActionButtonTypeTranslationMap;
-  widgetHeaderActionButtonTypeMap = widgetHeaderActionButtonTypeMap;
 
   @ViewChild('columnIndexSelect') columnIndexSelect: MatSelect;
   columnIndexPlaceholderText = this.translate.instant('widget-config.select-column-index');
