@@ -429,6 +429,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
         dataKey.def = 'def' + this.columns.length;
+        dataKey.sortable = !keySettings.disableSorting && !(dataKey.type === DataKeyType.alarm && dataKey.name.startsWith('details.'));
         if (dataKey.type === DataKeyType.alarm && !isDefined(keySettings.columnWidth)) {
           const alarmField = alarmFields[dataKey.name];
           if (alarmField && alarmField.time) {
@@ -1144,10 +1145,6 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     } else {
       return {};
     }
-  }
-
-  isSorting(column: EntityColumn): boolean {
-    return column.type === DataKeyType.alarm && column.name.startsWith('details.');
   }
 
   private clearCache() {

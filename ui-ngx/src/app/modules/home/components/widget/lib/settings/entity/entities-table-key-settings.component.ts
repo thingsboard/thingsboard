@@ -47,7 +47,8 @@ export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
       useCellContentFunction: false,
       cellContentFunction: '',
       defaultColumnVisibility: 'visible',
-      columnSelectionToDisplay: 'enabled'
+      columnSelectionToDisplay: 'enabled',
+      disableSorting: false
     };
   }
 
@@ -61,6 +62,7 @@ export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
       cellContentFunction: [settings.cellContentFunction, [Validators.required]],
       defaultColumnVisibility: [settings.defaultColumnVisibility, []],
       columnSelectionToDisplay: [settings.columnSelectionToDisplay, []],
+      disableSorting: [settings.disableSorting, []]
     });
   }
 
