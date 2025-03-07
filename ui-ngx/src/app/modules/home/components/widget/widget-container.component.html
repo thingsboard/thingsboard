@@ -37,14 +37,79 @@
          class="tb-widget-actions"
          [class]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel && !widgetComponent.widgetContext?.embedTitlePanel && (widget.showTitle||widget.hasAggregation))}"
          (mousedown)="$event.stopPropagation()">
-      <button mat-icon-button *ngFor="let action of widget.customHeaderActions"
-              type="button"
-              [class.!hidden]="isEdit"
-              (click)="action.onAction($event)"
-              matTooltip="{{ action.displayName }}"
-              matTooltipPosition="above">
-        <tb-icon>{{ action.icon }}</tb-icon>
-      </button>
+      <div class="flex items-center gap-2">
+        <ng-container *ngFor="let action of widget.customHeaderActions">
+          @switch (action.buttonType) {
+            @case (widgetHeaderActionButtonType.icon) {
+              <button mat-icon-button
+                      [style]="action.customButtonStyle"
+                      [class.!hidden]="isEdit"
+                      (click)="action.onAction($event)"
+                      matTooltip="{{ action.displayName }}"
+                      matTooltipPosition="above">
+                <tb-icon [style.color]="action.buttonColor">{{ action.icon }}</tb-icon>
+              </button>
+            }
+            @case (widgetHeaderActionButtonType.miniFab) {
+              <button mat-mini-fab
+                      [style]="action.customButtonStyle"
+                      [class.!hidden]="isEdit"
+                      [style.background-color]="action.buttonFillColor"
+                      (click)="action.onAction($event)"
+                      matTooltip="{{ action.displayName }}"
+                      matTooltipPosition="above">
+                <tb-icon [style.color]="action.buttonColor">{{ action.icon }}</tb-icon>
+              </button>
+            }
+            @case (widgetHeaderActionButtonType.basic) {
+              <button [class.!hidden]="isEdit" mat-button
+                      [style]="action.customButtonStyle"
+                      (click)="action.onAction($event)"
+                      matTooltip="{{ action.displayName }}"
+                      matTooltipPosition="above">
+                <tb-icon matButtonIcon *ngIf="action.showIcon" [style.color]="action.buttonColor">{{ action.icon }}</tb-icon>
+                <span [style.color]="action.buttonColor">{{ action.displayName }}</span>
+              </button>
+            }
+            @case (widgetHeaderActionButtonType.raised) {
+              <button [class.!hidden]="isEdit" mat-raised-button
+                      [style]="action.customButtonStyle"
+                      [style.background-color]="action.buttonFillColor"
+                      (click)="action.onAction($event)"
+                      matTooltip="{{ action.displayName }}"
+                      matTooltipPosition="above">
+                <tb-icon matButtonIcon *ngIf="action.showIcon" [style.color]="action.buttonColor">{{ action.icon }}</tb-icon>
+                <span [style.color]="action.buttonColor">{{ action.displayName }}</span>
+              </button>
+            }
+            @case (widgetHeaderActionButtonType.stroked) {
+              <button [class.!hidden]="isEdit" mat-stroked-button
+                      [style]="action.customButtonStyle"
+                      [style.border-color]="action.buttonBorderColor"
+                      [style.background-color]="action.buttonFillColor"
+                      (click)="action.onAction($event)"
+                      matTooltip="{{ action.displayName }}"
+                      matTooltipPosition="above">
+                <tb-icon matButtonIcon *ngIf="action.showIcon" [style.color]="action.buttonColor">{{ action.icon }}</tb-icon>
+                <span [style.color]="action.buttonColor">{{ action.displayName }}</span>
+              </button>
+            }
+            @case (widgetHeaderActionButtonType.flat) {
+              <button [class.!hidden]="isEdit" mat-flat-button
+                      [style]="action.customButtonStyle"
+                      [style.background-color]="action.buttonFillColor"
+                      [style.border-color]="action.buttonBorderColor"
+                      (click)="action.onAction($event)"
+                      matTooltip="{{ action.displayName }}"
+                      matTooltipPosition="above">
+                <tb-icon matButtonIcon *ngIf="action.showIcon" [style.color]="action.buttonColor">{{ action.icon }}</tb-icon>
+                <span [style.color]="action.buttonColor">{{ action.displayName }}</span>
+              </button>
+            }
+          }
+        </ng-container>
+      </div>
+
       <button mat-icon-button *ngFor="let action of widget.widgetActions"
               type="button"
               [class.!hidden]="isEdit || !action.show"
