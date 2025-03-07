@@ -204,7 +204,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   onMouseDown(event: MouseEvent) {
-    if (event) {
+    if (event && this.isEdit) {
       event.stopPropagation();
     }
     this.widgetComponentAction.emit({
