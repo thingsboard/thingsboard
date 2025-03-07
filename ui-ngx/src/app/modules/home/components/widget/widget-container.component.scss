@@ -86,8 +86,8 @@ div.tb-widget {
     flex-direction: row;
     place-content: center flex-start;
     align-items: center;
-    z-index: 19;
-    margin: 5px 0 5px;
+    z-index: 101;
+    margin: 5px 0 0;
 
     &-absolute {
       position: absolute;

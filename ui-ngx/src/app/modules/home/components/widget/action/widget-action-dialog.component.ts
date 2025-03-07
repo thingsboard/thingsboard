@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, DestroyRef, Inject, OnDestroy, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -28,7 +28,6 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import {
@@ -48,12 +47,12 @@ import {
   widgetHeaderActionButtonTypeTranslationMap,
   widgetType
 } from '@shared/models/widget.models';
-import { takeUntil } from 'rxjs/operators';
 import { CustomActionEditorCompleter } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import { WidgetService } from '@core/http/widget.service';
 import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import { MatSelect } from '@angular/material/select';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
@@ -71,8 +70,6 @@ export interface WidgetActionDialogData {
 })
 export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDialogComponent,
                                                  WidgetActionDescriptorInfo> implements OnInit, OnDestroy, ErrorStateMatcher {
-
-  private destroy$ = new Subject<void>();
 
   widgetActionFormGroup: FormGroup;
 
@@ -103,7 +100,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<WidgetActionDialogComponent, WidgetActionDescriptorInfo>,
               public fb: FormBuilder,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
     if (this.isAdd) {
@@ -141,7 +139,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     this.updateShowWidgetActionForm();
     this.widgetHeaderButtonValidators();
     this.widgetActionFormGroup.get('actionSourceId').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((value) => {
       this.widgetActionFormGroup.get('name').updateValueAndValidity();
       this.updateShowWidgetActionForm();
@@ -153,12 +151,12 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       }
     });
     this.widgetActionFormGroup.get('useShowWidgetActionFunction').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateShowWidgetActionForm();
     });
     this.widgetActionFormGroup.get('buttonType').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.widgetHeaderButtonValidators());
     setTimeout(() => {
       if (this.action?.actionSourceId === 'cellClick') {
@@ -172,8 +170,6 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   }
 
   ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
     super.ngOnDestroy();
   }
 
