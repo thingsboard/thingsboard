@@ -225,7 +225,7 @@ export interface CalculatedFieldLatestTelemetryArgumentValue<ValueType = unknown
 }
 
 export interface CalculatedFieldRollingTelemetryArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
-  timeWindow: { startTs: number; endTs: number; limit: number };
+  timeWindow: { startTs: number; endTs: number; };
   values: CalculatedFieldSingleArgumentValue<ValueType>[];
 }
 
@@ -529,7 +529,7 @@ export const getCalculatedFieldArgumentsEditorCompleter = (argumentsObj: Record<
         acc.ctx.children.args.children[key] = CalculatedFieldCtxAttributeValueArgumentAutocomplete;
         break;
       case ArgumentType.LatestTelemetry:
-        acc[key] = { ...CalculatedFieldLatestTelemetryArgumentAutocomplete, children: {} };
+        acc[key] = CalculatedFieldLatestTelemetryArgumentAutocomplete;
         acc.ctx.children.args.children[key] = CalculatedFieldCtxLatestTelemetryArgumentAutocomplete;
         break;
       case ArgumentType.Rolling:
