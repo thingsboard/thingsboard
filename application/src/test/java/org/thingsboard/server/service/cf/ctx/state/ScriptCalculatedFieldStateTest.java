@@ -191,7 +191,7 @@ public class ScriptCalculatedFieldStateTest {
 
         config.setArguments(Map.of("deviceTemperature", argument1, "assetHumidity", argument2));
 
-        config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity.value}");
+        config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity}");
 
         Output output = new Output();
         output.setType(OutputType.ATTRIBUTES);

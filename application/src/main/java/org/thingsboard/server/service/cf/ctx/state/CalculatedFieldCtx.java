@@ -136,11 +136,14 @@ public class CalculatedFieldCtx {
             throw new IllegalArgumentException("TBEL script engine is disabled!");
         }
 
+        List<String> ctxAndArgNames = new ArrayList<>(argNames.size() + 1);
+        ctxAndArgNames.add("ctx");
+        ctxAndArgNames.addAll(argNames);
         return new CalculatedFieldTbelScriptEngine(
                 tenantId,
                 tbelInvokeService,
                 expression,
-                argNames.toArray(String[]::new)
+                ctxAndArgNames.toArray(String[]::new)
         );
     }
 

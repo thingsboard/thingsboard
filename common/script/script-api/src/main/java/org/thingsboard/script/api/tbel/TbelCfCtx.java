@@ -15,10 +15,22 @@
  */
 package org.thingsboard.script.api.tbel;
 
-public interface TbelCfObject {
+import lombok.Getter;
 
-    long OBJ_SIZE = 32L; // Approximate calculation;
+import java.util.Collections;
+import java.util.Map;
 
-    long memorySize();
+public class TbelCfCtx implements TbelCfObject {
 
+    @Getter
+    private final Map<String, TbelCfArg> args;
+
+    public TbelCfCtx(Map<String, TbelCfArg> args) {
+        this.args = Collections.unmodifiableMap(args);
+    }
+
+    @Override
+    public long memorySize() {
+        return OBJ_SIZE;
+    }
 }
