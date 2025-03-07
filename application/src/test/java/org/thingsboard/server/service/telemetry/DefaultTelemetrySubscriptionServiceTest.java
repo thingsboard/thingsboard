@@ -31,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -51,6 +52,7 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -137,12 +139,14 @@ class DefaultTelemetrySubscriptionServiceTest {
     TbApiUsageStateService apiUsageStateService;
     @Mock
     CalculatedFieldQueueService calculatedFieldQueueService;
+    @Mock
+    DeviceStateManager deviceStateManager;
 
     DefaultTelemetrySubscriptionService telemetryService;
 
     @BeforeEach
     void setup() {
-        telemetryService = new DefaultTelemetrySubscriptionService(attrService, tsService, tbEntityViewService, apiUsageClient, apiUsageStateService, calculatedFieldQueueService);
+        telemetryService = new DefaultTelemetrySubscriptionService(attrService, tsService, tbEntityViewService, apiUsageClient, apiUsageStateService, calculatedFieldQueueService, deviceStateManager);
         ReflectionTestUtils.setField(telemetryService, "clusterService", clusterService);
         ReflectionTestUtils.setField(telemetryService, "partitionService", partitionService);
         ReflectionTestUtils.setField(telemetryService, "subscriptionManagerService", Optional.of(subscriptionManagerService));
@@ -658,6 +662,184 @@ class DefaultTelemetrySubscriptionServiceTest {
         then(clusterService).should(never()).pushMsgToCore(any(), any());
     }
 
+    @Test
+    void shouldNotifyDeviceStateManagerWhenDeviceInactivityTimeoutWasUpdated() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        var inactivityTimeout = new BaseAttributeKvEntry(123L, new LongDataEntry("inactivityTimeout", 5000L));
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entry(inactivityTimeout)
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attrService.save(tenantId, deviceId, request.getScope(), request.getEntries())).willReturn(immediateFuture(listOfNNumbers(request.getEntries().size())));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(deviceStateManager).should().onDeviceInactivityTimeoutUpdate(tenantId, deviceId, 5000L, TbCallback.EMPTY);
+    }
+
+    @Test
+    void shouldNotNotifyDeviceStateManagerWhenDeviceInactivityTimeoutSaveWasSkipped() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        var inactivityTimeout = new BaseAttributeKvEntry(123L, new LongDataEntry("inactivityTimeout", 5000L));
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entry(inactivityTimeout)
+                .strategy(new AttributesSaveRequest.Strategy(false, true, true))
+                .build();
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(deviceStateManager).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = EntityType.class,
+            names = {"DEVICE", "API_USAGE_STATE"}, // API usage state excluded due to coverage in another test
+            mode = EnumSource.Mode.EXCLUDE
+    )
+    void shouldNotNotifyDeviceStateManagerWhenInactivityTimeoutWasUpdatedButEntityTypeIsNotDevice(EntityType entityType) {
+        // GIVEN
+        var nonDeviceId = EntityIdFactory.getByTypeAndUuid(entityType, "cc51e450-53e1-11ee-883e-e56b48fd2088");
+        var inactivityTimeout = new BaseAttributeKvEntry(123L, new LongDataEntry("inactivityTimeout", 5000L));
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(nonDeviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entry(inactivityTimeout)
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attrService.save(tenantId, nonDeviceId, request.getScope(), request.getEntries())).willReturn(immediateFuture(listOfNNumbers(request.getEntries().size())));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(deviceStateManager).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = AttributeScope.class,
+            names = {"SERVER_SCOPE"},
+            mode = EnumSource.Mode.EXCLUDE
+    )
+    void shouldNotNotifyDeviceStateManagerWhenInactivityTimeoutWasUpdatedButAttributeScopeIsNotServer(AttributeScope nonServerScope) {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        var inactivityTimeout = new BaseAttributeKvEntry(123L, new LongDataEntry("inactivityTimeout", 5000L));
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(nonServerScope)
+                .entry(inactivityTimeout)
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attrService.save(tenantId, deviceId, request.getScope(), request.getEntries())).willReturn(immediateFuture(listOfNNumbers(request.getEntries().size())));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(deviceStateManager).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldNotNotifyDeviceStateManagerWhenUpdatedAttributesDoNotContainInactivityTimeout() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        var inactivityTimeout = new BaseAttributeKvEntry(123L, new LongDataEntry("notInactivityTimeout", 5000L));
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entry(inactivityTimeout)
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attrService.save(tenantId, deviceId, request.getScope(), request.getEntries())).willReturn(immediateFuture(listOfNNumbers(request.getEntries().size())));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(deviceStateManager).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldUseInactivityTimeoutEntryWithTheGreatestVersion() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        List<AttributeKvEntry> entries = List.of(
+                new BaseAttributeKvEntry(new LongDataEntry("inactivityTimeout", 0L), 0L, null),
+                new BaseAttributeKvEntry(new LongDataEntry("inactivityTimeout", 1000L), 3L, 1L),
+                new BaseAttributeKvEntry(new LongDataEntry("inactivityTimeout", 2000L), 2L, 2L),
+                new BaseAttributeKvEntry(new LongDataEntry("inactivityTimeout", 3000L), 1L, 3L)
+        );
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entries(entries)
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attrService.save(tenantId, deviceId, request.getScope(), request.getEntries())).willReturn(immediateFuture(listOfNNumbers(request.getEntries().size())));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(deviceStateManager).should().onDeviceInactivityTimeoutUpdate(tenantId, deviceId, 3000L, TbCallback.EMPTY);
+    }
+
+    @Test
+    void shouldUseInactivityTimeoutEntryWithTheGreatestLastUpdateTsWhenVersionsAreTheSame() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+        List<AttributeKvEntry> entries = List.of(
+                new BaseAttributeKvEntry(new LongDataEntry("inactivityTimeout", 1000L), 1L, 1L),
+                new BaseAttributeKvEntry(new LongDataEntry("inactivityTimeout", 2000L), 2L, 1L),
+                new BaseAttributeKvEntry(new LongDataEntry("inactivityTimeout", 3000L), 3L, 1L)
+        );
+
+        var request = AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .entries(entries)
+                .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                .build();
+
+        given(attrService.save(tenantId, deviceId, request.getScope(), request.getEntries())).willReturn(immediateFuture(listOfNNumbers(request.getEntries().size())));
+
+        // WHEN
+        telemetryService.saveAttributes(request);
+
+        // THEN
+        then(deviceStateManager).should().onDeviceInactivityTimeoutUpdate(tenantId, deviceId, 3000L, TbCallback.EMPTY);
+    }
+
     /* --- Delete attributes API --- */
 
     @Test
@@ -805,6 +987,121 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         // THEN
         then(clusterService).should(never()).pushMsgToCore(any(), any());
+    }
+
+    @Test
+    void shouldNotifyDeviceStateManagerWhenDeviceInactivityTimeoutWasDeleted() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .keys(List.of("inactivityTimeout", "someOtherDeletedAttribute"))
+                .build();
+
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), request.getKeys())).willReturn(immediateFuture(request.getKeys()));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(deviceStateManager).should().onDeviceInactivityTimeoutUpdate(tenantId, deviceId, 0L, TbCallback.EMPTY);
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = EntityType.class,
+            names = {"DEVICE", "API_USAGE_STATE"}, // API usage state excluded due to coverage in another test
+            mode = EnumSource.Mode.EXCLUDE
+    )
+    void shouldNotNotifyDeviceStateManagerWhenInactivityTimeoutWasDeletedButEntityTypeIsNotDevice(EntityType entityType) {
+        // GIVEN
+        var nonDeviceId = EntityIdFactory.getByTypeAndUuid(entityType, "cc51e450-53e1-11ee-883e-e56b48fd2088");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(nonDeviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .keys(List.of("inactivityTimeout", "someOtherDeletedAttribute"))
+                .build();
+
+        given(attrService.removeAll(tenantId, nonDeviceId, request.getScope(), request.getKeys())).willReturn(immediateFuture(request.getKeys()));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(deviceStateManager).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = AttributeScope.class,
+            names = {"SERVER_SCOPE"},
+            mode = EnumSource.Mode.EXCLUDE
+    )
+    void shouldNotNotifyDeviceStateManagerWhenInactivityTimeoutWasDeletedButAttributeScopeIsNotServer(AttributeScope nonServerScope) {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(nonServerScope)
+                .keys(List.of("inactivityTimeout", "someOtherDeletedAttribute"))
+                .build();
+
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), request.getKeys())).willReturn(immediateFuture(request.getKeys()));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(deviceStateManager).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldNotNotifyDeviceStateManagerWhenInactivityTimeoutWasNotDeleted() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .keys(List.of("someOtherDeletedAttribute"))
+                .build();
+
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), request.getKeys())).willReturn(immediateFuture(request.getKeys()));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(deviceStateManager).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldNotNotifyDeviceStateManagerWhenDeviceInactivityTimeoutDeleteFailed() {
+        // GIVEN
+        var deviceId = DeviceId.fromString("cc51e450-53e1-11ee-883e-e56b48fd2088");
+
+        var request = AttributesDeleteRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SERVER_SCOPE)
+                .keys(List.of("inactivityTimeout", "someOtherDeletedAttribute"))
+                .build();
+
+        given(attrService.removeAll(tenantId, deviceId, request.getScope(), request.getKeys())).willReturn(immediateFailedFuture(new RuntimeException("failed to delete")));
+
+        // WHEN
+        telemetryService.deleteAttributes(request);
+
+        // THEN
+        then(deviceStateManager).shouldHaveNoInteractions();
     }
 
     // used to emulate versions returned by save APIs

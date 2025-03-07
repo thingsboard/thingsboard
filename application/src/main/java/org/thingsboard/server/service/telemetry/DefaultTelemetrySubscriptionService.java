@@ -31,10 +31,12 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -43,6 +45,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
@@ -55,12 +58,11 @@ import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
-import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
+import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +71,11 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.comparingLong;
+import static java.util.Comparator.naturalOrder;
+import static java.util.Comparator.nullsFirst;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -83,6 +90,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
     private final CalculatedFieldQueueService calculatedFieldQueueService;
+    private final DeviceStateManager deviceStateManager;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -94,13 +102,15 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                @Lazy TbEntityViewService tbEntityViewService,
                                                TbApiUsageReportClient apiUsageClient,
                                                TbApiUsageStateService apiUsageStateService,
-                                               CalculatedFieldQueueService calculatedFieldQueueService) {
+                                               CalculatedFieldQueueService calculatedFieldQueueService,
+                                               DeviceStateManager deviceStateManager) {
         this.attrService = attrService;
         this.tsService = tsService;
         this.tbEntityViewService = tbEntityViewService;
         this.apiUsageClient = apiUsageClient;
         this.apiUsageStateService = apiUsageStateService;
         this.calculatedFieldQueueService = calculatedFieldQueueService;
+        this.deviceStateManager = deviceStateManager;
     }
 
     @PostConstruct
@@ -201,17 +211,48 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             }
         }, t -> request.getCallback().onFailure(t));
 
-        if (strategy.saveAttributes()
-                && entityId.getEntityType() == EntityType.DEVICE
-                && TbAttributeSubscriptionScope.SHARED_SCOPE.name().equalsIgnoreCase(request.getScope().name())
-                && request.isNotifyDevice()) {
+        if (shouldSendSharedAttributesUpdatedNotification(request)) {
             addMainCallback(resultFuture, success -> clusterService.pushMsgToCore(
                     DeviceAttributesEventNotificationMsg.onUpdate(tenantId, new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, request.getEntries()), null
             ));
         }
 
+        if (shouldCheckForInactivityTimeoutUpdates(request)) {
+            findNewInactivityTimeout(request.getEntries()).ifPresent(newInactivityTimeout ->
+                    addMainCallback(resultFuture, success -> deviceStateManager.onDeviceInactivityTimeoutUpdate(
+                            tenantId, new DeviceId(entityId.getId()), newInactivityTimeout, TbCallback.EMPTY)
+                    )
+            );
+        }
+
         if (strategy.sendWsUpdate()) {
             addWsCallback(resultFuture, success -> onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries()));
+        }
+    }
+
+    private static boolean shouldSendSharedAttributesUpdatedNotification(AttributesSaveRequest request) {
+        return request.getStrategy().saveAttributes() && shouldSendSharedAttributesNotification(request.getEntityId(), request.getScope(), request.isNotifyDevice());
+    }
+
+    private static boolean shouldCheckForInactivityTimeoutUpdates(AttributesSaveRequest request) {
+        return request.getStrategy().saveAttributes()
+                && request.getEntityId().getEntityType() == EntityType.DEVICE
+                && request.getScope() == AttributeScope.SERVER_SCOPE;
+    }
+
+    private static Optional<Long> findNewInactivityTimeout(List<AttributeKvEntry> entries) {
+        return entries.stream()
+                .filter(entry -> Objects.equals(DefaultDeviceStateService.INACTIVITY_TIMEOUT, entry.getKey()))
+                // Select the entry with the highest version, or if the versions are equal, the one with the most recent update timestamp
+                .max(comparing(AttributeKvEntry::getVersion, nullsFirst(naturalOrder())).thenComparingLong(AttributeKvEntry::getLastUpdateTs))
+                .map(DefaultTelemetrySubscriptionService::parseAsLong);
+    }
+
+    private static long parseAsLong(KvEntry kve) {
+        try {
+            return Long.parseLong(kve.getValueAsString());
+        } catch (NumberFormatException e) {
+            return 0L;
         }
     }
 
@@ -233,15 +274,35 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                 t -> request.getCallback().onFailure(t)
         );
 
-        if (entityId.getEntityType() == EntityType.DEVICE
-                && TbAttributeSubscriptionScope.SHARED_SCOPE.name().equalsIgnoreCase(request.getScope().name())
-                && request.isNotifyDevice()) {
+        if (shouldSendSharedAttributesDeletedNotification(request)) {
             addMainCallback(deleteFuture, success -> clusterService.pushMsgToCore(
                     DeviceAttributesEventNotificationMsg.onDelete(tenantId, new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, request.getKeys()), null
             ));
         }
 
+        if (inactivityTimeoutDeleted(request)) {
+            addMainCallback(deleteFuture, success -> deviceStateManager.onDeviceInactivityTimeoutUpdate(
+                    tenantId, new DeviceId(entityId.getId()), 0L, TbCallback.EMPTY)
+            );
+        }
+
         addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, request.getScope().name(), request.getKeys()));
+    }
+
+    private static boolean shouldSendSharedAttributesDeletedNotification(AttributesDeleteRequest request) {
+        return shouldSendSharedAttributesNotification(request.getEntityId(), request.getScope(), request.isNotifyDevice());
+    }
+
+    private static boolean shouldSendSharedAttributesNotification(EntityId entityId, AttributeScope scope, boolean notifyDevice) {
+        return entityId.getEntityType() == EntityType.DEVICE
+                && scope == AttributeScope.SHARED_SCOPE
+                && notifyDevice;
+    }
+
+    private static boolean inactivityTimeoutDeleted(AttributesDeleteRequest request) {
+        return request.getEntityId().getEntityType() == EntityType.DEVICE
+                && request.getScope() == AttributeScope.SERVER_SCOPE
+                && request.getKeys().stream().anyMatch(key -> Objects.equals(DefaultDeviceStateService.INACTIVITY_TIMEOUT, key));
     }
 
     @Override
@@ -293,7 +354,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                         if (entries != null) {
                                             Optional<TsKvEntry> tsKvEntry = entries.stream()
                                                     .filter(entry -> entry.getTs() > startTs && entry.getTs() <= endTs)
-                                                    .max(Comparator.comparingLong(TsKvEntry::getTs));
+                                                    .max(comparingLong(TsKvEntry::getTs));
                                             tsKvEntry.ifPresent(entityViewLatest::add);
                                         }
                                     }
