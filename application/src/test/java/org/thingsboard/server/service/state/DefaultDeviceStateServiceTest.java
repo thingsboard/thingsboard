@@ -69,7 +69,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -1074,7 +1074,7 @@ public class DefaultDeviceStateServiceTest {
         final long defaultTimeout = 1000;
         initStateService(defaultTimeout);
         given(deviceService.findDeviceById(any(TenantId.class), any(DeviceId.class))).willReturn(new Device(deviceId));
-        given(attributesService.find(any(TenantId.class), any(EntityId.class), any(AttributeScope.class), anyList())).willReturn(Futures.immediateFuture(Collections.emptyList()));
+        given(attributesService.find(any(TenantId.class), any(EntityId.class), any(AttributeScope.class), anyCollection())).willReturn(Futures.immediateFuture(Collections.emptyList()));
 
         TransportProtos.DeviceStateServiceMsgProto proto = TransportProtos.DeviceStateServiceMsgProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
@@ -1156,7 +1156,7 @@ public class DefaultDeviceStateServiceTest {
         final long defaultTimeout = 1000;
         initStateService(defaultTimeout);
         given(deviceService.findDeviceById(any(TenantId.class), any(DeviceId.class))).willReturn(new Device(deviceId));
-        given(attributesService.find(any(TenantId.class), any(EntityId.class), any(AttributeScope.class), anyList())).willReturn(Futures.immediateFuture(Collections.emptyList()));
+        given(attributesService.find(any(TenantId.class), any(EntityId.class), any(AttributeScope.class), anyCollection())).willReturn(Futures.immediateFuture(Collections.emptyList()));
 
         long currentTime = System.currentTimeMillis();
         DeviceState deviceState = DeviceState.builder()
