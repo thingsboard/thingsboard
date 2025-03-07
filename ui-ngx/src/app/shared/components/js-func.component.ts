@@ -241,6 +241,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
         this.updateJsWorkerGlobals();
         this.initialCompleters = this.jsEditor.completers || [];
         this.updateCompleters();
+        this.updateHighlightRules();
         this.editorResize$ = new ResizeObserver(() => {
           this.onAceEditorResize();
         });
@@ -577,22 +578,24 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
 
   private updateHighlightRules(): void {
     // @ts-ignore
-    if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
+    if (!!this.jsEditor.session.$mode) {
       // @ts-ignore
       const newMode = new this.jsEditor.session.$mode.constructor();
       newMode.$highlightRules = new newMode.HighlightRules();
-      for(const group in this.highlightRules) {
-        if(!!newMode.$highlightRules.$rules[group]) {
-          newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
-        } else {
-          newMode.$highlightRules.$rules[group] = this.highlightRules[group];
+      if (!!this.highlightRules) {
+        for(const group in this.highlightRules) {
+          if(!!newMode.$highlightRules.$rules[group]) {
+            newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
+          } else {
+            newMode.$highlightRules.$rules[group] = this.highlightRules[group];
+          }
         }
       }
       if (this.scriptLanguage === ScriptLanguage.TBEL) {
         newMode.$highlightRules.$rules.start = [...tbelUtilsFuncHighlightRules, ...newMode.$highlightRules.$rules.start];
       }
       const identifierRule = newMode.$highlightRules.$rules.no_regex.find(rule => rule.token?.includes('identifier'));
-      if (identifierRule) {
+      if (identifierRule && identifierRule.next === 'no_regex') {
         identifierRule.next = 'start';
       }
       // @ts-ignore
