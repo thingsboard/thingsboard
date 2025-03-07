@@ -241,7 +241,6 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
         this.updateJsWorkerGlobals();
         this.initialCompleters = this.jsEditor.completers || [];
         this.updateCompleters();
-        this.updateHighlightRules();
         this.editorResize$ = new ResizeObserver(() => {
           this.onAceEditorResize();
         });
