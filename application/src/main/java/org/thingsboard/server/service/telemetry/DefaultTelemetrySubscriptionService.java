@@ -259,8 +259,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                 .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
                                                 .callback(new FutureCallback<>() {
                                                     @Override
-                                                    public void onSuccess(@Nullable Void tmp) {
-                                                    }
+                                                    public void onSuccess(@Nullable Void tmp) {}
 
                                                     @Override
                                                     public void onFailure(Throwable t) {
@@ -324,6 +323,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         addMainCallback(saveFuture, result -> callback.onSuccess(null), callback::onFailure);
     }
 
+    private <S> void addMainCallback(ListenableFuture<S> saveFuture, Consumer<S> onSuccess) {
+        addMainCallback(saveFuture, onSuccess, null);
+    }
+
     private <S> void addMainCallback(ListenableFuture<S> saveFuture, Consumer<S> onSuccess, Consumer<Throwable> onFailure) {
         DonAsynchron.withCallback(saveFuture, onSuccess, onFailure, tsCallBackExecutor);
     }
@@ -345,13 +348,12 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             }
 
             @Override
-            public void onFailure(Throwable t) {
-            }
+            public void onFailure(Throwable t) {}
         };
     }
 
     private FutureCallback<Void> getCalculatedFieldCallback(FutureCallback<List<String>> originalCallback, List<String> keys) {
-        return new FutureCallback<Void>() {
+        return new FutureCallback<>() {
             @Override
             public void onSuccess(Void unused) {
                 originalCallback.onSuccess(keys);

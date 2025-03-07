@@ -90,7 +90,7 @@ public class ScriptCalculatedFieldStateTest {
         state.arguments = new HashMap<>(Map.of("assetHumidity", assetHumidityArgEntry));
 
         Map<String, ArgumentEntry> newArgs = Map.of("deviceTemperature", deviceTemperatureArgEntry);
-        boolean stateUpdated = state.updateState(newArgs);
+        boolean stateUpdated = state.updateState(ctx, newArgs);
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -107,7 +107,7 @@ public class ScriptCalculatedFieldStateTest {
 
         SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(ts, new LongDataEntry("assetHumidity", 41L), 349L);
         Map<String, ArgumentEntry> newArgs = Map.of("assetHumidity", newArgEntry);
-        boolean stateUpdated = state.updateState(newArgs);
+        boolean stateUpdated = state.updateState(ctx, newArgs);
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -191,7 +191,7 @@ public class ScriptCalculatedFieldStateTest {
 
         config.setArguments(Map.of("deviceTemperature", argument1, "assetHumidity", argument2));
 
-        config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity.value}");
+        config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity}");
 
         Output output = new Output();
         output.setType(OutputType.ATTRIBUTES);

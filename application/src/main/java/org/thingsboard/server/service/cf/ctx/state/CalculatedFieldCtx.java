@@ -71,6 +71,7 @@ public class CalculatedFieldCtx {
 
     private long maxDataPointsPerRollingArg;
     private long maxStateSize;
+    private long maxSingleValueArgumentSize;
 
     public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService, ApiLimitService apiLimitService) {
         this.calculatedField = calculatedField;
@@ -104,6 +105,7 @@ public class CalculatedFieldCtx {
 
         this.maxDataPointsPerRollingArg = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
         this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
+        this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
     }
 
     public void init() {
@@ -134,11 +136,14 @@ public class CalculatedFieldCtx {
             throw new IllegalArgumentException("TBEL script engine is disabled!");
         }
 
+        List<String> ctxAndArgNames = new ArrayList<>(argNames.size() + 1);
+        ctxAndArgNames.add("ctx");
+        ctxAndArgNames.addAll(argNames);
         return new CalculatedFieldTbelScriptEngine(
                 tenantId,
                 tbelInvokeService,
                 expression,
-                argNames.toArray(String[]::new)
+                ctxAndArgNames.toArray(String[]::new)
         );
     }
 

@@ -134,14 +134,20 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     public void process(CalculatedFieldEntityDeleteMsg msg) {
         log.info("[{}] Processing CF entity delete msg.", msg.getEntityId());
         if (this.entityId.equals(msg.getEntityId())) {
-            MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
-            states.forEach((cfId, state) -> cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
-            ctx.stop(ctx.getSelf());
+            if (states.isEmpty()) {
+                msg.getCallback().onSuccess();
+            } else {
+                MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
+                states.forEach((cfId, state) -> cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
+                ctx.stop(ctx.getSelf());
+            }
         } else {
             var cfId = new CalculatedFieldId(msg.getEntityId().getId());
             var state = states.remove(cfId);
             if (state != null) {
                 cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
+            } else {
+                msg.getCallback().onSuccess();
             }
         }
     }
@@ -242,7 +248,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             justRestored = true;
         }
         if (state.isSizeOk()) {
-            if (state.updateState(newArgValues) || justRestored) {
+            if (state.updateState(ctx, newArgValues) || justRestored) {
                 cfIdList = new ArrayList<>(cfIdList);
                 cfIdList.add(ctx.getCfId());
                 processStateIfReady(ctx, cfIdList, state, tbMsgId, tbMsgType, callback);
@@ -274,36 +280,34 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) throws CalculatedFieldException {
         CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
-        boolean stateSizeOk;
-        if (ctx.isInitialized() && state.isReady()) {
-            try {
-                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
+        boolean stateSizeChecked = false;
+        try {
+            if (ctx.isInitialized() && state.isReady()) {
+                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(systemContext.getCfCalculationResultTimeout(), TimeUnit.SECONDS);
                 state.checkStateSize(ctxId, ctx.getMaxStateSize());
-                stateSizeOk = state.isSizeOk();
-                if (stateSizeOk) {
+                stateSizeChecked = true;
+                if (state.isSizeOk()) {
                     cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
                     if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
                         systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
                     }
                 }
-            } catch (Exception e) {
-                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(tbMsgId).msgType(tbMsgType).arguments(state.getArguments()).cause(e).build();
             }
-        } else {
-            state.checkStateSize(ctxId, ctx.getMaxStateSize());
-            stateSizeOk = state.isSizeOk();
-            if (stateSizeOk) {
-                callback.onSuccess(); // State was updated but no calculation performed;
+        } catch (Exception e) {
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(tbMsgId).msgType(tbMsgType).arguments(state.getArguments()).cause(e).build();
+        } finally {
+            if (!stateSizeChecked) {
+                state.checkStateSize(ctxId, ctx.getMaxStateSize());
             }
-        }
-        if (stateSizeOk) {
-            cfStateService.persistState(ctxId, state, callback);
-        } else {
-            removeStateAndRaiseSizeException(ctxId, CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build(), callback);
+            if (state.isSizeOk()) {
+                cfStateService.persistState(ctxId, state, callback);
+            } else {
+                removeStateAndRaiseSizeException(ctxId, CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build(), callback);
+            }
         }
     }
 
-    private void removeStateAndRaiseSizeException(CalculatedFieldEntityCtxId ctxId, CalculatedFieldException ex, TbCallback callback) {
+    private void removeStateAndRaiseSizeException(CalculatedFieldEntityCtxId ctxId, CalculatedFieldException ex, TbCallback callback) throws CalculatedFieldException {
         // We remove the state, but remember that it is over-sized in a local map.
         cfStateService.removeState(ctxId, new TbCallback() {
             @Override
@@ -316,6 +320,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 callback.onFailure(ex);
             }
         });
+        throw ex;
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {

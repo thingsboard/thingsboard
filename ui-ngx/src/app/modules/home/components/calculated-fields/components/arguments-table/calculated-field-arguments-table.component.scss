@@ -28,6 +28,17 @@
     .key-text {
       font-size: 13px;
     }
+
+    .copy-argument-name {
+      visibility: hidden;
+      transition: visibility 0.1s;
+    }
+
+    .argument-name-cell:hover {
+      .copy-argument-name {
+        visibility: visible;
+      }
+    }
   }
 
   .max-args-warning {
@@ -59,6 +70,13 @@
   .arguments-table {
     .mat-mdc-header-row.mat-row-select .mat-mdc-header-cell.entity-type-header {
       padding: 0 28px 0 0;
+    }
+  }
+
+  .copy-argument-name {
+    .mat-icon {
+      font-size: 16px;
+      padding: 4px;
     }
   }
 }

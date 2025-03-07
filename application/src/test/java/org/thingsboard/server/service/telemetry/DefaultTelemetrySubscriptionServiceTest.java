@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -74,6 +75,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -159,13 +161,35 @@ class DefaultTelemetrySubscriptionServiceTest {
         }).when(calculatedFieldQueueService).pushRequestToQueue(any(TimeseriesSaveRequest.class), any(), any());
 
         // send partition change event so currentPartitions set is populated
-        telemetryService.onTbApplicationEvent(new PartitionChangeEvent(this, ServiceType.TB_CORE, Map.of(new QueueKey(ServiceType.TB_CORE), Set.of(tpi))));
+        telemetryService.onTbApplicationEvent(new PartitionChangeEvent(this, ServiceType.TB_CORE, Map.of(new QueueKey(ServiceType.TB_CORE), Set.of(tpi)), Collections.emptyMap()));
     }
 
     @AfterEach
     void cleanup() {
         wsCallBackExecutor.shutdownNow();
         tsCallBackExecutor.shutdownNow();
+    }
+
+    /* --- Save time series API --- */
+
+    @Test
+    void shouldThrowErrorWhenTryingToSaveTimeseriesForApiUsageState() {
+        // GIVEN
+        var request = TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .customerId(customerId)
+                .entityId(new ApiUsageStateId(UUID.randomUUID()))
+                .entries(sampleTelemetry)
+                .strategy(TimeseriesSaveRequest.Strategy.PROCESS_ALL)
+                .build();
+
+        // WHEN
+        assertThatThrownBy(() -> telemetryService.saveTimeseries(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Can't update API Usage State!");
+
+        // THEN
+        then(tsService).shouldHaveNoInteractions();
     }
 
     @Test
@@ -377,7 +401,7 @@ class DefaultTelemetrySubscriptionServiceTest {
         );
     }
 
-    // used to emulate versions returned by save latest API
+    // used to emulate sequence numbers returned by save latest API
     private static List<Long> listOfNNumbers(int N) {
         return LongStream.range(0, N).boxed().toList();
     }

@@ -102,6 +102,11 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
     }
 
     @Override
+    public PageData<NotificationTarget> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     protected Class<NotificationTargetEntity> getEntityClass() {
         return NotificationTargetEntity.class;
     }

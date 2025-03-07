@@ -23,6 +23,7 @@ import { CalculatedField, CalculatedFieldTestScriptInputParams } from '@shared/m
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityTestScriptResult } from '@shared/models/entity.models';
+import { CalculatedFieldEventBody } from '@shared/models/event.models';
 
 @Injectable({
   providedIn: 'root'
@@ -52,5 +53,9 @@ export class CalculatedFieldsService {
 
   public testScript(inputParams: CalculatedFieldTestScriptInputParams, config?: RequestConfig): Observable<EntityTestScriptResult> {
     return this.http.post<EntityTestScriptResult>('/api/calculatedField/testScript', inputParams, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getLatestCalculatedFieldDebugEvent(id: string, config?: RequestConfig): Observable<CalculatedFieldEventBody> {
+    return this.http.get<CalculatedFieldEventBody>(`/api/calculatedField/${id}/debug`, defaultHttpOptionsFromConfig(config));
   }
 }

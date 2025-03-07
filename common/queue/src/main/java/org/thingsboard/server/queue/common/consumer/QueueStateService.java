@@ -16,16 +16,20 @@
 package org.thingsboard.server.queue.common.consumer;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueMsg;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTopic;
+
+@Slf4j
 public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
 
     private PartitionedQueueConsumerManager<S> stateConsumer;
@@ -33,6 +37,9 @@ public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
 
     @Getter
     private Set<TopicPartitionInfo> partitions;
+    private final Set<TopicPartitionInfo> partitionsInProgress = ConcurrentHashMap.newKeySet();
+    private boolean initialized;
+
     private final ReadWriteLock partitionsLock = new ReentrantReadWriteLock();
 
     public void init(PartitionedQueueConsumerManager<S> stateConsumer, PartitionedQueueConsumerManager<E> eventConsumer) {
@@ -63,22 +70,29 @@ public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
         }
 
         if (!addedPartitions.isEmpty()) {
+            partitionsInProgress.addAll(addedPartitions);
             stateConsumer.addPartitions(addedPartitions, partition -> {
                 var readLock = partitionsLock.readLock();
                 readLock.lock();
                 try {
+                    partitionsInProgress.remove(partition);
+                    log.info("Finished partition {} (still in progress: {})", partition, partitionsInProgress);
+                    if (partitionsInProgress.isEmpty()) {
+                        log.info("All partitions processed");
+                    }
                     if (this.partitions.contains(partition)) {
-                        eventConsumer.addPartitions(Set.of(partition.newByTopic(eventConsumer.getTopic())));
+                        eventConsumer.addPartitions(Set.of(partition.withTopic(eventConsumer.getTopic())));
                     }
                 } finally {
                     readLock.unlock();
                 }
             });
         }
+        initialized = true;
     }
 
-    private Set<TopicPartitionInfo> withTopic(Set<TopicPartitionInfo> partitions, String topic) {
-        return partitions.stream().map(tpi -> tpi.newByTopic(topic)).collect(Collectors.toSet());
+    public Set<TopicPartitionInfo> getPartitionsInProgress() {
+        return initialized ? partitionsInProgress : null;
     }
 
 }

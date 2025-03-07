@@ -28,8 +28,9 @@ import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
+import org.thingsboard.rule.engine.api.RuleEngineCalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
+import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -725,7 +726,7 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public RuleEngineDeviceStateManager getDeviceStateManager() {
+    public DeviceStateManager getDeviceStateManager() {
         return mainCtx.getDeviceStateManager();
     }
 
@@ -900,6 +901,11 @@ public class DefaultTbContext implements TbContext {
     @Override
     public CalculatedFieldService getCalculatedFieldService() {
         return mainCtx.getCalculatedFieldService();
+    }
+
+    @Override
+    public RuleEngineCalculatedFieldQueueService getCalculatedFieldQueueService() {
+        return mainCtx.getCalculatedFieldQueueService();
     }
 
     @Override

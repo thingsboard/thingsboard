@@ -280,7 +280,7 @@ public interface TbContext {
 
     DeviceCredentialsService getDeviceCredentialsService();
 
-    RuleEngineDeviceStateManager getDeviceStateManager();
+    DeviceStateManager getDeviceStateManager();
 
     String getDeviceStateNodeRateLimitConfig();
 
@@ -359,6 +359,8 @@ public interface TbContext {
     SlackService getSlackService();
 
     CalculatedFieldService getCalculatedFieldService();
+
+    RuleEngineCalculatedFieldQueueService getCalculatedFieldQueueService();
 
     boolean isExternalNodeForceAck();
 

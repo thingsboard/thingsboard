@@ -136,7 +136,11 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         parserConfig.registerDataType("TbelCfSingleValueArg", TbelCfSingleValueArg.class, TbelCfSingleValueArg::memorySize);
         parserConfig.registerDataType("TbelCfTsRollingArg", TbelCfTsRollingArg.class, TbelCfTsRollingArg::memorySize);
         parserConfig.registerDataType("TbelCfTsDoubleVal", TbelCfTsDoubleVal.class, TbelCfTsDoubleVal::memorySize);
+        parserConfig.registerDataType("TbelCfTsRollingData", TbelCfTsRollingData.class, TbelCfTsRollingData::memorySize);
         parserConfig.registerDataType("TbTimeWindow", TbTimeWindow.class, TbTimeWindow::memorySize);
+        parserConfig.registerDataType("TbelCfTsDoubleVal", TbelCfTsMultiDoubleVal.class, TbelCfTsMultiDoubleVal::memorySize);
+        parserConfig.registerDataType("TbelCfCtx", TbelCfCtx.class, TbelCfCtx::memorySize);
+
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "tbel-executor"));
         try {
