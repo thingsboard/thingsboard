@@ -88,7 +88,7 @@ public class SimpleCalculatedFieldStateTest {
         ));
 
         Map<String, ArgumentEntry> newArgs = Map.of("key3", key3ArgEntry);
-        boolean stateUpdated = state.updateState(newArgs);
+        boolean stateUpdated = state.updateState(ctx, newArgs);
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -106,7 +106,7 @@ public class SimpleCalculatedFieldStateTest {
 
         SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis(), new LongDataEntry("key1", 18L), 190L);
         Map<String, ArgumentEntry> newArgs = Map.of("key1", newArgEntry);
-        boolean stateUpdated = state.updateState(newArgs);
+        boolean stateUpdated = state.updateState(ctx, newArgs);
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(Map.of("key1", newArgEntry));
@@ -120,7 +120,7 @@ public class SimpleCalculatedFieldStateTest {
         ));
 
         Map<String, ArgumentEntry> newArgs = Map.of("key3", new TsRollingArgumentEntry(10, 30000L));
-        assertThatThrownBy(() -> state.updateState(newArgs))
+        assertThatThrownBy(() -> state.updateState(ctx, newArgs))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Rolling argument entry is not supported for simple calculated fields.");
     }

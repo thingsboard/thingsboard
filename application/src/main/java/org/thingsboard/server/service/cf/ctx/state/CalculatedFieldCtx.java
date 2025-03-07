@@ -71,6 +71,7 @@ public class CalculatedFieldCtx {
 
     private long maxDataPointsPerRollingArg;
     private long maxStateSize;
+    private long maxSingleValueArgumentSize;
 
     public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService, ApiLimitService apiLimitService) {
         this.calculatedField = calculatedField;
@@ -104,6 +105,7 @@ public class CalculatedFieldCtx {
 
         this.maxDataPointsPerRollingArg = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
         this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
+        this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
     }
 
     public void init() {
