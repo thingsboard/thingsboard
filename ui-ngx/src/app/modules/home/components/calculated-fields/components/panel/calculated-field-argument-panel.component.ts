@@ -64,7 +64,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
   readonly defaultLimit = Math.floor(this.maxDataPointsPerRollingArg / 10);
 
   argumentFormGroup = this.fb.group({
-    argumentName: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(/^(?!ctx$).+$/), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
+    argumentName: ['', [Validators.required, this.uniqNameRequired(), this.notEqualCtxValidator(), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
     refEntityId: this.fb.group({
       entityType: [ArgumentEntityType.Current],
       id: ['']
@@ -235,6 +235,13 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
       typeControl.setValue(null);
       typeControl.markAsTouched();
     }
+  }
+
+  private notEqualCtxValidator(): ValidatorFn {
+    return (control: FormControl) => {
+      const trimmedValue = control.value.trim().toLowerCase();
+      return trimmedValue === 'ctx' ? { equalCtx: true } : null;
+    };
   }
 
   private observeUpdatePosition(): void {
