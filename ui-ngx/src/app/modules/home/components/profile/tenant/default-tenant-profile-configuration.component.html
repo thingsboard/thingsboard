@@ -155,10 +155,10 @@
                formControlName="maxTransportMessages"
                type="number">
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('required')">
-          {{ 'tenant-profile.max-transport-messages-range' | translate}}
+          {{ 'tenant-profile.max-transport-messages-required' | translate}}
         </mat-error>
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('min')">
-          {{ 'tenant-profile.max-transport-messages-required' | translate}}
+          {{ 'tenant-profile.max-transport-messages-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
       </mat-form-field>
