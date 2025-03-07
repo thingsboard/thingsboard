@@ -82,6 +82,10 @@ export class DataLayerPatternSettingsComponent implements OnInit, ControlValueAc
   hasTooltipOffset = false;
 
   @Input()
+  @coerceBoolean()
+  expand = true;
+
+  @Input()
   context: MapSettingsContext;
 
   private modelValue: DataLayerPatternSettings | DataLayerTooltipSettings;
@@ -149,7 +153,7 @@ export class DataLayerPatternSettingsComponent implements OnInit, ControlValueAc
       value, {emitEvent: false}
     );
     this.updateValidators();
-    this.settingsExpanded = this.patternSettingsFormGroup.get('show').value;
+    this.settingsExpanded = this.patternSettingsFormGroup.get('show').value && this.expand;
     this.patternSettingsFormGroup.get('show').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((show) => {

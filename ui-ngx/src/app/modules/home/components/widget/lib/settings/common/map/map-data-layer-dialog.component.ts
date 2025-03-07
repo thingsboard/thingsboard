@@ -428,6 +428,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       (updatedDataKey) => {
         if (updatedDataKey) {
           this.dataLayerFormGroup.get(keyType).patchValue(updatedDataKey);
+          this.dataLayerFormGroup.markAsDirty();
         }
       }
     );

@@ -175,6 +175,25 @@ export abstract class TbMap<S extends BaseMapSettings> {
       this.map.zoomControl.setPosition(this.settings.controlsPosition);
     }
     this.dragMode = !this.settings.dragModeButton;
+    const tripsWithMarkers = this.settings.trips?.length ? this.settings.trips.filter(trip => trip.showMarker) : [];
+    const showTimeline = this.settings.tripTimeline?.showTimelineControl && tripsWithMarkers.length;
+
+    if (showTimeline) {
+      this.timeline = true;
+      this.timeStep = this.settings.tripTimeline.timeStep;
+      this.timeLineComponentRef = this.ctx.widgetContentContainer.createComponent(MapTimelinePanelComponent);
+      this.timeLineComponent = this.timeLineComponentRef.instance;
+      this.timeLineComponent.settings = this.settings.tripTimeline;
+      this.timeLineComponent.timeChanged.subscribe((time) => {
+        this.currentTime = time;
+        this.updateTripsTime();
+      });
+      const parentElement = this.timeLineComponentRef.instance.element.nativeElement;
+      const content = parentElement.firstChild;
+      parentElement.removeChild(content);
+      parentElement.style.display = 'none';
+      this.containerElement.append(content);
+    }
     const setup = [this.doSetupControls()];
     if (this.timeline && this.settings.tripTimeline.snapToRealLocation) {
       setup.push(parseTbFunction<MapBooleanFunction>(this.getCtx().http, this.settings.tripTimeline.locationSnapFilter, ['data', 'dsData']).pipe(
@@ -269,7 +288,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
           buttonTitle: this.ctx.translate.instant('widgets.maps.data-layer.groups'),
         }).addTo(this.map);
         this.map.on('layergroupchange', () => {
-          this.updateBounds();
+          this.updateBounds(true);
         });
       }
       const setup = this.dataLayers.map(dl => dl.setup());
@@ -322,6 +341,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
             const tripDataLayersSubscriptionOptions: WidgetSubscriptionOptions = {
               datasources: tripDatasources,
               hasDataPageLink: true,
+              ignoreDataUpdateOnIntervalTick: true,
               useDashboardTimewindow: isDefined(this.ctx.widgetConfig.useDashboardTimewindow)
                 ? this.ctx.widgetConfig.useDashboardTimewindow : true,
               type: widgetType.timeseries,
@@ -363,26 +383,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private setupEditMode() {
-
-    const tripsWithMarkers = this.tripDataLayers.filter(dl => dl.showMarker());
-    const showTimeline = this.settings.tripTimeline?.showTimelineControl && tripsWithMarkers.length;
-
-    if (showTimeline) {
-      this.timeline = true;
-      this.timeStep = this.settings.tripTimeline.timeStep;
-      this.timeLineComponentRef = this.ctx.widgetContentContainer.createComponent(MapTimelinePanelComponent);
-      this.timeLineComponent = this.timeLineComponentRef.instance;
-      this.timeLineComponent.settings = this.settings.tripTimeline;
-      this.timeLineComponent.timeChanged.subscribe((time) => {
-        this.currentTime = time;
-        this.updateTripsTime();
-      });
-      const parentElement = this.timeLineComponentRef.instance.element.nativeElement;
-      const content = parentElement.firstChild;
-      parentElement.removeChild(content);
-      parentElement.style.display = 'none';
-      this.containerElement.append(content);
-    }
 
      this.editToolbar = L.TB.bottomToolbar({
        mapElement: $(this.mapElement),
@@ -919,7 +919,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.currentPopover?.updatePosition();
   }
 
-  private updateBounds() {
+  private updateBounds(force = false) {
     const enabledDataLayers = this.dataLayers.filter(dl => dl.isEnabled());
     const dataLayersBounds = enabledDataLayers.map(dl => dl.getBounds()).filter(b => b.isValid());
     let bounds: L.LatLngBounds;
@@ -927,7 +927,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       bounds = new L.LatLngBounds(null, null);
       dataLayersBounds.forEach(b => bounds.extend(b));
       const mapBounds = this.map.getBounds();
-      if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds) && this.settings.fitMapBounds && !mapBounds.contains(bounds))) {
+      if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || (!this.bounds.equals(bounds) || force) && this.settings.fitMapBounds && !mapBounds.contains(bounds))) {
         this.bounds = bounds;
         if (!this.ignoreUpdateBounds && !this.isPlacingItem) {
           this.fitBounds(bounds);

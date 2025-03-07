@@ -44,6 +44,11 @@ import { MarkerDataProcessor } from '@home/components/widget/lib/maps/data-layer
 
 type TripRouteData = {[time: number]: FormattedData<TbMapDatasource>};
 
+interface PointItem {
+  point: L.CircleMarker;
+  tooltip?: L.Popup;
+}
+
 class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsDataLayer, L.FeatureGroup> {
 
   private tripRouteData: TripRouteData;
@@ -54,7 +59,8 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
 
   private polyline: L.Polyline;
   private polylineDecorator: L.PolylineDecorator;
-  private points: L.FeatureGroup;
+  private pointsContainer: L.FeatureGroup;
+  private points = new Map<string, PointItem>();
 
   private currentTime: number;
   private currentPositionData: FormattedData<TbMapDatasource>;
@@ -94,7 +100,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   public updateAppearance() {
     this.updatePathAppearance();
     const dsData = this.dataLayer.getMap().getData();
-    if (this.settings.tooltip.show) {
+    if (this.settings.showMarker && this.settings.tooltip?.show) {
       updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
         this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
     }
@@ -120,6 +126,12 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   }
 
   public remove() {
+    if (this.marker) {
+      this.marker.off();
+    }
+    this.points.forEach(pointItem => {
+      pointItem.point.off();
+    });
     this.dataLayer.getDataLayerContainer().removeLayer(this.layer);
     this.layer.off();
   }
@@ -216,34 +228,61 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
 
   private updatePoints() {
     if (this.settings.showPoints) {
-      if (!this.points) {
-        this.points = L.featureGroup();
-        this.points.addTo(this.layer);
+      if (!this.pointsContainer) {
+        this.pointsContainer = L.featureGroup();
+        this.pointsContainer.addTo(this.layer);
       }
-      this.points.clearLayers();
       const formattedRouteData = _.values(this.tripRouteData);
       const dsData = this.dataLayer.getMap().getData();
-      const pointsList = formattedRouteData.filter(data => !!this.dataLayer.dataProcessor.extractLocationData(data));
-      for (const pData of pointsList) {
-        let pointData = pData;
+      const pointsData = formattedRouteData.map(data => ({
+        location: this.dataLayer.dataProcessor.extractLocation(data, dsData),
+        data
+      })).filter(pData => !!pData.location);
+      const toDelete = new Set(Array.from(this.points.keys()));
+      for (const pData of pointsData) {
+        let pointData = pData.data;
         if (this.latestData) {
           pointData = {...pointData, ...this.latestData};
         }
+        const pointLocation = pData.location;
         const pointColor = this.dataLayer.pointColorProcessor.processColor(pointData, dsData);
-        const point = L.circleMarker(this.dataLayer.dataProcessor.extractLocation(pointData, dsData), {
+        const pointStyle = {
           stroke: false,
           fillOpacity: 1,
           fillColor: pointColor,
           radius: this.settings.pointSize
-        });
-        if (this.settings.pointTooltip?.show) {
-          const pointTooltip = createTooltip(this.dataLayer.getMap(),
-            point, this.settings.pointTooltip, pointData, () => true);
-          updateTooltip(this.dataLayer.getMap(), pointTooltip,
-            this.settings.pointTooltip, this.dataLayer.pointTooltipProcessor, pointData, dsData);
+        };
+        const pointKey = `${pointLocation.lat}_${pointLocation.lng}`;
+        let pointItem = this.points.get(pointKey);
+        if (pointItem) {
+          pointItem.point.setStyle(pointStyle);
+          if (this.settings.pointTooltip?.show) {
+            updateTooltip(this.dataLayer.getMap(), pointItem.tooltip,
+              this.settings.pointTooltip, this.dataLayer.pointTooltipProcessor, pointData, dsData);
+          }
+        } else {
+          pointItem = {
+            point: L.circleMarker(pointLocation, pointStyle)
+          };
+          pointItem.point.addTo(this.pointsContainer);
+          if (this.settings.pointTooltip?.show) {
+            pointItem.tooltip = createTooltip(this.dataLayer.getMap(),
+              pointItem.point, this.settings.pointTooltip, pointData, () => true);
+            updateTooltip(this.dataLayer.getMap(), pointItem.tooltip,
+              this.settings.pointTooltip, this.dataLayer.pointTooltipProcessor, pointData, dsData);
+          }
+          this.points.set(pointKey, pointItem);
         }
-        this.points.addLayer(point);
+        toDelete.delete(pointKey);
       }
+      toDelete.forEach(pointKey => {
+        const pointItem = this.points.get(pointKey);
+        if (pointItem) {
+          this.pointsContainer.removeLayer(pointItem.point);
+          pointItem.point.off();
+          this.points.delete(pointKey);
+        }
+      });
     }
   }
 

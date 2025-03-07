@@ -238,7 +238,7 @@
                 </div>
               </div>
               @if (dataLayerType === 'trips') {
-                <ng-container *ngTemplateOutlet="dataLayerLabelAndTooltip"></ng-container>
+                <ng-container *ngTemplateOutlet="dataLayerLabelAndTooltip; context: {expand: false}"></ng-container>
                 <ng-container *ngTemplateOutlet="behavior; context: {stroked: true}"></ng-container>
               }
             </ng-template>
@@ -360,6 +360,7 @@
                 patternType="tooltip"
                 patternTitle="{{ 'widgets.maps.data-layer.points.point-tooltip' | translate }}"
                 [context]="context"
+                [expand]="false"
                 helpId="widget/lib/map/path_point_tooltip_fn"
                 formControlName="pointTooltip">
               </tb-data-layer-pattern-settings>
@@ -384,7 +385,7 @@
         </div>
       </ng-container>
       @if (dataLayerType !== 'trips') {
-        <ng-container *ngTemplateOutlet="dataLayerLabelAndTooltip"></ng-container>
+        <ng-container *ngTemplateOutlet="dataLayerLabelAndTooltip; context: {expand: true}"></ng-container>
       }
     </div>
     @if (dataLayerType !== 'trips') {
@@ -436,18 +437,20 @@
   </div>
 </form>
 
-<ng-template #dataLayerLabelAndTooltip>
+<ng-template #dataLayerLabelAndTooltip let-expand='expand'>
   <ng-container [formGroup]="dataLayerFormGroup">
     <tb-data-layer-pattern-settings
       patternType="label"
       [context]="context"
       [helpId]="labelHelpId"
+      [expand]="expand"
       formControlName="label">
     </tb-data-layer-pattern-settings>
     <tb-data-layer-pattern-settings
       patternType="tooltip"
       [context]="context"
       [helpId]="tooltipHelpId"
+      [expand]="expand"
       [hasTooltipOffset]="['trips', 'markers'].includes(dataLayerType)"
       formControlName="tooltip">
     </tb-data-layer-pattern-settings>
