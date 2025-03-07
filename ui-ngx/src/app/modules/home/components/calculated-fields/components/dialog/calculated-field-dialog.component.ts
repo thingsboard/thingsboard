@@ -70,7 +70,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   functionArgs$ = this.configFormGroup.get('arguments').valueChanges
     .pipe(
       startWith(this.data.value?.configuration?.arguments ?? {}),
-      map(argumentsObj => Object.keys(argumentsObj))
+      map(argumentsObj => ['ctx', ...Object.keys(argumentsObj)])
     );
 
   argumentsEditorCompleter$ = this.configFormGroup.get('arguments').valueChanges

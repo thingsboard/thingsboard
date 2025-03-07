@@ -36,14 +36,20 @@
 .tb-js-func {
   .ace_tb {
     &.ace_calculated-field {
-      &-key {
+      &-ctx {
         color: #C52F00;
       }
-      &-ts, &-time-window, &-values, &-value, &-func {
+      &-args {
+        color: #185F2A;
+      }
+      &-key {
+        color: #c24c1a;
+      }
+      &-time-window, &-values, &-func, &-value, &-ts {
         color: #7214D0;
       }
-      &-start-ts, &-end-ts, &-limit {
-        color: #185F2A;
+      &-start-ts, &-end-ts {
+        color: #2CAA00;
       }
     }
   }
