@@ -431,7 +431,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     private static String prepareMetaDataForEdgeVersion(RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_8_0)) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_9_0)) {
             JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
             JsonNode nodes = jsonNode.get("nodes");
 
