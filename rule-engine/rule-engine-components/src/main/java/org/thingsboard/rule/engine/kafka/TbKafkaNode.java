@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.kafka;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -26,6 +28,7 @@ import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.util.ReflectionUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -35,6 +38,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.exception.ThingsboardKafkaClientError;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -48,6 +52,7 @@ import java.util.Properties;
         type = ComponentType.EXTERNAL,
         name = "kafka",
         configClazz = TbKafkaNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Publish messages to Kafka server",
         nodeDetails = "Will send record via Kafka producer to Kafka server. " +
                 "Outbound message will contain response fields (<code>offset</code>, <code>partition</code>, <code>topic</code>)" +
@@ -83,8 +88,8 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         Properties properties = new Properties();
         properties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + ctx.getSelfId().getId().toString() + "-" + ctx.getServiceId());
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers());
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer());
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer());
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         properties.put(ProducerConfig.ACKS_CONFIG, config.getAcks());
         properties.put(ProducerConfig.RETRIES_CONFIG, config.getRetries());
         properties.put(ProducerConfig.BATCH_SIZE_CONFIG, config.getBatchSize());
@@ -198,6 +203,24 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         return origMsg.transform()
                 .metaData(metaData)
                 .build();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0 -> {
+                if (oldConfiguration.has("keySerializer") || oldConfiguration.has("valueSerializer")) {
+                    ObjectNode objectConfiguration = (ObjectNode) oldConfiguration;
+                    objectConfiguration.remove("keySerializer");
+                    objectConfiguration.remove("valueSerializer");
+                    hasChanges = true;
+                }
+            }
+            default -> {
+            }
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }
