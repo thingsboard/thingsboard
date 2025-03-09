@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import html2canvas from 'html2canvas';
 import { map, share } from 'rxjs/operators';
 import { BehaviorSubject, from } from 'rxjs';
 import { isNumber } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface DashboardImageDialogData {
   dashboardId: DashboardId;
@@ -84,7 +85,9 @@ export class DashboardImageDialogComponent extends DialogComponent<DashboardImag
       dashboardImage: [this.data.currentImage]
     });
 
-    this.dashboardImageFormGroup.get('dashboardImage').valueChanges.subscribe(
+    this.dashboardImageFormGroup.get('dashboardImage').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(
       (newImage) => {
         this.updateImage(newImage);
       }

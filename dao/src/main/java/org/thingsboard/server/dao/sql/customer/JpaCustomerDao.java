@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 package org.thingsboard.server.dao.sql.customer;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.fields.CustomerFields;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -30,6 +32,7 @@ import org.thingsboard.server.dao.model.sql.CustomerEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -102,6 +105,16 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
         return DaoUtil.toPageData(
                 customerRepository.findCustomersWithTheSameTitle(DaoUtil.toPageable(pageLink))
         );
+    }
+
+    @Override
+    public PageData<Customer> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<CustomerFields> findNextBatch(UUID id, int batchSize) {
+        return customerRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

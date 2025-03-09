@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,18 @@ package org.thingsboard.server.common.data.sync.vc.request.create;
 
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Data
 public class VersionCreateConfig implements Serializable {
+
+    @Serial
     private static final long serialVersionUID = 1223723167716612772L;
 
     private boolean saveRelations;
     private boolean saveAttributes;
     private boolean saveCredentials;
+    private boolean saveCalculatedFields;
+
 }

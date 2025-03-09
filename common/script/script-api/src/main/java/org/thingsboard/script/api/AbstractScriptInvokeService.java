@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfObject;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.stats.StatsCounter;
@@ -278,6 +280,8 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         for (Object arg : args) {
             if (arg instanceof CharSequence) {
                 totalArgsSize += ((CharSequence) arg).length();
+            } else if (arg instanceof TbelCfObject tbelCfObj) {
+                totalArgsSize += tbelCfObj.memorySize();
             } else {
                 var str = JacksonUtil.toString(arg);
                 if (str != null) {

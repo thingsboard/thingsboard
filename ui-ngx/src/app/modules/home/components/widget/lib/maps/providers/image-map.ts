@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,14 +23,14 @@ import {
   PosFunction,
   WidgetUnitedMapSettings
 } from '../map-models';
-import { forkJoin, Observable, of, ReplaySubject, switchMap } from 'rxjs';
+import { combineLatest, Observable, of, ReplaySubject, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { calculateNewPointCoordinate, loadImageWithAspect } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseFunction, parseTbFunction } from '@core/utils';
+import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseTbFunction } from '@core/utils';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
@@ -55,7 +55,7 @@ export class ImageMap extends LeafletMap {
           mapImage: this.mapImage(options)
         };
 
-        forkJoin(initData).subscribe(inited => {
+        combineLatest(initData).subscribe(inited => {
           this.posFunction = inited.posFunction;
           const mapImage = inited.mapImage;
           this.imageUrl = mapImage.imageUrl;

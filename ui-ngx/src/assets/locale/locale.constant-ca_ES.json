@@ -3651,8 +3651,7 @@
         "metadata-required": "Les entrades de metadades no poden estar buides.",
         "output": "Sortida",
         "test": "Test",
-        "help": "Ajuda",
-        "reset-debug-mode": "Restablir el mode de depuració a tots els nodes"
+        "help": "Ajuda"
     },
     "role": {
         "role": "Rol",
@@ -4454,7 +4453,6 @@
         "type": "Tipus",
         "resources": "Recursos",
         "resource-url": "URL JavaScript/CSS",
-        "resource-is-module": "És mòdul",
         "remove-resource": "Eliminar recurs",
         "add-resource": "Afegir recurs",
         "html": "HTML",

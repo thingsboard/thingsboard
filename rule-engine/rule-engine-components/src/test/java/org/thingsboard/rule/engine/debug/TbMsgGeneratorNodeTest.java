@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,7 +190,12 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         given(ctxMock.createScriptEngine(any(), any(), any(), any(), any())).willReturn(scriptEngineMock);
 
         // creation of tickMsg
-        TbMsg tickMsg = TbMsg.newMsg(TbMsgType.GENERATOR_NODE_SELF_MSG, RULE_NODE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg tickMsg = TbMsg.newMsg()
+                .type(TbMsgType.GENERATOR_NODE_SELF_MSG)
+                .originator(RULE_NODE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         given(ctxMock.newMsg(null, TbMsgType.GENERATOR_NODE_SELF_MSG, RULE_NODE_ID, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING)).willReturn(tickMsg);
 
         // invocation of tellSelf() method
@@ -203,16 +208,31 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         }).given(ctxMock).tellSelf(any(), any(Long.class));
 
         // creation of first message
-        TbMsg firstMsg = TbMsg.newMsg(TbMsg.EMPTY_STRING, RULE_NODE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg firstMsg = TbMsg.newMsg()
+                .type(TbMsg.EMPTY_STRING)
+                .originator(RULE_NODE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         given(ctxMock.newMsg(null, TbMsg.EMPTY_STRING, RULE_NODE_ID, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT)).willReturn(firstMsg);
 
         // creation of generated message
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of("data", "40"));
-        TbMsg generatedMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, RULE_NODE_ID, metaData, "{ \"temp\": 42, \"humidity\": 77 }");
+        TbMsg generatedMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(RULE_NODE_ID)
+                .copyMetaData(metaData)
+                .data("{ \"temp\": 42, \"humidity\": 77 }")
+                .build();
         given(scriptEngineMock.executeGenerateAsync(any())).willReturn(Futures.immediateFuture(generatedMsg));
 
         // creation of prev message
-        TbMsg prevMsg = TbMsg.newMsg(generatedMsg.getType(), RULE_NODE_ID, generatedMsg.getMetaData(), generatedMsg.getData());
+        TbMsg prevMsg = TbMsg.newMsg()
+                .type(generatedMsg.getType())
+                .originator(RULE_NODE_ID)
+                .copyMetaData(generatedMsg.getMetaData())
+                .data(generatedMsg.getData())
+                .build();
         given(ctxMock.newMsg(null, generatedMsg.getType(), RULE_NODE_ID, null, generatedMsg.getMetaData(), generatedMsg.getData())).willReturn(prevMsg);
 
         // WHEN

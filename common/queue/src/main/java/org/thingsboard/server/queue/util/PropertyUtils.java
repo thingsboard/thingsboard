@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,8 @@ public class PropertyUtils {
     }
 
     public static Map<String, String> getProps(Map<String, String> defaultProperties, String propertiesStr, Function<String, Map<String, String>> parser) {
-        Map<String, String> properties = defaultProperties;
+        Map<String, String> properties = new HashMap<>(defaultProperties);
         if (StringUtils.isNotBlank(propertiesStr)) {
-            properties = new HashMap<>(properties);
             properties.putAll(parser.apply(propertiesStr));
         }
         return properties;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   EventEmitter,
   forwardRef,
   Input,
@@ -37,6 +38,7 @@ import {
   timeSeriesStateSourceTypes,
   timeSeriesStateSourceTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-chart-state-row',
@@ -72,7 +74,8 @@ export class TimeSeriesChartStateRowComponent implements ControlValueAccessor, O
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -84,10 +87,14 @@ export class TimeSeriesChartStateRowComponent implements ControlValueAccessor, O
       sourceRangeFrom: [null, []],
       sourceRangeTo: [null, []]
     });
-    this.stateFormGroup.valueChanges.subscribe(
+    this.stateFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.stateFormGroup.get('sourceType').valueChanges.subscribe(() => {
+    this.stateFormGroup.get('sourceType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }

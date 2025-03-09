@@ -4012,7 +4012,6 @@
         "output": "输出",
         "test": "测试",
         "help": "帮助",
-        "reset-debug-mode": "重置所有节点中的调试模式",
         "test-with-this-message": "使用此消息进行{{test}}测试",
         "queue-hint": "选择一个队列将消息转发到另一个队列，默认情况下使用'Main'队列。",
         "queue-singleton-hint": "选择一个队列以在多实体中转发消息,默认情况下使用'Main'队列。"
@@ -4772,7 +4771,6 @@
         "type": "类型",
         "resources": "资源",
         "resource-url": "JavaScript/CSS",
-        "resource-is-module": "是否模块",
         "remove-resource": "删除资源",
         "add-resource": "添加资源",
         "html": "HTML",

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -245,9 +245,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           this.timewindowForm.get('realtime.advancedParams.lastAggIntervalsConfig').value;
         if (lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
           lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-          this.timewindowForm.get('realtime.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(
             lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('realtime.quickInterval').valueChanges.pipe(
@@ -257,9 +257,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           this.timewindowForm.get('realtime.advancedParams.quickAggIntervalsConfig').value;
         if (quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
           quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-          this.timewindowForm.get('realtime.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(
             quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('history.timewindowMs').valueChanges.pipe(
@@ -269,9 +269,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           this.timewindowForm.get('history.advancedParams.lastAggIntervalsConfig').value;
         if (lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
           lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-          this.timewindowForm.get('history.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('history.interval').patchValue(
             lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('history.quickInterval').valueChanges.pipe(
@@ -281,9 +281,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           this.timewindowForm.get('history.advancedParams.quickAggIntervalsConfig').value;
         if (quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
           quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-          this.timewindowForm.get('history.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('history.interval').patchValue(
             quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
 

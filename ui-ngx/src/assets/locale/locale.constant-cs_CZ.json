@@ -2426,8 +2426,7 @@
         "metadata-required": "Záznam metadat nemůže být prázdný.",
         "output": "Výstup",
         "test": "Test",
-        "help": "Nápověda",
-        "reset-debug-mode": "Resetovat režim ladění na všech uzlech"
+        "help": "Nápověda"
     },
     "timezone": {
         "timezone": "Časová zóna",
@@ -2735,7 +2734,6 @@
         "type": "Typ widgetu",
         "resources": "Zdroje",
         "resource-url": "JavaScript/CSS URL",
-        "resource-is-module": "Je modulem",
         "remove-resource": "Odebrat zdroj",
         "add-resource": "Přidat zdroj",
         "html": "HTML",

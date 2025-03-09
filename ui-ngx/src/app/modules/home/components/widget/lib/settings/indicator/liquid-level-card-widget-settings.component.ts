@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -53,9 +53,10 @@ import { ResourcesService } from '@core/services/resources.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'liquid-level-card-widget-settings',
+  selector: 'tb-liquid-level-card-widget-settings',
   templateUrl: './liquid-level-card-widget-settings.component.html',
   styleUrls: []
 })
@@ -189,7 +190,9 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
     });
 
-    this.levelCardWidgetSettingsForm.get('selectedShape').valueChanges.subscribe(() => {
+    this.levelCardWidgetSettingsForm.get('selectedShape').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.cd.detectChanges();
       this.layoutsImageCardsSelect?.imageCardsSelectOptions.notifyOnChanges();
     });

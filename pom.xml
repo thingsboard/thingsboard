@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@
         <fasterxml-classmate.version>1.7.0</fasterxml-classmate.version>
         <auth0-jwt.version>4.4.0</auth0-jwt.version>
         <json-schema-validator.version>2.2.14</json-schema-validator.version>
+        <milo.version>0.6.12</milo.version>
         <californium.version>3.12.1</californium.version>
         <leshan.version>2.0.0-M15</leshan.version>
         <gson.version>2.10.1</gson.version>
@@ -83,7 +84,7 @@
         <zookeeper.version>3.9.2</zookeeper.version>
         <protobuf.version>3.25.5</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
         <grpc.version>1.63.0</grpc.version>
-        <tbel.version>1.2.5</tbel.version>
+        <tbel.version>1.2.6</tbel.version>
         <lombok.version>1.18.32</lombok.version>
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
@@ -117,7 +118,6 @@
         <aws.sdk.version>1.12.701</aws.sdk.version>
         <pubsub.client.version>1.128.1</pubsub.client.version>
         <google.common.protos.version>2.37.1</google.common.protos.version>
-        <azure-servicebus.version>3.6.7</azure-servicebus.version>
         <passay.version>1.6.4</passay.version>
         <ua-parser.version>1.6.1</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
@@ -166,6 +166,8 @@
         <weisj-jsvg.version>1.6.1</weisj-jsvg.version>
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
+        <snappy.version>1.1.10.5</snappy.version>
+        <rocksdbjni.version>9.10.0</rocksdbjni.version>
     </properties>
 
     <modules>
@@ -173,6 +175,7 @@
         <module>common</module>
         <module>rule-engine</module>
         <module>dao</module>
+        <module>edqs</module>
         <module>transport</module>
         <module>ui-ngx</module>
         <module>tools</module>
@@ -849,6 +852,8 @@
                             <exclude>.run/**</exclude>
                             <exclude>**/NetworkReceive.java</exclude>
                             <exclude>**/lwm2m-registry/**</exclude>
+                            <exclude>**/test/resources/lwm2m/**</exclude>
+                            <exclude>**/resources/lwm2m/models/**</exclude>
                             <exclude>src/main/data/resources/**</exclude>
                         </excludes>
                         <mapping>
@@ -868,6 +873,29 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>io.github.git-commit-id</groupId>
+                    <artifactId>git-commit-id-maven-plugin</artifactId>
+                    <version>5.0.0</version>
+                    <executions>
+                        <execution>
+                            <id>get-the-git-infos</id>
+                            <goals>
+                                <goal>revision</goal>
+                            </goals>
+                            <phase>initialize</phase>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                        <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+<!--                        <includeOnlyProperties>-->
+<!--                            <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>-->
+<!--                            <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>-->
+<!--                        </includeOnlyProperties>-->
+                        <commitIdGenerationMode>full</commitIdGenerationMode>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -1007,6 +1035,11 @@
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>coap-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>edqs</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -2016,21 +2049,6 @@
                 <version>${google.common.protos.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.microsoft.azure</groupId>
-                <artifactId>azure-servicebus</artifactId>
-                <version>${azure-servicebus.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.nimbusds</groupId>
-                        <artifactId>content-type</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.ow2.asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
                 <groupId>org.passay</groupId>
                 <artifactId>passay</artifactId>
                 <version>${passay.version}</version>
@@ -2271,6 +2289,16 @@
                 <groupId>com.drewnoakes</groupId>
                 <artifactId>metadata-extractor</artifactId>
                 <version>${drewnoakes-metadata-extractor.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>${snappy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.rocksdb</groupId>
+                <artifactId>rocksdbjni</artifactId>
+                <version>${rocksdbjni.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

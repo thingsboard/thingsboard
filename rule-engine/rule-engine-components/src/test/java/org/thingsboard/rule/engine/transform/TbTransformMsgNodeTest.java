@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,24 @@ public class TbTransformMsgNodeTest {
 
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON,rawJson, ruleChainId, ruleNodeId);
-        TbMsg transformedMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, "{new}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(rawJson)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
+        TbMsg transformedMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data("{new}")
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFuture(Collections.singletonList(transformedMsg)));
 
         node.onMsg(ctx, msg);
@@ -81,7 +97,15 @@ public class TbTransformMsgNodeTest {
 
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(rawJson)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("error")));
 
         node.onMsg(ctx, msg);

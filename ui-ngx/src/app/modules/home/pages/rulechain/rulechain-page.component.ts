@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -95,6 +95,7 @@ import { ComponentClusteringMode } from '@shared/models/component-descriptor.mod
 import { MatDrawer } from '@angular/material/sidenav';
 import { HttpStatusCode } from '@angular/common/http';
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
+import { EntityDebugSettings } from '@shared/models/entity.models';
 import Timeout = NodeJS.Timeout;
 
 @Component({
@@ -1415,22 +1416,29 @@ export class RuleChainPageComponent extends PageComponent
     this.ruleChainCanvas.modelService.deleteSelected();
   }
 
-  isDebugModeEnabled(): boolean {
-    const res = this.ruleChainModel.nodes.find((node) => node.debugMode);
+  isDebugSettingsEnabled(): boolean {
+    const res = this.ruleChainModel.nodes.find((node) => node?.debugSettings && this.isDebugSettingsActive(node.debugSettings));
     return typeof res !== 'undefined';
   }
 
-  resetDebugModeInAllNodes() {
+  resetDebugSettingsInAllNodes(): void {
     let changed = false;
     this.ruleChainModel.nodes.forEach((node) => {
       if (node.component.type !== RuleNodeType.INPUT) {
-        changed = changed || node.debugMode;
-        node.debugMode = false;
+        const nodeHasActiveDebugSettings = node?.debugSettings && this.isDebugSettingsActive(node.debugSettings);
+        changed = changed || nodeHasActiveDebugSettings;
+        if (nodeHasActiveDebugSettings) {
+          node.debugSettings = { allEnabled: false, failuresEnabled: false, allEnabledUntil: 0 };
+        }
       }
     });
     if (changed) {
       this.onModelChanged();
     }
+  }
+
+  private isDebugSettingsActive(debugSettings: EntityDebugSettings): boolean {
+    return debugSettings.allEnabled || debugSettings.failuresEnabled || debugSettings.allEnabledUntil > new Date().getTime();
   }
 
   validate() {

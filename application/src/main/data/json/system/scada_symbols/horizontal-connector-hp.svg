@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
   "title": "HP Horizontal connector",
-  "description": "Horizontal connector",
+  "description": "Horizontal connector with an optional directional arrow to visually indicate flow.",
   "widgetSizeX": 1,
   "widgetSizeY": 1,
   "tags": [

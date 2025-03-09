@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -87,6 +87,9 @@ import {
   ExportResourceDialogData,
   ExportResourceDialogDialogResult
 } from '@shared/import-export/export-resource-dialog.component';
+import { FormProperty, propertyValid } from '@shared/models/dynamic-form.models';
+import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
+import { CalculatedField } from '@shared/models/calculated-field.models';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
@@ -115,8 +118,30 @@ export class ImportExportService {
               private imageService: ImageService,
               private utils: UtilsService,
               private itembuffer: ItemBufferService,
+              private calculatedFieldsService: CalculatedFieldsService,
               private dialog: MatDialog) {
 
+  }
+
+  public exportFormProperties(properties: FormProperty[], fileName: string) {
+    this.exportToPc(properties, fileName);
+  }
+
+  public importFormProperties(): Observable<FormProperty[]> {
+    return this.openImportDialog('dynamic-form.import-form',
+      'dynamic-form.json-file', true, 'dynamic-form.json-content').pipe(
+      map((properties: FormProperty[]) => {
+        if (!this.validateImportedFormProperties(properties)) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('dynamic-form.invalid-form-json-file-error'),
+              type: 'error'}));
+          throw new Error('Invalid form JSON file');
+        } else {
+          return properties;
+        }
+      }),
+      catchError(() => of(null))
+    );
   }
 
   public exportImage(type: ImageResourceType, key: string) {
@@ -146,6 +171,35 @@ export class ImportExportService {
         }
       }),
       catchError(() => of(null))
+    );
+  }
+
+  public exportCalculatedField(calculatedFieldId: string): void {
+    this.calculatedFieldsService.getCalculatedFieldById(calculatedFieldId).subscribe({
+      next: (calculatedField) => {
+        let name = calculatedField.name;
+        name = name.toLowerCase().replace(/\W/g, '_');
+        this.exportToPc(this.prepareCalculatedFieldExport(calculatedField), name);
+      },
+      error: (e) => {
+        this.handleExportError(e, 'calculated-fields.export-failed-error');
+      }
+    });
+  }
+
+  public importCalculatedField(entityId: EntityId): Observable<CalculatedField> {
+    return this.openImportDialog('calculated-fields.import', 'calculated-fields.file').pipe(
+      mergeMap((calculatedField: CalculatedField) => {
+        if (!this.validateImportedCalculatedField({ entityId, ...calculatedField })) {
+          this.store.dispatch(new ActionNotificationShow(
+            {message: this.translate.instant('calculated-fields.invalid-file-error'),
+              type: 'error'}));
+          throw new Error('Invalid calculated field file');
+        } else {
+          return this.calculatedFieldsService.saveCalculatedField(this.prepareImport({ entityId, ...calculatedField }));
+        }
+      }),
+      catchError(() => of(null)),
     );
   }
 
@@ -790,7 +844,7 @@ export class ImportExportService {
   private processCSVCell(cellData: any): any {
     if (isString(cellData)) {
       let result = cellData.replace(/"/g, '""');
-      if (result.search(/([",\n])/g) >= 0) {
+      if (result.search(/([",;\n])/g) >= 0) {
         result = `"${result}"`;
       }
       return result;
@@ -925,6 +979,24 @@ export class ImportExportService {
     this.store.dispatch(new ActionNotificationShow(
       {message: this.translate.instant(errorDetailsMessageId, {error: message}),
         type: 'error'}));
+  }
+
+  private validateImportedFormProperties(properties: FormProperty[]): boolean {
+    if (!properties.length) {
+      return false;
+    } else {
+      return !properties.some(p => !propertyValid(p));
+    }
+  }
+
+  private validateImportedCalculatedField(calculatedField: CalculatedField): boolean {
+    const { name, configuration, entityId } = calculatedField;
+    return isNotEmptyStr(name)
+      && isDefined(configuration)
+      && isDefined(entityId?.id)
+      && !!Object.keys(configuration.arguments).length
+      && isDefined(configuration.expression)
+      && isDefined(configuration.output)
   }
 
   private validateImportedImage(image: ImageExportData): boolean {
@@ -1105,14 +1177,17 @@ export class ImportExportService {
     };
   }
 
-  private openImportDialog(importTitle: string, importFileLabel: string): Observable<any> {
+  private openImportDialog(importTitle: string, importFileLabel: string,
+                           enableImportFromContent = false, importContentLabel?: string): Observable<any> {
     return this.dialog.open<ImportDialogComponent, ImportDialogData,
       any>(ImportDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         importTitle,
-        importFileLabel
+        importFileLabel,
+        enableImportFromContent,
+        importContentLabel
       }
     }).afterClosed().pipe(
       map((importedData) => {
@@ -1174,6 +1249,11 @@ export class ImportExportService {
     profile = this.prepareExport(profile);
     profile.default = false;
     return profile;
+  }
+
+  private prepareCalculatedFieldExport(calculatedField: CalculatedField): CalculatedField {
+    delete calculatedField.entityId;
+    return this.prepareExport(calculatedField);
   }
 
   private prepareExport(data: any): any {

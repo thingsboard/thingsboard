@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
@@ -128,7 +129,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         return transactionTemplate.execute(trStatus -> {
             AlarmDataPageLink pageLink = query.getPageLink();
-            QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
+            SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM));
             ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
             StringBuilder fromPart = new StringBuilder(" from alarm_info a ");
@@ -314,25 +315,41 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     }
 
     @Override
-    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
-        QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
+    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query, Collection<EntityId> orderedEntityIds) {
+        SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM));
 
         if (query.isSearchPropagatedAlarms()) {
             ctx.append("select count(distinct(a.id)) from alarm_info a ");
             ctx.append(JOIN_ENTITY_ALARMS);
-            ctx.append("where a.tenant_id = :tenantId and ea.tenant_id = :tenantId");
-            ctx.addUuidParameter("tenantId", tenantId.getId());
-            if (customerId != null && !customerId.isNullUid()) {
-                ctx.append(" and a.customer_id = :customerId and ea.customer_id = :customerId");
-                ctx.addUuidParameter("customerId", customerId.getId());
+            if (orderedEntityIds != null) {
+                if (orderedEntityIds.isEmpty()) {
+                    return 0;
+                }
+                ctx.addUuidListParameter("entity_filter_entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+                ctx.append("where ea.entity_id in (:entity_filter_entity_ids)");
+            } else {
+                ctx.append("where a.tenant_id = :tenantId and ea.tenant_id = :tenantId");
+                ctx.addUuidParameter("tenantId", tenantId.getId());
+                if (customerId != null && !customerId.isNullUid()) {
+                    ctx.append(" and a.customer_id = :customerId and ea.customer_id = :customerId");
+                    ctx.addUuidParameter("customerId", customerId.getId());
+                }
             }
         } else {
             ctx.append("select count(id) from alarm_info a ");
-            ctx.append("where a.tenant_id = :tenantId");
-            ctx.addUuidParameter("tenantId", tenantId.getId());
-            if (customerId != null && !customerId.isNullUid()) {
-                ctx.append(" and a.customer_id = :customerId");
-                ctx.addUuidParameter("customerId", customerId.getId());
+            if (orderedEntityIds != null) {
+                if (orderedEntityIds.isEmpty()) {
+                    return 0;
+                }
+                ctx.addUuidListParameter("entity_filter_entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+                ctx.append("where a.originator_id in (:entity_filter_entity_ids)");
+            } else {
+                ctx.append("where a.tenant_id = :tenantId");
+                ctx.addUuidParameter("tenantId", tenantId.getId());
+                if (customerId != null && !customerId.isNullUid()) {
+                    ctx.append(" and a.customer_id = :customerId");
+                    ctx.addUuidParameter("customerId", customerId.getId());
+                }
             }
         }
 
@@ -402,7 +419,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         });
     }
 
-    private String buildTextSearchQuery(QueryContext ctx, List<EntityKey> selectionMapping, String searchText) {
+    private String buildTextSearchQuery(SqlQueryContext ctx, List<EntityKey> selectionMapping, String searchText) {
         if (!StringUtils.isEmpty(searchText) && selectionMapping != null && !selectionMapping.isEmpty()) {
             String lowerSearchText = searchText.toLowerCase() + "%";
             List<String> searchPredicates = selectionMapping.stream()
@@ -420,7 +437,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         }
     }
 
-    private String buildPermissionsQuery(TenantId tenantId, QueryContext ctx) {
+    private String buildPermissionsQuery(TenantId tenantId, SqlQueryContext ctx) {
         StringBuilder permissionsQuery = new StringBuilder();
         ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
         permissionsQuery.append(" a.tenant_id = :permissions_tenant_id and ea.tenant_id = :permissions_tenant_id ");

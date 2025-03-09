@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Pipe, PipeTransform } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { DAY, HOUR, MINUTE, SECOND } from '@shared/models/time/time.models';
+import { DAY, HOUR, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
 
 @Pipe({
   name: 'milliSecondsToTimeString'
@@ -27,19 +27,21 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
   }
 
   transform(milliSeconds: number, shortFormat = false, onlyFirstDigit = false): string {
-    const { days, hours, minutes, seconds } = this.extractTimeUnits(milliSeconds);
-    return this.formatTimeString(days, hours, minutes, seconds, shortFormat, onlyFirstDigit);
+    const { years, days, hours, minutes, seconds } = this.extractTimeUnits(milliSeconds);
+    return this.formatTimeString(years, days, hours, minutes, seconds, shortFormat, onlyFirstDigit);
   }
 
-  private extractTimeUnits(milliseconds: number): { days: number; hours: number; minutes: number; seconds: number } {
-    const days = Math.floor(milliseconds / DAY);
+  private extractTimeUnits(milliseconds: number): { years: number; days: number; hours: number; minutes: number; seconds: number } {
+    const years = Math.floor(milliseconds / YEAR);
+    const days = Math.floor((milliseconds % YEAR) / DAY);
     const hours = Math.floor((milliseconds % DAY) / HOUR);
     const minutes = Math.floor((milliseconds % HOUR) / MINUTE);
     const seconds = Math.floor((milliseconds % MINUTE) / SECOND);
-    return { days, hours, minutes, seconds };
+    return { years, days, hours, minutes, seconds };
   }
 
   private formatTimeString(
+    years: number,
     days: number,
     hours: number,
     minutes: number,
@@ -48,6 +50,7 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
     onlyFirstDigit: boolean
   ): string {
     const timeUnits = [
+      { value: years, key: 'years', shortKey: 'short.years' },
       { value: days, key: 'days', shortKey: 'short.days' },
       { value: hours, key: 'hours', shortKey: 'short.hours' },
       { value: minutes, key: 'minutes', shortKey: 'short.minutes' },
@@ -59,7 +62,7 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
       if (value > 0) {
         timeString += this.translate.instant(shortFormat ? `timewindow.${shortKey}` : `timewindow.${key}`, { [key]: value });
         if (onlyFirstDigit) {
-          return timeString;
+          return timeString.trim();
         }
       }
     }

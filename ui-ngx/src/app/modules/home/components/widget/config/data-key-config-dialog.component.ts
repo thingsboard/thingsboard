@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,11 +36,12 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 export interface DataKeyConfigDialogData {
   dataKey: DataKey;
   dataKeyConfigMode?: DataKeyConfigMode;
-  dataKeySettingsSchema: any;
+  dataKeySettingsForm: FormProperty[];
   dataKeySettingsDirective: string;
   dashboard: Dashboard;
   aliasController: IAliasController;
@@ -92,8 +93,8 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
     this.dataKeyFormGroup = this.fb.group({
       dataKey: [this.data.dataKey, [Validators.required]]
     });
-    if (this.data.dataKeySettingsSchema && this.data.dataKeySettingsSchema.schema ||
-      this.data.dataKeySettingsDirective && this.data.dataKeySettingsDirective.length) {
+    if (this.data.dataKeySettingsForm?.length ||
+      this.data.dataKeySettingsDirective?.length) {
       this.hasAdvanced = true;
       this.dataKeyConfigHeaderOptions = [
         {

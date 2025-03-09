@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -30,6 +30,7 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { merge } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-no-aggregation-bar-width-settings',
@@ -64,7 +65,8 @@ export class TimeSeriesNoAggregationBarWidthSettingsComponent implements OnInit,
 
   public barWidthSettingsFormGroup: UntypedFormGroup;
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -81,13 +83,17 @@ export class TimeSeriesNoAggregationBarWidthSettingsComponent implements OnInit,
         absoluteWidth: [null, [Validators.required, Validators.min(100)]]
       })
     });
-    this.barWidthSettingsFormGroup.valueChanges.subscribe(() => {
+    this.barWidthSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     merge(this.barWidthSettingsFormGroup.get('strategy').valueChanges,
       this.barWidthSettingsFormGroup.get('groupWidth.relative').valueChanges,
-      this.barWidthSettingsFormGroup.get('barWidth.relative').valueChanges)
-    .subscribe(() => {
+      this.barWidthSettingsFormGroup.get('barWidth.relative').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }
