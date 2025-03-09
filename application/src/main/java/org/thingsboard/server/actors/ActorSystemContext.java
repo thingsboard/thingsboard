@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
@@ -432,10 +431,6 @@ public class ActorSystemContext {
     @Getter
     private ClaimDevicesService claimDevicesService;
 
-    @Autowired
-    @Getter
-    private JsInvokeStats jsInvokeStats;
-
     //TODO: separate context for TbCore and TbRuleEngine
     @Autowired(required = false)
     @Getter
@@ -593,17 +588,6 @@ public class ActorSystemContext {
     @PostConstruct
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
-    }
-
-    @Scheduled(fixedDelayString = "${actors.statistics.js_print_interval_ms}")
-    public void printStats() {
-        if (statisticsEnabled) {
-            if (jsInvokeStats.getRequests() > 0 || jsInvokeStats.getResponses() > 0 || jsInvokeStats.getFailures() > 0) {
-                log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
-                        jsInvokeStats.getRequests(), jsInvokeStats.getResponses(), jsInvokeStats.getFailures());
-                jsInvokeStats.reset();
-            }
-        }
     }
 
     @Value("${actors.tenant.create_components_on_init:true}")
