@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
@@ -28,12 +29,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
 import java.io.IOException;
@@ -44,6 +47,7 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.thingsboard.server.common.data.relation.EntityRelation.USES_TYPE;
 
 /**
  * Created by igor on 3/13/18.
@@ -55,6 +59,8 @@ public class RuleChainServiceTest extends AbstractServiceTest {
     EdgeService edgeService;
     @Autowired
     RuleChainService ruleChainService;
+    @Autowired
+    RelationService relationService;
 
     private IdComparator<RuleChain> idComparator = new IdComparator<>();
     private IdComparator<RuleNode> ruleNodeIdComparator = new IdComparator<>();
@@ -352,6 +358,66 @@ public class RuleChainServiceTest extends AbstractServiceTest {
 
         ruleChainById = ruleChainService.findRuleChainById(tenantId, ruleChainId2);
         Assert.assertTrue(ruleChainById.isRoot());
+    }
+
+    @Test
+    public void testSaveRuleChainWithInputNode() {
+        RuleChain toRuleChain = new RuleChain();
+        toRuleChain.setName("To Rule Chain");
+        toRuleChain.setTenantId(tenantId);
+        RuleChain savedToRuleChain = ruleChainService.saveRuleChain(toRuleChain);
+
+        RuleChain fromRuleChain = new RuleChain();
+        fromRuleChain.setName("From RuleChain");
+        fromRuleChain.setTenantId(tenantId);
+        RuleChain savedFromRuleChain = ruleChainService.saveRuleChain(fromRuleChain);
+
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        ruleChainMetaData.setRuleChainId(savedFromRuleChain.getId());
+
+        RuleNode ruleNode = new RuleNode();
+        ruleNode.setName("Input node");
+        ruleNode.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+        ObjectNode configuration = JacksonUtil.newObjectNode();
+        configuration.put("ruleChainId", savedToRuleChain.getId().toString());
+        ruleNode.setConfiguration(configuration);
+
+        List<RuleNode> ruleNodes = new ArrayList<>();
+        ruleNodes.add(ruleNode);
+        ruleChainMetaData.setFirstNodeIndex(0);
+        ruleChainMetaData.setNodes(ruleNodes);
+
+        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData, Function.identity());
+
+        List<EntityRelation> relations = relationService.findByFromAndType(tenantId, savedFromRuleChain.getId(), USES_TYPE, RelationTypeGroup.COMMON);
+        Assert.assertEquals(1, relations.size());
+        EntityRelation usesRelation = relations.get(0);
+        Assert.assertEquals(savedFromRuleChain.getId(), usesRelation.getFrom());
+        Assert.assertEquals(savedToRuleChain.getId(), usesRelation.getTo());
+
+        RuleChain newToRuleChain = new RuleChain();
+        newToRuleChain.setName("New To Rule Chain");
+        newToRuleChain.setTenantId(tenantId);
+        RuleChain savedNewToRuleChain = ruleChainService.saveRuleChain(newToRuleChain);
+
+        RuleNode newRuleNode = new RuleNode();
+        newRuleNode.setName("Input node");
+        newRuleNode.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+        ObjectNode newConfiguration = JacksonUtil.newObjectNode();
+        configuration.put("ruleChainId", savedNewToRuleChain.getId().toString());
+        newRuleNode.setConfiguration(newConfiguration);
+
+        List<RuleNode> newRuleNodes = new ArrayList<>();
+        newRuleNodes.add(newRuleNode);
+        RuleChainMetaData foundRuleChainMetaData = ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId());
+        foundRuleChainMetaData.setNodes(newRuleNodes);
+        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData, Function.identity());
+
+        List<EntityRelation> newRelations = relationService.findByFromAndType(tenantId, savedFromRuleChain.getId(), USES_TYPE, RelationTypeGroup.COMMON);
+        Assert.assertEquals(1, relations.size());
+        EntityRelation newUsesRelation = newRelations.get(0);
+        Assert.assertEquals(savedFromRuleChain.getId(), newUsesRelation.getFrom());
+        Assert.assertEquals(savedNewToRuleChain.getId(), newUsesRelation.getTo());
     }
 
     private RuleChainId saveRuleChainAndSetAutoAssignToEdge(String name) {
