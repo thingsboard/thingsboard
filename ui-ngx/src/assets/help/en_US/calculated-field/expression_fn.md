@@ -1,287 +1,139 @@
-#### Calculated field TBEL script function
+## Calculated Field TBEL Script Function
 
-The **calculate()** function is a user-defined script that allows you to perform custom calculations using [TBEL{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/tbel/) on telemetry and attribute data. 
-It receives arguments configured in the calculated field setup and an additional `ctx` object, which provides access to all arguments.
+The **calculate()** function is a user-defined script that enables custom calculations using [TBEL](\${siteBaseUrl}/docs\${docPlatformPrefix}/user-guide/tbel/) on telemetry and attribute data.
+It receives arguments configured in the calculated field setup, along with an additional `ctx` object that provides access to all arguments.
 
-##### Function signature
+
+### Function Signature
 
 ```javascript
-  function calculate(ctx, arg1, arg2, ...): object | object[]
+function calculate(ctx, arg1, arg2, ...): object | object[]
 ```
 
-##### Argument representation in the script
+### Supported Arguments
 
-Before describing how arguments are passed to the function, let's define how different argument types are **represented** inside the script.
+There are three types of arguments supported in the calculated field configuration:
 
-There are two types of arguments that can be used in the function:
+#### Attribute and Latest Telemetry Arguments
 
-* single value arguments - represent the latest telemetry data or attribute.
-  ```json
-    {
-        "altitude": {
-           "ts": 1740644636669,
-           "value": 1034
-        }
-    }
-  ```
+These arguments are single values and may be of type: boolean, int64 (long), double, string, or JSON.
 
-   * when accessed via `ctx.args`, they remain objects:
+Attribute and Latest telemetry are single value arguments that may be one of: boolean, int64 (long), double, string and JSON.
 
-  ```javascript
-  var altitudeTimestamp = ctx.args.altitude.ts;
-  var altitudeValue = ctx.args.altitude.value;
-  ```
+**Example: Convert Temperature from Fahrenheit to Celsius**
 
-  * when accessed as a **function parameter**, only the value is passed:
+```javascript
+var temperatureC = (temperatureF - 32) / 1.8;
+return {
+  "temperatureC": toFixed(temperatureC, 2)
+}
+```
 
-  ```javascript
-  function calculate(ctx, altitude/*(single value argument)*/, temperature/*(time series rolling argument)*/) {
-    // altitude = 1035
+Alternatively, using `ctx` to access the argument as an object:
+
+```json
+{
+  "temperatureF": {
+    "ts": 1740644636669,
+    "value": 36.6
   }
-  ```
+}
+```
 
-* time series rolling arguments - contain historical data within a defined time window.
-  ```json
-  {
-    "temperature": {
-        "timeWindow": {
-            "startTs": 1740643762896,
-            "endTs": 1740644662896
-        },
-        "values": [
-            { "ts": 1740644355935, "value": 72.32 },
-            { "ts": 1740644365935, "value": 72.86 },
-            { "ts": 1740644375935, "value": 73.58 },
-            { "ts": 1740644385935, "value": "NaN" }
-        ]
-    }
-  }
-  ```
+You may notice that the object includes both the `value` of an argument and its timestamp as `ts`.
+Let's modify the function that converts Fahrenheit to Celsius to also return the timestamp information:
 
-  * when accessed via `ctx.args`, they remain rolling argument objects:
+```javascript
+var temperatureC = (temperatureF - 32) / 1.8;
+return {
+  "ts": ctx.args.temperatureF.ts,
+  "values": { "temperatureC": toFixed(temperatureC, 2) }
+};
+```
 
-  ```javascript
-  var startOfInterval = temperature.timeWindow.startTs;
-  var firstTimestamp = temperature.values[0].ts;
-  var firstValue = temperature.values[0].value;
-  ```
+#### Time Series Rolling Arguments
 
-  * when accessed as a **function parameter**, they are passed as rolling arguments, retaining their structure:
+These contain time series data within a defined time window. Example format:
 
-  ```javascript
-  function calculate(ctx, altitude/*(single value argument)*/, temperature/*(time series rolling argument)*/) {
-    var avgTemp = temperature.mean(); // Use rolling argument functions
-  }
-  ```
-
-  **Built-in methods for rolling arguments**
-
-  Time series rolling arguments provide built-in functions for calculations. 
-  These functions accept an optional `ignoreNaN` boolean parameter, which controls how NaN values are handled.
-  Each function has two function signatures:
-
-  * **Without parameters:** `method()` → called **without parameters** and defaults to `ignoreNaN = true`, meaning NaN values are ignored.
-  * **With an explicit parameter:** `method(boolean ignoreNaN)` → called with a boolean `ignoreNaN` parameter:
-    * `true` → ignores NaN values (default behavior).
-    * `false` → includes NaN values in calculations.
-
-  | Method     | Default Behavior (`ignoreNaN = true`)            | Alternative (`ignoreNaN = false`)           |
-  |------------|--------------------------------------------------|---------------------------------------------|
-  | `max()`    | Returns the highest value, ignoring NaN values.  | Returns NaN if any NaN values exist.        |
-  | `min()`    | Returns the lowest value, ignoring NaN values.   | Returns NaN if any NaN values exist.        |
-  | `mean()`   | Computes the average value, ignoring NaN values. | Returns NaN if any NaN values exist.        |
-  | `std()`    | Calculates the standard deviation, ignoring NaN. | Returns NaN if any NaN values exist.        |
-  | `median()` | Returns the median value, ignoring NaN values.   | Returns NaN if any NaN values exist.        |
-  | `count()`  | Counts only valid (non-NaN) values.              | Counts all values, including NaN.           |
-  | `last()`   | Returns the most recent non-NaN value.           | Returns the last value, even if it is NaN.  |
-  | `first()`  | Returns the oldest non-NaN value.                | Returns the first value, even if it is NaN. |
-  | `sum()`    | Computes the total sum, ignoring NaN values.     | Returns NaN if any NaN values exist.        |
-
-  The following calculations are executed over the provided above arguments:
-
-  **Usage: default (`ignoreNaN = true`)**
-
-  ```javascript
-  var avgTemp = temperature.mean();
-  var tempMax = temperature.max();
-  var valueCount = temperature.count();
-  ```
-
-  **Output:**
-
-  ```json
-  {
-    "avgTemp": 72.92,
-    "tempMax": 73.58,
-    "valueCount": 3
-  }
-  ```
-
-  **Usage: explicit (`ignoreNaN = false`)**
-  
-  ```javascript
-  var avgTemp = temperature.mean(false);  // Returns NaN if any NaN values exist
-  var tempMax = temperature.max(false);   // Returns NaN if any NaN values exist
-  var valueCount = temperature.count(false); // Counts all values, including NaN
-  ```
-
-  **Output:**
-
-  ```json
-  {
-    "avgTemp": "NaN",
-    "tempMax": "NaN",
-    "valueCount": 4
-  }
-  ```
-
-  Time series rolling arguments can be **merged** to align timestamps across multiple datasets.
-
-  | Method                       | Description                                                                                                                                                                                                              | Parameters                                                                                                                                                                                                                                                                                                                           | Returns                                          |
-  |:-----------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------|
-  | `merge(other, settings)`     | Merges the current rolling argument with another rolling argument by aligning timestamps and filling missing values with the previous available value.                                                                   | <ul><li>`other` (another rolling argument)</li><li>`settings` (optional) - configuration object, supports:<ul><br/><li>`ignoreNaN` (boolean, default true) - controls whether NaN values should be ignored.</li><li>`timeWindow` (object, default {}) - defines a custom time window for filtering merged values.</li></ul></li></ul>| Merged object with timeWindow and aligned values. |
-  | `mergeAll(others, settings)` | Merges the current rolling argument with multiple rolling arguments by aligning timestamps and filling missing values with the previous available value.                                                                 | <ul><li>`others` (array of rolling arguments)</li><li>`settings` (optional) - configuration object, supports:<ul><br/><li>`ignoreNaN` (boolean, default true) - controls whether NaN values should be ignored.</li><li>`timeWindow` (object, default {}) - defines a custom time window for filtering merged values.</li></ul></li></ul>| Merged object with timeWindow and aligned values.|
-
-  **Example arguments:**
-
-  ```json
-  {
-    "humidity": {
-      "timeWindow": {
-        "startTs": 1741356332086,
-        "endTs": 1741357232086
-      },
-      "values": [{
-        "ts": 1741356882759,
-        "value": 43
-      }, {
-        "ts": 1741356918779,
-        "value": 46
-      }]
+```json
+{
+  "temperature": {
+    "timeWindow": {
+      "startTs": 1740643762896,
+      "endTs": 1740644662896
     },
-    "pressure": {
-      "timeWindow": {
-        "startTs": 1741356332086,
-        "endTs": 1741357232086
-      },
-      "values": [{
-        "ts": 1741357047945,
-        "value": 1023
-      }, {
-        "ts": 1741357056144,
-        "value": 1026
-      }, {
-        "ts": 1741357147391,
-        "value": 1025
-      }]
-    },
-    "temperature": {
-      "timeWindow": {
-        "startTs": 1741356332086,
-        "endTs": 1741357232086
-      },
-      "values": [{
-        "ts": 1741356874943,
-        "value": 76
-      }, {
-        "ts": 1741357063689,
-        "value": 77
-      }]
-    }
+    "values": [
+      { "ts": 1740644350000, "value": 72.32 },
+      { "ts": 1740644360000, "value": 72.86 },
+      { "ts": 1740644370000, "value": 73.58 },
+      { "ts": 1740644380000, "value": "NaN" }
+    ]
   }
-  ```
+}
+```
 
-  **Usage:**
+The values are always converted to type `double`, and `NaN` is used when conversion fails. One may use `isNaN(double): boolean` function to check that the value is a valid number.
 
-  ```javascript
-  var mergedData = temperature.merge(humidity, { ignoreNaN: false });
-  ```
+**Example: Accessing time series rolling argument data**
 
-  **Output:**
-
-  ```json
-  {
-    "mergedData": {
-      "timeWindow": {
-        "startTs": 1741356332086,
-        "endTs": 1741357232086
-      },
-      "values": [{
-        "ts": 1741356874943,
-        "values": [76.0, "NaN"]
-      }, {
-        "ts": 1741356882759,
-        "values": [76.0, 43.0]
-      }, {
-        "ts": 1741356918779,
-        "values": [76.0, 46.0]
-      }, {
-        "ts": 1741357063689,
-        "values": [77.0, 46.0]
-      }]
-    }
+```javascript
+var startOfInterval = temperature.timeWindow.startTs;
+var endOfInterval = temperature.timeWindow.endTs;
+var firstItem = temperature.values[0];
+var firstItemTs = firstItem.ts;
+var firstItemValue = firstItem.value;
+var sum = 0.0;
+// iterate through all values and calculate the sum using foreach:
+foreach(t: temperature) {
+  if(!isNaN(t.value)) { // check that the value is a valid number;
+    sum += t.value;
   }
-  ```
+}
+// iterate through all values and calculate the sum using for loop:
+sum = 0.0;
+for(var i = 0; i < temperature.values.size; i++) {
+  sum += temperature.values[i].value;
+}
+// use built-in function to calculate the sum
+sum = t.sum();
+```
 
-  **Usage:**
+##### Built-in Methods for Rolling Arguments
 
-  ```javascript
-  var mergedData = temperature.mergeAll([humidity, pressure], { ignoreNaN: true });
-  ```
+Time series rolling arguments support built-in functions for calculations. These functions accept an optional `ignoreNaN` boolean parameter.
 
-  **Output:**
+| Method     | Default Behavior (`ignoreNaN = true`)               | Alternative (`ignoreNaN = false`)           |
+|------------|-----------------------------------------------------|---------------------------------------------|
+| `max()`    | Returns the highest value, ignoring NaN values.     | Returns NaN if any NaN values exist.        |
+| `min()`    | Returns the lowest value, ignoring NaN values.      | Returns NaN if any NaN values exist.        |
+| `mean()`   | Computes the average value, ignoring NaN values.    | Returns NaN if any NaN values exist.        |
+| `std()`    | Calculates the standard deviation, ignoring NaN.    | Returns NaN if any NaN values exist.        |
+| `median()` | Returns the median value, ignoring NaN values.      | Returns NaN if any NaN values exist.        |
+| `count()`  | Counts values, ignoring NaN values.                 | Counts all values, including NaN.           |
+| `last()`   | Returns the most recent value, skipping NaN values. | Returns the last value, even if it is NaN.  |
+| `first()`  | Returns the oldest value, skipping NaN values.      | Returns the first value, even if it is NaN. |
+| `sum()`    | Computes the total sum, ignoring NaN values.        | Returns NaN if any NaN values exist.        |
 
-  ```json
-  {
-    "mergedData": {
-      "timeWindow": {
-        "startTs": 1741356332086,
-        "endTs": 1741357232086
-      },
-      "values": [{
-        "ts": 1741357047945,
-        "values": [76.0, 46.0, 1023.0]
-      }, {
-        "ts": 1741357056144,
-        "values": [76.0, 46.0, 1026.0]
-      }, {
-        "ts": 1741357063689,
-        "values": [77.0, 46.0, 1026.0]
-      }, {
-        "ts": 1741357147391,
-        "values": [77.0, 46.0, 1025.0]
-      }]
-    }
-  }
-  ```
 
-##### Function arguments
+Usage example:
 
-* `ctx` - context object that contains all provided arguments, in the representations described above.
+```javascript
+var avgTemp = temperature.mean(); // Returns 72.92
+var tempMax = temperature.max(); // Returns 73.58
+var valueCount = temperature.count(); // Returns 3
 
-Accessing arguments via `ctx`:
+var avgTempNaN = temperature.mean(false);  // Returns NaN
+var tempMaxNaN = temperature.max(false);   // Returns NaN
+var valueCountNaN = temperature.count(false); // Returns 4
+```
 
-  ```javascript
-  var altitude = ctx.args.altitude; // single value argument
-  var temperature = ctx.args.temperature; // time series rolling argument
-  ```
-
-* `arg1, arg2, ...` - user-defined arguments configured in the calculated field setup.
-
-How they are passed depends on their type:
-
-* **single value arguments** are passed as raw values **(e.g., 22.5, "ON")**.
-* **time series rolling arguments** are passed as objects (containing multiple values).
-
-##### Example: Air Density Calculation
-
-This function calculates air density using `altitude` (single value argument) and `temperature` (time series rolling argument).
+This function calculates air density using `altitude` (single value) and `temperature` (time series rolling argument).
 
 ```javascript
 function calculate(ctx, altitude, temperature) {
   var avgTemperature = temperature.mean(); // Get average temperature
   var temperatureK = (avgTemperature - 32) * (5 / 9) + 273.15; // Convert Fahrenheit to Kelvin
-    
+
   // Estimate air pressure based on altitude
   var pressure = 101325 * Math.pow((1 - 2.25577e-5 * altitude), 5.25588);
 
@@ -294,42 +146,255 @@ function calculate(ctx, altitude, temperature) {
 }
 ```
 
-* `altitude` is a single value, passed as number.
-* `temperature` is a rolling argument, retaining its full structure.
+##### Merging Time Series Arguments
 
-##### Function return format
+Time series rolling arguments can be **merged** to align timestamps across multiple datasets.
 
-The script should return a JSON object formatted according to the [ThingsBoard Telemetry Upload API](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/telemetry/#time-series-data-upload-api/). 
-The return value must match one of the supported telemetry upload formats.
+| Method                       | Description                                                                                                               | Parameters                                                                                                                                                                                                                                                                                                                           | Returns                                          |
+|:-----------------------------|:--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------|
+| `merge(other, settings)`     | Merges with another rolling argument. Aligns timestamps and filling missing values with the previous available value.     | <ul><li>`other` (another rolling argument)</li><li>`settings` (optional) - configuration object, supports:<ul><br/><li>`ignoreNaN` (boolean, default true) - controls whether NaN values should be ignored.</li><li>`timeWindow` (object, default {}) - defines a custom time window for filtering merged values.</li></ul></li></ul>| Merged object with timeWindow and aligned values. |
+| `mergeAll(others, settings)` | Merges with multiple rolling arguments. Aligns timestamps and filling missing values with the previous available value.   | <ul><li>`others` (array of rolling arguments)</li><li>`settings` (optional) - configuration object, supports:<ul><br/><li>`ignoreNaN` (boolean, default true) - controls whether NaN values should be ignored.</li><li>`timeWindow` (object, default {}) - defines a custom time window for filtering merged values.</li></ul></li></ul>| Merged object with timeWindow and aligned values.|
 
-The script must return data in a format compatible with ThingsBoard’s APIs. 
-The correct return format depends on the calculated field output configuration:
+Assuming the following arguments and their values:
 
-* if latest telemetry is used for output, the function must return data according to the [Telemetry Upload API](${siteBaseUrl}/docs${docPlatformPrefix}/reference/mqtt-api/#attributes-api/).
-
-  * without timestamps
-  ```json
-  {
-    "airDensity": 1.06,
-    "someKey": "value"
+```json
+{
+  "humidity": {
+    "timeWindow": {
+      "startTs": 1741356332086,
+      "endTs": 1741357232086
+    },
+    "values": [{
+      "ts": 1741356882759,
+      "value": 43
+    }, {
+      "ts": 1741356918779,
+      "value": 46
+    }]
+  },
+  "pressure": {
+    "timeWindow": {
+      "startTs": 1741356332086,
+      "endTs": 1741357232086
+    },
+    "values": [{
+      "ts": 1741357047945,
+      "value": 1023
+    }, {
+      "ts": 1741357056144,
+      "value": 1026
+    }, {
+      "ts": 1741357147391,
+      "value": 1025
+    }]
+  },
+  "temperature": {
+    "timeWindow": {
+      "startTs": 1741356332086,
+      "endTs": 1741357232086
+    },
+    "values": [{
+      "ts": 1741356874943,
+      "value": 76
+    }, {
+      "ts": 1741357063689,
+      "value": 77
+    }]
   }
-  ```
-  * with a timestamp:
-  ```json
+}
+```
+
+**Usage:**
+
+```javascript
+var mergedData = temperature.merge(humidity, { ignoreNaN: false });
+```
+
+**Output:**
+
+```json
+{
+  "mergedData": {
+    "timeWindow": {
+      "startTs": 1741356332086,
+      "endTs": 1741357232086
+    },
+    "values": [{
+      "ts": 1741356874943,
+      "values": [76.0, "NaN"]
+    }, {
+      "ts": 1741356882759,
+      "values": [76.0, 43.0]
+    }, {
+      "ts": 1741356918779,
+      "values": [76.0, 46.0]
+    }, {
+      "ts": 1741357063689,
+      "values": [77.0, 46.0]
+    }]
+  }
+}
+```
+
+**Usage:**
+
+```javascript
+var mergedData = temperature.mergeAll([humidity, pressure], { ignoreNaN: true });
+```
+
+**Output:**
+
+```json
+{
+  "mergedData": {
+    "timeWindow": {
+      "startTs": 1741356332086,
+      "endTs": 1741357232086
+    },
+    "values": [{
+      "ts": 1741357047945,
+      "values": [76.0, 46.0, 1023.0]
+    }, {
+      "ts": 1741357056144,
+      "values": [76.0, 46.0, 1026.0]
+    }, {
+      "ts": 1741357063689,
+      "values": [77.0, 46.0, 1026.0]
+    }, {
+      "ts": 1741357147391,
+      "values": [77.0, 46.0, 1025.0]
+    }]
+  }
+}
+```
+
+**Example: Freezer temperature analysis**
+
+This function merges `temperature` data with the fridge's `defrost` status. It then analyzes the merged data to identify instances where the fridge is not in defrost mode, yet the internal air temperature is too high ( > -5° C).
+
+```javascript
+function calculate(ctx, temperature, defrost) {
+  var merged = temperature.merge(defrost);
+  var result = [];
+
+  foreach(item: merged) {
+    if (item.v1 > -5.0 && item.v2 == 0) {
+      result.add({
+        ts: item.ts,
+        values: {
+          issue: {
+            temperature: item.v1,
+            defrostState: false
+          }
+        }
+      });
+    }
+  }
+
+  return result;
+}
+```
+
+The result is a list of issues that may be used to configure alarm rules:
+
+```json
+[{
+    "ts": 1741613833843,
+    "values": {
+        "issue": {
+            "temperature": -3.12,
+            "defrostState": false
+        }
+    }
+}, {
+    "ts": 1741613923848,
+    "values": {
+        "issue": {
+            "temperature": -4.16,
+            "defrostState": false
+        }
+    }
+}]
+```
+
+### Function return format
+
+The return format depends on the output type configured in the calculated field settings (default: **Time Series**).
+
+##### Time Series Output
+
+The function must return a JSON object or array with or without a timestamp.
+Examples below return 5 data points: airDensity (double), humidity (integer), hvacEnabled (boolean), hvacState (string) and configuration (JSON):
+
+Without timestamp:
+
+```json
+{
+  "airDensity": 1.06,
+  "humidity": 70,
+  "hvacEnabled": true,
+  "hvacState": "IDLE",
+  "configuration": {
+    "someNumber": 42,
+    "someArray": [1,2,3],
+    "someNestedObject": {"key": "value"}
+  }
+}
+```
+
+With timestamp:
+
+```json
+{
+  "ts": 1740644636669,
+  "values": {
+    "airDensity": 1.06,
+    "humidity": 70,
+    "hvacEnabled": true,
+    "hvacState": "IDLE",
+    "configuration": {
+      "someNumber": 42,
+      "someArray": [1,2,3],
+      "someNestedObject": {"key": "value"}
+    }
+   }
+}
+```
+
+Array containing multiple timestamps and different values of the `airDensity` :
+
+```json
+[
   {
     "ts": 1740644636669,
     "values": {
-      "airDensity": 1.06,
-      "someKey": "value"
-     }
-  }
-  ```
-
-* if attributes are used for output, the function must return data according to the [Attributes API](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/telemetry/#time-series-data-upload-api/).
-
-  ```json
+      "airDensity": 1.06
+    }
+  },
   {
-    "airDensity": 1.06,
-    "someKey": "value"
+    "ts": 1740644636670,
+    "values": {
+      "airDensity": 1.07
+    }
+  }  
+]
+```
+
+##### Attribute Output
+
+The function must return a JSON object **without timestamp** information.
+Example below return 5 data points: airDensity (double), humidity (integer), hvacEnabled (boolean), hvacState (string) and configuration (JSON):
+
+```json
+{
+  "airDensity": 1.06,
+  "humidity": 70,
+  "hvacEnabled": true,
+  "hvacState": "IDLE",
+  "configuration": {
+    "someNumber": 42,
+    "someArray": [1,2,3],
+    "someNestedObject": {"key": "value"}
   }
-  ```
+}
+```
