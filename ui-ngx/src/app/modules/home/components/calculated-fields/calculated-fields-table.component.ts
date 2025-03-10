@@ -31,10 +31,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { CalculatedFieldsTableConfig } from '@home/components/calculated-fields/calculated-fields-table-config';
-import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
-import { TbPopoverService } from '@shared/components/popover.service';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
+import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
 
 @Component({
@@ -42,6 +41,7 @@ import { DatePipe } from '@angular/common';
   templateUrl: './calculated-fields-table.component.html',
   styleUrls: ['./calculated-fields-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [EntityDebugSettingsService]
 })
 export class CalculatedFieldsTableComponent {
 
@@ -58,11 +58,10 @@ export class CalculatedFieldsTableComponent {
               private dialog: MatDialog,
               private store: Store<AppState>,
               private datePipe: DatePipe,
-              private durationLeft: DurationLeftPipe,
-              private popoverService: TbPopoverService,
               private cd: ChangeDetectorRef,
               private renderer: Renderer2,
               private importExportService: ImportExportService,
+              private entityDebugSettingsService: EntityDebugSettingsService,
               private destroyRef: DestroyRef) {
 
     effect(() => {
@@ -74,12 +73,11 @@ export class CalculatedFieldsTableComponent {
           this.datePipe,
           this.entityId(),
           this.store,
-          this.durationLeft,
-          this.popoverService,
           this.destroyRef,
           this.renderer,
           this.entityName(),
-          this.importExportService
+          this.importExportService,
+          this.entityDebugSettingsService,
         );
         this.cd.markForCheck();
       }
