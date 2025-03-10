@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.script;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.thingsboard.common.util.JacksonUtil;
@@ -22,7 +23,7 @@ import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.tbel.DefaultTbelInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.common.stats.DefaultStatsFactory;
 
 import java.util.Map;
 import java.util.UUID;
@@ -30,7 +31,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
-@SpringBootTest(classes = DefaultTbelInvokeService.class)
+@SpringBootTest(classes = {SimpleMeterRegistry.class, DefaultStatsFactory.class, DefaultTbelInvokeService.class })
 public abstract class AbstractTbelInvokeTest {
 
     @Autowired
