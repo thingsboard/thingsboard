@@ -8622,7 +8622,8 @@
             "timeseries-column-error": "At least one time series column should be specified",
             "alarm-column-error": "At least one alarm column should be specified",
             "table-tabs": "Table tabs",
-            "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
+            "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode",
+            "disable-sorting": "Disable sorting"
         },
         "latest-chart": {
             "total": "Total",

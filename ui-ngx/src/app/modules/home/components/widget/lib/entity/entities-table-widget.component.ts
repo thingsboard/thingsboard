@@ -463,7 +463,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
         dataKey.def = 'def' + this.columns.length;
-        dataKey.sortable = !dataKey.usePostProcessing && (!dataKey.aggregationType || dataKey.aggregationType === AggregationType.NONE);
+        dataKey.sortable = !keySettings.disableSorting && !dataKey.usePostProcessing
+          && (!dataKey.aggregationType ||dataKey.aggregationType === AggregationType.NONE);
         if (dataKey.type === DataKeyType.entityField &&
           !isDefined(keySettings.columnWidth) || keySettings.columnWidth === '0px') {
           const entityField = entityFields[dataKey.name];
