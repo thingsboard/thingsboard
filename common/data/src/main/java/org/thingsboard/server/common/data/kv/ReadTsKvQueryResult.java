@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.kv;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.query.TsValue;
 
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ import java.util.List;
 
 @Data
 public class ReadTsKvQueryResult {
+
+    private EntityId entityId;
 
     private final int queryId;
     // Holds the data list;
