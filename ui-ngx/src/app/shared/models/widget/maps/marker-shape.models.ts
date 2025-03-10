@@ -224,14 +224,6 @@ const createColorMarkerShape = (iconRegistry: MatIconRegistry, domSanitizer: Dom
         el.setAttribute('fill', '#'+color.toHex());
         el.setAttribute('fill-opacity', `${color.getAlpha()}`);
       });
-      const strokeElements = Array.from(svgElement.getElementsByClassName('marker-stroke'));
-      if (svgElement.classList.contains('marker-stroke')) {
-        strokeElements.push(svgElement);
-      }
-      strokeElements.forEach(el => {
-        el.setAttribute('stroke', '#'+color.toHex());
-        el.setAttribute('stroke-opacity', `${color.getAlpha()}`);
-      });
       const opacityElements = Array.from(svgElement.getElementsByClassName('marker-opacity'));
       if (svgElement.classList.contains('marker-opacity')) {
         opacityElements.push(svgElement);
