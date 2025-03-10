@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.common.msg.queue;
 
+import org.thingsboard.server.common.data.id.EntityId;
+
+import java.util.UUID;
+
 public interface TbCallback {
 
     TbCallback EMPTY = new TbCallback() {
@@ -29,6 +33,10 @@ public interface TbCallback {
 
         }
     };
+
+    default UUID getId(){
+        return EntityId.NULL_UUID;
+    }
 
     void onSuccess();
 

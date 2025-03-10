@@ -90,8 +90,8 @@ export class ResourceService {
     return this.http.post<Resource>('/api/resource', resource, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteResource(resourceId: string, config?: RequestConfig) {
-    return this.http.delete(`/api/resource/${resourceId}`, defaultHttpOptionsFromConfig(config));
+  public deleteResource(resourceId: string, force = false, config?: RequestConfig) {
+    return this.http.delete(`/api/resource/${resourceId}?force=${force}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

@@ -42,6 +42,8 @@ enum EdgeVersion {
   V_3_8_0 = 8;
   V_3_9_0 = 9;
   V_4_0_0 = 10;
+
+  V_LATEST = 999;
 }
 
 /**
@@ -131,6 +133,7 @@ message EntityDataProto {
   transport.PostAttributeMsg attributesUpdatedMsg = 6;
   string postAttributeScope = 7;
   AttributeDeleteMsg attributeDeleteMsg = 8;
+  optional int64 attributeTs = 9;
 }
 
 message AttributeDeleteMsg {
@@ -302,7 +305,9 @@ message NotificationTemplateUpdateMsg {
   optional string entity = 4;
 }
 
+// DEPRECATED. FOR REMOVAL
 message RuleChainMetadataRequestMsg {
+  option deprecated = true;
   int64 ruleChainIdMSB = 1;
   int64 ruleChainIdLSB = 2;
 }
@@ -320,22 +325,30 @@ message RelationRequestMsg {
   string entityType = 3;
 }
 
+// DEPRECATED. FOR REMOVAL
 message UserCredentialsRequestMsg {
+  option deprecated = true;
   int64 userIdMSB = 1;
   int64 userIdLSB = 2;
 }
 
+// DEPRECATED. FOR REMOVAL
 message DeviceCredentialsRequestMsg {
+  option deprecated = true;
   int64 deviceIdMSB = 1;
   int64 deviceIdLSB = 2;
 }
 
+// DEPRECATED. FOR REMOVAL
 message WidgetBundleTypesRequestMsg {
+  option deprecated = true;
   int64 widgetBundleIdMSB = 1;
   int64 widgetBundleIdLSB = 2;
 }
 
+// DEPRECATED. FOR REMOVAL
 message EntityViewsRequestMsg {
+  option deprecated = true;
   int64 entityIdMSB = 1;
   int64 entityIdLSB = 2;
   string entityType = 3;
@@ -393,14 +406,14 @@ message UplinkMsg {
   repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 4;
   repeated AlarmUpdateMsg alarmUpdateMsg = 5;
   repeated RelationUpdateMsg relationUpdateMsg = 6;
-  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 7;
+  repeated RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg = 7 [deprecated = true];
   repeated AttributesRequestMsg attributesRequestMsg = 8;
   repeated RelationRequestMsg relationRequestMsg = 9;
-  repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
-  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
+  repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10 [deprecated = true];
+  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11 [deprecated = true];
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 12;
-  repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
-  repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
+  repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14 [deprecated = true];
+  repeated EntityViewsRequestMsg entityViewsRequestMsg = 15 [deprecated = true];
   repeated AssetUpdateMsg assetUpdateMsg = 16;
   repeated DashboardUpdateMsg dashboardUpdateMsg = 17;
   repeated EntityViewUpdateMsg entityViewUpdateMsg = 18;
@@ -408,6 +421,8 @@ message UplinkMsg {
   repeated DeviceProfileUpdateMsg deviceProfileUpdateMsg = 20;
   repeated ResourceUpdateMsg resourceUpdateMsg = 21;
   repeated AlarmCommentUpdateMsg alarmCommentUpdateMsg = 22;
+  repeated RuleChainUpdateMsg ruleChainUpdateMsg = 23;
+  repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 24;
 }
 
 message UplinkResponseMsg {
@@ -426,7 +441,7 @@ message DownlinkMsg {
   int32 downlinkMsgId = 1;
   SyncCompletedMsg syncCompletedMsg = 2;
   repeated EntityDataProto entityData = 3;
-  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 4;
+  repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 4 [deprecated = true];
   repeated DeviceUpdateMsg deviceUpdateMsg = 5;
   repeated DeviceProfileUpdateMsg deviceProfileUpdateMsg = 6;
   repeated DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = 7;

@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.model.ToData;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -83,6 +84,10 @@ public abstract class DaoUtil {
 
     public static Pageable toPageable(PageLink pageLink, List<SortOrder> sortOrders) {
         return toPageable(pageLink, Collections.emptyMap(), sortOrders);
+    }
+
+    public static Pageable toPageable(PageLink pageLink, String... sortColumns) {
+        return toPageable(pageLink, Collections.emptyMap(), Arrays.stream(sortColumns).map(column -> new SortOrder(column, SortOrder.Direction.ASC)).toList(), false);
     }
 
     public static Pageable toPageable(PageLink pageLink, Map<String, String> columnMap, List<SortOrder> sortOrders) {

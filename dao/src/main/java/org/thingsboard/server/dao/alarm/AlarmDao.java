@@ -106,7 +106,7 @@ public interface AlarmDao extends Dao<Alarm> {
 
     AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long unassignTime);
 
-    long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
+    long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query, Collection<EntityId> orderedEntityIds);
 
     PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink);
 

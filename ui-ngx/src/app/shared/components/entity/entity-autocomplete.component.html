@@ -23,7 +23,7 @@
                 [appearance]="inlineField ? 'outline' : appearance"
                 [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing"
                 [class]="additionalClasses">
-  <mat-label *ngIf="!inlineField">{{ label | translate }}</mat-label>
+  <mat-label *ngIf="!hideLabel && !inlineField">{{ label | translate }}</mat-label>
   <input matInput type="text"
          #entityInput
          placeholder="{{ placeholder }}"

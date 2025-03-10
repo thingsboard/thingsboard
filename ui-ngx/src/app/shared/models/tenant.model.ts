@@ -95,6 +95,13 @@ export interface DefaultTenantProfileConfiguration {
   rpcTtlDays: number;
   queueStatsTtlDays: number;
   ruleEngineExceptionsTtlDays: number;
+
+  maxCalculatedFieldsPerEntity: number;
+  maxArgumentsPerCF: number;
+  maxDataPointsPerRollingArg: number;
+  maxStateSizeInKBytes: number;
+  maxSingleValueArgumentSizeInKBytes: number;
+  calculatedFieldDebugEventsRateLimit: string;
 }
 
 export type TenantProfileConfigurations = DefaultTenantProfileConfiguration;
@@ -148,7 +155,13 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           alarmsTtlDays: 0,
           rpcTtlDays: 0,
           queueStatsTtlDays: 0,
-          ruleEngineExceptionsTtlDays: 0
+          ruleEngineExceptionsTtlDays: 0,
+          maxCalculatedFieldsPerEntity: 5,
+          maxArgumentsPerCF: 10,
+          maxDataPointsPerRollingArg: 1000,
+          maxStateSizeInKBytes: 32,
+          maxSingleValueArgumentSizeInKBytes: 2,
+          calculatedFieldDebugEventsRateLimit: ''
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;

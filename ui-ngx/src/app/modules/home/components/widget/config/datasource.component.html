@@ -36,7 +36,7 @@
                                  datasourceFormGroup.get('type').value === datasourceType.entity ||
                                  datasourceFormGroup.get('type').value === datasourceType.entityCount ||
                                  datasourceFormGroup.get('type').value === datasourceType.alarmCount ? datasourceFormGroup.get('type').value : ''">
-      <tb-alarm-filter-config *ngIf="datasourceFormGroup.get('type').value === datasourceType.alarmCount"
+      <tb-alarm-filter-config *ngIf="datasourceFormGroup.get('type').value === datasourceType.alarmCount && !hideAlarmFilter"
                               propagatedFilter="false"
                               [initialAlarmFilterConfig]="{ statusList: [alarmSearchStatus.ACTIVE] }"
                               style="height: 56px; margin-bottom: 22px;"
@@ -47,9 +47,9 @@
                               formControlName="deviceId">
       </tb-entity-autocomplete>
       <tb-entity-alias-select
-        *ngIf="datasourceFormGroup.get('type').value !== datasourceType.device && datasourceFormGroup.get('type').value !== datasourceType.alarmCount"
+        *ngIf="datasourceFormGroup.get('type').value !== datasourceType.device"
         [showLabel]="true"
-        [tbRequired]="!datasourcesOptional"
+        [tbRequired]="!entityAliasOptional"
         [aliasController]="aliasController"
         formControlName="entityAliasId"
         [callbacks]="entityAliasSelectCallbacks">
@@ -106,7 +106,7 @@
     </tb-data-keys>
   </section>
   <tb-filter-select
-    *ngIf="(!basicMode || displayDatasourceFilterForBasicMode) && ![datasourceType.function, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
+    *ngIf="(!basicMode || displayDatasourceFilterForBasicMode) && ![datasourceType.function].includes(datasourceFormGroup.get('type').value)"
     [showLabel]="true"
     [aliasController]="aliasController"
     formControlName="filterId"

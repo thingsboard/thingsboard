@@ -26,7 +26,8 @@ import {
   OnDestroy,
   OnInit,
   SimpleChanges,
-  ViewChild
+  ViewChild,
+  ViewContainerRef,
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -141,7 +142,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
               private router: Router,
               private elementRef: ElementRef,
               private fb: FormBuilder,
-              private zone: NgZone) {
+              private zone: NgZone,
+              public viewContainerRef: ViewContainerRef) {
     super(store);
   }
 
@@ -687,7 +689,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   cellTooltip(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number) {
-    if (column instanceof EntityTableColumn) {
+    if (column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn) {
       const col = this.entitiesTableConfig.columns.indexOf(column);
       const index = row * this.entitiesTableConfig.columns.length + col;
       let res = this.cellTooltipCache[index];

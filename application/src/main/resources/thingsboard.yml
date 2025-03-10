@@ -437,6 +437,8 @@ actors:
     device_dispatcher_pool_size: "${ACTORS_SYSTEM_DEVICE_DISPATCHER_POOL_SIZE:4}" # Thread pool size for actor system dispatcher that process messages for device actors
     rule_dispatcher_pool_size: "${ACTORS_SYSTEM_RULE_DISPATCHER_POOL_SIZE:8}" # Thread pool size for actor system dispatcher that process messages for rule engine (chain/node) actors
     edge_dispatcher_pool_size: "${ACTORS_SYSTEM_EDGE_DISPATCHER_POOL_SIZE:4}" # Thread pool size for actor system dispatcher that process messages for edge actors
+    cfm_dispatcher_pool_size: "${ACTORS_SYSTEM_CFM_DISPATCHER_POOL_SIZE:2}" # Thread pool size for actor system dispatcher that process messages for CalculatedField manager actors
+    cfe_dispatcher_pool_size: "${ACTORS_SYSTEM_CFE_DISPATCHER_POOL_SIZE:8}" # Thread pool size for actor system dispatcher that process messages for CalculatedField entity actors
   tenant:
     create_components_on_init: "${ACTORS_TENANT_CREATE_COMPONENTS_ON_INIT:true}" # Create components in initialization
   session:
@@ -504,6 +506,14 @@ actors:
     js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
     # Actors statistic persistence frequency in milliseconds
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
+  calculated_fields:
+    debug_mode_rate_limits_per_tenant:
+      # Enable/Disable the rate limit of persisted debug events for all calculated fields per tenant
+      enabled: "${ACTORS_CALCULATED_FIELD_DEBUG_MODE_RATE_LIMITS_PER_TENANT_ENABLED:true}"
+      # The value of DEBUG mode rate limit. By default, no more than 50 thousand events per hour
+      configuration: "${ACTORS_CALCULATED_FIELD_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:50000:3600}"
+    # Time in seconds to receive calculation result.
+    calculation_timeout: "${ACTORS_CALCULATION_TIMEOUT_SEC:5}"
 
 debug:
   settings:
@@ -807,7 +817,7 @@ spring:
     events:
       # Enable dedicated datasource (a separate database) for events and audit logs.
       # Before enabling this, make sure you have set up the following tables in the new DB:
-      # error_event, lc_event, rule_chain_debug_event, rule_node_debug_event, stats_event, audit_log
+      # error_event, lc_event, rule_chain_debug_event, rule_node_debug_event, stats_event, audit_log, cf_debug_event
       enabled: "${SPRING_DEDICATED_EVENTS_DATASOURCE_ENABLED:false}"
       # Database driver for Spring JPA for events datasource
       driverClassName: "${SPRING_EVENTS_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}"
@@ -848,6 +858,7 @@ audit-log:
       "edge": "${AUDIT_LOG_MASK_EDGE:W}" # Edge logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
       "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
       "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
+      "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -1279,8 +1290,9 @@ transport:
 
 # CoAP server parameters
 coap:
-  # Enable/disable coap server.
-  enabled: "${COAP_SERVER_ENABLED:true}"
+  server:
+    # Enable/disable coap server.
+    enabled: "${COAP_SERVER_ENABLED:true}"
   # CoAP bind address
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   # CoAP bind port
@@ -1588,6 +1600,16 @@ queue:
         - key: max.poll.records
           # Amount of records to be returned in a single poll. For Housekeeper reprocessing topic, we should consume messages (tasks) one by one
           value: "${TB_QUEUE_KAFKA_HOUSEKEEPER_REPROCESSING_MAX_POLL_RECORDS:1}"
+      edqs.events:
+        # Key-value properties for Kafka consumer for edqs.events topic
+        - key: max.poll.records
+          # Max poll records for edqs.events topic
+          value: "${TB_QUEUE_KAFKA_EDQS_EVENTS_MAX_POLL_RECORDS:512}"
+      edqs.state:
+        # Key-value properties for Kafka consumer for edqs.state topic
+        - key: max.poll.records
+          # Max poll records for edqs.state topic
+          value: "${TB_QUEUE_KAFKA_EDQS_STATE_MAX_POLL_RECORDS:512}"
     other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
     other: # DEPRECATED. In this section, you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
     #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
@@ -1617,6 +1639,16 @@ queue:
       edge: "${TB_QUEUE_KAFKA_EDGE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for Edge event topic
       edge-event: "${TB_QUEUE_KAFKA_EDGE_EVENT_TOPIC_PROPERTIES:retention.ms:2592000000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Calculated Field topics
+      calculated-field: "${TB_QUEUE_KAFKA_CF_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Calculated Field State topics
+      calculated-field-state: "${TB_QUEUE_KAFKA_CF_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:104857600000;partitions:1;min.insync.replicas:1;cleanup.policy:compact}"
+      # Kafka properties for EDQS events topics. Partitions number must be the same as queue.edqs.partitions
+      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:-1;partitions:12;min.insync.replicas:1}"
+      # Kafka properties for EDQS requests topic (default: 3 minutes retention). Partitions number must be the same as queue.edqs.partitions
+      edqs-requests: "${TB_QUEUE_KAFKA_EDQS_REQUESTS_TOPIC_PROPERTIES:retention.ms:180000;segment.bytes:52428800;retention.bytes:1048576000;partitions:12;min.insync.replicas:1}"
+      # Kafka properties for EDQS state topic (infinite retention, compaction). Partitions number must be the same as queue.edqs.partitions
+      edqs-state: "${TB_QUEUE_KAFKA_EDQS_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:-1;partitions:12;min.insync.replicas:1;cleanup.policy:compact}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1646,6 +1678,8 @@ queue:
   core:
     # Default topic name
     topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_CORE_NOTIFICATIONS_TOPIC:tb_core.notifications}"
     # Interval in milliseconds to poll messages by Core microservices
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     # Amount of partitions used by Core microservices
@@ -1690,6 +1724,43 @@ queue:
         enabled: "${TB_HOUSEKEEPER_STATS_ENABLED:true}"
         # Statistics printing interval for Housekeeper
         print-interval-ms: "${TB_HOUSEKEEPER_STATS_PRINT_INTERVAL_MS:60000}"
+  edqs:
+    sync:
+      # Enable/disable EDQS synchronization
+      enabled: "${TB_EDQS_SYNC_ENABLED:false}"
+      # Batch size of entities being synced with EDQS
+      entity_batch_size: "${TB_EDQS_SYNC_ENTITY_BATCH_SIZE:10000}"
+      # Batch size of timeseries data being synced with EDQS
+      ts_batch_size: "${TB_EDQS_SYNC_TS_BATCH_SIZE:10000}"
+    api:
+      # Whether to forward entity data query requests to EDQS (otherwise use PostgreSQL implementation)
+      supported: "${TB_EDQS_API_SUPPORTED:false}"
+      # Whether to auto-enable EDQS API (if queue.edqs.api.supported is true) when sync of data to Kafka is finished 
+      auto_enable: "${TB_EDQS_API_AUTO_ENABLE:true}"
+    # Mode of EDQS: local (for monolith) or remote (with separate EDQS microservices)
+    mode: "${TB_EDQS_MODE:local}"
+    local:
+      # Path to RocksDB for EDQS backup when running in local mode
+      rocksdb_path: "${TB_EDQS_ROCKSDB_PATH:${user.home}/.rocksdb/edqs}"
+    # Number of partitions for EDQS topics
+    partitions: "${TB_EDQS_PARTITIONS:12}"
+    # EDQS partitioning strategy: tenant (partition is resolved by tenant id) or none (no specific strategy, resolving by message key)
+    partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}"
+    # EDQS requests topic
+    requests_topic: "${TB_EDQS_REQUESTS_TOPIC:edqs.requests}"
+    # EDQS responses topic
+    responses_topic: "${TB_EDQS_RESPONSES_TOPIC:edqs.responses}"
+    # Poll interval for EDQS topics
+    poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:125}"
+    # Maximum amount of pending requests to EDQS
+    max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
+    # Maximum timeout for requests to EDQS
+    max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:20000}"
+    stats:
+      # Enable/disable statistics for EDQS
+      enabled: "${TB_EDQS_STATS_ENABLED:true}"
+      # Statistics printing interval for EDQS
+      print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:300000}"
 
   vc:
     # Default topic name
@@ -1722,6 +1793,8 @@ queue:
   rule-engine:
     # Deprecated. It will be removed in the nearest releases
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb_rule_engine}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_RULE_ENGINE_NOTIFICATIONS_TOPIC:tb_rule_engine.notifications}"
     # Interval in milliseconds to poll messages by Rule Engine
     poll-interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
     # Timeout for processing a message pack of Rule Engine
@@ -1737,6 +1810,23 @@ queue:
     topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:15}"
     # Size of the thread pool that handles such operations as partition changes, config updates, queue deletion
     management-thread-pool-size: "${TB_QUEUE_RULE_ENGINE_MGMT_THREAD_POOL_SIZE:12}"
+  calculated_fields:
+    # Topic name for Calculated Field (CF) events from Rule Engine
+    event_topic: "${TB_QUEUE_CF_EVENT_TOPIC:tb_cf_event}"
+    # Topic name for Calculated Field (CF) compacted states
+    state_topic: "${TB_QUEUE_CF_STATE_TOPIC:tb_cf_state}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_CF_NOTIFICATIONS_TOPIC:calculated_field.notifications}"
+    # Interval in milliseconds to poll messages by CF (Rule Engine) microservices
+    poll_interval: "${TB_QUEUE_CF_POLL_INTERVAL_MS:25}"
+    # Amount of partitions used by CF microservices
+    partitions: "${TB_QUEUE_CF_PARTITIONS:10}"
+    # Timeout for processing a message pack by CF microservices
+    pack_processing_timeout: "${TB_QUEUE_CF_PACK_PROCESSING_TIMEOUT_MS:60000}"
+    # Thread pool size for processing of the incoming messages
+    pool_size: "${TB_QUEUE_CF_POOL_SIZE:8}"
+    # RocksDB path for storing CF states
+    rocks_db_path: "${TB_QUEUE_CF_ROCKS_DB_PATH:${user.home}/.rocksdb/cf_states}"
   transport:
     # For high-priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
@@ -1745,6 +1835,10 @@ queue:
   edge:
     # Default topic name
     topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_EDGE_NOTIFICATIONS_TOPIC:tb_edge.notifications}"
+    # For edge events messages
+    event_notifications_topic: "${TB_QUEUE_EDGE_EVENT_NOTIFICATIONS_TOPIC:tb_edge_event.notifications}"
     # Amount of partitions used by Edge services
     partitions: "${TB_QUEUE_EDGE_PARTITIONS:10}"
     # Poll interval for topics related to Edge services

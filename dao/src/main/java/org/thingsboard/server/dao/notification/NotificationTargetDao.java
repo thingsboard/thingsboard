@@ -28,7 +28,7 @@ import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
 
-public interface NotificationTargetDao extends Dao<NotificationTarget>, TenantEntityDao, ExportableEntityDao<NotificationTargetId, NotificationTarget> {
+public interface NotificationTargetDao extends Dao<NotificationTarget>, TenantEntityDao<NotificationTarget>, ExportableEntityDao<NotificationTargetId, NotificationTarget> {
 
     PageData<NotificationTarget> findByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
 
