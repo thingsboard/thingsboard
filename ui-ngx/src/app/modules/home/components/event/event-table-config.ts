@@ -18,6 +18,7 @@ import {
   CellActionDescriptorType,
   DateEntityTableColumn,
   EntityActionTableColumn,
+  EntityLinkTableColumn,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -29,7 +30,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EventService } from '@app/core/http/event.service';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
-import { EntityTypeResource } from '@shared/models/entity-type.models';
+import { EntityType, EntityTypeResource } from '@shared/models/entity-type.models';
 import { fromEvent, Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { Direction } from '@shared/models/page/sort-order';
@@ -39,7 +40,7 @@ import {
   EventContentDialogComponent,
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
-import { isEqual, sortObjectKeys } from '@core/utils';
+import { getEntityDetailsPageURL, isEqual, sortObjectKeys } from '@core/utils';
 import { DAY, historyInterval, MINUTE } from '@shared/models/time/time.models';
 import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ChangeDetectorRef, EventEmitter, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
@@ -355,6 +356,89 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             '48px')
         );
         break;
+      case DebugEventType.DEBUG_CALCULATED_FIELD:
+        this.columns[0].width = '80px';
+        this.columns[1].width = '100px';
+        this.columns.push(
+          new EntityLinkTableColumn<Event>('entityId', 'event.entity-id', '100px',
+            (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.entityId.substring(0, 8)}…</span>`,
+            (entity) => getEntityDetailsPageURL(entity.body.entityId, entity.body.entityType as EntityType),
+            false,
+            () => ({padding: '0 12px 0 0'}),
+            () => ({padding: '0 12px 0 0'}),
+            (entity) => entity.body.entityId,
+            {
+              name: this.translate.instant('event.copy-entity-id'),
+              icon: 'content_copy',
+              style: {
+                padding: '4px',
+                'font-size': '16px',
+                color: 'rgba(0,0,0,.87)'
+              },
+              isEnabled: () => true,
+              onAction: ($event, entity) => entity.body.entityId,
+              type: CellActionDescriptorType.COPY_BUTTON
+            }
+          ),
+          new EntityTableColumn<Event>('messageId', 'event.message-id', '100px',
+            (entity) => entity.body.msgId ? `<span style="display: inline-block; width: 9ch">${entity.body.msgId?.substring(0, 8)}…</span>` : '-',
+            () => ({padding: '0 12px 0 0'}),
+            false,
+            () => ({padding: '0 12px 0 0'}),
+            (entity) => entity.body.msgId,
+            false,
+            {
+              name: this.translate.instant('event.copy-message-id'),
+              icon: 'content_copy',
+              style: {
+                padding: '4px',
+                'font-size': '16px',
+                color: 'rgba(0,0,0,.87)'
+              },
+              isEnabled: (entity) => !!entity.body.msgId,
+              onAction: (_, entity) => entity.body.msgId,
+              type: CellActionDescriptorType.COPY_BUTTON
+            }
+          ),
+          new EntityTableColumn<Event>('messageType', 'event.message-type', '100px',
+            (entity) => entity.body.msgType ?? '-',
+            () => ({padding: '0 12px 0 0'}),
+            false,
+            () => ({padding: '0 12px 0 0'}),
+            (entity) => entity.body.msgType,
+          ),
+          new EntityActionTableColumn<Event>('arguments', 'event.arguments',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.arguments !== undefined,
+              onAction: ($event, entity) => this.showContent($event, entity.body.arguments,
+                'event.arguments', ContentType.JSON, true)
+            },
+            '48px'
+          ),
+          new EntityActionTableColumn<Event>('result', 'event.result',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.result !== undefined,
+              onAction: ($event, entity) => this.showContent($event, entity.body.result,
+                'event.result', ContentType.JSON, true)
+            },
+            '48px'
+          ),
+          new EntityActionTableColumn<Event>('error', 'event.error',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.error && entity.body.error.length > 0,
+              onAction: ($event, entity) => this.showContent($event, entity.body.error,
+                'event.error')
+            },
+            '48px'
+          )
+        );
+        break;
     }
     if (updateTableColumns) {
       this.getTable().columnsUpdated(true);
@@ -375,6 +459,14 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }
           });
         }
+        break;
+      case DebugEventType.DEBUG_CALCULATED_FIELD:
+        this.cellActionDescriptors.push({
+          name: this.translate.instant('common.test-with-this-message', {test: this.translate.instant(this.testButtonLabel)}),
+          icon: 'bug_report',
+          isEnabled: () => true,
+          onAction: (_, entity) => this.debugEventSelected.next(entity.body)
+        });
         break;
     }
     this.getTable()?.cellActionDescriptorsUpdated();
@@ -442,6 +534,17 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       case DebugEventType.DEBUG_RULE_CHAIN:
         this.filterColumns.push(
           {key: 'message', title: 'event.message'},
+          {key: 'isError', title: 'event.error'},
+          {key: 'errorStr', title: 'event.error'}
+        );
+        break;
+      case DebugEventType.DEBUG_CALCULATED_FIELD:
+        this.filterColumns.push(
+          {key: 'entityId', title: 'event.entity-id'},
+          {key: 'msgId', title: 'event.message-id'},
+          {key: 'msgType', title: 'event.message-type'},
+          {key: 'arguments', title: 'event.arguments'},
+          {key: 'result', title: 'event.result'},
           {key: 'isError', title: 'event.error'},
           {key: 'errorStr', title: 'event.error'}
         );

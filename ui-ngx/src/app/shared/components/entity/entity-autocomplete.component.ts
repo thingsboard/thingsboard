@@ -14,7 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  booleanAttribute,
+  Component,
+  ElementRef,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { firstValueFrom, merge, Observable, of, Subject } from 'rxjs';
@@ -123,6 +134,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   @coerceBoolean()
   allowCreateNew: boolean;
+
+  @Input({ transform: booleanAttribute }) hideLabel = false;
+
+  @Input({ transform: booleanAttribute }) inlineField = false;
+
+  @Input() placeholder: string;
 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';

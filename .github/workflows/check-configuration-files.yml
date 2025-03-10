@@ -32,14 +32,14 @@ on:
 jobs:
   build:
     name: Check thingsboard.yml file
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Set up Python 3.10
+      - name: Set up Python 3.13
         uses: actions/setup-python@v3
         with:
-          python-version: "3.10.2"
+          python-version: "3.13.2"
           architecture: "x64"
         env:
           AGENT_TOOLSDIRECTORY: /opt/hostedtoolcache

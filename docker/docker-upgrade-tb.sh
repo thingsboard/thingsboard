@@ -42,19 +42,24 @@ ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
 
 ADDITIONAL_CACHE_ARGS=$(additionalComposeCacheArgs) || exit $?
 
+ADDITIONAL_COMPOSE_EDQS_ARGS=$(additionalComposeEdqsArgs) || exit $?
+
 ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
 
 COMPOSE_ARGS_PULL="\
-      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} \
+      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS}
+      ${ADDITIONAL_COMPOSE_EDQS_ARGS} \
       pull \
       tb-core1"
 
 COMPOSE_ARGS_UP="\
-      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} \
+      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS}
+      ${ADDITIONAL_COMPOSE_EDQS_ARGS} \
       up -d ${ADDITIONAL_STARTUP_SERVICES}"
 
 COMPOSE_ARGS_RUN="\
-      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} \
+      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS}
+      ${ADDITIONAL_COMPOSE_EDQS_ARGS} \
       run --no-deps --rm -e UPGRADE_TB=true -e FROM_VERSION=${fromVersion} \
       tb-core1"
 

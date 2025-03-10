@@ -27,12 +27,16 @@ ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
 
 ADDITIONAL_CACHE_ARGS=$(additionalComposeCacheArgs) || exit $?
 
+ADDITIONAL_COMPOSE_EDQS_ARGS=$(additionalComposeEdqsArgs) || exit $?
+
 COMPOSE_ARGS_PULL="\
-      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} \
+      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS}
+      ${ADDITIONAL_COMPOSE_EDQS_ARGS} \
       pull"
 
 COMPOSE_ARGS_BUILD="\
-      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} \
+      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS}
+      ${ADDITIONAL_COMPOSE_EDQS_ARGS} \
       up -d --no-deps --build"
 
 case $COMPOSE_VERSION in
