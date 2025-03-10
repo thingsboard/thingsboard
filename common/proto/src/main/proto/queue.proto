@@ -1603,11 +1603,24 @@ message ToTransportMsg {
 }
 
 message UsageStatsKVProto {
-  ApiUsageRecordKeyProto key = 1;
+  string key = 1 [deprecated=true];
   int64 value = 2;
+  ApiUsageRecordKeyProto keyProto = 3;
 }
 
 message ToUsageStatsServiceMsg {
+  int64 tenantIdMSB = 1 [deprecated=true];
+  int64 tenantIdLSB = 2 [deprecated=true];
+  int64 entityIdMSB = 3 [deprecated=true];
+  int64 entityIdLSB = 4 [deprecated=true];
+  repeated UsageStatsKVProto values = 5 [deprecated=true];
+  int64 customerIdMSB = 6 [deprecated=true];
+  int64 customerIdLSB = 7 [deprecated=true];
+  string serviceId = 8;
+  repeated UsageStatsServiceMsg msgs = 9;
+}
+
+message UsageStatsServiceMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   int64 entityIdMSB = 3;
@@ -1615,11 +1628,6 @@ message ToUsageStatsServiceMsg {
   repeated UsageStatsKVProto values = 5;
   int64 customerIdMSB = 6;
   int64 customerIdLSB = 7;
-}
-
-message ToUsageStatsServiceMsgPack {
-  repeated ToUsageStatsServiceMsg msgs = 1;
-  string serviceId = 2;
 }
 
 message ToOtaPackageStateServiceMsg {

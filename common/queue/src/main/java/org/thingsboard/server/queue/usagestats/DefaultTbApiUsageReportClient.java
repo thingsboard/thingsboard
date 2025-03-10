@@ -32,8 +32,8 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsgPack;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -74,7 +74,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final SchedulerComponent scheduler;
     private final TbQueueProducerProvider producerProvider;
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsgPack>> msgProducer;
+    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> msgProducer;
 
     @PostConstruct
     private void init() {
@@ -94,7 +94,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     }
 
     private void reportStats() {
-        ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
+        ConcurrentMap<ParentEntity, UsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
             ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
@@ -102,8 +102,8 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 long value = statsValue.get();
                 if (value == 0 && key.isCounter()) return;
 
-                ToUsageStatsServiceMsg.Builder statsMsg = report.computeIfAbsent(reportLevel.getParentEntity(), parent -> {
-                    ToUsageStatsServiceMsg.Builder newStatsMsg = ToUsageStatsServiceMsg.newBuilder();
+                UsageStatsServiceMsg.Builder statsMsg = report.computeIfAbsent(reportLevel.getParentEntity(), parent -> {
+                    UsageStatsServiceMsg.Builder newStatsMsg = UsageStatsServiceMsg.newBuilder();
 
                     TenantId tenantId = parent.getTenantId();
                     newStatsMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
@@ -119,13 +119,13 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 });
 
                 UsageStatsKVProto.Builder statsItem = UsageStatsKVProto.newBuilder()
-                        .setKey(ProtoUtils.toProto(key))
+                        .setKeyProto(ProtoUtils.toProto(key))
                         .setValue(value);
                 statsMsg.addValues(statsItem.build());
             });
         }
 
-        Map<TopicPartitionInfo, List<ToUsageStatsServiceMsg>> reportStatsPerTpi = new HashMap<>();
+        Map<TopicPartitionInfo, List<UsageStatsServiceMsg>> reportStatsPerTpi = new HashMap<>();
 
         report.forEach((parent, statsMsg) -> {
             try {
@@ -152,11 +152,11 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
         }
     }
 
-    private List<ToUsageStatsServiceMsgPack> toMsgPack(List<ToUsageStatsServiceMsg> list) {
+    private List<ToUsageStatsServiceMsg> toMsgPack(List<UsageStatsServiceMsg> list) {
         return Lists.partition(list, packSize)
                 .stream()
                 .map(partition ->
-                        ToUsageStatsServiceMsgPack.newBuilder()
+                        ToUsageStatsServiceMsg.newBuilder()
                                 .addAllMsgs(partition)
                                 .setServiceId(serviceInfoProvider.getServiceId())
                                 .build())
