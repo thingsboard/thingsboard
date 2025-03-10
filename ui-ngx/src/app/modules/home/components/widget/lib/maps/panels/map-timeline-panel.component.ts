@@ -16,11 +16,13 @@
 
 import {
   ChangeDetectorRef,
-  Component, DestroyRef,
+  Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Injector,
   Input,
+  OnDestroy,
   OnInit,
   Output,
   ViewEncapsulation
@@ -37,7 +39,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   styleUrls: ['./map-timeline-panel.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class MapTimelinePanelComponent implements OnInit {
+export class MapTimelinePanelComponent implements OnInit, OnDestroy {
 
   @Input()
   settings: TripTimelineSettings;
@@ -93,11 +95,25 @@ export class MapTimelinePanelComponent implements OnInit {
     return !!this.currentTimeValue && this.currentTimeValue !== Infinity;
   }
 
+  set panelElement(element: Element) {
+    this.panelElementVal = element;
+    this.panelResize$ = new ResizeObserver(() => {
+      this.resize();
+    });
+    this.panelResize$.observe(element);
+  }
+
+  get panelElement(): Element {
+    return this.panelElementVal;
+  }
+
   @Input()
   anchors: number[] = [];
 
   @Output()
   timeChanged = new EventEmitter<number>();
+
+  column = false;
 
   timestampFormat: DateFormatProcessor;
 
@@ -112,6 +128,9 @@ export class MapTimelinePanelComponent implements OnInit {
   private maxValue: number;
   private currentTimeValue: number = null;
 
+  private panelResize$: ResizeObserver;
+  private panelElementVal: Element;
+
   constructor(public element: ElementRef<HTMLElement>,
               private cd: ChangeDetectorRef,
               private destroyRef: DestroyRef,
@@ -124,6 +143,12 @@ export class MapTimelinePanelComponent implements OnInit {
       this.timestampFormat.update(this.currentTime);
     }
     this.speed = this.settings.speedOptions[0];
+  }
+
+  ngOnDestroy() {
+    if (this.panelResize$) {
+      this.panelResize$.disconnect();
+    }
   }
 
   public onIndexChange(index: number) {
@@ -205,6 +230,15 @@ export class MapTimelinePanelComponent implements OnInit {
     }
     if (this.playing) {
       this.play();
+    }
+  }
+
+  private resize(): void {
+    const width = this.panelElement.getBoundingClientRect().width;
+    const column = width <= 400;
+    if (this.column !== column) {
+      this.column = column;
+      this.cd.markForCheck();
     }
   }
 

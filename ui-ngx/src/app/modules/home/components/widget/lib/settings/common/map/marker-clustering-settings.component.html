@@ -31,13 +31,13 @@
           {{ 'widgets.maps.data-layer.marker.clustering.zoom-on-cluster-click' | translate }}
         </mat-slide-toggle>
       </div>
-      <div class="tb-form-row space-between">
+      <div class="tb-form-row space-between column-xs">
         <div translate>widgets.maps.data-layer.marker.clustering.max-zoom</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput type="number" min="0" max="18" step="1" formControlName="maxZoom" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
       </div>
-      <div class="tb-form-row space-between">
+      <div class="tb-form-row space-between column-xs">
         <div translate>widgets.maps.data-layer.marker.clustering.max-radius</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="maxClusterRadius" placeholder="{{ 'widget-config.set' | translate }}">

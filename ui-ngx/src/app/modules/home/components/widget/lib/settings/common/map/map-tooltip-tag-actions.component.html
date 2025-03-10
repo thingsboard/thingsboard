@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div class="tb-form-row gap-4">
+<div class="tb-form-row gap-4 column-xs">
   <div translate>widgets.maps.data-layer.tooltip-tag-actions</div>
-  <div class="flex flex-1 flex-row items-center justify-end gap-4">
-    <mat-chip-listbox>
+  <div class="flex min-w-0 flex-1 flex-row items-center justify-end gap-4 xs:justify-between">
+    <mat-chip-listbox class="min-w-0">
       <mat-chip *ngFor="let action of this.actionsFormGroup.get('actions').value; let $index = index;"
                 class="tb-tag-action-chip"
                 [removable]="!disabled" (removed)="removeAction($index)">

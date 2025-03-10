@@ -21,7 +21,7 @@
                          [disabled]="!patternSettingsFormGroup.get('show').value">
       <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <div class="flex flex-1 flex-row items-center justify-between">
+          <div class="flex flex-1 flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
             <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="show" (click)="$event.stopPropagation()">
               {{ patternTitle ? patternTitle : ((patternType === 'label' ? 'widgets.maps.data-layer.label' : 'widgets.maps.data-layer.tooltip') | translate) }}
             </mat-slide-toggle>
@@ -64,19 +64,23 @@
               {{ 'widgets.maps.data-layer.auto-close-tooltips' | translate }}
             </mat-slide-toggle>
           </div>
-          <div *ngIf="hasTooltipOffset" class="tb-form-row space-between column-xs">
+          <div *ngIf="hasTooltipOffset" class="tb-form-row space-between column-lt-md">
             <div translate>widgets.maps.data-layer.tooltip-offset</div>
-            <div class="flex flex-row items-center justify-start gap-2">
-              <div class="tb-small-label" translate>widgets.maps.data-layer.tooltip-offset-horizontal</div>
-              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                <input matInput formControlName="offsetX"
-                       type="number" placeholder="{{ 'widget-config.set' | translate }}">
-              </mat-form-field>
-              <div class="tb-small-label" translate>widgets.maps.data-layer.tooltip-offset-vertical</div>
-              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                <input matInput formControlName="offsetY"
-                       type="number" placeholder="{{ 'widget-config.set' | translate }}">
-              </mat-form-field>
+            <div class="flex flex-row items-center justify-start gap-2 xs:flex-1 xs:flex-col xs:items-stretch">
+              <div class="flex flex-row items-center justify-start gap-2 xs:flex-1">
+                <div class="tb-small-label xs:min-w-20" translate>widgets.maps.data-layer.tooltip-offset-horizontal</div>
+                <mat-form-field appearance="outline" class="number xs:flex-1" subscriptSizing="dynamic">
+                  <input matInput formControlName="offsetX"
+                         type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                </mat-form-field>
+              </div>
+              <div class="flex flex-row items-center justify-start gap-2 xs:flex-1">
+                <div class="tb-small-label xs:min-w-20" translate>widgets.maps.data-layer.tooltip-offset-vertical</div>
+                <mat-form-field appearance="outline" class="number xs:flex-1" subscriptSizing="dynamic">
+                  <input matInput formControlName="offsetY"
+                         type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                </mat-form-field>
+              </div>
             </div>
           </div>
           <tb-map-tooltip-tag-actions-panel

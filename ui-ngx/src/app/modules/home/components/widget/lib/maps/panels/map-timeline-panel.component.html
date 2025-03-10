@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-map-timeline-panel">
+<div class="tb-map-timeline-panel" [class.col]="column">
   @if(hasData) {
     <mat-slider
       [disabled]="disabled"

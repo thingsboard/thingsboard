@@ -201,6 +201,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       parentElement.removeChild(content);
       parentElement.style.display = 'none';
       this.containerElement.append(content);
+      this.timeLineComponent.panelElement = content as Element;
     }
     const setup = [this.doSetupControls()];
     if (this.timeline && this.settings.tripTimeline.snapToRealLocation) {

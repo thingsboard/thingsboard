@@ -27,7 +27,7 @@
   </mat-toolbar>
   <div mat-dialog-content class="tb-form-panel no-border no-padding" [formGroup]="dataLayerFormGroup">
     <div class="tb-form-panel">
-      <div class="flex flex-row items-center justify-between">
+      <div class="flex flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
         <div class="tb-form-panel-title">{{ 'widget-config.datasource' | translate }}</div>
         <tb-toggle-select formControlName="dsType">
           <tb-toggle-option *ngFor="let type of datasourceTypes" [value]="type">{{ datasourceTypesTranslations.get(type) | translate }}</tb-toggle-option>
@@ -71,7 +71,7 @@
       <div class="flex flex-col">
         <div *ngIf="['trips', 'markers'].includes(dataLayerType)" class="flex flex-row gap-3">
           <tb-data-key-input
-            class="flex-1"
+            class="min-w-0 flex-1"
             inlineField="false"
             appearance="outline"
             subscriptSizing="fixed"
@@ -91,7 +91,7 @@
             formControlName="xKey">
           </tb-data-key-input>
           <tb-data-key-input
-            class="flex-1"
+            class="min-w-0 flex-1"
             inlineField="false"
             appearance="outline"
             subscriptSizing="fixed"
@@ -181,7 +181,7 @@
                                [disabled]="dataLayerType === 'trips' && !dataLayerFormGroup.get('showMarker').value">
             <mat-expansion-panel-header class="flex flex-row flex-wrap">
               <mat-panel-title>
-                <div class="flex flex-1 flex-row items-center justify-between">
+                <div class="flex flex-1 flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
                   @if (dataLayerType === 'markers') {
                     <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.marker.marker' | translate }}</div>
                   } @else {
@@ -198,11 +198,11 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.shape" class="tb-form-row space-between">
+              <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.shape" class="tb-form-row space-between column-xs">
                 <div translate>widgets.maps.data-layer.marker.shape</div>
                 <tb-marker-shape-settings formControlName="markerShape" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.shape"></tb-marker-shape-settings>
               </div>
-              <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.icon" class="tb-form-row space-between">
+              <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.icon" class="tb-form-row space-between column-xs">
                 <div translate>widgets.maps.data-layer.marker.icon</div>
                 <tb-marker-shape-settings formControlName="markerIcon" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.icon"></tb-marker-shape-settings>
               </div>
@@ -210,7 +210,7 @@
                 <div translate>widgets.maps.data-layer.marker.image</div>
                 <tb-marker-image-settings formControlName="markerImage"></tb-marker-image-settings>
               </div>
-              <div class="tb-form-row space-between column-xs">
+              <div class="tb-form-row space-between column-lt-md">
                 <div translate>widgets.maps.data-layer.marker.marker-offset</div>
                 <div class="flex flex-row items-center justify-start gap-2">
                   <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-horizontal</div>
@@ -225,7 +225,7 @@
                   </mat-form-field>
                 </div>
               </div>
-              <div *ngIf="dataLayerType === 'trips'" class="tb-form-row space-between">
+              <div *ngIf="dataLayerType === 'trips'" class="tb-form-row space-between column-xs">
                 <mat-slide-toggle class="mat-slide" formControlName="rotateMarker">
                   {{ 'widgets.maps.data-layer.marker.rotate-marker' | translate }}
                 </mat-slide-toggle>
@@ -289,9 +289,9 @@
                     </mat-panel-title>
                   </mat-expansion-panel-header>
                   <ng-template matExpansionPanelContent>
-                    <div class="tb-form-row">
-                      <div class="fixed-title-width" translate>widgets.maps.data-layer.path.decorator-symbol</div>
-                      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+                    <div class="tb-form-row space-between column-xs">
+                      <div translate>widgets.maps.data-layer.path.decorator-symbol</div>
+                      <div class="flex flex-1 flex-row items-center justify-start gap-2 lt-md:flex-col lt-md:items-stretch">
                         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
                           <mat-select formControlName="pathDecoratorSymbol">
                             <mat-option *ngFor="let symbol of pathDecoratorSymbols" [value]="symbol">
@@ -299,34 +299,42 @@
                             </mat-option>
                           </mat-select>
                         </mat-form-field>
-                        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                          <input matInput type="number" min="0" formControlName="pathDecoratorSymbolSize" placeholder="{{ 'widget-config.set' | translate }}">
-                          <span matSuffix>px</span>
-                        </mat-form-field>
-                        <tb-color-input asBoxInput
-                                        colorClearButton
-                                        formControlName="pathDecoratorSymbolColor">
-                        </tb-color-input>
+                        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+                          <mat-form-field appearance="outline" class="number flex-1" subscriptSizing="dynamic">
+                            <input matInput type="number" min="0" formControlName="pathDecoratorSymbolSize" placeholder="{{ 'widget-config.set' | translate }}">
+                            <span matSuffix>px</span>
+                          </mat-form-field>
+                          <tb-color-input asBoxInput
+                                          colorClearButton
+                                          formControlName="pathDecoratorSymbolColor">
+                          </tb-color-input>
+                        </div>
                       </div>
                     </div>
-                    <div class="tb-form-row space-between">
+                    <div class="tb-form-row space-between column-xs">
                       <div translate>widgets.maps.data-layer.path.decorator-arrangement</div>
-                      <div class="flex flex-row items-center justify-start gap-2">
-                        <div class="tb-small-label" translate>widgets.maps.data-layer.path.decorator-offset</div>
-                        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                          <input matInput formControlName="pathDecoratorOffset" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
-                          <div matSuffix>px</div>
-                        </mat-form-field>
-                        <div class="tb-small-label" translate>widgets.maps.data-layer.path.decorator-end-offset</div>
-                        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                          <input matInput formControlName="pathEndDecoratorOffset" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
-                          <div matSuffix>px</div>
-                        </mat-form-field>
-                        <div class="tb-small-label" translate>widgets.maps.data-layer.path.decorator-repeat</div>
-                        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                          <input matInput formControlName="pathDecoratorRepeat" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
-                          <div matSuffix>px</div>
-                        </mat-form-field>
+                      <div class="flex flex-1 flex-row items-center justify-start gap-2 lt-md:flex-col lt-md:items-stretch">
+                        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+                          <div class="tb-small-label lt-md:min-w-11" translate>widgets.maps.data-layer.path.decorator-offset</div>
+                          <mat-form-field appearance="outline" class="number flex-1" subscriptSizing="dynamic">
+                            <input matInput formControlName="pathDecoratorOffset" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+                            <div matSuffix>px</div>
+                          </mat-form-field>
+                        </div>
+                        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+                          <div class="tb-small-label lt-md:min-w-11" translate>widgets.maps.data-layer.path.decorator-end-offset</div>
+                          <mat-form-field appearance="outline" class="number flex-1" subscriptSizing="dynamic">
+                            <input matInput formControlName="pathEndDecoratorOffset" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+                            <div matSuffix>px</div>
+                          </mat-form-field>
+                        </div>
+                        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+                          <div class="tb-small-label lt-md:min-w-11" translate>widgets.maps.data-layer.path.decorator-repeat</div>
+                          <mat-form-field appearance="outline" class="number flex-1" subscriptSizing="dynamic">
+                            <input matInput formControlName="pathDecoratorRepeat" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+                            <div matSuffix>px</div>
+                          </mat-form-field>
+                        </div>
                       </div>
                     </div>
                   </ng-template>

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../../../../../scss/constants';
+
 .tb-form-table-row.tb-map-data-layer-row {
 
   .tb-source-field {
@@ -26,18 +28,47 @@
 
   .tb-x-pos-field {
     flex: 1 1 25%;
+    min-width: 0;
   }
 
   .tb-y-pos-field {
     flex: 1 1 25%;
+    min-width: 0;
   }
 
   .tb-key-field {
     flex: 1 1 50%;
+    min-width: 0;
   }
 
   .tb-remove-button {
     width: 40px;
     min-width: 40px;
+  }
+
+  @media #{$mat-lt-lg} {
+    .tb-source-field {
+      flex-direction: column;
+      flex: 1 1 30%;
+    }
+    .tb-x-pos-field, .tb-y-pos-field {
+      flex: 1 1 35%;
+    }
+    .tb-key-field {
+      flex: 1 1 70%;
+    }
+  }
+  @media screen and (min-width: 450px) and (max-width: 599px) {
+    .tb-source-field {
+      flex-direction: row;
+    }
+  }
+  @media #{$mat-xs} {
+    .tb-x-pos-field, .tb-y-pos-field {
+      display: none;
+    }
+    .tb-key-field {
+      display: none;
+    }
   }
 }

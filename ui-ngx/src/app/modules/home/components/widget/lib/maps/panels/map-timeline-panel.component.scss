@@ -18,6 +18,13 @@
   padding: 4px 16px 8px;
   display: flex;
   flex-direction: column;
+  &.col {
+    height: 156px;
+    .tb-timeline-controls {
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
   .tb-timeline-controls {
     display: flex;
     flex-direction: row;
