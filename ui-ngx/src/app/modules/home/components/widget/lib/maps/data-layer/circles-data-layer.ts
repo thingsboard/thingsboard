@@ -208,7 +208,7 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
         value: converted
       }
     ];
-    return this.map.saveItemData(data.$datasource, circleData).pipe(
+    return this.map.saveItemData(data.$datasource, circleData, this.settings.edit?.attributeScope).pipe(
       map(() => converted)
     );
   }

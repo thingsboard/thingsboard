@@ -72,6 +72,7 @@ import { ComponentRef } from '@angular/core';
 import { TbTripsDataLayer } from '@home/components/widget/lib/maps/data-layer/trips-data-layer';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import { EntityType } from '@shared/models/entity-type.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 
@@ -1099,7 +1100,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     return this.dragMode;
   }
 
-  public saveItemData(datasource: TbMapDatasource, data: DataKeyValuePair[]): Observable<any> {
+  public saveItemData(datasource: TbMapDatasource, data: DataKeyValuePair[], attributeScope: AttributeScope): Observable<any> {
     const attributeService = this.ctx.$injector.get(AttributeService);
     const attributes: AttributeData[] = [];
     const timeseries: AttributeData[] = [];
@@ -1107,6 +1108,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
       entityType: datasource.entityType,
       id: datasource.entityId
     };
+
+    const targetAttributeScope =
+      entityId.entityType === EntityType.DEVICE && !!attributeScope ? attributeScope : AttributeScope.SERVER_SCOPE;
+
     data.forEach(pair => {
       const key = pair.dataKey;
       if (key.type === DataKeyType.attribute) {
@@ -1132,7 +1137,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     if (attributes.length) {
       observables.push(attributeService.saveEntityAttributes(
         entityId,
-        AttributeScope.SERVER_SCOPE,
+        targetAttributeScope,
         attributes
       ));
     }

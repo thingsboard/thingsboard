@@ -22,7 +22,7 @@ import {
   WidgetAction,
   WidgetActionType
 } from '@shared/models/widget.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
   guid,
   hashCode,
@@ -127,6 +127,7 @@ export const dataLayerEditActionTranslationMap = new Map<DataLayerEditAction, st
 
 export interface DataLayerEditSettings {
   enabledActions: DataLayerEditAction[];
+  attributeScope: AttributeScope;
   snappable: boolean;
 }
 
@@ -161,6 +162,7 @@ export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataL
   },
   edit: {
     enabledActions: [],
+    attributeScope: AttributeScope.SERVER_SCOPE,
     snappable: false
   }
 })

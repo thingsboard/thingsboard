@@ -26,9 +26,12 @@ import {
   MapDataLayerType,
   MapType,
   MarkersDataLayerSettings,
-  MarkerType, pathDecoratorSymbols, pathDecoratorSymbolTranslationMap,
+  MarkerType,
+  pathDecoratorSymbols,
+  pathDecoratorSymbolTranslationMap,
   PolygonsDataLayerSettings,
-  ShapeDataLayerSettings, TripsDataLayerSettings
+  ShapeDataLayerSettings,
+  TripsDataLayerSettings
 } from '@shared/models/widget/maps/map.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -36,7 +39,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { AttributeScope, DataKeyType, telemetryTypeTranslationsShort } from '@shared/models/telemetry/telemetry.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityType } from '@shared/models/entity-type.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
@@ -66,6 +69,9 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   MapType = MapType;
 
   DataKeyType = DataKeyType;
+
+  AttributeScope = AttributeScope;
+  telemetryTypeTranslationsShort = telemetryTypeTranslationsShort;
 
   widgetType = widgetType;
 
@@ -124,6 +130,31 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     }
   }
 
+  get showEditAttributeScope(): boolean {
+    if (this.dataLayerType !== 'trips') {
+      const editEnabledActions: DataLayerEditAction[] =
+        this.dataLayerFormGroup.get('edit').get('enabledActions').value;
+      if (editEnabledActions && editEnabledActions.length) {
+          switch (this.dataLayerType) {
+            case 'markers':
+              const xKey: DataKey = this.dataLayerFormGroup.get('xKey').value;
+              const yKey: DataKey = this.dataLayerFormGroup.get('yKey').value;
+              return (xKey?.type === DataKeyType.attribute || yKey?.type === DataKeyType.attribute);
+            case 'polygons':
+              const polygonKey: DataKey = this.dataLayerFormGroup.get('polygonKey').value;
+              return polygonKey?.type === DataKeyType.attribute;
+            case 'circles':
+              const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
+              return circleKey?.type === DataKeyType.attribute;
+          }
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: MapDataLayerDialogData,
@@ -158,6 +189,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     if (this.dataLayerType !== 'trips') {
       this.dataLayerFormGroup.addControl('edit', this.fb.group({
         enabledActions: [this.settings.edit?.enabledActions, []],
+        attributeScope: [this.settings.edit?.attributeScope, []],
         snappable: [this.settings.edit?.snappable, []]
       }));
     }
@@ -237,7 +269,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.addControl('strokeWeight', this.fb.control(shapeDataLayer.strokeWeight, [Validators.required, Validators.min(0)]));
         if (this.dataLayerType === 'polygons') {
           this.dialogTitle = 'widgets.maps.data-layer.polygon.polygon-configuration';
-          this.dataLayerEditTitle = 'widgets.maps.data-layer.marker.edit';
+          this.dataLayerEditTitle = 'widgets.maps.data-layer.polygon.edit';
           const polygonsDataLayer = this.settings as PolygonsDataLayerSettings;
           this.dataLayerFormGroup.addControl('polygonKey', this.fb.control(polygonsDataLayer.polygonKey, Validators.required));
         } else {

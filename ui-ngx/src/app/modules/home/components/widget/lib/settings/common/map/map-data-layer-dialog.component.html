@@ -411,6 +411,17 @@
           </mat-chip-option>
         </mat-chip-listbox>
       </div>
+      <div *ngIf="showEditAttributeScope" class="tb-form-row space-between column-lt-md">
+        <div translate>widgets.maps.data-layer.persist-location-attribute-scope</div>
+        <tb-toggle-select formControlName="attributeScope" appearance="fill">
+          <tb-toggle-option [value]="AttributeScope.SERVER_SCOPE">
+            {{ telemetryTypeTranslationsShort.get(AttributeScope.SERVER_SCOPE) | translate }}
+          </tb-toggle-option>
+          <tb-toggle-option [value]="AttributeScope.SHARED_SCOPE">
+            {{ telemetryTypeTranslationsShort.get(AttributeScope.SHARED_SCOPE) | translate }}
+          </tb-toggle-option>
+        </tb-toggle-select>
+      </div>
       <div class="tb-form-row">
         <mat-slide-toggle class="mat-slide" formControlName="snappable">
           {{ 'widgets.maps.data-layer.enable-snapping' | translate }}

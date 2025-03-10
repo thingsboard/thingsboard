@@ -621,7 +621,7 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
         value: converted.y
       }
     ];
-    return this.map.saveItemData(data.$datasource, locationData).pipe(
+    return this.map.saveItemData(data.$datasource, locationData, this.settings.edit?.attributeScope).pipe(
       map(() => converted)
     );
   }

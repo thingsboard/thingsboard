@@ -7842,6 +7842,7 @@
                 "action-move": "Move",
                 "action-remove": "Remove",
                 "edit-instruments": "Instruments",
+                "persist-location-attribute-scope": "Scope of the attribute to persist location",
                 "enable-snapping": "Enable snapping to other vertices for precision drawing",
                 "drag-drop-mode": "Drag-drop mode",
                 "trip": {

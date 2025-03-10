@@ -405,7 +405,7 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
         value: converted
       }
     ];
-    return this.map.saveItemData(data.$datasource, polygonData).pipe(
+    return this.map.saveItemData(data.$datasource, polygonData, this.settings.edit?.attributeScope).pipe(
       map(() => converted)
     );
   }
