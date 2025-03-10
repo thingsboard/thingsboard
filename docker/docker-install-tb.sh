@@ -53,8 +53,6 @@ ADDITIONAL_COMPOSE_EDQS_ARGS=$(additionalComposeEdqsArgs) || exit $?
 
 ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
 
-checkFolders --create || exit $?
-
 if [ ! -z "${ADDITIONAL_STARTUP_SERVICES// }" ]; then
 
     COMPOSE_ARGS="\
