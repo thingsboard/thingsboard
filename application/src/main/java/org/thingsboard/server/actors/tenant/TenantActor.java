@@ -99,7 +99,6 @@ public class TenantActor extends RuleChainManagerActor {
                                     () -> true);
                         } catch (Exception e) {
                             log.info("Failed to init CF Actor.", e);
-                            cantFindTenant = true;
                         }
                         try {
                             if (getApiUsageState().isReExecEnabled()) {
@@ -190,6 +189,10 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onToCalculatedFieldSystemActorMsg(ToCalculatedFieldSystemMsg msg, boolean priority) {
+        if (cfActor == null) {
+            log.warn("[{}] CF Actor is not initialized.", tenantId);
+            return;
+        }
         if (priority) {
             cfActor.tellWithHighPriority(msg);
         } else {
