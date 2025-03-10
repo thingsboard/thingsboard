@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -150,6 +151,11 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 attributeScope.getId());
         attributes.forEach(attributeKvEntity -> attributeKvEntity.setStrKey(keyDictionaryDao.getKey(attributeKvEntity.getId().getAttributeKey())));
         return DaoUtil.convertDataList(Lists.newArrayList(attributes));
+    }
+
+    @Override
+    public List<AttributeKvEntity> findNextBatch(UUID entityId, int attributeType, int attributeKey, int batchSize) {
+        return attributeKvRepository.findNextBatch(entityId, attributeType, attributeKey, batchSize);
     }
 
     @Override

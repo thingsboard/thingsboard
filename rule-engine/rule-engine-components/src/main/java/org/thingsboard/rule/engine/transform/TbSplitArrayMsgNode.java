@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import java.util.concurrent.ExecutionException;
         nodeDetails = "Splits an array message into individual elements, with each element sent as a separate message. " +
                 "All outbound messages will have the same type and metadata as the original array message.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "content_copy",
         configDirective = "tbNodeEmptyConfig"
 )

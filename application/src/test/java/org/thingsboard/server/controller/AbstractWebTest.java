@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -402,7 +402,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Awaitility.await("all tasks processed").atMost(60, TimeUnit.SECONDS).during(300, TimeUnit.MILLISECONDS)
+        Awaitility.await("all tasks processed").atMost(90, TimeUnit.SECONDS).during(300, TimeUnit.MILLISECONDS)
                 .until(() -> storage.getLag("tb_housekeeper") == 0);
     }
 

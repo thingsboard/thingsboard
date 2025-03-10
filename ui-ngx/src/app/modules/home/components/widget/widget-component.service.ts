@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ import {
   ResourcesService
 } from '@core/services/resources.service';
 import {
-  IWidgetSettingsComponent, migrateWidgetTypeToDynamicForms,
+  IWidgetSettingsComponent,
+  migrateWidgetTypeToDynamicForms,
   Widget,
   widgetActionSources,
   WidgetControllerDescriptor,
@@ -58,8 +59,6 @@ import tinycolor from 'tinycolor2';
 import moment from 'moment';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
-import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
-import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { compileTbFunction, TbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
@@ -437,17 +436,17 @@ export class WidgetComponentService {
       basicDirectives.push(widgetInfo.basicModeDirective);
     }
 
-    this.expandSettingComponentMap(widgetSettingsComponentsMap, directives, modulesWithComponents);
-    this.expandSettingComponentMap(basicWidgetConfigComponentsMap, basicDirectives, modulesWithComponents);
+    this.expandSettingComponentMap(this.widgetService.putWidgetSettingsComponentToMap.bind(this.widgetService), directives, modulesWithComponents);
+    this.expandSettingComponentMap(this.widgetService.putBasicWidgetSettingsComponentToMap.bind(this.widgetService), basicDirectives, modulesWithComponents);
   }
 
-  private expandSettingComponentMap(settingsComponentsMap: {[key: string]: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>},
+  private expandSettingComponentMap(putComponentToMap: (selector: string, comp: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>) => void,
                                     directives: string[], modulesWithComponents: ModulesWithComponents): void {
     if (directives.length) {
       directives.forEach(selector => {
         const compType = componentTypeBySelector(modulesWithComponents, selector);
         if (compType) {
-          settingsComponentsMap[selector] = compType;
+          putComponentToMap(selector, compType);
         }
       });
     }

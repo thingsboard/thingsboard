@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -99,16 +100,27 @@ public abstract class AbstractSubscriptionService extends TbApplicationEventList
     }
 
     protected <T> void addWsCallback(ListenableFuture<T> saveFuture, Consumer<T> callback) {
-        Futures.addCallback(saveFuture, new FutureCallback<T>() {
+        addCallback(saveFuture, callback, wsCallBackExecutor);
+    }
+
+    protected <T> void addCallback(ListenableFuture<T> saveFuture, Consumer<T> callback, Executor executor) {
+        Futures.addCallback(saveFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable T result) {
                 callback.accept(result);
             }
 
             @Override
-            public void onFailure(Throwable t) {
-            }
-        }, wsCallBackExecutor);
+            public void onFailure(Throwable t) {}
+        }, executor);
+    }
+
+    protected static Consumer<Throwable> safeCallback(FutureCallback<Void> callback) {
+        if (callback != null) {
+            return callback::onFailure;
+        } else {
+            return throwable -> {};
+        }
     }
 
 }

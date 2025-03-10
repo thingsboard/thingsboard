@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ public enum LimitedApi {
     TRANSPORT_MESSAGES_PER_GATEWAY("transport messages per gateway", false),
     TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE("transport messages per gateway device", false),
     EMAILS("emails sending", true),
-    WS_SUBSCRIPTIONS("WS subscriptions", false);
+    WS_SUBSCRIPTIONS("WS subscriptions", false),
+    CALCULATED_FIELD_DEBUG_EVENTS("calculated field debug events", true);
 
     private Function<DefaultTenantProfileConfiguration, String> configExtractor;
     @Getter

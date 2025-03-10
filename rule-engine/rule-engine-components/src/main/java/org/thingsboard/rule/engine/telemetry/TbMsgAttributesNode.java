@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -30,6 +31,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
@@ -43,9 +45,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.Advanced;
+import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.Deduplicate;
+import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.OnEveryMessage;
+import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.WebSocketsOnly;
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
@@ -55,14 +62,51 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
         type = ComponentType.ACTION,
         name = "save attributes",
         configClazz = TbMsgAttributesNodeConfiguration.class,
-        version = 2,
-        nodeDescription = "Saves attributes data",
-        nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type. " +
-                "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
-                "Additionally if checkbox <b>Send attributes updated notification</b> is set to true, rule node will put the \"Attributes Updated\" " +
-                "event for <b>SHARED_SCOPE</b> and <b>SERVER_SCOPE</b> attributes updates to the corresponding rule engine queue." +
-                "Performance checkbox 'Save attributes only if the value changes' will skip attributes overwrites for values with no changes (avoid concurrent writes because this check is not transactional; will not update 'Last updated time' for skipped attributes).",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        version = 3,
+        nodeDescription = """
+                Saves attribute data with a configurable scope and according to configured processing strategies.
+                """,
+        nodeDetails = """
+                Node performs three <strong>actions:</strong>
+                <ul>
+                  <li><strong>Attributes:</strong> save attribute data to a database.</li>
+                  <li><strong>WebSockets:</strong> notify WebSockets subscriptions about attribute data updates.</li>
+                  <li><strong>Calculated fields:</strong> notify calculated fields about attribute data updates.</li>
+                </ul>
+                
+                For each <em>action</em>, three <strong>processing strategies</strong> are available:
+                <ul>
+                  <li><strong>On every message:</strong> perform the action for every message.</li>
+                  <li><strong>Deduplicate:</strong> perform the action only for the first message from a particular originator within a configurable interval.</li>
+                  <li><strong>Skip:</strong> never perform the action.</li>
+                </ul>
+                
+                <strong>Processing strategies</strong> are configured using <em>processing settings</em>, which support two modes:
+                <ul>
+                  <li><strong>Basic</strong>
+                    <ul>
+                      <li><strong>On every message:</strong> applies the "On every message" strategy to all actions.</li>
+                      <li><strong>Deduplicate:</strong> applies the "Deduplicate" strategy (with a specified interval) to all actions.</li>
+                      <li><strong>WebSockets only:</strong> for all actions except WebSocket notifications, the "Skip" strategy is applied, while WebSocket notifications use the "On every message" strategy.</li>
+                    </ul>
+                  </li>
+                  <li><strong>Advanced:</strong> configure each action’s strategy independently.</li>
+                </ul>
+                
+                The node supports three attribute scopes: <strong>Client attributes</strong>, <strong>Shared attributes</strong>, and <strong>Server attributes</strong>.
+                You can set the default scope in the node configuration, or override it by specifying a valid <code>scope</code> property in the message metadata.
+                <br><br>
+                Additionally:
+                <ul>
+                  <li>If <b>Save attributes only if the value changes</b> is enabled, the rule node compares the received attribute value with the current stored value and skips the save operation if they match.</li>
+                  <li>If <b>Send attributes updated notification</b> is enabled, the rule node will put the <b>Attributes Updated</b> event for <code>SHARED_SCOPE</code> and <code>SERVER_SCOPE</code> attribute updates to the queue named <code>Main</code>.</li>
+                  <li>If <b>Force notification to the device</b> is enabled, then rule node will always notify device about <code>SHARED_SCOPE</code> attribute updates, regardless of the value of <code>notifyDevice</code> metadata property.</li>
+                </ul>
+                
+                This node expects messages of type <code>POST_ATTRIBUTES_REQUEST</code>.
+                <br><br>
+                Output connections: <code>Success</code>, <code>Failure</code>.
+                """,
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"
 )
@@ -74,9 +118,12 @@ public class TbMsgAttributesNode implements TbNode {
 
     private TbMsgAttributesNodeConfiguration config;
 
+    private AttributesProcessingSettings processingSettings;
+
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbMsgAttributesNodeConfiguration.class);
+        config = TbNodeUtils.convert(configuration, TbMsgAttributesNodeConfiguration.class);
+        processingSettings = config.getProcessingSettings();
     }
 
     @Override
@@ -91,11 +138,20 @@ public class TbMsgAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
+
+        AttributesSaveRequest.Strategy strategy = determineSaveStrategy(msg.getMetaDataTs(), msg.getOriginator().getId());
+
+        // short-circuit
+        if (!strategy.saveAttributes() && !strategy.sendWsUpdate() && !strategy.processCalculatedFields()) {
+            ctx.tellSuccess(msg);
+            return;
+        }
+
         AttributeScope scope = getScope(msg.getMetaData().getValue(SCOPE));
         boolean sendAttributesUpdateNotification = checkSendNotification(scope);
 
         if (!config.isUpdateAttributesOnlyOnValueChange()) {
-            saveAttr(newAttributes, ctx, msg, scope, sendAttributesUpdateNotification);
+            saveAttr(newAttributes, ctx, msg, scope, sendAttributesUpdateNotification, strategy);
             return;
         }
 
@@ -105,13 +161,42 @@ public class TbMsgAttributesNode implements TbNode {
         DonAsynchron.withCallback(findFuture,
                 currentAttributes -> {
                     List<AttributeKvEntry> attributesChanged = filterChangedAttr(currentAttributes, newAttributes);
-                    saveAttr(attributesChanged, ctx, msg, scope, sendAttributesUpdateNotification);
+                    saveAttr(attributesChanged, ctx, msg, scope, sendAttributesUpdateNotification, strategy);
                 },
                 throwable -> ctx.tellFailure(msg, throwable),
                 MoreExecutors.directExecutor());
     }
 
-    void saveAttr(List<AttributeKvEntry> attributes, TbContext ctx, TbMsg msg, AttributeScope scope, boolean sendAttributesUpdateNotification) {
+    private AttributesSaveRequest.Strategy determineSaveStrategy(long ts, UUID originatorUuid) {
+        if (processingSettings instanceof OnEveryMessage) {
+            return AttributesSaveRequest.Strategy.PROCESS_ALL;
+        }
+        if (processingSettings instanceof WebSocketsOnly) {
+            return AttributesSaveRequest.Strategy.WS_ONLY;
+        }
+        if (processingSettings instanceof Deduplicate deduplicate) {
+            boolean isFirstMsgInInterval = deduplicate.getProcessingStrategy().shouldProcess(ts, originatorUuid);
+            return isFirstMsgInInterval ? AttributesSaveRequest.Strategy.PROCESS_ALL : AttributesSaveRequest.Strategy.SKIP_ALL;
+        }
+        if (processingSettings instanceof Advanced advanced) {
+            return new AttributesSaveRequest.Strategy(
+                    advanced.attributes().shouldProcess(ts, originatorUuid),
+                    advanced.webSockets().shouldProcess(ts, originatorUuid),
+                    advanced.calculatedFields().shouldProcess(ts, originatorUuid)
+            );
+        }
+        // should not happen
+        throw new IllegalArgumentException("Unknown processing settings type: " + processingSettings.getClass().getSimpleName());
+    }
+
+    private void saveAttr(
+            List<AttributeKvEntry> attributes,
+            TbContext ctx,
+            TbMsg msg,
+            AttributeScope scope,
+            boolean sendAttributesUpdateNotification,
+            AttributesSaveRequest.Strategy strategy
+    ) {
         if (attributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;
@@ -125,11 +210,15 @@ public class TbMsgAttributesNode implements TbNode {
                 .scope(scope)
                 .entries(attributes)
                 .notifyDevice(config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)))
+                .strategy(strategy)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .callback(callback)
                 .build());
     }
 
-    List<AttributeKvEntry> filterChangedAttr(List<AttributeKvEntry> currentAttributes, List<AttributeKvEntry> newAttributes) {
+    private List<AttributeKvEntry> filterChangedAttr(List<AttributeKvEntry> currentAttributes, List<AttributeKvEntry> newAttributes) {
         if (currentAttributes == null || currentAttributes.isEmpty()) {
             return newAttributes;
         }
@@ -179,6 +268,9 @@ public class TbMsgAttributesNode implements TbNode {
                 hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY, hasChanges, false);
                 // update updateAttributesOnlyOnValueChange.
                 hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, hasChanges, true);
+            case 2:
+                hasChanges = true;
+                ((ObjectNode) oldConfiguration).set("processingSettings", JacksonUtil.valueToTree(new OnEveryMessage()));
                 break;
             default:
                 break;
