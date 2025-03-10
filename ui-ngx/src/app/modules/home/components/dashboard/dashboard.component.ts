@@ -395,7 +395,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   onDashboardMouseDown($event: MouseEvent) {
     if (this.callbacks && this.callbacks.onDashboardMouseDown) {
-      if ($event) {
+      if ($event && this.isEdit) {
         $event.stopPropagation();
       }
       this.callbacks.onDashboardMouseDown($event);
