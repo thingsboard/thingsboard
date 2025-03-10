@@ -127,6 +127,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
 
   public remove() {
     if (this.marker) {
+      this.layer.removeLayer(this.marker);
       this.marker.off();
     }
     this.points.forEach(pointItem => {
