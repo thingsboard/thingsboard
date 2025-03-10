@@ -15,17 +15,19 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block"
-                [appearance]="inlineField ? 'outline' : appearance"
-                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing"
+<mat-form-field [formGroup]="selectEntityFormGroup"
                 [class.tb-inline-field]="inlineField"
                 [class.flex]="inlineField"
+                [class.tb-suffix-absolute]="inlineField && !selectEntityFormGroup.get('entity').value"
+                class="mat-block"
+                [appearance]="inlineField ? 'outline' : appearance"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing"
                 [class]="additionalClasses">
-  <mat-label *ngIf="!hideLabel">{{ label | translate }}</mat-label>
+  <mat-label *ngIf="!inlineField">{{ label | translate }}</mat-label>
   <input matInput type="text"
          #entityInput
+         placeholder="{{ placeholder }}"
          formControlName="entity"
-         [placeholder]="placeholder"
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
@@ -33,14 +35,6 @@
   <a *ngIf="showEntityLink" aria-label="Open entity details page" [routerLink]=entityURL>
     {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
   </a>
-  <mat-icon *ngIf="inlineField && selectEntityFormGroup.get('entity').hasError('required') && selectEntityFormGroup.get('entity').touched"
-            matSuffix
-            matTooltipPosition="above"
-            matTooltipClass="tb-error-tooltip"
-            [matTooltip]="requiredErrorText | translate"
-            class="tb-error">
-    warning
-  </mat-icon>
   <button *ngIf="selectEntityFormGroup.get('entity').value && !disabled"
           type="button"
           matSuffix mat-icon-button aria-label="Clear"
@@ -53,6 +47,15 @@
           (click)="createNewEntity($event)">
     <span style="white-space: nowrap">{{ 'entity.create-new' | translate }}</span>
   </button>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="requiredErrorText | translate"
+            *ngIf="inlineField && selectEntityFormGroup.get('entity').hasError('required')
+                            && selectEntityFormGroup.get('entity').touched"
+            class="tb-error">
+    warning
+  </mat-icon>
   <mat-autocomplete class="tb-autocomplete"
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">
@@ -72,7 +75,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="selectEntityFormGroup.get('entity').hasError('required') && !inlineField">
+  <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('required')">
     {{ requiredErrorText | translate }}
   </mat-error>
 </mat-form-field>

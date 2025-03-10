@@ -58,7 +58,11 @@ export class MaterialIconsComponent extends PageComponent implements OnInit {
   iconClearButton = false;
 
   @Input()
-  popover: TbPopoverComponent<MaterialIconsComponent>;
+  @coerceBoolean()
+  showTitle = true;
+
+  @Input()
+  popover: TbPopoverComponent;
 
   @Output()
   iconSelected = new EventEmitter<string>();

@@ -27,7 +27,7 @@ import { WidgetConfigComponentData } from '../../models/widget-component.models'
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({

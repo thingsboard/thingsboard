@@ -17,7 +17,7 @@
 import _ from 'lodash';
 import { from, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { catchError, finalize, share } from 'rxjs/operators';
-import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
+import { DataKey, Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
@@ -491,11 +491,12 @@ export const createLabelFromSubscriptionEntityInfo = (entityInfo: SubscriptionEn
 
 export const hasDatasourceLabelsVariables = (pattern: string): boolean => varsRegex.test(pattern) !== null;
 
-export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number, ts?: number): FormattedData[] {
-  return _(input).groupBy(el => el.datasource.entityName + el.datasource.entityType)
+export function formattedDataFormDatasourceData<D extends Datasource = Datasource>(input: DatasourceData[], dataIndex?: number, ts?: number,
+                                                groupFunction: (el: DatasourceData) => any = (el) => el.datasource.entityName + el.datasource.entityType): FormattedData<D>[] {
+  return _(input).groupBy(groupFunction)
     .values().value().map((entityArray, i) => {
-      const datasource = entityArray[0].datasource;
-      const obj = formattedDataFromDatasource(datasource, i);
+      const datasource = entityArray[0].datasource as D;
+      const obj = formattedDataFromDatasource<D>(datasource, i);
       entityArray.filter(el => el.data.length).forEach(el => {
         const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
         const dataSet = isDefined(ts) ? el.data.find(data => data[0] === ts) : el.data[index];
@@ -511,18 +512,20 @@ export function formattedDataFormDatasourceData(input: DatasourceData[], dataInd
     });
 }
 
-export function formattedDataArrayFromDatasourceData(input: DatasourceData[]): FormattedData[][] {
-  return _(input).groupBy(el => el.datasource.entityName)
+export function formattedDataArrayFromDatasourceData<D extends Datasource = Datasource>(input: DatasourceData[],
+                                                                                        groupFunction: (el: DatasourceData) => any =
+                                                                                        (el) => el.datasource.entityName + el.datasource.entityType): FormattedData<D>[][] {
+  return _(input).groupBy(groupFunction)
     .values().value().map((entityArray, dsIndex) => {
-      const timeDataMap: {[time: number]: FormattedData} = {};
+      const timeDataMap: {[time: number]: FormattedData<D>} = {};
       entityArray.filter(e => e.data.length).forEach(entity => {
         entity.data.forEach(tsData => {
           const time = tsData[0];
           const value = tsData[1];
           let data = timeDataMap[time];
           if (!data) {
-            const datasource = entity.datasource;
-            data = formattedDataFromDatasource(datasource, dsIndex);
+            const datasource = entity.datasource as D;
+            data = formattedDataFromDatasource<D>(datasource, dsIndex);
             data.time = time;
             timeDataMap[time] = data;
           }
@@ -537,7 +540,7 @@ export function formattedDataArrayFromDatasourceData(input: DatasourceData[]): F
     });
 }
 
-export function formattedDataFromDatasource(datasource: Datasource, dsIndex: number): FormattedData {
+export function formattedDataFromDatasource<D extends Datasource = Datasource>(datasource: D, dsIndex: number): FormattedData<D> {
   return {
     entityName: datasource.entityName,
     deviceName: datasource.entityName,
@@ -845,7 +848,7 @@ function prepareMessageFromData(data): string {
   }
 }
 
-export function genNextLabel(name: string, datasources: Datasource[]): string {
+export const genNextLabel = (name: string, datasources: Datasource[]): string => {
   let label = name;
   let i = 1;
   let matches = false;
@@ -875,6 +878,25 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
         }
       });
     } while (matches);
+  }
+  return label;
+}
+
+export const genNextLabelForDataKeys = (name: string, dataKeys: DataKey[]): string => {
+  let label = name;
+  let i = 1;
+  let matches = false;
+  if (dataKeys) {
+    do {
+      matches = false;
+      dataKeys.forEach((dataKey) => {
+        if (dataKey?.label === label) {
+          i++;
+          label = name + ' ' + i;
+          matches = true;
+        }
+      });
+    } while (matches)
   }
   return label;
 }

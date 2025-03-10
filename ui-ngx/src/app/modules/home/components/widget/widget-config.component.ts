@@ -80,7 +80,7 @@ import { FilterDialogComponent, FilterDialogData } from '@home/components/filter
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
-import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { defaultFormProperties, FormProperty } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetService } from '@core/http/widget.service';
@@ -323,7 +323,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   private buildHeader() {
     this.headerOptions.length = 0;
-    if (this.widgetType !== widgetType.static) {
+    if (this.displayData) {
       this.headerOptions.push(
         {
           name: this.translate.instant('widget-config.data'),
@@ -709,6 +709,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   public get useDefinedBasicModeDirective(): boolean {
     return this.modelValue?.basicModeDirective?.length && !this.basicModeDirectiveError;
+  }
+
+  public get displayData(): boolean {
+    return !this.modelValue?.typeParameters?.hideDataTab && this.widgetType !== widgetType.static;
   }
 
   public get displayAppearance(): boolean {

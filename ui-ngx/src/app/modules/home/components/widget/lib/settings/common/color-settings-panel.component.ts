@@ -32,7 +32,7 @@ import { WidgetService } from '@core/http/widget.service';
 import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
 import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 

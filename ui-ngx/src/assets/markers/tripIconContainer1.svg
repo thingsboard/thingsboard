@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" class="marker-color" fill="#307FE5">
+  <circle cx="17" cy="17" r="17" mask="url(#icon-mask)"/>
+  <circle cx="17" cy="17" r="17" mask="url(#icon-mask-2)" fill="#fff"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M 17,33 C 25.8366,33 33,25.8366 33,17 33,8.16344 25.8366,1 17,1 8.16344,1 1,8.16344 1,17 1,25.8366 8.16344,33 17,33 Z m 0,1 C 26.3888,34 34,26.3888 34,17 34,7.61116 26.3888,0 17,0 7.61116,0 0,7.61116 0,17 0,26.3888 7.61116,34 17,34 Z" style="filter:url(#stroke-filter)" />
+  <mask id="icon-mask" class="icon-mask-exclude">
+    <g class="marker-icon-container" transform="translate(17,17)">
+      <rect width="100%" height="100%" fill="#fff" transform="translate(-17,-17)"></rect>
+    </g>
+  </mask>
+  <mask id="icon-mask-2" class="icon-mask-overlay">
+    <g class="marker-icon-container" transform="translate(17,17)">
+      <rect width="100%" height="100%" fill="#000" transform="translate(-17,-17)"></rect>
+    </g>
+  </mask>
+  <defs>
+    <filter
+      id="stroke-filter"
+      style="color-interpolation-filters:sRGB"
+      x="0" y="0" width="1" height="1">
+      <feColorMatrix values="0.6 0 0 0 0 0 0.6 0 0 0 0 0 0.6 0 0 0 0 0 1 0" />
+    </filter>
+  </defs>
+</svg>
