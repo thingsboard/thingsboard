@@ -55,6 +55,14 @@
                       class="tb-error">
               warning
             </mat-icon>
+          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('equalCtx')) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'calculated-fields.hint.argument-name-ctx' | translate"
+                      class="tb-error">
+              warning
+            </mat-icon>
           }
         </mat-form-field>
       </div>
