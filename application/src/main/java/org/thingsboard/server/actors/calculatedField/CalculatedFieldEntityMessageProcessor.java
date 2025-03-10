@@ -153,7 +153,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(EntityCalculatedFieldTelemetryMsg msg) throws CalculatedFieldException {
-        log.info("[{}] Processing CF telemetry msg.", msg.getEntityId());
+        log.debug("[{}] Processing CF telemetry msg.", msg.getEntityId());
         var proto = msg.getProto();
         var numberOfCallbacks = CALLBACKS_PER_CF * (msg.getEntityIdFields().size() + msg.getProfileIdFields().size());
         MultipleTbCallback callback = new MultipleTbCallback(numberOfCallbacks, msg.getCallback());
@@ -168,7 +168,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(EntityCalculatedFieldLinkedTelemetryMsg msg) throws CalculatedFieldException {
-        log.info("[{}] Processing CF link telemetry msg.", msg.getEntityId());
+        log.debug("[{}] Processing CF link telemetry msg.", msg.getEntityId());
         var proto = msg.getProto();
         var ctx = msg.getCtx();
         var callback = new MultipleTbCallback(CALLBACKS_PER_CF, msg.getCallback());
