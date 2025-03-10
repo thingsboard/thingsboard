@@ -92,17 +92,22 @@ public class TenantActor extends RuleChainManagerActor {
                 if (isRuleEngine) {
                     if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
                         try {
+                            //TODO: IM - extend API usage to have CF Exec Enabled? Not in 4.0;
+                            cfActor = ctx.getOrCreateChildActor(new TbStringActorId("CFM|" + tenantId),
+                                    () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
+                                    () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
+                                    () -> true);
+                        } catch (Exception e) {
+                            log.info("Failed to init CF Actor.", e);
+                            cantFindTenant = true;
+                        }
+                        try {
                             if (getApiUsageState().isReExecEnabled()) {
                                 log.debug("[{}] Going to init rule chains", tenantId);
                                 initRuleChains();
                             } else {
                                 log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
                             }
-                            //TODO: IM - extend API usage to have CF Exec Enabled? Not in 4.0;
-                            cfActor = ctx.getOrCreateChildActor(new TbStringActorId("CFM|" + tenantId),
-                                    () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
-                                    () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
-                                    () -> true);
                         } catch (Exception e) {
                             log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
                             cantFindTenant = true;
