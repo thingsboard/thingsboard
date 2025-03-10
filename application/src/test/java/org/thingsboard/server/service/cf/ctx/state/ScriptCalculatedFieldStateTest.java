@@ -74,9 +74,6 @@ public class ScriptCalculatedFieldStateTest {
     @MockBean
     private ApiLimitService apiLimitService;
 
-//    @MockBean
-//    private MeterRegistry meterRegistry;
-
     @BeforeEach
     void setUp() {
         when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
