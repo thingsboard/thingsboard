@@ -183,7 +183,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       this.map.zoomControl.setPosition(this.settings.controlsPosition);
     }
     this.dragMode = !this.settings.dragModeButton;
-    const tripsWithMarkers = this.settings.trips?.length ? this.settings.trips.filter(trip => trip.showMarker) : [];
+    const tripsWithMarkers = this.settings.trips?.length ? this.settings.trips.filter(trip => trip.showMarker !== false) : [];
     const showTimeline = this.settings.tripTimeline?.showTimelineControl && tripsWithMarkers.length;
 
     if (showTimeline) {
