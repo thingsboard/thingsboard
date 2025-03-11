@@ -127,7 +127,7 @@ export const ArgumentTypeTranslations = new Map<ArgumentType, string>(
 export interface CalculatedFieldArgument {
   refEntityKey: RefEntityKey;
   defaultValue?: string;
-  refEntityId?: RefEntityKey;
+  refEntityId?: RefEntityId;
   limit?: number;
   timeWindow?: number;
 }
@@ -138,7 +138,7 @@ export interface RefEntityKey {
   scope?: AttributeScope;
 }
 
-export interface RefEntityKey {
+export interface RefEntityId {
   entityType: ArgumentEntityType;
   id: string;
 }
@@ -563,12 +563,12 @@ export const getCalculatedFieldArgumentsHighlights = (
     regex: `\\b${key}\\b`,
     next: argumentsObj[key].refEntityKey.type === ArgumentType.Rolling
       ? 'calculatedFieldRollingArgumentValue'
-      : 'start'
+      : 'no_regex'
   }));
   const calculatedFieldCtxArgumentsHighlightRules = {
     calculatedFieldCtxArgs: [
       dotOperatorHighlightRule,
-      ...calculatedFieldArgumentsKeys.map(argumentRule => argumentRule.next === 'start' ? {...argumentRule, next: 'calculatedFieldSingleArgumentValue' } : argumentRule),
+      ...calculatedFieldArgumentsKeys.map(argumentRule => argumentRule.next === 'no_regex' ? {...argumentRule, next: 'calculatedFieldSingleArgumentValue' } : argumentRule),
       endGroupHighlightRule
     ]
   };

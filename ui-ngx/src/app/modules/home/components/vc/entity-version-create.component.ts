@@ -89,7 +89,8 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
         {entityName: this.entityName}), [Validators.required, Validators.pattern(/(?:.|\s)*\S(&:.|\s)*/)]],
       saveRelations: [false, []],
       saveAttributes: [true, []],
-      saveCredentials: [true, []]
+      saveCredentials: [true, []],
+      saveCalculatedFields: [true, []]
     });
   }
 

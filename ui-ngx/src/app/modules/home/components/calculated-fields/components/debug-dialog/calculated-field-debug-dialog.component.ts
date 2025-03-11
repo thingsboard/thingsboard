@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { CalculatedFieldEventBody, DebugEventType, EventType } from '@shared/models/event.models';
+import { CalculatedFieldEventBody, DebugEventType, Event, EventType } from '@shared/models/event.models';
 import { EventTableComponent } from '@home/components/event/event-table.component';
 import { CalculatedFieldDebugDialogData, CalculatedFieldType } from '@shared/models/calculated-field.models';
 
@@ -46,7 +46,7 @@ export class CalculatedFieldDebugDialogComponent extends DialogComponent<Calcula
 
   ngAfterViewInit(): void {
     this.eventsTable.entitiesTable.updateData();
-    this.eventsTable.entitiesTable.cellActionDescriptors[0].isEnabled = () => this.data.value.type === CalculatedFieldType.SCRIPT;
+    this.eventsTable.entitiesTable.cellActionDescriptors[0].isEnabled = (event => this.data.value.type === CalculatedFieldType.SCRIPT && !!(event as Event).body.arguments)
   }
 
   cancel(): void {
