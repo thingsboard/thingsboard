@@ -80,8 +80,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     private long pollInterval;
     @Value("${queue.calculated_fields.pack_processing_timeout:60000}")
     private long packProcessingTimeout;
-    @Value("${queue.calculated_fields.pool_size:8}")
-    private int poolSize;
 
     private final TbRuleEngineQueueFactory queueFactory;
     private final CalculatedFieldStateService stateService;
@@ -146,14 +144,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
         } catch (Throwable t) {
             log.error("Failed to process partition change event: {}", event, t);
         }
-    }
-
-    private boolean[] partitionsToBooleanIndexArray(Set<TopicPartitionInfo> partitions) {
-        boolean[] myPartitions = new boolean[partitionService.getTotalCalculatedFieldPartitions()];
-        for (var tpi : partitions) {
-            tpi.getPartition().ifPresent(partition -> myPartitions[partition] = true);
-        }
-        return myPartitions;
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToCalculatedFieldMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> consumer, QueueConfig config) throws Exception {

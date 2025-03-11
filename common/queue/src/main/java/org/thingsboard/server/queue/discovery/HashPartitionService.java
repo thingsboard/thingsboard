@@ -68,8 +68,6 @@ public class HashPartitionService implements PartitionService {
     private String cfEventTopic;
     @Value("${queue.calculated_fields.state_topic:tb_cf_state}")
     private String cfStateTopic;
-    @Value("${queue.calculated_fields.partitions:10}")
-    private Integer cfPartitions;
     @Value("${queue.vc.topic:tb_version_control}")
     private String vcTopic;
     @Value("${queue.vc.partitions:10}")
@@ -570,11 +568,6 @@ public class HashPartitionService implements PartitionService {
     public int countTransportsByType(String type) {
         var list = tbTransportServicesByType.get(type);
         return list == null ? 0 : list.size();
-    }
-
-    @Override
-    public int getTotalCalculatedFieldPartitions() {
-        return cfPartitions;
     }
 
     private Map<QueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
