@@ -197,7 +197,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
             root.add(new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE));
             root.add(new LwM2mTransportCoapResource(otaPackageDataCache, SOFTWARE_UPDATE_COAP_RESOURCE));
         }
-        return builder.build();
+        return leshanServer;
     }
 
     private void setServerWithCredentials(LeshanServerBuilder builder) {
