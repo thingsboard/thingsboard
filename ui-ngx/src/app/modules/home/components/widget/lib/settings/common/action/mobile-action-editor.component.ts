@@ -39,7 +39,7 @@ import {
   getDefaultProcessLaunchResultFunction,
   getDefaultProcessLocationFunction,
   getDefaultProcessQrCodeFunction,
-  getDefaultProvisioningSuccessFunction
+  getDefaultProvisionSuccessFunction
 } from '@home/components/widget/lib/settings/common/action/mobile-action-editor.models';
 import { WidgetService } from '@core/http/widget.service';
 import { TbFunction } from '@shared/models/js-function.models';
@@ -255,12 +255,12 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
             this.fb.control(processLocationFunction, [Validators.required])
           );
           break;
-        case WidgetMobileActionType.provisionDevice:
+        case WidgetMobileActionType.deviceProvision:
           let handleProvisionSuccessFunction = action?.handleProvisionSuccessFunction;
           if (changed) {
-            const defaultProvisioningSuccessFunction = getDefaultProvisioningSuccessFunction();
-            if (defaultProvisioningSuccessFunction !== handleProvisionSuccessFunction) {
-              handleProvisionSuccessFunction = defaultProvisioningSuccessFunction;
+            const defaultProvisionSuccessFunction = getDefaultProvisionSuccessFunction();
+            if (defaultProvisionSuccessFunction !== handleProvisionSuccessFunction) {
+              handleProvisionSuccessFunction = defaultProvisionSuccessFunction;
             }
           }
           this.mobileActionTypeFormGroup.addControl(

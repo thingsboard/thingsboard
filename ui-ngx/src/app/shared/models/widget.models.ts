@@ -588,7 +588,7 @@ export enum WidgetMobileActionType {
   makePhoneCall = 'makePhoneCall',
   getLocation = 'getLocation',
   takeScreenshot = 'takeScreenshot',
-  provisionDevice = 'provisionDevice',
+  deviceProvision = 'deviceProvision',
 }
 
 export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
@@ -616,7 +616,7 @@ export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionTy
     [ WidgetMobileActionType.makePhoneCall, 'widget-action.mobile.make-phone-call' ],
     [ WidgetMobileActionType.getLocation, 'widget-action.mobile.get-location' ],
     [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ],
-    [ WidgetMobileActionType.provisionDevice, 'widget-action.mobile.provision-device' ]
+    [ WidgetMobileActionType.deviceProvision, 'widget-action.mobile.device-provision' ]
   ]
 );
 
@@ -638,7 +638,7 @@ export interface MobileLocationResult {
   longitude: number;
 }
 
-export interface MobileDeviceProvisioningResult {
+export interface MobileDeviceProvisionResult {
   deviceName: string;
 }
 
@@ -646,7 +646,7 @@ export type MobileActionResult = MobileLaunchResult &
                                  MobileImageResult &
                                  MobileQrCodeResult &
                                  MobileLocationResult &
-                                 MobileDeviceProvisioningResult;
+                                 MobileDeviceProvisionResult;
 
 export interface WidgetMobileActionResult<T extends MobileActionResult> {
   result?: T;

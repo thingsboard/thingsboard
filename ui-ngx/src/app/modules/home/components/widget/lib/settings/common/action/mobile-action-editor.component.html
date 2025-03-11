@@ -36,7 +36,7 @@
     </mat-form-field>
   </div>
   <ng-container [formGroup]="mobileActionTypeFormGroup" [ngSwitch]="mobileActionFormGroup.get('type').value">
-    <ng-template [ngSwitchCase]="mobileActionType.provisionDevice">
+    <ng-template [ngSwitchCase]="mobileActionType.deviceProvision">
       <tb-js-func
         formControlName="handleProvisionSuccessFunction"
         functionName="handleProvisionSuccess"

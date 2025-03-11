@@ -138,12 +138,13 @@ const processLocationFunction: TbFunction =
   '    }, 100);\n' +
   '}';
 
-const provisioningSuccessFunction: TbFunction =
+const provisionSuccessFunction: TbFunction =
   '// Function body to handle device provision success. \n' +
   '// - deviceName - name of device that was successfully provisioned.\n' +
-  'showDeviceProvisioningSuccess(deviceName);\n' +
   '\n' +
-  'function showDeviceProvisioningSuccess(deviceName) {\n' +
+  'showDeviceProvisionSuccess(deviceName);\n' +
+  '\n' +
+  'function showDeviceProvisionSuccess(deviceName) {\n' +
   '    setTimeout(function() {\n' +
   '        widgetContext.showSuccessToast(`Device ` + deviceName + ` was successfully provisioned`).subscribe();\n' +
   '    }, 100);\n' +
@@ -252,7 +253,7 @@ export const getDefaultProcessQrCodeFunction = () => processQrCodeFunction;
 
 export const getDefaultProcessLocationFunction = () => processLocationFunction;
 
-export const getDefaultProvisioningSuccessFunction = () => provisioningSuccessFunction;
+export const getDefaultProvisionSuccessFunction = () => provisionSuccessFunction;
 
 export const getDefaultGetLocationFunction = () => getLocationFunctionTemplate;
 
@@ -285,8 +286,8 @@ export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType
     case WidgetMobileActionType.takeScreenshot:
       message = 'Take screenshot action was cancelled!';
       break;
-    case WidgetMobileActionType.provisionDevice:
-      message = 'Provisioning device was not invoked!';
+    case WidgetMobileActionType.deviceProvision:
+      message = 'Device provision was not invoked!';
       break;
   }
   return handleEmptyResultFunctionTemplate.replace('--MESSAGE--', message);
@@ -319,7 +320,7 @@ export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): TbF
     case WidgetMobileActionType.takeScreenshot:
       title = 'Failed to take screenshot';
       break;
-    case WidgetMobileActionType.provisionDevice:
+    case WidgetMobileActionType.deviceProvision:
       title = 'Failed to make device provision';
       break;
   }
