@@ -318,14 +318,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     public void onTelemetryMsg(CalculatedFieldTelemetryMsg msg) {
         EntityId entityId = msg.getEntityId();
-        log.info("Received telemetry msg from entity [{}]", entityId);
+        log.debug("Received telemetry msg from entity [{}]", entityId);
         // 2 = 1 for CF processing + 1 for links processing
         MultipleTbCallback callback = new MultipleTbCallback(2, msg.getCallback());
         // process all cfs related to entity, or it's profile;
         var entityIdFields = getCalculatedFieldsByEntityId(entityId);
         var profileIdFields = getCalculatedFieldsByEntityId(getProfileId(tenantId, entityId));
         if (!entityIdFields.isEmpty() || !profileIdFields.isEmpty()) {
-            log.info("Pushing telemetry msg to specific actor [{}]", entityId);
+            log.debug("Pushing telemetry msg to specific actor [{}]", entityId);
             getOrCreateActor(entityId).tell(new EntityCalculatedFieldTelemetryMsg(msg, entityIdFields, profileIdFields, callback));
         } else {
             callback.onSuccess();
@@ -342,7 +342,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     public void onLinkedTelemetryMsg(CalculatedFieldLinkedTelemetryMsg msg) {
         EntityId sourceEntityId = msg.getEntityId();
-        log.info("Received linked telemetry msg from entity [{}]", sourceEntityId);
+        log.debug("Received linked telemetry msg from entity [{}]", sourceEntityId);
         var proto = msg.getProto();
         var linksList = proto.getLinksList();
         for (var linkProto : linksList) {
@@ -357,14 +357,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     MultipleTbCallback callback = new MultipleTbCallback(entityIds.size(), msg.getCallback());
                     var newMsg = new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, callback);
                     entityIds.forEach(entityId -> {
-                        log.info("Pushing linked telemetry msg to specific actor [{}]", entityId);
+                        log.debug("Pushing linked telemetry msg to specific actor [{}]", entityId);
                         getOrCreateActor(entityId).tell(newMsg);
                     });
                 } else {
                     msg.getCallback().onSuccess();
                 }
             } else {
-                log.info("Pushing linked telemetry msg to specific actor [{}]", targetEntityId);
+                log.debug("Pushing linked telemetry msg to specific actor [{}]", targetEntityId);
                 var newMsg = new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, msg.getCallback());
                 getOrCreateActor(targetEntityId).tell(newMsg);
             }

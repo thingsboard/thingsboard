@@ -92,17 +92,21 @@ public class TenantActor extends RuleChainManagerActor {
                 if (isRuleEngine) {
                     if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
                         try {
+                            //TODO: IM - extend API usage to have CF Exec Enabled? Not in 4.0;
+                            cfActor = ctx.getOrCreateChildActor(new TbStringActorId("CFM|" + tenantId),
+                                    () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
+                                    () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
+                                    () -> true);
+                        } catch (Exception e) {
+                            log.info("[{}] Failed to init CF Actor.", tenantId, e);
+                        }
+                        try {
                             if (getApiUsageState().isReExecEnabled()) {
                                 log.debug("[{}] Going to init rule chains", tenantId);
                                 initRuleChains();
                             } else {
                                 log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
                             }
-                            //TODO: IM - extend API usage to have CF Exec Enabled? Not in 4.0;
-                            cfActor = ctx.getOrCreateChildActor(new TbStringActorId("CFM|" + tenantId),
-                                    () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
-                                    () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
-                                    () -> true);
                         } catch (Exception e) {
                             log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
                             cantFindTenant = true;
@@ -185,6 +189,10 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onToCalculatedFieldSystemActorMsg(ToCalculatedFieldSystemMsg msg, boolean priority) {
+        if (cfActor == null) {
+            log.warn("[{}] CF Actor is not initialized.", tenantId);
+            return;
+        }
         if (priority) {
             cfActor.tellWithHighPriority(msg);
         } else {
@@ -251,11 +259,25 @@ public class TenantActor extends RuleChainManagerActor {
         ServiceType serviceType = msg.getServiceType();
         if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
             if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                if (cfActor == null) {
+                    try {
+                        //TODO: IM - extend API usage to have CF Exec Enabled? Not in 4.0;
+                        cfActor = ctx.getOrCreateChildActor(new TbStringActorId("CFM|" + tenantId),
+                                () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
+                                () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
+                                () -> true);
+                    } catch (Exception e) {
+                        log.info("[{}] Failed to init CF Actor.", tenantId, e);
+                    }
+                }
                 if (!ruleChainsInitialized) {
                     log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
                     initRuleChains();
                 }
             } else {
+                if (cfActor != null) {
+                    ctx.stop(cfActor.getActorId());
+                }
                 if (ruleChainsInitialized) {
                     log.info("Tenant {} is no longer managed by this service, stopping rule chains", tenantId);
                     destroyRuleChains();
