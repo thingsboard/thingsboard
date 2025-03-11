@@ -362,7 +362,7 @@
         },
         {
           "value": false,
-          "label": "Metric"
+          "label": "Absolute"
         }
       ],
       "disabled": false,
