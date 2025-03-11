@@ -18,6 +18,8 @@ package org.thingsboard.server.transport.lwm2m.server;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.CoapResource;
+import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
@@ -58,6 +60,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_W
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_UPDATE_COAP_RESOURCE;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
 
 @Slf4j
@@ -85,14 +88,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void init() {
         this.server = getLhServer();
-        /*
-         * Add a resource to the server.
-         * CoapResource ->
-         * path = FW_PACKAGE or SW_PACKAGE
-         * nameFile = "BC68JAR01A09_TO_BC68JAR01A10.bin"
-         * "coap://host:port/{path}/{token}/{nameFile}"
-         */
-        new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
         this.context.setServer(server);
         this.startLhServer();
     }
@@ -168,7 +163,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
 
         if (config.getDtlsCidLength() != null) {
-            setDtlsConnectorConfigCidLength( serverCoapConfig, config.getDtlsCidLength());
+            setDtlsConnectorConfigCidLength(serverCoapConfig, config.getDtlsCidLength());
         }
 
         /* Create DTLS Config */
@@ -191,6 +186,17 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
         // Create LWM2M server
         builder.setEndpointsProviders(endpointsBuilder.build());
+        LeshanServer leshanServer = builder.build();
+        CoapServer coapServer = ((CaliforniumServerEndpointsProvider) (leshanServer.getEndpointsProvider()).toArray()[0]).getCoapServer();
+        if (coapServer != null) {
+            CoapResource root = (CoapResource) coapServer.getRoot();
+            if (root == null) {
+                root = new CoapResource("");
+                coapServer.add(root);
+            }
+            root.add(new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE));
+            root.add(new LwM2mTransportCoapResource(otaPackageDataCache, SOFTWARE_UPDATE_COAP_RESOURCE));
+        }
         return builder.build();
     }
 
