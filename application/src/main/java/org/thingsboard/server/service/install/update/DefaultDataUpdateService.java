@@ -24,22 +24,35 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
+import org.thingsboard.server.service.install.DbUpgradeExecutorService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+
+import static org.thingsboard.server.common.data.relation.EntityRelation.USES_TYPE;
 
 @Service
 @Profile("install")
@@ -53,6 +66,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private RuleChainService ruleChainService;
 
     @Autowired
+    private RelationService relationService;
+
+    @Autowired
+    private TenantService tenantService;
+
+    @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
 
     @Autowired
@@ -61,12 +80,65 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private InstallScripts installScripts;
 
+    @Autowired
+    private DbUpgradeExecutorService executorService;
+
     @Override
     public void updateData() throws Exception {
         log.info("Updating data ...");
         //TODO: should be cleaned after each release
+        inputNodesUpdater.updateEntities();
         log.info("Data updated.");
     }
+
+    //TODO: should be removed after release
+    private final PaginatedUpdater<String, Tenant> inputNodesUpdater = new PaginatedUpdater<>() {
+        @Override
+        protected String getName() {
+            return "Input nodes updater";
+        }
+
+        @Override
+        protected PageData<Tenant> findEntities(String type, PageLink pageLink) {
+            return tenantService.findTenants(pageLink);
+        }
+
+        @Override
+        protected void updateEntity(Tenant tenant) {
+            TenantId tenantId = tenant.getId();
+            try {
+                var inputNodes = ruleChainService.findRuleNodesByTenantIdAndType(tenantId, "org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+                var resultFutures = inputNodes.stream().map(ruleNode -> {
+                    try {
+                        JsonNode id = ruleNode.getConfiguration().get("ruleChainId");
+                        if (id != null) {
+                            RuleChainId toRuleChainId = new RuleChainId(UUID.fromString(id.asText()));
+                            RuleChainId fromRuleChainId = ruleNode.getRuleChainId();
+                            var isExistFuture = relationService.checkRelationAsync(null, fromRuleChainId, toRuleChainId, USES_TYPE, RelationTypeGroup.COMMON);
+                            Futures.transformAsync(isExistFuture, isExist -> {
+                                if (!isExist) {
+                                    EntityRelation relation = new EntityRelation();
+                                    relation.setFrom(fromRuleChainId);
+                                    relation.setTo(toRuleChainId);
+                                    relation.setType(EntityRelation.USES_TYPE);
+                                    relation.setTypeGroup(RelationTypeGroup.COMMON);
+                                    return relationService.saveRelationAsync(tenantId, relation);
+                                }
+                                return Futures.immediateFuture(null);
+                            }, executorService);
+                        }
+                    } catch (Exception e) {
+                        log.error("[{}] Create relation for input node: [{}]", tenantId, ruleNode, e);
+                    }
+                    return Futures.immediateFuture(null);
+                }).toList();
+
+                Futures.allAsList(resultFutures).get();
+            } catch (Exception e) {
+                log.error("[{}] Unable to update Tenant input nodes", tenantId, e);
+            }
+        }
+    };
 
     @Override
     public void upgradeRuleNodes() {
