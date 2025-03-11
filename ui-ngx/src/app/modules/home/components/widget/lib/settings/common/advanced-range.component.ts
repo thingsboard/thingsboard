@@ -27,7 +27,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { IAliasController } from '@core/api/widget-api.models';
 import { AdvancedColorRange } from '@shared/models/widget-settings.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 

@@ -133,8 +133,6 @@ redis:
 transport:
   # Local CoAP transport parameters
   coap:
-    # Enable/disable coap transport protocol.
-    enabled: "${COAP_ENABLED:true}"
     # CoaP processing timeout in milliseconds
     timeout: "${COAP_TIMEOUT:10000}"
     # CoaP piggyback response timeout in milliseconds
@@ -173,8 +171,6 @@ transport:
 
 # CoAP server parameters
 coap:
-  # Enable/disable coap transport protocol.
-  enabled: "${COAP_SERVER_ENABLED:true}"
   # CoAP bind-address
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   # CoAP bind port
@@ -351,6 +347,8 @@ queue:
   core:
     # Default topic name
     topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_CORE_NOTIFICATIONS_TOPIC:tb_core.notifications}"
     # Interval in milliseconds to poll messages by Core microservices
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     # Amount of partitions used by Core microservices
@@ -381,6 +379,8 @@ queue:
   rule-engine:
     # Deprecated. It will be removed in the nearest releases
     topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb_rule_engine}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_RULE_ENGINE_NOTIFICATIONS_TOPIC:tb_rule_engine.notifications}"
     # Interval in milliseconds to poll messages by Rule Engine
     poll-interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
     # Timeout for processing a message pack of Rule Engine

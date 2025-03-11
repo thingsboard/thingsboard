@@ -31,7 +31,12 @@ import {
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
-import { AceHighlightRule, AceHighlightRules } from '@shared/models/ace/ace.models';
+import {
+  AceHighlightRule,
+  AceHighlightRules,
+  dotOperatorHighlightRule,
+  endGroupHighlightRule
+} from '@shared/models/ace/ace.models';
 import { HelpLinks, ValueType } from '@shared/models/constants';
 import { formPropertyCompletions } from '@shared/models/dynamic-form.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
@@ -920,17 +925,6 @@ export class ScadaSymbolElement {
 }
 
 const identifierRe = /[a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*/;
-
-const dotOperatorHighlightRule: AceHighlightRule = {
-  token: 'punctuation.operator',
-  regex: /[.](?![.])/,
-};
-
-const endGroupHighlightRule: AceHighlightRule = {
-  regex: '',
-  token: 'empty',
-  next: 'no_regex'
-};
 
 const scadaSymbolCtxObjectHighlightRule: AceHighlightRule = {
   token: 'tb.scada-symbol-ctx',

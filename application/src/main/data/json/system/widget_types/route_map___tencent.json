@@ -1,7 +1,7 @@
 {
   "fqn": "maps_v2.route_map_tencent_maps",
   "name": "Route Map - Tencent",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/route_map_tencent_system_widget_image.png",
   "description": "Visualize the entity trip on Tencent Maps. Allows to visualize location history. Use the Trip Animation widget for advanced features.",
   "descriptor": {

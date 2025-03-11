@@ -22,7 +22,8 @@ public enum EventType {
     LC_EVENT("lc_event", "LC_EVENT"),
     STATS("stats_event", "STATS"),
     DEBUG_RULE_NODE("rule_node_debug_event", "DEBUG_RULE_NODE", true),
-    DEBUG_RULE_CHAIN("rule_chain_debug_event", "DEBUG_RULE_CHAIN", true);
+    DEBUG_RULE_CHAIN("rule_chain_debug_event", "DEBUG_RULE_CHAIN", true),
+    DEBUG_CALCULATED_FIELD("cf_debug_event", "DEBUG_CALCULATED_FIELD", true);
 
     @Getter
     private final String table;

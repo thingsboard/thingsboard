@@ -31,29 +31,38 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
+import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +71,11 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.comparingLong;
+import static java.util.Comparator.naturalOrder;
+import static java.util.Comparator.nullsFirst;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -75,6 +89,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TbEntityViewService tbEntityViewService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
+    private final CalculatedFieldQueueService calculatedFieldQueueService;
+    private final DeviceStateManager deviceStateManager;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -85,12 +101,16 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                TimeseriesService tsService,
                                                @Lazy TbEntityViewService tbEntityViewService,
                                                TbApiUsageReportClient apiUsageClient,
-                                               TbApiUsageStateService apiUsageStateService) {
+                                               TbApiUsageStateService apiUsageStateService,
+                                               CalculatedFieldQueueService calculatedFieldQueueService,
+                                               DeviceStateManager deviceStateManager) {
         this.attrService = attrService;
         this.tsService = tsService;
         this.tbEntityViewService = tbEntityViewService;
         this.apiUsageClient = apiUsageClient;
         this.apiUsageStateService = apiUsageStateService;
+        this.calculatedFieldQueueService = calculatedFieldQueueService;
+        this.deviceStateManager = deviceStateManager;
     }
 
     @PostConstruct
@@ -120,10 +140,9 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
         if (sysTenant || !request.getStrategy().saveTimeseries() || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
             KvUtils.validate(request.getEntries(), valueNoXssValidation);
-            ListenableFuture<Integer> future = saveTimeseriesInternal(request);
+            ListenableFuture<TimeseriesSaveResult> future = saveTimeseriesInternal(request);
             if (request.getStrategy().saveTimeseries()) {
-                FutureCallback<Integer> callback = getApiUsageCallback(tenantId, request.getCustomerId(), sysTenant, request.getCallback());
-                Futures.addCallback(future, callback, tsCallBackExecutor);
+                Futures.addCallback(future, getApiUsageCallback(tenantId, request.getCustomerId(), sysTenant), tsCallBackExecutor);
             }
         } else {
             request.getCallback().onFailure(new RuntimeException("DB storage writes are disabled due to API limits!"));
@@ -131,29 +150,37 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
-    public ListenableFuture<Integer> saveTimeseriesInternal(TimeseriesSaveRequest request) {
+    public ListenableFuture<TimeseriesSaveResult> saveTimeseriesInternal(TimeseriesSaveRequest request) {
         TenantId tenantId = request.getTenantId();
         EntityId entityId = request.getEntityId();
         TimeseriesSaveRequest.Strategy strategy = request.getStrategy();
-        ListenableFuture<Integer> saveFuture;
+        ListenableFuture<TimeseriesSaveResult> resultFuture;
+
         if (strategy.saveTimeseries() && strategy.saveLatest()) {
-            saveFuture = tsService.save(tenantId, entityId, request.getEntries(), request.getTtl());
+            resultFuture = tsService.save(tenantId, entityId, request.getEntries(), request.getTtl());
         } else if (strategy.saveLatest()) {
-            saveFuture = Futures.transform(tsService.saveLatest(tenantId, entityId, request.getEntries()), result -> 0, MoreExecutors.directExecutor());
+            resultFuture = tsService.saveLatest(tenantId, entityId, request.getEntries());
         } else if (strategy.saveTimeseries()) {
-            saveFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
+            resultFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
         } else {
-            saveFuture = Futures.immediateFuture(0);
+            resultFuture = Futures.immediateFuture(TimeseriesSaveResult.EMPTY);
         }
 
-        addMainCallback(saveFuture, request.getCallback());
+        addMainCallback(resultFuture, result -> {
+            if (strategy.processCalculatedFields()) {
+                calculatedFieldQueueService.pushRequestToQueue(request, result, request.getCallback());
+            } else {
+                request.getCallback().onSuccess(null);
+            }
+        }, t -> request.getCallback().onFailure(t));
+
         if (strategy.sendWsUpdate()) {
-            addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
+            addWsCallback(resultFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         }
         if (strategy.saveLatest()) {
             copyLatestToEntityViews(tenantId, entityId, request.getEntries());
         }
-        return saveFuture;
+        return resultFuture;
     }
 
     @Override
@@ -165,9 +192,68 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void saveAttributesInternal(AttributesSaveRequest request) {
         log.trace("Executing saveInternal [{}]", request);
-        ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
-        addMainCallback(saveFuture, request.getCallback());
-        addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
+        TenantId tenantId = request.getTenantId();
+        EntityId entityId = request.getEntityId();
+        AttributesSaveRequest.Strategy strategy = request.getStrategy();
+        ListenableFuture<List<Long>> resultFuture;
+
+        if (strategy.saveAttributes()) {
+            resultFuture = attrService.save(tenantId, entityId, request.getScope(), request.getEntries());
+        } else {
+            resultFuture = Futures.immediateFuture(Collections.emptyList());
+        }
+
+        addMainCallback(resultFuture, result -> {
+            if (strategy.processCalculatedFields()) {
+                calculatedFieldQueueService.pushRequestToQueue(request, result, request.getCallback());
+            } else {
+                request.getCallback().onSuccess(null);
+            }
+        }, t -> request.getCallback().onFailure(t));
+
+        if (shouldSendSharedAttributesUpdatedNotification(request)) {
+            addMainCallback(resultFuture, success -> clusterService.pushMsgToCore(
+                    DeviceAttributesEventNotificationMsg.onUpdate(tenantId, new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, request.getEntries()), null
+            ));
+        }
+
+        if (shouldCheckForInactivityTimeoutUpdates(request)) {
+            findNewInactivityTimeout(request.getEntries()).ifPresent(newInactivityTimeout ->
+                    addMainCallback(resultFuture, success -> deviceStateManager.onDeviceInactivityTimeoutUpdate(
+                            tenantId, new DeviceId(entityId.getId()), newInactivityTimeout, TbCallback.EMPTY)
+                    )
+            );
+        }
+
+        if (strategy.sendWsUpdate()) {
+            addWsCallback(resultFuture, success -> onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries()));
+        }
+    }
+
+    private static boolean shouldSendSharedAttributesUpdatedNotification(AttributesSaveRequest request) {
+        return request.getStrategy().saveAttributes() && shouldSendSharedAttributesNotification(request.getEntityId(), request.getScope(), request.isNotifyDevice());
+    }
+
+    private static boolean shouldCheckForInactivityTimeoutUpdates(AttributesSaveRequest request) {
+        return request.getStrategy().saveAttributes()
+                && request.getEntityId().getEntityType() == EntityType.DEVICE
+                && request.getScope() == AttributeScope.SERVER_SCOPE;
+    }
+
+    private static Optional<Long> findNewInactivityTimeout(List<AttributeKvEntry> entries) {
+        return entries.stream()
+                .filter(entry -> Objects.equals(DefaultDeviceStateService.INACTIVITY_TIMEOUT, entry.getKey()))
+                // Select the entry with the highest version, or if the versions are equal, the one with the most recent update timestamp
+                .max(comparing(AttributeKvEntry::getVersion, nullsFirst(naturalOrder())).thenComparingLong(AttributeKvEntry::getLastUpdateTs))
+                .map(DefaultTelemetrySubscriptionService::parseAsLong);
+    }
+
+    private static long parseAsLong(KvEntry kve) {
+        try {
+            return Long.parseLong(kve.getValueAsString());
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
     }
 
     @Override
@@ -178,9 +264,45 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void deleteAttributesInternal(AttributesDeleteRequest request) {
-        ListenableFuture<List<String>> deleteFuture = attrService.removeAll(request.getTenantId(), request.getEntityId(), request.getScope(), request.getKeys());
-        addMainCallback(deleteFuture, request.getCallback());
-        addWsCallback(deleteFuture, success -> onAttributesDelete(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getKeys(), request.isNotifyDevice()));
+        TenantId tenantId = request.getTenantId();
+        EntityId entityId = request.getEntityId();
+
+        ListenableFuture<List<String>> deleteFuture = attrService.removeAll(tenantId, entityId, request.getScope(), request.getKeys());
+
+        addMainCallback(deleteFuture,
+                result -> calculatedFieldQueueService.pushRequestToQueue(request, result, request.getCallback()),
+                t -> request.getCallback().onFailure(t)
+        );
+
+        if (shouldSendSharedAttributesDeletedNotification(request)) {
+            addMainCallback(deleteFuture, success -> clusterService.pushMsgToCore(
+                    DeviceAttributesEventNotificationMsg.onDelete(tenantId, new DeviceId(entityId.getId()), DataConstants.SHARED_SCOPE, request.getKeys()), null
+            ));
+        }
+
+        if (inactivityTimeoutDeleted(request)) {
+            addMainCallback(deleteFuture, success -> deviceStateManager.onDeviceInactivityTimeoutUpdate(
+                    tenantId, new DeviceId(entityId.getId()), 0L, TbCallback.EMPTY)
+            );
+        }
+
+        addWsCallback(deleteFuture, success -> onAttributesDelete(tenantId, entityId, request.getScope().name(), request.getKeys()));
+    }
+
+    private static boolean shouldSendSharedAttributesDeletedNotification(AttributesDeleteRequest request) {
+        return shouldSendSharedAttributesNotification(request.getEntityId(), request.getScope(), request.isNotifyDevice());
+    }
+
+    private static boolean shouldSendSharedAttributesNotification(EntityId entityId, AttributeScope scope, boolean notifyDevice) {
+        return entityId.getEntityType() == EntityType.DEVICE
+                && scope == AttributeScope.SHARED_SCOPE
+                && notifyDevice;
+    }
+
+    private static boolean inactivityTimeoutDeleted(AttributesDeleteRequest request) {
+        return request.getEntityId().getEntityType() == EntityType.DEVICE
+                && request.getScope() == AttributeScope.SERVER_SCOPE
+                && request.getKeys().stream().anyMatch(key -> Objects.equals(DefaultDeviceStateService.INACTIVITY_TIMEOUT, key));
     }
 
     @Override
@@ -199,10 +321,14 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                 deleteFuture = tsService.remove(request.getTenantId(), request.getEntityId(), request.getDeleteHistoryQueries());
                 addWsCallback(deleteFuture, result -> onTimeSeriesDelete(request.getTenantId(), request.getEntityId(), request.getKeys(), result));
             }
-            addMainCallback(deleteFuture, __ -> request.getCallback().onSuccess(request.getKeys()), request.getCallback()::onFailure);
+            DonAsynchron.withCallback(deleteFuture, result -> {
+                calculatedFieldQueueService.pushRequestToQueue(request, request.getKeys(), getCalculatedFieldCallback(request.getCallback(), request.getKeys()));
+            }, safeCallback(getCalculatedFieldCallback(request.getCallback(), request.getKeys())), tsCallBackExecutor);
         } else {
             ListenableFuture<List<String>> deleteFuture = tsService.removeAllLatest(request.getTenantId(), request.getEntityId());
-            addMainCallback(deleteFuture, request.getCallback()::onSuccess, request.getCallback()::onFailure);
+            DonAsynchron.withCallback(deleteFuture, result -> {
+                calculatedFieldQueueService.pushRequestToQueue(request, request.getKeys(), getCalculatedFieldCallback(request.getCallback(), result));
+            }, safeCallback(getCalculatedFieldCallback(request.getCallback(), request.getKeys())), tsCallBackExecutor);
         }
     }
 
@@ -228,7 +354,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                         if (entries != null) {
                                             Optional<TsKvEntry> tsKvEntry = entries.stream()
                                                     .filter(entry -> entry.getTs() > startTs && entry.getTs() <= endTs)
-                                                    .max(Comparator.comparingLong(TsKvEntry::getTs));
+                                                    .max(comparingLong(TsKvEntry::getTs));
                                             tsKvEntry.ifPresent(entityViewLatest::add);
                                         }
                                     }
@@ -261,28 +387,22 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice) {
-        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
-            subscriptionManagerService.onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice, TbCallback.EMPTY);
-        }, () -> {
-            return TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
-        });
+    private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+        forwardToSubscriptionManagerService(tenantId, entityId,
+                subscriptionManagerService -> subscriptionManagerService.onAttributesUpdate(tenantId, entityId, scope, attributes, TbCallback.EMPTY),
+                () -> TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes));
     }
 
-    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
-        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
-            subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice, TbCallback.EMPTY);
-        }, () -> {
-            return TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
-        });
+    private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys) {
+        forwardToSubscriptionManagerService(tenantId, entityId,
+                subscriptionManagerService -> subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, TbCallback.EMPTY),
+                () -> TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys));
     }
 
     private void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
-        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
-            subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, ts, TbCallback.EMPTY);
-        }, () -> {
-            return TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
-        });
+        forwardToSubscriptionManagerService(tenantId, entityId,
+                subscriptionManagerService -> subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, ts, TbCallback.EMPTY),
+                () -> TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts));
     }
 
     private void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, List<TsKvLatestRemovingResult> ts) {
@@ -302,14 +422,16 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
             subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, updated, TbCallback.EMPTY);
             subscriptionManagerService.onTimeSeriesDelete(tenantId, entityId, deleted, TbCallback.EMPTY);
-        }, () -> {
-            return TbSubscriptionUtils.toTimeseriesDeleteProto(tenantId, entityId, keys);
-        });
+        }, () -> TbSubscriptionUtils.toTimeseriesDeleteProto(tenantId, entityId, keys));
     }
 
     private <S> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<Void> callback) {
         if (callback == null) return;
         addMainCallback(saveFuture, result -> callback.onSuccess(null), callback::onFailure);
+    }
+
+    private <S> void addMainCallback(ListenableFuture<S> saveFuture, Consumer<S> onSuccess) {
+        addMainCallback(saveFuture, onSuccess, null);
     }
 
     private <S> void addMainCallback(ListenableFuture<S> saveFuture, Consumer<S> onSuccess, Consumer<Throwable> onFailure) {
@@ -322,19 +444,31 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private FutureCallback<Integer> getApiUsageCallback(TenantId tenantId, CustomerId customerId, boolean sysTenant, FutureCallback<Void> callback) {
+    private FutureCallback<TimeseriesSaveResult> getApiUsageCallback(TenantId tenantId, CustomerId customerId, boolean sysTenant) {
         return new FutureCallback<>() {
             @Override
-            public void onSuccess(Integer result) {
-                if (!sysTenant && result != null && result > 0) {
-                    apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, result);
+            public void onSuccess(TimeseriesSaveResult result) {
+                Integer dataPoints = result.getDataPoints();
+                if (!sysTenant && dataPoints != null && dataPoints > 0) {
+                    apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, dataPoints);
                 }
-                callback.onSuccess(null);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {}
+        };
+    }
+
+    private FutureCallback<Void> getCalculatedFieldCallback(FutureCallback<List<String>> originalCallback, List<String> keys) {
+        return new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void unused) {
+                originalCallback.onSuccess(keys);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                callback.onFailure(t);
+                originalCallback.onFailure(t);
             }
         };
     }

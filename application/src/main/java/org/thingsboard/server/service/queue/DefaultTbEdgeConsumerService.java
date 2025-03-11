@@ -20,8 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +50,7 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
-import org.thingsboard.server.service.queue.consumer.MainQueueConsumerManager;
+import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 
@@ -87,11 +85,11 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     private final EdgeContextComponent edgeCtx;
     private final EdgeConsumerStats stats;
 
-    private MainQueueConsumerManager<TbProtoQueueMsg<ToEdgeMsg>, EdgeQueueConfig> mainConsumer;
+    private MainQueueConsumerManager<TbProtoQueueMsg<ToEdgeMsg>, QueueConfig> mainConsumer;
 
     public DefaultTbEdgeConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         StatsFactory statsFactory, EdgeContextComponent edgeCtx) {
-        super(actorContext, null, null, null, null, null,
+        super(actorContext, null, null, null, null, null, null,
                 null, null);
         this.edgeCtx = edgeCtx;
         this.stats = new EdgeConsumerStats(statsFactory);
@@ -102,9 +100,9 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     public void init() {
         super.init("tb-edge");
 
-        this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdgeMsg>, EdgeQueueConfig>builder()
+        this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdgeMsg>, QueueConfig>builder()
                 .queueKey(new QueueKey(ServiceType.TB_CORE).withQueueName(DataConstants.EDGE_QUEUE_NAME))
-                .config(EdgeQueueConfig.of(consumerPerPartition, pollInterval))
+                .config(QueueConfig.of(consumerPerPartition, pollInterval))
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator((config, partitionId) -> queueFactory.createEdgeMsgConsumer())
                 .consumerExecutor(consumersExecutor)
@@ -130,14 +128,14 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         mainConsumer.update(partitions);
     }
 
-    private void processMsgs(List<TbProtoQueueMsg<ToEdgeMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> consumer, EdgeQueueConfig edgeQueueConfig) throws InterruptedException {
+    private void processMsgs(List<TbProtoQueueMsg<ToEdgeMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> consumer, QueueConfig edgeQueueConfig) throws InterruptedException {
         List<IdMsgPair<ToEdgeMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
         ConcurrentMap<UUID, TbProtoQueueMsg<ToEdgeMsg>> pendingMap = orderedMsgList.stream().collect(
                 Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
         CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
         TbPackProcessingContext<TbProtoQueueMsg<ToEdgeMsg>> ctx = new TbPackProcessingContext<>(
                 processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
-        PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
+        PendingMsgHolder<ToEdgeMsg> pendingMsgHolder = new PendingMsgHolder<>();
         Future<?> submitFuture = consumersExecutor.submit(() -> {
             orderedMsgList.forEach((element) -> {
                 UUID id = element.getUuid();
@@ -145,7 +143,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                 TbCallback callback = new TbPackCallback<>(id, ctx);
                 try {
                     ToEdgeMsg toEdgeMsg = msg.getValue();
-                    pendingMsgHolder.setToEdgeMsg(toEdgeMsg);
+                    pendingMsgHolder.setMsg(toEdgeMsg);
                     if (toEdgeMsg.hasEdgeNotificationMsg()) {
                         pushNotificationToEdge(toEdgeMsg.getEdgeNotificationMsg(), 0, packProcessingRetries, callback);
                     }
@@ -161,18 +159,11 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
             if (!submitFuture.isDone()) {
                 submitFuture.cancel(true);
-                ToEdgeMsg lastSubmitMsg = pendingMsgHolder.getToEdgeMsg();
-                log.info("Timeout to process message: {}", lastSubmitMsg);
+                log.info("Timeout to process message: {}", pendingMsgHolder.getMsg());
             }
             ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
         }
         consumer.commit();
-    }
-
-    private static class PendingMsgHolder {
-        @Getter
-        @Setter
-        private volatile ToEdgeMsg toEdgeMsg;
     }
 
     @Override
@@ -292,12 +283,6 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         super.stopConsumers();
         mainConsumer.stop();
         mainConsumer.awaitStop();
-    }
-
-    @Data(staticConstructor = "of")
-    public static class EdgeQueueConfig implements QueueConfig {
-        private final boolean consumerPerPartition;
-        private final int pollInterval;
     }
 
 }
