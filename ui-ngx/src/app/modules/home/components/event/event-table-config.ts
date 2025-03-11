@@ -369,7 +369,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             (entity) => entity.body.entityId,
             {
               name: this.translate.instant('event.copy-entity-id'),
-              icon: 'content_paste',
+              icon: 'content_copy',
               style: {
                 padding: '4px',
                 'font-size': '16px',
@@ -389,7 +389,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             false,
             {
               name: this.translate.instant('event.copy-message-id'),
-              icon: 'content_paste',
+              icon: 'content_copy',
               style: {
                 padding: '4px',
                 'font-size': '16px',

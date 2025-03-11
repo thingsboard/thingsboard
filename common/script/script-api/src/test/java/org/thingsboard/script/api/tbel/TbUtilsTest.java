@@ -1138,10 +1138,16 @@ public class TbUtilsTest {
     }
 
     @Test
-    void toInt() {
+    public void toInt() {
         Assertions.assertEquals(1729, TbUtils.toInt(doubleVal));
         Assertions.assertEquals(13, TbUtils.toInt(12.8));
         Assertions.assertEquals(28, TbUtils.toInt(28.0));
+    }
+
+    @Test
+    public void isNaN() {
+        Assertions.assertFalse(TbUtils.isNaN(doubleVal));
+        Assertions.assertTrue(TbUtils.isNaN(Double.NaN));
     }
 
     private static List<Byte> toList(byte[] data) {

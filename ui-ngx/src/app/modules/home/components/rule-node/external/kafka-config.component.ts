@@ -54,8 +54,6 @@ export class KafkaConfigComponent extends RuleNodeConfigurationComponent {
       linger: [configuration ? configuration.linger : null, [Validators.min(0)]],
       bufferMemory: [configuration ? configuration.bufferMemory : null, [Validators.min(0)]],
       acks: [configuration ? configuration.acks : null, [Validators.required]],
-      keySerializer: [configuration ? configuration.keySerializer : null, [Validators.required]],
-      valueSerializer: [configuration ? configuration.valueSerializer : null, [Validators.required]],
       otherProperties: [configuration ? configuration.otherProperties : null, []],
       addMetadataKeyValuesAsKafkaHeaders: [configuration ? configuration.addMetadataKeyValuesAsKafkaHeaders : false, []],
       kafkaHeadersCharset: [configuration ? configuration.kafkaHeadersCharset : null, []]

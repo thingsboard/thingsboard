@@ -27,6 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings;
 import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
@@ -45,11 +46,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings;
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced;
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Deduplicate;
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.OnEveryMessage;
-import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.WebSocketsOnly;
+import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.Advanced;
+import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.Deduplicate;
+import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.OnEveryMessage;
+import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.WebSocketsOnly;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
@@ -61,7 +61,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                 Saves time series data with a configurable TTL and according to configured processing strategies.
                 """,
         nodeDetails = """
-                Node performs three <strong>actions:</strong>
+                Node performs four <strong>actions:</strong>
                 <ul>
                   <li><strong>Time series:</strong> save time series data to a <code>ts_kv</code> table in a DB.</li>
                   <li><strong>Latest values:</strong> save time series data to a <code>ts_kv_latest</code> table in a DB.</li>
@@ -82,7 +82,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                     <ul>
                       <li><strong>On every message:</strong> applies the "On every message" strategy to all actions.</li>
                       <li><strong>Deduplicate:</strong> applies the "Deduplicate" strategy (with a specified interval) to all actions.</li>
-                      <li><strong>WebSockets only:</strong> applies the "Skip" strategy to Time series and Latest values, and the "On every message" strategy to WebSockets.</li>
+                      <li><strong>WebSockets only:</strong> for all actions except WebSocket notifications, the "Skip" strategy is applied, while WebSocket notifications use the "On every message" strategy.</li>
                     </ul>
                   </li>
                   <li><strong>Advanced:</strong> configure each action’s strategy independently.</li>
@@ -111,7 +111,7 @@ public class TbMsgTimeseriesNode implements TbNode {
     private TbContext ctx;
     private long tenantProfileDefaultStorageTtl;
 
-    private ProcessingSettings processingSettings;
+    private TimeseriesProcessingSettings processingSettings;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {

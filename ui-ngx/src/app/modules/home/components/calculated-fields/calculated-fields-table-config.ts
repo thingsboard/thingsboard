@@ -14,7 +14,11 @@
 /// limitations under the License.
 ///
 
-import { EntityTableColumn, EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import {
+  DateEntityTableColumn,
+  EntityTableColumn,
+  EntityTableConfig
+} from '@home/models/entity/entities-table-config.models';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Direction } from '@shared/models/page/sort-order';
@@ -45,6 +49,7 @@ import {
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
   CalculatedFieldTypeTranslations,
+  CalculatedFieldType,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -53,6 +58,7 @@ import {
 } from './components/public-api';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { isObject } from '@core/utils';
+import { DatePipe } from '@angular/common';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
 
@@ -69,6 +75,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   constructor(private calculatedFieldsService: CalculatedFieldsService,
               private translate: TranslateService,
               private dialog: MatDialog,
+              private datePipe: DatePipe,
               public entityId: EntityId = null,
               private store: Store<AppState>,
               private durationLeft: DurationLeftPipe,
@@ -107,11 +114,20 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       }
     ];
 
-    this.defaultSortOrder = {property: 'name', direction: Direction.DESC};
+    this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
-    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '33%', entity => entity.configuration?.expression);
+    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '300px');
     expressionColumn.sortable = false;
+    expressionColumn.cellContentFunction = entity => {
+      const expressionLabel = this.getExpressionLabel(entity);
+      return expressionLabel.length < 45 ? expressionLabel : `<span style="display: inline-block; width: 45ch">${expressionLabel.substring(0, 44)}…</span>`;
+    }
+    expressionColumn.cellTooltipFunction = entity => {
+      const expressionLabel = this.getExpressionLabel(entity);
+      return expressionLabel.length < 45 ? null : expressionLabel
+    };
 
+    this.columns.push(new DateEntityTableColumn<CalculatedField>('createdTime', 'common.created-time', this.datePipe, '150px'));
     this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
     this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '50px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type))));
     this.columns.push(expressionColumn);
@@ -144,6 +160,14 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         onAction: (_, entity) => this.editCalculatedField(entity),
       }
     );
+  }
+
+  private getExpressionLabel(entity: CalculatedField): string {
+    if (entity.type === CalculatedFieldType.SCRIPT) {
+      return 'function calculate(' + Object.keys(entity.configuration.arguments).join(', ') + ')';
+    } else {
+      return entity.configuration.expression;
+    }
   }
 
   fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedField>> {

@@ -147,7 +147,8 @@ public interface EntityViewRepository extends JpaRepository<EntityViewEntity, UU
     @Query("SELECT externalId FROM EntityViewEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
 
-    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.GenericFields(e.id, e.createdTime, e.tenantId," +
-            "e.name, e.version) FROM EntityViewEntity e WHERE e.id > :id ORDER BY e.id")
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.EntityViewFields(e.id, e.createdTime, e.tenantId, " +
+            "e.customerId, e.name, e.type, e.additionalInfo, e.version) " +
+            "FROM EntityViewEntity e WHERE e.id > :id ORDER BY e.id")
     List<EntityViewFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

@@ -36,3 +36,5 @@ CREATE INDEX IF NOT EXISTS idx_lc_event_main
 CREATE INDEX IF NOT EXISTS idx_error_event_main
     ON error_event (tenant_id ASC, entity_id ASC, ts DESC NULLS LAST) WITH (FILLFACTOR=95);
 
+CREATE INDEX IF NOT EXISTS idx_cf_debug_event_main
+    ON cf_debug_event (tenant_id ASC, entity_id ASC, ts DESC NULLS LAST) WITH (FILLFACTOR=95);

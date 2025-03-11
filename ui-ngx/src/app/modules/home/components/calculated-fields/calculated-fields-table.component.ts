@@ -35,6 +35,7 @@ import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'tb-calculated-fields-table',
@@ -56,6 +57,7 @@ export class CalculatedFieldsTableComponent {
               private translate: TranslateService,
               private dialog: MatDialog,
               private store: Store<AppState>,
+              private datePipe: DatePipe,
               private durationLeft: DurationLeftPipe,
               private popoverService: TbPopoverService,
               private cd: ChangeDetectorRef,
@@ -69,6 +71,7 @@ export class CalculatedFieldsTableComponent {
           this.calculatedFieldsService,
           this.translate,
           this.dialog,
+          this.datePipe,
           this.entityId(),
           this.store,
           this.durationLeft,

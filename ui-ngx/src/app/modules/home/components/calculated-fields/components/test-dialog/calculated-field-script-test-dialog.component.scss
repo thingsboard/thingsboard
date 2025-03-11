@@ -13,77 +13,78 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .test-dialog-container {
-    .block-label {
-      padding: 4px;
-      color: #00acc1;
-      background: rgba(220, 220, 220, .35);
-      border-radius: 5px;
+
+.cf-test-dialog-container {
+  .gutter {
+    background-color: #eee;
+    background-repeat: no-repeat;
+    background-position: 50%;
+  }
+
+  .gutter.gutter-horizontal {
+    cursor: col-resize;
+    background-image: url("../../../../../../../assets/split.js/grips/horizontal.png");
+  }
+
+  .gutter.gutter-vertical {
+    cursor: row-resize;
+    background-image: url("../../../../../../../assets/split.js/grips/vertical.png");
+  }
+
+  .block-label {
+    padding: 4px;
+    color: #00acc1;
+    background: rgba(220, 220, 220, .35);
+    border-radius: 5px;
+  }
+
+  .test-block-content {
+    padding-top: 5px;
+    padding-left: 5px;
+    border: 1px solid #c0c0c0;
+    overflow: scroll;
+  }
+
+  .block-label-container {
+    position: absolute;
+    z-index: 10;
+    font-size: 12px;
+    font-weight: bold;
+
+    &.left {
+      right: 112px;
+      top: 9px;
     }
 
-    .test-block-content {
-      padding-top: 5px;
-      padding-left: 5px;
-      border: 1px solid #c0c0c0;
-      overflow: scroll;
+    &.right-bottom {
+      right: 40px;
+      top: 6px;
     }
 
-    .block-label-container {
-      position: absolute;
-      z-index: 10;
-      font-size: 12px;
-      font-weight: bold;
-
-      &.left {
-        right: 112px;
-        top: 9px;
-      }
-
-      &.right-bottom {
-        right: 40px;
-        top: 6px;
-      }
-
-      &.right-top {
-        right: 8px;
-        top: 2px;
-      }
+    &.right-top {
+      right: 8px;
+      top: 2px;
     }
   }
 }
 
-:host::ng-deep {
-  .test-dialog-container {
-    .gutter {
-      background-color: #eee;
-      background-repeat: no-repeat;
-      background-position: 50%;
-    }
-
-    .gutter.gutter-horizontal {
-      cursor: col-resize;
-      background-image: url("../../../../../../../assets/split.js/grips/horizontal.png");
-    }
-
-    .gutter.gutter-vertical {
-      cursor: row-resize;
-      background-image: url("../../../../../../../assets/split.js/grips/vertical.png");
-    }
-  }
-
-  .expression-edit {
-    .ace_tb {
-      &.ace_calculated-field {
-        &-key {
-          color: #C52F00;
-        }
-        &-ts, &-time-window, &-values, &-value, &-func {
-          color: #7214D0;
-        }
-        &-start-ts, &-end-ts, &-limit {
-          color: #185F2A;
-        }
+.tb-js-func {
+  .ace_tb {
+    &.ace_calculated-field {
+      &-ctx {
+        color: #C52F00;
+      }
+      &-args {
+        color: #185F2A;
+      }
+      &-key {
+        color: #c24c1a;
+      }
+      &-time-window, &-values, &-func, &-value, &-ts {
+        color: #7214D0;
+      }
+      &-start-ts, &-end-ts {
+        color: #2CAA00;
       }
     }
   }

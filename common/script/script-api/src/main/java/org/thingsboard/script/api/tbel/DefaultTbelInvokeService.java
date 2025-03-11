@@ -44,6 +44,7 @@ import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
@@ -139,6 +140,7 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         parserConfig.registerDataType("TbelCfTsRollingData", TbelCfTsRollingData.class, TbelCfTsRollingData::memorySize);
         parserConfig.registerDataType("TbTimeWindow", TbTimeWindow.class, TbTimeWindow::memorySize);
         parserConfig.registerDataType("TbelCfTsDoubleVal", TbelCfTsMultiDoubleVal.class, TbelCfTsMultiDoubleVal::memorySize);
+        parserConfig.registerDataType("TbelCfCtx", TbelCfCtx.class, TbelCfCtx::memorySize);
 
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "tbel-executor"));
@@ -261,5 +263,10 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     @Override
     protected long getMaxEvalRequestsTimeout() {
         return maxInvokeRequestsTimeout * 2;
+    }
+
+    @Override
+    protected StatsType getStatsType() {
+        return StatsType.TBEL_INVOKE;
     }
 }

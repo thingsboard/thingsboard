@@ -24,6 +24,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
@@ -74,7 +76,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     final EntityId entityId;
     final CalculatedFieldProcessingService cfService;
     final CalculatedFieldStateService cfStateService;
-    final int partition;
 
     TbActorCtx ctx;
     Map<CalculatedFieldId, CalculatedFieldState> states = new HashMap<>();
@@ -85,7 +86,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         this.entityId = entityId;
         this.cfService = systemContext.getCalculatedFieldProcessingService();
         this.cfStateService = systemContext.getCalculatedFieldStateService();
-        this.partition = systemContext.getCalculatedFieldEntityProfileCache().getEntityIdPartition(tenantId, entityId);
     }
 
     void init(TbActorCtx ctx) {
@@ -93,8 +93,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(CalculatedFieldPartitionChangeMsg msg) {
-        if (!msg.getPartitions()[partition]) {
-            log.info("[{}][{}] Stopping entity actor due to change partition event.", partition, entityId);
+        if (!systemContext.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId).isMyPartition()) {
+            log.info("[{}] Stopping entity actor due to change partition event.", entityId);
             ctx.stop(ctx.getSelf());
         }
     }
@@ -134,20 +134,26 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     public void process(CalculatedFieldEntityDeleteMsg msg) {
         log.info("[{}] Processing CF entity delete msg.", msg.getEntityId());
         if (this.entityId.equals(msg.getEntityId())) {
-            MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
-            states.forEach((cfId, state) -> cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
-            ctx.stop(ctx.getSelf());
+            if (states.isEmpty()) {
+                msg.getCallback().onSuccess();
+            } else {
+                MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
+                states.forEach((cfId, state) -> cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
+                ctx.stop(ctx.getSelf());
+            }
         } else {
             var cfId = new CalculatedFieldId(msg.getEntityId().getId());
             var state = states.remove(cfId);
             if (state != null) {
                 cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
+            } else {
+                msg.getCallback().onSuccess();
             }
         }
     }
 
     public void process(EntityCalculatedFieldTelemetryMsg msg) throws CalculatedFieldException {
-        log.info("[{}] Processing CF telemetry msg.", msg.getEntityId());
+        log.debug("[{}] Processing CF telemetry msg.", msg.getEntityId());
         var proto = msg.getProto();
         var numberOfCallbacks = CALLBACKS_PER_CF * (msg.getEntityIdFields().size() + msg.getProfileIdFields().size());
         MultipleTbCallback callback = new MultipleTbCallback(numberOfCallbacks, msg.getCallback());
@@ -162,7 +168,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(EntityCalculatedFieldLinkedTelemetryMsg msg) throws CalculatedFieldException {
-        log.info("[{}] Processing CF link telemetry msg.", msg.getEntityId());
+        log.debug("[{}] Processing CF link telemetry msg.", msg.getEntityId());
         var proto = msg.getProto();
         var ctx = msg.getCtx();
         var callback = new MultipleTbCallback(CALLBACKS_PER_CF, msg.getCallback());
