@@ -25,6 +25,7 @@ RUN chmod a+x /tmp/*.sh \
     (systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :) && \
     chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
 
+RUN usermod -d /home/${pkg.user} ${pkg.user}
 USER ${pkg.user}
 
 CMD ["start-tb-lwm2m-transport.sh"]

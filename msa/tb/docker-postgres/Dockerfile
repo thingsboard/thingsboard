@@ -63,6 +63,7 @@ RUN apt-get update \
     && chown -R ${pkg.user}:${pkg.user} /var/log/${pkg.name} \
     && chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
 
+RUN usermod -d /home/${pkg.user} ${pkg.user}
 USER ${pkg.user}
 
 EXPOSE 9090

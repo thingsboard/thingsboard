@@ -26,6 +26,7 @@ RUN chmod a+x /tmp/*.sh \
     chown -R ${pkg.user}:${pkg.user} /tmp && \
     chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
 
+RUN usermod -d /home/${pkg.user} ${pkg.user}
 USER ${pkg.user}
 
 CMD ["start-tb-node.sh"]
