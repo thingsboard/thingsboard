@@ -19,10 +19,10 @@ version: '3.0'
 services:
   tb-edqs-1:
     volumes:
-      - tb-edqs-log-volume:/var/log/edqs
+      - tb-edqs-log-volume:/var/log/tb-edqs
   tb-edqs-2:
     volumes:
-      - tb-edqs-log-volume:/var/log/edqs
+      - tb-edqs-log-volume:/var/log/tb-edqs
 
 volumes:
   tb-edqs-log-volume:
