@@ -33,10 +33,10 @@ services:
     restart: always
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
     env_file:
-      - edqs.env
+      - tb-edqs.env
     volumes:
-      - ./edqs/conf:/usr/share/edqs/conf
-      - ./edqs/log:/var/log/edqs
+      - ./tb-edqs/conf:/usr/share/tb-edqs/conf
+      - ./tb-edqs/log:/var/log/tb-edqs
     ports:
       - "8080"
     depends_on:
@@ -46,10 +46,10 @@ services:
     restart: always
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
     env_file:
-      - edqs.env
+      - tb-edqs.env
     volumes:
-      - ./edqs/conf:/usr/share/edqs/conf
-      - ./edqs/log:/var/log/edqs
+      - ./tb-edqs/conf:/usr/share/tb-edqs/conf
+      - ./tb-edqs/log:/var/log/tb-edqs
     ports:
       - "8080"
     depends_on:

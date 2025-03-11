@@ -18,8 +18,10 @@ package org.thingsboard.server.service.cf.cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
@@ -57,7 +59,7 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     public void add(TenantId tenantId, EntityId profileId, EntityId entityId) {
-        var tpi = partitionService.resolve(QueueKey.CF, entityId);
+        var tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId);
         var partition = tpi.getPartition().orElse(UNKNOWN);
         tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache())
                 .add(profileId, entityId, partition, tpi.isMyPartition());
@@ -65,7 +67,7 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     public void update(TenantId tenantId, EntityId oldProfileId, EntityId newProfileId, EntityId entityId) {
-        var tpi = partitionService.resolve(QueueKey.CF, entityId);
+        var tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId);
         var partition = tpi.getPartition().orElse(UNKNOWN);
         var cache = tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache());
         //TODO: make this method atomic;
@@ -86,7 +88,7 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     public int getEntityIdPartition(TenantId tenantId, EntityId entityId) {
-        var tpi = partitionService.resolve(QueueKey.CF, entityId);
+        var tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId);
         return tpi.getPartition().orElse(UNKNOWN);
     }
 

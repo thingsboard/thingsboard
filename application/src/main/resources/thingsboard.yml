@@ -1757,7 +1757,6 @@ queue:
     stats:
       # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
-
   vc:
     # Default topic name
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
@@ -1814,9 +1813,7 @@ queue:
     # For high-priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_CF_NOTIFICATIONS_TOPIC:calculated_field.notifications}"
     # Interval in milliseconds to poll messages by CF (Rule Engine) microservices
-    poll_interval: "${TB_QUEUE_CF_POLL_INTERVAL_MS:25}"
-    # Amount of partitions used by CF microservices
-    partitions: "${TB_QUEUE_CF_PARTITIONS:10}"
+    poll_interval: "${TB_QUEUE_CF_POLL_INTERVAL_MS:1000}"
     # Timeout for processing a message pack by CF microservices
     pack_processing_timeout: "${TB_QUEUE_CF_PACK_PROCESSING_TIMEOUT_MS:60000}"
     # Thread pool size for processing of the incoming messages
