@@ -98,7 +98,7 @@ public class TenantActor extends RuleChainManagerActor {
                                     () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
                                     () -> true);
                         } catch (Exception e) {
-                            log.info("Failed to init CF Actor.", e);
+                            log.info("[{}] Failed to init CF Actor.", tenantId, e);
                         }
                         try {
                             if (getApiUsageState().isReExecEnabled()) {
@@ -259,11 +259,25 @@ public class TenantActor extends RuleChainManagerActor {
         ServiceType serviceType = msg.getServiceType();
         if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
             if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                if (cfActor == null) {
+                    try {
+                        //TODO: IM - extend API usage to have CF Exec Enabled? Not in 4.0;
+                        cfActor = ctx.getOrCreateChildActor(new TbStringActorId("CFM|" + tenantId),
+                                () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
+                                () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
+                                () -> true);
+                    } catch (Exception e) {
+                        log.info("[{}] Failed to init CF Actor.", tenantId, e);
+                    }
+                }
                 if (!ruleChainsInitialized) {
                     log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
                     initRuleChains();
                 }
             } else {
+                if (cfActor != null) {
+                    ctx.stop(cfActor.getActorId());
+                }
                 if (ruleChainsInitialized) {
                     log.info("Tenant {} is no longer managed by this service, stopping rule chains", tenantId);
                     destroyRuleChains();

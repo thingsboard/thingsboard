@@ -64,10 +64,10 @@ public class PartitionChangeEvent extends TbApplicationEvent {
     }
 
     public Set<TopicPartitionInfo> getCfPartitions() {
-        return newPartitions.getOrDefault(QueueKey.CF, Collections.emptySet());
+        return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
     }
 
-    private Set<TopicPartitionInfo> getPartitionsByServiceTypeAndQueueName(ServiceType serviceType, String queueName) {
+    public Set<TopicPartitionInfo> getPartitionsByServiceTypeAndQueueName(ServiceType serviceType, String queueName) {
         return newPartitions.entrySet()
                 .stream()
                 .filter(entry -> serviceType.equals(entry.getKey().getType()) && queueName.equals(entry.getKey().getQueueName()))

@@ -358,7 +358,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushMsgToCalculatedFields(TenantId tenantId, EntityId entityId, ToCalculatedFieldMsg msg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId);
         pushMsgToCalculatedFields(tpi, UUID.randomUUID(), msg, callback);
     }
 
@@ -371,7 +371,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToCalculatedFields(TenantId tenantId, EntityId entityId, ToCalculatedFieldNotificationMsg msg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId);
         producerProvider.getCalculatedFieldsNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
         toRuleEngineNfs.incrementAndGet();
     }

@@ -26,8 +26,6 @@ import java.util.Set;
 @Data
 public class CalculatedFieldPartitionChangeMsg implements ToCalculatedFieldSystemMsg {
 
-    private final boolean[] partitions;
-
     @Override
     public TenantId getTenantId() {
         return TenantId.SYS_TENANT_ID;

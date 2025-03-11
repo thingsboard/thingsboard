@@ -27,6 +27,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldLinkedTelemetryMsg;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.QueueConfig;
@@ -108,9 +109,10 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     public void init() {
         super.init("tb-cf");
 
+        var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
         this.eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
-                .queueKey(QueueKey.CF)
-                .topic(partitionService.getTopic(QueueKey.CF))
+                .queueKey(queueKey)
+                .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator((config, partitionId) -> queueFactory.createToCalculatedFieldMsgConsumer())
@@ -140,7 +142,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 
             // Cleanup old entities after corresponding consumers are stopped.
             // Any periodic tasks need to check that the entity is still managed by the current server before processing.
-            actorContext.tell(new CalculatedFieldPartitionChangeMsg(partitionsToBooleanIndexArray(partitions)));
+            actorContext.tell(new CalculatedFieldPartitionChangeMsg());
         } catch (Throwable t) {
             log.error("Failed to process partition change event: {}", event, t);
         }
