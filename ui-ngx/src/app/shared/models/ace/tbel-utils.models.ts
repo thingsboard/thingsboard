@@ -23,7 +23,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Encodes a string to Base64.',
     args: [
       {
-        name: 'input',
+        name: 'str',
         description: 'The string to encode',
         type: 'string'
       }
@@ -38,7 +38,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Decodes a Base64 encoded string.',
     args: [
       {
-        name: 'encoded',
+        name: 'str',
         description: 'The Base64 encoded string to decode',
         type: 'string'
       }
@@ -53,9 +53,9 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a list of bytes to a string, optionally specifying the charset.',
     args: [
       {
-        name: 'bytesList',
+        name: 'data',
         description: 'The list of bytes to convert',
-        type: 'array'
+        type: 'list'
       },
       {
         name: 'charsetName',
@@ -71,12 +71,12 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
   },
   decodeToString: {
     meta: 'function',
-    description: 'Converts a list of bytes to a string using the default charset.',
+    description: 'Converts a list of bytes to a string.',
     args: [
       {
-        name: 'bytesList',
+        name: 'data',
         description: 'The list of bytes to convert',
-        type: 'array'
+        type: 'list'
       }
     ],
     return: {
@@ -89,13 +89,13 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Parses a JSON string or converts a list of bytes to a string and parses it as JSON.',
     args: [
       {
-        name: 'input',
-        description: 'The JSON string or list of bytes to parse',
-        type: 'string | array'
+        name: 'data',
+        description: 'The JSON string or list of bytes to parse into JSON object',
+        type: 'string | list'
       }
     ],
     return: {
-      description: 'The parsed JSON object (e.g., object, array, or primitive)',
+      description: 'The parsed JSON object',
       type: 'object'
     }
   },
@@ -117,7 +117,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     ],
     return: {
       description: 'The list of bytes representing the string',
-      type: 'array'
+      type: 'list'
     }
   },
   parseInt: {
@@ -125,13 +125,13 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Parses a string to an integer, optionally specifying the radix.',
     args: [
       {
-        name: 'value',
+        name: 'str',
         description: 'The string to parse',
         type: 'string'
       },
       {
         name: 'radix',
-        description: 'The radix for parsing (e.g., 2 for binary, 16 for hex, defaults to auto-detection if 0)',
+        description: 'The radix for parsing (e.g., 2 for binary, 16 for hex). If omitted, it is auto-detected (e.g., 0x for hex).',
         type: 'number',
         optional: true
       }
@@ -146,13 +146,13 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Parses a string to a long integer, optionally specifying the radix.',
     args: [
       {
-        name: 'value',
+        name: 'str',
         description: 'The string to parse',
         type: 'string'
       },
       {
         name: 'radix',
-        description: 'The radix for parsing (e.g., 2 for binary, 16 for hex, defaults to auto-detection if 0)',
+        description: 'The radix for parsing (e.g., 2 for binary, 16 for hex). If omitted, it is auto-detected (e.g., 0x for hex).',
         type: 'number',
         optional: true
       }
@@ -164,16 +164,16 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
   },
   parseFloat: {
     meta: 'function',
-    description: 'Parses a string to a float. If radix is 16, interprets the string as hexadecimal IEEE 754 float bits.',
+    description: 'Parses a string to a float, optionally specifying the radix.',
     args: [
       {
-        name: 'value',
+        name: 'str',
         description: 'The string to parse',
         type: 'string'
       },
       {
         name: 'radix',
-        description: 'The radix for parsing (e.g., 16 for hex, defaults to 10 if 0)',
+        description: 'The radix for parsing (e.g., 16 indicates a standard IEEE 754 hexadecimal float, defaults to 10 if unspecified)',
         type: 'number',
         optional: true
       }
@@ -188,7 +188,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Parses a hexadecimal string to a float, treating it as an integer value.',
     args: [
       {
-        name: 'value',
+        name: 'hex',
         description: 'The hexadecimal string to parse (e.g., "0x0A" for 10.0)',
         type: 'string'
       },
@@ -205,16 +205,16 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
   },
   parseDouble: {
     meta: 'function',
-    description: 'Parses a string to a double. If radix is 16, interprets the string as hexadecimal IEEE 754 double bits.',
+    description: 'Parses a string to a double, optionally specifying the radix.',
     args: [
       {
-        name: 'value',
+        name: 'str',
         description: 'The string to parse',
         type: 'string'
       },
       {
         name: 'radix',
-        description: 'The radix for parsing (e.g., 16 for hex, defaults to 10 if unspecified)',
+        description: 'The radix for parsing (e.g., 16 indicates a standard IEEE 754 double bits, defaults to 10 if unspecified)',
         type: 'number',
         optional: true
       }
@@ -259,7 +259,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Parses a hexadecimal string to an integer, optionally specifying endianness.',
     args: [
       {
-        name: 'value',
+        name: 'hex',
         description: 'The hexadecimal string to parse',
         type: 'string'
       },
@@ -282,11 +282,11 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       {
         name: 'data',
         description: 'The bytes to parse',
-        type: 'array'
+        type: 'list | array'
       },
       {
         name: 'offset',
-        description: 'The starting index in the byte array',
+        description: 'The starting index in the byte list or array (defaults to 0)',
         type: 'number',
         optional: true
       },
@@ -343,7 +343,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Parses a hexadecimal string to a long integer, optionally specifying endianness.',
     args: [
       {
-        name: 'value',
+        name: 'hex',
         description: 'The hexadecimal string to parse',
         type: 'string'
       },
@@ -366,11 +366,11 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       {
         name: 'data',
         description: 'The bytes to parse',
-        type: 'array'
+        type: 'list | array'
       },
       {
         name: 'offset',
-        description: 'The starting index in the byte array',
+        description: 'The starting index in the byte list or array (defaults to 0)',
         type: 'number',
         optional: true
       },
@@ -427,7 +427,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Parses a hexadecimal string to a float using IEEE 754 format, optionally specifying endianness.',
     args: [
       {
-        name: 'value',
+        name: 'hex',
         description: 'The hexadecimal string to parse',
         type: 'string'
       },
@@ -450,11 +450,11 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       {
         name: 'data',
         description: 'The bytes to parse',
-        type: 'array'
+        type: 'list | array'
       },
       {
         name: 'offset',
-        description: 'The starting index in the byte array',
+        description: 'The starting index in the byte list or array (defaults to 0)',
         type: 'number',
         optional: true
       },
@@ -483,11 +483,11 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       {
         name: 'data',
         description: 'The bytes to parse',
-        type: 'array'
+        type: 'list | array'
       },
       {
         name: 'offset',
-        description: 'The starting index in the byte array',
+        description: 'The starting index in the byte list or array (defaults to 0)',
         type: 'number',
         optional: true
       },
@@ -544,7 +544,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Parses a hexadecimal string to a double using IEEE 754 format, optionally specifying endianness.',
     args: [
       {
-        name: 'value',
+        name: 'hex',
         description: 'The hexadecimal string to parse',
         type: 'string'
       },
@@ -567,11 +567,11 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       {
         name: 'data',
         description: 'The bytes to parse',
-        type: 'array'
+        type: 'list | array'
       },
       {
         name: 'offset',
-        description: 'The starting index in the byte array',
+        description: 'The starting index in the byte list or array (defaults to 0)',
         type: 'number',
         optional: true
       },
@@ -600,11 +600,11 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       {
         name: 'data',
         description: 'The bytes to parse',
-        type: 'array'
+        type: 'list | array'
       },
       {
         name: 'offset',
-        description: 'The starting index in the byte array',
+        description: 'The starting index in the byte list or array (defaults to 0)',
         type: 'number',
         optional: true
       },
@@ -628,11 +628,11 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
   },
   toFixed: {
     meta: 'function',
-    description: 'Rounds a number to a specified number of decimal places.',
+    description: 'Rounds a floating-point number to a set precision using half-up rounding.',
     args: [
       {
         name: 'value',
-        description: 'The number to round',
+        description: 'The floating-point number',
         type: 'number'
       },
       {
@@ -642,17 +642,17 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       }
     ],
     return: {
-      description: 'The rounded number',
+      description: 'The rounded floating-point number.',
       type: 'number'
     }
   },
   toInt: {
     meta: 'function',
-    description: 'Converts a double to an integer by rounding.',
+    description: 'Converts a floating-point number to an integer by half-up rounding.',
     args: [
       {
         name: 'value',
-        description: 'The double to convert',
+        description: 'The floating-point number to convert',
         type: 'number'
       }
     ],
@@ -666,14 +666,14 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a hexadecimal string to a list of bytes.',
     args: [
       {
-        name: 'value',
+        name: 'hex',
         description: 'The hexadecimal string to convert',
         type: 'string'
       }
     ],
     return: {
       description: 'The list of bytes',
-      type: 'array'
+      type: 'list'
     }
   },
   hexToBytesArray: {
@@ -681,7 +681,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a hexadecimal string to an array of bytes.',
     args: [
       {
-        name: 'value',
+        name: 'hex',
         description: 'The hexadecimal string to convert',
         type: 'string'
       }
@@ -696,7 +696,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts an integer to a hexadecimal string.',
     args: [
       {
-        name: 'i',
+        name: 'value',
         description: 'The integer to convert',
         type: 'number'
       },
@@ -707,13 +707,13 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
         optional: true
       },
       {
-        name: 'pref',
+        name: 'prefix',
         description: 'Whether to prefix with "0x" (defaults to false)',
         type: 'boolean',
         optional: true
       },
       {
-        name: 'len',
+        name: 'length',
         description: 'The desired length of the hex string (defaults to minimum required)',
         type: 'number',
         optional: true
@@ -729,7 +729,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a long integer to a hexadecimal string.',
     args: [
       {
-        name: 'l',
+        name: 'value',
         description: 'The long integer to convert',
         type: 'number'
       },
@@ -740,13 +740,13 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
         optional: true
       },
       {
-        name: 'pref',
+        name: 'prefix',
         description: 'Whether to prefix with "0x" (defaults to false)',
         type: 'boolean',
         optional: true
       },
       {
-        name: 'len',
+        name: 'length',
         description: 'The desired length of the hex string (defaults to minimum required)',
         type: 'number',
         optional: true
@@ -762,13 +762,13 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a long integer to a string in the specified radix.',
     args: [
       {
-        name: 'number',
+        name: 'value',
         description: 'The number to convert',
         type: 'number'
       },
       {
         name: 'radix',
-        description: 'The radix for conversion (e.g., 2, 8, 10, 16, defaults to 10)',
+        description: 'The radix for conversion (e.g., 2 for binary, 16 for hex). If omitted, it defaults to 10.',
         type: 'number',
         optional: true
       },
@@ -779,7 +779,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
         optional: true
       },
       {
-        name: 'pref',
+        name: 'prefix',
         description: 'Whether to prefix hex with "0x" (defaults to false)',
         type: 'boolean',
         optional: true
@@ -795,7 +795,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a float to its IEEE 754 hexadecimal representation.',
     args: [
       {
-        name: 'f',
+        name: 'value',
         description: 'The float to convert',
         type: 'number'
       },
@@ -807,7 +807,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       }
     ],
     return: {
-      description: 'The hexadecimal string (e.g., "0x41200000" for 10.0)',
+      description: 'The hexadecimal string',
       type: 'string'
     }
   },
@@ -816,7 +816,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a double to its IEEE 754 hexadecimal representation.',
     args: [
       {
-        name: 'd',
+        name: 'value',
         description: 'The double to convert',
         type: 'number'
       },
@@ -828,7 +828,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       }
     ],
     return: {
-      description: 'The hexadecimal string (e.g., "0x4024000000000000" for 10.0)',
+      description: 'The hexadecimal string',
       type: 'string'
     }
   },
@@ -837,14 +837,14 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a list of signed bytes to a list of unsigned integer values.',
     args: [
       {
-        name: 'byteArray',
+        name: 'data',
         description: 'The list of bytes to convert',
-        type: 'array'
+        type: 'list'
       }
     ],
     return: {
       description: 'The list of unsigned integers (0-255)',
-      type: 'array'
+      type: 'list'
     }
   },
   base64ToHex: {
@@ -852,7 +852,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a Base64 string to a hexadecimal string.',
     args: [
       {
-        name: 'base64',
+        name: 'str',
         description: 'The Base64 string to convert',
         type: 'string'
       }
@@ -882,7 +882,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a Base64 string to an array of bytes.',
     args: [
       {
-        name: 'input',
+        name: 'str',
         description: 'The Base64 string to convert',
         type: 'string'
       }
@@ -897,14 +897,14 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a Base64 string to a list of bytes.',
     args: [
       {
-        name: 'input',
+        name: 'str',
         description: 'The Base64 string to convert',
         type: 'string'
       }
     ],
     return: {
       description: 'The list of bytes',
-      type: 'array'
+      type: 'list'
     }
   },
   bytesToBase64: {
@@ -912,7 +912,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts an array of bytes to a Base64 string.',
     args: [
       {
-        name: 'bytes',
+        name: 'data',
         description: 'The array of bytes to convert',
         type: 'array'
       }
@@ -924,12 +924,12 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
   },
   bytesToHex: {
     meta: 'function',
-    description: 'Converts an array or list of bytes to a hexadecimal string.',
+    description: 'Converts a list or array of bytes to a hexadecimal string.',
     args: [
       {
-        name: 'bytes',
+        name: 'data',
         description: 'The bytes to convert',
-        type: 'array'
+        type: 'list | array'
       }
     ],
     return: {
@@ -939,7 +939,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
   },
   toFlatMap: {
     meta: 'function',
-    description: 'Converts a nested map to a flat map, with options for key paths and exclusions.',
+    description: 'Converts a nested map to a flat map, with customizable key paths and exclusions',
     args: [
       {
         name: 'json',
@@ -947,9 +947,9 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
         type: 'object'
       },
       {
-        name: 'excludeList',
+        name: 'excludeKeys',
         description: 'List of keys to exclude from flattening',
-        type: 'array',
+        type: 'list',
         optional: true
       },
       {
@@ -969,7 +969,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Encodes a URI string, preserving certain characters as per MDN standards.',
     args: [
       {
-        name: 'uri',
+        name: 'str',
         description: 'The URI string to encode',
         type: 'string'
       }
@@ -981,10 +981,10 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
   },
   decodeURI: {
     meta: 'function',
-    description: 'Decodes a URI string previously encoded with encodeURI.',
+    description: 'Decodes a URI string previously encoded.',
     args: [
       {
-        name: 'uri',
+        name: 'str',
         description: 'The URI string to decode',
         type: 'string'
       }
@@ -999,7 +999,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Throws an error with a custom message.',
     args: [
       {
-        name: 'message',
+        name: 'str',
         description: 'The error message to throw',
         type: 'string'
       }
@@ -1071,17 +1071,17 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
   },
   bytesToExecutionArrayList: {
     meta: 'function',
-    description: 'Converts an array of bytes to an execution array list.',
+    description: 'Converts an array of bytes to a list.',
     args: [
       {
-        name: 'byteArray',
+        name: 'data',
         description: 'The array of bytes to convert',
         type: 'array'
       }
     ],
     return: {
-      description: 'The execution array list of bytes',
-      type: 'array'
+      description: 'The list of bytes',
+      type: 'list'
     }
   },
   padStart: {
@@ -1094,7 +1094,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
         type: 'string'
       },
       {
-        name: 'targetLength',
+        name: 'length',
         description: 'The desired length of the resulting string',
         type: 'number'
       },
@@ -1119,7 +1119,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
         type: 'string'
       },
       {
-        name: 'targetLength',
+        name: 'length',
         description: 'The desired length of the resulting string',
         type: 'number'
       },
@@ -1139,12 +1139,12 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a byte to a binary array.',
     args: [
       {
-        name: 'byteValue',
+        name: 'value',
         description: 'The byte value to convert',
         type: 'number'
       },
       {
-        name: 'binLength',
+        name: 'length',
         description: 'The length of the binary array (defaults to 8)',
         type: 'number',
         optional: true
@@ -1157,7 +1157,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       }
     ],
     return: {
-      description: 'The binary array (array of 0s and 1s)',
+      description: 'The binary array',
       type: 'array'
     }
   },
@@ -1166,19 +1166,19 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a list or array of bytes to a binary array.',
     args: [
       {
-        name: 'value',
+        name: 'data',
         description: 'The bytes to convert',
-        type: 'array'
+        type: 'list | array'
       },
       {
-        name: 'binLength',
+        name: 'length',
         description: 'The total length of the binary array (defaults to bytes.length * 8)',
         type: 'number',
         optional: true
       }
     ],
     return: {
-      description: 'The binary array (array of 0s and 1s)',
+      description: 'The binary array',
       type: 'array'
     }
   },
@@ -1187,34 +1187,34 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
     description: 'Converts a long integer to a binary array.',
     args: [
       {
-        name: 'longValue',
+        name: 'value',
         description: 'The long integer to convert',
         type: 'number'
       },
       {
-        name: 'binLength',
+        name: 'length',
         description: 'The length of the binary array (defaults to 64)',
         type: 'number',
         optional: true
       }
     ],
     return: {
-      description: 'The binary array (array of 0s and 1s)',
+      description: 'The binary array',
       type: 'array'
     }
   },
   parseBinaryArrayToInt: {
     meta: 'function',
-    description: 'Converts a binary array to an integer.',
+    description: 'Converts a binary list or array to an integer.',
     args: [
       {
-        name: 'value',
-        description: 'The binary array to convert (array of 0s and 1s)',
-        type: 'array'
+        name: 'data',
+        description: 'The binary list or array to convert',
+        type: 'list | array'
       },
       {
         name: 'offset',
-        description: 'The starting index in the array (defaults to 0)',
+        description: 'The starting index in the binary list or array (defaults to 0)',
         type: 'number',
         optional: true
       },
