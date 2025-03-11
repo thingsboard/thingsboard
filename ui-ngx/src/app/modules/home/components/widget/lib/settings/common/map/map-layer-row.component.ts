@@ -123,7 +123,8 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       provider: [null, [Validators.required]],
       layerType: [null, [Validators.required]],
       tileUrl: [null, [Validators.required]],
-      apiKey: [null, [Validators.required]]
+      apiKey: [null, [Validators.required]],
+      referenceLayer: [null, []]
     });
     this.layerFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)

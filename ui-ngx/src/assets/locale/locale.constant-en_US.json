@@ -7906,6 +7906,12 @@
                 "roadmap": "Roadmap",
                 "satellite": "Satellite",
                 "hybrid": "Hybrid",
+                "reference": {
+                    "reference-layer": "Reference layer",
+                    "no-layer": "No layer",
+                    "openstreetmap-hybrid": "OpenStreetMap Hybrid",
+                    "world-edition-hybrid": "World Edition Hybrid"
+                },
                 "provider": {
                     "provider": "Provider",
                     "openstreet": {

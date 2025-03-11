@@ -35,6 +35,10 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
 
 .tb-map-container {
   flex-direction: column;
+  .leaflet-gl-layer.maplibregl-map {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .tb-map-layout {
@@ -47,6 +51,10 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
   .tb-map {
     position: relative;
     flex: 1;
+    .leaflet-control-attribution {
+      font-size: 0.6rem;
+      background: rgba(255,255,255,0.5);
+    }
     &.leaflet-touch {
       .leaflet-bar {
         border: 1px solid rgba(0,0,0,0.38);
