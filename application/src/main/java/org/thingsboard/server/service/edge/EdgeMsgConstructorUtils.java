@@ -422,7 +422,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
-        String metaData = prepareMetaDataForEdgeVersion(ruleChainMetaData, edgeVersion);
+        String metaData = filterMetadataForOldEdgeVersions(ruleChainMetaData, edgeVersion);
 
         return RuleChainMetadataUpdateMsg.newBuilder()
                 .setMsgType(msgType)
@@ -430,14 +430,15 @@ public class EdgeMsgConstructorUtils {
                 .build();
     }
 
-    private static String prepareMetaDataForEdgeVersion(RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
+    private static String filterMetadataForOldEdgeVersions(RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
         if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_9_0)) {
             JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
             JsonNode nodes = jsonNode.get("nodes");
 
             for (JsonNode node : nodes) {
-                if (node.isObject())
-                    prepareRuleNodeForOldEdgeVersion((ObjectNode) node);
+                if (node.isObject()) {
+                    removeIncompatibleFields((ObjectNode) node);
+                }
             }
             return JacksonUtil.toString(jsonNode);
         } else {
@@ -445,11 +446,10 @@ public class EdgeMsgConstructorUtils {
         }
     }
 
-    private static void prepareRuleNodeForOldEdgeVersion(ObjectNode node) {
+    private static void removeIncompatibleFields(ObjectNode node) {
         if (TbMsgTimeseriesNode.class.getName().equals(node.get("type").asText())) {
-            JsonNode configurationNode = node.get("configuration");
-            if (configurationNode != null && configurationNode.isObject()) {
-                ((ObjectNode) configurationNode).remove("processingSettings");
+            if (node.has("configuration") && node.get("configuration").isObject()) {
+                ((ObjectNode) node.get("configuration")).remove("processingSettings");
             }
         }
     }
