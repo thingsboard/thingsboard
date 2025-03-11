@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.kafka;
 
 import lombok.Data;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 import java.util.Collections;
@@ -33,8 +32,6 @@ public class TbKafkaNodeConfiguration implements NodeConfiguration<TbKafkaNodeCo
     private int linger;
     private int bufferMemory;
     private String acks;
-    private String keySerializer;
-    private String valueSerializer;
     private Map<String, String> otherProperties;
 
     private boolean addMetadataKeyValuesAsKafkaHeaders;
@@ -50,8 +47,6 @@ public class TbKafkaNodeConfiguration implements NodeConfiguration<TbKafkaNodeCo
         configuration.setLinger(0);
         configuration.setBufferMemory(33554432);
         configuration.setAcks("-1");
-        configuration.setKeySerializer(StringSerializer.class.getName());
-        configuration.setValueSerializer(StringSerializer.class.getName());
         configuration.setOtherProperties(Collections.emptyMap());
         configuration.setAddMetadataKeyValuesAsKafkaHeaders(false);
         configuration.setKafkaHeadersCharset("UTF-8");

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 /// limitations under the License.
 ///
 
-import { NgModule, Type } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
+import { WidgetService } from '@core/http/widget.service';
 import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
 import {
   SimpleCardBasicConfigComponent
@@ -146,6 +146,10 @@ import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/
 import {
   SegmentedButtonBasicConfigComponent
 } from '@home/components/widget/config/basic/button/segmented-button-basic-config.component';
+import {
+  ValueStepperBasicConfigComponent
+} from '@home/components/widget/config/basic/rpc/value-stepper-basic-config.component';
+import { MapBasicConfigComponent } from '@home/components/widget/config/basic/map/map-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -182,6 +186,7 @@ import {
     PowerButtonBasicConfigComponent,
     SliderBasicConfigComponent,
     ToggleButtonBasicConfigComponent,
+    ValueStepperBasicConfigComponent,
     TimeSeriesChartBasicConfigComponent,
     ComparisonKeyRowComponent,
     ComparisonKeysTableComponent,
@@ -195,7 +200,8 @@ import {
     LabelCardBasicConfigComponent,
     LabelValueCardBasicConfigComponent,
     UnreadNotificationBasicConfigComponent,
-    ScadaSymbolBasicConfigComponent
+    ScadaSymbolBasicConfigComponent,
+    MapBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -236,6 +242,7 @@ import {
     PowerButtonBasicConfigComponent,
     SliderBasicConfigComponent,
     ToggleButtonBasicConfigComponent,
+    ValueStepperBasicConfigComponent,
     TimeSeriesChartBasicConfigComponent,
     StatusWidgetBasicConfigComponent,
     PieChartBasicConfigComponent,
@@ -247,51 +254,12 @@ import {
     MobileAppQrCodeBasicConfigComponent,
     LabelCardBasicConfigComponent,
     LabelValueCardBasicConfigComponent,
-    UnreadNotificationBasicConfigComponent
+    UnreadNotificationBasicConfigComponent,
+    MapBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
+  constructor(private widgetService: WidgetService) {
+    this.widgetService.registerBasicWidgetConfigComponents(this.constructor)
+  }
 }
-
-export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetConfigComponent>} = {
-  'tb-simple-card-basic-config': SimpleCardBasicConfigComponent,
-  'tb-entities-table-basic-config': EntitiesTableBasicConfigComponent,
-  'tb-timeseries-table-basic-config': TimeseriesTableBasicConfigComponent,
-  'tb-flot-basic-config': FlotBasicConfigComponent,
-  'tb-alarms-table-basic-config': AlarmsTableBasicConfigComponent,
-  'tb-value-card-basic-config': ValueCardBasicConfigComponent,
-  'tb-aggregated-value-card-basic-config': AggregatedValueCardBasicConfigComponent,
-  'tb-alarm-count-basic-config': AlarmCountBasicConfigComponent,
-  'tb-entity-count-basic-config': EntityCountBasicConfigComponent,
-  'tb-battery-level-basic-config': BatteryLevelBasicConfigComponent,
-  'tb-wind-speed-direction-basic-config': WindSpeedDirectionBasicConfigComponent,
-  'tb-signal-strength-basic-config': SignalStrengthBasicConfigComponent,
-  'tb-value-chart-card-basic-config': ValueChartCardBasicConfigComponent,
-  'tb-progress-bar-basic-config': ProgressBarBasicConfigComponent,
-  'tb-radial-gauge-basic-config': RadialGaugeBasicConfigComponent,
-  'tb-thermometer-scale-gauge-basic-config': ThermometerScaleGaugeBasicConfigComponent,
-  'tb-compass-gauge-basic-config': CompassGaugeBasicConfigComponent,
-  'tb-liquid-level-card-basic-config': LiquidLevelCardBasicConfigComponent,
-  'tb-doughnut-basic-config': DoughnutBasicConfigComponent,
-  'tb-range-chart-basic-config': RangeChartBasicConfigComponent,
-  'tb-bar-chart-with-labels-basic-config': BarChartWithLabelsBasicConfigComponent,
-  'tb-single-switch-basic-config': SingleSwitchBasicConfigComponent,
-  'tb-action-button-basic-config': ActionButtonBasicConfigComponent,
-  'tb-segmented-button-basic-config': SegmentedButtonBasicConfigComponent,
-  'tb-command-button-basic-config': CommandButtonBasicConfigComponent,
-  'tb-power-button-basic-config': PowerButtonBasicConfigComponent,
-  'tb-slider-basic-config': SliderBasicConfigComponent,
-  'tb-toggle-button-basic-config': ToggleButtonBasicConfigComponent,
-  'tb-time-series-chart-basic-config': TimeSeriesChartBasicConfigComponent,
-  'tb-status-widget-basic-config': StatusWidgetBasicConfigComponent,
-  'tb-pie-chart-basic-config': PieChartBasicConfigComponent,
-  'tb-bar-chart-basic-config': BarChartBasicConfigComponent,
-  'tb-polar-area-chart-basic-config': PolarAreaChartBasicConfigComponent,
-  'tb-radar-chart-basic-config': RadarChartBasicConfigComponent,
-  'tb-digital-simple-gauge-basic-config': DigitalSimpleGaugeBasicConfigComponent,
-  'tb-mobile-app-qr-code-basic-config': MobileAppQrCodeBasicConfigComponent,
-  'tb-label-card-basic-config': LabelCardBasicConfigComponent,
-  'tb-label-value-card-basic-config': LabelValueCardBasicConfigComponent,
-  'tb-unread-notification-basic-config': UnreadNotificationBasicConfigComponent,
-  'tb-scada-symbol-basic-config': ScadaSymbolBasicConfigComponent
-};

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,17 +15,24 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance" [subscriptSizing]="subscriptSizing"
+<mat-form-field [formGroup]="selectEntityFormGroup"
+                [class.tb-inline-field]="inlineField"
+                [class.flex]="inlineField"
+                [class.tb-suffix-absolute]="inlineField && !selectEntityFormGroup.get('entity').value"
+                class="mat-block"
+                [appearance]="inlineField ? 'outline' : appearance"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing"
                 [class]="additionalClasses">
-  <mat-label>{{ label | translate }}</mat-label>
+  <mat-label *ngIf="!inlineField">{{ label | translate }}</mat-label>
   <input matInput type="text"
          #entityInput
+         placeholder="{{ placeholder }}"
          formControlName="entity"
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
-         [class.!hidden]="disabled && selectEntityFormGroup.get('entity').value">
-  <a *ngIf="selectEntityFormGroup.get('entity').value && disabled" aria-label="Open device profile" [routerLink]=entityURL>
+         [class.!hidden]="showEntityLink">
+  <a *ngIf="showEntityLink" aria-label="Open entity details page" [routerLink]=entityURL>
     {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
   </a>
   <button *ngIf="selectEntityFormGroup.get('entity').value && !disabled"
@@ -40,6 +47,15 @@
           (click)="createNewEntity($event)">
     <span style="white-space: nowrap">{{ 'entity.create-new' | translate }}</span>
   </button>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="requiredErrorText | translate"
+            *ngIf="inlineField && selectEntityFormGroup.get('entity').hasError('required')
+                            && selectEntityFormGroup.get('entity').touched"
+            class="tb-error">
+    warning
+  </mat-icon>
   <mat-autocomplete class="tb-autocomplete"
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">
@@ -53,13 +69,13 @@
         </div>
         <ng-template #searchNotEmpty>
           <span>
-              {{ translate.get(noEntitiesMatchingText, {entity: searchText}) | async }}
+              {{ noEntitiesMatchingText | translate: {entity: searchText} }}
           </span>
         </ng-template>
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="selectEntityFormGroup.get('entity').hasError('required')">
+  <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('required')">
     {{ requiredErrorText | translate }}
   </mat-error>
 </mat-form-field>

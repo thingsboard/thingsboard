@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -43,6 +43,22 @@
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" floatLabel="always">
         <mat-label translate>mobile.page-name</mat-label>
         <input matInput formControlName="label" placeholder="{{ defaultItemName }}">
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  matTooltip="{{ 'mobile.page-name-cannot-contain-only-spaces' | translate }}"
+                  *ngIf="mobilePageFormGroup.get('label').hasError('pattern') && mobilePageFormGroup.get('label').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  matTooltip="{{ 'mobile.page-name-max-length' | translate }}"
+                  *ngIf="mobilePageFormGroup.get('label').hasError('maxlength') && mobilePageFormGroup.get('label').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
       </mat-form-field>
     </div>
   </div>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
@@ -130,9 +131,17 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         OptimizerFactory.setDefaultOptimizer(OptimizerFactory.SAFE_REFLECTIVE);
         parserConfig = ParserContext.enableSandboxedMode();
         parserConfig.addImport("JSON", TbJson.class);
-        parserConfig.registerDataType("Date", TbDate.class, date -> 8L);
-        parserConfig.registerDataType("Random", Random.class, date -> 8L);
-        parserConfig.registerDataType("Calendar", Calendar.class, date -> 8L);
+        parserConfig.registerDataType("Date", TbDate.class, val -> 8L);
+        parserConfig.registerDataType("Random", Random.class, val -> 8L);
+        parserConfig.registerDataType("Calendar", Calendar.class, val -> 8L);
+        parserConfig.registerDataType("TbelCfSingleValueArg", TbelCfSingleValueArg.class, TbelCfSingleValueArg::memorySize);
+        parserConfig.registerDataType("TbelCfTsRollingArg", TbelCfTsRollingArg.class, TbelCfTsRollingArg::memorySize);
+        parserConfig.registerDataType("TbelCfTsDoubleVal", TbelCfTsDoubleVal.class, TbelCfTsDoubleVal::memorySize);
+        parserConfig.registerDataType("TbelCfTsRollingData", TbelCfTsRollingData.class, TbelCfTsRollingData::memorySize);
+        parserConfig.registerDataType("TbTimeWindow", TbTimeWindow.class, TbTimeWindow::memorySize);
+        parserConfig.registerDataType("TbelCfTsDoubleVal", TbelCfTsMultiDoubleVal.class, TbelCfTsMultiDoubleVal::memorySize);
+        parserConfig.registerDataType("TbelCfCtx", TbelCfCtx.class, TbelCfCtx::memorySize);
+
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "tbel-executor"));
         try {
@@ -254,5 +263,10 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     @Override
     protected long getMaxEvalRequestsTimeout() {
         return maxInvokeRequestsTimeout * 2;
+    }
+
+    @Override
+    protected StatsType getStatsType() {
+        return StatsType.TBEL_INVOKE;
     }
 }

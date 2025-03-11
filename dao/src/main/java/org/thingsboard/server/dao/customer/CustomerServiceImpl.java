@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
             }
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCustomer.getTenantId())
-                    .entityId(savedCustomer.getId()).created(customer.getId() == null).build());
+                    .entityId(savedCustomer.getId()).entity(savedCustomer).created(customer.getId() == null).build());
             return savedCustomer;
         } catch (Exception e) {
             handleEvictEvent(evictEvent);
@@ -184,6 +184,10 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Transactional
     @Override
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        if (!force && calculatedFieldService.referencedInAnyCalculatedField(tenantId, id)) {
+            throw new DataValidationException("Can't delete customer that is referenced in calculated fields!");
+        }
+
         CustomerId customerId = (CustomerId) id;
         Customer customer = findCustomerById(tenantId, customerId);
         if (customer == null) {

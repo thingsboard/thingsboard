@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.alarm.AlarmCommentDao;
 import org.thingsboard.server.dao.model.sql.AlarmCommentEntity;
 import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
@@ -44,7 +45,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COMMENT_TABL
 @Component
 @SqlDao
 @RequiredArgsConstructor
-public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEntity, AlarmComment> implements AlarmCommentDao {
+public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEntity, AlarmComment> implements AlarmCommentDao, TenantEntityDao<AlarmComment> {
     private final SqlPartitioningRepository partitioningRepository;
     @Value("${sql.alarm_comments.partition_size:168}")
     private int partitionSizeInHours;
@@ -77,6 +78,11 @@ public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEn
     }
 
     @Override
+    public PageData<AlarmComment> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(alarmCommentRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
     protected Class<AlarmCommentEntity> getEntityClass() {
         return AlarmCommentEntity.class;
     }
@@ -85,4 +91,5 @@ public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEn
     protected JpaRepository<AlarmCommentEntity, UUID> getRepository() {
         return alarmCommentRepository;
     }
+
 }

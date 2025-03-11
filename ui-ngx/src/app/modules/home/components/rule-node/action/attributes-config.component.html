@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,11 +16,54 @@
 
 -->
 <section [formGroup]="attributesConfigForm" class="tb-form-panel no-border no-padding">
+  <div class="tb-form-panel stroked no-padding-bottom no-gap" formGroupName="processingSettings">
+    <div class="mb-4 flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'rule-node-config.save-attribute.processing-settings-hint' | translate}}" translate>
+        rule-node-config.save-attribute.processing-settings
+      </div>
+      <tb-toggle-select appearance="fill" selectMediaBreakpoint="xs"
+                        formControlName="isAdvanced">
+        <tb-toggle-option [value]=false>{{ 'rule-node-config.basic-mode' | translate}}</tb-toggle-option>
+        <tb-toggle-option [value]=true>{{ 'rule-node-config.advanced-mode' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    @if(!attributesConfigForm.get('processingSettings.isAdvanced').value) {
+      <mat-form-field>
+        <mat-label translate>rule-node-config.save-attribute.strategy</mat-label>
+        <mat-select formControlName="type">
+          @for (strategy of processingStrategies; track strategy) {
+            <mat-option [value]="strategy">{{ ProcessingTypeTranslationMap.get(strategy) | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if(attributesConfigForm.get('processingSettings.type').value === ProcessingType.DEDUPLICATE) {
+        <tb-time-unit-input
+          required
+          labelText="{{ 'rule-node-config.save-attribute.deduplication-interval' | translate }}"
+          requiredText="{{ 'rule-node-config.save-attribute.deduplication-interval-required' | translate }}"
+          minErrorText="{{ 'rule-node-config.save-attribute.deduplication-interval-min-max-range' | translate }}"
+          maxErrorText="{{ 'rule-node-config.save-attribute.deduplication-interval-min-max-range' | translate }}"
+          [maxTime]="maxDeduplicateTime"
+          [minTime]="1"
+          formControlName="deduplicationIntervalSecs">
+        </tb-time-unit-input>
+      }
+    } @else {
+      <tb-advanced-processing-settings
+        class="mb-4"
+        formControlName="advanced"
+        attributes webSockets calculatedFields
+      ></tb-advanced-processing-settings>
+    }
+  </div>
+
   <div class="tb-form-panel stroked">
-    <tb-example-hint [hintText]="'rule-node-config.attributes-scope-hint'">
-    </tb-example-hint>
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'rule-node-config.attributes-scope-hint' | translate}}" translate>
+      rule-node-config.save-attribute.scope
+    </div>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" subscriptSizing="dynamic">
         <mat-label>{{ 'rule-node-config.attributes-scope' | translate }}</mat-label>
         <mat-select required
                     class="tb-entity-type-select" matInput formControlName="scope">
@@ -29,7 +72,7 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="flex">
+      <mat-form-field class="flex" subscriptSizing="dynamic">
         <mat-label>{{ 'rule-node-config.attributes-scope-value' | translate }}</mat-label>
         <input type="text" matInput readonly disabled [ngModel]="attributesConfigForm.get('scope').value" [ngModelOptions]="{standalone: true}">
         <button type="button"

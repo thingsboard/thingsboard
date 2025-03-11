@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -183,6 +183,7 @@
                         [class.lt-lg:!hidden]="column.mobileHide"
                         *matCellDef="let entity; let row = index"
                         [matTooltip]="cellTooltip(entity, column, row)"
+                        #cellMatTooltip="matTooltip"
                         matTooltipPosition="above"
                         [style]="cellStyle(entity, column, row)">
                 <ng-container [ngSwitch]="column.type">
@@ -192,7 +193,8 @@
                        (click)="$event.stopPropagation();"></a>
                   </ng-template>
                   <ng-template [ngSwitchCase]="'entityChips'">
-                    <tb-entity-chips [entity]="entity" [key]="column.key"></tb-entity-chips>
+                    <tb-entity-chips [entity]="entity" [key]="column.key"
+                                     [detailsPagePrefixUrl]="column.entityURL ? column.entityURL(entity) : ''"></tb-entity-chips>
                   </ng-template>
                   <ng-template #defaultContent ngSwitchDefault>
                     <span [innerHTML]="cellContent(entity, column, row)"></span>
@@ -208,6 +210,8 @@
                         [copyText]="column.actionCell.onAction(null, entity)"
                         tooltipText="{{ column.actionCell.nameFunction ? column.actionCell.nameFunction(entity) : column.actionCell.name }}"
                         tooltipPosition="above"
+                        (mouseover)="cellMatTooltip.hide()"
+                        (mouseleave)="cellMatTooltip.show()"
                         [icon]="column.actionCell.icon"
                         [style]="column.actionCell.style">
                       </tb-copy-button>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntitySearchDirection, RelationEntityTypeFilter } from '@shared/models/relation.models';
 import { EntityFilter } from '@shared/models/query/query.models';
+import { guid, isEqual } from '@core/utils';
 
 export enum AliasFilterType {
   singleEntity = 'singleEntity',
@@ -209,4 +210,42 @@ export interface EntityAliasFilterResult {
   stateEntity: boolean;
   entityFilter: EntityFilter;
   entityParamName?: string;
+}
+
+export const getEntityAliasId = (entityAliases: EntityAliases, aliasInfo: EntityAliasInfo): string => {
+  let newAliasId: string;
+  for (const aliasId of Object.keys(entityAliases)) {
+    if (isEntityAliasEqual(entityAliases[aliasId], aliasInfo)) {
+      newAliasId = aliasId;
+      break;
+    }
+  }
+  if (!newAliasId) {
+    const newAliasName = createEntityAliasName(entityAliases, aliasInfo.alias);
+    newAliasId = guid();
+    entityAliases[newAliasId] = {id: newAliasId, alias: newAliasName, filter: aliasInfo.filter};
+  }
+  return newAliasId;
+}
+
+const isEntityAliasEqual = (alias1: EntityAliasInfo, alias2: EntityAliasInfo): boolean => {
+  return isEqual(alias1.filter, alias2.filter);
+}
+
+const createEntityAliasName = (entityAliases: EntityAliases, alias: string): string => {
+  let c = 0;
+  let newAlias = alias;
+  let unique = false;
+  while (!unique) {
+    unique = true;
+    for (const entAliasId of Object.keys(entityAliases)) {
+      const entAlias = entityAliases[entAliasId];
+      if (newAlias === entAlias.alias) {
+        c++;
+        newAlias = alias + c;
+        unique = false;
+      }
+    }
+  }
+  return newAlias;
 }

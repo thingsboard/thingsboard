@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,6 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
 
-
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = AbstractServiceTest.class, loader = AnnotationConfigContextLoader.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -131,7 +130,7 @@ public abstract class AbstractServiceTest {
     }
 
     public JsonNode readFromResource(String resourceName) throws IOException {
-        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resourceName)){
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resourceName)) {
             return JacksonUtil.fromBytes(Objects.requireNonNull(is).readAllBytes());
         }
     }

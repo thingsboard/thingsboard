@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
-import { EntityTypeVersionCreateConfig, exportableEntityTypes } from '@shared/models/vc.models';
+import {
+  EntityTypeVersionCreateConfig,
+  exportableEntityTypes,
+  typesWithCalculatedFields
+} from '@shared/models/vc.models';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
@@ -42,6 +46,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
   entityTypes = EntityType;
 
   isReadOnly: Observable<boolean>;
+
+  readonly typesWithCalculatedFields = typesWithCalculatedFields;
 
   constructor(protected store: Store<AppState>,
               private adminService: AdminService,
@@ -104,7 +110,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
       branch: null,
       saveAttributes: true,
       saveRelations: false,
-      saveCredentials: true
+      saveCredentials: true,
+      saveCalculatedFields: true,
     };
     const allowed = this.allowedEntityTypes();
     let entityType: EntityType = null;
@@ -206,7 +213,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
           branch: [config.branch, []],
           saveRelations: [config.saveRelations, []],
           saveAttributes: [config.saveAttributes, []],
-          saveCredentials: [config.saveCredentials, []]
+          saveCredentials: [config.saveCredentials, []],
+          saveCalculatedFields: [config.saveCalculatedFields, []]
         })
       }
     );

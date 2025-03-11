@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "server.ws.alarms_per_alarm_status_subscription_cache_size=5"
+        "server.ws.alarms_per_alarm_status_subscription_cache_size=5",
+        "server.ws.dynamic_page_link.refresh_interval=15"
 })
 public class WebsocketApiTest extends AbstractControllerTest {
     @Autowired
@@ -325,6 +326,83 @@ public class WebsocketApiTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAlarmCountWsCmdWithSingleEntityFilter() throws Exception {
+        loginTenantAdmin();
+
+        SingleEntityFilter singleEntityFilter = new SingleEntityFilter();
+        singleEntityFilter.setSingleEntity(tenantId);
+        AlarmCountQuery alarmCountQuery = new AlarmCountQuery(singleEntityFilter);
+        AlarmCountCmd cmd1 = new AlarmCountCmd(1, alarmCountQuery);
+
+        getWsClient().send(cmd1);
+
+        AlarmCountUpdate update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        //create alarm, check count = 1
+        getWsClient().registerWaitForUpdate();
+
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(tenantId);
+        alarm.setType("TEST ALARM");
+        alarm.setSeverity(AlarmSeverity.WARNING);
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForUpdate());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        // set wrong entity id in filter, check count = 0
+        singleEntityFilter.setSingleEntity(tenantAdminUserId);
+        AlarmCountCmd cmd3 = new AlarmCountCmd(2, alarmCountQuery);
+
+        getWsClient().send(cmd3);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(2, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+    }
+
+    @Test
+    public void testAlarmCountWsCmdWithDeviceType() throws Exception {
+        loginTenantAdmin();
+
+        DeviceTypeFilter deviceTypeFilter = new DeviceTypeFilter();
+        deviceTypeFilter.setDeviceTypes(List.of("default"));
+        AlarmCountQuery alarmCountQuery = new AlarmCountQuery(deviceTypeFilter);
+        AlarmCountCmd cmd1 = new AlarmCountCmd(1, alarmCountQuery);
+
+        getWsClient().send(cmd1);
+
+        AlarmCountUpdate update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        getWsClient().registerWaitForUpdate();
+
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(device.getId());
+        alarm.setType("TEST ALARM");
+        alarm.setSeverity(AlarmSeverity.WARNING);
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForUpdate());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        deviceTypeFilter.setDeviceTypes(List.of("non-existing"));
+        AlarmCountCmd cmd3 = new AlarmCountCmd(3, alarmCountQuery);
+
+        getWsClient().send(cmd3);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(3, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+    }
+
+    @Test
     public void testAlarmStatusWsCmd() throws Exception {
         loginTenantAdmin();
 
@@ -372,17 +450,18 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         doPost("/api/alarm", alarm2, Alarm.class);
 
-        AlarmStatusUpdate alarmStatusUpdate3 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        AlarmStatusUpdate alarmStatusUpdate3 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate3.getCmdId());
         Assert.assertTrue(alarmStatusUpdate3.isActive());
 
         //change severity
+        getWsClient().registerWaitForUpdate();
         alarm2.setSeverity(AlarmSeverity.MAJOR);
         Alarm updatedAlarm = doPost("/api/alarm", alarm2, Alarm.class);
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
 
-        AlarmStatusUpdate alarmStatusUpdate4 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        AlarmStatusUpdate alarmStatusUpdate4 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate4.getCmdId());
         Assert.assertFalse(alarmStatusUpdate4.isActive());
 

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -72,20 +72,6 @@
         {{ ackValue }}
       </mat-option>
     </mat-select>
-  </mat-form-field>
-  <mat-form-field class="mat-block">
-    <mat-label translate>rule-node-config.key-serializer</mat-label>
-    <input required matInput formControlName="keySerializer">
-    <mat-error *ngIf="kafkaConfigForm.get('keySerializer').hasError('required')">
-      {{ 'rule-node-config.key-serializer-required' | translate }}
-    </mat-error>
-  </mat-form-field>
-  <mat-form-field class="mat-block">
-    <mat-label translate>rule-node-config.value-serializer</mat-label>
-    <input required matInput formControlName="valueSerializer">
-    <mat-error *ngIf="kafkaConfigForm.get('valueSerializer').hasError('required')">
-      {{ 'rule-node-config.value-serializer-required' | translate }}
-    </mat-error>
   </mat-form-field>
   <label translate class="tb-title">rule-node-config.other-properties</label>
   <tb-kv-map-config-old

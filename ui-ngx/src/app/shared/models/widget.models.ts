@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ import { isNotEmptyStr, mergeDeepIgnoreArray } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { HasTenantId, HasVersion } from '@shared/models/entity.models';
-import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { EntityInfoData, HasTenantId, HasVersion } from '@shared/models/entity.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { TbFunction } from '@shared/models/js-function.models';
 import { FormProperty, jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
@@ -185,12 +185,14 @@ export interface WidgetTypeParameters {
   previewHeight?: string;
   embedTitlePanel?: boolean;
   overflowVisible?: boolean;
+  hideDataTab?: boolean;
   hideDataSettings?: boolean;
   defaultDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   defaultLatestDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   dataKeySettingsFunction?: DataKeySettingsFunction;
   displayRpcMessageToast?: boolean;
   targetDeviceOptional?: boolean;
+  additionalWidgetActionTypes?: WidgetActionType[];
 }
 
 export interface WidgetControllerDescriptor {
@@ -270,6 +272,7 @@ export interface WidgetTypeInfo extends BaseWidgetType {
   description: string;
   tags: string[];
   widgetType: widgetType;
+  bundles?: EntityInfoData[];
 }
 
 export interface WidgetTypeDetails extends WidgetType, ExportableEntity<WidgetTypeId> {
@@ -509,8 +512,8 @@ export const datasourcesHasOnlyComparisonAggregation = (datasources?: Array<Data
   return true;
 };
 
-export interface FormattedData {
-  $datasource: Datasource;
+export interface FormattedData<D extends Datasource = Datasource> {
+  $datasource: D;
   entityName: string;
   deviceName: string;
   entityId: string;
@@ -574,7 +577,8 @@ export enum WidgetActionType {
   custom = 'custom',
   customPretty = 'customPretty',
   mobileAction = 'mobileAction',
-  openURL = 'openURL'
+  openURL = 'openURL',
+  placeMapItem = 'placeMapItem'
 }
 
 export enum WidgetMobileActionType {
@@ -588,7 +592,15 @@ export enum WidgetMobileActionType {
   takeScreenshot = 'takeScreenshot'
 }
 
-export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
+export enum MapItemType {
+  marker = 'marker',
+  polygon = 'polygon',
+  rectangle = 'rectangle',
+  circle = 'circle'
+}
+
+export const widgetActionTypes = Object.keys(WidgetActionType)
+  .filter(value => value !== WidgetActionType.placeMapItem) as WidgetActionType[];
 
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   [
@@ -599,7 +611,8 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.custom, 'widget-action.custom' ],
     [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ],
     [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ],
-    [ WidgetActionType.openURL, 'widget-action.open-URL' ]
+    [ WidgetActionType.openURL, 'widget-action.open-URL' ],
+    [ WidgetActionType.placeMapItem, 'widget-action.place-map-item' ],
   ]
 );
 
@@ -615,6 +628,15 @@ export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionTy
     [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ]
   ]
 );
+
+export const mapItemTypeTranslationMap = new Map<MapItemType, string>(
+  [
+    [ MapItemType.marker, 'widget-action.map-item.marker' ],
+    [ MapItemType.polygon, 'widget-action.map-item.polygon' ],
+    [ MapItemType.rectangle, 'widget-action.map-item.rectangle' ],
+    [ MapItemType.circle, 'widget-action.map-item.circle' ],
+  ]
+)
 
 export interface MobileLaunchResult {
   launched: boolean;
@@ -691,6 +713,7 @@ export interface CustomActionDescriptor {
 }
 
 export interface WidgetAction extends CustomActionDescriptor {
+  name?: string;
   type: WidgetActionType;
   targetDashboardId?: string;
   targetDashboardStateId?: string;
@@ -712,6 +735,7 @@ export interface WidgetAction extends CustomActionDescriptor {
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
   url?: string;
+  mapItemType?: MapItemType;
 }
 
 export interface WidgetActionDescriptor extends WidgetAction {
@@ -860,6 +884,7 @@ export interface IWidgetSettingsComponent {
   aliasController: IAliasController;
   callbacks: WidgetConfigCallbacks;
   dataKeyCallbacks: DataKeysCallbacks;
+  functionsOnly: boolean;
   dashboard: Dashboard;
   widget: Widget;
   widgetConfig: WidgetConfigComponentData;
@@ -880,6 +905,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   callbacks: WidgetConfigCallbacks;
 
   dataKeyCallbacks: DataKeysCallbacks;
+
+  functionsOnly: boolean;
 
   dashboard: Dashboard;
 

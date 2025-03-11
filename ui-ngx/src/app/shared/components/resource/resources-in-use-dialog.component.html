@@ -1,0 +1,82 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<h2 mat-dialog-title translate>{{configuration.title}}</h2>
+<div mat-dialog-content class="tb-resources-in-use-content" [class]="{multiple: data.multiple}">
+  <div [innerHTML]="configuration.message | safe: 'html'"></div>
+  <ng-container *ngIf="data.multiple; else singleResourceReferences">
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource">
+        <ng-container matColumnDef="select" sticky>
+          <mat-header-cell *matHeaderCellDef style="width: 30px;">
+            <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
+                          [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
+                          [indeterminate]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async) === false">
+            </mat-checkbox>
+          </mat-header-cell>
+          <mat-cell *matCellDef="let resource">
+            <mat-checkbox (click)="$event.stopPropagation()"
+                          (change)="$event ? dataSource.selection.toggle(resource) : null"
+                          [checked]="dataSource.selection.isSelected(resource)">
+            </mat-checkbox>
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="preview" *ngIf="displayPreview">
+          <mat-header-cell *matHeaderCellDef style="width: 50px; min-width: 50px;"></mat-header-cell>
+          <mat-cell *matCellDef="let image">
+            <img class="tb-image-preview" [src]="image.link | image: {preview: true} | async" alt="{{ image.title }}">
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="title">
+          <mat-header-cell *matHeaderCellDef style="width: 100%;">
+            <ng-container *ngIf="dataSource.selection.isEmpty(); else selectedResources">
+              {{ 'resource.title' | translate }}
+            </ng-container>
+            <ng-template #selectedResources>
+              {{ translate.get(configuration.selectedText, {count: dataSource.selection.selected.length}) | async }}
+            </ng-template>
+          </mat-header-cell>
+          <mat-cell *matCellDef="let resource">
+            {{ resource.title }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="references">
+          <mat-header-cell *matHeaderCellDef></mat-header-cell>
+          <mat-cell *matCellDef="let resource">
+            <button #showReferencesButton
+                    mat-stroked-button
+                    color="primary"
+                    (click)="toggleShowReferences($event, resource, showReferencesButton)">{{ 'image.references' | translate }}</button>
+          </mat-cell>
+        </ng-container>
+        <mat-header-row class="mat-row-select" *matHeaderRowDef="configuration.columns; sticky: true"></mat-header-row>
+        <mat-row class="mat-row-select"
+                 [class.mat-selected]="dataSource.selection.isSelected(resource)"
+                 *matRowDef="let resource; columns: configuration.columns;"></mat-row>
+      </table>
+    </div>
+  </ng-container>
+</div>
+<div mat-dialog-actions class="flex items-center justify-end">
+  <button mat-button color="primary" (click)="cancel()">{{'action.cancel' | translate}}</button>
+  <button mat-raised-button color="accent" (click)="delete()" [disabled]="data.multiple && dataSource.selection.isEmpty()"
+          cdkFocusInitial>{{ (data.multiple ? 'action.delete-selected' : 'action.delete-anyway') | translate}}</button>
+</div>
+<ng-template #singleResourceReferences>
+  <tb-image-references [references]="references"></tb-image-references>
+  <div [innerHTML]="configuration.deleteText | translate | safe: 'html'"></div>
+</ng-template>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,7 +33,8 @@ import {
   EntityTypeVersionCreateConfig,
   exportableEntityTypes,
   SyncStrategy,
-  syncStrategyTranslationMap
+  syncStrategyTranslationMap,
+  typesWithCalculatedFields
 } from '@shared/models/vc.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -78,6 +79,8 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
   entityTypesWithoutRelatedData = entityTypesWithoutRelatedData;
 
   loading = true;
+
+  readonly typesWithCalculatedFields = typesWithCalculatedFields;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
@@ -150,6 +153,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
           saveRelations: [config.saveRelations, []],
           saveAttributes: [config.saveAttributes, []],
           saveCredentials: [config.saveCredentials, []],
+          saveCalculatedFields: [config.saveCalculatedFields, []],
           allEntities: [config.allEntities, []],
           entityIds: [config.entityIds, [Validators.required]]
         })
@@ -202,6 +206,7 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
       saveAttributes: true,
       saveRelations: true,
       saveCredentials: true,
+      saveCalculatedFields: true,
       allEntities: true,
       entityIds: []
     };
