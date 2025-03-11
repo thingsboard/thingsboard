@@ -28,13 +28,14 @@ import { MatButton } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, of, shareReplay, timer } from 'rxjs';
 import { SECOND, MINUTE } from '@shared/models/time/time.models';
-import { AdditionalDebugActionConfig, EntityDebugSettings } from '@shared/models/entity.models';
+import { EntityDebugSettings } from '@shared/models/entity.models';
 import { map, switchMap, takeWhile } from 'rxjs/operators';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
 import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
+import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 
 @Component({
   selector: 'tb-entity-debug-settings-button',

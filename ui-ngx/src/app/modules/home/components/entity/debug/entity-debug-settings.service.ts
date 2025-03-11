@@ -16,10 +16,11 @@
 
 import { Injectable, Optional, Renderer2, ViewContainerRef } from '@angular/core';
 import { EntityDebugSettingsPanelComponent } from '@home/components/entity/debug/entity-debug-settings-panel.component';
-import { EntityDebugSettingPanelConfig, EntityDebugSettings } from '@shared/models/entity.models';
+import { EntityDebugSettings } from '@shared/models/entity.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
+import { EntityDebugSettingPanelConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 
 @Injectable()
 export class EntityDebugSettingsService {

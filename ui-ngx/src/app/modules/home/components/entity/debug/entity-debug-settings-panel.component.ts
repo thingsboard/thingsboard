@@ -32,8 +32,9 @@ import { SECOND } from '@shared/models/time/time.models';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { of, shareReplay, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AdditionalDebugActionConfig, EntityDebugSettings } from '@shared/models/entity.models';
+import { EntityDebugSettings } from '@shared/models/entity.models';
 import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs/operators';
+import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 
 @Component({
   selector: 'tb-entity-debug-settings-panel',

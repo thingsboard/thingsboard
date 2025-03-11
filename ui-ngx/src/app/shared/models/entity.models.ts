@@ -203,25 +203,9 @@ export interface EntityDebugSettings {
   allEnabledUntil?: number;
 }
 
-export interface EntityDebugSettingPanelConfig {
-  debugSettings: EntityDebugSettings;
-  debugConfig: {
-    maxDebugModeDuration: number;
-    debugLimitsConfiguration: string;
-    entityLabel?: string;
-    additionalActionConfig?: AdditionalDebugActionConfig;
-  }
-  onSettingsAppliedFn: (settings: EntityDebugSettings) => void;
-}
-
 export interface EntityTestScriptResult {
   output: string;
   error: string;
-}
-
-export interface AdditionalDebugActionConfig<Action = (...args: unknown[]) => void> {
-  action: Action;
-  title: string;
 }
 
 export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;

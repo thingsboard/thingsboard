@@ -15,7 +15,6 @@
 ///
 
 import {
-  AdditionalDebugActionConfig,
   HasEntityDebugSettings,
   HasTenantId,
   HasVersion
@@ -34,6 +33,7 @@ import {
   dotOperatorHighlightRule,
   endGroupHighlightRule
 } from '@shared/models/ace/ace.models';
+import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
   configuration: CalculatedFieldConfiguration;
