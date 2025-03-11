@@ -438,19 +438,19 @@ export const defaultBaseTripsDataLayerSettings = (mapType: MapType): Partial<Tri
     rotateMarker: true,
     offsetAngle: 0,
     markerShape: {
-      shape: MarkerShape.tripMarkerShape1
+      shape: MarkerShape.tripMarkerShape2
     },
     markerIcon: {
       iconContainer: MarkerIconContainer.tripIconContainer1,
       icon: 'arrow_forward'
     },
     markerImage: {
-      image: '/assets/markers/tripShape1.svg'
+      image: '/assets/markers/tripShape2.svg'
     },
     markerOffsetX: 0.5,
     markerOffsetY: 0.5,
     showPath: true,
-    pathStrokeWeight: 2,
+    pathStrokeWeight: 4,
     pathStrokeColor: {
       type: DataLayerColorType.constant,
       color: '#307FE5',
