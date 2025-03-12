@@ -131,7 +131,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       },
       {
         name: 'radix',
-        description: 'The radix for parsing (e.g., 2 for binary, 16 for hex). If omitted, it is auto-detected (e.g., 0x for hex).',
+        description: 'The radix for parsing (e.g., 2 for binary, 16 for hex). Defaults to auto-detected (e.g., 0x for hex).',
         type: 'number',
         optional: true
       }
@@ -152,7 +152,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       },
       {
         name: 'radix',
-        description: 'The radix for parsing (e.g., 2 for binary, 16 for hex). If omitted, it is auto-detected (e.g., 0x for hex).',
+        description: 'The radix for parsing (e.g., 2 for binary, 16 for hex). Defaults to auto-detected (e.g., 0x for hex).',
         type: 'number',
         optional: true
       }
@@ -768,7 +768,7 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       },
       {
         name: 'radix',
-        description: 'The radix for conversion (e.g., 2 for binary, 16 for hex). If omitted, it defaults to 10.',
+        description: 'The radix for conversion (e.g., 2 for binary, 16 for hex). Defaults to 10.',
         type: 'number',
         optional: true
       },
@@ -1229,7 +1229,22 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       description: 'The parsed integer',
       type: 'number'
     }
-  }
+  },
+  isNaN: {
+    meta: 'function',
+    description: 'Checks if the given number is NaN (Not a Number).',
+    args: [
+      {
+        name: 'value',
+        description: 'The number to check',
+        type: 'number'
+      }
+    ],
+    return: {
+      description: 'True if the number is NaN, false otherwise',
+      type: 'boolean'
+    }
+  },
 });
 
 const tbelUtilsFuncNames = [
@@ -1292,7 +1307,8 @@ const tbelUtilsFuncNames = [
   "parseByteToBinaryArray",
   "parseBytesToBinaryArray",
   "parseLongToBinaryArray",
-  "parseBinaryArrayToInt"
+  "parseBinaryArrayToInt",
+  "isNaN",
 ];
 
 export const tbelUtilsFuncHighlightRules: Array<AceHighlightRule> =
