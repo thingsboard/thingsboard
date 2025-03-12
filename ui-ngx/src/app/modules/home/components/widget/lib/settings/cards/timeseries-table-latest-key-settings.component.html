@@ -56,6 +56,11 @@
         </mat-select>
       </mat-form-field>
     </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide"  formControlName="disableSorting">
+        {{ 'widgets.table.disable-sorting' | translate }}
+      </mat-slide-toggle>
+    </div>
   </div>
   <div [class.!hidden]="!timeseriesTableLatestKeySettingsForm.get('show').value" class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="timeseriesTableLatestKeySettingsForm.get('useCellStyleFunction').value">

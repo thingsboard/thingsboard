@@ -72,6 +72,9 @@
                 <mat-checkbox *ngIf="!entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="loadRelations">
                   {{ 'version-control.load-relations' | translate }}
                 </mat-checkbox>
+                <mat-checkbox *ngIf="typesWithCalculatedFields.has(entityTypeFormGroup.get('entityType').value)" formControlName="loadCalculatedFields">
+                  {{ 'version-control.load-calculated-fields' | translate }}
+                </mat-checkbox>
               </div>
             </div>
           </div>

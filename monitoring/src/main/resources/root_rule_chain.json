@@ -39,8 +39,11 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Attributes",
         "singletonMode": false,
-        "configurationVersion": 1,
+        "configurationVersion": 3,
         "configuration": {
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          },
           "scope": "CLIENT_SCOPE",
           "notifyDevice": false,
           "sendAttributesUpdatedNotification": false,

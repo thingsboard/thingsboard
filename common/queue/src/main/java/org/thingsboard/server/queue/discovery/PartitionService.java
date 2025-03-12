@@ -41,7 +41,11 @@ public interface PartitionService {
 
     boolean isMyPartition(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 
+    boolean isSystemPartitionMine(ServiceType serviceType);
+
     List<Integer> getMyPartitions(QueueKey queueKey);
+
+    String getTopic(QueueKey queueKey);
 
     /**
      * Received from the Discovery service when network topology is changed.
@@ -61,8 +65,6 @@ public interface PartitionService {
 
     Set<TransportProtos.ServiceInfo> getOtherServices(ServiceType serviceType);
 
-    int resolvePartitionIndex(UUID entityId, int partitions);
-
     void evictTenantInfo(TenantId tenantId);
 
     int countTransportsByType(String type);
@@ -74,5 +76,7 @@ public interface PartitionService {
     void removeTenant(TenantId tenantId);
 
     boolean isManagedByCurrentService(TenantId tenantId);
+
+    int resolvePartitionIndex(UUID entityId, int partitions);
 
 }

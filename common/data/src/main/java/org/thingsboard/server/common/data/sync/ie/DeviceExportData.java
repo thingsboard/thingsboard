@@ -38,4 +38,5 @@ public class DeviceExportData extends EntityExportData<Device> {
     public boolean hasCredentials() {
         return credentials != null;
     }
+
 }

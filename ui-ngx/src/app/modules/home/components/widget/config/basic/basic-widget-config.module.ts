@@ -149,6 +149,7 @@ import {
 import {
   ValueStepperBasicConfigComponent
 } from '@home/components/widget/config/basic/rpc/value-stepper-basic-config.component';
+import { MapBasicConfigComponent } from '@home/components/widget/config/basic/map/map-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -199,7 +200,8 @@ import {
     LabelCardBasicConfigComponent,
     LabelValueCardBasicConfigComponent,
     UnreadNotificationBasicConfigComponent,
-    ScadaSymbolBasicConfigComponent
+    ScadaSymbolBasicConfigComponent,
+    MapBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -252,7 +254,8 @@ import {
     MobileAppQrCodeBasicConfigComponent,
     LabelCardBasicConfigComponent,
     LabelValueCardBasicConfigComponent,
-    UnreadNotificationBasicConfigComponent
+    UnreadNotificationBasicConfigComponent,
+    MapBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {

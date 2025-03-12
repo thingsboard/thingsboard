@@ -43,7 +43,7 @@ import { dataKeyRowValidator, dataKeyValid } from '@home/components/widget/confi
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
-import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TimeSeriesChartYAxisId } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { FormProperty } from '@shared/models/dynamic-form.models';

@@ -42,6 +42,7 @@ import {
   CellClickColumnInfo,
   defaultWidgetAction,
   WidgetActionSource,
+  WidgetActionType,
   WidgetHeaderActionButtonType,
   WidgetHeaderActionButtonTypes,
   widgetHeaderActionButtonTypeTranslationMap,
@@ -60,6 +61,7 @@ export interface WidgetActionDialogData {
   actionsData: WidgetActionsData;
   action?: WidgetActionDescriptorInfo;
   widgetType: widgetType;
+  additionalWidgetActionTypes?: WidgetActionType[];
 }
 
 @Component({

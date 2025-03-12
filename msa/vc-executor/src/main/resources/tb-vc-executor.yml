@@ -151,6 +151,8 @@ queue:
   core:
     # Default topic name
     topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
+    # For high-priority notifications that require minimum latency and processing time
+    notifications_topic: "${TB_QUEUE_CORE_NOTIFICATIONS_TOPIC:tb_core.notifications}"
     # Interval in milliseconds to poll messages by Core microservices
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
     # Amount of partitions used by Core microservices

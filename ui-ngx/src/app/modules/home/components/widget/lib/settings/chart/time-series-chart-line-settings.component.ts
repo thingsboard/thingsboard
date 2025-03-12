@@ -32,7 +32,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
-import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
+import { DataKeyConfigComponent } from '@home/components/widget/lib/settings/common/key/data-key-config.component';
 import {
   chartLabelPositions,
   chartLabelPositionTranslations,

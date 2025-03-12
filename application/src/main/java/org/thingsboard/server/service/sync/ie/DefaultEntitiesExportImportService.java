@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.util.ThrowingRunnable;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -61,6 +62,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     private final Map<EntityType, EntityImportService<?, ?, ?>> importServices = new HashMap<>();
 
     private final RelationService relationService;
+    private final CalculatedFieldService calculatedFieldService;
     private final RateLimitService rateLimitService;
     private final TbLogEntityActionService logEntityActionService;
 
@@ -71,7 +73,6 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
             EntityType.ENTITY_VIEW, EntityType.WIDGET_TYPE, EntityType.WIDGETS_BUNDLE,
             EntityType.NOTIFICATION_TEMPLATE, EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE
     );
-
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
@@ -129,12 +130,10 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         }
     }
 
-
     @Override
     public Comparator<EntityType> getEntityTypeComparatorForImport() {
         return Comparator.comparing(SUPPORTED_ENTITY_TYPES::indexOf);
     }
-
 
     @SuppressWarnings("unchecked")
     private <I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> EntityExportService<I, E, D> getExportService(EntityType entityType) {

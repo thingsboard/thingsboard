@@ -44,6 +44,8 @@ import { GridsterItemComponent } from 'angular-gridster2';
 import { UtilsService } from '@core/services/utils.service';
 import { from } from 'rxjs';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import ITooltipsterGeoHelper = JQueryTooltipster.ITooltipsterGeoHelper;
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 import { WidgetHeaderActionButtonType } from '@shared/models/widget.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
@@ -125,7 +127,6 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   widgetComponentAction: EventEmitter<WidgetComponentAction> = new EventEmitter<WidgetComponentAction>();
 
   hovered = false;
-  isReferenceWidget = false;
 
   get widgetEditActionsEnabled(): boolean {
     return (this.isEditActionEnabled || this.isRemoveActionEnabled || this.isExportActionEnabled) && !this.widget?.isFullscreen;
@@ -207,7 +208,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   onMouseDown(event: MouseEvent) {
-    if (event) {
+    if (event && this.isEdit) {
       event.stopPropagation();
     }
     this.widgetComponentAction.emit({
@@ -298,6 +299,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
         theme: ['tb-widget-edit-actions-tooltip'],
         interactive: true,
         trigger: 'custom',
+        ignoreCloseOnScroll: true,
         triggerOpen: {
           mouseenter: true
         },
@@ -308,6 +310,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
         trackOrigin: true,
         trackerInterval: 25,
         content: '',
+        checkOverflowY: (geo: ITooltipsterGeoHelper, bcr: DOMRect) => {
+          return geo.origin.windowOffset.top < bcr.top || geo.origin.windowOffset.bottom < bcr.bottom;
+        },
         functionPosition: (instance, helper, position) => {
           const clientRect = helper.origin.getBoundingClientRect();
           const container = parent.getBoundingClientRect();
@@ -317,6 +322,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
           return position;
         },
         functionReady: (_instance, helper) => {
+          this.editWidgetActionsTooltip.__scrollHandler({});
           const tooltipEl = $(helper.tooltip);
           tooltipEl.on('mouseenter', () => {
             this.hovered = true;
