@@ -6,7 +6,10 @@
         "esri": {
             "type": "vector",
             "url": "https://basemaps.arcgis.com/arcgis/rest/services/OpenStreetMap_v2/VectorTileServer",
-            "attribution": "Map data (c) OpenStreetMap contributors, Microsoft, Facebook, Google, Esri Community Maps contributors, Map layer by Esri"
+            "attribution": "Map data (c) OpenStreetMap contributors, Microsoft, Facebook, Google, Esri Community Maps contributors, Map layer by Esri",
+            "tiles": [
+                "https://basemaps.arcgis.com/arcgis/rest/services/OpenStreetMap_v2/VectorTileServer/tile/{z}/{y}/{x}.pbf"
+            ]
         }
     },
     "layers": [
