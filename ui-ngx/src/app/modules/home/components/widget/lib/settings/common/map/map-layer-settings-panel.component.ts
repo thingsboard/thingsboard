@@ -30,7 +30,7 @@ import {
   mapProviders,
   mapProviderTranslationMap,
   openStreetLayerTypes,
-  openStreetMapLayerTranslationMap,
+  openStreetMapLayerTranslationMap, referenceLayerTypes, referenceLayerTypeTranslationMap,
   tencentLayerTranslationMap,
   tencentLayerTypes
 } from '@shared/models/widget/maps/map.models';
@@ -67,6 +67,10 @@ export class MapLayerSettingsPanelComponent implements OnInit {
 
   tencentLayerTranslationMap = tencentLayerTranslationMap;
 
+  referenceLayerTypes = referenceLayerTypes;
+
+  referenceLayerTypeTranslationMap = referenceLayerTypeTranslationMap;
+
   @Input()
   mapLayerSettings: MapLayerSettings;
 
@@ -90,7 +94,8 @@ export class MapLayerSettingsPanelComponent implements OnInit {
         provider: [null, [Validators.required]],
         layerType: [null, [Validators.required]],
         tileUrl: [null, [Validators.required]],
-        apiKey: [null, [Validators.required]]
+        apiKey: [null, [Validators.required]],
+        referenceLayer: [null, []]
       }
     );
     this.layerFormGroup.patchValue(

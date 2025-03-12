@@ -438,19 +438,19 @@ export const defaultBaseTripsDataLayerSettings = (mapType: MapType): Partial<Tri
     rotateMarker: true,
     offsetAngle: 0,
     markerShape: {
-      shape: MarkerShape.tripMarkerShape1
+      shape: MarkerShape.tripMarkerShape2
     },
     markerIcon: {
       iconContainer: MarkerIconContainer.tripIconContainer1,
       icon: 'arrow_forward'
     },
     markerImage: {
-      image: '/assets/markers/tripShape1.svg'
+      image: '/assets/markers/tripShape2.svg'
     },
     markerOffsetX: 0.5,
     markerOffsetY: 0.5,
     showPath: true,
-    pathStrokeWeight: 2,
+    pathStrokeWeight: 4,
     pathStrokeColor: {
       type: DataLayerColorType.constant,
       color: '#307FE5',
@@ -755,9 +755,24 @@ export const mapProviderTranslationMap = new Map<MapProvider, string>(
   ]
 );
 
+export enum ReferenceLayerType {
+  openstreetmap_hybrid = 'openstreetmap_hybrid',
+  world_edition_hybrid = 'world_edition_hybrid',
+}
+
+export const referenceLayerTypes = Object.keys(ReferenceLayerType) as ReferenceLayerType[];
+
+export const referenceLayerTypeTranslationMap = new Map<ReferenceLayerType, string>(
+  [
+    [ReferenceLayerType.openstreetmap_hybrid, 'widgets.maps.layer.reference.openstreetmap-hybrid'],
+    [ReferenceLayerType.world_edition_hybrid, 'widgets.maps.layer.reference.world-edition-hybrid']
+  ]
+);
+
 export interface MapLayerSettings {
   label?: string;
   provider: MapProvider;
+  referenceLayer?: ReferenceLayerType;
 }
 
 export const mapLayerValid = (layer: MapLayerSettings): boolean => {
@@ -973,9 +988,10 @@ export const defaultMapLayers: MapLayerSettings[] = [
   } as OpenStreetMapLayerSettings,
   {
     label: '{i18n:widgets.maps.layer.hybrid}',
-    provider: MapProvider.google,
-    layerType: GoogleLayerType.hybrid,
-  } as GoogleMapLayerSettings
+    provider: MapProvider.openstreet,
+    layerType: OpenStreetLayerType.esriWorldImagery,
+    referenceLayer: ReferenceLayerType.openstreetmap_hybrid
+  } as OpenStreetMapLayerSettings
 ];
 
 export interface GeoMapSettings extends BaseMapSettings {

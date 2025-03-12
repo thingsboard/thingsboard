@@ -17,6 +17,7 @@
 import L, { TB } from 'leaflet';
 import { guid, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
+import '@maplibre/maplibre-gl-leaflet';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -211,15 +212,19 @@ class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> {
 
       input.on('click', (e: JQuery.MouseEventBase) => {
         e.stopPropagation();
-        layers.forEach((other) => {
-          if (other.layer === layerData.layer) {
-            map.addLayer(other.layer);
-            map.attributionControl.setPrefix(other.attributionPrefix);
-          } else {
-            map.removeLayer(other.layer);
+        if (!map.hasLayer(layerData.layer)) {
+          map.addLayer(layerData.layer);
+          map.attributionControl.setPrefix(layerData.attributionPrefix);
+          if (layerData.onAdd) {
+            layerData.onAdd();
           }
-        });
-        map.fire('baselayerchange', { layer: layerData.layer });
+          layers.forEach((other) => {
+            if (other.layer !== layerData.layer) {
+              map.removeLayer(other.layer);
+            }
+          });
+          map.fire('baselayerchange', { layer: layerData.layer });
+        }
       });
 
       item.on('dblclick', (e) => {
