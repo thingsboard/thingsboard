@@ -76,7 +76,7 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
 
     @Override
     protected CompareResult compare(EntitiesImportCtx ctx, WidgetsBundleExportData exportData, WidgetsBundle prepared, WidgetsBundle existing) {
-        return new CompareResult(true, false);
+        return new CompareResult(true);
     }
 
     @Override

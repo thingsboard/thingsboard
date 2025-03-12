@@ -117,11 +117,11 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     @Override
     protected CompareResult compare(EntitiesImportCtx ctx, RuleChainExportData exportData, RuleChain prepared, RuleChain existing) {
         CompareResult result = super.compare(ctx, exportData, prepared, existing);
-        if (!result.isNeedUpdate()) {
+        if (!result.isUpdateNeeded()) {
             RuleChainMetaData newMD = exportData.getMetaData();
             RuleChainMetaData existingMD = ruleChainService.loadRuleChainMetaData(ctx.getTenantId(), prepared.getId());
             existingMD.setRuleChainId(null);
-            result.setNeedUpdate(!newMD.equals(existingMD));
+            result.setUpdateNeeded(!newMD.equals(existingMD));
         }
         return result;
     }

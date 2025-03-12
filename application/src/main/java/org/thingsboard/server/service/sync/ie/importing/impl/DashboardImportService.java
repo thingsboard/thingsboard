@@ -118,7 +118,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     @Override
     protected CompareResult compare(EntitiesImportCtx ctx, EntityExportData<Dashboard> exportData, Dashboard prepared, Dashboard existing) {
         CompareResult result = super.compare(ctx, exportData, prepared, existing);
-        result.setNeedUpdate(result.isNeedUpdate() || !prepared.getConfiguration().equals(existing.getConfiguration()));
+        result.setUpdateNeeded(result.isUpdateNeeded() || !prepared.getConfiguration().equals(existing.getConfiguration()));
         return result;
     }
 

@@ -50,7 +50,7 @@ public class WidgetTypeImportService extends BaseEntityImportService<WidgetTypeI
 
     @Override
     protected CompareResult compare(EntitiesImportCtx ctx, WidgetTypeExportData exportData, WidgetTypeDetails prepared, WidgetTypeDetails existing) {
-        return new CompareResult(true, false);
+        return new CompareResult(true);
     }
 
     @Override
