@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-version: '3.0'
-
 services:
   # Redis sentinel
   # The latest version of Redis compatible with ThingsBoard is 7.2

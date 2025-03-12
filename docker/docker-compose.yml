@@ -15,8 +15,6 @@
 #
 
 
-version: '3.0'
-
 services:
   zookeeper:
     restart: always
