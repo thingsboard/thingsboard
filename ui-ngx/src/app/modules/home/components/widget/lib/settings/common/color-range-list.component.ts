@@ -39,7 +39,7 @@ import { deepClone, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 
 export function advancedRangeValidator(control: AbstractControl): ValidationErrors | null {

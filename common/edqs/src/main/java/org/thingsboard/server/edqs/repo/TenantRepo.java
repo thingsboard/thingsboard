@@ -422,16 +422,19 @@ public class TenantRepo {
     }
 
     public String getOwnerName(EntityId ownerId) {
-        if (ownerId == null || (EntityType.CUSTOMER.equals(ownerId.getEntityType()) && CustomerId.NULL_UUID.equals(ownerId.getId()))) {
-            ownerId = tenantId;
+        if (ownerId == null || (ownerId.getEntityType() == EntityType.CUSTOMER && ownerId.isNullUid())) {
+            return getOwnerEntityName(tenantId);
         }
-        return getEntityName(ownerId);
+        return getOwnerEntityName(ownerId);
     }
 
-    private String getEntityName(EntityId entityId) {
+    private String getOwnerEntityName(EntityId entityId) {
         EntityType entityType = entityId.getEntityType();
         return switch (entityType) {
-            case CUSTOMER, TENANT -> getEntityMap(entityType).get(entityId.getId()).getFields().getName();
+            case CUSTOMER, TENANT -> {
+                EntityFields fields = getEntityMap(entityType).get(entityId.getId()).getFields();
+                yield fields != null ? fields.getName() : "";
+            }
             default -> throw new RuntimeException("Unsupported entity type: " + entityType);
         };
     }

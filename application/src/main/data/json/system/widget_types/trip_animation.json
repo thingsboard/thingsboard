@@ -1,7 +1,7 @@
 {
   "fqn": "maps_v2.test",
   "name": "Trip Animation",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/trip_animation_system_widget_image.png",
   "description": "Displays the trip of the entity on the OpenStreetMap or other map providers. Allows to scroll and animate the movement of the entity. Highly customizable via custom markers, marker tooltips, and widget actions.",
   "descriptor": {

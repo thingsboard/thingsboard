@@ -23,6 +23,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { DataKey, Datasource, DatasourceType } from '@shared/models/widget.models';
 import { PageData } from '@shared/models/page/page-data';
 import {
+  guid,
   isArraysEqualIgnoreUndefined,
   isDefined,
   isDefinedAndNotNull,
@@ -920,4 +921,43 @@ export function updateDatasourceFromEntityInfo(datasource: Datasource, entity: E
       };
     }
   }
+}
+
+export const getFilterId = (filters: Filters, filterInfo: FilterInfo): string => {
+  let newFilterId: string;
+  for (const filterId of Object.keys(filters)) {
+    if (isFilterEqual(filters[filterId], filterInfo)) {
+      newFilterId = filterId;
+      break;
+    }
+  }
+  if (!newFilterId) {
+    const newFilterName = createFilterName(filters, filterInfo.filter);
+    newFilterId = guid();
+    filters[newFilterId] = {id: newFilterId, filter: newFilterName,
+      keyFilters: filterInfo.keyFilters, editable: filterInfo.editable};
+  }
+  return newFilterId;
+}
+
+const isFilterEqual = (filter1: FilterInfo, filter2: FilterInfo): boolean => {
+  return isEqual(filter1.keyFilters, filter2.keyFilters);
+}
+
+const createFilterName = (filters: Filters, filter: string): string => {
+  let c = 0;
+  let newFilter = filter;
+  let unique = false;
+  while (!unique) {
+    unique = true;
+    for (const entFilterId of Object.keys(filters)) {
+      const entFilter = filters[entFilterId];
+      if (newFilter === entFilter.filter) {
+        c++;
+        newFilter = filter + c;
+        unique = false;
+      }
+    }
+  }
+  return newFilter;
 }

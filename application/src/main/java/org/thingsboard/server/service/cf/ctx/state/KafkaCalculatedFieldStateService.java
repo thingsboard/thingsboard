@@ -20,10 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
@@ -67,9 +69,11 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
     @Override
     public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
         super.init(eventConsumer);
+
+        var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_STATES_QUEUE_NAME);
         this.stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>>create()
-                .queueKey(QueueKey.CF_STATES)
-                .topic(partitionService.getTopic(QueueKey.CF_STATES))
+                .queueKey(queueKey)
+                .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
                 .msgPackProcessor((msgs, consumer, config) -> {
                     for (TbProtoQueueMsg<CalculatedFieldStateProto> msg : msgs) {
@@ -101,7 +105,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
 
     @Override
     protected void doPersist(CalculatedFieldEntityCtxId stateId, CalculatedFieldStateProto stateMsgProto, TbCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF_STATES, stateId.entityId());
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_STATES_QUEUE_NAME, stateId.tenantId(), stateId.entityId());
         TbProtoQueueMsg<CalculatedFieldStateProto> msg = new TbProtoQueueMsg<>(stateId.entityId().getId(), stateMsgProto);
         if (stateMsgProto == null) {
             putStateId(msg.getHeaders(), stateId);

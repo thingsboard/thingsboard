@@ -34,7 +34,7 @@ import {
 import { IAliasController } from '@core/api/widget-api.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 
 @Injectable()

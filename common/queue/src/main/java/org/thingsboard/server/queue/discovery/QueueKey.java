@@ -35,9 +35,6 @@ public class QueueKey {
     private final String queueName;
     private final TenantId tenantId;
 
-    public static final QueueKey CF = new QueueKey(ServiceType.TB_RULE_ENGINE).withQueueName(CF_QUEUE_NAME);
-    public static final QueueKey CF_STATES = new QueueKey(ServiceType.TB_RULE_ENGINE).withQueueName(CF_STATES_QUEUE_NAME);
-
     public QueueKey(ServiceType type, Queue queue) {
         this.type = type;
         this.queueName = queue.getName();

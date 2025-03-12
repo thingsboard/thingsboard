@@ -27,4 +27,11 @@ public final class CalculatedFieldResult {
     private final AttributeScope scope;
     private final JsonNode result;
 
+    public boolean isEmpty() {
+        return result == null || result.isMissingNode() || result.isNull() ||
+                (result.isObject() && result.isEmpty()) ||
+                (result.isArray() && result.isEmpty()) ||
+                (result.isTextual() && result.asText().isEmpty());
+    }
+
 }

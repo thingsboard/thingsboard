@@ -502,8 +502,6 @@ actors:
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
-    # Frequency of printing the JS executor statistics
-    js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
     # Actors statistic persistence frequency in milliseconds
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
   calculated_fields:
@@ -1284,7 +1282,7 @@ transport:
         # URL of gateways dashboard repository
         repository_url: "${TB_GATEWAY_DASHBOARD_SYNC_REPOSITORY_URL:https://github.com/thingsboard/gateway-management-extensions-dist.git}"
         # Branch of gateways dashboard repository to work with
-        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:}"
+        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:release/4.0.0}"
         # Fetch frequency in hours for gateways dashboard repository
         fetch_frequency: "${TB_GATEWAY_DASHBOARD_SYNC_FETCH_FREQUENCY:24}"
 
@@ -1759,9 +1757,6 @@ queue:
     stats:
       # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
-      # Statistics printing interval for EDQS
-      print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:300000}"
-
   vc:
     # Default topic name
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
@@ -1818,9 +1813,7 @@ queue:
     # For high-priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_CF_NOTIFICATIONS_TOPIC:calculated_field.notifications}"
     # Interval in milliseconds to poll messages by CF (Rule Engine) microservices
-    poll_interval: "${TB_QUEUE_CF_POLL_INTERVAL_MS:25}"
-    # Amount of partitions used by CF microservices
-    partitions: "${TB_QUEUE_CF_PARTITIONS:10}"
+    poll_interval: "${TB_QUEUE_CF_POLL_INTERVAL_MS:1000}"
     # Timeout for processing a message pack by CF microservices
     pack_processing_timeout: "${TB_QUEUE_CF_PACK_PROCESSING_TIMEOUT_MS:60000}"
     # Thread pool size for processing of the incoming messages

@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-material-icons-panel">
-  <div class="tb-material-icons-title" translate>icon.icons</div>
+  <div *ngIf="showTitle" class="tb-material-icons-title" translate>icon.icons</div>
   <mat-form-field class="tb-material-icons-search tb-inline-field" appearance="outline" subscriptSizing="dynamic">
     <mat-icon matPrefix>search</mat-icon>
     <input matInput [formControl]="searchIconControl" placeholder="{{ 'icon.search-icon' | translate }}"/>
