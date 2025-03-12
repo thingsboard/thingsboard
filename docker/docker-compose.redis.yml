@@ -31,66 +31,66 @@ services:
 # ThingsBoard setup to use redis-standalone
   tb-core1:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-core2:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-rule-engine1:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-rule-engine2:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-mqtt-transport1:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-mqtt-transport2:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-http-transport1:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-http-transport2:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-coap-transport:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-lwm2m-transport:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-snmp-transport:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-vc-executor1:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
   tb-vc-executor2:
     env_file:
-      - cache-redis.env
+      - config-env/cache-redis.env
     depends_on:
       - redis
