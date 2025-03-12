@@ -52,10 +52,6 @@ export interface NavTreeEditCallbacks {
   clearSearch?: () => void;
 }
 
-interface JSTreeEventDataWithAction extends JSTreeEventData {
-  action: string;
-}
-
 export type NodesCallback = (nodes: NavTreeNode[]) => void;
 export type LoadNodesCallback = (node: NavTreeNode, cb: NodesCallback) => void;
 export type NodeSearchCallback = (searchText: string, node: NavTreeNode) => boolean;
@@ -153,9 +149,9 @@ export class NavTreeComponent implements OnInit {
 
       this.treeElement = $('.tb-nav-tree-container', this.elementRef.nativeElement).jstree(config);
 
-      this.treeElement.on('changed.jstree', (e: any, data: JSTreeEventDataWithAction) => {
-        const node: NavTreeNode = data.instance.get_selected(true)[0];
+      this.treeElement.on('changed.jstree', (e: any, data) => {
         if (this.onNodeSelected && data.action !== 'ready') {
+          const node: NavTreeNode = data.instance.get_selected(true)[0];
           this.ngZone.run(() => this.onNodeSelected(node, e as Event));
         }
       });
