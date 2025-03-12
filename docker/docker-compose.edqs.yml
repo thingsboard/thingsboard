@@ -17,21 +17,21 @@
 services:
   tb-core1:
     env_file:
-      - tb-core-edqs.env
+      - config-env/tb-core-edqs.env
   tb-core2:
     env_file:
-      - tb-core-edqs.env
+      - config-env/tb-core-edqs.env
   tb-rule-engine1:
     env_file:
-      - tb-rule-engine-edqs.env
+      - config-env/tb-rule-engine-edqs.env
   tb-rule-engine2:
     env_file:
-      - tb-rule-engine-edqs.env
+      - config-env/tb-rule-engine-edqs.env
   tb-edqs-1:
     restart: always
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
     env_file:
-      - tb-edqs.env
+      - config-env/tb-edqs.env
     volumes:
       - ./tb-edqs/conf:/usr/share/tb-edqs/conf
       - ./tb-edqs/log:/var/log/tb-edqs
@@ -44,7 +44,7 @@ services:
     restart: always
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
     env_file:
-      - tb-edqs.env
+      - config-env/tb-edqs.env
     volumes:
       - ./tb-edqs/conf:/usr/share/tb-edqs/conf
       - ./tb-edqs/log:/var/log/tb-edqs
