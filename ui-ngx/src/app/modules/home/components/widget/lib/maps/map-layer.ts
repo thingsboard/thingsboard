@@ -165,17 +165,9 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
     return spec$.pipe(
       map(spec => {
         const sourceSpec = (spec.sources['esri'] as VectorSourceSpecification);
-        const tileUrl = sourceSpec.url;
         const attribution = sourceSpec.attribution;
-        const transformRequest = (url: string, resourceType: ResourceType) => {
-          if (resourceType === 'Tile') {
-            url = tileUrl + '/' + url;
-          }
-          return {url}
-        }
         const gl = L.maplibreGL({
           style: spec,
-          transformRequest
         });
         gl.options.attribution = attribution;
         return gl;

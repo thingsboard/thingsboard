@@ -48,6 +48,9 @@ import static org.awaitility.Awaitility.await;
 @DaoSqlTest
 public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTest {
 
+    public static final int TIMEOUT = 60;
+    public static final int POLL_INTERVAL = 1;
+
     @BeforeEach
     void setUp() throws Exception {
         loginTenantAdmin();
@@ -86,6 +89,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
         await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
@@ -95,6 +99,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
 
         await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
@@ -108,6 +113,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
         await().alias("update CF output -> perform calculation with updated output").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode temperatureF = getServerAttributes(testDevice.getId(), "temperatureF");
                     assertThat(temperatureF).isNotNull();
@@ -119,6 +125,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
         await().alias("update CF argument -> perform calculation with new argument").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode temperatureF = getServerAttributes(testDevice.getId(), "temperatureF");
                     assertThat(temperatureF).isNotNull();
@@ -129,6 +136,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
         await().alias("update CF expression -> perform calculation with new expression").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode temperatureF = getServerAttributes(testDevice.getId(), "temperatureF");
                     assertThat(temperatureF).isNotNull();
@@ -166,6 +174,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
         await().alias("create CF -> state is not ready -> no calculation performed").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
@@ -175,6 +184,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
 
         await().alias("update telemetry -> perform calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
@@ -213,6 +223,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
         await().alias("create CF -> perform initial calculation with default value").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
@@ -222,6 +233,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
 
         await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
@@ -277,6 +289,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
         await().alias("create CF and perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -292,6 +305,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":25}"));
 
         await().alias("update device telemetry -> recalculate state for all assets").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -307,6 +321,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doPost("/api/plugins/telemetry/ASSET/" + asset1.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":15}"));
 
         await().alias("update asset 1 telemetry -> recalculate state only for asset 1").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -322,6 +337,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doPost("/api/plugins/telemetry/ASSET/" + asset2.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":5}"));
 
         await().alias("update asset 2 telemetry -> recalculate state only for asset 2").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1 (no changes)
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -339,6 +355,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         Asset finalAsset3 = asset3;
         await().alias("add new entity to profile -> calculate state for new entity").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 3
                     ArrayNode z3 = getServerAttributes(finalAsset3.getId(), "z");
@@ -349,6 +366,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":20}"));
 
         await().alias("update device telemetry -> recalculate state for all assets").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -375,6 +393,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         Asset updatedAsset3 = asset3;
         await().alias("update device telemetry -> recalculate state for asset 1 and asset 2").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // result of asset 1
                     ArrayNode z1 = getServerAttributes(asset1.getId(), "z");
@@ -425,6 +444,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
         await().alias("create CF -> ctx is not initialized -> no calculation perform").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
@@ -434,6 +454,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
 
         await().alias("update telemetry -> ctx is not initialized -> no calculation perform").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
