@@ -54,7 +54,6 @@ public class LwM2mObjectModelUtils {
                 if (resource.getId() == null) {
                     resource.setTitle(name + " id=" + objectModel.id + " v" + objectModel.version);
                 }
-                resource.setSearchText(resourceKey + LWM2M_SEPARATOR_SEARCH_TEXT + name);
             } else {
                 throw new DataValidationException(String.format("Could not parse the XML of objectModel with name %s", resource.getSearchText()));
             }

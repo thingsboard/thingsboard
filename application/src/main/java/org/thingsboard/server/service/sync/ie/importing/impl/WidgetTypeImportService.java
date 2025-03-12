@@ -44,13 +44,13 @@ public class WidgetTypeImportService extends BaseEntityImportService<WidgetTypeI
     }
 
     @Override
-    protected WidgetTypeDetails saveOrUpdate(EntitiesImportCtx ctx, WidgetTypeDetails widgetsBundle, WidgetTypeExportData exportData, IdProvider idProvider) {
+    protected WidgetTypeDetails saveOrUpdate(EntitiesImportCtx ctx, WidgetTypeDetails widgetsBundle, WidgetTypeExportData exportData, IdProvider idProvider, CompareResult compareResult) {
         return widgetTypeService.saveWidgetType(widgetsBundle);
     }
 
     @Override
-    protected boolean compare(EntitiesImportCtx ctx, WidgetTypeExportData exportData, WidgetTypeDetails prepared, WidgetTypeDetails existing) {
-        return true;
+    protected CompareResult compare(EntitiesImportCtx ctx, WidgetTypeExportData exportData, WidgetTypeDetails prepared, WidgetTypeDetails existing) {
+        return new CompareResult(true, false);
     }
 
     @Override

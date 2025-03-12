@@ -58,17 +58,18 @@ public class ResourceImportService extends BaseEntityImportService<TbResourceId,
     }
 
     @Override
-    protected boolean compare(EntitiesImportCtx ctx, EntityExportData<TbResource> exportData, TbResource prepared, TbResource existing) {
-        return true;
-    }
-
-    @Override
     protected TbResource deepCopy(TbResource resource) {
         return new TbResource(resource);
     }
 
     @Override
-    protected TbResource saveOrUpdate(EntitiesImportCtx ctx, TbResource resource, EntityExportData<TbResource> exportData, IdProvider idProvider) {
+    protected void cleanupForComparison(TbResource resource) {
+        super.cleanupForComparison(resource);
+        resource.setSearchText(null);
+    }
+
+    @Override
+    protected TbResource saveOrUpdate(EntitiesImportCtx ctx, TbResource resource, EntityExportData<TbResource> exportData, IdProvider idProvider, CompareResult compareResult) {
         if (resource.getResourceType() == ResourceType.IMAGE) {
             return new TbResource(imageService.saveImage(resource));
         } else {

@@ -45,11 +45,15 @@ public class EntityLoadError implements Serializable {
     }
 
     public static EntityLoadError runtimeError(Throwable e) {
+        return runtimeError(e, null);
+    }
+
+    public static EntityLoadError runtimeError(Throwable e, EntityId externalId) {
         String message = e.getMessage();
         if (StringUtils.isEmpty(message)) {
             message = "unexpected error (" + ClassUtils.getShortClassName(e.getClass()) + ")";
         }
-        return EntityLoadError.builder().type("RUNTIME").message(message).build();
+        return EntityLoadError.builder().type("RUNTIME").message(message).source(externalId).build();
     }
 
 }
