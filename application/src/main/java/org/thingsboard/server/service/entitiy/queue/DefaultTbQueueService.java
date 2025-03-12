@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -57,7 +56,6 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
             oldQueue = queueService.findQueueById(queue.getTenantId(), queue.getId());
         }
 
-        checkQueueName(queue.getName());
         Queue savedQueue = queueService.saveQueue(queue);
         createTopicsIfNeeded(savedQueue, oldQueue);
         tbClusterService.onQueuesUpdate(List.of(savedQueue));
@@ -180,12 +178,6 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
                     new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName(),
                     queue.getCustomProperties()
             );
-        }
-    }
-
-    private void checkQueueName(String queueName) {
-        if (DataConstants.CF_QUEUE_NAME.equals(queueName) || DataConstants.CF_STATES_QUEUE_NAME.equals(queueName)) {
-            throw new IllegalArgumentException(String.format("The queue name '%s' is not allowed. This name is reserved for internal use. Please choose a different name.", queueName));
         }
     }
 
