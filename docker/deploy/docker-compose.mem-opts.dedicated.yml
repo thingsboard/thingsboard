@@ -14,46 +14,44 @@
 # limitations under the License.
 #
 
+
 services:
-  tb-js-executor:
-    env_file:
-      - config-env/queue-service-bus.env
   tb-core1:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-core.mem-opts.env
   tb-core2:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-core.mem-opts.env
   tb-rule-engine1:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-rule-engine.mem-opts.env
   tb-rule-engine2:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-rule-engine.mem-opts.env
   tb-mqtt-transport1:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-mqtt-transport.mem-opts.env
   tb-mqtt-transport2:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-mqtt-transport.mem-opts.env
   tb-http-transport1:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-http-transport.mem-opts.env
   tb-http-transport2:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-http-transport.mem-opts.env
   tb-coap-transport:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-coap-transport.mem-opts.env
   tb-lwm2m-transport:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-lwm2m-transport.mem-opts.env
   tb-snmp-transport:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-snmp-transport.mem-opts.env
   tb-vc-executor1:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-vc-executor.mem-opts.env
   tb-vc-executor2:
     env_file:
-      - config-env/queue-service-bus.env
+      - ../config-env/tb-vc-executor.mem-opts.env

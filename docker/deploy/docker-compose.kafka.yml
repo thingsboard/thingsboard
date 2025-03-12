@@ -15,82 +15,82 @@
 #
 
 services:
-# Redis standalone
-# The latest version of Redis compatible with ThingsBoard is 7.2
-  redis:
+  kafka:
     restart: always
-    image: bitnami/redis:7.2
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      ALLOW_EMPTY_PASSWORD: "yes"
+    image: "bitnami/kafka:3.7.0"
     ports:
-      - '6379:6379'
-    volumes:
-      - ./tb-node/redis-data:/bitnami/redis/data
-
-# ThingsBoard setup to use redis-standalone
+      - "9092:9092"
+    env_file:
+      - ../config-env/kafka.env
+    depends_on:
+      - zookeeper
+  tb-js-executor:
+    env_file:
+      - ../config-env/queue-kafka.env
+    depends_on:
+      - kafka
   tb-core1:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-core2:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-rule-engine1:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-rule-engine2:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-mqtt-transport1:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-mqtt-transport2:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-http-transport1:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-http-transport2:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-coap-transport:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-lwm2m-transport:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-snmp-transport:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-vc-executor1:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka
   tb-vc-executor2:
     env_file:
-      - config-env/cache-redis.env
+      - ../config-env/queue-kafka.env
     depends_on:
-      - redis
+      - kafka

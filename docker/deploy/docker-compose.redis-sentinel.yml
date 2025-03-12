@@ -20,7 +20,7 @@ services:
   redis-master:
     image: 'bitnami/redis:7.2'
     volumes:
-      - ./tb-node/redis-sentinel-data-master:/bitnami/redis/data
+      - ../tb-node/redis-sentinel-data-master:/bitnami/redis/data
     environment:
       - 'REDIS_REPLICATION_MODE=master'
       - 'REDIS_PASSWORD=thingsboard'
@@ -28,7 +28,7 @@ services:
   redis-slave:
     image: 'bitnami/redis:7.2'
     volumes:
-      - ./tb-node/redis-sentinel-data-slave:/bitnami/redis/data
+      - ../tb-node/redis-sentinel-data-slave:/bitnami/redis/data
     environment:
       - 'REDIS_REPLICATION_MODE=slave'
       - 'REDIS_MASTER_HOST=redis-master'
@@ -40,7 +40,7 @@ services:
   redis-sentinel:
     image: 'bitnami/redis-sentinel:7.2'
     volumes:
-      - ./tb-node/redis-sentinel-data-sentinel:/bitnami/redis/data
+      - ../tb-node/redis-sentinel-data-sentinel:/bitnami/redis/data
     environment:
       - 'REDIS_MASTER_HOST=redis-master'
       - 'REDIS_MASTER_SET=mymaster'
@@ -53,66 +53,66 @@ services:
   # ThingsBoard setup to use redis-sentinel
   tb-core1:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-core2:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-rule-engine1:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-rule-engine2:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-mqtt-transport1:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-mqtt-transport2:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-http-transport1:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-http-transport2:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-coap-transport:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-lwm2m-transport:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-snmp-transport:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-vc-executor1:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
   tb-vc-executor2:
     env_file:
-      - config-env/cache-redis-sentinel.env
+      - ../config-env/cache-redis-sentinel.env
     depends_on:
       - redis-sentinel

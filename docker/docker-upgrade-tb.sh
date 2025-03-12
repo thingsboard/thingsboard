@@ -36,6 +36,8 @@ source compose-utils.sh
 
 COMPOSE_VERSION=$(composeVersion) || exit $?
 
+DEPLOYMENT_FOLDER="deploy"
+
 ADDITIONAL_COMPOSE_QUEUE_ARGS=$(additionalComposeQueueArgs) || exit $?
 
 ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
@@ -47,6 +49,8 @@ ADDITIONAL_COMPOSE_EDQS_ARGS=$(additionalComposeEdqsArgs) || exit $?
 ADDITIONAL_COMPOSE_JAVA_ARGS=$(additionalComposeJavaArgs) || exit $?
 
 ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
+
+cd $DEPLOYMENT_FOLDER
 
 COMPOSE_ARGS_PULL="\
       -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} ${ADDITIONAL_COMPOSE_EDQS_ARGS} ${ADDITIONAL_COMPOSE_JAVA_ARGS} \
@@ -77,3 +81,5 @@ case $COMPOSE_VERSION in
         # unknown option
     ;;
 esac
+
+cd ~-

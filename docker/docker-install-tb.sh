@@ -43,6 +43,8 @@ source compose-utils.sh
 
 COMPOSE_VERSION=$(composeVersion) || exit $?
 
+DEPLOYMENT_FOLDER="deploy"
+
 ADDITIONAL_COMPOSE_QUEUE_ARGS=$(additionalComposeQueueArgs) || exit $?
 
 ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
@@ -54,6 +56,8 @@ ADDITIONAL_COMPOSE_EDQS_ARGS=$(additionalComposeEdqsArgs) || exit $?
 ADDITIONAL_COMPOSE_JAVA_ARGS=$(additionalComposeJavaArgs) || exit $?
 
 ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
+
+cd $DEPLOYMENT_FOLDER
 
 if [ ! -z "${ADDITIONAL_STARTUP_SERVICES// }" ]; then
 
@@ -92,4 +96,4 @@ case $COMPOSE_VERSION in
     ;;
 esac
 
-
+cd ~-
