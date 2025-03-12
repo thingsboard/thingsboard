@@ -26,7 +26,8 @@ import {
   HereMapLayerSettings,
   MapLayerSettings,
   MapProvider,
-  OpenStreetMapLayerSettings, ReferenceLayerType,
+  OpenStreetMapLayerSettings,
+  ReferenceLayerType,
   TencentMapLayerSettings
 } from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -37,13 +38,13 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import L from 'leaflet';
 import { catchError, map } from 'rxjs/operators';
 import { ResourcesService } from '@core/services/resources.service';
-import { StyleSpecification, VectorSourceSpecification } from '@maplibre/maplibre-gl-style-spec';
-import { ResourceType } from 'maplibre-gl';
+import { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
 
 const referenceLayerStyleUrlMap = new Map<ReferenceLayerType, string>(
   [
     [ReferenceLayerType.openstreetmap_hybrid, '/assets/map/openstreetmap_hybrid_reference_style.json'],
-    [ReferenceLayerType.world_edition_hybrid, '/assets/map/world_edition_hybrid_reference_style.json']
+    [ReferenceLayerType.world_edition_hybrid, '/assets/map/world_edition_hybrid_reference_style.json'],
+    [ReferenceLayerType.enhanced_contrast_hybrid, '/assets/map/enhanced_contrast_hybrid_reference_style.json']
   ]
 );
 
@@ -52,7 +53,6 @@ const referenceLayerCache = new Map<ReferenceLayerType, Observable<StyleSpecific
 interface TbMapLayerData {
   layer: L.Layer;
   attribution: boolean;
-  onAdd?: () => void;
 }
 
 export abstract class TbMapLayer<S extends MapLayerSettings> {
@@ -93,12 +93,7 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
                   title: this.title(),
                   attributionPrefix: attributionPrefix,
                   layer: layerData.layer,
-                  mini: miniLayerData.layer,
-                  onAdd: () => {
-                    if (layerData.onAdd) {
-                      layerData.onAdd();
-                    }
-                  }
+                  mini: miniLayerData.layer
                 };
               } else {
                 return null;
@@ -125,10 +120,7 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
                     referenceLayer.addTo(layer);
                     return {
                       layer,
-                      attribution: !!baseLayer.getAttribution() || !!referenceLayer.getAttribution(),
-                      onAdd: () => {
-                        (referenceLayer as any)._update();
-                      }
+                      attribution: !!baseLayer.getAttribution() || !!referenceLayer.getAttribution()
                     };
                   } else {
                     return {
@@ -164,13 +156,9 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
     }
     return spec$.pipe(
       map(spec => {
-        const sourceSpec = (spec.sources['esri'] as VectorSourceSpecification);
-        const attribution = sourceSpec.attribution;
-        const gl = L.maplibreGL({
+        return L.TB.MapLibreGL.mapLibreGLLayer({
           style: spec,
         });
-        gl.options.attribution = attribution;
-        return gl;
       })
     );
   }

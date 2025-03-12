@@ -758,6 +758,7 @@ export const mapProviderTranslationMap = new Map<MapProvider, string>(
 export enum ReferenceLayerType {
   openstreetmap_hybrid = 'openstreetmap_hybrid',
   world_edition_hybrid = 'world_edition_hybrid',
+  enhanced_contrast_hybrid = 'enhanced_contrast_hybrid'
 }
 
 export const referenceLayerTypes = Object.keys(ReferenceLayerType) as ReferenceLayerType[];
@@ -765,7 +766,8 @@ export const referenceLayerTypes = Object.keys(ReferenceLayerType) as ReferenceL
 export const referenceLayerTypeTranslationMap = new Map<ReferenceLayerType, string>(
   [
     [ReferenceLayerType.openstreetmap_hybrid, 'widgets.maps.layer.reference.openstreetmap-hybrid'],
-    [ReferenceLayerType.world_edition_hybrid, 'widgets.maps.layer.reference.world-edition-hybrid']
+    [ReferenceLayerType.world_edition_hybrid, 'widgets.maps.layer.reference.world-edition-hybrid'],
+    [ReferenceLayerType.enhanced_contrast_hybrid, 'widgets.maps.layer.reference.enhanced-contrast-hybrid']
   ]
 );
 
