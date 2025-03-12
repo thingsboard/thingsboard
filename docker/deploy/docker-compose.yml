@@ -31,7 +31,7 @@ services:
     deploy:
       replicas: 10
     env_file:
-      - config-env/tb-js-executor.env
+      - ../config-env/tb-js-executor.env
   tb-core1:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
@@ -49,10 +49,10 @@ services:
       EDGES_ENABLED: "true"
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-node.env
+      - ../config-env/tb-node.env
     volumes:
-      - ./tb-node/conf:/config
-      - ./tb-node/log:/var/log/thingsboard
+      - ../tb-node/conf:/config
+      - ../tb-node/log:/var/log/thingsboard
     depends_on:
       - zookeeper
       - tb-js-executor
@@ -75,10 +75,10 @@ services:
       EDGES_ENABLED: "true"
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-node.env
+      - ../config-env/tb-node.env
     volumes:
-      - ./tb-node/conf:/config
-      - ./tb-node/log:/var/log/thingsboard
+      - ../tb-node/conf:/config
+      - ../tb-node/log:/var/log/thingsboard
     depends_on:
       - zookeeper
       - tb-js-executor
@@ -99,10 +99,10 @@ services:
       TB_SERVICE_TYPE: tb-rule-engine
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-node.env
+      - ../config-env/tb-node.env
     volumes:
-      - ./tb-node/conf:/config
-      - ./tb-node/log:/var/log/thingsboard
+      - ../tb-node/conf:/config
+      - ../tb-node/log:/var/log/thingsboard
     depends_on:
       - zookeeper
       - tb-js-executor
@@ -121,10 +121,10 @@ services:
       TB_SERVICE_TYPE: tb-rule-engine
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-node.env
+      - ../config-env/tb-node.env
     volumes:
-      - ./tb-node/conf:/config
-      - ./tb-node/log:/var/log/thingsboard
+      - ../tb-node/conf:/config
+      - ../tb-node/log:/var/log/thingsboard
     depends_on:
       - zookeeper
       - tb-js-executor
@@ -137,10 +137,10 @@ services:
       TB_SERVICE_ID: tb-mqtt-transport1
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-mqtt-transport.env
+      - ../config-env/tb-mqtt-transport.env
     volumes:
-      - ./tb-transports/mqtt/conf:/config
-      - ./tb-transports/mqtt/log:/var/log/tb-mqtt-transport
+      - ../tb-transports/mqtt/conf:/config
+      - ../tb-transports/mqtt/log:/var/log/tb-mqtt-transport
     depends_on:
       - zookeeper
       - tb-core1
@@ -154,10 +154,10 @@ services:
       TB_SERVICE_ID: tb-mqtt-transport2
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-mqtt-transport.env
+      - ../config-env/tb-mqtt-transport.env
     volumes:
-      - ./tb-transports/mqtt/conf:/config
-      - ./tb-transports/mqtt/log:/var/log/tb-mqtt-transport
+      - ../tb-transports/mqtt/conf:/config
+      - ../tb-transports/mqtt/log:/var/log/tb-mqtt-transport
     depends_on:
       - zookeeper
       - tb-core1
@@ -171,10 +171,10 @@ services:
       TB_SERVICE_ID: tb-http-transport1
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-http-transport.env
+      - ../config-env/tb-http-transport.env
     volumes:
-      - ./tb-transports/http/conf:/config
-      - ./tb-transports/http/log:/var/log/tb-http-transport
+      - ../tb-transports/http/conf:/config
+      - ../tb-transports/http/log:/var/log/tb-http-transport
     depends_on:
       - zookeeper
       - tb-core1
@@ -188,10 +188,10 @@ services:
       TB_SERVICE_ID: tb-http-transport2
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-http-transport.env
+      - ../config-env/tb-http-transport.env
     volumes:
-      - ./tb-transports/http/conf:/config
-      - ./tb-transports/http/log:/var/log/tb-http-transport
+      - ../tb-transports/http/conf:/config
+      - ../tb-transports/http/log:/var/log/tb-http-transport
     depends_on:
       - zookeeper
       - tb-core1
@@ -205,10 +205,10 @@ services:
       TB_SERVICE_ID: tb-coap-transport
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-coap-transport.env
+      - ../config-env/tb-coap-transport.env
     volumes:
-      - ./tb-transports/coap/conf:/config
-      - ./tb-transports/coap/log:/var/log/tb-coap-transport
+      - ../tb-transports/coap/conf:/config
+      - ../tb-transports/coap/log:/var/log/tb-coap-transport
     depends_on:
       - zookeeper
       - tb-core1
@@ -223,10 +223,10 @@ services:
       TB_SERVICE_ID: tb-lwm2m-transport
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-lwm2m-transport.env
+      - ../config-env/tb-lwm2m-transport.env
     volumes:
-      - ./tb-transports/lwm2m/conf:/config
-      - ./tb-transports/lwm2m/log:/var/log/tb-lwm2m-transport
+      - ../tb-transports/lwm2m/conf:/config
+      - ../tb-transports/lwm2m/log:/var/log/tb-lwm2m-transport
     depends_on:
       - zookeeper
       - tb-core1
@@ -240,10 +240,10 @@ services:
       TB_SERVICE_ID: tb-snmp-transport
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-snmp-transport.env
+      - ../config-env/tb-snmp-transport.env
     volumes:
-      - ./tb-transports/snmp/conf:/config
-      - ./tb-transports/snmp/log:/var/log/tb-snmp-transport
+      - ../tb-transports/snmp/conf:/config
+      - ../tb-transports/snmp/log:/var/log/tb-snmp-transport
     depends_on:
       - zookeeper
       - tb-core1
@@ -254,14 +254,14 @@ services:
     ports:
       - "8080"
     env_file:
-      - config-env/tb-web-ui.env
+      - ../config-env/tb-web-ui.env
   tb-web-ui2:
     restart: always
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "8080"
     env_file:
-      - config-env/tb-web-ui.env
+      - ../config-env/tb-web-ui.env
   tb-vc-executor1:
     restart: always
     image: "${DOCKER_REPO}/${TB_VC_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
@@ -271,10 +271,10 @@ services:
       TB_SERVICE_ID: tb-vc-executor1
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-vc-executor.env
+      - ../config-env/tb-vc-executor.env
     volumes:
-      - ./tb-vc-executor/conf:/config
-      - ./tb-vc-executor/log:/var/log/tb-vc-executor
+      - ../tb-vc-executor/conf:/config
+      - ../tb-vc-executor/log:/var/log/tb-vc-executor
     depends_on:
       - zookeeper
       - tb-core1
@@ -288,10 +288,10 @@ services:
       TB_SERVICE_ID: tb-vc-executor2
       JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
-      - config-env/tb-vc-executor.env
+      - ../config-env/tb-vc-executor.env
     volumes:
-      - ./tb-vc-executor/conf:/config
-      - ./tb-vc-executor/log:/var/log/tb-vc-executor
+      - ../tb-vc-executor/conf:/config
+      - ../tb-vc-executor/log:/var/log/tb-vc-executor
     depends_on:
       - zookeeper
       - tb-core1
@@ -301,9 +301,9 @@ services:
     container_name: "${LOAD_BALANCER_NAME}"
     image: thingsboard/haproxy-certbot:2.2.33-alpine
     volumes:
-     - ./haproxy/config:/config
-     - ./haproxy/letsencrypt:/etc/letsencrypt
-     - ./haproxy/certs.d:/usr/local/etc/haproxy/certs.d
+     - ../haproxy/config:/config
+     - ../haproxy/letsencrypt:/etc/letsencrypt
+     - ../haproxy/certs.d:/usr/local/etc/haproxy/certs.d
     ports:
      - "80:80"
      - "443:443"
