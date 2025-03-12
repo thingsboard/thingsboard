@@ -26,17 +26,34 @@ import {
   HereMapLayerSettings,
   MapLayerSettings,
   MapProvider,
-  OpenStreetMapLayerSettings,
+  OpenStreetMapLayerSettings, ReferenceLayerType,
   TencentMapLayerSettings
 } from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { mergeDeep } from '@core/utils';
-import { Observable, of, switchMap } from 'rxjs';
+import { Observable, of, shareReplay, switchMap } from 'rxjs';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import L from 'leaflet';
 import { catchError, map } from 'rxjs/operators';
 import { ResourcesService } from '@core/services/resources.service';
+import { StyleSpecification, VectorSourceSpecification } from '@maplibre/maplibre-gl-style-spec';
+import { ResourceType } from 'maplibre-gl';
+
+const referenceLayerStyleUrlMap = new Map<ReferenceLayerType, string>(
+  [
+    [ReferenceLayerType.openstreetmap_hybrid, '/assets/map/openstreetmap_hybrid_reference_style.json'],
+    [ReferenceLayerType.world_edition_hybrid, '/assets/map/world_edition_hybrid_reference_style.json']
+  ]
+);
+
+const referenceLayerCache = new Map<ReferenceLayerType, Observable<StyleSpecification>>();
+
+interface TbMapLayerData {
+  layer: L.Layer;
+  attribution: boolean;
+  onAdd?: () => void;
+}
 
 export abstract class TbMapLayer<S extends MapLayerSettings> {
 
@@ -65,19 +82,23 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
   }
 
   public loadLayer(theMap: L.Map): Observable<L.TB.LayerData> {
-    return this.createLayer().pipe(
-      switchMap((layer) => {
-        if (layer) {
-          return this.createLayer().pipe(
-            map((mini) => {
-              if (mini) {
-                const attribution = layer.getAttribution();
-                const attributionPrefix = attribution ? theMap.attributionControl.options.prefix as string : null;
+    return this.generateLayer().pipe(
+      switchMap((layerData) => {
+        if (layerData) {
+          return this.generateLayer().pipe(
+            map((miniLayerData) => {
+              if (miniLayerData) {
+                const attributionPrefix = layerData.attribution ? theMap.attributionControl.options.prefix as string : null;
                 return {
                   title: this.title(),
                   attributionPrefix: attributionPrefix,
-                  layer,
-                  mini
+                  layer: layerData.layer,
+                  mini: miniLayerData.layer,
+                  onAdd: () => {
+                    if (layerData.onAdd) {
+                      layerData.onAdd();
+                    }
+                  }
                 };
               } else {
                 return null;
@@ -87,6 +108,69 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
         } else {
           return of(null);
         }
+      })
+    );
+  }
+
+  private generateLayer(): Observable<TbMapLayerData> {
+    return this.createLayer().pipe(
+      switchMap((baseLayer) => {
+        if (baseLayer) {
+          if (this.settings.referenceLayer) {
+            return this.loadReferenceLayer(this.settings.referenceLayer).pipe(
+              map((referenceLayer) => {
+                  if (referenceLayer) {
+                    const layer = L.featureGroup();
+                    baseLayer.addTo(layer);
+                    referenceLayer.addTo(layer);
+                    return {
+                      layer,
+                      attribution: !!baseLayer.getAttribution() || !!referenceLayer.getAttribution(),
+                      onAdd: () => {
+                        (referenceLayer as any)._update();
+                      }
+                    };
+                  } else {
+                    return {
+                      layer: baseLayer,
+                      attribution: !!baseLayer.getAttribution()
+                    };
+                  }
+              }));
+          } else {
+            return of({
+              layer: baseLayer,
+              attribution: !!baseLayer.getAttribution()
+            });
+          }
+        } else {
+          return of(null);
+        }
+      }
+    ));
+  }
+
+  private loadReferenceLayer(referenceLayer: ReferenceLayerType): Observable<L.Layer> {
+    let spec$ = referenceLayerCache.get(referenceLayer);
+    if (!spec$) {
+      const styleUrl = referenceLayerStyleUrlMap.get(referenceLayer);
+      spec$ = this.ctx.http.get<StyleSpecification>(styleUrl).pipe(
+        shareReplay({
+          bufferSize: 1,
+          refCount: true
+        })
+      );
+      referenceLayerCache.set(referenceLayer, spec$);
+    }
+    return spec$.pipe(
+      map(spec => {
+        const sourceSpec = (spec.sources['esri'] as VectorSourceSpecification);
+        const attribution = sourceSpec.attribution;
+        const gl = L.maplibreGL({
+          style: spec,
+        });
+        gl.options.attribution = attribution;
+        return gl;
       })
     );
   }

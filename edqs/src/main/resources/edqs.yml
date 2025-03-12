@@ -70,8 +70,6 @@ queue:
     stats:
       # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
-      # Statistics printing interval for EDQS
-      print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:300000}"
 
   kafka:
     # Kafka Bootstrap nodes in "host:port" format
