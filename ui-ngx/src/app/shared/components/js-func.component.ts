@@ -561,6 +561,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
         break;
       case 'scriptLanguage':
         this.updatedScriptLanguage();
+        this.updateHighlightRules();
+        this.updateCompleters();
+        this.updateJsWorkerGlobals();
         break;
       case 'disableUndefinedCheck':
       case 'globalVariables':
