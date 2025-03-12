@@ -73,7 +73,11 @@ public class ResourceImportService extends BaseEntityImportService<TbResourceId,
         if (resource.getResourceType() == ResourceType.IMAGE) {
             return new TbResource(imageService.saveImage(resource));
         } else {
-            resource = resourceService.saveResource(resource);
+            if (compareResult.isExternalIdChangedOnly()) {
+                resource = resourceService.saveResource(resource, false);
+            } else {
+                resource = resourceService.saveResource(resource);
+            }
             resource.setData(null);
             resource.setPreview(null);
             return resource;
