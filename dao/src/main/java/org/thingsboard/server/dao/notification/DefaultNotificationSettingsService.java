@@ -186,6 +186,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimitsForSysadmin, sysAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.newPlatformVersion, sysAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.taskProcessingFailure, tenantAdmins.getId());
+            defaultNotifications.create(tenantId, DefaultNotifications.resourcesShortage, sysAdmins.getId());
             return;
         }
 
@@ -220,6 +221,9 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             }
             if (!isNotificationConfigured(tenantId, NotificationType.TASK_PROCESSING_FAILURE)) {
                 defaultNotifications.create(tenantId, DefaultNotifications.taskProcessingFailure, sysAdmins.getId());
+            }
+            if (!isNotificationConfigured(tenantId, NotificationType.RESOURCES_SHORTAGE)) {
+                defaultNotifications.create(tenantId, DefaultNotifications.resourcesShortage, sysAdmins.getId());
             }
         } else {
             var requiredNotificationTypes = List.of(NotificationType.EDGE_CONNECTION, NotificationType.EDGE_COMMUNICATION_FAILURE);

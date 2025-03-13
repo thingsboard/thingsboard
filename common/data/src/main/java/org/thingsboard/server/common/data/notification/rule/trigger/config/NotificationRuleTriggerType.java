@@ -32,7 +32,8 @@ public enum NotificationRuleTriggerType {
     ENTITIES_LIMIT(false),
     API_USAGE_LIMIT(false),
     RATE_LIMITS(false),
-    TASK_PROCESSING_FAILURE(false);
+    TASK_PROCESSING_FAILURE(false),
+    RESOURCES_SHORTAGE(false);
 
     private final boolean tenantLevel;
 
