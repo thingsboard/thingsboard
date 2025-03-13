@@ -171,6 +171,8 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
     const action: GetValueAction = this.getValueSettingsFormGroup.get('action').value;
     if (action === GetValueAction.GET_DASHBOARD_STATE_OBJECT) {
       return 'widget/config/parse_value_get_dashboard_state_object_fn';
+    } else if (action === GetValueAction.GET_DASHBOARD_STATE) {
+      return 'widget/config/parse_value_get_dashboard_state_id_fn';
     }
     return 'widget/lib/rpc/parse_value_fn';
   }
