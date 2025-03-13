@@ -22,6 +22,7 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbCalculatedFieldEntityActorId;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
@@ -178,6 +180,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         EntityId entityId = msg.getEntityId();
         EntityId profileId = getProfileId(tenantId, entityId);
         cfEntityCache.add(tenantId, profileId, entityId);
+        if (!isMyPartition(entityId, callback)) {
+            return;
+        }
         var entityIdFields = getCalculatedFieldsByEntityId(entityId);
         var profileIdFields = getCalculatedFieldsByEntityId(profileId);
         var fieldsCount = entityIdFields.size() + profileIdFields.size();
@@ -193,6 +198,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void onEntityUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
         if (msg.getOldProfileId() != null && msg.getOldProfileId() != msg.getProfileId()) {
             cfEntityCache.update(tenantId, msg.getOldProfileId(), msg.getProfileId(), msg.getEntityId());
+            if (!isMyPartition(msg.getEntityId(), callback)) {
+                return;
+            }
             var oldProfileCfs = getCalculatedFieldsByEntityId(msg.getOldProfileId());
             var newProfileCfs = getCalculatedFieldsByEntityId(msg.getProfileId());
             var fieldsCount = oldProfileCfs.size() + newProfileCfs.size();
@@ -209,8 +217,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void onEntityDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         cfEntityCache.evict(tenantId, msg.getEntityId());
-        log.info("Pushing entity lifecycle msg to specific actor [{}]", msg.getEntityId());
-        getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
+        if (isMyPartition(msg.getEntityId(), callback)) {
+            log.info("Pushing entity lifecycle msg to specific actor [{}]", msg.getEntityId());
+            getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
+        }
     }
 
     private void onCfCreated(ComponentLifecycleMsg msg, TbCallback callback) throws CalculatedFieldException {
@@ -311,7 +321,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     callback.onSuccess();
                 }
             } else {
-                deleteCfForEntity(entityId, cfId, callback);
+                if (isMyPartition(entityId, callback)) {
+                    deleteCfForEntity(entityId, cfId, callback);
+                }
             }
         }
     }
@@ -418,7 +430,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 callback.onSuccess();
             }
         } else {
-            initCfForEntity(entityId, cfCtx, forceStateReinit, callback);
+            if (isMyPartition(entityId, callback)) {
+                initCfForEntity(entityId, cfCtx, forceStateReinit, callback);
+            }
         }
     }
 
@@ -430,6 +444,15 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void initCfForEntity(EntityId entityId, CalculatedFieldCtx cfCtx, boolean forceStateReinit, TbCallback callback) {
         log.info("Pushing entity init CF msg to specific actor [{}]", entityId);
         getOrCreateActor(entityId).tell(new EntityInitCalculatedFieldMsg(tenantId, cfCtx, callback, forceStateReinit));
+    }
+
+    private boolean isMyPartition(EntityId entityId, TbCallback callback) {
+        if (!systemContext.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId).isMyPartition()) {
+            log.debug("[{}] Entity belongs to external partition.", entityId);
+            callback.onSuccess();
+            return false;
+        }
+        return true;
     }
 
     private static boolean isProfileEntity(EntityType entityType) {
