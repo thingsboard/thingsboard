@@ -7910,7 +7910,8 @@
                     "reference-layer": "Reference layer",
                     "no-layer": "No layer",
                     "openstreetmap-hybrid": "OpenStreetMap Hybrid",
-                    "world-edition-hybrid": "World Edition Hybrid"
+                    "world-edition-hybrid": "World Edition Hybrid",
+                    "enhanced-contrast-hybrid": "Enhanced Contrast Hybrid"
                 },
                 "provider": {
                     "provider": "Provider",
