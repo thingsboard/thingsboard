@@ -6667,10 +6667,10 @@ leaflet-rotatedmarker@^0.2.0:
   resolved "https://registry.yarnpkg.com/leaflet-rotatedmarker/-/leaflet-rotatedmarker-0.2.0.tgz#4467f49f98d1bfd56959bd9c6705203dd2601277"
   integrity sha512-yc97gxLXwbZa+Gk9VCcqI0CkvIBC9oNTTjFsHqq4EQvANrvaboib4UdeQLyTnEqDpaXHCqzwwVIDHtvz2mUiDg==
 
-leaflet.gridlayer.googlemutant@0.14.1:
-  version "0.14.1"
-  resolved "https://registry.yarnpkg.com/leaflet.gridlayer.googlemutant/-/leaflet.gridlayer.googlemutant-0.14.1.tgz#c282209aa1a39eb2f87d8aaa4e9894181c9e20a0"
-  integrity sha512-/OYxEjmgxO1U1KOhTzg+m8c0b95J0943LU8DXQmdJu/x2f+1Ur78rvEPO2QCS0cmwZ3m6FvE5I3zXnBzJNWRCA==
+leaflet.gridlayer.googlemutant@0.15.0:
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/leaflet.gridlayer.googlemutant/-/leaflet.gridlayer.googlemutant-0.15.0.tgz#7a32d949578695b8aa8fa5fd11b40bd7a6ce6c23"
+  integrity sha512-kA5jCOBhCPigyue6YpZMhXMVYA1hM2pDIaJ6u0wSSiSZ2TQ4kZfKuhwkIexcadJfs0BP4FyhZIDZC7hmTlvjOA==
 
 leaflet.markercluster@1.5.3:
   version "1.5.3"
