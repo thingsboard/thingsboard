@@ -1177,6 +1177,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       case WidgetMobileActionType.scanQrCode:
       case WidgetMobileActionType.getLocation:
       case WidgetMobileActionType.takeScreenshot:
+      case WidgetMobileActionType.deviceProvision:
         argsObservable = of([]);
         break;
       case WidgetMobileActionType.mapDirection:
@@ -1255,6 +1256,26 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                             next: (compiled) => {
                               try {
                                 compiled.execute(imageUrl, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                              } catch (e) {
+                                console.error(e);
+                              }
+                            },
+                            error: (err) => {
+                              console.error(err);
+                            }
+                          }
+                        );
+                      }
+                      break;
+                    case WidgetMobileActionType.deviceProvision:
+                      const deviceName = actionResult.deviceName;
+                      if (isNotEmptyTbFunction(mobileAction.handleProvisionSuccessFunction)) {
+                        compileTbFunction(this.http, mobileAction.handleProvisionSuccessFunction, 'deviceName', '$event', 'widgetContext', 'entityId',
+                          'entityName', 'additionalParams', 'entityLabel').subscribe(
+                          {
+                            next: (compiled) => {
+                              try {
+                                compiled.execute(deviceName, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
                               } catch (e) {
                                 console.error(e);
                               }

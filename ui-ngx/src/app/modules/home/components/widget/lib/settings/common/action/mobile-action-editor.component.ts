@@ -27,7 +27,7 @@ import {
   WidgetActionType,
   WidgetMobileActionDescriptor,
   WidgetMobileActionType,
-  widgetMobileActionTypeTranslationMap
+  widgetMobileActionTypeTranslationMap,
 } from '@shared/models/widget.models';
 import { CustomActionEditorCompleter } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import {
@@ -38,7 +38,8 @@ import {
   getDefaultProcessImageFunction,
   getDefaultProcessLaunchResultFunction,
   getDefaultProcessLocationFunction,
-  getDefaultProcessQrCodeFunction
+  getDefaultProcessQrCodeFunction,
+  getDefaultProvisionSuccessFunction
 } from '@home/components/widget/lib/settings/common/action/mobile-action-editor.models';
 import { WidgetService } from '@core/http/widget.service';
 import { TbFunction } from '@shared/models/js-function.models';
@@ -254,6 +255,18 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
             this.fb.control(processLocationFunction, [Validators.required])
           );
           break;
+        case WidgetMobileActionType.deviceProvision:
+          let handleProvisionSuccessFunction = action?.handleProvisionSuccessFunction;
+          if (changed) {
+            const defaultProvisionSuccessFunction = getDefaultProvisionSuccessFunction();
+            if (defaultProvisionSuccessFunction !== handleProvisionSuccessFunction) {
+              handleProvisionSuccessFunction = defaultProvisionSuccessFunction;
+            }
+          }
+          this.mobileActionTypeFormGroup.addControl(
+            'handleProvisionSuccessFunction',
+            this.fb.control(handleProvisionSuccessFunction, [Validators.required])
+          );
       }
     }
     this.mobileActionTypeFormGroup.valueChanges.pipe(
