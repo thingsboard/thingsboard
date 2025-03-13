@@ -77,7 +77,7 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         }
     }
 
-    private void scheduleStatsPersistTick() {
+    void scheduleStatsPersistTick() {
         try {
             this.statsScheduledFuture = processor.scheduleStatsPersistTick(ctx, systemContext.getStatisticsPersistFrequency());
         } catch (Exception e) {
