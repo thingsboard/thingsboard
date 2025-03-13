@@ -570,6 +570,26 @@ export interface LegendData {
   data: Array<LegendKeyData>;
 }
 
+export enum WidgetHeaderActionButtonType {
+  basic = 'basic',
+  raised = 'raised',
+  stroked = 'stroked',
+  flat = 'flat',
+  icon = 'icon',
+  miniFab = 'miniFab'
+}
+
+export const WidgetHeaderActionButtonTypes = Object.keys(WidgetHeaderActionButtonType) as WidgetHeaderActionButtonType[];
+
+export const widgetHeaderActionButtonTypeTranslationMap = new Map<WidgetHeaderActionButtonType, string>([
+  [WidgetHeaderActionButtonType.basic, 'widget-config.header-button.button-type-basic'],
+  [WidgetHeaderActionButtonType.raised, 'widget-config.header-button.button-type-raised'],
+  [WidgetHeaderActionButtonType.stroked, 'widget-config.header-button.button-type-stroked'],
+  [WidgetHeaderActionButtonType.flat, 'widget-config.header-button.button-type-flat'],
+  [WidgetHeaderActionButtonType.icon, 'widget-config.header-button.button-type-icon'],
+  [WidgetHeaderActionButtonType.miniFab, 'widget-config.header-button.button-type-mini-fab']
+]);
+
 export enum WidgetActionType {
   doNothing = 'doNothing',
   openDashboardState = 'openDashboardState',
@@ -754,7 +774,13 @@ export interface WidgetAction extends CustomActionDescriptor {
 export interface WidgetActionDescriptor extends WidgetAction {
   id: string;
   name: string;
+  buttonType?: WidgetHeaderActionButtonType;
+  showIcon?: boolean;
   icon: string;
+  buttonColor?: string;
+  buttonFillColor?: string;
+  buttonBorderColor?: string;
+  customButtonStyle?: string;
   displayName?: string;
   useShowWidgetActionFunction?: boolean;
   showWidgetActionFunction?: TbFunction;
@@ -765,7 +791,13 @@ export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): Wi
   const result: WidgetActionDescriptor = {...descriptor};
   delete result.id;
   delete result.name;
+  delete result.buttonType;
+  delete result.showIcon;
   delete result.icon;
+  delete result.buttonColor;
+  delete result.buttonFillColor;
+  delete result.buttonBorderColor;
+  delete result.customButtonStyle;
   delete result.displayName;
   delete result.useShowWidgetActionFunction;
   delete result.showWidgetActionFunction;
