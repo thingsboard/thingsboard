@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rpc.RpcError;
-import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -234,7 +233,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                 List<QueueKey> toRemove = consumers.keySet().stream()
                         .filter(queueKey -> queueKey.getTenantId().equals(event.getTenantId()))
-                        .collect(Collectors.toList());
+                        .toList();
                 toRemove.forEach(queueKey -> {
                     removeConsumer(queueKey).ifPresent(consumer -> consumer.delete(false));
                 });

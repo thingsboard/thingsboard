@@ -1674,14 +1674,12 @@ message ToEdgeEventNotificationMsg {
 }
 
 message ToCalculatedFieldMsg {
-  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
-  CalculatedFieldTelemetryMsgProto telemetryMsg = 2;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 3;
+  CalculatedFieldTelemetryMsgProto telemetryMsg = 1;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
 }
 
 message ToCalculatedFieldNotificationMsg {
-  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 1;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
