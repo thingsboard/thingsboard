@@ -17,12 +17,15 @@
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DataLayerColorSettings, DataLayerColorType } from '@shared/models/widget/maps/map.models';
+import { DataLayerColorSettings, DataLayerColorType, MapType } from '@shared/models/widget/maps/map.models';
+import { DataKey, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
   selector: 'tb-data-layer-color-settings-panel',
@@ -33,8 +36,24 @@ import { DataLayerColorSettings, DataLayerColorType } from '@shared/models/widge
 })
 export class DataLayerColorSettingsPanelComponent extends PageComponent implements OnInit {
 
+  widgetType = widgetType;
+
+  DataKeyType = DataKeyType;
+
   @Input()
   colorSettings: DataLayerColorSettings;
+
+  @Input()
+  context: MapSettingsContext;
+
+  @Input()
+  dsType: DatasourceType;
+
+  @Input()
+  dsEntityAliasId: string;
+
+  @Input()
+  dsDeviceId: string;
 
   @Input()
   helpId = 'widget/lib/map/color_fn';
@@ -63,14 +82,18 @@ export class DataLayerColorSettingsPanelComponent extends PageComponent implemen
       {
         type: [this.colorSettings?.type || DataLayerColorType.constant, []],
         color: [this.colorSettings?.color, []],
+        rangeKey: [this.colorSettings?.rangeKey, [Validators.required]],
+        range: [this.colorSettings?.range, []],
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
     this.colorSettingsFormGroup.get('type').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
+      this.updateValidators();
       setTimeout(() => {this.popover?.updatePosition();}, 0);
     });
+    this.updateValidators();
   }
 
   cancel() {
@@ -82,4 +105,25 @@ export class DataLayerColorSettingsPanelComponent extends PageComponent implemen
     this.colorSettingsApplied.emit(colorSettings);
   }
 
+  public editRangeKey() {
+    const targetDataKey: DataKey = this.colorSettingsFormGroup.get('rangeKey').value;
+    this.context.editKey(targetDataKey,
+      this.dsDeviceId, this.dsEntityAliasId, widgetType.latest).subscribe(
+      (updatedDataKey) => {
+        if (updatedDataKey) {
+          this.colorSettingsFormGroup.get('rangeKey').patchValue(updatedDataKey);
+          this.colorSettingsFormGroup.markAsDirty();
+        }
+      }
+    );
+  }
+
+  private updateValidators() {
+    const type: DataLayerColorType = this.colorSettingsFormGroup.get('type').value;
+    if (type === DataLayerColorType.range) {
+      this.colorSettingsFormGroup.get('rangeKey').enable({emitEvent: false});
+    } else {
+      this.colorSettingsFormGroup.get('rangeKey').disable({emitEvent: false});
+    }
+  }
 }

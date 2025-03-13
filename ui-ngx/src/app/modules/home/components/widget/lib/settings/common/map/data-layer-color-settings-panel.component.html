@@ -22,6 +22,9 @@
       <tb-toggle-option [value]="DataLayerColorType.constant">
         {{ 'widgets.maps.data-layer.color-type-constant' | translate }}
       </tb-toggle-option>
+      <tb-toggle-option [value]="DataLayerColorType.range">
+        {{ 'widgets.maps.data-layer.color-type-range' | translate }}
+      </tb-toggle-option>
       <tb-toggle-option [value]="DataLayerColorType.function">
         {{ 'widgets.maps.data-layer.color-type-function' | translate }}
       </tb-toggle-option>
@@ -34,6 +37,35 @@
     </tb-color-input>
   </div>
   <div class="tb-data-layer-color-settings-panel-body" [class.!hidden]="colorSettingsFormGroup.get('type').value !== DataLayerColorType.constant">
+  </div>
+  <div class="tb-data-layer-color-settings-panel-body" [class.!hidden]="colorSettingsFormGroup.get('type').value !== DataLayerColorType.range">
+    <tb-data-key-input
+      inlineField="false"
+      appearance="outline"
+      subscriptSizing="fixed"
+      label="{{ 'widgets.maps.data-layer.color-range-source-key' | translate }}"
+      required
+      requiredText="{{ 'widgets.maps.data-layer.color-range-source-key-required' }}"
+      [datasourceType]="dsType"
+      [entityAliasId]="dsEntityAliasId"
+      [deviceId]="dsDeviceId"
+      [aliasController]="context.aliasController"
+      [widgetType]="widgetType.latest"
+      [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+      [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="context.callbacks"
+      [generateKey]="context.generateDataKey"
+      (keyEdit)="editRangeKey()"
+      formControlName="rangeKey">
+    </tb-data-key-input>
+    <div class="tb-form-panel stroked">
+      <div translate>widgets.maps.data-layer.color-range</div>
+      <tb-color-range-list class="tb-color-ranges-panel"
+                           simpleRange
+                           formControlName="range"
+                           [popover]="popover">
+      </tb-color-range-list>
+    </div>
   </div>
   <div class="tb-data-layer-color-settings-panel-body" [class.!hidden]="colorSettingsFormGroup.get('type').value !== DataLayerColorType.function">
     <ng-container *ngTemplateOutlet="function"></ng-container>
