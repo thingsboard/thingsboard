@@ -95,7 +95,7 @@ interface MarkerIconContainerDefinition {
   iconSize: number;
   iconColor: (color: tinycolor.Instance) => tinycolor.Instance;
   iconAlpha: (color: tinycolor.Instance) => number;
-  appendIcon?: (svgElement: SVGElement, iconElement: Element) => void;
+  appendIcon?: (svgElement: SVGElement, iconElement: Element, iconSize: number) => void;
 }
 
 const emptyIconContainerDefinition: MarkerIconContainerDefinition = {
@@ -114,14 +114,16 @@ const defaultTripIconContainerDefinition: MarkerIconContainerDefinition = {
   iconSize: 24,
   iconColor: () => tinycolor('#000'),
   iconAlpha: () => 1,
-  appendIcon: (svgElement, iconElement) => {
+  appendIcon: (svgElement, iconElement, iconSize) => {
     const box = iconElement.bbox();
+    const cx =  iconSize/2 + box.x;
+    const cy =  iconSize/2 + box.y;
     let elements = svgElement.getElementsByClassName('icon-mask-exclude');
     if (elements.length) {
       elements = elements[0].getElementsByClassName('marker-icon-container');
       if (elements.length) {
         const iconContainer = new G(elements[0] as SVGGElement);
-        iconContainer.add(iconElement.clone().fill('#000').translate(-box.cx, -box.cy));
+        iconContainer.add(iconElement.clone().fill('#000').translate(-cx, -cy));
       }
     }
     elements = svgElement.getElementsByClassName('icon-mask-overlay');
@@ -129,7 +131,7 @@ const defaultTripIconContainerDefinition: MarkerIconContainerDefinition = {
       elements = elements[0].getElementsByClassName('marker-icon-container');
       if (elements.length) {
         const iconContainer = new G(elements[0] as SVGGElement);
-        iconContainer.add(iconElement.clone().fill('#fff').translate(-box.cx, -box.cy));
+        iconContainer.add(iconElement.clone().fill('#fff').translate(-cx, -cy));
       }
     }
   }
@@ -302,14 +304,14 @@ export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domS
           if (svgElement) {
             if (iconElement) {
               if (definition.appendIcon) {
-                definition.appendIcon(svgElement, iconElement);
+                definition.appendIcon(svgElement, iconElement, iconSize);
               } else {
                 const elements = svgElement.getElementsByClassName('marker-icon-container');
                 if (elements.length) {
                   const iconContainer = new G(elements[0] as SVGGElement);
                   iconContainer.add(iconElement);
                   const box = iconElement.bbox();
-                  iconElement.translate(-box.cx, -box.cy);
+                  iconElement.translate(-(iconSize/2 + box.x), -(iconSize/2 + box.y));
                 }
               }
             }
@@ -321,7 +323,7 @@ export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domS
             iconContainer.translate(iconSize/2,iconSize/2);
             iconContainer.add(iconElement);
             const box = iconElement.bbox();
-            iconElement.translate(-box.cx, -box.cy);
+            iconElement.translate(-(iconSize/2 + box.x), -(iconSize/2 + box.y));
             svg.add(iconContainer);
             return svg.node;
           }
