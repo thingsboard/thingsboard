@@ -30,29 +30,27 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class AbstractRedisClusterContainer {
 
-    static final String nodes = "127.0.0.1:6371,127.0.0.1:6372,127.0.0.1:6373,127.0.0.1:6374,127.0.0.1:6375,127.0.0.1:6376";
-    static Map<String,String> envs = Map.of(
+    static final String NODES = "127.0.0.1:6371,127.0.0.1:6372,127.0.0.1:6373,127.0.0.1:6374,127.0.0.1:6375,127.0.0.1:6376";
+    static final String IMAGE = "bitnami/valkey-cluster:8.0";
+    static final Map<String,String> ENVS = Map.of(
             "VALKEY_CLUSTER_ANNOUNCE_IP", "127.0.0.1",
             "VALKEY_CLUSTER_DYNAMIC_IPS", "no",
             "ALLOW_EMPTY_PASSWORD", "yes",
-            "VALKEY_NODES", nodes
-            
+            "VALKEY_NODES", NODES
     ); 
-    
-    @ClassRule(order = 0)
-    public static Network network = Network.newNetwork();
+
     @ClassRule(order = 1)
-    public static GenericContainer redis1 = new GenericContainer("bitnami/valkey-cluster:8.0").withEnv(envs).withEnv("VALKEY_PORT_NUMBER", "6371").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer redis1 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6371").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 2)
-    public static GenericContainer redis2 = new GenericContainer("bitnami/valkey-cluster:8.0").withEnv(envs).withEnv("VALKEY_PORT_NUMBER", "6372").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer redis2 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6372").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 3)
-    public static GenericContainer redis3 = new GenericContainer("bitnami/valkey-cluster:8.0").withEnv(envs).withEnv("VALKEY_PORT_NUMBER", "6373").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer redis3 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6373").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 4)
-    public static GenericContainer redis4 = new GenericContainer("bitnami/valkey-cluster:8.0").withEnv(envs).withEnv("VALKEY_PORT_NUMBER", "6374").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer redis4 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6374").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 5)
-    public static GenericContainer redis5 = new GenericContainer("bitnami/valkey-cluster:8.0").withEnv(envs).withEnv("VALKEY_PORT_NUMBER", "6375").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer redis5 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6375").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
     @ClassRule(order = 6)
-    public static GenericContainer redis6 = new GenericContainer("bitnami/valkey-cluster:8.0").withEnv(envs).withEnv("VALKEY_PORT_NUMBER", "6376").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    public static GenericContainer redis6 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6376").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
 
 
     @ClassRule(order = 100)
@@ -68,23 +66,18 @@ public class AbstractRedisClusterContainer {
 
             Thread.sleep(TimeUnit.SECONDS.toMillis(5)); // otherwise not all containers have time to start
 
-            redis6.execInContainer("/bin/sh", "-c", "printenv | grep VALKEY"); //"sleep infinity"
-
-            String clusterCreateCommand = "" +
-                    "valkey-cli --cluster create " +nodes.replace(","," ") + " --cluster-replicas 1 --cluster-yes" +
-                    "";
+            String clusterCreateCommand = "valkey-cli --cluster create " + NODES.replace(","," ") + " --cluster-replicas 1 --cluster-yes";
             log.warn("Command to init ValKey Cluster: {}", clusterCreateCommand);
-            var result = redis6.execInContainer("/bin/sh", "-c", clusterCreateCommand); //"sleep infinity"
-//            result.wait(TimeUnit.SECONDS.toMillis(300));
+            var result = redis6.execInContainer("/bin/sh", "-c", clusterCreateCommand);
             log.warn("Init cluster result: {}", result);
             Assertions.assertThat(result.getExitCode()).isEqualTo(0);
 
             Thread.sleep(TimeUnit.SECONDS.toMillis(5)); // otherwise cluster not always ready
 
-            log.warn("Connect to nodes: {}", nodes);
+            log.warn("Connect to nodes: {}", NODES);
             System.setProperty("cache.type", "redis");
             System.setProperty("redis.connection.type", "cluster");
-            System.setProperty("redis.cluster.nodes", nodes);
+            System.setProperty("redis.cluster.nodes", NODES);
             System.setProperty("redis.cluster.useDefaultPoolConfig", "false");
         }
 
