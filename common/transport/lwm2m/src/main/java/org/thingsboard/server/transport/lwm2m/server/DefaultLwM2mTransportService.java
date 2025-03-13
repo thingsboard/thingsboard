@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
+import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
@@ -194,8 +195,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
                 root = new CoapResource("");
                 coapServer.add(root);
             }
-            root.add(new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE));
-            root.add(new LwM2mTransportCoapResource(otaPackageDataCache, SOFTWARE_UPDATE_COAP_RESOURCE));
+            root.add(new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE, serverCoapConfig.get(CoapConfig.PREFERRED_BLOCK_SIZE), serverCoapConfig.get(CoapConfig.MAX_RESOURCE_BODY_SIZE)));
+            root.add(new LwM2mTransportCoapResource(otaPackageDataCache, SOFTWARE_UPDATE_COAP_RESOURCE,serverCoapConfig.get(CoapConfig.PREFERRED_BLOCK_SIZE), serverCoapConfig.get(CoapConfig.MAX_RESOURCE_BODY_SIZE)));
         }
         return leshanServer;
     }
