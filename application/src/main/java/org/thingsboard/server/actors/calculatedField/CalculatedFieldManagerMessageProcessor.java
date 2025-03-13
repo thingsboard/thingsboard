@@ -123,7 +123,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
         if (calculatedField != null) {
             msg.getState().setRequiredArguments(calculatedField.getArgNames());
-            log.info("Pushing CF state restore msg to specific actor [{}]", msg.getId().entityId());
+            log.debug("Pushing CF state restore msg to specific actor [{}]", msg.getId().entityId());
             getOrCreateActor(msg.getId().entityId()).tell(msg);
         } else {
             cfStateService.removeState(msg.getId(), msg.getCallback());
@@ -218,7 +218,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void onEntityDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         cfEntityCache.evict(tenantId, msg.getEntityId());
         if (isMyPartition(msg.getEntityId(), callback)) {
-            log.info("Pushing entity lifecycle msg to specific actor [{}]", msg.getEntityId());
+            log.debug("Pushing entity lifecycle msg to specific actor [{}]", msg.getEntityId());
             getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
         }
     }
@@ -437,12 +437,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void deleteCfForEntity(EntityId entityId, CalculatedFieldId cfId, TbCallback callback) {
-        log.info("Pushing delete CF msg to specific actor [{}]", entityId);
+        log.debug("Pushing delete CF msg to specific actor [{}]", entityId);
         getOrCreateActor(entityId).tell(new CalculatedFieldEntityDeleteMsg(tenantId, cfId, callback));
     }
 
     private void initCfForEntity(EntityId entityId, CalculatedFieldCtx cfCtx, boolean forceStateReinit, TbCallback callback) {
-        log.info("Pushing entity init CF msg to specific actor [{}]", entityId);
+        log.debug("Pushing entity init CF msg to specific actor [{}]", entityId);
         getOrCreateActor(entityId).tell(new EntityInitCalculatedFieldMsg(tenantId, cfCtx, callback, forceStateReinit));
     }
 
