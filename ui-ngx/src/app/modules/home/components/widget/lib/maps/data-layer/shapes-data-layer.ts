@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ShapeDataLayerSettings, TbMapDatasource } from '@shared/models/widget/maps/map.models';
+import { DataLayerColorSettings, ShapeDataLayerSettings, TbMapDatasource } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { forkJoin, Observable } from 'rxjs';
@@ -43,6 +43,10 @@ export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L exte
       fillOpacity: 1,
       opacity: 1
     };
+  }
+
+  protected allColorSettings(): DataLayerColorSettings[] {
+    return [this.settings.fillColor, this.settings.strokeColor];
   }
 
   protected doSetup(): Observable<any> {

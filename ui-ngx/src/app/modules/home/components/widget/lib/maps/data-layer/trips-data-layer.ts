@@ -16,16 +16,16 @@
 
 import {
   calculateInterpolationRatio,
-  calculateLastPoints,
+  calculateLastPoints, DataLayerColorSettings, DataLayerColorType,
   defaultBaseTripsDataLayerSettings,
   findRotationAngle,
   interpolateLineSegment,
-  MapDataLayerType,
+  MapDataLayerType, MarkerType,
   TbMapDatasource,
   TripsDataLayerSettings
 } from '@shared/models/widget/maps/map.models';
 import { forkJoin, Observable } from 'rxjs';
-import { FormattedData, WidgetActionType } from '@shared/models/widget.models';
+import { DataKey, FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import { map } from 'rxjs/operators';
 import L from 'leaflet';
 import { deepClone, isDefined, isUndefined } from '@core/utils';
@@ -530,15 +530,38 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
 
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     datasource.dataKeys = [this.settings.xKey, this.settings.yKey];
+    const additionalKeys = this.allColorSettings().filter(settings => settings.type === DataLayerColorType.range && settings.rangeKey)
+                                                  .map(settings => settings.rangeKey);
     if (this.settings.additionalDataKeys?.length) {
-      const tsKeys = this.settings.additionalDataKeys.filter(key => key.type === DataKeyType.timeseries);
-      const latestKeys = this.settings.additionalDataKeys.filter(key => key.type !== DataKeyType.timeseries);
+      additionalKeys.push(...this.settings.additionalDataKeys);
+    }
+    if (additionalKeys.length) {
+      const tsKeys = additionalKeys.filter(key => key.type === DataKeyType.timeseries);
+      const latestKeys = additionalKeys.filter(key => key.type !== DataKeyType.timeseries);
       datasource.dataKeys.push(...tsKeys);
       if (latestKeys.length) {
         datasource.latestDataKeys = latestKeys;
       }
     }
     return datasource;
+  }
+
+  protected allColorSettings(): DataLayerColorSettings[] {
+    const colorSettings: DataLayerColorSettings[] = [];
+    if (this.settings.showMarker) {
+      if (this.settings.markerType === MarkerType.shape) {
+        colorSettings.push(this.settings.markerShape.color);
+      } else if (this.settings.markerType === MarkerType.icon) {
+        colorSettings.push(this.settings.markerIcon.color);
+      }
+    }
+    if (this.settings.showPath) {
+      colorSettings.push(this.settings.pathStrokeColor);
+    }
+    if (this.settings.showPoints) {
+      colorSettings.push(this.settings.pointColor);
+    }
+    return colorSettings;
   }
 
   protected defaultBaseSettings(map: TbMap<any>): Partial<TripsDataLayerSettings> {
