@@ -93,7 +93,7 @@
         </div>
       </mat-chip-row>
       <input matInput type="text" placeholder="{{ !disabled && (!maxDataKeysSet || keys.length < maxDataKeys) ? secondaryPlaceholder : '' }}"
-             [class.tb-dragging]="dragIndex > -1"
+             [class.invisible]="dragIndex > -1"
              style="max-width: 200px;"
              #keyInput
              formControlName="key"
