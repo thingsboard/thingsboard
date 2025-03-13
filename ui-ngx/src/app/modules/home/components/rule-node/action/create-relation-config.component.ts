@@ -81,7 +81,7 @@ export class CreateRelationConfigComponent extends RuleNodeConfigurationComponen
 
   protected updateValidators(emitEvent: boolean) {
     const entityType: EntityType = this.createRelationConfigForm.get('entityType').value;
-    if (entityType) {
+    if (entityType && entityType !== EntityType.TENANT) {
       this.createRelationConfigForm.get('entityNamePattern').setValidators([Validators.required, Validators.pattern(/.*\S.*/)]);
     } else {
       this.createRelationConfigForm.get('entityNamePattern').setValidators([]);
