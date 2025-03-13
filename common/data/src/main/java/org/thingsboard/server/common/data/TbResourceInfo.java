@@ -168,7 +168,7 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         if (!Objects.equals(resourceKey, that.resourceKey)) return false;
         if (!Objects.equals(publicResourceKey, that.publicResourceKey))
             return false;
-        if (!Objects.equals(searchText, that.searchText)) return false;
+        if (!Objects.equals(getSearchText(), that.getSearchText())) return false;
         if (!Objects.equals(etag, that.etag)) return false;
         if (!Objects.equals(fileName, that.fileName)) return false;
         if (!Objects.equals(descriptor, that.descriptor)) {

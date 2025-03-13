@@ -141,7 +141,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     @Data
     @AllArgsConstructor
-    protected static class CompareResult {
+    static class CompareResult {
         private boolean updateNeeded;
         private boolean externalIdChangedOnly;
 
@@ -162,13 +162,17 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     protected abstract E prepare(EntitiesImportCtx ctx, E entity, E oldEntity, D exportData, IdProvider idProvider);
 
     protected CompareResult compare(EntitiesImportCtx ctx, D exportData, E prepared, E existing) {
+        if (existing == null) {
+            log.debug("[{}] Found new entity.", prepared.getId());
+            return new CompareResult(true);
+        }
         var newCopy = deepCopy(prepared);
         var existingCopy = deepCopy(existing);
         cleanupForComparison(newCopy);
         cleanupForComparison(existingCopy);
-        var entityChanged = !newCopy.equals(existingCopy);
+        var updateNeeded = isUpdateNeeded(ctx, exportData, newCopy, existingCopy);
         boolean externalIdChangedOnly = false;
-        if (entityChanged) {
+        if (updateNeeded) {
             log.debug("[{}] Found update.", prepared.getId());
             log.debug("[{}] From: {}", prepared.getId(), newCopy);
             log.debug("[{}] To: {}", prepared.getId(), existingCopy);
@@ -176,7 +180,11 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
             cleanupExternalId(existingCopy);
             externalIdChangedOnly = newCopy.equals(existingCopy);
         }
-        return new CompareResult(existing == null || entityChanged, externalIdChangedOnly);
+        return new CompareResult(updateNeeded, externalIdChangedOnly);
+    }
+
+    protected boolean isUpdateNeeded(EntitiesImportCtx ctx, D exportData, E prepared, E existing) {
+        return !prepared.equals(existing);
     }
 
     protected abstract E deepCopy(E e);
