@@ -24,7 +24,6 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.io.Serial;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
