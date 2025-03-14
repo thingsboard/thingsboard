@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import static org.thingsboard.server.common.data.relation.EntityRelation.USES_TYPE;
+import static org.thingsboard.server.dao.rule.BaseRuleChainService.TB_RULE_CHAIN_INPUT_NODE;
 
 @Service
 @Profile("install")
@@ -98,28 +98,22 @@ public class DefaultDataUpdateService implements DataUpdateService {
         protected void updateEntity(Tenant tenant) {
             TenantId tenantId = tenant.getId();
             try {
-                var inputNodes = ruleChainService.findRuleNodesByTenantIdAndType(tenantId, "org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+                var inputNodes = ruleChainService.findRuleNodesByTenantIdAndType(tenantId, TB_RULE_CHAIN_INPUT_NODE);
                 var resultFutures = inputNodes.stream().map(ruleNode -> {
                     try {
                         JsonNode id = ruleNode.getConfiguration().get("ruleChainId");
                         if (id != null) {
                             RuleChainId toRuleChainId = new RuleChainId(UUID.fromString(id.asText()));
                             RuleChainId fromRuleChainId = ruleNode.getRuleChainId();
-                            var isExistFuture = relationService.checkRelationAsync(null, fromRuleChainId, toRuleChainId, USES_TYPE, RelationTypeGroup.COMMON);
-                            Futures.transformAsync(isExistFuture, isExist -> {
-                                if (!isExist) {
-                                    EntityRelation relation = new EntityRelation();
-                                    relation.setFrom(fromRuleChainId);
-                                    relation.setTo(toRuleChainId);
-                                    relation.setType(EntityRelation.USES_TYPE);
-                                    relation.setTypeGroup(RelationTypeGroup.COMMON);
-                                    return relationService.saveRelationAsync(tenantId, relation);
-                                }
-                                return Futures.immediateFuture(null);
-                            }, executorService);
+                            EntityRelation relation = new EntityRelation();
+                            relation.setFrom(fromRuleChainId);
+                            relation.setTo(toRuleChainId);
+                            relation.setType(EntityRelation.USES_TYPE);
+                            relation.setTypeGroup(RelationTypeGroup.COMMON);
+                            return relationService.saveRelationAsync(tenantId, relation);
                         }
                     } catch (Exception e) {
-                        log.error("[{}] Create relation for input node: [{}]", tenantId, ruleNode, e);
+                        log.error("[{}] Failed to save relation for input node: [{}]", tenantId, ruleNode, e);
                     }
                     return Futures.immediateFuture(null);
                 }).toList();

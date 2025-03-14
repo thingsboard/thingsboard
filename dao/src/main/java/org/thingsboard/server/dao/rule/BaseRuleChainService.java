@@ -210,7 +210,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         List<RuleNode> existingRuleNodes = getRuleChainNodes(tenantId, ruleChainMetaData.getRuleChainId());
         for (RuleNode existingNode : existingRuleNodes) {
             relationService.deleteEntityRelations(tenantId, existingNode.getId());
-            if (existingNode.getType().equals("org.thingsboard.rule.engine.flow.TbRuleChainInputNode")) {
+            if (existingNode.getType().equals(TB_RULE_CHAIN_INPUT_NODE)) {
                 if (existingNode.getConfiguration().has("ruleChainId")) {
                     RuleChainId targetRuleChainId = extractRuleChainIdFromInputNode(existingNode);
                     var relation = createRuleChainInputRelation(ruleChainId, targetRuleChainId);
@@ -241,7 +241,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-                if (node.getType().equals("org.thingsboard.rule.engine.flow.TbRuleChainInputNode")) {
+                if (node.getType().equals(TB_RULE_CHAIN_INPUT_NODE)) {
                     if (node.getConfiguration().has("ruleChainId")) {
                         RuleChainId targetRuleChainId = extractRuleChainIdFromInputNode(node);
                         var relation = createRuleChainInputRelation(ruleChainId, targetRuleChainId);
@@ -280,7 +280,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     RuleNode targetNode = new RuleNode();
                     targetNode.setName(targetRuleChain != null ? targetRuleChain.getName() : "Rule Chain Input");
                     targetNode.setRuleChainId(ruleChainId);
-                    targetNode.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+                    targetNode.setType(TB_RULE_CHAIN_INPUT_NODE);
                     var configuration = JacksonUtil.newObjectNode();
                     configuration.put("ruleChainId", targetRuleChainId.getId().toString());
                     targetNode.setConfiguration(configuration);

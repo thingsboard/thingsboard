@@ -48,6 +48,7 @@ import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.relation.EntityRelation.USES_TYPE;
+import static org.thingsboard.server.dao.rule.BaseRuleChainService.TB_RULE_CHAIN_INPUT_NODE;
 
 /**
  * Created by igor on 3/13/18.
@@ -377,7 +378,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
 
         RuleNode ruleNode = new RuleNode();
         ruleNode.setName("Input node");
-        ruleNode.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+        ruleNode.setType(TB_RULE_CHAIN_INPUT_NODE);
         ObjectNode configuration = JacksonUtil.newObjectNode();
         configuration.put("ruleChainId", savedToRuleChain.getId().toString());
         ruleNode.setConfiguration(configuration);
@@ -402,7 +403,7 @@ public class RuleChainServiceTest extends AbstractServiceTest {
 
         RuleNode newRuleNode = new RuleNode();
         newRuleNode.setName("Input node");
-        newRuleNode.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+        newRuleNode.setType(TB_RULE_CHAIN_INPUT_NODE);
         ObjectNode newConfiguration = JacksonUtil.newObjectNode();
         configuration.put("ruleChainId", savedNewToRuleChain.getId().toString());
         newRuleNode.setConfiguration(newConfiguration);
