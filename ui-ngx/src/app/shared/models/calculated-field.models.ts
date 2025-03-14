@@ -126,7 +126,7 @@ export const ArgumentTypeTranslations = new Map<ArgumentType, string>(
 export interface CalculatedFieldArgument {
   refEntityKey: RefEntityKey;
   defaultValue?: string;
-  refEntityId?: RefEntityKey;
+  refEntityId?: RefEntityId;
   limit?: number;
   timeWindow?: number;
 }
@@ -137,7 +137,7 @@ export interface RefEntityKey {
   scope?: AttributeScope;
 }
 
-export interface RefEntityKey {
+export interface RefEntityId {
   entityType: ArgumentEntityType;
   id: string;
 }
@@ -538,12 +538,12 @@ export const getCalculatedFieldArgumentsHighlights = (
     regex: `\\b${key}\\b`,
     next: argumentsObj[key].refEntityKey.type === ArgumentType.Rolling
       ? 'calculatedFieldRollingArgumentValue'
-      : 'start'
+      : 'no_regex'
   }));
   const calculatedFieldCtxArgumentsHighlightRules = {
     calculatedFieldCtxArgs: [
       dotOperatorHighlightRule,
-      ...calculatedFieldArgumentsKeys.map(argumentRule => argumentRule.next === 'start' ? {...argumentRule, next: 'calculatedFieldSingleArgumentValue' } : argumentRule),
+      ...calculatedFieldArgumentsKeys.map(argumentRule => argumentRule.next === 'no_regex' ? {...argumentRule, next: 'calculatedFieldSingleArgumentValue' } : argumentRule),
       endGroupHighlightRule
     ]
   };
@@ -638,7 +638,8 @@ const calculatedFieldTimeWindowArgumentValueHighlightRules: AceHighlightRules = 
   ]
 }
 
-export const calculatedFieldDefaultScript = 'return {\n' +
-  '    // Convert Fahrenheit to Celsius\n' +
-  '    "temperatureCelsius": (temperature - 32) / 1.8\n' +
+export const calculatedFieldDefaultScript =
+  '// Sample script to convert temperature readings from Fahrenheit to Celsius\n' +
+  'return {\n' +
+  '    "temperatureC": (temperatureF - 32) / 1.8\n' +
   '};'

@@ -249,8 +249,15 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private importCalculatedField(): void {
-    this.importExportService.importCalculatedField(this.entityId)
-      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+    this.importExportService.openCalculatedFieldImportDialog()
+      .pipe(
+        filter(Boolean),
+        switchMap(calculatedField => this.getCalculatedFieldDialog(calculatedField, 'action.add')),
+        filter(Boolean),
+        switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField(calculatedField)),
+        filter(Boolean),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(() => this.updateData());
   }
 

@@ -107,6 +107,8 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
 
   @Input() globalVariables: Array<string>;
 
+  @Input() helpPopupStyle: Record<string, any> = {};
+
   @Input()
   @coerceBoolean()
   disableUndefinedCheck = false;

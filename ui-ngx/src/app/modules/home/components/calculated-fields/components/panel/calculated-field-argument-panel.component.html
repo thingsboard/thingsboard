@@ -82,6 +82,7 @@
             <div class="fixed-title-width tb-required">{{ ArgumentEntityTypeParamsMap.get(entityType).title | translate }}</div>
             <tb-entity-autocomplete
               class="flex flex-1"
+              #entityAutocomplete
               formControlName="id"
               inlineField
               [placeholder]="'action.set' | translate"
@@ -165,7 +166,7 @@
         </div>
       } @else {
         <div class="tb-form-row">
-          <div class="fixed-title-width">{{ 'calculated-fields.time-window' | translate }}</div>
+          <div class="fixed-title-width tb-required">{{ 'calculated-fields.time-window' | translate }}</div>
           <tb-timeinterval
             subscriptSizing="dynamic"
             appearance="outline"
@@ -175,7 +176,7 @@
         </div>
         @if (maxDataPointsPerRollingArg) {
           <div class="tb-form-row limit-field-row">
-            <div class="fixed-title-width">{{ 'calculated-fields.limit' | translate }}</div>
+            <div class="fixed-title-width tb-required">{{ 'calculated-fields.limit' | translate }}</div>
             <div class="limit-slider-container flex w-full flex-1 flex-row items-center justify-start">
               <mat-slider class="flex-1" min="1" max="{{maxDataPointsPerRollingArg}}">
                 <input matSliderThumb formControlName="limit" [value]="argumentFormGroup.get('limit').value"/>

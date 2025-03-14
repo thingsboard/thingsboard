@@ -97,7 +97,7 @@
                     matTooltipPosition="above">
               <mat-icon
                 [matBadgeHidden]="!(argument.refEntityKey.type === ArgumentType.Rolling
-                          && calculatedFieldType === CalculatedFieldType.SIMPLE)"
+                          && calculatedFieldType === CalculatedFieldType.SIMPLE) && !entityNameErrorSet.has(argument.refEntityId?.id)"
                 matBadgeColor="warn"
                 matBadgeSize="small"
                 matBadge="*"

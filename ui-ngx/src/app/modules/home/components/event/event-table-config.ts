@@ -478,7 +478,12 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     }
     if (contentType === ContentType.JSON && sortKeys) {
       try {
-        content = JSON.stringify(sortObjectKeys(JSON.parse(content)));
+        const parsedContent = JSON.parse(content);
+        if (Array.isArray(parsedContent)) {
+          content = JSON.stringify(parsedContent.map(item => item && typeof item === 'object' ? sortObjectKeys(item) : item));
+        } else {
+          content = JSON.stringify(sortObjectKeys(parsedContent));
+        }
       } catch (e) {}
     }
     this.dialog.open<EventContentDialogComponent, EventContentDialogData>(EventContentDialogComponent, {

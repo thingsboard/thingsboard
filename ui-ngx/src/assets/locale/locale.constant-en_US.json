@@ -1074,7 +1074,8 @@
             "argument-type-required": "Argument type is required.",
             "max-args": "Maximum number of arguments reached.",
             "decimals-range": "Decimals by default should be a number between 0 and 15.",
-            "expression": "Default expression demonstrates how to transform a temperature from Fahrenheit to Celsius."
+            "expression": "Default expression demonstrates how to transform a temperature from Fahrenheit to Celsius.",
+            "arguments-entity-not-found": "Argument target entity not found."
         }
     },
     "confirm-on-exit": {
@@ -5571,12 +5572,12 @@
         "max-calculated-fields": "Calculated fields per entity maximum number",
         "max-calculated-fields-range": "Calculated fields per entity maximum number can't be negative",
         "max-calculated-fields-required": "Calculated fields per entity maximum number is required",
-        "max-data-points-per-rolling-arg": "Maximum data points number in rolling arguments",
-        "max-data-points-per-rolling-arg-range": "Maximum data points number in rolling arguments can't be negative",
-        "max-data-points-per-rolling-arg-required": "Maximum data points number in rolling arguments is required",
-        "max-arguments-per-cf": "Arguments per calculated field maximum number",
-        "max-arguments-per-cf-range": "Arguments per calculated field maximum number can't be negative",
-        "max-arguments-per-cf-required": "Arguments per calculated field maximum number is required",
+        "max-data-points-per-rolling-arg": "Max data points number in rolling arguments",
+        "max-data-points-per-rolling-arg-range": "Max data points number in rolling arguments can't be negative",
+        "max-data-points-per-rolling-arg-required": "Max data points number in rolling arguments is required",
+        "max-arguments-per-cf": "Arguments per calculated field max number",
+        "max-arguments-per-cf-range": "Arguments per calculated field max number can't be negative",
+        "max-arguments-per-cf-required": "Arguments per calculated field max number is required",
         "max-state-size": "State maximum size in KB",
         "max-state-size-range": "State maximum size in KB can't be negative",
         "max-state-size-required": "State maximum size in KB is required",

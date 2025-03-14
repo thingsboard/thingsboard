@@ -58,6 +58,8 @@ import { MatSort } from '@angular/material/sort';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { catchError } from 'rxjs/operators';
+import { NEVER } from 'rxjs';
 
 @Component({
   selector: 'tb-calculated-field-arguments-table',
@@ -88,6 +90,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   errorText = '';
   argumentsFormArray = this.fb.array<AbstractControl>([]);
   entityNameMap = new Map<string, string>();
+  entityNameErrorSet = new Set<string>();
   sortOrder = { direction: 'asc', property: '' };
   dataSource = new CalculatedFieldArgumentDatasource();
 
@@ -168,6 +171,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         buttonTitle: this.argumentsFormArray.at(index)?.value ? 'action.apply' : 'action.add',
         tenantId: this.tenantId,
         entityName: this.entityName,
+        entityHasError: this.entityNameErrorSet.has(argument.refEntityId?.id),
         usedArgumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argument.argumentName),
       };
       this.popoverComponent = this.popoverService.displayPopover(trigger, this.renderer,
@@ -198,6 +202,8 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     if (this.calculatedFieldType === CalculatedFieldType.SIMPLE
       && this.argumentsFormArray.controls.some(control => control.value.refEntityKey.type === ArgumentType.Rolling)) {
       this.errorText = 'calculated-fields.hint.arguments-simple-with-rolling';
+    } else if (this.entityNameErrorSet.size) {
+      this.errorText = 'calculated-fields.hint.arguments-entity-not-found';
     } else if (!this.argumentsFormArray.controls.length) {
       this.errorText = 'calculated-fields.hint.arguments-empty';
     } else {
@@ -234,11 +240,18 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   }
 
   private updateEntityNameMap(value: CalculatedFieldArgumentValue[]): void {
+    this.entityNameErrorSet.clear();
     value.forEach(({ refEntityId = {}}) => {
       if (refEntityId.id && !this.entityNameMap.has(refEntityId.id)) {
         const { id, entityType } = refEntityId as EntityId;
         this.entityService.getEntity(entityType as EntityType, id, { ignoreLoading: true, ignoreErrors: true })
-          .pipe(takeUntilDestroyed(this.destroyRef))
+          .pipe(
+            catchError(() => {
+              this.entityNameErrorSet.add(id);
+              return NEVER;
+            }),
+            takeUntilDestroyed(this.destroyRef)
+          )
           .subscribe(entity => this.entityNameMap.set(id, entity.name));
       }
     });
