@@ -22,7 +22,17 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { CalculatedFieldEventBody, DebugEventType, EventType } from '@shared/models/event.models';
 import { EventTableComponent } from '@home/components/event/event-table.component';
-import { CalculatedFieldDebugDialogData, CalculatedFieldType } from '@shared/models/calculated-field.models';
+import {
+  CalculatedField,
+  CalculatedFieldTestScriptFn,
+  CalculatedFieldType
+} from '@shared/models/calculated-field.models';
+
+export interface CalculatedFieldDebugDialogData {
+  tenantId: string;
+  value: CalculatedField;
+  getTestScriptDialogFn: CalculatedFieldTestScriptFn;
+}
 
 @Component({
   selector: 'tb-calculated-field-debug-dialog',

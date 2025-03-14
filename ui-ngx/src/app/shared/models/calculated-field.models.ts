@@ -148,12 +148,6 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
 
 export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
 
-export interface CalculatedFieldDebugDialogData {
-  tenantId: string;
-  value: CalculatedField;
-  getTestScriptDialogFn: CalculatedFieldTestScriptFn;
-}
-
 export interface CalculatedFieldTestScriptInputParams {
   arguments: CalculatedFieldEventArguments;
   expression: string;

@@ -39,7 +39,6 @@ import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import {
   ArgumentType,
   CalculatedField,
-  CalculatedFieldDebugDialogData,
   CalculatedFieldEventArguments,
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
@@ -47,7 +46,7 @@ import {
   getCalculatedFieldArgumentsHighlights,
 } from '@shared/models/calculated-field.models';
 import {
-  CalculatedFieldDebugDialogComponent,
+  CalculatedFieldDebugDialogComponent, CalculatedFieldDebugDialogData,
   CalculatedFieldDialogComponent,
   CalculatedFieldDialogData,
   CalculatedFieldScriptTestDialogComponent,
