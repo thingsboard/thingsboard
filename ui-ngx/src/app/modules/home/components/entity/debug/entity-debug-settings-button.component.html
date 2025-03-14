@@ -21,7 +21,7 @@
         #matButton
         [class.active]="((isDebugAllActive$ | async) || failuresEnabled) && !disabled"
         [disabled]="disabled"
-        (click)="openDebugStrategyPanel($event, matButton)">
+        (click)="onOpenDebugStrategyPanel($event, matButton)">
   <mat-icon [color]="debugSettingsFormGroup.disabled ? 'inherit' : 'primary'">bug_report</mat-icon>
   @if (isDebugAllActive$ | async) {
     {{ (allEnabled$ | async) === false ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) }}
