@@ -15,9 +15,9 @@
 ///
 
 import { AceHighlightRule } from '@shared/models/ace/ace.models';
-import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import { TbEditorCompleter, TbEditorCompletions } from '@shared/models/ace/completion.models';
 
-export const tbelUtilsAutocompletes = new TbEditorCompleter({
+const tbelEditorCompletions:TbEditorCompletions = {
   btoa: {
     meta: 'function',
     description: 'Encodes a string to Base64.',
@@ -1245,71 +1245,11 @@ export const tbelUtilsAutocompletes = new TbEditorCompleter({
       type: 'boolean'
     }
   },
-});
+}
 
-const tbelUtilsFuncNames = [
-  "btoa",
-  "atob",
-  "bytesToString",
-  "decodeToString",
-  "decodeToJson",
-  "stringToBytes",
-  "parseInt",
-  "parseLong",
-  "parseFloat",
-  "parseHexIntLongToFloat",
-  "parseDouble",
-  "parseLittleEndianHexToInt",
-  "parseBigEndianHexToInt",
-  "parseHexToInt",
-  "parseBytesToInt",
-  "parseLittleEndianHexToLong",
-  "parseBigEndianHexToLong",
-  "parseHexToLong",
-  "parseBytesToLong",
-  "parseLittleEndianHexToFloat",
-  "parseBigEndianHexToFloat",
-  "parseHexToFloat",
-  "parseBytesToFloat",
-  "parseBytesIntToFloat",
-  "parseLittleEndianHexToDouble",
-  "parseBigEndianHexToDouble",
-  "parseHexToDouble",
-  "parseBytesToDouble",
-  "parseBytesLongToDouble",
-  "toFixed",
-  "toInt",
-  "hexToBytes",
-  "hexToBytesArray",
-  "intToHex",
-  "longToHex",
-  "intLongToRadixString",
-  "floatToHex",
-  "doubleToHex",
-  "printUnsignedBytes",
-  "base64ToHex",
-  "hexToBase64",
-  "base64ToBytes",
-  "base64ToBytesList",
-  "bytesToBase64",
-  "bytesToHex",
-  "toFlatMap",
-  "encodeURI",
-  "decodeURI",
-  "raiseError",
-  "isBinary",
-  "isOctal",
-  "isDecimal",
-  "isHexadecimal",
-  "bytesToExecutionArrayList",
-  "padStart",
-  "padEnd",
-  "parseByteToBinaryArray",
-  "parseBytesToBinaryArray",
-  "parseLongToBinaryArray",
-  "parseBinaryArrayToInt",
-  "isNaN",
-];
+export const tbelUtilsAutocompletes = new TbEditorCompleter(tbelEditorCompletions);
+
+const tbelUtilsFuncNames = Object.keys(tbelEditorCompletions);
 
 export const tbelUtilsFuncHighlightRules: Array<AceHighlightRule> =
   tbelUtilsFuncNames.map(funcName => ({
