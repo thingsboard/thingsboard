@@ -115,9 +115,9 @@ const defaultTripIconContainerDefinition: MarkerIconContainerDefinition = {
   iconColor: () => tinycolor('#000'),
   iconAlpha: () => 1,
   appendIcon: (svgElement, iconElement, iconSize) => {
-    const box = iconElement.bbox();
-    const cx =  iconSize/2 + box.x;
-    const cy =  iconSize/2 + box.y;
+    const iconCenter = calculateIconCenter(iconElement, iconSize);
+    const cx =  iconCenter.cx;
+    const cy =  iconCenter.cy;
     let elements = svgElement.getElementsByClassName('icon-mask-exclude');
     if (elements.length) {
       elements = elements[0].getElementsByClassName('marker-icon-container');
@@ -310,8 +310,8 @@ export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domS
                 if (elements.length) {
                   const iconContainer = new G(elements[0] as SVGGElement);
                   iconContainer.add(iconElement);
-                  const box = iconElement.bbox();
-                  iconElement.translate(-(iconSize/2 + box.x), -(iconSize/2 + box.y));
+                  const iconCenter = calculateIconCenter(iconElement, iconSize);
+                  iconElement.translate(-iconCenter.cx, -iconCenter.cy);
                 }
               }
             }
@@ -322,8 +322,8 @@ export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domS
             const iconContainer = new G();
             iconContainer.translate(iconSize/2,iconSize/2);
             iconContainer.add(iconElement);
-            const box = iconElement.bbox();
-            iconElement.translate(-(iconSize/2 + box.x), -(iconSize/2 + box.y));
+            const iconCenter = calculateIconCenter(iconElement, iconSize);
+            iconElement.translate(-iconCenter.cx, -iconCenter.cy);
             svg.add(iconContainer);
             return svg.node;
           }
@@ -343,4 +343,19 @@ export const createPlaceItemIcon = (iconRegistry: MatIconRegistry, domSanitizer:
     shareReplay({refCount: true, bufferSize: 1})
   );
   return placeItemIconURI$;
+}
+
+const calculateIconCenter = (iconElement: Element, iconSize: number): {cx: number, cy: number} => {
+  const box = iconElement.bbox();
+  if (iconElement.type === 'text') {
+    return {
+      cx: iconSize/2 + box.x,
+      cy: iconSize/2 + box.y
+    };
+  } else {
+    return {
+      cx: box.cx,
+      cy: box.cy
+    };
+  }
 }
