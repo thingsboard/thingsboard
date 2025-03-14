@@ -99,9 +99,12 @@ import org.thingsboard.server.service.telemetry.TsData;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -885,16 +888,6 @@ public class TelemetryController extends BaseController {
                 }, executor);
     }
 
-    private static List<String> toDecodedKeysList(String encodedKeys) {
-        List<String> keyList = new ArrayList<>();
-        if (!StringUtils.isEmpty(encodedKeys)) {
-            for (String s : encodedKeys.split(",")) {
-                keyList.add(URLDecoder.decode(s, StandardCharsets.UTF_8));
-            }
-        }
-        return keyList;
-    }
-
     private DeferredResult<ResponseEntity> getImmediateDeferredResult(String message, HttpStatus status) {
         DeferredResult<ResponseEntity> result = new DeferredResult<>();
         result.setResult(new ResponseEntity<>(message, status));
@@ -953,12 +946,14 @@ public class TelemetryController extends BaseController {
         return entry.getValue();
     }
 
+    // the method introduced to deal with keys containing comma
     private static List<String> getKeysFromRequest(HttpServletRequest request) {
         String encodedKeys = UriComponentsBuilder.fromUriString(request.getRequestURL().toString() + "?" + request.getQueryString())
                 .build()
                 .getQueryParams()
                 .getFirst("keys");
-        return toDecodedKeysList(encodedKeys);
+        return StringUtils.isNotEmpty(encodedKeys) ? Arrays.stream(encodedKeys.split(","))
+                .map(k -> URLDecoder.decode(k, StandardCharsets.UTF_8)).toList() : Collections.emptyList();
     }
 
 }
