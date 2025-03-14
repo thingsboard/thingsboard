@@ -119,7 +119,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 });
 
                 UsageStatsKVProto.Builder statsItem = UsageStatsKVProto.newBuilder()
-                        .setKeyProto(ProtoUtils.toProto(key))
+                        .setRecordKey(ProtoUtils.toProto(key))
                         .setValue(value);
                 statsMsg.addValues(statsItem.build());
             });

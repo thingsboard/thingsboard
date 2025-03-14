@@ -1737,7 +1737,7 @@ message ToTransportMsg {
 message UsageStatsKVProto {
   string key = 1 [deprecated=true];
   int64 value = 2;
-  ApiUsageRecordKeyProto keyProto = 3;
+  ApiUsageRecordKeyProto recordKey = 3;
 }
 
 message ToUsageStatsServiceMsg {

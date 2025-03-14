@@ -153,7 +153,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         List<TransportProtos.UsageStatsServiceMsg> msgs;
 
         //For backward compatibility, remove after release
-        if (serviceMsg.getTenantIdMSB() != 0) {
+        if (serviceMsg.getMsgsList().isEmpty()) {
             TransportProtos.UsageStatsServiceMsg oldMsg = TransportProtos.UsageStatsServiceMsg.newBuilder()
                     .setTenantIdMSB(serviceMsg.getTenantIdMSB())
                     .setTenantIdLSB(serviceMsg.getTenantIdLSB())
@@ -211,7 +211,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 if (StringUtils.isNotEmpty(statsItem.getKey())) {
                     recordKey = ApiUsageRecordKey.valueOf(statsItem.getKey());
                 } else {
-                    recordKey = ProtoUtils.fromProto(statsItem.getKeyProto());
+                    recordKey = ProtoUtils.fromProto(statsItem.getRecordKey());
                 }
 
                 StatsCalculationResult calculationResult = usageState.calculate(recordKey, statsItem.getValue(), serviceId);
