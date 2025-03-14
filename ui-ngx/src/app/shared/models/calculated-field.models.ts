@@ -149,18 +149,6 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
 
 export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
 
-export interface CalculatedFieldDialogData {
-  value?: CalculatedField;
-  buttonTitle: string;
-  entityId: EntityId;
-  debugLimitsConfiguration: string;
-  tenantId: string;
-  entityName?: string;
-  additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
-  getTestScriptDialogFn: CalculatedFieldTestScriptFn;
-  isDirty?: boolean;
-}
-
 export interface CalculatedFieldDebugDialogData {
   tenantId: string;
   value: CalculatedField;
@@ -170,12 +158,6 @@ export interface CalculatedFieldDebugDialogData {
 export interface CalculatedFieldTestScriptInputParams {
   arguments: CalculatedFieldEventArguments;
   expression: string;
-}
-
-export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTestScriptInputParams {
-  argumentsEditorCompleter: TbEditorCompleter;
-  argumentsHighlightRules: AceHighlightRules;
-  openCalculatedFieldEdit?: boolean;
 }
 
 export interface ArgumentEntityTypeParams {
@@ -560,7 +542,7 @@ const calculatedFieldSingleArgumentValueHighlightRules: AceHighlightRules = {
 }
 
 const calculatedFieldRollingArgumentValueFunctionsHighlightRules: Array<AceHighlightRule> =
-  ['max', 'min', 'avg', 'mean', 'std', 'median', 'count', 'last', 'first', 'sum', 'merge', 'mergeAll'].map(funcName => ({
+  Object.keys(CalculatedFieldRollingValueArgumentFunctionsAutocomplete).map(funcName => ({
     token: 'tb.calculated-field-func',
     regex: `\\b${funcName}\\b`,
     next: 'no_regex'

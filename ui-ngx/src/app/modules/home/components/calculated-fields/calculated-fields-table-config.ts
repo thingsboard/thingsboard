@@ -39,28 +39,27 @@ import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import {
   ArgumentType,
   CalculatedField,
-  CalculatedFieldEventArguments,
   CalculatedFieldDebugDialogData,
-  CalculatedFieldDialogData,
-  CalculatedFieldTestScriptDialogData,
+  CalculatedFieldEventArguments,
+  CalculatedFieldType,
+  CalculatedFieldTypeTranslations,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
-  CalculatedFieldTypeTranslations,
-  CalculatedFieldType,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
   CalculatedFieldDialogComponent,
-  CalculatedFieldScriptTestDialogComponent
+  CalculatedFieldDialogData,
+  CalculatedFieldScriptTestDialogComponent,
+  CalculatedFieldTestScriptDialogData
 } from './components/public-api';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { isObject } from '@core/utils';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
 
-export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
+export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField> {
 
-  // TODO: [Calculated Fields] remove hardcode when BE variable implemented
   readonly calculatedFieldsDebugPerTenantLimitsConfiguration =
     getCurrentAuthState(this.store)['calculatedFieldsDebugPerTenantLimitsConfiguration'] || '1:1';
   readonly maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
