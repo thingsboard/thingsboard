@@ -77,7 +77,7 @@ public class HttpClientTest extends AbstractContainerTest {
         assertThat(accessToken).isNotNull();
 
         JsonNode sharedAttribute = mapper.readTree(createPayload().toString());
-        testRestClient.postTelemetryAttribute(DEVICE, device.getId(), SHARED_SCOPE, sharedAttribute);
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, sharedAttribute);
 
         JsonNode clientAttribute = mapper.readTree(createPayload().toString());
         testRestClient.postAttribute(accessToken, clientAttribute);
