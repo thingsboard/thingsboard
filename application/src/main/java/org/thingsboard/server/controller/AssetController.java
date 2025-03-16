@@ -97,6 +97,63 @@ public class AssetController extends BaseController {
 
     public static final String ASSET_ID = "assetId";
 
+    // start my code
+
+    @ApiOperation(value = "Get Customer Assets (getCustomerAssetsV2)",
+            notes = "Returns a page of assets objects assigned to customer. " +
+                    PAGE_DATA_PARAMETERS)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/customer/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<Asset> getCustomerAssetsV2(
+            @Parameter(description = PAGE_SIZE_DESCRIPTION)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION)
+            @RequestParam int page,
+            @Parameter(description = ASSET_TYPE_DESCRIPTION)
+            @RequestParam(required = false) String type,
+            @Parameter(description = ASSET_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "type", "label", "customerTitle"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        String strCustomerId = getCurrentUser().getCustomerId().toString();
+        TenantId tenantId = getCurrentUser().getTenantId();
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        checkCustomerId(customerId, Operation.READ);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        if (type != null && type.trim().length() > 0) {
+            return checkNotNull(assetService.findAssetsByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+        } else {
+            return checkNotNull(assetService.findAssetsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+        }
+    }
+
+    @ApiOperation(value = "Create Asset (saveAssetV2)",
+            notes = "Creates the Asset. When creating asset, platform generates Asset Id as " + UUID_WIKI_LINK +
+                    "The newly created Asset id will be present in the response. " +
+                    "Specify existing Asset id to update the asset. " +
+                    "Referencing non-existing Asset Id will cause 'Not Found' error. " +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Asset entity. "
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/create-asset-z", method = RequestMethod.POST)
+    @ResponseBody
+    public Asset saveAssetV2(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the asset.") @RequestBody Asset asset) throws Exception {
+//        asset.setTenantId(getTenantId());
+//        checkEntity(asset.getId(), asset, Resource.ASSET);
+//        return tbAssetService.save(asset, getCurrentUser());
+        asset.setTenantId(getTenantId());
+        // cho customer co the tao duoc
+        if (getCurrentUser().getCustomerId() != null) {
+            asset.setCustomerId(getCurrentUser().getCustomerId());
+        }
+        return tbAssetService.save(asset, getCurrentUser());
+    }
+
+    // end my code
+
     @ApiOperation(value = "Get Asset (getAssetById)",
             notes = "Fetch the Asset object based on the provided Asset Id. " +
                     "If the user has the authority of 'Tenant Administrator', the server checks that the asset is owned by the same tenant. " +

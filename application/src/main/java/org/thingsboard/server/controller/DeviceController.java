@@ -39,15 +39,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.server.common.data.ClaimRequest;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceInfo;
-import org.thingsboard.server.common.data.DeviceInfoFilter;
-import org.thingsboard.server.common.data.EntitySubtype;
-import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
-import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -61,6 +53,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
@@ -132,6 +125,115 @@ public class DeviceController extends BaseController {
     private final DeviceBulkImportService deviceBulkImportService;
 
     private final TbDeviceService tbDeviceService;
+
+    // start my code
+
+    // get device
+    @ApiOperation(value = "Get Customer Devices (getCustomerDevicesV2)",
+            notes = "Returns a page of devices objects assigned to customer. " +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/customer/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<Device> getCustomerDevicesV2(
+            @Parameter(description = PAGE_SIZE_DESCRIPTION)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @Parameter(description = DEVICE_TYPE_DESCRIPTION)
+            @RequestParam(required = false) String type,
+            @Parameter(description = DEVICE_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "deviceProfileName", "label", "customerTitle"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        String strCustomerId = getCurrentUser().getCustomerId().toString();
+        TenantId tenantId = getCurrentUser().getTenantId();
+        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+        checkCustomerId(customerId, Operation.READ);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        if (type != null && type.trim().length() > 0) {
+            return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+        } else {
+            return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+        }
+    }
+
+    // create device
+    @ApiOperation(value = "Create device",
+            notes = "Create the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
+                    "Device credentials are also generated if not provided in the 'accessToken' request parameter. " +
+                    "The newly created device id will be present in the response. " +
+                    "Specify existing Device id to update the device. " +
+                    "Referencing non-existing device Id will cause 'Not Found' error." +
+                    "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes." +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/create-device-z", method = RequestMethod.POST)
+    @ResponseBody
+    public Device createDevice(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the device.") @RequestBody Device device,
+                               @Parameter(description = "Optional value of the device credentials to be used during device creation. " +
+                                       "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws Exception {
+        // Lấy thông tin người dùng hiện tại
+        System.out.println("Tao thiet bi");
+        User currentUser = getCurrentUser();
+        device.setTenantId(currentUser.getTenantId());
+
+        if (device.getId() != null) {
+            checkDeviceId(device.getId(), Operation.WRITE);
+            // tra ve la khong cap nhat duoc
+            throw new ThingsboardException("Không thể cập nhật thiết bị!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+//        else {
+//            checkEntity(null, device, Resource.DEVICE);
+//        }
+
+        // Lưu thiết bị vào hệ thống
+        Device savedDevice = tbDeviceService.save(device, accessToken, currentUser);
+
+        System.out.println("TenantId: " + currentUser.getTenantId());
+        // Nếu user là CUSTOMER_USER, gán thiết bị cho customer của họ
+        if (currentUser.getAuthority() == Authority.CUSTOMER_USER) {
+            CustomerId customerId = currentUser.getCustomerId();
+            System.out.println("CustomerId: " + customerId);
+
+            if (customerId != null && !customerId.isNullUid()) {
+                // Tìm Customer từ ID
+                Customer customer = new Customer(customerId);
+
+                // Gán thiết bị cho Customer của user hiện tại
+                tbDeviceService.assignDeviceToCustomer(currentUser.getTenantId(), savedDevice.getId(), customer, currentUser);
+            } else {
+                throw new ThingsboardException("CUSTOMER_USER không có CustomerId hợp lệ!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+        }
+
+        return savedDevice;
+    }
+
+    @ApiOperation(value = "Delete device (deleteDeviceV2)",
+            notes = "Deletes the device, it's credentials and all the relations (from and to the device). Referencing non-existing device Id will cause an error." + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/device-z/{deviceId}", method = RequestMethod.DELETE)
+    @ResponseStatus(value = HttpStatus.OK)
+    public void deleteDeviceV2(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
+                             @PathVariable(DEVICE_ID) String strDeviceId) throws Exception {
+        System.out.println("Xoa thiet bi");
+        checkParameter(DEVICE_ID, strDeviceId);
+        System.out.println("Xoa thiet bi");
+//        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
+//        Device device = checkDeviceId(deviceId, Operation.DELETE);
+        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
+        System.out.println("Xoa thiet bi");
+        Device device = checkDeviceId(deviceId, Operation.READ);
+        System.out.println("Xoa thiet bi");
+        tbDeviceService.delete(device, getCurrentUser());
+    }
+
+
+    // end my code
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
