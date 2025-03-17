@@ -41,7 +41,7 @@ import {
 } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
 import L from 'leaflet';
-import { forkJoin, Observable, of } from 'rxjs';
+import { EMPTY, forkJoin, Observable, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
 import {
@@ -142,6 +142,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
                         protected inputSettings: DeepPartial<S>,
                         protected containerElement: HTMLElement) {
     this.ctx.actionsApi.placeMapItem = this.placeMapItem.bind(this);
+    (this.ctx as any).mapInstance = this;
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultSettings(), this.inputSettings as S);
 
     $(containerElement).empty();
@@ -1099,6 +1100,47 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public dragModeEnabled(): boolean {
     return this.dragMode;
+  }
+
+  public saveMarkerLocation(data: FormattedData<TbMapDatasource>, lat?: number, lng?: number): Observable<any> {
+    const targetDataLayer = this.latestDataLayers.find(dl => dl.dataLayerType() === 'markers' && dl.hasData(data));
+    if (targetDataLayer) {
+      let location: L.LatLng = null;
+      if (isDefinedAndNotNull(lat) && isDefinedAndNotNull(lng)) {
+        location = new L.LatLng(lat, lng);
+      }
+      return (targetDataLayer as TbMarkersDataLayer).saveMarkerLocation(data, location);
+    } else {
+      return EMPTY;
+    }
+  }
+
+  public savePolygonLocation(data: FormattedData<TbMapDatasource>, coordinates?: TbPolygonCoordinates): Observable<any> {
+    const targetDataLayer = this.latestDataLayers.find(dl => dl.dataLayerType() === 'polygons' && dl.hasData(data));
+    if (targetDataLayer) {
+      return (targetDataLayer as TbPolygonsDataLayer).savePolygonCoordinates(data, coordinates);
+    } else {
+      return EMPTY;
+    }
+  }
+
+  public saveLocation(data: FormattedData<TbMapDatasource>, values: {[key: string]: any}): Observable<any> {
+    const datasource = data.$datasource;
+    let dataKeys = datasource.dataKeys;
+    if (datasource.latestDataKeys) {
+      dataKeys = dataKeys.concat(datasource.latestDataKeys);
+    }
+    const itemData: DataKeyValuePair[] = [];
+    for (const dataKeyName of Object.keys(values)) {
+      const dataKey = dataKeys.find(key => key.name === dataKeyName);
+      if (dataKey) {
+        itemData.push({
+          dataKey,
+          value: values[dataKeyName]
+        });
+      }
+    }
+    return this.saveItemData(datasource, itemData, AttributeScope.SERVER_SCOPE);
   }
 
   public saveItemData(datasource: TbMapDatasource, data: DataKeyValuePair[], attributeScope: AttributeScope): Observable<any> {
