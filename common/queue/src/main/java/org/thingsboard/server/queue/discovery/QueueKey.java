@@ -23,9 +23,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 
-import static org.thingsboard.server.common.data.DataConstants.CF_QUEUE_NAME;
-import static org.thingsboard.server.common.data.DataConstants.CF_STATES_QUEUE_NAME;
-
 @Data
 @AllArgsConstructor
 public class QueueKey {

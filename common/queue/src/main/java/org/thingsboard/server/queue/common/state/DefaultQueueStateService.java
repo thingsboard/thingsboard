@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cf;
+package org.thingsboard.server.queue.common.state;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.queue.TbQueueMsg;
+import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 
-@Data
-public class CalculatedFieldEntityLifecycleMsg implements ToCalculatedFieldSystemMsg {
+public class DefaultQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> extends QueueStateService<E, S> {
 
-    private final TenantId tenantId;
-    private final ComponentLifecycleMsg data;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_ENTITY_LIFECYCLE_MSG;
+    public DefaultQueueStateService(PartitionedQueueConsumerManager<E> eventConsumer) {
+        super(eventConsumer);
     }
+
 }
