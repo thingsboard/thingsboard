@@ -154,7 +154,7 @@ function additionalComposeEdqsArgs() {
     if [ "$EDQS_ENABLED" = true ]
     then
       ADDITIONAL_COMPOSE_EDQS_ARGS="-f docker-compose.edqs.yml"
-      echo ADDITIONAL_COMPOSE_EDQS_ARGS
+      echo $ADDITIONAL_COMPOSE_EDQS_ARGS
     else
       echo ""
     fi
