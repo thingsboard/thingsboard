@@ -196,7 +196,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void onEntityUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
-        if (msg.getOldProfileId() != null && msg.getOldProfileId() != msg.getProfileId()) {
+        if (msg.getOldProfileId() != null && !msg.getOldProfileId().equals(msg.getProfileId())) {
             cfEntityCache.update(tenantId, msg.getOldProfileId(), msg.getProfileId(), msg.getEntityId());
             if (!isMyPartition(msg.getEntityId(), callback)) {
                 return;
