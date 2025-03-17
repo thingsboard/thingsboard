@@ -52,7 +52,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static org.thingsboard.server.common.data.DataConstants.CF_QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.CF_STATES_QUEUE_NAME;
 import static org.thingsboard.server.common.data.DataConstants.EDGE_QUEUE_NAME;
 import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
 
@@ -159,16 +162,7 @@ public class HashPartitionService implements PartitionService {
         List<QueueRoutingInfo> queueRoutingInfoList = getQueueRoutingInfos();
         queueRoutingInfoList.forEach(queue -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
-            if (DataConstants.MAIN_QUEUE_NAME.equals(queueKey.getQueueName())) {
-                QueueKey cfQueueKey = queueKey.withQueueName(DataConstants.CF_QUEUE_NAME);
-                partitionSizesMap.put(cfQueueKey, queue.getPartitions());
-                partitionTopicsMap.put(cfQueueKey, cfEventTopic);
-                QueueKey cfQueueStatesKey = queueKey.withQueueName(DataConstants.CF_STATES_QUEUE_NAME);
-                partitionSizesMap.put(cfQueueStatesKey, queue.getPartitions());
-                partitionTopicsMap.put(cfQueueStatesKey, cfStateTopic);
-            }
-            partitionTopicsMap.put(queueKey, queue.getQueueTopic());
-            partitionSizesMap.put(queueKey, queue.getPartitions());
+            updateQueue(queueKey, queue.getQueueTopic(), queue.getPartitions());
             queueConfigs.put(queueKey, new QueueConfig(queue));
         });
     }
@@ -215,16 +209,7 @@ public class HashPartitionService implements PartitionService {
             QueueRoutingInfo queueRoutingInfo = new QueueRoutingInfo(queueUpdateMsg);
             TenantId tenantId = queueRoutingInfo.getTenantId();
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueRoutingInfo.getQueueName(), tenantId);
-            if (DataConstants.MAIN_QUEUE_NAME.equals(queueKey.getQueueName())) {
-                QueueKey cfQueueKey = queueKey.withQueueName(DataConstants.CF_QUEUE_NAME);
-                partitionSizesMap.put(cfQueueKey, queueRoutingInfo.getPartitions());
-                partitionTopicsMap.put(cfQueueKey, cfEventTopic);
-                QueueKey cfQueueStatesKey = queueKey.withQueueName(DataConstants.CF_STATES_QUEUE_NAME);
-                partitionSizesMap.put(cfQueueStatesKey, queueRoutingInfo.getPartitions());
-                partitionTopicsMap.put(cfQueueStatesKey, cfStateTopic);
-            }
-            partitionTopicsMap.put(queueKey, queueRoutingInfo.getQueueTopic());
-            partitionSizesMap.put(queueKey, queueRoutingInfo.getPartitions());
+            updateQueue(queueKey, queueRoutingInfo.getQueueTopic(), queueRoutingInfo.getPartitions());
             queueConfigs.put(queueKey, new QueueConfig(queueRoutingInfo));
             if (!tenantId.isSysTenantId()) {
                 tenantRoutingInfoMap.remove(tenantId);
@@ -235,9 +220,15 @@ public class HashPartitionService implements PartitionService {
     @Override
     public void removeQueues(List<TransportProtos.QueueDeleteMsg> queueDeleteMsgs) {
         List<QueueKey> queueKeys = queueDeleteMsgs.stream()
-                .map(queueDeleteMsg -> {
+                .flatMap(queueDeleteMsg -> {
                     TenantId tenantId = TenantId.fromUUID(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
-                    return new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
+                    QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
+                    if (queueKey.getQueueName().equals(MAIN_QUEUE_NAME)) {
+                        return Stream.of(queueKey, queueKey.withQueueName(CF_QUEUE_NAME),
+                                queueKey.withQueueName(CF_STATES_QUEUE_NAME));
+                    } else {
+                        return Stream.of(queueKey);
+                    }
                 }).toList();
         queueKeys.forEach(queueKey -> {
             removeQueue(queueKey);
@@ -252,9 +243,31 @@ public class HashPartitionService implements PartitionService {
     @Override
     public void removeTenant(TenantId tenantId) {
         List<QueueKey> queueKeys = partitionSizesMap.keySet().stream()
-                .filter(queueKey -> tenantId.equals(queueKey.getTenantId())).toList();
+                .filter(queueKey -> tenantId.equals(queueKey.getTenantId()))
+                .flatMap(queueKey -> {
+                    if (queueKey.getQueueName().equals(MAIN_QUEUE_NAME)) {
+                        return Stream.of(queueKey, queueKey.withQueueName(CF_QUEUE_NAME),
+                                queueKey.withQueueName(CF_STATES_QUEUE_NAME));
+                    } else {
+                        return Stream.of(queueKey);
+                    }
+                })
+                .toList();
         queueKeys.forEach(this::removeQueue);
         evictTenantInfo(tenantId);
+    }
+
+    private void updateQueue(QueueKey queueKey, String topic, int partitions) {
+        partitionTopicsMap.put(queueKey, topic);
+        partitionSizesMap.put(queueKey, partitions);
+        if (DataConstants.MAIN_QUEUE_NAME.equals(queueKey.getQueueName())) {
+            QueueKey cfQueueKey = queueKey.withQueueName(DataConstants.CF_QUEUE_NAME);
+            partitionTopicsMap.put(cfQueueKey, cfEventTopic);
+            partitionSizesMap.put(cfQueueKey, partitions);
+            QueueKey cfStatesQueueKey = queueKey.withQueueName(DataConstants.CF_STATES_QUEUE_NAME);
+            partitionTopicsMap.put(cfStatesQueueKey, cfStateTopic);
+            partitionSizesMap.put(cfStatesQueueKey, partitions);
+        }
     }
 
     private void removeQueue(QueueKey queueKey) {
@@ -262,15 +275,6 @@ public class HashPartitionService implements PartitionService {
         partitionTopicsMap.remove(queueKey);
         partitionSizesMap.remove(queueKey);
         queueConfigs.remove(queueKey);
-
-        if (DataConstants.MAIN_QUEUE_NAME.equals(queueKey.getQueueName())) {
-            QueueKey cfQueueKey = queueKey.withQueueName(DataConstants.CF_QUEUE_NAME);
-            partitionSizesMap.remove(cfQueueKey);
-            partitionTopicsMap.remove(cfQueueKey);
-            QueueKey cfQueueStatesKey = queueKey.withQueueName(DataConstants.CF_STATES_QUEUE_NAME);
-            partitionSizesMap.remove(cfQueueStatesKey);
-            partitionTopicsMap.remove(cfQueueStatesKey);
-        }
     }
 
     @Override

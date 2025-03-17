@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.common.consumer;
+package org.thingsboard.server.queue.common.state;
 
-import java.io.Serializable;
+import org.thingsboard.server.queue.TbQueueMsg;
+import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 
-public enum QueueTaskType implements Serializable {
+public class DefaultQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> extends QueueStateService<E, S> {
 
-    UPDATE_PARTITIONS, UPDATE_CONFIG, DELETE,
-    ADD_PARTITIONS, REMOVE_PARTITIONS, DELETE_PARTITIONS
+    public DefaultQueueStateService(PartitionedQueueConsumerManager<E> eventConsumer) {
+        super(eventConsumer);
+    }
 
 }
