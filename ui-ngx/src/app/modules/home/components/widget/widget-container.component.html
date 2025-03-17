@@ -104,16 +104,6 @@
 
 <ng-template #widgetHeaderActionButton let-action="action" let-last="last">
 @switch (action.buttonType) {
-  @case (widgetHeaderActionButtonType.icon) {
-    <button mat-icon-button
-            [style]="action.customButtonStyle"
-            [class.!hidden]="isEdit"
-            (click)="action.onAction($event)"
-            matTooltip="{{ action.displayName }}"
-            matTooltipPosition="above">
-      <tb-icon [style.color]="action.buttonColor">{{ action.icon }}</tb-icon>
-    </button>
-  }
   @case (widgetHeaderActionButtonType.miniFab) {
     <button mat-mini-fab
             [style]="action.customButtonStyle"
@@ -173,6 +163,16 @@
             matTooltipPosition="above">
       <tb-icon matButtonIcon *ngIf="action.showIcon" [style.color]="action.buttonColor">{{ action.icon }}</tb-icon>
       <span [style.color]="action.buttonColor">{{ action.displayName }}</span>
+    </button>
+  }
+  @default {
+    <button mat-icon-button
+            [style]="action.customButtonStyle"
+            [class.!hidden]="isEdit"
+            (click)="action.onAction($event)"
+            matTooltip="{{ action.displayName }}"
+            matTooltipPosition="above">
+      <tb-icon [style.color]="action.buttonColor">{{ action.icon }}</tb-icon>
     </button>
   }
 }
