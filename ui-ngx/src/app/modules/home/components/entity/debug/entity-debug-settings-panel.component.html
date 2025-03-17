@@ -15,17 +15,15 @@
     limitations under the License.
 
 -->
-<div class="flex max-w-sm flex-col gap-3 p-2">
+<div class="flex w-96 flex-col gap-3 p-2">
   <div class="tb-form-panel-title" translate>debug-settings.label</div>
-  <div class="hint-container">
-    <div class="tb-form-hint tb-primary-fill tb-flex center">
-      @if (debugLimitsConfiguration) {
+  @if (debugLimitsConfiguration) {
+    <div class="hint-container">
+      <div class="tb-form-hint tb-primary-fill tb-flex center">
         {{ 'debug-settings.hint.main-limited' | translate: { entity: entityLabel ?? ('debug-settings.entity' | translate), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
-      } @else {
-        {{ 'debug-settings.hint.main' | translate }}
-      }
+      </div>
     </div>
-  </div>
+  }
   <div class="flex flex-col gap-3">
     <mat-slide-toggle class="mat-slide" [formControl]="onFailuresControl">
       <div tb-hint-tooltip-icon="{{ 'debug-settings.hint.on-failure' | translate }}">
@@ -33,12 +31,12 @@
       </div>
     </mat-slide-toggle>
     <div class="align-center flex justify-between">
-      <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl">
+      <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl" (change)="debugAllControl.markAsTouched()">
         <div tb-hint-tooltip-icon="{{ 'debug-settings.hint.all-messages' | translate }}">
-          {{ 'debug-settings.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) } }}
+          {{ 'debug-settings.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled && debugAllControl.untouched ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) } }}
         </div>
       </mat-slide-toggle>
-      <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !allEnabled"
+      <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !allEnabled && debugAllControl.untouched"
               class="tb-mat-20"
               matTooltip="{{ 'action.reset' | translate }}"
               matTooltipPosition="above"

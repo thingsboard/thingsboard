@@ -991,7 +991,7 @@
         "type-sms-sent": "SMS sent"
     },
     "debug-settings": {
-        "label": "Debug configuration",
+        "label": "Debug Configuration",
         "on-failure": "Failures only (24/7)",
         "all-messages": "All messages ({{time}})",
         "failures": "Failures",
@@ -999,10 +999,9 @@
         "rule-node": "rule node",
         "calculated-field": "calculated field",
         "hint": {
-            "main": "All node debug messages rate limited with:",
-            "main-limited": "All {{entity}} debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{time}}.",
-            "on-failure": "Save all failure debug events without time limit.",
-            "all-messages": "Save all debug events during time limit."
+            "main-limited": "No more than {{msg}} {{entity}} debug messages per {{time}} will be recorded.",
+            "on-failure": "Log all debug messages.",
+            "all-messages": "Log error messages only. "
         }
     },
     "calculated-fields": {
