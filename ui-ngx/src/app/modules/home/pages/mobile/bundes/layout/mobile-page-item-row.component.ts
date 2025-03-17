@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ export class MobilePageItemRowComponent implements ControlValueAccessor, OnInit,
   mobilePageRowForm = this.fb.group({
     visible: [true, []],
     icon: ['', []],
-    label: ['', []],
+    label: ['', [Validators.pattern(/\S/), Validators.maxLength(255)]],
     type: [MobilePageType.DEFAULT]
   });
 
@@ -187,7 +187,7 @@ export class MobilePageItemRowComponent implements ControlValueAccessor, OnInit,
       }
     } else {
       this.isCustomMenuItem = true;
-      this.mobilePageRowForm.get('label').setValidators([Validators.required]);
+      this.mobilePageRowForm.get('label').addValidators([Validators.required]);
       this.mobilePageRowForm.get('label').updateValueAndValidity({emitEvent: false});
     }
     this.updateCleanupState();
@@ -271,7 +271,7 @@ export class MobilePageItemRowComponent implements ControlValueAccessor, OnInit,
   private updateModel() {
     this.modelValue.visible = this.mobilePageRowForm.get('visible').value;
     const label = this.mobilePageRowForm.get('label').value;
-    if (label) {
+    if (label?.trim()) {
       this.modelValue.label = label;
     } else {
       delete this.modelValue.label;

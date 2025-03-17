@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,12 @@ class TbCheckRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     private final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
     private final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
     private final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
-    private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, ORIGINATOR_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+    private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg()
+            .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+            .originator(ORIGINATOR_ID)
+            .copyMetaData(TbMsgMetaData.EMPTY)
+            .data(TbMsg.EMPTY_JSON_OBJECT)
+            .build();
 
     private TbCheckRelationNode node;
 

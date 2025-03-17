@@ -1,0 +1,49 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.mat-mdc-chip.mat-mdc-standard-chip.tb-tag-action-chip {
+  overflow: hidden;
+  line-height: 20px;
+  height: 32px;
+
+  &.mdc-evolution-chip--with-trailing-action {
+    .mdc-evolution-chip__action--primary {
+      padding-left: 4px;
+      padding-right: 12px;
+    }
+  }
+
+  .tb-chip-labels {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    min-width: 0;
+    padding: 2px 10px;
+    .tb-chip-label {
+      font-weight: normal;
+      font-size: 14px;
+      line-height: 20px;
+      &.tb-chip-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+  .mat-mdc-chip-remove.mat-mdc-icon-button {
+    color: inherit;
+    opacity: inherit;
+  }
+}

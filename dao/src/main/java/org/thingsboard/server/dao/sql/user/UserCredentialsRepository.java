@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 
@@ -51,5 +54,8 @@ public interface UserCredentialsRepository extends JpaRepository<UserCredentials
     @Modifying
     @Query("UPDATE UserCredentialsEntity SET failedLoginAttempts = :failedLoginAttempts WHERE userId = :userId")
     void updateFailedLoginAttemptsByUserId(UUID userId, int failedLoginAttempts);
+
+    @Query("SELECT c FROM UserCredentialsEntity c WHERE c.userId IN (SELECT u.id FROM UserEntity u WHERE u.tenantId = :tenantId)")
+    Page<UserCredentialsEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
 }

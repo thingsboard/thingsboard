@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package org.thingsboard.server.dao.sql.rule;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.fields.RuleChainFields;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -33,6 +35,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -131,6 +134,16 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     @Override
     public RuleChain findDefaultEntityByTenantId(UUID tenantId) {
         return findRootRuleChainByTenantIdAndType(tenantId, RuleChainType.CORE);
+    }
+
+    @Override
+    public PageData<RuleChain> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findRuleChainsByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<RuleChainFields> findNextBatch(UUID id, int batchSize) {
+        return ruleChainRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

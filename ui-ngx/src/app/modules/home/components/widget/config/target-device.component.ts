@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,14 +24,15 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { TargetDevice, TargetDeviceType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { EntityAliasSelectCallbacks } from '@home/components/alias/entity-alias-select.component.models';
+import { EntityAliasSelectCallbacks } from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-target-device',
@@ -80,7 +81,8 @@ export class TargetDeviceComponent implements ControlValueAccessor, OnInit, Vali
   constructor(private fb: UntypedFormBuilder,
               private utils: UtilsService,
               public translate: TranslateService,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -111,10 +113,14 @@ export class TargetDeviceComponent implements ControlValueAccessor, OnInit, Vali
       deviceId: [null, (!this.widgetEditMode && !this.targetDeviceOptional) ? [Validators.required] : []],
       entityAliasId: [null, (!this.widgetEditMode && !this.targetDeviceOptional) ? [Validators.required] : []]
     });
-    this.targetDeviceFormGroup.get('type').valueChanges.subscribe(() => {
+    this.targetDeviceFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
-    this.targetDeviceFormGroup.valueChanges.subscribe(
+    this.targetDeviceFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.targetDeviceUpdated(this.targetDeviceFormGroup.value);
       }

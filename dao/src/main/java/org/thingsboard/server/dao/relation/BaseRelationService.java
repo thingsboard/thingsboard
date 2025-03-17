@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,6 +236,7 @@ public class BaseRelationService implements RelationService {
         return Futures.transform(future, deletedEvent -> {
             if (deletedEvent != null) {
                 handleEvictEvent(EntityRelationEvent.from(deletedEvent));
+                eventPublisher.publishEvent(new RelationActionEvent(tenantId, deletedEvent, ActionType.RELATION_DELETED));
             }
             return deletedEvent != null;
         }, MoreExecutors.directExecutor());
@@ -267,6 +268,7 @@ public class BaseRelationService implements RelationService {
 
         for (EntityRelation relation : inboundRelations) {
             eventPublisher.publishEvent(EntityRelationEvent.from(relation));
+            eventPublisher.publishEvent(new RelationActionEvent(tenantId, relation, ActionType.RELATION_DELETED));
         }
 
         List<EntityRelation> outboundRelations;
@@ -278,6 +280,7 @@ public class BaseRelationService implements RelationService {
 
         for (EntityRelation relation : outboundRelations) {
             eventPublisher.publishEvent(EntityRelationEvent.from(relation));
+            eventPublisher.publishEvent(new RelationActionEvent(tenantId, relation, ActionType.RELATION_DELETED));
         }
     }
 

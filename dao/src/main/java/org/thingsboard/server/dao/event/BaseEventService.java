@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
@@ -88,6 +89,11 @@ public class BaseEventService implements EventService {
                 ErrorEvent eEvent = (ErrorEvent) event;
                 truncateField(eEvent, ErrorEvent::getError, ErrorEvent::setError);
                 break;
+            case DEBUG_CALCULATED_FIELD:
+                CalculatedFieldDebugEvent cfEvent = (CalculatedFieldDebugEvent) event;
+                truncateField(cfEvent, CalculatedFieldDebugEvent::getArguments, CalculatedFieldDebugEvent::setArguments);
+                truncateField(cfEvent, CalculatedFieldDebugEvent::getResult, CalculatedFieldDebugEvent::setResult);
+                truncateField(cfEvent, CalculatedFieldDebugEvent::getError, CalculatedFieldDebugEvent::setError);
         }
     }
 

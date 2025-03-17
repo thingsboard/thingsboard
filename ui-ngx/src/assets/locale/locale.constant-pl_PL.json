@@ -4520,7 +4520,6 @@
         "output": "Wyjście",
         "test": "Test",
         "help": "Pomoc",
-        "reset-debug-mode": "Zresetuj tryb debugowania we wszystkich węzłach",
         "test-with-this-message": "{{test}} with this message",
         "description": "Opis"
     },
@@ -5911,7 +5910,6 @@
         "type": "Typ widgetu",
         "resources": "Biblioteki",
         "resource-url": "Adres URL JavaScript/CSS",
-        "resource-is-module": "Jest modułem",
         "remove-resource": "Usuń zasób",
         "add-resource": "Dodaj zasób",
         "html": "HTML",

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -109,7 +110,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.amazonaws.util.StringUtils.UTF8;
 import static io.netty.handler.codec.mqtt.MqttMessageType.CONNECT;
 import static io.netty.handler.codec.mqtt.MqttMessageType.PINGRESP;
 import static io.netty.handler.codec.mqtt.MqttMessageType.SUBACK;
@@ -606,7 +606,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void getOtaPackageCallback(ChannelHandlerContext ctx, MqttPublishMessage mqttMsg, int msgId, Matcher fwMatcher, OtaPackageType type) {
-        String payload = mqttMsg.content().toString(UTF8);
+        String payload = mqttMsg.content().toString(StandardCharsets.UTF_8);
         int chunkSize = StringUtils.isNotEmpty(payload) ? Integer.parseInt(payload) : 0;
         String requestId = fwMatcher.group("requestId");
         int chunk = Integer.parseInt(fwMatcher.group("chunk"));
@@ -963,7 +963,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 unSubResults.add((short) MqttReasonCodes.UnsubAck.NO_SUBSCRIPTION_EXISTED.byteValue());
             }
         }
-        if (!activityReported) {
+        if (!activityReported && !deviceSessionCtx.isProvisionOnly()) {
             transportService.recordActivity(deviceSessionCtx.getSessionInfo());
         }
         ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(), unSubResults));

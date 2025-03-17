@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2024 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ ENV PATH=$PATH:/usr/lib/postgresql/$PG_MAJOR/bin
 ENV SPRING_DRIVER_CLASS_NAME=org.postgresql.Driver
 ENV SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/thingsboard
 ENV SPRING_DATASOURCE_USERNAME=${pkg.user}
-ENV SPRING_DATASOURCE_PASSWORD=postgres
 
 ENV PGLOG=/var/log/postgres
 

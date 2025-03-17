@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import {
   TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { TimeSeriesChartTooltipTrigger } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-chart-basic-config',
@@ -204,7 +205,9 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     if (this.chartType === TimeSeriesChartType.state) {
       this.timeSeriesChartWidgetConfigForm.addControl('states', this.fb.control(settings.states, []));
     }
-    this.timeSeriesChartWidgetConfigForm.get('comparisonEnabled').valueChanges.subscribe(() => this.updateSeriesState());
+    this.timeSeriesChartWidgetConfigForm.get('comparisonEnabled').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.updateSeriesState());
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {

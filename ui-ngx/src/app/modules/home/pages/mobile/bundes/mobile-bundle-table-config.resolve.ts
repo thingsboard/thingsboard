@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,15 +24,14 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { MobileAppBundleInfo } from '@shared/models/mobile-app.models';
-import { ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
 import { MobileBundleTableHeaderComponent } from '@home/pages/mobile/bundes/mobile-bundle-table-header.component';
 import { DatePipe } from '@angular/common';
 import { MobileAppService } from '@core/http/mobile-app.service';
-import { map, take } from 'rxjs/operators';
+import { finalize, map, skip, take, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityAction } from '@home/models/entity/entity-component.models';
 import { MatDialog } from '@angular/material/dialog';
 import {
   MobileBundleDialogComponent,
@@ -45,31 +44,35 @@ import {
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, Observable, of, switchMap } from 'rxjs';
 
 @Injectable()
 export class MobileBundleTableConfigResolver {
 
   private readonly config: EntityTableConfig<MobileAppBundleInfo> = new EntityTableConfig<MobileAppBundleInfo>();
 
+  private openingEditDialog = false;
+
   constructor(
     private datePipe: DatePipe,
     private mobileAppService: MobileAppService,
     private translate : TranslateService,
     private dialog: MatDialog,
+    private router: Router,
     private store: Store<AppState>
   ) {
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.MOBILE_APP_BUNDLE;
-    this.config.addEnabled = false;
+    this.config.addAsTextButton = true;
     this.config.rowPointer = true;
     this.config.detailsPanelEnabled = false;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.MOBILE_APP_BUNDLE);
     this.config.entityResources = entityTypeResources.get(EntityType.MOBILE_APP_BUNDLE);
     this.config.headerComponent = MobileBundleTableHeaderComponent;
-    this.config.onEntityAction = action => this.onBundleAction(action);
     this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
+
+    this.config.addEntity = () => this.editBundle(null, true);
 
     this.config.columns.push(
       new DateEntityTableColumn<MobileAppBundleInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
@@ -108,11 +111,30 @@ export class MobileBundleTableConfigResolver {
 
     this.config.handleRowClick = ($event, bundle) => {
       $event?.stopPropagation();
-      this.mobileAppService.getMobileAppBundleInfoById(bundle.id.id).subscribe(appBundleInfo => {
-        this.editBundle($event, appBundleInfo);
-      })
+      if (!this.openingEditDialog) {
+        this.openingEditDialog = true;
+        this.mobileAppService.getMobileAppBundleInfoById(bundle.id.id).pipe(
+          switchMap(appBundleInfo => this.editBundle(appBundleInfo)),
+          takeUntil(this.router.events.pipe(skip(1))),
+          finalize(() => {this.openingEditDialog = false;})
+        ).subscribe((res) => {
+          if (res) {
+            this.config.updateData();
+          }
+        });
+      }
       return true;
     };
+
+    this.config.entityAdded = (bundle) => {
+      this.store.pipe(select(selectUserSettingsProperty('notDisplayConfigurationAfterAddMobileBundle'))).pipe(
+        take(1)
+      ).subscribe((settings: boolean) => {
+        if(!settings) {
+          this.configurationApp(null, bundle, true);
+        }
+      });
+    }
 
     this.config.cellActionDescriptors = this.configureCellActions();
   }
@@ -132,11 +154,8 @@ export class MobileBundleTableConfigResolver {
     ];
   }
 
-  private editBundle($event: Event, bundle: MobileAppBundleInfo, isAdd = false) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<MobileBundleDialogComponent, MobileBundleDialogData,
+  private editBundle(bundle: MobileAppBundleInfo, isAdd = false): Observable<MobileAppBundleInfo> {
+    return this.dialog.open<MobileBundleDialogComponent, MobileBundleDialogData,
       MobileAppBundleInfo>(MobileBundleDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -144,33 +163,7 @@ export class MobileBundleTableConfigResolver {
         isAdd,
         bundle
       }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          if (!isAdd) {
-            this.config.updateData();
-          } else {
-            this.store.pipe(select(selectUserSettingsProperty('notDisplayConfigurationAfterAddMobileBundle'))).pipe(
-              take(1)
-            ).subscribe((settings: boolean) => {
-              if (!settings) {
-                this.configurationApp(null, res, true);
-              } else {
-                this.config.updateData();
-              }
-            });
-          }
-        }
-      });
-  }
-
-  private onBundleAction(action: EntityAction<MobileAppBundleInfo>): boolean {
-    switch (action.action) {
-      case 'add':
-        this.editBundle(action.event, action.entity, true);
-        return true;
-    }
-    return false;
+    }).afterClosed();
   }
 
   private configurationApp($event: Event, entity: MobileAppBundleInfo, afterAdd = false) {
@@ -192,11 +185,7 @@ export class MobileBundleTableConfigResolver {
           iosApp: data.iosApp
         }
       }).afterClosed()
-        .subscribe(() => {
-          if (afterAdd) {
-            this.config.updateData();
-          }
-        });
+        .subscribe();
     })
   }
 }

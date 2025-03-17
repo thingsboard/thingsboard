@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -286,6 +286,11 @@ export class EntityService {
         break;
       case EntityType.OAUTH2_CLIENT:
         observable = this.oauth2Service.findTenantOAuth2ClientInfosByIds(entityIds, config);
+        break;
+      case EntityType.RULE_CHAIN:
+        observable = this.getEntitiesByIdsObservable(
+          (id) => this.ruleChainService.getRuleChain(id, config),
+          entityIds);
         break;
     }
     return observable;

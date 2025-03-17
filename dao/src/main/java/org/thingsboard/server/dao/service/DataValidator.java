@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -43,7 +44,10 @@ public abstract class DataValidator<D extends BaseData<?>> {
             Pattern.compile("^[A-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern QUEUE_PATTERN = Pattern.compile("^[a-zA-Z0-9_.\\-]+$");
-
+    private static final String DOMAIN_REGEX = "^(((?!-))(xn--|_)?[a-z0-9-]{0,61}[a-z0-9]{1,1}\\.)*(xn--)?([a-z0-9][a-z0-9\\-]{0,60}|[a-z0-9-]{1,30}\\.[a-z]{2,})$";
+    private static final Pattern DOMAIN_PATTERN = Pattern.compile(DOMAIN_REGEX);
+    private static final String LOCALHOST_REGEX = "^localhost(:\\d{1,5})?$";
+    private static final Pattern LOCALHOST_PATTERN = Pattern.compile(LOCALHOST_REGEX);
     private static final String NAME = "name";
     private static final String TOPIC = "topic";
 
@@ -155,6 +159,9 @@ public abstract class DataValidator<D extends BaseData<?>> {
 
     protected static void validateQueueName(String name) {
         validateQueueNameOrTopic(name, NAME);
+        if (DataConstants.CF_QUEUE_NAME.equals(name) || DataConstants.CF_STATES_QUEUE_NAME.equals(name)) {
+            throw new DataValidationException(String.format("The queue name '%s' is not allowed. This name is reserved for internal use. Please choose a different name.", name));
+        }
     }
 
     protected static void validateQueueTopic(String topic) {
@@ -169,6 +176,16 @@ public abstract class DataValidator<D extends BaseData<?>> {
             throw new DataValidationException(
                     String.format("Queue %s contains a character other than ASCII alphanumerics, '.', '_' and '-'!", fieldName));
         }
+    }
+
+    public static boolean isValidDomain(String domainName) {
+        if (domainName == null) {
+            return false;
+        }
+        if (LOCALHOST_PATTERN.matcher(domainName).matches()) {
+            return true;
+        }
+        return DOMAIN_PATTERN.matcher(domainName).matches();
     }
 
 }

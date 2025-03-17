@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,10 @@ import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.ProfileEntityIdInfo;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -39,7 +42,7 @@ import java.util.UUID;
  * The Interface DeviceDao.
  *
  */
-public interface DeviceDao extends Dao<Device>, TenantEntityDao, ExportableEntityDao<DeviceId, Device> {
+public interface DeviceDao extends Dao<Device>, TenantEntityDao<Device>, ExportableEntityDao<DeviceId, Device> {
 
     /**
      * Find device info by id.
@@ -84,6 +87,16 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao, ExportableEntit
      * @return the list of device objects
      */
     PageData<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, PageLink pageLink);
+
+    /**
+     * Find device ids by tenantId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param deviceProfileId the deviceProfileId
+     * @param pageLink the page link
+     * @return the list of device objects
+     */
+    PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(UUID tenantId, UUID deviceProfileId, PageLink pageLink);
 
     PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(UUID tenantId,
                                                                     UUID deviceProfileId,
@@ -218,5 +231,8 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao, ExportableEntit
 
     PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink);
 
+    PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink);
+
     PageData<DeviceInfo> findDeviceInfosByFilter(DeviceInfoFilter filter, PageLink pageLink);
+
 }

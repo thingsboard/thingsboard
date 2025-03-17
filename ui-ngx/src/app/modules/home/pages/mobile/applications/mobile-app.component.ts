@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -76,9 +76,9 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
       }),
       storeInfo: this.fb.group({
         storeLink: [entity?.storeInfo?.storeLink ? entity.storeInfo.storeLink : '',
-          Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+$/)],
+          Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+(?:&[a-zA-Z0-9._-]+=[a-zA-Z0-9._%-]*)*$/)],
         sha256CertFingerprints: [entity?.storeInfo?.sha256CertFingerprints ? entity.storeInfo.sha256CertFingerprints : '',
-          Validators.pattern(/^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){1,31}$/)],
+          Validators.pattern(/^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){31}$/)],
         appId: [entity?.storeInfo?.appId ? entity.storeInfo.appId : '', Validators.pattern(/^[A-Z0-9]{10}\.[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*$/)],
       }),
     });
@@ -89,11 +89,11 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
       if (value === PlatformType.ANDROID) {
         form.get('storeInfo.sha256CertFingerprints').enable({emitEvent: false});
         form.get('storeInfo.appId').disable({emitEvent: false});
-        form.get('storeInfo.storeLink').setValidators(Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+$/));
+        form.get('storeInfo.storeLink').setValidators(Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+(?:&[a-zA-Z0-9._-]+=[a-zA-Z0-9._%-]*)*$/));
       } else if (value === PlatformType.IOS) {
         form.get('storeInfo.sha256CertFingerprints').disable({emitEvent: false});
         form.get('storeInfo.appId').enable({emitEvent: false});
-        form.get('storeInfo.storeLink').setValidators(Validators.pattern(/^https?:\/\/apps\.apple\.com\/[a-z]{2}\/app\/[\w-]+\/id\d{7,10}$/));
+        form.get('storeInfo.storeLink').setValidators(Validators.pattern(/^https?:\/\/apps\.apple\.com\/[a-z]{2}\/app\/[\w-]+\/id\d{7,10}(?:\?[^\s]*)?$/));
       }
       form.get('storeInfo.storeLink').setValue('', {emitEvent: false});
     });
@@ -101,7 +101,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     form.get('status').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((value: MobileAppStatus) => {
-      if (value !== MobileAppStatus.DRAFT) {
+      if (value === MobileAppStatus.PUBLISHED) {
         form.get('storeInfo.storeLink').addValidators(Validators.required);
         form.get('storeInfo.sha256CertFingerprints')
           .addValidators(Validators.required);

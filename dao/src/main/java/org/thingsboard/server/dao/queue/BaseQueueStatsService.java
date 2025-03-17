@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
@@ -51,7 +53,10 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     public QueueStats save(TenantId tenantId, QueueStats queueStats) {
         log.trace("Executing save [{}]", queueStats);
         queueStatsValidator.validate(queueStats, QueueStats::getTenantId);
-        return queueStatsDao.save(tenantId, queueStats);
+        QueueStats savedQueueStats = queueStatsDao.save(tenantId, queueStats);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedQueueStats.getTenantId()).entityId(savedQueueStats.getId())
+                .entity(savedQueueStats).created(queueStats.getId() == null).build());
+        return savedQueueStats;
     }
 
     @Override
@@ -80,7 +85,7 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     public PageData<QueueStats> findByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findByTenantId, tenantId: [{}]", tenantId);
         Validator.validatePageLink(pageLink);
-        return queueStatsDao.findByTenantId(tenantId, pageLink);
+        return queueStatsDao.findAllByTenantId(tenantId, pageLink);
     }
 
     @Override
@@ -93,6 +98,7 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     @Override
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         queueStatsDao.removeById(tenantId, id.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(id).build());
     }
 
     @Override

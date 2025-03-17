@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   forwardRef,
   Input,
   OnChanges,
@@ -37,8 +38,9 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
 import { DataKey, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { aggregatedValueCardDefaultKeySettings } from '@home/components/widget/lib/cards/aggregated-value-card.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-aggregated-data-keys-panel',
@@ -87,14 +89,17 @@ export class AggregatedDataKeysPanelComponent implements ControlValueAccessor, O
               private dialog: MatDialog,
               private cd: ChangeDetectorRef,
               private utils: UtilsService,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
     this.keysListFormGroup = this.fb.group({
       keys: [this.fb.array([]), []]
     });
-    this.keysListFormGroup.valueChanges.subscribe(
+    this.keysListFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (val) => this.propagateChange(this.keysListFormGroup.get('keys').value)
     );
     this.updateParams();

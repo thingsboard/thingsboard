@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormControl } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { EditorOptions } from 'tinymce';
 
 @Component({
   selector: 'tb-release-notes-panel',
@@ -43,7 +44,7 @@ export class EditorPanelComponent implements OnInit {
 
   editorControl: FormControl<string>;
 
-  tinyMceOptions: Record<string, any> = {
+  tinyMceOptions: Partial<EditorOptions> = {
     base_url: '/assets/tinymce',
     suffix: '.min',
     plugins: ['lists'],
@@ -55,7 +56,16 @@ export class EditorPanelComponent implements OnInit {
     autofocus: false,
     branding: false,
     promotion: false,
-    resize: false
+    resize: false,
+    setup: (editor) => {
+      editor.on('PostRender', function() {
+        const container = editor.getContainer().closest('.tb-popover-content');
+        const uiContainer = document.querySelector('.tox.tox-tinymce-aux');
+        container.parentNode.appendChild(uiContainer);
+      });
+    },
+    relative_urls: false,
+    urlconverter_callback: (url) => url
   };
 
   constructor(private fb: FormBuilder) {

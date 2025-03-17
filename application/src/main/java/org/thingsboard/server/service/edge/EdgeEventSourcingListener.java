@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,11 @@ public class EdgeEventSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(SaveEntityEvent<?> event) {
+        if (Boolean.FALSE.equals(event.getBroadcastEvent())) {
+            log.trace("Ignoring event {}", event);
+            return;
+        }
+
         try {
             if (!isValidSaveEntityEventForEdgeProcessing(event)) {
                 return;
@@ -133,6 +138,9 @@ public class EdgeEventSourcingListener {
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent<?> event) {
         if (EntityType.DEVICE.equals(event.getEntityId().getEntityType()) && ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType())) {
+            return;
+        }
+        if (EntityType.ALARM.equals(event.getEntityId().getEntityType())) {
             return;
         }
         try {

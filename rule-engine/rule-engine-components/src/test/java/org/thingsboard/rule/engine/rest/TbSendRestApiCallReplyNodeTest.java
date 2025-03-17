@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,12 @@ public class TbSendRestApiCallReplyNodeTest {
         Map<String, String> metadata = Map.of(
                 requestIdAttribute, requestUUIDStr,
                 serviceIdAttribute, serviceIdStr);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(new TbMsgMetaData(metadata))
+                .data(data)
+                .build();
 
         node.onMsg(ctxMock, msg);
 
@@ -109,7 +114,12 @@ public class TbSendRestApiCallReplyNodeTest {
     @ParameterizedTest
     @MethodSource
     public void givenInvalidRequest_whenOnMsg_thenTellFailure(TbMsgMetaData metaData, String data, String errorMsg) {
-        TbMsg msg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
 
         node.onMsg(ctxMock, msg);
 

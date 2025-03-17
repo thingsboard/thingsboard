@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -143,11 +144,18 @@ public interface TbContext {
     void tellFailure(TbMsg msg, Throwable th);
 
     /**
-     * Puts new message to queue for processing by the Root Rule Chain
+     * Puts new message to queue from TbMsg for processing by the Root Rule Chain
      *
      * @param msg - message
      */
     void enqueue(TbMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure);
+
+    /**
+     * Puts new message to custom queue for processing
+     *
+     * @param msg - message
+     */
+    void enqueue(TbMsg msg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     /**
      * Sends message to the nested rule chain.
@@ -167,13 +175,6 @@ public interface TbContext {
      */
     void output(TbMsg msg, String relationType);
 
-    /**
-     * Puts new message to custom queue for processing
-     *
-     * @param msg - message
-     */
-    void enqueue(TbMsg msg, String queueName, Runnable onSuccess, Consumer<Throwable> onFailure);
-
     void enqueueForTellFailure(TbMsg msg, String failureMessage);
 
     void enqueueForTellFailure(TbMsg tbMsg, Throwable t);
@@ -191,9 +192,6 @@ public interface TbContext {
     void enqueueForTellNext(TbMsg msg, String queueName, Set<String> relationTypes, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     void ack(TbMsg tbMsg);
-
-    @Deprecated(since = "3.6.0", forRemoval = true)
-    TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
     /**
      * Creates a new TbMsg instance with the specified parameters.
@@ -282,7 +280,7 @@ public interface TbContext {
 
     DeviceCredentialsService getDeviceCredentialsService();
 
-    RuleEngineDeviceStateManager getDeviceStateManager();
+    DeviceStateManager getDeviceStateManager();
 
     String getDeviceStateNodeRateLimitConfig();
 
@@ -360,6 +358,10 @@ public interface TbContext {
 
     SlackService getSlackService();
 
+    CalculatedFieldService getCalculatedFieldService();
+
+    RuleEngineCalculatedFieldQueueService getCalculatedFieldQueueService();
+
     boolean isExternalNodeForceAck();
 
     /**
@@ -372,12 +374,6 @@ public interface TbContext {
     ScriptEngine createJsScriptEngine(String script, String... argNames);
 
     ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
-
-    void logJsEvalRequest();
-
-    void logJsEvalResponse();
-
-    void logJsEvalFailure();
 
     String getServiceId();
 

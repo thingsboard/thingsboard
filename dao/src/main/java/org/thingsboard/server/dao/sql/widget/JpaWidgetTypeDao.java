@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -30,6 +32,7 @@ import org.thingsboard.server.common.data.widget.WidgetTypeFilter;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.WidgetTypeDetailsEntity;
 import org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleWidgetCompositeKey;
@@ -53,7 +56,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
  */
 @Component
 @SqlDao
-public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, WidgetTypeDetails> implements WidgetTypeDao {
+public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, WidgetTypeDetails> implements WidgetTypeDao, TenantEntityDao<WidgetTypeDetails> {
 
     @Autowired
     private WidgetTypeRepository widgetTypeRepository;
@@ -82,6 +85,11 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     @Override
     public boolean existsByTenantIdAndId(TenantId tenantId, UUID widgetTypeId) {
         return widgetTypeRepository.existsByTenantIdAndId(tenantId.getId(), widgetTypeId);
+    }
+
+    @Override
+    public WidgetTypeInfo findWidgetTypeInfoById(TenantId tenantId, UUID widgetTypeId) {
+        return DaoUtil.getData(widgetTypeInfoRepository.findById(widgetTypeId));
     }
 
     @Override
@@ -186,11 +194,6 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public List<String> findWidgetTypesNamesByTenantIdAndResourceLink(UUID tenantId, String link) {
-        return widgetTypeRepository.findNamesByTenantIdAndResourceLink(tenantId, link);
-    }
-
-    @Override
     public List<WidgetTypeId> findWidgetTypeIdsByTenantIdAndFqns(UUID tenantId, List<String> widgetFqns) {
         var idFqnPairs = widgetTypeRepository.findWidgetTypeIdsByTenantIdAndFqns(tenantId, widgetFqns);
         idFqnPairs.sort(Comparator.comparingInt(o -> widgetFqns.indexOf(o.getFqn())));
@@ -256,9 +259,28 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
+    public PageData<WidgetTypeDetails> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<WidgetTypeFields> findNextBatch(UUID id, int batchSize) {
+        return widgetTypeRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByTenantIdAndResourceLink(TenantId tenantId, String link, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByTenantIdAndResourceLink(tenantId.getId(), link, limit));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByResourceLink(String link, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByResourceLink(link, limit));
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.WIDGET_TYPE;
     }
-
 
 }

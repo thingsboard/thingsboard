@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,7 +239,12 @@ public class RpcV2Controller extends AbstractRpcController {
             rpcService.deleteRpc(getTenantId(), rpcId);
             rpc.setStatus(RpcStatus.DELETED);
 
-            TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_DELETED, rpc.getDeviceId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(rpc));
+            TbMsg msg = TbMsg.newMsg()
+                    .type(TbMsgType.RPC_DELETED)
+                    .originator(rpc.getDeviceId())
+                    .copyMetaData(TbMsgMetaData.EMPTY)
+                    .data(JacksonUtil.toString(rpc))
+                    .build();
             tbClusterService.pushMsgToRuleEngine(getTenantId(), rpc.getDeviceId(), msg, null);
         }
     }

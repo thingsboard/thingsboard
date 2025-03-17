@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -36,6 +36,17 @@
     </mat-form-field>
   </div>
   <ng-container [formGroup]="mobileActionTypeFormGroup" [ngSwitch]="mobileActionFormGroup.get('type').value">
+    <ng-template [ngSwitchCase]="mobileActionType.deviceProvision">
+      <tb-js-func
+        formControlName="handleProvisionSuccessFunction"
+        functionName="handleProvisionSuccess"
+        withModules
+        [functionArgs]="['deviceName', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+        [globalVariables]="functionScopeVariables"
+        [editorCompleter]="customActionEditorCompleter"
+        hideBrackets
+      ></tb-js-func>
+    </ng-template>
     <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.mapDirection ||
                                  mobileActionFormGroup.get('type').value === mobileActionType.mapLocation ?
                                  mobileActionFormGroup.get('type').value : ''">

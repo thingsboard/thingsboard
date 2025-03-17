@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -38,14 +38,15 @@ export interface StringItemsOption {
 @Component({
   selector: 'tb-string-items-list',
   templateUrl: './string-items-list.component.html',
-  styleUrls: [],
+  styleUrls: ['./string-items-list.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => StringItemsListComponent),
       multi: true
     }
-  ]
+  ],
+  encapsulation: ViewEncapsulation.None
 })
 export class StringItemsListComponent implements ControlValueAccessor, OnInit {
 
@@ -107,6 +108,9 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  fieldClass: string;
 
   @Input()
   @coerceArray()

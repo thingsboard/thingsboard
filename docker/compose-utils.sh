@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2024 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -128,10 +128,21 @@ function additionalStartupServices() {
     echo $ADDITIONAL_STARTUP_SERVICES
 }
 
+function additionalComposeEdqsArgs() {
+    source .env
+
+    if [ "$EDQS_ENABLED" = true ]
+    then
+      ADDITIONAL_COMPOSE_EDQS_ARGS="-f docker-compose.edqs.yml"
+      echo ADDITIONAL_COMPOSE_EDQS_ARGS
+    else
+      echo ""
+    fi
+}
+
 function permissionList() {
     PERMISSION_LIST="
       799  799  tb-node/log
-      799  799  tb-transports/coap/log
       799  799  tb-transports/lwm2m/log
       799  799  tb-transports/http/log
       799  799  tb-transports/mqtt/log
@@ -146,6 +157,12 @@ function permissionList() {
     if [ "$DATABASE" = "hybrid" ]; then
       PERMISSION_LIST="$PERMISSION_LIST
       999  999  tb-node/cassandra
+      "
+    fi
+
+    if [ "$EDQS_ENABLED" = true ]; then
+      PERMISSION_LIST="$PERMISSION_LIST
+      799  799  edqs/log
       "
     fi
 
@@ -182,29 +199,77 @@ function permissionList() {
 }
 
 function checkFolders() {
+  CREATE=false
+  SKIP_CHOWN=false
+  for i in "$@"
+    do
+      case $i in
+          --create)
+          CREATE=true
+          shift
+          ;;
+          --skipChown)
+          SKIP_CHOWN=true
+          shift
+          ;;
+          *)
+                  # unknown option
+          ;;
+      esac
+    done
   EXIT_CODE=0
   PERMISSION_LIST=$(permissionList) || exit $?
   set -e
   while read -r USR GRP DIR
   do
-    if [ -z "$DIR" ]; then # skip empty lines
+    IS_EXIST_CHECK_PASSED=false
+    IS_OWNER_CHECK_PASSED=false
+
+    # skip empty lines
+    if [ -z "$DIR" ]; then
           continue
     fi
-    MESSAGE="Checking user ${USR} group ${GRP} dir ${DIR}"
-    if [[ -d "$DIR" ]] &&
-       [[ $(ls -ldn "$DIR" | awk '{print $3}') -eq "$USR" ]] &&
-       [[ $(ls -ldn "$DIR" | awk '{print $4}') -eq "$GRP" ]]
-    then
-      MESSAGE="$MESSAGE OK"
+
+    # checks section
+    echo "Checking if dir ${DIR} exists..."
+    if [[ -d "$DIR" ]]; then
+      echo "> OK"
+      IS_EXIST_CHECK_PASSED=true
+      if [ "$SKIP_CHOWN" = false ]; then
+        echo "Checking user ${USR} group ${GRP} ownership for dir ${DIR}..."
+        if [[ $(ls -ldn "$DIR" | awk '{print $3}') -eq "$USR" ]] && [[ $(ls -ldn "$DIR" | awk '{print $4}') -eq "$GRP" ]]; then
+          echo "> OK"
+          IS_OWNER_CHECK_PASSED=true
+        else
+          echo "...ownership check failed"
+          if [ "$CREATE" = false ]; then
+            EXIT_CODE=1
+          fi
+        fi
+      fi
     else
-      if [ "$1" = "--create" ]; then
-        echo "Create and chown: user ${USR} group ${GRP} dir ${DIR}"
-        mkdir -p "$DIR" && sudo chown -R "$USR":"$GRP" "$DIR"
-      else
-        echo "$MESSAGE FAILED"
+      echo "...does not exist"
+      if [ "$CREATE" = false ]; then
         EXIT_CODE=1
       fi
     fi
+
+    # create/chown section
+    if [ "$CREATE" = true ]; then
+      if [ "$IS_EXIST_CHECK_PASSED" = false ]; then
+        echo "...will create dir ${DIR}"
+        if [ "$SKIP_CHOWN" = false ]; then
+        echo "...will change ownership to user ${USR} group ${GRP} for dir ${DIR}"
+          mkdir -p "$DIR" && sudo chown -R "$USR":"$GRP" "$DIR" && echo "> OK"
+        else
+          mkdir -p "$DIR" && echo "> OK"
+        fi
+      elif [ "$IS_OWNER_CHECK_PASSED" = false ] && [ "$SKIP_CHOWN" = false ]; then
+        echo "...will change ownership to user ${USR} group ${GRP} for dir ${DIR}"
+        sudo chown -R "$USR":"$GRP" "$DIR" && echo "> OK"
+      fi
+    fi
+
   done < <(echo "$PERMISSION_LIST")
   return $EXIT_CODE
 }

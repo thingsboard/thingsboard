@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -63,9 +63,10 @@ import { map, share, tap } from 'rxjs/operators';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
 import { UtilsService } from '@core/services/utils.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'liquid-level-card-basic-config',
+  selector: 'tb-liquid-level-card-basic-config',
   templateUrl: './liquid-level-card-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
@@ -228,7 +229,9 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
       actions: [configData.config.actions || {}, []]
     });
 
-    this.levelCardWidgetConfigForm.get('selectedShape').valueChanges.subscribe(() => {
+    this.levelCardWidgetConfigForm.get('selectedShape').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.cd.detectChanges();
       this.layoutsImageCardsSelect?.imageCardsSelectOptions.notifyOnChanges();
     });

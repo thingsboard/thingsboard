@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -35,15 +35,6 @@ import {
 import {
   ScadaSymbolBehaviorPanelComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-panel.component';
-import {
-  ScadaSymbolPropertiesComponent
-} from '@home/pages/scada-symbol/metadata-components/scada-symbol-properties.component';
-import {
-  ScadaSymbolPropertyRowComponent
-} from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-row.component';
-import {
-  ScadaSymbolPropertyPanelComponent
-} from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-panel.component';
 import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
 import {
   ScadaSymbolMetadataTagFunctionPanelComponent
@@ -58,10 +49,7 @@ import {
       ScadaSymbolMetadataTagFunctionPanelComponent,
       ScadaSymbolBehaviorsComponent,
       ScadaSymbolBehaviorRowComponent,
-      ScadaSymbolBehaviorPanelComponent,
-      ScadaSymbolPropertiesComponent,
-      ScadaSymbolPropertyRowComponent,
-      ScadaSymbolPropertyPanelComponent
+      ScadaSymbolBehaviorPanelComponent
     ],
   imports: [
     CommonModule,

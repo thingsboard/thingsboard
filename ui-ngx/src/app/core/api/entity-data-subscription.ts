@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -685,7 +685,7 @@ export class EntityDataSubscription {
       if (this.tsFields.length > 0) {
         if (this.history) {
           cmd.historyCmd = {
-            keys: this.tsFields.map(key => key.key),
+            keys: [... new Set(this.tsFields.map(key => key.key))],
             startTs: this.subsTw.fixedWindow.startTimeMs,
             endTs: this.subsTw.fixedWindow.endTimeMs,
             interval: 0,
@@ -702,7 +702,7 @@ export class EntityDataSubscription {
           }
         } else {
           cmd.tsCmd = {
-            keys: this.tsFields.map(key => key.key),
+            keys: [... new Set(this.tsFields.map(key => key.key))],
             startTs: this.subsTw.startTs,
             timeWindow: this.subsTw.aggregation.timeWindow,
             interval: 0,

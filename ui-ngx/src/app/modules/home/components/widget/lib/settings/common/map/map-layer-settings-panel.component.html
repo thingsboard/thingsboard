@@ -1,0 +1,112 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-map-layer-settings-panel" [formGroup]="layerFormGroup">
+  <div class="tb-map-layer-settings-title" translate>widgets.maps.layer.layer-settings</div>
+  <div class="tb-map-layer-settings-panel-content">
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>widgets.maps.layer.label</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="label" [placeholder]="labelPlaceholder()">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>widgets.maps.layer.provider.provider</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="provider" required>
+          <mat-option *ngFor="let provider of mapProviders" [value]="provider">
+            {{ mapProviderTranslationMap.get(provider) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width"> {{ (MapProvider.custom === layerFormGroup.get('provider').value ? 'widgets.maps.layer.provider.custom.tile-url' : 'widgets.maps.layer.layer') | translate }}</div>
+      <mat-form-field *ngIf="MapProvider.openstreet === layerFormGroup.get('provider').value"
+                      class="flex"  appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="layerType" required>
+          <mat-option *ngFor="let layerType of openStreetLayerTypes" [value]="layerType">
+            {{ openStreetMapLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field *ngIf="MapProvider.google === layerFormGroup.get('provider').value"
+                      class="flex"  appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="layerType" required>
+          <mat-option *ngFor="let layerType of googleMapLayerTypes" [value]="layerType">
+            {{ googleMapLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field *ngIf="MapProvider.here === layerFormGroup.get('provider').value"
+                      class="flex"  appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="layerType" required>
+          <mat-option *ngFor="let layerType of hereLayerTypes" [value]="layerType">
+            {{ hereLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field *ngIf="MapProvider.tencent === layerFormGroup.get('provider').value"
+                      class="flex"  appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="layerType" required>
+          <mat-option *ngFor="let layerType of tencentLayerTypes" [value]="layerType">
+            {{ tencentLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field *ngIf="MapProvider.custom === layerFormGroup.get('provider').value"
+                      class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="tileUrl" required placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div *ngIf="[MapProvider.google, MapProvider.here].includes(layerFormGroup.get('provider').value)" class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>widgets.maps.layer.credentials.credentials</div>
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" translate>widgets.maps.layer.credentials.api-key</div>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="apiKey" required placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>widgets.maps.layer.reference.reference-layer</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="referenceLayer" placeholder="{{'widgets.maps.layer.reference.no-layer' | translate}}">
+          <mat-option [value]="null">{{ 'widgets.maps.layer.reference.no-layer' | translate }}</mat-option>
+          <mat-option *ngFor="let layer of referenceLayerTypes" [value]="layer">
+            {{ referenceLayerTypeTranslationMap.get(layer) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-map-layer-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyLayerSettings()"
+            [disabled]="layerFormGroup.invalid || !layerFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

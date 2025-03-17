@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -274,7 +274,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         Device device = createDevice("Device with alarm", "233");
         NotificationTarget target = createNotificationTarget(tenantAdminUserId);
         defaultNotifications.create(tenantId, DefaultNotifications.newAlarm, target.getId());
-        defaultNotifications.create(tenantId, DefaultNotifications.entityAction, target.getId());
         notificationRulesCache.evict(tenantId);
 
         Alarm alarm = new Alarm();
@@ -287,7 +286,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .pollDelay(2, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     List<Notification> notifications = getMyNotifications(false, 10);
-                    assertThat(notifications).hasSize(1).first().matches(notification -> {
+                    assertThat(notifications).singleElement().matches(notification -> {
                         return notification.getType() == NotificationType.ALARM &&
                                 notification.getSubject().equals("New alarm 'testAlarm'");
                     });
@@ -353,12 +352,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .findFirst().orElse(null);
         assertThat(scheduledNotificationRequest).extracting(NotificationRequest::getInfo).isEqualTo(notification.getInfo());
 
-        getWsClient().registerWaitForUpdate();
         alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), System.currentTimeMillis(), null);
-        getWsClient().waitForUpdate(true);
-        notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("critical alarm '" + alarmType + "' is CLEARED_UNACK");
-
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(findNotificationRequests(EntityType.ALARM).getData()).filteredOn(NotificationRequest::isScheduled).isEmpty();
         });

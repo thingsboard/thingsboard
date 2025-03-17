@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LinkedHashMapRemoveEldestTest {
 
-    public static final long MAX_ENTRIES = 10L;
-    long removeCount = 0;
+    public static final int MAX_ENTRIES = 10;
+    int removeCount = 0;
 
-    void removalConsumer(Long id, String name) {
+    void removalConsumer(Integer id, String name) {
         removeCount++;
         assertThat(id, is(Matchers.lessThan(MAX_ENTRIES)));
         assertThat(name, is(id.toString()));
@@ -39,7 +39,7 @@ public class LinkedHashMapRemoveEldestTest {
     @Test
     public void givenMap_whenOverSized_thenVerifyRemovedEldest() {
         //given
-        LinkedHashMapRemoveEldest<Long, String> map =
+        LinkedHashMapRemoveEldest<Integer, String> map =
                 new LinkedHashMapRemoveEldest<>(MAX_ENTRIES, this::removalConsumer);
 
         assertThat(map.getMaxEntries(), is(MAX_ENTRIES));
@@ -49,14 +49,14 @@ public class LinkedHashMapRemoveEldestTest {
         assertThat(map.size(), is(0));
 
         //when
-        for (long i = 0; i < MAX_ENTRIES * 2; i++) {
+        for (int i = 0; i < MAX_ENTRIES * 2; i++) {
             map.put(i, String.valueOf(i));
         }
 
         //then
-        assertThat((long) map.size(), is(MAX_ENTRIES));
+        assertThat( map.size(), is(MAX_ENTRIES));
         assertThat(removeCount, is(MAX_ENTRIES));
-        for (long i = MAX_ENTRIES; i < MAX_ENTRIES * 2; i++) {
+        for (int i = MAX_ENTRIES; i < MAX_ENTRIES * 2; i++) {
             assertThat(map.get(i), is(String.valueOf(i)));
         }
     }

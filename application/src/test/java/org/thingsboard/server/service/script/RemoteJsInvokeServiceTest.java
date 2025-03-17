@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.DefaultStatsFactory;
+import org.thingsboard.server.common.stats.StatsCounter;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
@@ -68,6 +72,10 @@ class RemoteJsInvokeServiceTest {
         remoteJsInvokeService = new RemoteJsInvokeService(Optional.of(apiUsageStateClient), Optional.of(apiUsageReportClient));
         jsRequestTemplate = mock(TbQueueRequestTemplate.class);
         remoteJsInvokeService.requestTemplate = jsRequestTemplate;
+        StatsFactory statsFactory = mock(StatsFactory.class);
+        when(statsFactory.createStatsCounter(any(), any())).thenReturn(mock(StatsCounter.class));
+        ReflectionTestUtils.setField(remoteJsInvokeService, "statsFactory",statsFactory);
+        remoteJsInvokeService.init();
     }
 
     @AfterEach
