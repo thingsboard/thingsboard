@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
 import org.jboss.aerogear.security.otp.Totp;
 import org.junit.After;
 import org.junit.Before;
@@ -69,6 +70,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -100,6 +102,8 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setEmail(username);
         user.setTenantId(tenantId);
+
+        willReturn(Futures.immediateVoidFuture()).given(smsService).sendSms(any(), any(), any(), any());
 
         loginSysAdmin();
         user = createUser(user, password);
