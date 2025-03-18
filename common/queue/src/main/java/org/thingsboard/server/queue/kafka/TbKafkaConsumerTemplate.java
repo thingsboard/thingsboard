@@ -160,7 +160,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
                     int partition = record.partition();
                     Long endOffset = endOffsets.get(partition);
                     if (endOffset == null) {
-                        log.warn("End offset not found for {} [{}]", record.topic(), partition);
+                        log.debug("End offset not found for {} [{}]", record.topic(), partition);
                         return;
                     }
                     log.trace("[{}-{}] Got record offset {}, expected end offset: {}", record.topic(), partition, record.offset(), endOffset - 1);

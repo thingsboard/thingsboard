@@ -123,6 +123,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                         .setValue(value);
                 statsMsg.addValues(statsItem.build());
             });
+            statsForKey.clear();
         }
 
         Map<TopicPartitionInfo, List<UsageStatsServiceMsg>> reportStatsPerTpi = new HashMap<>();

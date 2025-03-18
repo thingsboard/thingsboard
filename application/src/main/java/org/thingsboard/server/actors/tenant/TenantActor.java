@@ -49,6 +49,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
@@ -175,7 +176,6 @@ public class TenantActor extends RuleChainManagerActor {
             case CF_LINK_INIT_MSG:
             case CF_STATE_RESTORE_MSG:
             case CF_PARTITIONS_CHANGE_MSG:
-            case CF_ENTITY_LIFECYCLE_MSG:
                 onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, true);
                 break;
             case CF_TELEMETRY_MSG:
@@ -315,19 +315,26 @@ public class TenantActor extends RuleChainManagerActor {
             onToDeviceActorMsg(new DeviceDeleteMsg(tenantId, deviceId), true);
             deletedDevices.add(deviceId);
         }
-        if (isRuleEngine && ruleChainsInitialized) {
-            TbActorRef target = getEntityActorRef(msg.getEntityId());
-            if (target != null) {
-                if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
-                    RuleChain ruleChain = systemContext.getRuleChainService().
-                            findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
-                    if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
-                        visit(ruleChain, target);
+        if (isRuleEngine) {
+            if (ruleChainsInitialized) {
+                TbActorRef target = getEntityActorRef(msg.getEntityId());
+                if (target != null) {
+                    if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
+                        RuleChain ruleChain = systemContext.getRuleChainService().
+                                findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
+                        if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
+                            visit(ruleChain, target);
+                        }
                     }
+                    target.tellWithHighPriority(msg);
+                } else {
+                    log.debug("[{}] Invalid component lifecycle msg: {}", tenantId, msg);
                 }
-                target.tellWithHighPriority(msg);
-            } else {
-                log.debug("[{}] Invalid component lifecycle msg: {}", tenantId, msg);
+            }
+            if (cfActor != null) {
+                if (msg.getEntityId().getEntityType().isOneOf(EntityType.CALCULATED_FIELD, EntityType.DEVICE, EntityType.ASSET)) {
+                    cfActor.tellWithHighPriority(new CalculatedFieldEntityLifecycleMsg(tenantId, msg));
+                }
             }
         }
     }
