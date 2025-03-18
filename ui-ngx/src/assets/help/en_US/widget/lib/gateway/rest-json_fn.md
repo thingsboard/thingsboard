@@ -37,7 +37,7 @@ Converted data:
 
 `AM-123`
 
-For extracting all data from the message above, use:
+To extract all data from the message above, use:
 
 `${data}`
 
@@ -45,7 +45,7 @@ Converted data:
 
 `{"temp": 12.2, "hum": 56, "status": "ok"}`
 
-For extracting a specific value, such as the temperature, use:
+To extract a specific value, such as the temperature, use:
 
 `${data.temp}`
 
