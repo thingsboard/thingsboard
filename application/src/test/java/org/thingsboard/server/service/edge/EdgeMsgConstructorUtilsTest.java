@@ -15,9 +15,20 @@
  */
 package org.thingsboard.server.service.edge;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode;
+import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNodeConfiguration;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode;
+import org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNodeConfiguration;
+import org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode;
+import org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNodeConfiguration;
+import org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode;
+import org.thingsboard.rule.engine.telemetry.TbMsgAttributesNodeConfiguration;
+import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
 import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -26,66 +37,129 @@ import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
+import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.MISSING_NODES_IN_VERSION_37;
+import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.NODE_TO_IGNORE_PARAM_FOR_OLD_EDGE_VERSION;
+
+@Slf4j
 public class EdgeMsgConstructorUtilsTest {
     private static final int CONFIGURATION_VERSION = 5;
 
+    public static final List<EdgeVersion> TEST_SUPPORTED_EDGE_VERSIONS = Arrays.asList(
+            EdgeVersion.V_4_0_0, EdgeVersion.V_3_9_0, EdgeVersion.V_3_8_0, EdgeVersion.V_3_7_0
+    );
+
+    private static final Map<NodeConfiguration, String> CONFIG_TO_NODE_NAME = Map.of(
+            new TbMsgTimeseriesNodeConfiguration(), TbMsgTimeseriesNode.class.getName(),
+            new TbMsgAttributesNodeConfiguration(), TbMsgAttributesNode.class.getName(),
+            new TbSaveToCustomCassandraTableNodeConfiguration(), TbSaveToCustomCassandraTableNode.class.getName()
+    );
+
+    private static final Map<String, Integer> NODE_TO_CONFIG_PARAMS_COUNT = Map.of(
+            TbMsgTimeseriesNode.class.getName(), 3,
+            TbMsgAttributesNode.class.getName(), 5,
+            TbSaveToCustomCassandraTableNode.class.getName(), 3
+    );
+
+    private static final Map<NodeConfiguration, String> CONFIG_TO_MISS_NODE_FOR_OLD_EDGE = Map.of(
+            new TbSendRestApiCallReplyNodeConfiguration(), TbSendRestApiCallReplyNode.class.getName(),
+            new TbAwsLambdaNodeConfiguration(), TbAwsLambdaNode.class.getName()
+    );
+
     @Test
-    public void testRuleChainMetadataUpdateMsgForAllEdgeVersions() {
+    public void testRuleChainMetadataUpdateMsgForOldEdgeVersions() {
         // GIVEN
-        RuleChainMetaData metaData = createIncompatibleRuleNodesForOldEdge();
+        RuleChainMetaData metaData = createMetadataWithProblemNodes(CONFIG_TO_NODE_NAME);
 
-        // WHEN
-        RuleNode ruleNode_V_4_0_0 = getRuleNodeFromMetadataUpdateMessage(metaData, EdgeVersion.V_4_0_0);
-        RuleNode ruleNode_V_3_9_0 = getRuleNodeFromMetadataUpdateMessage(metaData, EdgeVersion.V_3_9_0);
-        RuleNode ruleNode_V_3_8_0 = getRuleNodeFromMetadataUpdateMessage(metaData, EdgeVersion.V_3_8_0);
-        RuleNode ruleNode_V_3_7_0 = getRuleNodeFromMetadataUpdateMessage(metaData, EdgeVersion.V_3_7_0);
+        TEST_SUPPORTED_EDGE_VERSIONS.forEach(edgeVersion -> {
+            // WHEN
+            List<RuleNode> ruleNodes = getRuleNodesFromUpdateMsg(metaData, edgeVersion);
 
-        // THEN
-        assertRuleNodeConfiguration(ruleNode_V_4_0_0, EdgeVersion.V_4_0_0);
-        assertRuleNodeConfiguration(ruleNode_V_3_9_0, EdgeVersion.V_3_9_0);
-        assertRuleNodeConfiguration(ruleNode_V_3_8_0, EdgeVersion.V_3_8_0);
-        assertRuleNodeConfiguration(ruleNode_V_3_7_0, EdgeVersion.V_3_7_0);
+            // THEN
+            validateRuleNodeConfig(ruleNodes, edgeVersion);
+        });
     }
 
-    private RuleChainMetaData createIncompatibleRuleNodesForOldEdge() {
-        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+    @Test
+    public void testRuleChainMetadataWithMissingNodeForOldEdgeVersions() {
+        // GIVEN
+        RuleChainMetaData metaData = createMetadataWithProblemNodes(CONFIG_TO_MISS_NODE_FOR_OLD_EDGE);
 
-        RuleNode ruleNode1 = new RuleNode();
-        ruleNode1.setName("TbMsgTimeseriesNode");
-        ruleNode1.setType(org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode.class.getName());
-        ruleNode1.setConfigurationVersion(CONFIGURATION_VERSION);
-        ruleNode1.setConfiguration(JacksonUtil.valueToTree(new TbMsgTimeseriesNodeConfiguration().defaultConfiguration()));
+        TEST_SUPPORTED_EDGE_VERSIONS.forEach(edgeVersion -> {
+            // WHEN
+            List<RuleNode> ruleNodes = getRuleNodesFromUpdateMsg(metaData, edgeVersion);
+
+            // THEN
+            boolean isOldEdge = EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_8_0);
+
+            if (isOldEdge) {
+                Assert.assertTrue("Rule Node must be empty", ruleNodes.isEmpty());
+            } else {
+                Assert.assertEquals(MISSING_NODES_IN_VERSION_37.size(), ruleNodes.size());
+            }
+        });
+    }
+
+    private RuleChainMetaData createMetadataWithProblemNodes(Map<NodeConfiguration, String> nodeMap) {
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        List<RuleNode> ruleNodes = new ArrayList<>();
+
+        nodeMap.entrySet().forEach(configToNodeName -> {
+            RuleNode ruleNode = new RuleNode();
+
+            ruleNode.setName(configToNodeName.getValue());
+            ruleNode.setType(configToNodeName.getValue());
+            ruleNode.setConfigurationVersion(CONFIGURATION_VERSION);
+            ruleNode.setConfiguration(JacksonUtil.valueToTree(configToNodeName.getKey().defaultConfiguration()));
+
+            ruleNodes.add(ruleNode);
+        });
 
         ruleChainMetaData.setFirstNodeIndex(0);
-        ruleChainMetaData.setNodes(Collections.singletonList(ruleNode1));
+        ruleChainMetaData.setNodes(ruleNodes);
 
         return ruleChainMetaData;
     }
 
-
-    private RuleNode getRuleNodeFromMetadataUpdateMessage(RuleChainMetaData metaData, EdgeVersion edgeVersion) {
+    private List<RuleNode> getRuleNodesFromUpdateMsg(RuleChainMetaData metaData, EdgeVersion edgeVersion) {
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
                 EdgeMsgConstructorUtils.constructRuleChainMetadataUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, metaData, edgeVersion);
 
         RuleChainMetaData ruleChainMetaData = JacksonUtil.fromString(ruleChainMetadataUpdateMsg.getEntity(), RuleChainMetaData.class, true);
         Assert.assertNotNull("RuleChainMetaData is null", ruleChainMetaData);
 
-        RuleNode ruleNode = ruleChainMetaData.getNodes().stream().findFirst().orElse(null);
-        Assert.assertNotNull("RuleNode is null for Edge version " + edgeVersion, ruleNode);
-        Assert.assertNotNull("Configuration is null for Edge version " + edgeVersion, ruleNode.getConfiguration());
-
-        return ruleNode;
+        return ruleChainMetaData.getNodes();
     }
 
-    private void assertRuleNodeConfiguration(RuleNode ruleNode, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_9_0)) {
-            Assert.assertEquals("Unexpected config size", 2, ruleNode.getConfiguration().size());
-            Assert.assertFalse("Unexpected field 'processingSettings'", ruleNode.getConfiguration().has("processingSettings"));
-        }else{
-            Assert.assertEquals("Unexpected config size", 3, ruleNode.getConfiguration().size());
-            Assert.assertTrue("Missing field 'processingSettings'", ruleNode.getConfiguration().has("processingSettings"));
-        }
+    private void validateRuleNodeConfig(List<RuleNode> ruleNodes, EdgeVersion edgeVersion) {
+        ruleNodes.forEach(ruleNode -> {
+            int ruleNodeConfigAmount = NODE_TO_CONFIG_PARAMS_COUNT.get(ruleNode.getName());
+
+            boolean isOldEdge = EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_9_0);
+            int expectedConfigAmount = isOldEdge ? ruleNodeConfigAmount - 1 : ruleNodeConfigAmount;
+            boolean includeConfigParam = !isOldEdge;
+
+            validateParams(ruleNode, expectedConfigAmount, includeConfigParam);
+        });
     }
+
+    private void validateParams(RuleNode ruleNode, int expectedConfigAmount, boolean includeConfigParam) {
+        String ignoreConfigParam = NODE_TO_IGNORE_PARAM_FOR_OLD_EDGE_VERSION.get(ruleNode.getName());
+
+        Assert.assertEquals(
+                String.format("Expected %d config params for ruleNode '%s', but found %d", expectedConfigAmount, ruleNode.getName(), ruleNode.getConfiguration().size()),
+                expectedConfigAmount, ruleNode.getConfiguration().size()
+        );
+
+        boolean hasIgnoredField = ruleNode.getConfiguration().has(ignoreConfigParam);
+        Assert.assertEquals(
+                String.format("Field '%s' for ruleNode '%s' should %s be present", ignoreConfigParam, ruleNode.getName(), includeConfigParam ? "not" : ""),
+                includeConfigParam, hasIgnoredField
+        );
+    }
+
 }

@@ -25,6 +25,10 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode;
+import org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode;
+import org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode;
+import org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode;
 import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.Customer;
@@ -117,11 +121,25 @@ import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 public class EdgeMsgConstructorUtils {
+    public static final Map<String, String> NODE_TO_IGNORE_PARAM_FOR_OLD_EDGE_VERSION = Map.of(
+            TbMsgTimeseriesNode.class.getName(), "processingSettings",
+            TbMsgAttributesNode.class.getName(), "processingSettings",
+            TbSaveToCustomCassandraTableNode.class.getName(), "defaultTtl"
+    );
+
+    //added in edge version 3.8.0
+    public static final Set<String> MISSING_NODES_IN_VERSION_37 = Set.of(
+            TbSendRestApiCallReplyNode.class.getName(),
+            TbAwsLambdaNode.class.getName()
+    );
 
     public static AlarmUpdateMsg constructAlarmUpdatedMsg(UpdateMsgType msgType, Alarm alarm) {
         return AlarmUpdateMsg.newBuilder().setMsgType(msgType)
@@ -431,25 +449,36 @@ public class EdgeMsgConstructorUtils {
     }
 
     private static String filterMetadataForOldEdgeVersions(RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
-        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_9_0)) {
-            JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
-            JsonNode nodes = jsonNode.get("nodes");
+        JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
+        JsonNode nodes = jsonNode.get("nodes");
 
-            for (JsonNode node : nodes) {
-                if (node.isObject()) {
-                    removeIncompatibleFields((ObjectNode) node);
+        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_8_0)) {
+            Iterator<JsonNode> iterator = nodes.iterator();
+            while (iterator.hasNext()) {
+                JsonNode node = iterator.next();
+
+                String type = node.get("type").asText();
+                if (MISSING_NODES_IN_VERSION_37.contains(type)) {
+                    iterator.remove();
                 }
             }
+        }
+
+        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_9_0)) {
+            nodes.forEach(EdgeMsgConstructorUtils::changeRuleNodeConfigForOldEdgeVersion);
+
             return JacksonUtil.toString(jsonNode);
         } else {
             return JacksonUtil.toString(ruleChainMetaData);
         }
     }
 
-    private static void removeIncompatibleFields(ObjectNode node) {
-        if (TbMsgTimeseriesNode.class.getName().equals(node.get("type").asText())) {
-            if (node.has("configuration") && node.get("configuration").isObject()) {
-                ((ObjectNode) node.get("configuration")).remove("processingSettings");
+    private static void changeRuleNodeConfigForOldEdgeVersion(JsonNode node) {
+        if (node.isObject()) {
+            JsonNode configurationNode = node.get("configuration");
+            if (configurationNode != null && configurationNode.isObject() &&
+                    NODE_TO_IGNORE_PARAM_FOR_OLD_EDGE_VERSION.containsKey(node.get("type").asText())) {
+                ((ObjectNode) configurationNode).remove(NODE_TO_IGNORE_PARAM_FOR_OLD_EDGE_VERSION.get(node.get("type").asText()));
             }
         }
     }
