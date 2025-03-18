@@ -1419,6 +1419,8 @@ device:
       host: "${DEVICE_CONNECTIVITY_COAPS_HOST:}"
       # Port of coap transport service. If empty, the default port for coaps will be used.
       port: "${DEVICE_CONNECTIVITY_COAPS_PORT:5684}"
+      # Path to the COAP CA root certificate file
+      pem_cert_file: "${DEVICE_CONNECTIVITY_COAPS_CA_ROOT_CERT:cafile.pem}"
 
 # Edges parameters
 edges:

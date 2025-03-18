@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
@@ -83,6 +84,8 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
 
     @Value("${device.connectivity.mqtts.pem_cert_file:}")
     private String mqttsPemCertFile;
+    @Value("${device.connectivity.coaps.pem_cert_file:}")
+    private String coapsPemCertFile;
 
     @Override
     public JsonNode findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
@@ -133,22 +136,19 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public Resource getPemCertFile(String protocol) {
         return certs.computeIfAbsent(protocol, key -> {
             DeviceConnectivityInfo connectivity = getConnectivity(protocol);
-            if (!MQTTS.equals(protocol) || connectivity == null) {
+            if (connectivity == null) {
                 log.warn("Unknown connectivity protocol: {}", protocol);
                 return null;
             }
 
-            if (StringUtils.isNotBlank(mqttsPemCertFile) && ResourceUtils.resourceExists(this, mqttsPemCertFile)) {
-                try {
-                    return getCert(mqttsPemCertFile);
-                } catch (Exception e) {
-                    String msg = String.format("Failed to read %s server certificate!", protocol);
-                    log.warn(msg);
-                    throw new RuntimeException(msg, e);
+            return switch (protocol) {
+                case COAPS -> getCert(coapsPemCertFile);
+                case MQTTS -> getCert(mqttsPemCertFile);
+                default -> {
+                    log.warn("Unsupported secure protocol: {}", protocol);
+                    yield null;
                 }
-            } else {
-                return null;
-            }
+            };
         });
     }
 
@@ -174,7 +174,11 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         return info != null && info.isEnabled();
     }
 
-    private Resource getCert(String path) throws Exception {
+    private Resource getCert(String path) {
+        if (StringUtils.isBlank(path) || !ResourceUtils.resourceExists(this, path)) {
+           return null;
+        }
+
         StringBuilder pemContentBuilder = new StringBuilder();
 
         try (InputStream inStream = ResourceUtils.getInputStream(this, path);
@@ -197,6 +201,10 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
                     pemContentBuilder.append("-----END CERTIFICATE-----\n");
                 }
             }
+        } catch (IOException e) {
+            String msg = String.format("Failed to read %s server certificate!", path);
+            log.warn(msg);
+            throw new RuntimeException(msg, e);
         }
 
         return new ByteArrayResource(pemContentBuilder.toString().getBytes(StandardCharsets.UTF_8));
@@ -311,8 +319,11 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         }
 
         if (isEnabled(COAPS)) {
+            ArrayNode coapsCommands = coapCommands.putArray(COAPS);
+            Optional.ofNullable(DeviceConnectivityUtil.getCurlPemCertCommand(baseUrl, COAPS))
+                    .ifPresent(coapsCommands::add);
             Optional.ofNullable(getCoapPublishCommand(COAPS, baseUrl, deviceCredentials))
-                    .ifPresent(v -> coapCommands.put(COAPS, v));
+                    .ifPresent(coapsCommands::add);
 
             Optional.ofNullable(getDockerCoapPublishCommand(COAPS, baseUrl, deviceCredentials))
                     .ifPresent(v -> dockerCoapCommands.put(COAPS, v));
@@ -336,7 +347,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         DeviceConnectivityInfo properties = getConnectivity(protocol);
         String host = getHost(baseUrl, properties, protocol);
         String port = StringUtils.isBlank(properties.getPort()) ? "" : ":" + properties.getPort();
-        return DeviceConnectivityUtil.getDockerCoapPublishCommand(protocol, host, port, deviceCredentials);
+        return DeviceConnectivityUtil.getDockerCoapPublishCommand(protocol, baseUrl, host, port, deviceCredentials);
     }
 
 }
