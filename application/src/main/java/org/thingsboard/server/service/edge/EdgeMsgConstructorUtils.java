@@ -129,7 +129,7 @@ import java.util.UUID;
 
 @Slf4j
 public class EdgeMsgConstructorUtils {
-    public static final Map<String, String> NODE_TO_IGNORE_PARAM_FOR_OLD_EDGE_VERSION = Map.of(
+    public static final Map<String, String> NODE_TO_IGNORED_PARAM_FOR_OLD_EDGE_VERSION = Map.of(
             TbMsgTimeseriesNode.class.getName(), "processingSettings",
             TbMsgAttributesNode.class.getName(), "processingSettings",
             TbSaveToCustomCassandraTableNode.class.getName(), "defaultTtl"
@@ -452,7 +452,7 @@ public class EdgeMsgConstructorUtils {
         JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
         JsonNode nodes = jsonNode.get("nodes");
 
-        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_8_0)) {
+        if (EdgeVersionUtils.isEdgeOlderThan_3_8_0(edgeVersion)) {
             Iterator<JsonNode> iterator = nodes.iterator();
             while (iterator.hasNext()) {
                 JsonNode node = iterator.next();
@@ -464,7 +464,7 @@ public class EdgeMsgConstructorUtils {
             }
         }
 
-        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_9_0)) {
+        if (EdgeVersionUtils.isEdgeOlderThan_3_9_0(edgeVersion)) {
             nodes.forEach(EdgeMsgConstructorUtils::changeRuleNodeConfigForOldEdgeVersion);
 
             return JacksonUtil.toString(jsonNode);
@@ -475,10 +475,10 @@ public class EdgeMsgConstructorUtils {
 
     private static void changeRuleNodeConfigForOldEdgeVersion(JsonNode node) {
         if (node.isObject()) {
-            JsonNode configurationNode = node.get("configuration");
-            if (configurationNode != null && configurationNode.isObject() &&
-                    NODE_TO_IGNORE_PARAM_FOR_OLD_EDGE_VERSION.containsKey(node.get("type").asText())) {
-                ((ObjectNode) configurationNode).remove(NODE_TO_IGNORE_PARAM_FOR_OLD_EDGE_VERSION.get(node.get("type").asText()));
+            String nodeType = node.get("type").asText();
+
+            if (node.isObject() && node.has("configuration") && NODE_TO_IGNORED_PARAM_FOR_OLD_EDGE_VERSION.containsKey(nodeType)) {
+                ((ObjectNode) node.get("configuration")).remove(NODE_TO_IGNORED_PARAM_FOR_OLD_EDGE_VERSION.get(nodeType));
             }
         }
     }
