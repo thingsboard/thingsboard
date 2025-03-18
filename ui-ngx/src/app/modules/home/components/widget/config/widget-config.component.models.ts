@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
-import { DataKey, DatasourceType, WidgetConfigMode, widgetType } from '@shared/models/widget.models';
+import { DataKey, DatasourceType, Widget, WidgetConfigMode, widgetType } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { isDefinedAndNotNull } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -67,12 +67,20 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
 
+  get functionsOnly(): boolean {
+    return this.widgetConfigComponent.functionsOnly;
+  }
+
   get widgetType(): widgetType {
     return this.widgetConfigComponent.widgetType;
   }
 
   get widgetEditMode(): boolean {
     return this.widgetConfigComponent.widgetEditMode;
+  }
+
+  get widget(): Widget {
+    return this.widgetConfigComponent.widget;
   }
 
   widgetConfigChangedEmitter = new EventEmitter<WidgetConfigComponentData>();

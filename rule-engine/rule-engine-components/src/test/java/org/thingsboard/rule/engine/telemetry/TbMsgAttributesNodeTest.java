@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
@@ -29,6 +31,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -42,96 +45,469 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.service.ConstraintValidator;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.willCallRealMethod;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.thingsboard.rule.engine.api.AttributesSaveRequest.Strategy;
+import static org.thingsboard.rule.engine.api.AttributesSaveRequest.builder;
+import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.Advanced;
+import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.Deduplicate;
+import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.OnEveryMessage;
+import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.WebSocketsOnly;
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 
-@Slf4j
+@ExtendWith(MockitoExtension.class)
 class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private TenantId tenantId;
-    private DeviceId deviceId;
-    private TbMsgAttributesNode node;
+    final TenantId tenantId = TenantId.fromUUID(UUID.fromString("6c18691e-4470-4766-9739-aface71d761f"));
+    final DeviceId deviceId = new DeviceId(UUID.fromString("b66159d7-c77e-45e8-bb41-a8f557f434c1"));
+
+    @Spy
+    TbMsgAttributesNode node;
+    TbMsgAttributesNodeConfiguration config;
+
+    @Mock
+    TbContext ctxMock;
+    @Mock
+    AttributesService attributesServiceMock;
+    @Mock
+    RuleEngineTelemetryService telemetryServiceMock;
 
     @BeforeEach
     void setUp() {
-        tenantId = new TenantId(UUID.fromString("6c18691e-4470-4766-9739-aface71d761f"));
-        deviceId = new DeviceId(UUID.fromString("b66159d7-c77e-45e8-bb41-a8f557f434c1"));
-        node = spy(TbMsgAttributesNode.class);
+        lenient().when(ctxMock.getTenantId()).thenReturn(tenantId);
+        lenient().when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
+        lenient().when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
+
+        config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
     }
 
     @Test
-    void testFilterChangedAttr_whenCurrentAttributesEmpty_thenReturnNewAttributes() {
-        List<AttributeKvEntry> newAttributes = new ArrayList<>();
-
-        List<AttributeKvEntry> filtered = node.filterChangedAttr(Collections.emptyList(), newAttributes);
-        assertThat(filtered).isSameAs(newAttributes);
+    void verifyDefaultConfig() {
+        assertThat(config.getProcessingSettings()).isInstanceOf(OnEveryMessage.class);
+        assertThat(config.getScope()).isEqualTo("SERVER_SCOPE");
+        assertThat(config.isNotifyDevice()).isFalse();
+        assertThat(config.isSendAttributesUpdatedNotification()).isFalse();
+        assertThat(config.isUpdateAttributesOnlyOnValueChange()).isTrue();
     }
 
     @Test
-    void testFilterChangedAttr_whenCurrentAttributesContainsInAnyOrderNewAttributes_thenReturnEmptyList() {
+    void givenProcessingSettingsAreNull_whenValidatingConstraints_thenThrowsException() {
+        // GIVEN
+        config.setProcessingSettings(null);
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> ConstraintValidator.validateFields(config))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Validation error: processingSettings must not be null");
+    }
+
+    @Test
+    void givenOnEveryMessageProcessingSettingsAndSameMessageTwoTimes_whenOnMsg_thenPersistSameMessageTwoTimes() throws TbNodeException {
+        // GIVEN
+        config.setUpdateAttributesOnlyOnValueChange(false);
+        config.setProcessingSettings(new OnEveryMessage());
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of(NOTIFY_DEVICE_METADATA_KEY, "false")))
+                .build();
+
+        // WHEN-THEN
+        var expectedSaveRequest = builder()
+                .tenantId(tenantId)
+                .entityId(msg.getOriginator())
+                .scope(AttributeScope.valueOf(config.getScope()))
+                .entry(new DoubleDataEntry("temperature", 22.3))
+                .notifyDevice(false)
+                .strategy(Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
+                .build();
+
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should(times(1)).saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest)
+                        .usingRecursiveComparison()
+                        .ignoringFields("callback", "entries.lastUpdateTs")
+                        .isEqualTo(expectedSaveRequest)
+        ));
+
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should(times(2)).saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest)
+                        .usingRecursiveComparison()
+                        .ignoringFields("callback", "entries.lastUpdateTs")
+                        .isEqualTo(expectedSaveRequest)
+        ));
+    }
+
+    @Test
+    void givenDeduplicateProcessingSettingsAndSameMessageTwoTimes_whenOnMsg_thenPersistThisMessageOnlyFirstTime() throws TbNodeException {
+        // GIVEN
+        config.setUpdateAttributesOnlyOnValueChange(false);
+        config.setProcessingSettings(new Deduplicate(10));
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of(NOTIFY_DEVICE_METADATA_KEY, "false")))
+                .build();
+
+        // WHEN-THEN
+        var expectedSaveRequest = builder()
+                .tenantId(tenantId)
+                .entityId(msg.getOriginator())
+                .scope(AttributeScope.valueOf(config.getScope()))
+                .entry(new DoubleDataEntry("temperature", 22.3))
+                .notifyDevice(false)
+                .strategy(Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
+                .build();
+
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should().saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest)
+                        .usingRecursiveComparison()
+                        .ignoringFields("callback", "entries.lastUpdateTs")
+                        .isEqualTo(expectedSaveRequest)
+        ));
+
+        clearInvocations(telemetryServiceMock, ctxMock);
+
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should(never()).saveAttributes(any());
+    }
+
+    @Test
+    void givenWebSocketsOnlyProcessingSettingsAndSameMessageTwoTimes_whenOnMsg_thenSendsOnlyWsUpdateTwoTimes() throws TbNodeException {
+        // GIVEN
+        config.setUpdateAttributesOnlyOnValueChange(false);
+        config.setProcessingSettings(new WebSocketsOnly());
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of(NOTIFY_DEVICE_METADATA_KEY, "false")))
+                .build();
+
+        // WHEN-THEN
+        var expectedSaveRequest = builder()
+                .tenantId(tenantId)
+                .entityId(msg.getOriginator())
+                .scope(AttributeScope.valueOf(config.getScope()))
+                .entry(new DoubleDataEntry("temperature", 22.3))
+                .notifyDevice(false)
+                .strategy(Strategy.WS_ONLY)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
+                .build();
+
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should(times(1)).saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest)
+                        .usingRecursiveComparison()
+                        .ignoringFields("callback", "entries.lastUpdateTs")
+                        .isEqualTo(expectedSaveRequest)
+        ));
+
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should(times(2)).saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest)
+                        .usingRecursiveComparison()
+                        .ignoringFields("callback", "entries.lastUpdateTs")
+                        .isEqualTo(expectedSaveRequest)
+        ));
+    }
+
+    @Test
+    void givenAdvancedProcessingSettingsWithOnEveryMessageStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenPersistSameMessageTwoTimes() throws TbNodeException {
+        // GIVEN
+        config.setUpdateAttributesOnlyOnValueChange(false);
+        config.setProcessingSettings(new Advanced(
+                ProcessingStrategy.onEveryMessage(),
+                ProcessingStrategy.onEveryMessage(),
+                ProcessingStrategy.onEveryMessage()
+        ));
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of(NOTIFY_DEVICE_METADATA_KEY, "false")))
+                .build();
+
+        // WHEN-THEN
+        var expectedSaveRequest = builder()
+                .tenantId(tenantId)
+                .entityId(msg.getOriginator())
+                .scope(AttributeScope.valueOf(config.getScope()))
+                .entry(new DoubleDataEntry("temperature", 22.3))
+                .notifyDevice(false)
+                .strategy(Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
+                .build();
+
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should(times(1)).saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest)
+                        .usingRecursiveComparison()
+                        .ignoringFields("callback", "entries.lastUpdateTs")
+                        .isEqualTo(expectedSaveRequest)
+        ));
+
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should(times(2)).saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest)
+                        .usingRecursiveComparison()
+                        .ignoringFields("callback", "entries.lastUpdateTs")
+                        .isEqualTo(expectedSaveRequest)
+        ));
+    }
+
+    @Test
+    void givenAdvancedProcessingSettingsWithDifferentDeduplicateStrategyForEachAction_whenOnMsg_thenEvaluatesStrategiesForEachActionsIndependently() throws TbNodeException {
+        // GIVEN
+        config.setUpdateAttributesOnlyOnValueChange(false);
+        config.setProcessingSettings(new Advanced(
+                ProcessingStrategy.deduplicate(1),
+                ProcessingStrategy.deduplicate(2),
+                ProcessingStrategy.deduplicate(3)
+        ));
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        long ts1 = 500L;
+        long ts2 = 1500L;
+        long ts3 = 2500L;
+        long ts4 = 3500L;
+
+        // WHEN-THEN
+        node.onMsg(ctxMock, TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts1))))
+                .build());
+        then(telemetryServiceMock).should().saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(Strategy.PROCESS_ALL)
+        ));
+
+        clearInvocations(telemetryServiceMock);
+
+        node.onMsg(ctxMock, TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts2))))
+                .build());
+        then(telemetryServiceMock).should().saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new Strategy(true, false, false))
+        ));
+
+        clearInvocations(telemetryServiceMock);
+
+        node.onMsg(ctxMock, TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts3))))
+                .build());
+        then(telemetryServiceMock).should().saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new Strategy(true, true, false))
+        ));
+
+        clearInvocations(telemetryServiceMock);
+
+        node.onMsg(ctxMock, TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts4))))
+                .build());
+        then(telemetryServiceMock).should().saveAttributes(assertArg(
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new Strategy(true, false, true))
+        ));
+    }
+
+    @Test
+    public void givenAdvancedProcessingSettingsWithSkipStrategiesForAllActionsAndSameMessageTwoTimes_whenOnMsg_thenSkipsSameMessageTwoTimes() throws TbNodeException {
+        // GIVEN
+        config.setProcessingSettings(new Advanced(
+                ProcessingStrategy.skip(),
+                ProcessingStrategy.skip(),
+                ProcessingStrategy.skip()
+        ));
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("temperature", 22.3).toString())
+                .metaData(new TbMsgMetaData(Map.of(NOTIFY_DEVICE_METADATA_KEY, "false")))
+                .build();
+
+        // WHEN-THEN
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should(never()).saveAttributes(any());
+        then(ctxMock).should(times(1)).tellSuccess(msg);
+
+        node.onMsg(ctxMock, msg);
+        then(telemetryServiceMock).should(never()).saveAttributes(any());
+        then(ctxMock).should(times(2)).tellSuccess(msg);
+    }
+
+    @Test
+    void givenVariousChangesToAttributes_whenUpdateOnlyOnValueChangeEnabled_thenShouldCorrectlyFilterChangedAttributes() throws TbNodeException {
+        // GIVEN
+        config.setUpdateAttributesOnlyOnValueChange(true);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
         List<AttributeKvEntry> currentAttributes = List.of(
-                new BaseAttributeKvEntry(1694000000L, new StringDataEntry("address", "Peremohy ave 1")),
-                new BaseAttributeKvEntry(1694000000L, new BooleanDataEntry("valid", true)),
-                new BaseAttributeKvEntry(1694000000L, new LongDataEntry("counter", 100L)),
-                new BaseAttributeKvEntry(1694000000L, new DoubleDataEntry("temp", -18.35)),
-                new BaseAttributeKvEntry(1694000000L, new JsonDataEntry("json", "{\"warning\":\"out of paper\"}"))
+                new BaseAttributeKvEntry(123L, new StringDataEntry("address", "Prospect Beresteiskyi 1")),
+                new BaseAttributeKvEntry(123L, new BooleanDataEntry("valid", true)),
+                new BaseAttributeKvEntry(123L, new LongDataEntry("counter", 100L)),
+                new BaseAttributeKvEntry(123L, new DoubleDataEntry("temp", -18.35)),
+                new BaseAttributeKvEntry(123L, new JsonDataEntry("json", "{\"warning\":\"out of paper\"}"))
         );
-        List<AttributeKvEntry> newAttributes = new ArrayList<>(currentAttributes);
-        newAttributes.add(newAttributes.get(0));
-        newAttributes.remove(0);
-        assertThat(newAttributes).hasSize(currentAttributes.size());
-        assertThat(currentAttributes).isNotEmpty();
-        assertThat(newAttributes).containsExactlyInAnyOrderElementsOf(currentAttributes);
+        given(attributesServiceMock.find(eq(tenantId), eq(deviceId), eq(AttributeScope.valueOf(config.getScope())), anyList())).willReturn(immediateFuture(currentAttributes));
 
-        List<AttributeKvEntry> filtered = node.filterChangedAttr(currentAttributes, newAttributes);
-        assertThat(filtered).isEmpty(); //no changes
+        var data = JacksonUtil.newObjectNode()
+                .put("address", "Prospect Beresteiskyi 1") // no changes
+                .put("valid", "false") // type and value changed
+                .put("counter", 101L) // value changed
+                .put("temp", -18.35) // no changes
+                .put("json", "{\"warning\":\"out of paper\"}") // only type changed
+                .put("newKey", "newValue"); // new attribute
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(data.toString())
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        List<AttributeKvEntry> expectedChangedAttributes = List.of(
+                new BaseAttributeKvEntry(456L, new StringDataEntry("valid", "false")),
+                new BaseAttributeKvEntry(456L, new LongDataEntry("counter", 101L)),
+                new BaseAttributeKvEntry(456L, new StringDataEntry("json", "{\"warning\":\"out of paper\"}")),
+                new BaseAttributeKvEntry(456L, new StringDataEntry("newKey", "newValue"))
+        );
+
+        then(telemetryServiceMock).should().saveAttributes(assertArg(request ->
+                assertThat(request.getEntries())
+                        .usingRecursiveComparison()
+                        .ignoringCollectionOrder()
+                        .ignoringFields("lastUpdateTs")
+                        .isEqualTo(expectedChangedAttributes)
+        ));
     }
 
     @Test
-    void testFilterChangedAttr_whenCurrentAttributesContainsInAnyOrderNewAttributes_thenReturnExpectedList() {
+    void givenNoChangesToAttributes_whenUpdateOnlyOnValueChangeEnabled_thenShouldNotCallSaveAndJustTellSuccess() throws TbNodeException {
+        // GIVEN
+        config.setUpdateAttributesOnlyOnValueChange(true);
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
         List<AttributeKvEntry> currentAttributes = List.of(
-                new BaseAttributeKvEntry(1694000000L, new StringDataEntry("address", "Peremohy ave 1")),
-                new BaseAttributeKvEntry(1694000000L, new BooleanDataEntry("valid", true)),
-                new BaseAttributeKvEntry(1694000000L, new LongDataEntry("counter", 100L)),
-                new BaseAttributeKvEntry(1694000000L, new DoubleDataEntry("temp", -18.35)),
-                new BaseAttributeKvEntry(1694000000L, new JsonDataEntry("json", "{\"warning\":\"out of paper\"}"))
+                new BaseAttributeKvEntry(123L, new StringDataEntry("address", "Prospect Beresteiskyi 1")),
+                new BaseAttributeKvEntry(123L, new BooleanDataEntry("valid", true)),
+                new BaseAttributeKvEntry(123L, new LongDataEntry("counter", 100L))
         );
-        List<AttributeKvEntry> newAttributes = List.of(
-                new BaseAttributeKvEntry(1694000999L, new JsonDataEntry("json", "{\"status\":\"OK\"}")), // value changed, reordered
-                new BaseAttributeKvEntry(1694000999L, new StringDataEntry("valid", "true")), //type changed
-                new BaseAttributeKvEntry(1694000999L, new LongDataEntry("counter", 101L)), //value changed
-                new BaseAttributeKvEntry(1694000999L, new DoubleDataEntry("temp", -18.35)),
-                new BaseAttributeKvEntry(1694000999L, new StringDataEntry("address", "Peremohy ave 1")) // reordered
-        );
-        List<AttributeKvEntry> expected = List.of(
-                new BaseAttributeKvEntry(1694000999L, new StringDataEntry("valid", "true")),
-                new BaseAttributeKvEntry(1694000999L, new LongDataEntry("counter", 101L)),
-                new BaseAttributeKvEntry(1694000999L, new JsonDataEntry("json", "{\"status\":\"OK\"}"))
+        given(attributesServiceMock.find(eq(tenantId), eq(deviceId), eq(AttributeScope.valueOf(config.getScope())), anyList())).willReturn(immediateFuture(currentAttributes));
+
+        var data = JacksonUtil.newObjectNode()
+                .put("address", "Prospect Beresteiskyi 1")
+                .put("valid", true)
+                .put("counter", 100L);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(data.toString())
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        then(telemetryServiceMock).shouldHaveNoInteractions();
+        then(ctxMock).should().tellSuccess(msg);
+    }
+
+    // Notify device backward-compatibility test
+    @ParameterizedTest
+    @MethodSource
+    void givenVariousValuesForNotifyDeviceInMetadata_thenShouldCorrectlyParseValueFromMetadata(String mdValue, boolean expectedArgumentValue) throws TbNodeException {
+        // GIVEN
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        given(attributesServiceMock.find(tenantId, deviceId, AttributeScope.valueOf(config.getScope()), List.of("mode"))).willReturn(
+                immediateFuture(List.of(new BaseAttributeKvEntry(123L, new StringDataEntry("mode", "tilt"))))
         );
 
-        List<AttributeKvEntry> filtered = node.filterChangedAttr(currentAttributes, newAttributes);
-        assertThat(filtered).containsExactlyInAnyOrderElementsOf(expected);
+        var metadata = new TbMsgMetaData();
+        metadata.putValue(NOTIFY_DEVICE_METADATA_KEY, mdValue);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .data(JacksonUtil.newObjectNode().put("mode", "vibration").toString())
+                .metaData(metadata)
+                .build();
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        then(telemetryServiceMock).should().saveAttributes(assertArg(request -> assertThat(request.isNotifyDevice()).isEqualTo(expectedArgumentValue)));
     }
 
     // Notify device backward-compatibility test arguments
-    private static Stream<Arguments> givenNotifyDeviceMdValue_whenSaveAndNotify_thenVerifyExpectedArgumentForNotifyDeviceInSaveAndNotifyMethod() {
+    static Stream<Arguments> givenVariousValuesForNotifyDeviceInMetadata_thenShouldCorrectlyParseValueFromMetadata() {
         return Stream.of(
                 Arguments.of(null, true),
                 Arguments.of("null", false),
@@ -140,87 +516,189 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         );
     }
 
-    // Notify device backward-compatibility test
-    @ParameterizedTest
-    @MethodSource
-    void givenNotifyDeviceMdValue_whenSaveAndNotify_thenVerifyExpectedArgumentForNotifyDeviceInSaveAndNotifyMethod(String mdValue, boolean expectedArgumentValue) throws TbNodeException {
-        var ctxMock = mock(TbContext.class);
-        var telemetryServiceMock = mock(RuleEngineTelemetryService.class);
-        ObjectNode defaultConfig = (ObjectNode) JacksonUtil.valueToTree(new TbMsgAttributesNodeConfiguration().defaultConfiguration());
-        defaultConfig.put("notifyDevice", false);
-        var tbNodeConfiguration = new TbNodeConfiguration(defaultConfig);
-
-        assertThat(defaultConfig.has("notifyDevice")).as("pre condition has notifyDevice").isTrue();
-
-        when(ctxMock.getTenantId()).thenReturn(tenantId);
-        when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
-        willCallRealMethod().given(node).init(any(TbContext.class), any(TbNodeConfiguration.class));
-        willCallRealMethod().given(node).saveAttr(any(), eq(ctxMock), any(TbMsg.class), any(AttributeScope.class), anyBoolean());
-
-        node.init(ctxMock, tbNodeConfiguration);
-
-        TbMsgMetaData md = new TbMsgMetaData();
-        if (mdValue != null) {
-            md.putValue(NOTIFY_DEVICE_METADATA_KEY, mdValue);
-        }
-        // dummy list with one ts kv to pass the empty list check.
-        var testTbMsg = TbMsg.newMsg()
-                .type(TbMsgType.POST_TELEMETRY_REQUEST)
-                .originator(deviceId)
-                .copyMetaData(md)
-                .data(TbMsg.EMPTY_STRING)
-                .build();
-        List<AttributeKvEntry> testAttrList = List.of(new BaseAttributeKvEntry(0L, new StringDataEntry("testKey", "testValue")));
-
-        node.saveAttr(testAttrList, ctxMock, testTbMsg, AttributeScope.SHARED_SCOPE, false);
-
-        verify(telemetryServiceMock, times(1)).saveAttributes(assertArg(request -> {
-            assertThat(request.getTenantId()).isEqualTo(tenantId);
-            assertThat(request.getEntityId()).isEqualTo(deviceId);
-            assertThat(request.getScope()).isEqualTo(AttributeScope.SHARED_SCOPE);
-            assertThat(request.getEntries()).isEqualTo(testAttrList);
-            assertThat(request.isNotifyDevice()).isEqualTo(expectedArgumentValue);
-        }));
-    }
-
     // Rule nodes upgrade
-    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+    static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
         return Stream.of(
                 // default config for version 0
                 Arguments.of(0,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"false\",\"sendAttributesUpdatedNotification\":\"false\"}",
+                        """
+                                {
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": "false",
+                                  "sendAttributesUpdatedNotification": "false"
+                                }
+                                """,
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":false}"),
+                        """
+                                {
+                                  "processingSettings": {
+                                    "type": "ON_EVERY_MESSAGE"
+                                  },
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": false,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": false
+                                }
+                                """
+                ),
                 // default config for version 1 with upgrade from version 0
                 Arguments.of(0,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
-                        false,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        """
+                                {
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": false,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """,
+                        true,
+                        """
+                                {
+                                  "processingSettings": {
+                                    "type": "ON_EVERY_MESSAGE"
+                                  },
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": false,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """
+                ),
                 // all flags are booleans
                 Arguments.of(1,
-                        "{\"scope\":\"SHARED_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
-                        false,
-                        "{\"scope\":\"SHARED_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        """
+                                {
+                                  "scope": "SHARED_SCOPE",
+                                  "notifyDevice": true,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """,
+                        true,
+                        """
+                                {
+                                  "processingSettings": {
+                                    "type": "ON_EVERY_MESSAGE"
+                                  },
+                                  "scope": "SHARED_SCOPE",
+                                  "notifyDevice": true,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """
+                ),
                 // no boolean flags set
                 Arguments.of(1,
-                        "{\"scope\":\"CLIENT_SCOPE\"}",
+                        """
+                                {
+                                  "scope": "CLIENT_SCOPE"
+                                }
+                                """,
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        """
+                                {
+                                  "processingSettings": {
+                                    "type": "ON_EVERY_MESSAGE"
+                                  },
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": true,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """
+                ),
                 // all flags are boolean strings
                 Arguments.of(1,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"false\",\"sendAttributesUpdatedNotification\":\"false\",\"updateAttributesOnlyOnValueChange\":\"true\"}",
+                        """
+                                {
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": "false",
+                                  "sendAttributesUpdatedNotification": "false",
+                                  "updateAttributesOnlyOnValueChange": "true"
+                                }
+                                """,
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        """
+                                {
+                                  "processingSettings": {
+                                    "type": "ON_EVERY_MESSAGE"
+                                  },
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": false,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """
+                ),
                 // at least one flag is boolean string
                 Arguments.of(1,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"false\",\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
+                        """
+                                {
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": "false",
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """,
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        """
+                                {
+                                  "processingSettings": {
+                                    "type": "ON_EVERY_MESSAGE"
+                                  },
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": false,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """
+                ),
                 // notify device flag is null
                 Arguments.of(1,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"null\",\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
+                        """
+                                {
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": "null",
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """,
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}")
+                        """
+                                {
+                                  "processingSettings": {
+                                    "type": "ON_EVERY_MESSAGE"
+                                  },
+                                  "scope": "CLIENT_SCOPE",
+                                  "notifyDevice": true,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """
+                ),
+                // default config for version 2
+                Arguments.of(2,
+                        """
+                                {
+                                  "scope": "SERVER_SCOPE",
+                                  "notifyDevice": false,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """,
+                        true,
+                        """
+                                {
+                                  "processingSettings": {
+                                    "type": "ON_EVERY_MESSAGE"
+                                  },
+                                  "scope": "SERVER_SCOPE",
+                                  "notifyDevice": false,
+                                  "sendAttributesUpdatedNotification": false,
+                                  "updateAttributesOnlyOnValueChange": true
+                                }
+                                """
+                )
         );
     }
 

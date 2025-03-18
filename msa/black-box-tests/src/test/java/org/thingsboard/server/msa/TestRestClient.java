@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import io.restassured.internal.ValidatableResponseImpl;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -35,14 +36,17 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -56,6 +60,9 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rpc.Rpc;
@@ -66,7 +73,6 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
@@ -110,6 +116,20 @@ public class TestRestClient {
         requestSpec.header(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
     }
 
+    public void resetToken() {
+        token = null;
+        refreshToken = null;
+    }
+
+    public Tenant postTenant(Tenant tenant) {
+        return given().spec(requestSpec).body(tenant)
+                .post("/api/tenant")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Tenant.class);
+    }
+
     public Device postDevice(String accessToken, Device device) {
         return given().spec(requestSpec).body(device)
                 .pathParams("accessToken", accessToken)
@@ -129,6 +149,14 @@ public class TestRestClient {
                 .as(ObjectNode.class);
     }
 
+    public CalculatedField postCalculatedField(CalculatedField calculatedField) {
+        return given().spec(requestSpec).body(calculatedField)
+                .post("/api/calculatedField")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(CalculatedField.class);
+    }
 
     public Device getDeviceByName(String deviceName) {
         return given().spec(requestSpec).pathParam("deviceName", deviceName)
@@ -195,9 +223,16 @@ public class TestRestClient {
                 .statusCode(anyOf(is(HTTP_OK), is(HTTP_NOT_FOUND)));
     }
 
-    public ValidatableResponse postTelemetryAttribute(String entityType, DeviceId deviceId, String scope, JsonNode attribute) {
+    public ValidatableResponse deleteCalculatedFieldIfExists(CalculatedFieldId calculatedFieldId) {
+        return given().spec(requestSpec)
+                .delete("/api/calculatedField/{calculatedFieldId}", calculatedFieldId.getId())
+                .then()
+                .statusCode(anyOf(is(HTTP_OK), is(HTTP_NOT_FOUND)));
+    }
+
+    public ValidatableResponse postTelemetryAttribute(EntityId entityId, String scope, JsonNode attribute) {
         return given().spec(requestSpec).body(attribute)
-                .post("/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}", entityType, deviceId.getId(), scope)
+                .post("/api/plugins/telemetry/{entityType}/{entityId}/attributes/{scope}", entityId.getEntityType(), entityId.getId(), scope)
                 .then()
                 .statusCode(HTTP_OK);
     }
@@ -214,6 +249,24 @@ public class TestRestClient {
                 .queryParam("clientKeys", clientKeys)
                 .queryParam("sharedKeys", sharedKeys)
                 .get("/api/v1/{accessToken}/attributes", accessToken)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
+    public JsonNode getAttributes(EntityId entityId, AttributeScope scope, String keys) {
+        return given().spec(requestSpec)
+                .get("/api/plugins/telemetry/{entityType}/{entityId}/values/attributes/{scope}?keys={keys}", entityId.getEntityType(), entityId.getId(), scope, keys)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
+    public JsonNode getLatestTelemetry(EntityId entityId) {
+        return given().spec(requestSpec)
+                .get("/api/plugins/telemetry/" + entityId.getEntityType().name() + "/" + entityId.getId() + "/values/timeseries")
                 .then()
                 .statusCode(HTTP_OK)
                 .extract()
@@ -479,6 +532,28 @@ public class TestRestClient {
                 .as(User.class);
     }
 
+    public UserId createUserAndLogin(User user, String password) {
+        UserId userId = postUser(user).getId();
+        getAndSetUserToken(userId);
+        return userId;
+    }
+
+    public void getAndSetUserToken(UserId id) {
+        ObjectNode tokenInfo = given().spec(requestSpec)
+                .get("/api/user/" + id.getId().toString() + "/token")
+                .then()
+                .extract()
+                .as(ObjectNode.class);
+        token = tokenInfo.get("token").asText();
+        refreshToken = tokenInfo.get("refreshToken").asText();
+        requestSpec.header(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
+    }
+
+    protected void resetTokens() {
+        this.token = null;
+        this.refreshToken = null;
+    }
+
     public void deleteUser(UserId userId) {
         given().spec(requestSpec)
                 .delete("/api/user/{userId}", userId.getId())
@@ -592,6 +667,7 @@ public class TestRestClient {
                 .then()
                 .statusCode(anyOf(is(HTTP_OK), is(HTTP_BAD_REQUEST)));
     }
+
     public void deleteDeviceProfileIfExists(DeviceProfile deviceProfile) {
         given().spec(requestSpec)
                 .delete("/api/deviceProfile/" + deviceProfile.getId().getId().toString())
@@ -605,11 +681,11 @@ public class TestRestClient {
                 .get("/api/tenant/devices?deviceName={deviceName}")
                 .then()
                 .statusCode(anyOf(is(HTTP_OK), is(HTTP_NOT_FOUND)));
-        if(((ValidatableResponseImpl) response).extract().response().getStatusCode()==HTTP_OK){
-            return   response.extract()
+        if (((ValidatableResponseImpl) response).extract().response().getStatusCode() == HTTP_OK) {
+            return response.extract()
                     .as(Device.class);
         } else {
-            return  null;
+            return null;
         }
     }
 
@@ -642,5 +718,46 @@ public class TestRestClient {
             urlParams += "&endTime={endTime}";
         }
         return urlParams;
+    }
+
+    public PageData<EntityData> postEntityDataQuery(EntityDataQuery entityDataQuery) {
+        return given().spec(requestSpec).body(entityDataQuery)
+                .post("/api/entitiesQuery/find")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<>() {});
+    }
+
+    public Long postCountDataQuery(EntityCountQuery entityCountQuery) {
+        return given().spec(requestSpec).body(entityCountQuery)
+                .post("/api/entitiesQuery/count")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Long.class);
+    }
+
+    public Boolean isEdqsApiEnabled() {
+        return given().spec(requestSpec)
+                .get("/api/edqs/enabled")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Boolean.class);
+    }
+
+    public void assignDeviceToCustomer(CustomerId customerId, DeviceId id) {
+        given().spec(requestSpec)
+                .post("/api/customer/" + customerId.getId().toString() + "/device/" + id.getId().toString())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public void deleteTenant(TenantId tenantId) {
+        given().spec(requestSpec)
+                .delete("/api/tenant/" + tenantId.getId().toString())
+                .then()
+                .statusCode(HTTP_OK);
     }
 }

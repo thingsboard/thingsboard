@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.thingsboard.script.api.tbel.TbDate;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
@@ -126,6 +127,31 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         msgStr = msgMapStr;
         decoderStr = """
                 foreach(element : msg.entrySet()){
+                  if(element.getKey() == null){
+                    return raiseError("Bad getKey");
+                  }
+                  if(element.key == null){
+                    return raiseError("Bad key");
+                  }
+                  if(element.getValue() == null){
+                    return raiseError("Bad getValue");
+                  }
+                  if(element.value == null){
+                    return raiseError("Bad value");
+                  }
+                }
+                return msg;
+                """;
+        LinkedHashMap<String, Object> expected = expectedMap;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void mapsImplicitIterationWithoutEntrySet() throws ExecutionException, InterruptedException {
+        msgStr = msgMapStr;
+        decoderStr = """
+                foreach(element : msg){
                   if(element.getKey() == null){
                     return raiseError("Bad getKey");
                   }
@@ -660,14 +686,13 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 """;
         decoderStr = """
                 var list = msg.list;
-                var listAdd = ["thigsboard", 4, 67];
                 return {
                         list: list.clone(),
                         length: list.length(),
                         memorySize: list.memorySize(),
                         indOf1: list.indexOf("B", 1),
                         indOf2: list.indexOf(2, 2),
-                        sStr: list.validateClazzInArrayIsOnlyString()
+                        sStr: list.validateClazzInArrayIsOnlyNumber()
                        }
                 """;
         ArrayList list = new ArrayList<>(List.of(67, 2, 2, 2));
@@ -677,7 +702,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("memorySize", 32L);
         expected.put("indOf1", -1);
         expected.put("indOf2", 2);
-        expected.put("sStr", false);
+        expected.put("sStr", true);
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
@@ -2148,6 +2173,177 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertEquals(expected, actual);
     }
 
+    @Test
+    public void toUnmodifiableExecutionArrayList_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = String.format("""
+                var original = [];
+                original.add(0x35);
+                var unmodifiable = original.toUnmodifiable();
+                msg.result = unmodifiable;
+                return {msg: msg};
+                """);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        List expectedList = Arrays.asList(0x35);
+        LinkedHashMap<String, Object> expectedResult = new LinkedHashMap<>();
+        expectedResult.put("result", expectedList);
+        expected.put("msg", expectedResult);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+
+        decoderStr = String.format("""
+                var original = [];
+                original.add(0x67);
+                var unmodifiable = original.toUnmodifiable();
+                unmodifiable.add(0x35);                                
+                msg.result = unmodifiable;
+                return {msg: msg};
+                """);
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: unmodifiable.add(0x35): List is unmodifiable");
+    }
+
+
+    @Test
+    public void toUnmodifiableExecutionHashMap_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = String.format("""
+                var original = {};
+                original.putIfAbsent("entry1", 73);
+                var unmodifiable = original.toUnmodifiable();
+                msg.result = unmodifiable;
+                return {msg: msg};
+                """);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        LinkedHashMap<String, Object> expectedMap = new LinkedHashMap<>(Map.of("entry1", 73));
+        LinkedHashMap<String, Object> expectedResult = new LinkedHashMap<>();
+        expectedResult.put("result", expectedMap);
+        expected.put("msg", expectedResult);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+
+        decoderStr = String.format("""
+                var original = {};
+                original.humidity = 73;
+                var unmodifiable = original.toUnmodifiable();
+                unmodifiable.put("temperature1", 96);
+                msg.result = unmodifiable;
+                return {msg: msg};
+                """);
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: unmodifiable.put(\"temperature1\", 96): Map is unmodifiable");
+    }
+
+    @Test
+    public void tbDateFunction_Test() throws ExecutionException, InterruptedException {
+        String stringDateUTC = "2024-01-01T10:00:00.00Z";
+        TbDate d = new TbDate(stringDateUTC);
+
+        msgStr = "{}";
+        decoderStr = String.format("""
+                var d = new Date("%s");              // TZ => "UTC"
+                var dIsoY1 = d.toISOString();                           // return 2024-01-01T10:00:00Z
+                d.addYears(1);
+                var dIsoY2 = d.toISOString();                           // return 2025-01-01T10:00:00Z
+                d.addYears(-2);
+                var dIsoY3 = d.toISOString();                         // return 2023-01-01T10:00:00Z
+                d.addMonths(2);
+                var dIsoM1 = d.toISOString();                           // return 2023-03-01T10:00:00Z
+                d.addMonths(10);
+                var dIsoM2 = d.toISOString();                           // return 2024-01-01T10:00:00Z
+                d.addMonths(-13);
+                var dIsoM3 = d.toISOString();                           // return 2022-12-01T10:00:00Z
+                d.addWeeks(4);
+                var dIsoW1 = d.toISOString();                           // return 2022-12-29T10:00:00Z
+                d.addWeeks(-5);
+                var dIsoW2 = d.toISOString();                           // return 2022-11-24T10:00:00Z
+                d.addDays(6);
+                var dIsoD1 = d.toISOString();                           // return 2022-11-30T10:00:00Z
+                d.addDays(45);
+                var dIsoD2 = d.toISOString();                           // return 2023-01-14T10:00:00Z
+                d.addDays(-50);
+                var dIsoD3 = d.toISOString();                           // return 2022-11-25T10:00:00Z
+                d.addHours(23);
+                var dIsoH1 = d.toISOString();                           // return 2022-11-26T09:00:00Z
+                d.addHours(-47);
+                var dIsoH2 = d.toISOString();                           // return 2022-11-24T10:00:00Z
+                d.addMinutes(59);
+                var dIsoMin1 = d.toISOString();                         // return 2022-11-24T10:59:00Z
+                d.addMinutes(-60);
+                var dIsoMin2 = d.toISOString();                         // return 2022-11-24T09:59:00Z
+                d.addSeconds(59);
+                var dIsoS1 = d.toISOString();                           // return 2022-11-24T09:59:59Z
+                d.addSeconds(-60);
+                var dIsoS2 = d.toISOString();                           // return 2022-11-24T09:58:59Z
+                d.addNanos(999999);
+                var dIsoN1 = d.toISOString();                           // return 2022-11-24T09:58:59.000999999Z
+                d.addNanos(-1000000);
+                var dIsoN2 = d.toISOString();                           // return 2022-11-24T09:58:58.999999999Z
+                    return {
+                        "dIsoY1": dIsoY1,
+                        "dIsoY2": dIsoY2,
+                        "dIsoY3": dIsoY3,
+                        "dIsoM1": dIsoM1,
+                        "dIsoM2": dIsoM2,
+                        "dIsoM3": dIsoM3,
+                        "dIsoW1": dIsoW1,
+                        "dIsoW2": dIsoW2,
+                        "dIsoD1": dIsoD1,
+                        "dIsoD2": dIsoD2,
+                        "dIsoD3": dIsoD3,
+                        "dIsoH1": dIsoH1,
+                        "dIsoH2": dIsoH2,
+                        "dIsoMin1": dIsoMin1,
+                        "dIsoMin2": dIsoMin2,
+                        "dIsoS1": dIsoS1,
+                        "dIsoS2": dIsoS2,
+                        "dIsoN1": dIsoN1,
+                        "dIsoN2": dIsoN2
+                    }
+                """, stringDateUTC);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("dIsoY1", d.toISOString());
+        d.addYears(1);
+        expected.put("dIsoY2", d.toISOString());
+        d.addYears(-2);
+        expected.put("dIsoY3", d.toISOString());
+        d.addMonths(2);
+        expected.put("dIsoM1", d.toISOString());
+        d.addMonths(10);
+        expected.put("dIsoM2", d.toISOString());
+        d.addMonths(-13);
+        expected.put("dIsoM3", d.toISOString());
+        d.addWeeks(4);
+        expected.put("dIsoW1", d.toISOString());
+        d.addWeeks(-5);
+        expected.put("dIsoW2", d.toISOString());
+        d.addDays(6);
+        expected.put("dIsoD1", d.toISOString());
+        d.addDays(45);
+        expected.put("dIsoD2", d.toISOString());
+        d.addDays(-50);
+        expected.put("dIsoD3", d.toISOString());
+        d.addHours(23);
+        expected.put("dIsoH1", d.toISOString());
+        d.addHours(-47);
+        expected.put("dIsoH2", d.toISOString());
+        d.addMinutes(59);
+        expected.put("dIsoMin1", d.toISOString());
+        d.addMinutes(-60);
+        expected.put("dIsoMin2", d.toISOString());
+        d.addSeconds(59);
+        expected.put("dIsoS1", d.toISOString());
+        d.addSeconds(-60);
+        expected.put("dIsoS2", d.toISOString());
+        d.addNanos(999999);
+        expected.put("dIsoN1", d.toISOString());
+        d.addNanos(-1000000);
+        expected.put("dIsoN2", d.toISOString());
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
 
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);

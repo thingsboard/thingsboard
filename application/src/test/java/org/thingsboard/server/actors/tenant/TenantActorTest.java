@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.thingsboard.server.actors.TbActorSystemSettings;
 import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.ruleChain.RuleChainActor;
 import org.thingsboard.server.actors.ruleChain.RuleChainToRuleChainMsg;
+import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.RuleChainErrorActor;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -116,6 +117,7 @@ public class TenantActorTest {
         TbActorSystemSettings settings = new TbActorSystemSettings(0, 0, 0);
         TbActorSystem system = spy(new DefaultTbActorSystem(settings));
         system.createDispatcher(RULE_DISPATCHER_NAME, mock());
+        system.createDispatcher(DefaultActorService.CF_MANAGER_DISPATCHER_NAME, mock());
         TbActorMailbox tenantCtx = new TbActorMailbox(system, settings, null, mock(), mock(), null);
         tenantActor.init(tenantCtx);
 

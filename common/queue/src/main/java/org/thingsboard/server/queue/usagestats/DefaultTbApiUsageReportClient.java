@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.usagestats;
 
+import com.google.common.collect.Lists;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -38,7 +42,11 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,6 +65,8 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     private boolean enabledPerCustomer;
     @Value("${usage.stats.report.interval:10}")
     private int interval;
+    @Value("${usage.stats.report.pack_size:1024}")
+    private int packSize;
 
     private final EnumMap<ApiUsageRecordKey, ConcurrentMap<ReportLevel, AtomicLong>> stats = new EnumMap<>(ApiUsageRecordKey.class);
 
@@ -64,7 +74,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final SchedulerComponent scheduler;
     private final TbQueueProducerProvider producerProvider;
-    private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> msgProducer;
+    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> msgProducer;
 
     @PostConstruct
     private void init() {
@@ -84,7 +94,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     }
 
     private void reportStats() {
-        ConcurrentMap<ParentEntity, ToUsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
+        ConcurrentMap<ParentEntity, UsageStatsServiceMsg.Builder> report = new ConcurrentHashMap<>();
 
         for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
             ConcurrentMap<ReportLevel, AtomicLong> statsForKey = stats.get(key);
@@ -92,8 +102,8 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 long value = statsValue.get();
                 if (value == 0 && key.isCounter()) return;
 
-                ToUsageStatsServiceMsg.Builder statsMsg = report.computeIfAbsent(reportLevel.getParentEntity(), parent -> {
-                    ToUsageStatsServiceMsg.Builder newStatsMsg = ToUsageStatsServiceMsg.newBuilder();
+                UsageStatsServiceMsg.Builder statsMsg = report.computeIfAbsent(reportLevel.getParentEntity(), parent -> {
+                    UsageStatsServiceMsg.Builder newStatsMsg = UsageStatsServiceMsg.newBuilder();
 
                     TenantId tenantId = parent.getTenantId();
                     newStatsMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
@@ -105,34 +115,53 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                         newStatsMsg.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
                     }
 
-                    newStatsMsg.setServiceId(serviceInfoProvider.getServiceId());
                     return newStatsMsg;
                 });
 
                 UsageStatsKVProto.Builder statsItem = UsageStatsKVProto.newBuilder()
-                        .setKey(key.name())
+                        .setRecordKey(ProtoUtils.toProto(key))
                         .setValue(value);
                 statsMsg.addValues(statsItem.build());
             });
             statsForKey.clear();
         }
 
-        report.forEach(((parent, statsMsg) -> {
-            //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
+        Map<TopicPartitionInfo, List<UsageStatsServiceMsg>> reportStatsPerTpi = new HashMap<>();
+
+        report.forEach((parent, statsMsg) -> {
             try {
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, parent.getTenantId(), parent.getId())
                         .newByTopic(msgProducer.getDefaultTopic());
-                msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), statsMsg.build()), null);
+                reportStatsPerTpi.computeIfAbsent(tpi, k -> new ArrayList<>()).add(statsMsg.build());
             } catch (TenantNotFoundException e) {
                 log.debug("Couldn't report usage stats for non-existing tenant: {}", e.getTenantId());
-            } catch (Exception e) {
-                log.warn("Failed to report usage stats for tenant {}", parent.getTenantId(), e);
             }
-        }));
+        });
+
+        reportStatsPerTpi.forEach((tpi, statsList) -> {
+            toMsgPack(statsList).forEach(pack -> {
+                try {
+                    msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), pack), null);
+                } catch (Exception e) {
+                    log.warn("Failed to report usage stats pack to TPI {}", tpi, e);
+                }
+            });
+        });
 
         if (!report.isEmpty()) {
             log.debug("Reporting API usage statistics for {} tenants and customers", report.size());
         }
+    }
+
+    private List<ToUsageStatsServiceMsg> toMsgPack(List<UsageStatsServiceMsg> list) {
+        return Lists.partition(list, packSize)
+                .stream()
+                .map(partition ->
+                        ToUsageStatsServiceMsg.newBuilder()
+                                .addAllMsgs(partition)
+                                .setServiceId(serviceInfoProvider.getServiceId())
+                                .build())
+                .toList();
     }
 
     @Override

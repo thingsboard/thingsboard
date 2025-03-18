@@ -25,7 +25,7 @@
         "configuration": {
           "defaultTTL": 0,
           "useServerTs": false,
-          "persistenceSettings": {
+          "processingSettings": {
             "type": "ON_EVERY_MESSAGE"
           }
         },
@@ -39,8 +39,11 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Attributes",
         "singletonMode": false,
-        "configurationVersion": 1,
+        "configurationVersion": 3,
         "configuration": {
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          },
           "scope": "CLIENT_SCOPE",
           "notifyDevice": false,
           "sendAttributesUpdatedNotification": false,
@@ -281,7 +284,7 @@
         "configuration": {
           "defaultTTL": 0,
           "useServerTs": false,
-          "persistenceSettings": {
+          "processingSettings": {
             "type": "ON_EVERY_MESSAGE"
           }
         },
@@ -319,7 +322,7 @@
         "configuration": {
           "defaultTTL": 180,
           "useServerTs": false,
-          "persistenceSettings": {
+          "processingSettings": {
             "type": "ON_EVERY_MESSAGE"
           }
         },

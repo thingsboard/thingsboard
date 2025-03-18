@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,14 +121,14 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertNull(assetProfile.getDefaultRuleChainId());
         Assert.assertEquals(edgeRuleChainId, assetProfile.getDefaultEdgeRuleChainId());
 
-        // delete profile
-        edgeImitator.expectMessageAmount(1);
+        // delete profile and delete relation messages
+        edgeImitator.expectMessageAmount(2);
         doDelete("/api/assetProfile/" + assetProfile.getUuidId())
                 .andExpect(status().isOk());
         Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof AssetProfileUpdateMsg);
-        AssetProfileUpdateMsg assetProfileUpdateMsg = (AssetProfileUpdateMsg) latestMessage;
+        Optional<AssetProfileUpdateMsg> assetDeleteMsgOpt = edgeImitator.findMessageByType(AssetProfileUpdateMsg.class);
+        Assert.assertTrue(assetDeleteMsgOpt.isPresent());
+        AssetProfileUpdateMsg assetProfileUpdateMsg = assetDeleteMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, assetProfileUpdateMsg.getMsgType());
         Assert.assertEquals(assetProfile.getUuidId().getMostSignificantBits(), assetProfileUpdateMsg.getIdMSB());
         Assert.assertEquals(assetProfile.getUuidId().getLeastSignificantBits(), assetProfileUpdateMsg.getIdLSB());

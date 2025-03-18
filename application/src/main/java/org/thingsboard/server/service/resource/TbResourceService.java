@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,27 @@ package org.thingsboard.server.service.resource;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceDeleteResult;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 
-public interface TbResourceService extends SimpleTbEntityService<TbResource> {
+public interface TbResourceService {
+
+    default TbResourceInfo save(TbResource entity) throws Exception {
+        return save(entity, null);
+    }
+
+    TbResourceInfo save(TbResource entity, SecurityUser user) throws Exception;
+
+    TbResourceDeleteResult delete(TbResourceInfo entity, boolean force, User user);
 
     List<LwM2mObject> findLwM2mObject(TenantId tenantId,
                                       String sortOrder,

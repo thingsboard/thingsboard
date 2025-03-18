@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -233,8 +233,8 @@
                       <textarea matInput #descriptionInput
                                 [(ngModel)]="widget.description"
                                 (ngModelChange)="isDirty = true"
-                                rows="2" maxlength="255"></textarea>
-                      <mat-hint align="end">{{descriptionInput.value?.length || 0}}/255</mat-hint>
+                                rows="2" maxlength="1024"></textarea>
+                      <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
                     </mat-form-field>
                     <tb-string-items-list
                       label="{{ 'widget.tags' | translate }}"

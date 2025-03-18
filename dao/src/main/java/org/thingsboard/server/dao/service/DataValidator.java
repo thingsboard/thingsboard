@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -158,6 +159,9 @@ public abstract class DataValidator<D extends BaseData<?>> {
 
     protected static void validateQueueName(String name) {
         validateQueueNameOrTopic(name, NAME);
+        if (DataConstants.CF_QUEUE_NAME.equals(name) || DataConstants.CF_STATES_QUEUE_NAME.equals(name)) {
+            throw new DataValidationException(String.format("The queue name '%s' is not allowed. This name is reserved for internal use. Please choose a different name.", name));
+        }
     }
 
     protected static void validateQueueTopic(String topic) {

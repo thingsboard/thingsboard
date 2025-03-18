@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ public class MqttClientTest extends AbstractContainerTest {
         String sharedAttributeValue = StringUtils.randomAlphanumeric(8);
         sharedAttributes.addProperty("sharedAttr", sharedAttributeValue);
         JsonNode sharedAttribute = mapper.readTree(sharedAttributes.toString());
-        testRestClient.postTelemetryAttribute(DEVICE, device.getId(), SHARED_SCOPE, sharedAttribute);
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, sharedAttribute);
 
         // Subscribe to attributes response
         mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
@@ -255,7 +255,7 @@ public class MqttClientTest extends AbstractContainerTest {
         sharedAttributes.addProperty(sharedAttributeName, sharedAttributeValue);
         JsonNode sharedAttribute = mapper.readTree(sharedAttributes.toString());
 
-        testRestClient.postTelemetryAttribute(DataConstants.DEVICE, device.getId(), SHARED_SCOPE, sharedAttribute);
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, sharedAttribute);
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
         assertThat(mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get(sharedAttributeName).asText())
@@ -265,7 +265,7 @@ public class MqttClientTest extends AbstractContainerTest {
         JsonObject updatedSharedAttributes = new JsonObject();
         String updatedSharedAttributeValue = StringUtils.randomAlphanumeric(8);
         updatedSharedAttributes.addProperty(sharedAttributeName, updatedSharedAttributeValue);
-        testRestClient.postTelemetryAttribute(DEVICE, device.getId(), SHARED_SCOPE, mapper.readTree(updatedSharedAttributes.toString()));
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, mapper.readTree(updatedSharedAttributes.toString()));
 
         event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
         assertThat(mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get(sharedAttributeName).asText())

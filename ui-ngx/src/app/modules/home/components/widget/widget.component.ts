@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -248,6 +248,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     this.widgetContext.isPreview = this.isPreview;
     this.widgetContext.isMobile = this.isMobile;
     this.widgetContext.toastTargetId = this.toastTargetId;
+    this.widgetContext.renderer = this.renderer;
+    this.widgetContext.widgetContentContainer = this.widgetContentContainer;
 
     this.widgetContext.subscriptionApi = {
       createSubscription: this.createSubscription.bind(this),
@@ -271,7 +273,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       click: this.click.bind(this),
       getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
       openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
-      openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this)
+      openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this),
+      placeMapItem: () => {}
     };
 
     this.widgetContext.customHeaderActions = [];
@@ -295,7 +298,13 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           const headerAction: WidgetHeaderAction = {
             name: descriptor.name,
             displayName: descriptor.displayName,
+            buttonType: descriptor.buttonType,
+            showIcon: descriptor.showIcon,
             icon: descriptor.icon,
+            buttonColor: descriptor.buttonColor,
+            buttonFillColor: descriptor.buttonFillColor,
+            buttonBorderColor: descriptor.buttonBorderColor,
+            customButtonStyle: descriptor.customButtonStyle,
             descriptor,
             useShowWidgetHeaderActionFunction,
             showWidgetHeaderActionFunction,
@@ -1147,44 +1156,15 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           )
         }
         break;
-      case WidgetActionType.customPretty:
-        const customPrettyFunction = descriptor.customFunction;
-        const customHtml = descriptor.customHtml;
-        const customCss = descriptor.customCss;
-        const customResources = descriptor.customResources;
-        const actionNamespace = `custom-action-pretty-${guid()}`;
-        let htmlTemplate = '';
-        if (isDefined(customHtml) && customHtml.length > 0) {
-          htmlTemplate = customHtml;
-        }
-        this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe({
-          next: () => {
-            if (isNotEmptyTbFunction(customPrettyFunction)) {
-              compileTbFunction(this.http, customPrettyFunction, '$event', 'widgetContext', 'entityId',
-                'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel').subscribe(
-                {
-                  next: (compiled) => {
-                    try {
-                      if (!additionalParams) {
-                        additionalParams = {};
-                      }
-                      this.widgetContext.customDialog.setAdditionalImports(descriptor.customImports);
-                      compiled.execute($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
-                    } catch (e) {
-                      console.error(e);
-                    }
-                  },
-                  error: (err) => {
-                    console.error(err);
-                  }
-                }
-              )
-            }
-          },
-          error: (errorMessages: string[]) => {
-            this.processResourcesLoadErrors(errorMessages);
-          }
+      case WidgetActionType.placeMapItem:
+        this.widgetContext.actionsApi.placeMapItem({
+          action: descriptor,
+          afterPlaceItemCallback: this.executeCustomPrettyAction.bind(this),
+          additionalParams: additionalParams
         });
+        break;
+      case WidgetActionType.customPretty:
+        this.executeCustomPrettyAction($event, descriptor, entityId, entityName, additionalParams, entityLabel);
         break;
       case WidgetActionType.mobileAction:
         const mobileAction = descriptor.mobileAction;
@@ -1203,6 +1183,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       case WidgetMobileActionType.scanQrCode:
       case WidgetMobileActionType.getLocation:
       case WidgetMobileActionType.takeScreenshot:
+      case WidgetMobileActionType.deviceProvision:
         argsObservable = of([]);
         break;
       case WidgetMobileActionType.mapDirection:
@@ -1281,6 +1262,26 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                             next: (compiled) => {
                               try {
                                 compiled.execute(imageUrl, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                              } catch (e) {
+                                console.error(e);
+                              }
+                            },
+                            error: (err) => {
+                              console.error(err);
+                            }
+                          }
+                        );
+                      }
+                      break;
+                    case WidgetMobileActionType.deviceProvision:
+                      const deviceName = actionResult.deviceName;
+                      if (isNotEmptyTbFunction(mobileAction.handleProvisionSuccessFunction)) {
+                        compileTbFunction(this.http, mobileAction.handleProvisionSuccessFunction, 'deviceName', '$event', 'widgetContext', 'entityId',
+                          'entityName', 'additionalParams', 'entityLabel').subscribe(
+                          {
+                            next: (compiled) => {
+                              try {
+                                compiled.execute(deviceName, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
                               } catch (e) {
                                 console.error(e);
                               }
@@ -1554,6 +1555,45 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     const entityName = entityInfo ? entityInfo.entityName : null;
     const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
     this.handleWidgetAction($event, action, entityId, entityName, null, entityLabel);
+  }
+
+  private executeCustomPrettyAction($event: Event, descriptor: WidgetAction, entityId?: EntityId,
+                                    entityName?: string, additionalParams?: any, entityLabel?: string) {
+    const customPrettyFunction = descriptor.customFunction;
+    const customHtml = descriptor.customHtml;
+    const customCss = descriptor.customCss;
+    const customResources = descriptor.customResources;
+    const actionNamespace = `custom-action-pretty-${guid()}`;
+    let htmlTemplate = '';
+    if (isDefined(customHtml) && customHtml.length > 0) {
+      htmlTemplate = customHtml;
+    }
+    this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe({
+      next: () => {
+        if (isNotEmptyTbFunction(customPrettyFunction)) {
+          compileTbFunction(this.http, customPrettyFunction, '$event', 'widgetContext', 'entityId',
+            'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel').subscribe({
+            next: (compiled) => {
+              try {
+                if (!additionalParams) {
+                  additionalParams = {};
+                }
+                this.widgetContext.customDialog.setAdditionalImports(descriptor.customImports);
+                compiled.execute($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
+              } catch (e) {
+                console.error(e);
+              }
+            },
+            error: (err) => {
+              console.error(err);
+            }
+          });
+        }
+      },
+      error: (errorMessages: string[]) => {
+        this.processResourcesLoadErrors(errorMessages);
+      }
+    });
   }
 
   private loadCustomActionResources(actionNamespace: string, customCss: string, customResources: Array<WidgetResource>,

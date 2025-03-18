@@ -37,7 +37,7 @@
         "configuration": {
           "defaultTTL": 0,
           "useServerTs": false,
-          "persistenceSettings": {
+          "processingSettings": {
             "type": "ON_EVERY_MESSAGE"
           }
         },
@@ -50,8 +50,11 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Client Attributes",
-        "configurationVersion": 2,
+        "configurationVersion": 3,
         "configuration": {
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          },
           "scope": "CLIENT_SCOPE",
           "notifyDevice": false,
           "sendAttributesUpdatedNotification": false,
@@ -119,7 +122,7 @@
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
         "configuration": {
-          "scope": "SERVER_SCOPE"
+          "scope": "CLIENT_SCOPE"
         },
         "externalId": null
       },

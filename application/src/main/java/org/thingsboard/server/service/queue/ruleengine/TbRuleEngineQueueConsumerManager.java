@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,14 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.DeleteQueueTask;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.TbMsgPackCallback;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
-import org.thingsboard.server.service.queue.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategy;
@@ -69,19 +72,19 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                                             ExecutorService consumerExecutor,
                                             ScheduledExecutorService scheduler,
                                             ExecutorService taskExecutor) {
-        super(queueKey, null, null, ctx.getQueueFactory()::createToRuleEngineMsgConsumer, consumerExecutor, scheduler, taskExecutor);
+        super(queueKey, null, null, ctx.getQueueFactory()::createToRuleEngineMsgConsumer, consumerExecutor, scheduler, taskExecutor, null);
         this.ctx = ctx;
         this.stats = new TbRuleEngineConsumerStats(queueKey, ctx.getStatsFactory());
     }
 
     public void delete(boolean drainQueue) {
-        addTask(TbQueueConsumerManagerTask.delete(drainQueue));
+        addTask(new DeleteQueueTask(drainQueue));
     }
 
     @Override
     protected void processTask(TbQueueConsumerManagerTask task) {
-        if (task.getEvent() == QueueEvent.DELETE) {
-            doDelete(task.isDrainQueue());
+        if (task instanceof DeleteQueueTask deleteQueueTask) {
+            doDelete(deleteQueueTask.drainQueue());
         }
     }
 

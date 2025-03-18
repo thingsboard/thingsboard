@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,8 +54,6 @@ export class KafkaConfigComponent extends RuleNodeConfigurationComponent {
       linger: [configuration ? configuration.linger : null, [Validators.min(0)]],
       bufferMemory: [configuration ? configuration.bufferMemory : null, [Validators.min(0)]],
       acks: [configuration ? configuration.acks : null, [Validators.required]],
-      keySerializer: [configuration ? configuration.keySerializer : null, [Validators.required]],
-      valueSerializer: [configuration ? configuration.valueSerializer : null, [Validators.required]],
       otherProperties: [configuration ? configuration.otherProperties : null, []],
       addMetadataKeyValuesAsKafkaHeaders: [configuration ? configuration.addMetadataKeyValuesAsKafkaHeaders : false, []],
       kafkaHeadersCharset: [configuration ? configuration.kafkaHeadersCharset : null, []]

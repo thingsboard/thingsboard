@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -143,6 +144,7 @@ import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.memory.InMemoryStorage;
+import org.thingsboard.server.service.cf.CfRocksDb;
 import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -276,6 +278,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     @Autowired
     protected InMemoryStorage storage;
 
+    @MockBean
+    protected CfRocksDb cfRocksDb;
+
     @Rule
     public TestRule watcher = new TestWatcher() {
         protected void starting(Description description) {
@@ -402,7 +407,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Awaitility.await("all tasks processed").atMost(60, TimeUnit.SECONDS).during(300, TimeUnit.MILLISECONDS)
+        Awaitility.await("all tasks processed").atMost(90, TimeUnit.SECONDS).during(300, TimeUnit.MILLISECONDS)
                 .until(() -> storage.getLag("tb_housekeeper") == 0);
     }
 

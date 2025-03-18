@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -231,10 +231,10 @@ import * as EntityFilterViewComponent from '@home/components/entity/entity-filte
 import * as EntityAliasDialogComponent from '@home/components/alias/entity-alias-dialog.component';
 import * as EntityFilterComponent from '@home/components/entity/entity-filter.component';
 import * as RelationFiltersComponent from '@home/components/relation/relation-filters.component';
-import * as EntityAliasSelectComponent from '@home/components/alias/entity-alias-select.component';
-import * as DataKeysComponent from '@home/components/widget/config/data-keys.component';
-import * as DataKeyConfigDialogComponent from '@home/components/widget/config/data-key-config-dialog.component';
-import * as DataKeyConfigComponent from '@home/components/widget/config/data-key-config.component';
+import * as EntityAliasSelectComponent from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component';
+import * as DataKeysComponent from '@home/components/widget/lib/settings/common/key/data-keys.component';
+import * as DataKeyConfigDialogComponent from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
+import * as DataKeyConfigComponent from '@home/components/widget/lib/settings/common/key/data-key-config.component';
 import * as LegendConfigComponent from '@home/components/widget/lib/settings/common/legend-config.component';
 import * as ManageWidgetActionsComponent from '@home/components/widget/action/manage-widget-actions.component';
 import * as WidgetActionDialogComponent from '@home/components/widget/action/widget-action-dialog.component';
@@ -268,7 +268,7 @@ import * as ComplexFilterPredicateDialogComponent from '@home/components/filter/
 import * as KeyFilterDialogComponent from '@home/components/filter/key-filter-dialog.component';
 import * as FiltersDialogComponent from '@home/components/filter/filters-dialog.component';
 import * as FilterDialogComponent from '@home/components/filter/filter-dialog.component';
-import * as FilterSelectComponent from '@home/components/filter/filter-select.component';
+import * as FilterSelectComponent from '@home/components/widget/lib/settings/common/filter/filter-select.component';
 import * as FiltersEditComponent from '@home/components/filter/filters-edit.component';
 import * as FiltersEditPanelComponent from '@home/components/filter/filters-edit-panel.component';
 import * as UserFilterDialogComponent from '@home/components/filter/user-filter-dialog.component';
@@ -338,8 +338,7 @@ import * as AggregationOptionsConfigComponent from '@shared/components/time/aggr
 import * as IntervalOptionsConfigPanelComponent from '@shared/components/time/interval-options-config-panel.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
-import { Observable, map, of } from 'rxjs';
-import { getFlexLayout } from '@shared/legacy/flex-layout.models';
+import { Observable, of } from 'rxjs';
 import { isJSResourceUrl } from '@shared/public-api';
 
 class ModulesMap implements IModulesMap {
@@ -352,10 +351,6 @@ class ModulesMap implements IModulesMap {
     '@angular/common': AngularCommon,
     '@angular/common/http': HttpClientModule,
     '@angular/forms': AngularForms,
-    '@angular/flex-layout': {},
-    '@angular/flex-layout/flex': {},
-    '@angular/flex-layout/grid': {},
-    '@angular/flex-layout/extended': {},
     '@angular/platform-browser': AngularPlatformBrowser,
     '@angular/platform-browser/animations': AngularPlatformBrowserAnimations,
     '@angular/router': AngularRouter,
@@ -577,10 +572,10 @@ class ModulesMap implements IModulesMap {
     '@home/components/alias/entity-alias-dialog.component': EntityAliasDialogComponent,
     '@home/components/entity/entity-filter.component': EntityFilterComponent,
     '@home/components/relation/relation-filters.component': RelationFiltersComponent,
-    '@home/components/alias/entity-alias-select.component': EntityAliasSelectComponent,
-    '@home/components/widget/config/data-keys.component': DataKeysComponent,
-    '@home/components/widget/config/data-key-config-dialog.component': DataKeyConfigDialogComponent,
-    '@home/components/widget/config/data-key-config.component': DataKeyConfigComponent,
+    '@home/components/widget/lib/settings/common/alias/entity-alias-select.component': EntityAliasSelectComponent,
+    '@home/components/widget/lib/settings/common/key/data-keys.component': DataKeysComponent,
+    '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component': DataKeyConfigDialogComponent,
+    '@home/components/widget/lib/settings/common/key/data-key-config.component': DataKeyConfigComponent,
     '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,
@@ -610,7 +605,7 @@ class ModulesMap implements IModulesMap {
     '@home/components/filter/key-filter-dialog.component': KeyFilterDialogComponent,
     '@home/components/filter/filters-dialog.component': FiltersDialogComponent,
     '@home/components/filter/filter-dialog.component': FilterDialogComponent,
-    '@home/components/filter/filter-select.component': FilterSelectComponent,
+    '@home/components/widget/lib/settings/common/filter/filter-select.component': FilterSelectComponent,
     '@home/components/filter/filters-edit.component': FiltersEditComponent,
     '@home/components/filter/filters-edit-panel.component': FiltersEditPanelComponent,
     '@home/components/filter/user-filter-dialog.component': UserFilterDialogComponent,
@@ -678,39 +673,30 @@ class ModulesMap implements IModulesMap {
 
   init(): Observable<any> {
     if (!this.initialized) {
-      return getFlexLayout().pipe(
-        map((flexLayout) => {
-          this.modulesMap['@angular/flex-layout'] = flexLayout;
-          this.modulesMap['@angular/flex-layout/flex'] = flexLayout;
-          this.modulesMap['@angular/flex-layout/grid'] = flexLayout;
-          this.modulesMap['@angular/flex-layout/extended'] = flexLayout;
-          System.constructor.prototype.resolve = (id: string) => {
-            try {
-              if (this.modulesMap[id]) {
-                return 'app:' + id;
-              } else {
-                return id;
-              }
-            } catch (err) {
-              return id;
-            }
-          };
-          for (const moduleId of Object.keys(this.modulesMap)) {
-            System.set('app:' + moduleId, this.modulesMap[moduleId]);
+      System.constructor.prototype.resolve = (id: string) => {
+        try {
+          if (this.modulesMap[id]) {
+            return 'app:' + id;
+          } else {
+            return id;
           }
-          System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download') || isJSResourceUrl(url);
-          System.constructor.prototype.fetch = (url: string, options: RequestInit & {meta?: any}) => {
-            if (options?.meta?.additionalHeaders) {
-              options.headers = { ...options.headers, ...options.meta.additionalHeaders };
-            }
-            return fetch(url, options);
-          };
-          this.initialized = true;
-        })
-      );
-    } else {
-      return of(null);
+        } catch (err) {
+          return id;
+        }
+      };
+      for (const moduleId of Object.keys(this.modulesMap)) {
+        System.set('app:' + moduleId, this.modulesMap[moduleId]);
+      }
+      System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download') || isJSResourceUrl(url);
+      System.constructor.prototype.fetch = (url: string, options: RequestInit & {meta?: any}) => {
+        if (options?.meta?.additionalHeaders) {
+          options.headers = { ...options.headers, ...options.meta.additionalHeaders };
+        }
+        return fetch(url, options);
+      };
+      this.initialized = true;
     }
+    return of(null);
   }
 }
 

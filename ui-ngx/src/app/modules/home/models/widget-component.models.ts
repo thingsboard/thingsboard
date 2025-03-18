@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import {
   WidgetActionSource,
   WidgetConfig,
   WidgetControllerDescriptor,
+  WidgetHeaderActionButtonType,
   WidgetType,
   widgetType,
   WidgetTypeDescriptor,
@@ -46,7 +47,15 @@ import {
   WidgetActionsApi,
   WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
-import { ChangeDetectorRef, InjectionToken, Injector, NgZone, TemplateRef, Type } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  InjectionToken,
+  Injector,
+  NgZone, Renderer2,
+  TemplateRef,
+  Type,
+  ViewContainerRef
+} from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -102,7 +111,7 @@ import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-
 import { SharedTelemetrySubscriber, TelemetrySubscriber } from '@shared/models/telemetry/telemetry.models';
 import { UserId } from '@shared/models/id/user-id';
 import { UserSettingsService } from '@core/http/user-settings.service';
-import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { FormProperty } from '@shared/models/dynamic-form.models';
@@ -118,6 +127,12 @@ export type ShowWidgetHeaderActionFunction = (ctx: WidgetContext, data: Formatte
 export interface WidgetHeaderAction extends IWidgetAction {
   displayName: string;
   descriptor: WidgetActionDescriptor;
+  buttonType?: WidgetHeaderActionButtonType;
+  showIcon?:boolean;
+  buttonColor?: string;
+  buttonFillColor?: string;
+  buttonBorderColor?: string;
+  customButtonStyle?: string;
   useShowWidgetHeaderActionFunction: boolean;
   showWidgetHeaderActionFunction: CompiledTbFunction<ShowWidgetHeaderActionFunction>;
 }
@@ -215,6 +230,8 @@ export class WidgetContext {
   http: HttpClient;
   sanitizer: DomSanitizer;
   router: Router;
+  renderer: Renderer2;
+  widgetContentContainer: ViewContainerRef;
 
   private changeDetectorValue: ChangeDetectorRef;
   private containerChangeDetectorValue: ChangeDetectorRef;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,13 +57,11 @@ public class TbTransformMsgNode extends TbAbstractTransformNode<TbTransformMsgNo
 
     @Override
     protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
-        ctx.logJsEvalRequest();
         return scriptEngine.executeUpdateAsync(msg);
     }
 
     @Override
     protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {
-        ctx.logJsEvalFailure();
         super.transformFailure(ctx, msg, t);
     }
 

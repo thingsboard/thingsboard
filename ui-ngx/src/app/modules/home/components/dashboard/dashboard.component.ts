@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -395,7 +395,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   onDashboardMouseDown($event: MouseEvent) {
     if (this.callbacks && this.callbacks.onDashboardMouseDown) {
-      if ($event) {
+      if ($event && this.isEdit) {
         $event.stopPropagation();
       }
       this.callbacks.onDashboardMouseDown($event);

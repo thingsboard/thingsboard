@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -149,9 +149,9 @@ export class NavTreeComponent implements OnInit {
 
       this.treeElement = $('.tb-nav-tree-container', this.elementRef.nativeElement).jstree(config);
 
-      this.treeElement.on('select_node.jstree', (e: any, data) => {
-        const node: NavTreeNode = data.instance.get_selected(true)[0];
-        if (this.onNodeSelected) {
+      this.treeElement.on('changed.jstree', (e: any, data) => {
+        if (this.onNodeSelected && data.action !== 'ready') {
+          const node: NavTreeNode = data.instance.get_selected(true)[0];
           this.ngZone.run(() => this.onNodeSelected(node, e as Event));
         }
       });
