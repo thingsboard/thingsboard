@@ -30,13 +30,12 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
-import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
+import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
@@ -59,7 +58,6 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
 
     private final TbRuleEngineQueueFactory queueFactory;
     private final PartitionService partitionService;
-    private final TbQueueAdmin queueAdmin;
 
     @Value("${queue.calculated_fields.poll_interval:25}")
     private long pollInterval;
@@ -94,7 +92,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                     }
                 })
                 .consumerCreator((config, partitionId) -> queueFactory.createCalculatedFieldStateConsumer())
-                .queueAdmin(queueAdmin)
+                .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .scheduler(eventConsumer.getScheduler())
                 .taskExecutor(eventConsumer.getTaskExecutor())
