@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -67,7 +67,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         createdAddMetricValuePrimitiveTsKv(listTsKvEntry, listKeys, ndataPayload, ts);
 
         if (client.isConnected()) {
-            client.publish(NAMESPACE + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
                     ndataPayload.build().toByteArray(), 0, false);
         }
 
@@ -96,7 +96,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         createdAddMetricValueArraysPrimitiveTsKv(listTsKvEntry, listKeys, ndataPayload, ts);
 
         if (client.isConnected()) {
-            client.publish(NAMESPACE + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
                     ndataPayload.build().toByteArray(), 0, false);
         }
 
