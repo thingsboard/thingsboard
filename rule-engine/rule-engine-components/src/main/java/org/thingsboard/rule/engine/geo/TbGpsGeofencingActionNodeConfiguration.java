@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.geo;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,10 +24,11 @@ import java.util.concurrent.TimeUnit;
  * Created by ashvayka on 19.01.18.
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TbGpsGeofencingActionNodeConfiguration extends TbGpsGeofencingFilterNodeConfiguration {
 
-    private int minInsideDuration;
-    private int minOutsideDuration;
+    private long minInsideDuration;
+    private long minOutsideDuration;
 
     private String minInsideDurationTimeUnit;
     private String minOutsideDurationTimeUnit;
