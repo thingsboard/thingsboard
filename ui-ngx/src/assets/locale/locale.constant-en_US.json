@@ -6669,6 +6669,7 @@
         "units-short": "Units",
         "decimals-short": "Decimals",
         "decimals-suffix": "decimals",
+        "digits-suffix": "digits",
         "timewindow": "Time window",
         "use-dashboard-timewindow": "Use dashboard time window",
         "use-widget-timewindow": "Use widget time window",
