@@ -201,7 +201,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
                     pemContentBuilder.append("-----END CERTIFICATE-----\n");
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             String msg = String.format("Failed to read %s server certificate!", path);
             log.warn(msg);
             throw new RuntimeException(msg, e);

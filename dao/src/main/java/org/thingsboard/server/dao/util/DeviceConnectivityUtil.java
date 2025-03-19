@@ -214,24 +214,24 @@ public class DeviceConnectivityUtil {
             return null;
         }
 
-        StringBuilder mqttDockerCommand = new StringBuilder();
-        mqttDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "").append(COAP_IMAGE);
+        StringBuilder coapDockerCommand = new StringBuilder();
+        coapDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "").append(COAP_IMAGE);
 
         if (isLocalhost(host)) {
             coapCommand = coapCommand.replace(host, HOST_DOCKER_INTERNAL);
         }
 
         if (COAPS.equals(protocol)) {
-            mqttDockerCommand.append("/bin/sh -c \"")
+            coapDockerCommand.append("/bin/sh -c \"")
                     .append(getCurlPemCertCommand(baseUrl, protocol))
                     .append(" && ")
                     .append(coapCommand)
                     .append("\"");
         } else {
-            mqttDockerCommand.append(coapCommand);
+            coapDockerCommand.append(coapCommand);
         }
 
-        return mqttDockerCommand.toString();
+        return coapDockerCommand.toString();
     }
 
     public static String getHost(String baseUrl, DeviceConnectivityInfo properties, String protocol) throws URISyntaxException {
