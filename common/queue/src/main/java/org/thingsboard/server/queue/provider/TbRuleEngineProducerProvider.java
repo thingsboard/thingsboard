@@ -69,6 +69,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
         this.toEdgeNotifications = tbQueueProvider.createEdgeNotificationsMsgProducer();
         this.toEdgeEvents = tbQueueProvider.createEdgeEventMsgProducer();
         this.toCalculatedFields = tbQueueProvider.createToCalculatedFieldMsgProducer();
+        this.toCalculatedFieldNotifications = tbQueueProvider.createToCalculatedFieldNotificationMsgProducer();
     }
 
     @Override

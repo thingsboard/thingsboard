@@ -214,7 +214,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 
     @Override
     protected TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> createNotificationsConsumer() {
-        return queueFactory.createToCalculatedFieldNotificationsMsgConsumer();
+        return queueFactory.createToCalculatedFieldNotificationMsgConsumer();
     }
 
     @Override
