@@ -421,14 +421,7 @@ public class TenantRepo {
         return relations.computeIfAbsent(relationTypeGroup, type -> new RelationsRepo());
     }
 
-    public String getOwnerName(EntityId ownerId) {
-        if (ownerId == null || (ownerId.getEntityType() == EntityType.CUSTOMER && ownerId.isNullUid())) {
-            return getOwnerEntityName(tenantId);
-        }
-        return getOwnerEntityName(ownerId);
-    }
-
-    private String getOwnerEntityName(EntityId entityId) {
+    public String getOwnerEntityName(EntityId entityId) {
         EntityType entityType = entityId.getEntityType();
         return switch (entityType) {
             case CUSTOMER, TENANT -> {

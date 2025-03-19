@@ -54,7 +54,9 @@ public interface EntityData<T extends EntityFields> {
 
     boolean removeTs(Integer keyId);
 
-    EntityType getOwnerType();
+    String getOwnerName();
+
+    String getOwnerType();
 
     DataPoint getDataPoint(DataKey key, QueryContext queryContext);
 
