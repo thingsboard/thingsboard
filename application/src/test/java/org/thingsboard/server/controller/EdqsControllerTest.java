@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
@@ -27,7 +29,9 @@ import org.thingsboard.server.common.data.edqs.EdqsSyncRequest;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
+import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -47,7 +51,13 @@ import java.util.concurrent.TimeUnit;
 import static org.awaitility.Awaitility.await;
 
 @DaoSqlTest
-public class EdqsControllerTest extends EdqsEntityQueryControllerTest {
+@TestPropertySource(properties = {
+        "queue.edqs.sync.enabled=true",
+        "queue.edqs.api.supported=true",
+        "queue.edqs.api.auto_enable=true",
+        "queue.edqs.mode=local"
+})
+public class EdqsControllerTest extends AbstractControllerTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -80,7 +90,9 @@ public class EdqsControllerTest extends EdqsEntityQueryControllerTest {
 
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, null);
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, Collections.singletonList(getGatewayFilter()));
-        findByQueryAndCheck(query, 3);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+                }), result -> result.getTotalElements() == 3);
 
         // update db
         Device device1 = devices.get(0);
@@ -101,7 +113,8 @@ public class EdqsControllerTest extends EdqsEntityQueryControllerTest {
 
         // check if the count is updated
         loginTenantAdmin();
-        findByQueryAndCheck(query, 2);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+        }), result -> result.getTotalElements() == 2);
     }
 
     private KeyFilter getGatewayFilter() {
