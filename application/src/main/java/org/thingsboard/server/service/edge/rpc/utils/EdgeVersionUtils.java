@@ -25,12 +25,4 @@ public final class EdgeVersionUtils {
         return currentVersion.ordinal() < requiredVersion.ordinal();
     }
 
-    public static boolean isEdgeOlderThan_3_9_0(EdgeVersion currentVersion) {
-        return isEdgeVersionOlderThan(currentVersion, EdgeVersion.V_3_9_0);
-    }
-
-    public static boolean isEdgeOlderThan_3_8_0(EdgeVersion currentVersion) {
-        return isEdgeVersionOlderThan(currentVersion, EdgeVersion.V_3_8_0);
-    }
-
 }

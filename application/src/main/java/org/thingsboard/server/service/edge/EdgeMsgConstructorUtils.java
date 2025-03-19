@@ -119,7 +119,6 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.Iterator;
 import java.util.List;
@@ -128,17 +127,30 @@ import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
+
 public class EdgeMsgConstructorUtils {
-    public static final Map<String, String> NODE_TO_IGNORED_PARAM_FOR_OLD_EDGE_VERSION = Map.of(
-            TbMsgTimeseriesNode.class.getName(), "processingSettings",
-            TbMsgAttributesNode.class.getName(), "processingSettings",
-            TbSaveToCustomCassandraTableNode.class.getName(), "defaultTtl"
+    public static final Map<EdgeVersion, Map<String, String>> VERSION_TO_IGNORED_PARAM = Map.of(
+            EdgeVersion.V_3_8_0,
+            Map.of(
+                    TbMsgTimeseriesNode.class.getName(), "processingSettings",
+                    TbMsgAttributesNode.class.getName(), "processingSettings",
+                    TbSaveToCustomCassandraTableNode.class.getName(), "defaultTtl"
+            ),
+            EdgeVersion.V_3_7_0,
+            Map.of(
+                    TbMsgTimeseriesNode.class.getName(), "processingSettings",
+                    TbMsgAttributesNode.class.getName(), "processingSettings",
+                    TbSaveToCustomCassandraTableNode.class.getName(), "defaultTtl"
+            )
     );
 
-    //added in edge version 3.8.0
-    public static final Set<String> MISSING_NODES_IN_VERSION_37 = Set.of(
-            TbSendRestApiCallReplyNode.class.getName(),
-            TbAwsLambdaNode.class.getName()
+    //these nodes added in edge version 3.8.0
+    public static final Map<EdgeVersion, Set<String>> VERSION_TO_MISSING_NODES = Map.of(
+            EdgeVersion.V_3_7_0,
+            Set.of(
+                    TbSendRestApiCallReplyNode.class.getName(),
+                    TbAwsLambdaNode.class.getName()
+            )
     );
 
     public static AlarmUpdateMsg constructAlarmUpdatedMsg(UpdateMsgType msgType, Alarm alarm) {
@@ -452,33 +464,35 @@ public class EdgeMsgConstructorUtils {
         JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
         JsonNode nodes = jsonNode.get("nodes");
 
-        if (EdgeVersionUtils.isEdgeOlderThan_3_8_0(edgeVersion)) {
-            Iterator<JsonNode> iterator = nodes.iterator();
-            while (iterator.hasNext()) {
-                JsonNode node = iterator.next();
+        changeConfigForOldEdgeVersions(nodes, edgeVersion);
+        removeMissingNodeOldForEdge(nodes, edgeVersion);
 
-                String type = node.get("type").asText();
-                if (MISSING_NODES_IN_VERSION_37.contains(type)) {
-                    iterator.remove();
-                }
-            }
-        }
-
-        if (EdgeVersionUtils.isEdgeOlderThan_3_9_0(edgeVersion)) {
-            nodes.forEach(EdgeMsgConstructorUtils::changeRuleNodeConfigForOldEdgeVersion);
-
-            return JacksonUtil.toString(jsonNode);
-        } else {
-            return JacksonUtil.toString(ruleChainMetaData);
-        }
+        return JacksonUtil.toString(jsonNode);
     }
 
-    private static void changeRuleNodeConfigForOldEdgeVersion(JsonNode node) {
-        if (node.isObject()) {
-            String nodeType = node.get("type").asText();
+    private static void changeConfigForOldEdgeVersions(JsonNode nodes, EdgeVersion edgeVersion) {
+        nodes.forEach(node -> {
+            if (node.isObject() && node.has("configuration")) {
+                String nodeType = node.get("type").asText();
+                Map<String, String> ignoredParams = VERSION_TO_IGNORED_PARAM.get(edgeVersion);
 
-            if (node.isObject() && node.has("configuration") && NODE_TO_IGNORED_PARAM_FOR_OLD_EDGE_VERSION.containsKey(nodeType)) {
-                ((ObjectNode) node.get("configuration")).remove(NODE_TO_IGNORED_PARAM_FOR_OLD_EDGE_VERSION.get(nodeType));
+                if (ignoredParams != null && ignoredParams.containsKey(nodeType)) {
+                    ((ObjectNode) node.get("configuration")).remove(ignoredParams.get(nodeType));
+                }
+            }
+        });
+    }
+
+    private static void removeMissingNodeOldForEdge(JsonNode nodes, EdgeVersion edgeVersion) {
+        Iterator<JsonNode> iterator = nodes.iterator();
+
+        while (iterator.hasNext()) {
+            JsonNode node = iterator.next();
+            String type = node.get("type").asText();
+            Set<String> missNodes = VERSION_TO_MISSING_NODES.get(edgeVersion);
+
+            if (missNodes != null && missNodes.contains(type)) {
+                iterator.remove();
             }
         }
     }
