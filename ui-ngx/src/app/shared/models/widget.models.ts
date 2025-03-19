@@ -780,7 +780,7 @@ export interface WidgetActionDescriptor extends WidgetAction {
   buttonColor?: string;
   buttonFillColor?: string;
   buttonBorderColor?: string;
-  customButtonStyle?: string;
+  customButtonStyle?: {[key: string]: string};
   displayName?: string;
   useShowWidgetActionFunction?: boolean;
   showWidgetActionFunction?: TbFunction;

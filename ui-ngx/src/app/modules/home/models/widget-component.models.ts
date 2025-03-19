@@ -132,7 +132,7 @@ export interface WidgetHeaderAction extends IWidgetAction {
   buttonColor?: string;
   buttonFillColor?: string;
   buttonBorderColor?: string;
-  customButtonStyle?: string;
+  customButtonStyle?: {[key: string]: string};
   useShowWidgetHeaderActionFunction: boolean;
   showWidgetHeaderActionFunction: CompiledTbFunction<ShowWidgetHeaderActionFunction>;
 }
