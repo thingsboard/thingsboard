@@ -1,9 +1,11 @@
 ### Expressions
 #### JSON Path
 
-The expression field is used to specify the path for extracting data from an HTTP response message.
+The expression field is used to specify the path for extracting data from an incoming HTTP request body.
 
-JSONPath expressions specify the items within a JSON structure (which could be an object, array, or nested combination of both) that you want to access. These expressions can select elements from JSON data on specific criteria. Here's a basic overview of how JSONPath expressions are structured:
+JSONPath expressions specifies the items within a JSON structure (which could be an object, array, or nested combination of both) that you want to access.  
+These expressions can select elements from JSON data on specific criteria.  
+Basic overview of how JSONPath expressions are structured:
 
 - `$`: The root element of the JSON document;
 - `.`: Child operator used to select child elements. For example, $.store.book ;
@@ -11,9 +13,7 @@ JSONPath expressions specify the items within a JSON structure (which could be a
 
 #### Examples
 
-For example, if we want to extract the device name from the following message, we can use the expression below:
-
-HTTP response message:
+Incoming request body:
 
 ```json
 {
@@ -25,30 +25,26 @@ HTTP response message:
 		"temp": 12.2,
 		"hum": 56,
 		"status": "ok"
-	}
+	},
+  "rxInfo": [
+    {
+      "rssi": 50,
+      "snr": 3
+    },
+    {
+      "rssi": 22,
+      "snr": 1
+    }
+  ]
 }
 ```
+<br>
 
-JSON Path Expression
+Examples below shows on how to extract values from incoming request body.
 
-`${sensorModelInfo.sensorName}`
-
-Converted data:
-
-`AM-123`
-
-To extract all data from the message above, use:
-
-`${data}`
-
-Converted data:
-
-`{"temp": 12.2, "hum": 56, "status": "ok"}`
-
-To extract a specific value, such as the temperature, use:
-
-`${data.temp}`
-
-Converted data:
-
-`12.2`
+| JSON Path Expression            | Extracted data                              |
+|---------------------------------|---------------------------------------------|
+| `${sensorModelInfo.sensorName}` | `AM-123`                                    |
+| `${data}`                       | `{"temp": 12.2, "hum": 56, "status": "ok"}` |
+| `${$.data.temp}`                | `12.2`                                      |
+| `${$.rxInfo[0].rssi}`           | `50`                                        |
