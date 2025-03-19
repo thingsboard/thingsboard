@@ -46,7 +46,8 @@ export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsCom
       useCellContentFunction: false,
       cellContentFunction: '',
       defaultColumnVisibility: 'visible',
-      columnSelectionToDisplay: 'enabled'
+      columnSelectionToDisplay: 'enabled',
+      disableSorting: false
     };
   }
 
@@ -60,6 +61,7 @@ export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsCom
       cellContentFunction: [settings.cellContentFunction, [Validators.required]],
       defaultColumnVisibility: [settings.defaultColumnVisibility, []],
       columnSelectionToDisplay: [settings.columnSelectionToDisplay, []],
+      disableSorting: [settings.disableSorting, []]
     });
   }
 

@@ -93,6 +93,7 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
           setTimeout(() => {
             this.updateDisplayValue();
             this.updateEntityAliasesInfo();
+            this.cd.detectChanges();
           }, 0);
         }
       ));
@@ -101,6 +102,7 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
           setTimeout(() => {
             this.updateDisplayValue();
             this.updateEntityAliasesInfo();
+            this.cd.detectChanges();
           }, 0);
         }
       ));
@@ -184,7 +186,6 @@ export class AliasesEntitySelectComponent implements OnInit, OnDestroy {
       displayValue = this.translate.instant('entity.entities');
     }
     this.displayValue = displayValue;
-    this.cd.detectChanges();
   }
 
   private updateEntityAliasesInfo() {

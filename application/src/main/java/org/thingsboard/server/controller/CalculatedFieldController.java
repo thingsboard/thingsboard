@@ -34,6 +34,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfCtx;
+import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
@@ -216,11 +218,14 @@ public class CalculatedFieldController extends BaseController {
             @RequestBody JsonNode inputParams) {
         String expression = inputParams.get("expression").asText();
         Map<String, TbelCfArg> arguments = Objects.requireNonNullElse(
-                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<Map<String, TbelCfArg>>() {
+                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<>() {
                 }),
                 Collections.emptyMap()
         );
-        ArrayList<String> argNames = new ArrayList<>(arguments.keySet());
+
+        ArrayList<String> ctxAndArgNames = new ArrayList<>(arguments.size() + 1);
+        ctxAndArgNames.add("ctx");
+        ctxAndArgNames.addAll(arguments.keySet());
 
         String output = "";
         String errorText = "";
@@ -234,12 +239,20 @@ public class CalculatedFieldController extends BaseController {
                     getTenantId(),
                     tbelInvokeService,
                     expression,
-                    argNames.toArray(String[]::new)
+                    ctxAndArgNames.toArray(String[]::new)
             );
 
-            Object[] args = argNames.stream()
-                    .map(arguments::get)
-                    .toArray();
+
+            Object[] args = new Object[ctxAndArgNames.size()];
+            args[0] = new TbelCfCtx(arguments);
+            for (int i = 1; i < ctxAndArgNames.size(); i++) {
+                var arg = arguments.get(ctxAndArgNames.get(i));
+                if (arg instanceof TbelCfSingleValueArg svArg) {
+                    args[i] = svArg.getValue();
+                } else {
+                    args[i] = arg;
+                }
+            }
 
             JsonNode json = calculatedFieldScriptEngine.executeJsonAsync(args).get(TIMEOUT, TimeUnit.SECONDS);
             output = JacksonUtil.toString(json);
@@ -260,7 +273,8 @@ public class CalculatedFieldController extends BaseController {
             EntityType entityType = referencedEntityId.getEntityType();
             switch (entityType) {
                 case TENANT, CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
-                default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
+                default ->
+                        throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
             }
         }
 

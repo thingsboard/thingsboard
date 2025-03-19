@@ -28,12 +28,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
+import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
@@ -109,6 +108,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
+import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
@@ -141,6 +141,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -233,7 +234,7 @@ public class ActorSystemContext {
 
     @Autowired(required = false)
     @Getter
-    private RuleEngineDeviceStateManager deviceStateManager;
+    private DeviceStateManager deviceStateManager;
 
     @Autowired
     @Getter
@@ -431,10 +432,6 @@ public class ActorSystemContext {
     @Getter
     private ClaimDevicesService claimDevicesService;
 
-    @Autowired
-    @Getter
-    private JsInvokeStats jsInvokeStats;
-
     //TODO: separate context for TbCore and TbRuleEngine
     @Autowired(required = false)
     @Getter
@@ -547,11 +544,16 @@ public class ActorSystemContext {
     @Lazy
     @Autowired(required = false)
     @Getter
+    private CalculatedFieldQueueService calculatedFieldQueueService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
     private CalculatedFieldEntityProfileCache calculatedFieldEntityProfileCache;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
-    private long maxConcurrentSessionsPerDevice;
+    private int maxConcurrentSessionsPerDevice;
 
     @Value("${actors.session.sync.timeout:10000}")
     @Getter
@@ -587,17 +589,6 @@ public class ActorSystemContext {
     @PostConstruct
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
-    }
-
-    @Scheduled(fixedDelayString = "${actors.statistics.js_print_interval_ms}")
-    public void printStats() {
-        if (statisticsEnabled) {
-            if (jsInvokeStats.getRequests() > 0 || jsInvokeStats.getResponses() > 0 || jsInvokeStats.getFailures() > 0) {
-                log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
-                        jsInvokeStats.getRequests(), jsInvokeStats.getResponses(), jsInvokeStats.getFailures());
-                jsInvokeStats.reset();
-            }
-        }
     }
 
     @Value("${actors.tenant.create_components_on_init:true}")
@@ -643,6 +634,10 @@ public class ActorSystemContext {
     @Value("${state.rule.node.deviceState.rateLimit:1:1,30:60,60:3600}")
     @Getter
     private String deviceStateNodeRateLimitConfig;
+
+    @Value("${actors.calculated_fields.calculation_timeout:5}")
+    @Getter
+    private long cfCalculationResultTimeout;
 
     @Getter
     @Setter
@@ -862,9 +857,9 @@ public class ActorSystemContext {
         appActor.tellWithHighPriority(tbActorMsg);
     }
 
-    public void schedulePeriodicMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs, long periodInMs) {
+    public ScheduledFuture<?> schedulePeriodicMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs, long periodInMs) {
         log.debug("Scheduling periodic msg {} every {} ms with delay {} ms", msg, periodInMs, delayInMs);
-        getScheduler().scheduleWithFixedDelay(() -> ctx.tell(msg), delayInMs, periodInMs, TimeUnit.MILLISECONDS);
+        return getScheduler().scheduleWithFixedDelay(() -> ctx.tell(msg), delayInMs, periodInMs, TimeUnit.MILLISECONDS);
     }
 
     public void scheduleMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs) {

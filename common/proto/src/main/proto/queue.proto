@@ -63,6 +63,20 @@ enum EntityTypeProto {
   CALCULATED_FIELD_LINK = 40;
 }
 
+enum ApiUsageRecordKeyProto {
+  TRANSPORT_MSG_COUNT  = 0;
+  TRANSPORT_DP_COUNT   = 1;
+  STORAGE_DP_COUNT     = 2;
+  RE_EXEC_COUNT        = 3;
+  JS_EXEC_COUNT        = 4;
+  TBEL_EXEC_COUNT      = 5;
+  EMAIL_EXEC_COUNT     = 6;
+  SMS_EXEC_COUNT       = 7;
+  CREATED_ALARMS_COUNT = 8;
+  ACTIVE_DEVICES       = 9;
+  INACTIVE_DEVICES     = 10;
+}
+
 /**
  * Service Discovery Data Structures;
  */
@@ -72,6 +86,7 @@ message ServiceInfo {
   repeated string transports = 6;
   SystemInfoProto systemInfo = 10;
   repeated string assignedTenantProfiles = 11;
+  string label = 12;
 }
 
 message SystemInfoProto {
@@ -172,15 +187,45 @@ message AttributeValueProto {
   optional int64 version = 10;
 }
 
+message AttributeKvProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  EntityTypeProto entityType = 3;
+  AttributeScopeProto scope = 4;
+  string key = 5;
+  int64 version = 6;
+  DataPointProto dataPoint = 7;
+}
+
 message TsKvProto {
   int64 ts = 1;
   KeyValueProto kv = 2;
   optional int64 version = 3;
 }
 
+message LatestTsKvProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  EntityTypeProto entityType = 3;
+  string key = 4;
+  int64 version = 5;
+  DataPointProto dataPoint = 6;
+}
+
 message TsKvListProto {
   int64 ts = 1;
   repeated KeyValueProto kv = 2;
+}
+
+message DataPointProto {
+  int64 ts = 1;
+  optional bool boolV = 2;
+  optional int64 longV = 3;
+  optional double doubleV = 4;
+  optional string stringV = 5;
+  optional bytes compressedStringV = 6;
+  optional string jsonV = 7;
+  optional bytes compressedJsonV = 8;
 }
 
 message DeviceInfoProto {
@@ -485,6 +530,10 @@ message ImageCacheKeyProto {
   optional string publicResourceKey = 2;
 }
 
+message ToEdqsCoreServiceMsg {
+  bytes value = 1;
+}
+
 message LwM2MRegistrationRequestMsg {
   string tenantId = 1;
   string endpoint = 2;
@@ -772,6 +821,14 @@ message DeviceInactivityProto {
   int64 deviceIdMSB = 3;
   int64 deviceIdLSB = 4;
   int64 lastInactivityTime = 5;
+}
+
+message DeviceInactivityTimeoutUpdateProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 inactivityTimeout = 5;
 }
 
 message CalculatedFieldTelemetryMsgProto {
@@ -1079,7 +1136,11 @@ message TbAttributeDeleteProto {
   int64 tenantIdLSB = 5;
   string scope = 6;
   repeated string keys = 7;
-  bool notifyDevice = 8;
+  // DEPRECATED. FOR REMOVAL
+  // Since 4.0, this field is no longer used.
+  // Device notifications are now handled directly by DefaultTelemetrySubscriptionService,
+  // eliminating the need to pass this parameter through the queue and proto to DefaultSubscriptionManagerService.
+  optional bool notifyDevice = 8 [deprecated = true];
 }
 
 message TbTimeSeriesDeleteProto {
@@ -1586,6 +1647,7 @@ message ToCoreMsg {
   DeviceConnectProto deviceConnectMsg = 50;
   DeviceDisconnectProto deviceDisconnectMsg = 51;
   DeviceInactivityProto deviceInactivityMsg = 52;
+  DeviceInactivityTimeoutUpdateProto deviceInactivityTimeoutUpdateMsg = 53;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -1604,6 +1666,7 @@ message ToCoreNotificationMsg {
   ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11 [deprecated = true];
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12 [deprecated = true];
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
+  ToEdqsCoreServiceMsg toEdqsCoreServiceMsg = 17;
   RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
 }
 
@@ -1625,14 +1688,12 @@ message ToEdgeEventNotificationMsg {
 }
 
 message ToCalculatedFieldMsg {
-  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
-  CalculatedFieldTelemetryMsgProto telemetryMsg = 2;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 3;
+  CalculatedFieldTelemetryMsgProto telemetryMsg = 1;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
 }
 
 message ToCalculatedFieldNotificationMsg {
-  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 1;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -1671,12 +1732,25 @@ message ToTransportMsg {
   repeated QueueDeleteMsg queueDeleteMsgs = 16;
 }
 
-message UsageStatsKVProto{
-  string key = 1;
+message UsageStatsKVProto {
+  string key = 1 [deprecated=true];
   int64 value = 2;
+  ApiUsageRecordKeyProto recordKey = 3;
 }
 
 message ToUsageStatsServiceMsg {
+  int64 tenantIdMSB = 1 [deprecated=true];
+  int64 tenantIdLSB = 2 [deprecated=true];
+  int64 entityIdMSB = 3 [deprecated=true];
+  int64 entityIdLSB = 4 [deprecated=true];
+  repeated UsageStatsKVProto values = 5 [deprecated=true];
+  int64 customerIdMSB = 6 [deprecated=true];
+  int64 customerIdLSB = 7 [deprecated=true];
+  string serviceId = 8;
+  repeated UsageStatsServiceMsg msgs = 9;
+}
+
+message UsageStatsServiceMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   int64 entityIdMSB = 3;
@@ -1684,7 +1758,6 @@ message ToUsageStatsServiceMsg {
   repeated UsageStatsKVProto values = 5;
   int64 customerIdMSB = 6;
   int64 customerIdLSB = 7;
-  string serviceId = 8;
 }
 
 message ToOtaPackageStateServiceMsg {
@@ -1742,4 +1815,34 @@ message HousekeeperTaskProto {
   // reprocessing
   int32 attempt = 50;
   repeated string errors = 51;
+}
+
+message ToEdqsMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 customerIdMSB = 3;
+  int64 customerIdLSB = 4;
+  int64 ts = 5;
+  EdqsEventMsg eventMsg = 6;
+  EdqsRequestMsg requestMsg = 7;
+}
+
+message FromEdqsMsg {
+  EdqsResponseMsg responseMsg = 1;
+}
+
+message EdqsEventMsg {
+  string key = 1;
+  string objectType = 2;
+  bytes data = 3;
+  string eventType = 4;
+  optional int64 version = 5;
+}
+
+message EdqsRequestMsg {
+  string value = 1;
+}
+
+message EdqsResponseMsg {
+  string value = 1;
 }

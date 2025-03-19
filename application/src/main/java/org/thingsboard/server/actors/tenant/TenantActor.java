@@ -49,6 +49,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
@@ -92,23 +93,27 @@ public class TenantActor extends RuleChainManagerActor {
                 if (isRuleEngine) {
                     if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
                         try {
-                            if (getApiUsageState().isReExecEnabled()) {
-                                log.debug("[{}] Going to init rule chains", tenantId);
-                                initRuleChains();
-                            } else {
-                                log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
-                            }
                             //TODO: IM - extend API usage to have CF Exec Enabled? Not in 4.0;
                             cfActor = ctx.getOrCreateChildActor(new TbStringActorId("CFM|" + tenantId),
                                     () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
                                     () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
                                     () -> true);
                         } catch (Exception e) {
+                            log.info("[{}] Failed to init CF Actor.", tenantId, e);
+                        }
+                        try {
+                            if (getApiUsageState().isReExecEnabled()) {
+                                log.debug("[{}] Going to init rule chains", tenantId);
+                                initRuleChains();
+                            } else {
+                                log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
+                            }
+                        } catch (Exception e) {
                             log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
                             cantFindTenant = true;
                         }
                     } else {
-                        log.info("Tenant {} is not managed by current service, skipping rule chains init", tenantId);
+                        log.info("Tenant {} is not managed by current service, skipping rule chains and cf actor init", tenantId);
                     }
                 }
                 log.debug("[{}] Tenant actor started.", tenantId);
@@ -171,7 +176,6 @@ public class TenantActor extends RuleChainManagerActor {
             case CF_LINK_INIT_MSG:
             case CF_STATE_RESTORE_MSG:
             case CF_PARTITIONS_CHANGE_MSG:
-            case CF_ENTITY_LIFECYCLE_MSG:
                 onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, true);
                 break;
             case CF_TELEMETRY_MSG:
@@ -185,6 +189,10 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onToCalculatedFieldSystemActorMsg(ToCalculatedFieldSystemMsg msg, boolean priority) {
+        if (cfActor == null) {
+            log.warn("[{}] CF Actor is not initialized.", tenantId);
+            return;
+        }
         if (priority) {
             cfActor.tellWithHighPriority(msg);
         } else {
@@ -251,11 +259,25 @@ public class TenantActor extends RuleChainManagerActor {
         ServiceType serviceType = msg.getServiceType();
         if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
             if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                if (cfActor == null) {
+                    try {
+                        //TODO: IM - extend API usage to have CF Exec Enabled? Not in 4.0;
+                        cfActor = ctx.getOrCreateChildActor(new TbStringActorId("CFM|" + tenantId),
+                                () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
+                                () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
+                                () -> true);
+                    } catch (Exception e) {
+                        log.info("[{}] Failed to init CF Actor.", tenantId, e);
+                    }
+                }
                 if (!ruleChainsInitialized) {
                     log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
                     initRuleChains();
                 }
             } else {
+                if (cfActor != null) {
+                    ctx.stop(cfActor.getActorId());
+                }
                 if (ruleChainsInitialized) {
                     log.info("Tenant {} is no longer managed by this service, stopping rule chains", tenantId);
                     destroyRuleChains();
@@ -293,19 +315,26 @@ public class TenantActor extends RuleChainManagerActor {
             onToDeviceActorMsg(new DeviceDeleteMsg(tenantId, deviceId), true);
             deletedDevices.add(deviceId);
         }
-        if (isRuleEngine && ruleChainsInitialized) {
-            TbActorRef target = getEntityActorRef(msg.getEntityId());
-            if (target != null) {
-                if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
-                    RuleChain ruleChain = systemContext.getRuleChainService().
-                            findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
-                    if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
-                        visit(ruleChain, target);
+        if (isRuleEngine) {
+            if (ruleChainsInitialized) {
+                TbActorRef target = getEntityActorRef(msg.getEntityId());
+                if (target != null) {
+                    if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
+                        RuleChain ruleChain = systemContext.getRuleChainService().
+                                findRuleChainById(tenantId, new RuleChainId(msg.getEntityId().getId()));
+                        if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
+                            visit(ruleChain, target);
+                        }
                     }
+                    target.tellWithHighPriority(msg);
+                } else {
+                    log.debug("[{}] Invalid component lifecycle msg: {}", tenantId, msg);
                 }
-                target.tellWithHighPriority(msg);
-            } else {
-                log.debug("[{}] Invalid component lifecycle msg: {}", tenantId, msg);
+            }
+            if (cfActor != null) {
+                if (msg.getEntityId().getEntityType().isOneOf(EntityType.CALCULATED_FIELD, EntityType.DEVICE, EntityType.ASSET)) {
+                    cfActor.tellWithHighPriority(new CalculatedFieldEntityLifecycleMsg(tenantId, msg));
+                }
             }
         }
     }

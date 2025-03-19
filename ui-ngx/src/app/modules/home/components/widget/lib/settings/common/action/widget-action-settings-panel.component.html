@@ -21,7 +21,10 @@
     <tb-widget-action
       formControlName="widgetAction"
       [callbacks]="callbacks"
-      [widgetType]="widgetType">
+      [widgetType]="widgetType"
+      [withName]="withName"
+      [actionNames]="actionNames"
+      [additionalWidgetActionTypes]="additionalWidgetActionTypes">
     </tb-widget-action>
   </div>
   <div class="tb-action-settings-panel-buttons">
@@ -36,7 +39,7 @@
             type="button"
             (click)="applyWidgetAction()"
             [disabled]="widgetActionFormGroup.invalid || !widgetActionFormGroup.dirty">
-      {{ 'action.apply' | translate }}
+      {{ applyTitle }}
     </button>
   </div>
 </div>

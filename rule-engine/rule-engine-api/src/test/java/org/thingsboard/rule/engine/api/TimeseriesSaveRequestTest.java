@@ -23,14 +23,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TimeseriesSaveRequestTest {
 
     @Test
-    void testDefaultSaveStrategyIsProcessAll() {
+    void testDefaultProcessingStrategyIsProcessAll() {
         var request = TimeseriesSaveRequest.builder().build();
 
         assertThat(request.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.PROCESS_ALL);
     }
 
     @Test
-    void testSaveAllStrategy() {
+    void testNullProcessingStrategyIsProcessAll() {
+        var request = TimeseriesSaveRequest.builder().strategy(null).build();
+
+        assertThat(request.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.PROCESS_ALL);
+    }
+
+    @Test
+    void testProcessAllStrategy() {
         assertThat(TimeseriesSaveRequest.Strategy.PROCESS_ALL).isEqualTo(new TimeseriesSaveRequest.Strategy(true, true, true, true));
     }
 

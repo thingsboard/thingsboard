@@ -23,11 +23,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfCtx;
+import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Slf4j
@@ -49,11 +55,20 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        Object[] args = ctx.getArgNames().stream()
-                .map(this::toTbelArgument)
-                .toArray();
-
-        ListenableFuture<JsonNode> resultFuture = ctx.getCalculatedFieldScriptEngine().executeJsonAsync(args);
+        Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
+        List<Object> args = new ArrayList<>(ctx.getArgNames().size() + 1);
+        args.add(new Object()); // first element is a ctx, but we will set it later;
+        for (String argName : ctx.getArgNames()) {
+            var arg = toTbelArgument(argName);
+            arguments.put(argName, arg);
+            if (arg instanceof TbelCfSingleValueArg svArg) {
+                args.add(svArg.getValue());
+            } else {
+                args.add(arg);
+            }
+        }
+        args.set(0, new TbelCfCtx(arguments));
+        ListenableFuture<JsonNode> resultFuture = ctx.getCalculatedFieldScriptEngine().executeJsonAsync(args.toArray());
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,
                 result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),

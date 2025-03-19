@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Notif
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.NotificationRuleEntity;
 import org.thingsboard.server.dao.model.sql.NotificationRuleInfoEntity;
 import org.thingsboard.server.dao.notification.NotificationRuleDao;
@@ -41,7 +42,7 @@ import java.util.UUID;
 @Component
 @SqlDao
 @RequiredArgsConstructor
-public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntity, NotificationRule> implements NotificationRuleDao {
+public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntity, NotificationRule> implements NotificationRuleDao, TenantEntityDao<NotificationRule> {
 
     private final NotificationRuleRepository notificationRuleRepository;
 
@@ -99,6 +100,11 @@ public class JpaNotificationRuleDao extends JpaAbstractDao<NotificationRuleEntit
     @Override
     public NotificationRuleId getExternalIdByInternal(NotificationRuleId internalId) {
         return DaoUtil.toEntityId(notificationRuleRepository.getExternalIdByInternal(internalId.getId()), NotificationRuleId::new);
+    }
+
+    @Override
+    public PageData<NotificationRule> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override

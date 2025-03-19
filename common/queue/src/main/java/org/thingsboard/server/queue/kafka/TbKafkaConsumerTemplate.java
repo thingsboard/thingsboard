@@ -24,6 +24,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.util.StopWatch;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.AbstractTbQueueConsumerTemplate;
@@ -33,9 +34,11 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -52,7 +55,8 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     private final String groupId;
 
     private final boolean readFromBeginning; // reset offset to beginning
-    private final boolean stopWhenRead; // stop consuming when reached initial end offsets
+    private final boolean stopWhenRead; // stop consuming when reached end offset remembered on start
+    private int readCount;
     private Map<Integer, Long> endOffsets; // needed if stopWhenRead is true
 
     @Builder
@@ -82,29 +86,49 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     }
 
     @Override
-    protected void doSubscribe(List<String> topicNames) {
-        if (!topicNames.isEmpty()) {
-            topicNames.forEach(admin::createTopicIfNotExists);
-            if (readFromBeginning || stopWhenRead) {
-                consumer.subscribe(topicNames, new ConsumerRebalanceListener() {
-                    @Override
-                    public void onPartitionsRevoked(Collection<TopicPartition> partitions) {}
+    protected void doSubscribe(Set<TopicPartitionInfo> partitions) {
+        Map<String, List<Integer>> topics;
+        if (partitions == null) {
+            topics = Collections.emptyMap();
+        } else {
+            topics = new HashMap<>();
+            partitions.forEach(tpi -> {
+                if (tpi.isUseInternalPartition()) {
+                    topics.computeIfAbsent(tpi.getFullTopicName(), t -> new ArrayList<>()).add(tpi.getPartition().get());
+                } else {
+                    topics.put(tpi.getFullTopicName(), null);
+                }
+            });
+        }
+        if (!topics.isEmpty()) {
+            topics.keySet().forEach(admin::createTopicIfNotExists);
+            List<String> toSubscribe = new ArrayList<>();
+            topics.forEach((topic, kafkaPartitions) -> {
+                if (kafkaPartitions == null) {
+                    toSubscribe.add(topic);
+                } else {
+                    List<TopicPartition> topicPartitions = kafkaPartitions.stream()
+                            .map(partition -> new TopicPartition(topic, partition))
+                            .toList();
+                    consumer.assign(topicPartitions);
+                    onPartitionsAssigned(topicPartitions);
+                }
+            });
+            if (!toSubscribe.isEmpty()) {
+                if (readFromBeginning || stopWhenRead) {
+                    consumer.subscribe(toSubscribe, new ConsumerRebalanceListener() {
+                        @Override
+                        public void onPartitionsRevoked(Collection<TopicPartition> partitions) {}
 
-                    @Override
-                    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-                        log.debug("Handling onPartitionsAssigned {}", partitions);
-                        if (readFromBeginning) {
-                            consumer.seekToBeginning(partitions);
+                        @Override
+                        public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+                            log.debug("Handling onPartitionsAssigned {}", partitions);
+                            TbKafkaConsumerTemplate.this.onPartitionsAssigned(partitions);
                         }
-                        if (stopWhenRead) {
-                            endOffsets = consumer.endOffsets(partitions).entrySet().stream()
-                                    .filter(entry -> entry.getValue() > 0)
-                                    .collect(Collectors.toMap(entry -> entry.getKey().partition(), Map.Entry::getValue));
-                        }
-                    }
-                });
-            } else {
-                consumer.subscribe(topicNames);
+                    });
+                } else {
+                    consumer.subscribe(toSubscribe);
+                }
             }
         } else {
             log.info("unsubscribe due to empty topic list");
@@ -132,10 +156,11 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
             records.forEach(record -> {
                 recordList.add(record);
                 if (stopWhenRead && endOffsets != null) {
+                    readCount++;
                     int partition = record.partition();
                     Long endOffset = endOffsets.get(partition);
                     if (endOffset == null) {
-                        log.warn("End offset not found for {} [{}]", record.topic(), partition);
+                        log.debug("End offset not found for {} [{}]", record.topic(), partition);
                         return;
                     }
                     log.trace("[{}-{}] Got record offset {}, expected end offset: {}", record.topic(), partition, record.offset(), endOffset - 1);
@@ -146,10 +171,21 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
             });
         }
         if (stopWhenRead && endOffsets != null && endOffsets.isEmpty()) {
-            log.info("Reached end offset for {}, stopping consumer", consumer.assignment());
+            log.info("Finished reading {}, processed {} messages", partitions, readCount);
             stop();
         }
         return recordList;
+    }
+
+    private void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+        if (readFromBeginning) {
+            consumer.seekToBeginning(partitions);
+        }
+        if (stopWhenRead) {
+            endOffsets = consumer.endOffsets(partitions).entrySet().stream()
+                    .filter(entry -> entry.getValue() > 0)
+                    .collect(Collectors.toMap(entry -> entry.getKey().partition(), Map.Entry::getValue));
+        }
     }
 
     @Override

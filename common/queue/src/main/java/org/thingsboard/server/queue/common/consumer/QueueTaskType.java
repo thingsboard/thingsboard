@@ -20,6 +20,6 @@ import java.io.Serializable;
 public enum QueueTaskType implements Serializable {
 
     UPDATE_PARTITIONS, UPDATE_CONFIG, DELETE,
-    ADD_PARTITIONS, REMOVE_PARTITIONS
+    ADD_PARTITIONS, REMOVE_PARTITIONS, DELETE_PARTITIONS
 
 }

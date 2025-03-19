@@ -28,8 +28,9 @@ import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
+import org.thingsboard.rule.engine.api.RuleEngineCalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
+import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -654,27 +655,6 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void logJsEvalRequest() {
-        if (mainCtx.isStatisticsEnabled()) {
-            mainCtx.getJsInvokeStats().incrementRequests();
-        }
-    }
-
-    @Override
-    public void logJsEvalResponse() {
-        if (mainCtx.isStatisticsEnabled()) {
-            mainCtx.getJsInvokeStats().incrementResponses();
-        }
-    }
-
-    @Override
-    public void logJsEvalFailure() {
-        if (mainCtx.isStatisticsEnabled()) {
-            mainCtx.getJsInvokeStats().incrementFailures();
-        }
-    }
-
-    @Override
     public String getServiceId() {
         return mainCtx.getServiceInfoProvider().getServiceId();
     }
@@ -725,7 +705,7 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public RuleEngineDeviceStateManager getDeviceStateManager() {
+    public DeviceStateManager getDeviceStateManager() {
         return mainCtx.getDeviceStateManager();
     }
 
@@ -900,6 +880,11 @@ public class DefaultTbContext implements TbContext {
     @Override
     public CalculatedFieldService getCalculatedFieldService() {
         return mainCtx.getCalculatedFieldService();
+    }
+
+    @Override
+    public RuleEngineCalculatedFieldQueueService getCalculatedFieldQueueService() {
+        return mainCtx.getCalculatedFieldQueueService();
     }
 
     @Override

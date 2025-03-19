@@ -20,6 +20,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import {
   entityTypesWithoutRelatedData,
   SingleEntityVersionCreateRequest,
+  typesWithCalculatedFields,
   VersionCreateRequestType,
   VersionCreationResult
 } from '@shared/models/vc.models';
@@ -71,6 +72,8 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
 
   private versionCreateResultSubscription: Subscription;
 
+  readonly typesWithCalculatedFields = typesWithCalculatedFields;
+
   constructor(protected store: Store<AppState>,
               private entitiesVersionControlService: EntitiesVersionControlService,
               private cd: ChangeDetectorRef,
@@ -86,7 +89,8 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
         {entityName: this.entityName}), [Validators.required, Validators.pattern(/(?:.|\s)*\S(&:.|\s)*/)]],
       saveRelations: [false, []],
       saveAttributes: [true, []],
-      saveCredentials: [true, []]
+      saveCredentials: [true, []],
+      saveCalculatedFields: [true, []]
     });
   }
 
@@ -115,7 +119,8 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
             ? this.createVersionFormGroup.get('saveRelations').value : false,
           saveAttributes: !entityTypesWithoutRelatedData.has(this.entityId.entityType)
             ? this.createVersionFormGroup.get('saveAttributes').value : false,
-          saveCredentials: this.entityId.entityType === EntityType.DEVICE ? this.createVersionFormGroup.get('saveCredentials').value : false
+          saveCredentials: this.entityId.entityType === EntityType.DEVICE ? this.createVersionFormGroup.get('saveCredentials').value : false,
+          saveCalculatedFields: typesWithCalculatedFields.has(this.entityId.entityType) ? this.createVersionFormGroup.get('saveCalculatedFields').value : false,
         },
         type: VersionCreateRequestType.SINGLE_ENTITY
       };

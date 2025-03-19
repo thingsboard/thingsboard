@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.cf;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

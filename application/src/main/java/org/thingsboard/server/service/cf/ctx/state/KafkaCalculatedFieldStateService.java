@@ -20,10 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
@@ -33,7 +35,7 @@ import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
-import org.thingsboard.server.queue.common.consumer.QueueStateService;
+import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
@@ -41,10 +43,12 @@ import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.service.cf.AbstractCalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.*;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToString;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToUuid;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.stringToBytes;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.uuidToBytes;
 
 @Service
 @RequiredArgsConstructor
@@ -58,18 +62,16 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
     @Value("${queue.calculated_fields.poll_interval:25}")
     private long pollInterval;
 
-    private PartitionedQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateProto>> stateConsumer;
     private TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>> stateProducer;
-    private QueueStateService<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>> queueStateService;
 
     private final AtomicInteger counter = new AtomicInteger();
 
     @Override
     public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
-        super.init(eventConsumer);
-        this.stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>>create()
-                .queueKey(QueueKey.CF_STATES)
-                .topic(partitionService.getTopic(QueueKey.CF_STATES))
+        var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_STATES_QUEUE_NAME);
+        PartitionedQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateProto>> stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>>create()
+                .queueKey(queueKey)
+                .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
                 .msgPackProcessor((msgs, consumer, config) -> {
                     for (TbProtoQueueMsg<CalculatedFieldStateProto> msg : msgs) {
@@ -90,18 +92,18 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                     }
                 })
                 .consumerCreator((config, partitionId) -> queueFactory.createCalculatedFieldStateConsumer())
+                .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .scheduler(eventConsumer.getScheduler())
                 .taskExecutor(eventConsumer.getTaskExecutor())
                 .build();
+        super.stateService = new KafkaQueueStateService<>(eventConsumer, stateConsumer);
         this.stateProducer = (TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>>) queueFactory.createCalculatedFieldStateProducer();
-        this.queueStateService = new QueueStateService<>();
-        this.queueStateService.init(stateConsumer, super.eventConsumer);
     }
 
     @Override
     protected void doPersist(CalculatedFieldEntityCtxId stateId, CalculatedFieldStateProto stateMsgProto, TbCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF_STATES, stateId.entityId());
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_STATES_QUEUE_NAME, stateId.tenantId(), stateId.entityId());
         TbProtoQueueMsg<CalculatedFieldStateProto> msg = new TbProtoQueueMsg<>(stateId.entityId().getId(), stateMsgProto);
         if (stateMsgProto == null) {
             putStateId(msg.getHeaders(), stateId);
@@ -128,11 +130,6 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
         doPersist(stateId, null, callback);
     }
 
-    @Override
-    public void restore(Set<TopicPartitionInfo> partitions) {
-        queueStateService.update(partitions);
-    }
-
     private void putStateId(TbQueueMsgHeaders headers, CalculatedFieldEntityCtxId stateId) {
         headers.put("tenantId", uuidToBytes(stateId.tenantId().getId()));
         headers.put("cfId", uuidToBytes(stateId.cfId().getId()));
@@ -149,8 +146,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
 
     @Override
     public void stop() {
-        stateConsumer.stop();
-        stateConsumer.awaitStop();
+        super.stop();
         stateProducer.stop();
     }
 

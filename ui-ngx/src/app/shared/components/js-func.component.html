@@ -41,7 +41,7 @@
       {{'js-func.tidy' | translate }}
     </button>
     <ng-content select="[toolbarSuffixButton]"></ng-content>
-    <div *ngIf="helpId" [tb-help-popup]="helpId"></div>
+    <div *ngIf="helpId" [tb-help-popup]="helpId" [tb-help-popup-style]="helpPopupStyle"></div>
     <fieldset style="width: initial">
       <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
            matTooltipPosition="above"
