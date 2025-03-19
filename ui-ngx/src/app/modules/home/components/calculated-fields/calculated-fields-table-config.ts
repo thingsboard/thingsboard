@@ -263,18 +263,17 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private updateImportedCalculatedField(calculatedField: CalculatedField): CalculatedField {
+    const updatedArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
+      const arg = calculatedField.configuration.arguments[key];
+      acc[key] = arg.refEntityId?.entityType === ArgumentEntityType.Tenant
+        ? { ...arg, refEntityId: { id: this.tenantId, entityType: ArgumentEntityType.Tenant } }
+        : arg;
+      return acc;
+    }, {});
+
     return {
       ...calculatedField,
-      configuration: {
-        ...calculatedField.configuration,
-        arguments: Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
-          const arg = calculatedField.configuration.arguments[key];
-          acc[key] = arg.refEntityId?.entityType === ArgumentEntityType.Tenant
-            ? { ...arg, refEntityId: { id: this.tenantId, entityType: ArgumentEntityType.Tenant } }
-            : arg;
-          return acc;
-        }, {})
-      }
+      configuration: { ...calculatedField.configuration, arguments: updatedArguments }
     }
   }
 
