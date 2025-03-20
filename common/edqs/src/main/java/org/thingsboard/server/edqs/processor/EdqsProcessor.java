@@ -164,13 +164,10 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         }
         try {
             Set<TopicPartitionInfo> newPartitions = event.getNewPartitions().get(new QueueKey(ServiceType.EDQS));
-            Set<TopicPartitionInfo> partitions = newPartitions.stream()
-                    .map(tpi -> tpi.withUseInternalPartition(true))
-                    .collect(Collectors.toSet());
 
-            stateService.process(withTopic(partitions, EdqsQueue.STATE.getTopic()));
+            stateService.process(withTopic(newPartitions, EdqsQueue.STATE.getTopic()));
             // eventsConsumer's partitions are updated by stateService
-            responseTemplate.subscribe(withTopic(partitions, config.getRequestsTopic())); // FIXME: we subscribe to partitions before we are ready. implement consumer-per-partition version for request template
+            responseTemplate.subscribe(withTopic(newPartitions, config.getRequestsTopic())); // TODO: we subscribe to partitions before we are ready. implement consumer-per-partition version for request template
 
             Set<TopicPartitionInfo> oldPartitions = event.getOldPartitions().get(new QueueKey(ServiceType.EDQS));
             if (CollectionsUtil.isNotEmpty(oldPartitions)) {

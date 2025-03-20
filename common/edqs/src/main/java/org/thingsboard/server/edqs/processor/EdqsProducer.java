@@ -70,17 +70,13 @@ public class EdqsProducer {
                 log.warn("[{}][{}][{}] Failed to publish msg to {}: {}", tenantId, type, key, topic, msg, t);
             }
         };
+        TopicPartitionInfo tpi = TopicPartitionInfo.builder()
+                .topic(topic)
+                .partition(partitionService.resolvePartition(tenantId))
+                .build();
         if (producer instanceof TbKafkaProducerTemplate<TbProtoQueueMsg<ToEdqsMsg>> kafkaProducer) {
-            TopicPartitionInfo tpi = TopicPartitionInfo.builder()
-                    .topic(topic)
-                    .partition(partitionService.resolvePartition(tenantId))
-                    .useInternalPartition(true)
-                    .build();
             kafkaProducer.send(tpi, key, new TbProtoQueueMsg<>(null, msg), callback); // specifying custom key for compaction
         } else {
-            TopicPartitionInfo tpi = TopicPartitionInfo.builder()
-                    .topic(topic)
-                    .build();
             producer.send(tpi, new TbProtoQueueMsg<>(null, msg), callback);
         }
     }

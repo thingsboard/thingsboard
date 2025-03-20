@@ -45,6 +45,8 @@ import org.thingsboard.server.queue.edqs.KafkaEdqsComponent;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -151,7 +153,13 @@ public class KafkaEdqsStateService implements EdqsStateService {
     @Override
     public void process(Set<TopicPartitionInfo> partitions) {
         if (queueStateService.getPartitions().isEmpty()) {
-            eventsToBackupConsumer.subscribe();
+            Set<TopicPartitionInfo> allPartitions = IntStream.range(0, config.getPartitions())
+                    .mapToObj(partition -> TopicPartitionInfo.builder()
+                            .topic(EdqsQueue.EVENTS.getTopic())
+                            .partition(partition)
+                            .build())
+                    .collect(Collectors.toSet());
+            eventsToBackupConsumer.subscribe(allPartitions);
             eventsToBackupConsumer.launch();
         }
         queueStateService.update(new QueueKey(ServiceType.EDQS), partitions);
