@@ -270,8 +270,7 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
     this.latestChartOption = {
       tooltip: {
         trigger: this.settings.showTooltip ? 'item' : 'none',
-        confine: false,
-        appendTo: 'body',
+        confine: true,
         formatter: (params: CallbackDataParams) =>
           this.settings.showTooltip
             ? latestChartTooltipFormatter(this.renderer, this.settings, params, this.units, this.total, this.dataItems)

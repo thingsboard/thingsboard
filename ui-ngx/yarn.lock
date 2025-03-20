@@ -4798,12 +4798,12 @@ eastasianwidth@^0.2.0:
   resolved "https://registry.yarnpkg.com/eastasianwidth/-/eastasianwidth-0.2.0.tgz#696ce2ec0aa0e6ea93a397ffcf24aa7840c827cb"
   integrity sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==
 
-"echarts@https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz":
-  version "5.5.0-TB"
-  resolved "https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz#0b707b5cd2ae4699e9ced8b07ca49cb70189ae2a"
+"echarts@https://github.com/thingsboard/echarts/archive/5.5.1-TB.tar.gz":
+  version "5.5.1-TB"
+  resolved "https://github.com/thingsboard/echarts/archive/5.5.1-TB.tar.gz#8cf0cbb1b4c6161f0b587a1a649ff4f8eecbbf42"
   dependencies:
     tslib "2.3.0"
-    zrender "5.5.0"
+    zrender "https://github.com/thingsboard/zrender/archive/5.5.0-TB.tar.gz"
 
 editorconfig@^1.0.4:
   version "1.0.4"
@@ -10102,9 +10102,8 @@ zone.js@~0.14.10:
   resolved "https://registry.yarnpkg.com/zone.js/-/zone.js-0.14.10.tgz#23b8b29687c6bffece996e5ee5b854050e7775c8"
   integrity sha512-YGAhaO7J5ywOXW6InXNlLmfU194F8lVgu7bRntUF3TiG8Y3nBK0x1UJJuHUP/e8IyihkjCYqhCScpSwnlaSRkQ==
 
-zrender@5.5.0:
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/zrender/-/zrender-5.5.0.tgz#54d0d6c4eda81a96d9f60a9cd74dc48ea026bc1e"
-  integrity sha512-O3MilSi/9mwoovx77m6ROZM7sXShR/O/JIanvzTwjN3FORfLSr81PsUGd7jlaYOeds9d8tw82oP44+3YucVo+w==
+"zrender@https://github.com/thingsboard/zrender/archive/5.5.0-TB.tar.gz":
+  version "5.5.0-TB"
+  resolved "https://github.com/thingsboard/zrender/archive/5.5.0-TB.tar.gz#9605f08284436a9be86085e27f1c01b29a9923bf"
   dependencies:
     tslib "2.3.0"
