@@ -72,7 +72,7 @@ public class EdqsProducer {
         };
         TopicPartitionInfo tpi = TopicPartitionInfo.builder()
                 .topic(topic)
-                .partition(partitionService.resolvePartition(tenantId))
+                .partition(partitionService.resolvePartition(tenantId, key))
                 .build();
         if (producer instanceof TbKafkaProducerTemplate<TbProtoQueueMsg<ToEdqsMsg>> kafkaProducer) {
             kafkaProducer.send(tpi, key, new TbProtoQueueMsg<>(null, msg), callback); // specifying custom key for compaction

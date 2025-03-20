@@ -173,13 +173,18 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             if (CollectionsUtil.isNotEmpty(oldPartitions)) {
                 Set<Integer> removedPartitions = Sets.difference(oldPartitions, newPartitions).stream()
                         .map(tpi -> tpi.getPartition().orElse(-1)).collect(Collectors.toSet());
-                if (config.getPartitioningStrategy() != EdqsPartitioningStrategy.TENANT && !removedPartitions.isEmpty()) {
+                if (removedPartitions.isEmpty()) {
+                    return;
+                }
+
+                if (config.getPartitioningStrategy() == EdqsPartitioningStrategy.TENANT) {
+                    repository.clearIf(tenantId -> {
+                        Integer partition = partitionService.resolvePartition(tenantId, null);
+                        return removedPartitions.contains(partition);
+                    });
+                } else {
                     log.warn("Partitions {} were removed but shouldn't be (due to NONE partitioning strategy)", removedPartitions);
                 }
-                repository.clearIf(tenantId -> {
-                    Integer partition = partitionService.resolvePartition(tenantId);
-                    return partition != null && removedPartitions.contains(partition);
-                });
             }
         } catch (Throwable t) {
             log.error("Failed to handle partition change event {}", event, t);
