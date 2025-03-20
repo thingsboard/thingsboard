@@ -127,6 +127,9 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     public void destroy(TbActorStopReason stopReason, Throwable cause) {
         log.info("[{}] Stopping tenant actor.", tenantId);
+        if (cfActor != null) {
+            ctx.stop(cfActor.getActorId());
+        }
     }
 
     @Override

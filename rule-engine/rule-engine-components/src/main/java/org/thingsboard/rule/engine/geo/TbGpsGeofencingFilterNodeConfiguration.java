@@ -17,6 +17,8 @@ package org.thingsboard.rule.engine.geo;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.script.api.PerimeterType;
+import org.thingsboard.script.api.RangeUnit;
 
 /**
  * Created by ashvayka on 19.01.18.

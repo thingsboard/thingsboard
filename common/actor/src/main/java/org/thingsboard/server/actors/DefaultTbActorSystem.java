@@ -23,7 +23,6 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -215,7 +214,6 @@ public class DefaultTbActorSystem implements TbActorSystem {
 
     @Override
     public void stop() {
-        actors.values().forEach(mailbox -> Optional.ofNullable(mailbox).ifPresent(m -> m.destroy(null)));
         dispatchers.values().forEach(dispatcher -> {
             dispatcher.getExecutor().shutdown();
             try {

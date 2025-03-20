@@ -25,9 +25,9 @@ import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.execution.ExecutionHashMap;
 import org.mvel2.util.MethodStub;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.geo.Coordinates;
-import org.thingsboard.rule.engine.geo.GeoUtil;
-import org.thingsboard.rule.engine.geo.RangeUnit;
+import org.thingsboard.script.api.Coordinates;
+import org.thingsboard.script.api.GeoUtil;
+import org.thingsboard.script.api.RangeUnit;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.IOException;

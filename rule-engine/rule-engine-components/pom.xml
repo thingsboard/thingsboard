@@ -54,6 +54,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.common.script</groupId>
+            <artifactId>script-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <scope>provided</scope>
@@ -119,14 +123,6 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.locationtech.spatial4j</groupId>
-            <artifactId>spatial4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.locationtech.jts</groupId>
-            <artifactId>jts-core</artifactId>
         </dependency>
         <dependency>
             <groupId>com.sun.mail</groupId>

@@ -26,6 +26,11 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.script.api.Coordinates;
+import org.thingsboard.script.api.GeoUtil;
+import org.thingsboard.script.api.Perimeter;
+import org.thingsboard.script.api.PerimeterType;
+import org.thingsboard.script.api.RangeUnit;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -74,7 +79,7 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
         } else if (perimeter.getPerimeterType() == PerimeterType.POLYGON) {
             return GeoUtil.contains(perimeter.getPolygonsDefinition(), new Coordinates(latitude, longitude));
         } else {
-            throw new TbNodeException("Unsupported perimeter type: " + perimeter.getPerimeterType()  + "!");
+            throw new TbNodeException("Unsupported perimeter type: " + perimeter.getPerimeterType() + "!");
         }
     }
 
