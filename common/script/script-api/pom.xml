@@ -49,6 +49,10 @@
             <artifactId>util</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.rule-engine</groupId>
+            <artifactId>rule-engine-components</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.javadelight</groupId>
             <artifactId>delight-nashorn-sandbox</artifactId>
         </dependency>

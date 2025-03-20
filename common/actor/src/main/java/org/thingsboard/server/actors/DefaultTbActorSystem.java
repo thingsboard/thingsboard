@@ -215,6 +215,7 @@ public class DefaultTbActorSystem implements TbActorSystem {
 
     @Override
     public void stop() {
+        actors.values().forEach(mailbox -> Optional.ofNullable(mailbox).ifPresent(m -> m.destroy(null)));
         dispatchers.values().forEach(dispatcher -> {
             dispatcher.getExecutor().shutdown();
             try {
@@ -226,7 +227,6 @@ public class DefaultTbActorSystem implements TbActorSystem {
         if (scheduler != null) {
             scheduler.shutdownNow();
         }
-        actors.values().forEach(mailbox -> Optional.ofNullable(mailbox).ifPresent(m -> m.destroy(null)));
         actors.clear();
     }
 
