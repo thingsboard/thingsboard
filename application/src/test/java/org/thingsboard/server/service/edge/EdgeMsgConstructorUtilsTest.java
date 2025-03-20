@@ -136,13 +136,13 @@ public class EdgeMsgConstructorUtilsTest {
         ruleNodes.forEach(ruleNode -> {
             int configParamCount = NODE_TO_CONFIG_PARAMS_COUNT.get(ruleNode.getType());
 
-            boolean isOldEdgeVersion = VERSION_TO_IGNORED_PARAM.keySet().stream()
-                    .anyMatch(version -> version.equals(edgeVersion));
+            boolean isOldEdgeVersion = VERSION_TO_IGNORED_PARAM.entrySet().stream()
+                    .anyMatch(entry -> entry.getKey().equals(edgeVersion) &&
+                            entry.getValue().containsKey(ruleNode.getType()));
             int expectedConfigAmount = isOldEdgeVersion ? configParamCount - 1 : configParamCount;
 
             Assert.assertEquals(
-                    String.format("Expected %d config params for ruleNode '%s', but found %d",
-                            expectedConfigAmount, ruleNode.getName(), ruleNode.getConfiguration().size()),
+                    String.format("For ruleNode '%s', edgeVersion '%s", ruleNode.getName(), edgeVersion),
                     expectedConfigAmount, ruleNode.getConfiguration().size()
             );
         });

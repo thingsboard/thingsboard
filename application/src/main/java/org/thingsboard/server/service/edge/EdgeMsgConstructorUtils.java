@@ -144,7 +144,6 @@ public class EdgeMsgConstructorUtils {
             )
     );
 
-    //these nodes added in edge version 3.8.0
     public static final Map<EdgeVersion, Set<String>> VERSION_TO_MISSING_NODES = Map.of(
             EdgeVersion.V_3_7_0,
             Set.of(
@@ -465,7 +464,7 @@ public class EdgeMsgConstructorUtils {
         JsonNode nodes = jsonNode.get("nodes");
 
         changeConfigForOldEdgeVersions(nodes, edgeVersion);
-        removeMissingNodeOldForEdge(nodes, edgeVersion);
+        removeMissingNodeForOldEdge(nodes, edgeVersion);
 
         return JacksonUtil.toString(jsonNode);
     }
@@ -483,7 +482,7 @@ public class EdgeMsgConstructorUtils {
         });
     }
 
-    private static void removeMissingNodeOldForEdge(JsonNode nodes, EdgeVersion edgeVersion) {
+    private static void removeMissingNodeForOldEdge(JsonNode nodes, EdgeVersion edgeVersion) {
         Iterator<JsonNode> iterator = nodes.iterator();
 
         while (iterator.hasNext()) {
