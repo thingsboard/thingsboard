@@ -54,4 +54,21 @@ public abstract class AbstractDataPoint implements DataPoint {
         return valueToString();
     }
 
+    @Override
+    public int compareTo(DataPoint dataPoint) {
+        String str1 = this.valueToString();
+        String str2 = dataPoint.valueToString();
+
+        if (str1 == null && str2 == null) {
+            return 0;
+        }
+        if (str1 == null) {
+            return -1;
+        }
+        if (str2 == null) {
+            return 1;
+        }
+        return str1.compareToIgnoreCase(str2);
+    }
+
 }

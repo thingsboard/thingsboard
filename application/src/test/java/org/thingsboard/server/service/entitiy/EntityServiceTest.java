@@ -1698,6 +1698,19 @@ public class EntityServiceTest extends AbstractControllerTest {
         query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, keyFilters);
         findByQueryAndCheckTelemetry(query, EntityKeyType.TIME_SERIES, "temperature", deviceHighTemperatures);
 
+        // change sort order to sort by temperature
+        temperatures.sort(Comparator.naturalOrder());
+        List<String> expectedSortedList = temperatures.stream().map(aDouble -> Double.toString(aDouble)).collect(Collectors.toList());
+
+        EntityDataSortOrder sortByTempOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.TIME_SERIES, "temperature"), EntityDataSortOrder.Direction.ASC);
+        EntityDataPageLink sortByTempPageLink = new EntityDataPageLink(10, 0, null, sortByTempOrder);
+        EntityDataQuery querySortByTemp = new EntityDataQuery(filter, sortByTempPageLink, entityFields, latestValues, null);
+
+        List<EntityData> loadedEntities = loadAllData(querySortByTemp, deviceTemperatures.size());
+        List<String> entitiesTelemetry = loadedEntities.stream().map(entityData -> entityData.getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue()).toList();
+        assertThat(entitiesTelemetry).containsExactlyElementsOf(expectedSortedList);
+
         deviceService.deleteDevicesByTenantId(tenantId);
     }
 
@@ -2377,14 +2390,14 @@ public class EntityServiceTest extends AbstractControllerTest {
     }
 
     protected List<EntityData> findByQueryAndCheckTelemetry(EntityDataQuery query, EntityKeyType entityKeyType, String key, List<String> expectedTelemetry) {
-        List<EntityData> loadedEntities = findEntitiesTelemetry(query, entityKeyType, key, expectedTelemetry);
+        List<EntityData> loadedEntities = loadAllData(query, expectedTelemetry.size());
         List<String> entitiesTelemetry = loadedEntities.stream().map(entityData -> entityData.getLatest().get(entityKeyType).get(key).getValue()).toList();
         assertThat(entitiesTelemetry).containsExactlyInAnyOrderElementsOf(expectedTelemetry);
         return loadedEntities;
     }
 
-    protected List<EntityData> findEntitiesTelemetry(EntityDataQuery query, EntityKeyType entityKeyType, String key, List<String> expectedTelemetries) {
-        PageData<EntityData> data = findByQueryAndCheck(query, expectedTelemetries.size());
+    protected List<EntityData> loadAllData(EntityDataQuery query, int expectedSize) {
+        PageData<EntityData> data = findByQueryAndCheck(query, expectedSize);
         List<EntityData> loadedEntities = new ArrayList<>(data.getData());
         while (data.hasNext()) {
             query = query.next();
