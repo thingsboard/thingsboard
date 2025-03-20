@@ -370,19 +370,18 @@ public class TenantRepo {
 //            Collections.reverse(result);
 //            result = result.subList(offset, requiredSize);
 //          IMPLEMENTATION THAT IS BASED ON TREE SET  (For offset + query.getPageSize() << totalSize)
-//            var requiredSize = Math.min(offset + query.getPageSize(), totalSize);
-//            TreeSet<SortableEntityData> topNSet = new TreeSet<>(comparator);
-//            for (SortableEntityData sp : data) {
-//                topNSet.add(sp);
-//                if (topNSet.size() > requiredSize) {
-//                    topNSet.pollLast();
-//                }
-//            }
-//            var result = topNSet.stream().skip(offset).limit(query.getPageSize()).collect(Collectors.toList());
-//          IMPLEMENTATION THAT IS BASED ON TIM SORT (For offset + query.getPageSize() > totalSize / 2)
             var requiredSize = Math.min(offset + query.getPageSize(), totalSize);
-            data.sort(comparator);
-            var result = data.subList(offset, requiredSize);
+            TreeSet<SortableEntityData> topNSet = new TreeSet<>(comparator);
+            for (SortableEntityData sp : data) {
+                topNSet.add(sp);
+                if (topNSet.size() > requiredSize) {
+                    topNSet.pollLast();
+                }
+            }
+            var result = topNSet.stream().skip(offset).limit(query.getPageSize()).collect(Collectors.toList());
+//          IMPLEMENTATION THAT IS BASED ON TIM SORT (For offset + query.getPageSize() > totalSize / 2)
+//            data.sort(comparator);
+//            var result = data.subList(offset, endIndex);
             log.trace("EDQ Sorted in {}", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTs));
             return new PageData<>(toQueryResult(result, query, ctx), totalPages, totalSize, totalSize > requiredSize);
         }
