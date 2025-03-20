@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
@@ -755,6 +756,21 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
                 TimeUnit.MINUTES.toMillis(6), 1000, 10, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         assertEquals(5, fullList.size());
         assertThat(fullList).containsOnlyOnceElementsOf(timeseries);
+    }
+
+    @Test
+    public void testFindAllByQueriesWithAggregationAndZeroInterval() throws Exception {
+        testFindAllByQueriesWithAggregationAndInvalidInterval(0);
+    }
+
+    @Test
+    public void testFindAllByQueriesWithAggregationAndNegativeInterval() throws Exception {
+        testFindAllByQueriesWithAggregationAndInvalidInterval(-1);
+    }
+
+    private void testFindAllByQueriesWithAggregationAndInvalidInterval(long interval) {
+        BaseReadTsKvQuery query = new BaseReadTsKvQuery(STRING_KEY, TS, TS, interval, 1000, Aggregation.SUM, "DESC");
+        Assert.assertThrows(IncorrectParameterException.class, () -> findAndVerifyQueryId(deviceId, query));
     }
 
     private TsKvEntry save(DeviceId deviceId, long ts, long value) throws Exception {
