@@ -39,6 +39,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
     protected void validateCreate(TenantId tenantId, CalculatedField calculatedField) {
         validateNumberOfCFsPerEntity(tenantId, calculatedField.getEntityId());
         validateNumberOfArgumentsPerCF(tenantId, calculatedField);
+        validateArgumentNames(calculatedField);
     }
 
     @Override
@@ -48,6 +49,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
             throw new DataValidationException("Can't update non existing calculated field!");
         }
         validateNumberOfArgumentsPerCF(tenantId, calculatedField);
+        validateArgumentNames(calculatedField);
         return old;
     }
 
@@ -68,6 +70,12 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         }
         if (calculatedField.getConfiguration().getArguments().size() > maxArgumentsPerCF) {
             throw new DataValidationException("Calculated field arguments limit reached!");
+        }
+    }
+
+    private void validateArgumentNames(CalculatedField calculatedField) {
+        if (calculatedField.getConfiguration().getArguments().containsKey("ctx")) {
+            throw new DataValidationException("Argument name 'ctx' is reserved and cannot be used.");
         }
     }
 

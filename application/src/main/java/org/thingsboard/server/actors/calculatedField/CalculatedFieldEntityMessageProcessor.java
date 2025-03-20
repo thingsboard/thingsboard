@@ -92,6 +92,12 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         this.ctx = ctx;
     }
 
+    public void stop() {
+        log.info("[{}][{}] Stopping entity actor.", tenantId, entityId);
+        states.clear();
+        ctx.stop(ctx.getSelf());
+    }
+
     public void process(CalculatedFieldPartitionChangeMsg msg) {
         if (!systemContext.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId).isMyPartition()) {
             log.info("[{}] Stopping entity actor due to change partition event.", entityId);

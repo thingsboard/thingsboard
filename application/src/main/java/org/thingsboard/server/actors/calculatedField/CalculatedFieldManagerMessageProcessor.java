@@ -91,6 +91,15 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         this.ctx = ctx;
     }
 
+    public void stop() {
+        log.info("[{}] Stopping CF manager actor.", tenantId);
+        calculatedFields.values().forEach(CalculatedFieldCtx::stop);
+        calculatedFields.clear();
+        entityIdCalculatedFields.clear();
+        entityIdCalculatedFieldLinks.clear();
+        ctx.stop(ctx.getSelf());
+    }
+
     public void onFieldInitMsg(CalculatedFieldInitMsg msg) throws CalculatedFieldException {
         log.debug("[{}] Processing CF init message.", msg.getCf().getId());
         var cf = msg.getCf();

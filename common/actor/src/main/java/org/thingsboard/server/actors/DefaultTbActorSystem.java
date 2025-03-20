@@ -23,6 +23,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -225,6 +226,7 @@ public class DefaultTbActorSystem implements TbActorSystem {
         if (scheduler != null) {
             scheduler.shutdownNow();
         }
+        actors.values().forEach(mailbox -> Optional.ofNullable(mailbox).ifPresent(m -> m.destroy(null)));
         actors.clear();
     }
 
