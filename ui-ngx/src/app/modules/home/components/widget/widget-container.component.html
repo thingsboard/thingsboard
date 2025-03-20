@@ -74,18 +74,19 @@
 </div>
 <ng-template #widgetTitlePanel let-titleSuffixTemplate="titleSuffixTemplate">
   <div *ngIf="widget.showWidgetTitlePanel"
-       class="tb-widget-title">
-              <div *ngIf="widget.showTitle"
-                    [matTooltip]="widget.titleTooltip"
-                    matTooltipClass="tb-tooltip-multiline"
-                    matTooltipPosition="above"
-                    class="title-row">
-                <tb-icon *ngIf="widget.showTitleIcon" [style]="widget.titleIconStyle">{{widget.titleIcon}}</tb-icon>
-                <div class="mat-subtitle-1 title" [style]="widget.titleStyle">
-                  {{widget.title$ | async}}
-                </div>
-                <ng-container *ngTemplateOutlet="titleSuffixTemplate"></ng-container>
-              </div>
+       class="tb-widget-title"
+       [class.tb-widget-title-btn-min-h]="buttonAction">
+          <div *ngIf="widget.showTitle"
+                [matTooltip]="widget.titleTooltip"
+                matTooltipClass="tb-tooltip-multiline"
+                matTooltipPosition="above"
+                class="title-row">
+            <tb-icon *ngIf="widget.showTitleIcon" [style]="widget.titleIconStyle">{{widget.titleIcon}}</tb-icon>
+            <div class="mat-subtitle-1 title" [style]="widget.titleStyle">
+              {{widget.title$ | async}}
+            </div>
+            <ng-container *ngTemplateOutlet="titleSuffixTemplate"></ng-container>
+          </div>
     <tb-timewindow *ngIf="widget.hasTimewindow"
                    aggregation="{{widget.hasAggregation}}"
                    quickIntervalOnly="{{widget.onlyQuickInterval}}"

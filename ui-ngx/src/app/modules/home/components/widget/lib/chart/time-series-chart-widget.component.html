@@ -20,7 +20,9 @@
   <ng-container *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   </ng-container>
-  <div class="tb-time-series-chart-content" [class]="legendClass">
+  <div class="tb-time-series-chart-content"
+       [class]="legendClass"
+       [class.pt-8]="!widgetComponent.dashboardWidget.showWidgetTitlePanel && !widgetComponent.dashboardWidget.hasTimewindow">
     <div #chartShape class="tb-time-series-chart-shape">
     </div>
     <div *ngIf="showLegend" class="tb-time-series-chart-legend" [class.tb-simple-legend]="!displayLegendValues">

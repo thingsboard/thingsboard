@@ -57,6 +57,10 @@ div.tb-widget {
     padding-left: 5px;
     overflow: hidden;
 
+    &-btn-min-h {
+      min-height: 36px;
+    }
+
     tb-timewindow {
       font-size: 14px;
       opacity: .85;

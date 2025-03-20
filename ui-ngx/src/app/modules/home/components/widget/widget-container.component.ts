@@ -131,6 +131,8 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     return (this.isEditActionEnabled || this.isRemoveActionEnabled || this.isExportActionEnabled) && !this.widget?.isFullscreen;
   }
 
+  buttonAction: boolean = false;
+
   widgetHeaderActionButtonType = WidgetHeaderActionButtonType;
 
   private cssClass: string;
@@ -159,6 +161,12 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     const dashboardContentElement = this.widget.widgetContext.dashboardContentElement;
     if (dashboardContentElement) {
       this.initEditWidgetActionTooltip(dashboardContentElement);
+    }
+    if (this.widget.showTitle && this.widget.widgetContext.widgetConfig.actions?.headerButton?.length) {
+      this.buttonAction = this.widget.widgetContext.widgetConfig.actions.headerButton.some(action => {
+        console.log(action, action.buttonType);
+        return action.buttonType !== 'icon'
+      });
     }
   }
 
