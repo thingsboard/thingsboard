@@ -199,19 +199,39 @@ public class DeviceConnectivityUtil {
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
                 String client = COAPS.equals(protocol) ? "coap-client-openssl" : "coap-client";
-                return String.format("%s -v 6 -m POST %s://%s%s/api/v1/%s/telemetry -t json -e %s",
-                        client, protocol, host, port, deviceCredentials.getCredentialsId(), JSON_EXAMPLE_PAYLOAD);
+                String certificate = COAPS.equals(protocol) ? " -R " + CA_ROOT_CERT_PEM : "";
+                return String.format("%s -v 6 -m POST%s -t \"application/json\" -e %s %s://%s%s/api/v1/%s/telemetry",
+                        client, certificate, JSON_EXAMPLE_PAYLOAD, protocol, host, port, deviceCredentials.getCredentialsId());
             default:
                 return null;
         }
     }
 
-    public static String getDockerCoapPublishCommand(String protocol, String host, String port, DeviceCredentials deviceCredentials) {
+    public static String getDockerCoapPublishCommand(String protocol, String baseUrl, String host, String port, DeviceCredentials deviceCredentials) {
         String coapCommand = getCoapPublishCommand(protocol, host, port, deviceCredentials);
-        if (coapCommand != null && isLocalhost(host)) {
+
+        if (coapCommand == null) {
+            return null;
+        }
+
+        StringBuilder coapDockerCommand = new StringBuilder();
+        coapDockerCommand.append(DOCKER_RUN).append(isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : "").append(COAP_IMAGE);
+
+        if (isLocalhost(host)) {
             coapCommand = coapCommand.replace(host, HOST_DOCKER_INTERNAL);
         }
-        return coapCommand != null ? String.format("%s%s%s", DOCKER_RUN + (isLocalhost(host) ? ADD_DOCKER_INTERNAL_HOST : ""), COAP_IMAGE, coapCommand) : null;
+
+        if (COAPS.equals(protocol)) {
+            coapDockerCommand.append("/bin/sh -c \"")
+                    .append(getCurlPemCertCommand(baseUrl, protocol))
+                    .append(" && ")
+                    .append(coapCommand)
+                    .append("\"");
+        } else {
+            coapDockerCommand.append(coapCommand);
+        }
+
+        return coapDockerCommand.toString();
     }
 
     public static String getHost(String baseUrl, DeviceConnectivityInfo properties, String protocol) throws URISyntaxException {

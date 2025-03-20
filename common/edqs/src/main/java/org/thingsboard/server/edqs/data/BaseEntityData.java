@@ -98,8 +98,13 @@ public abstract class BaseEntityData<T extends EntityFields> implements EntityDa
     }
 
     @Override
-    public EntityType getOwnerType() {
-        return customerId != null ? EntityType.CUSTOMER : EntityType.TENANT;
+    public String getOwnerName() {
+        return repo.getOwnerEntityName(isTenantEntity() ? repo.getTenantId() : new CustomerId(getCustomerId()));
+    }
+
+    @Override
+    public String getOwnerType() {
+        return isTenantEntity() ? EntityType.TENANT.name() :  EntityType.CUSTOMER.name();
     }
 
     @Override
@@ -132,20 +137,19 @@ public abstract class BaseEntityData<T extends EntityFields> implements EntityDa
         }
         return switch (name) {
             case "name" -> getEntityName();
-            case "ownerName" -> getEntityOwnerName();
-            case "ownerType" -> customerId != null ? EntityType.CUSTOMER.name() : EntityType.TENANT.name();
+            case "ownerName" -> getOwnerName();
+            case "ownerType" -> getOwnerType();
             case "entityType" -> Optional.ofNullable(getEntityType()).map(EntityType::name).orElse("");
             default -> fields.getAsString(name);
         };
     }
 
-    public String getEntityOwnerName() {
-        return repo.getOwnerName(getCustomerId() == null || CustomerId.NULL_UUID.equals(getCustomerId()) ? null :
-                new CustomerId(getCustomerId()));
-    }
-
     public String getEntityName() {
         return getFields().getName();
+    }
+
+    private boolean isTenantEntity() {
+        return getCustomerId() == null || CustomerId.NULL_UUID.equals(getCustomerId());
     }
 
     private String getRelatedParentId(QueryContext ctx) {
