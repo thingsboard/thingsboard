@@ -149,16 +149,16 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
 
     @Test
     public void givenZeroInterval_whenAggregateCount_thenFindAllWithoutAggregation() {
-        ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 1, 3000, 0, LIMIT, COUNT, DESC);
-        willCallRealMethod().given(tsDao).findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
-        tsDao.findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
-        verify(tsDao, times(1)).findAllAsyncWithLimit(any(), any());
-        verify(tsDao, times(0)).findAndAggregateAsync(any(), any(), anyLong(), anyLong(), anyLong(), any());
+        givenInterval_whenAggregateCount_thenFindAllWithoutAggregation(0);
     }
 
     @Test
     public void givenNegativeInterval_whenAggregateCount_thenFindAllWithoutAggregation() {
-        ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 1, 3000, 0, LIMIT, COUNT, DESC);
+        givenInterval_whenAggregateCount_thenFindAllWithoutAggregation(-1);
+    }
+
+    public void givenInterval_whenAggregateCount_thenFindAllWithoutAggregation(int interval) {
+        ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 1, 3000, interval, LIMIT, COUNT, DESC);
         willCallRealMethod().given(tsDao).findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         tsDao.findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         verify(tsDao, times(1)).findAllAsyncWithLimit(any(), any());
