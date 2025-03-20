@@ -349,6 +349,9 @@ public class RepositoryUtils {
     }
 
     public static DataPoint getSortValue(EntityData entity, DataKey sortKey, QueryContext queryContext) {
+        if (sortKey == null) {
+            return null;
+        }
        return entity.getDataPoint(sortKey, queryContext);
     }
 
