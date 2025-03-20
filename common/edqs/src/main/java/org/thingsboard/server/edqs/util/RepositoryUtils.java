@@ -348,6 +348,10 @@ public class RepositoryUtils {
         }
     }
 
+    public static DataPoint getSortValue(EntityData entity, DataKey sortKey, QueryContext queryContext) {
+       return entity.getDataPoint(sortKey, queryContext);
+    }
+
     public static boolean checkFilters(EdqsQuery query, EntityData entity) {
         if (entity == null || entity.getFields() == null) {
             return false; // Entity was already removed or not arrived yet;

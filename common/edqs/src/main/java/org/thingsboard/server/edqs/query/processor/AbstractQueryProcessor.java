@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.thingsboard.server.edqs.util.RepositoryUtils.checkFilters;
+import static org.thingsboard.server.edqs.util.RepositoryUtils.getSortValue;
 
 public abstract class AbstractQueryProcessor<T extends EntityFilter> implements EntityQueryProcessor {
 
@@ -50,8 +51,7 @@ public abstract class AbstractQueryProcessor<T extends EntityFilter> implements 
 
     protected SortableEntityData toSortData(EntityData<?> ed) {
         SortableEntityData sortData = new SortableEntityData(ed);
-        DataPoint sortValue = ed.getDataPoint(sortKey, ctx);
-        sortData.setSortValue(sortValue);
+        sortData.setSortValue(getSortValue(ed, sortKey, ctx));
         return sortData;
     }
 
