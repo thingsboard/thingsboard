@@ -20,6 +20,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
@@ -50,6 +51,12 @@ public class CalculatedFieldManagerActor extends AbstractCalculatedFieldActor {
             log.warn("[{}] Unknown failure", processor.tenantId, e);
             throw new TbActorException("Failed to initialize manager actor", e);
         }
+    }
+
+    @Override
+    public void destroy(TbActorStopReason stopReason, Throwable cause) throws TbActorException {
+        log.debug("[{}] Stopping CF manager actor.", processor.tenantId);
+        processor.stop();
     }
 
     @Override
