@@ -336,7 +336,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   }
 
   private updatedScriptLanguage() {
-    this.jsEditor.session.setMode(`ace/mode/${ScriptLanguage.TBEL === this.scriptLanguage ? 'tbel' : 'javascript'}`);
+    this.jsEditor?.session?.setMode(`ace/mode/${ScriptLanguage.TBEL === this.scriptLanguage ? 'tbel' : 'javascript'}`);
   }
 
   validateOnSubmit(): Observable<void> {
@@ -582,7 +582,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
 
   private updateHighlightRules(): void {
     // @ts-ignore
-    if (!!this.jsEditor.session.$mode) {
+    if (!!this.jsEditor?.session?.$mode) {
       // @ts-ignore
       const newMode = new this.jsEditor.session.$mode.constructor();
       newMode.$highlightRules = new newMode.HighlightRules();
@@ -598,7 +598,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
       if (this.scriptLanguage === ScriptLanguage.TBEL) {
         newMode.$highlightRules.$rules.start = [...tbelUtilsFuncHighlightRules, ...newMode.$highlightRules.$rules.start];
       }
-      const identifierRule = newMode.$highlightRules.$rules.no_regex.find(rule => rule.token?.includes('identifier'));
+      const identifierRule = newMode.$highlightRules.$rules.no_regex.find(rule => Array.isArray(rule.token) && rule.token.includes('identifier'));
       if (identifierRule && identifierRule.next === 'no_regex') {
         identifierRule.next = 'start';
       }
@@ -609,7 +609,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
 
   private updateJsWorkerGlobals() {
     // @ts-ignore
-    if (!!this.jsEditor.session.$worker) {
+    if (!!this.jsEditor?.session?.$worker) {
       const jsWorkerOptions = {
         undef: !this.disableUndefinedCheck,
         unused: true,
@@ -638,6 +638,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   }
 
   updateCompleters() {
+    if (!this.jsEditor) {
+      return;
+    }
     let modulesCompleterObservable: Observable<TbEditorCompleter>;
     if (this.withModules) {
       modulesCompleterObservable = loadModulesCompleter(this.http, this.modules);
