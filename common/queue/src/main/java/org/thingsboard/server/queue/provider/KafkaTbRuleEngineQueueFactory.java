@@ -388,6 +388,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     public TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgProducer(EdqsQueue queue) {
         return TbKafkaProducerTemplate.<TbProtoQueueMsg<ToEdqsMsg>>builder()
                 .clientId("edqs-producer-" + queue.name().toLowerCase() + "-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(queue.getTopic()))
                 .settings(kafkaSettings)
                 .admin(edqsEventsAdmin)
                 .build();

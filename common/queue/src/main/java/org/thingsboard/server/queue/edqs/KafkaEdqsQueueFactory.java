@@ -95,6 +95,7 @@ public class KafkaEdqsQueueFactory implements EdqsQueueFactory {
     public TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgProducer(EdqsQueue queue) {
         return TbKafkaProducerTemplate.<TbProtoQueueMsg<ToEdqsMsg>>builder()
                 .clientId("edqs-" + queue.name().toLowerCase() + "-producer-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(queue.getTopic()))
                 .settings(kafkaSettings)
                 .admin(queue == EdqsQueue.STATE ? edqsStateAdmin : edqsEventsAdmin)
                 .build();

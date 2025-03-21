@@ -79,4 +79,6 @@ public interface PartitionService {
 
     int resolvePartitionIndex(UUID entityId, int partitions);
 
+    int resolvePartitionIndex(String key, int partitions);
+
 }

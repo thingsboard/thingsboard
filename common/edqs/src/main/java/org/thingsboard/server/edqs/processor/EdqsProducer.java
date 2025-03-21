@@ -16,6 +16,7 @@
 package org.thingsboard.server.edqs.processor;
 
 import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.thingsboard.server.common.data.ObjectType;
@@ -27,60 +28,41 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
 
 @Slf4j
+@Builder
+@RequiredArgsConstructor
 public class EdqsProducer {
 
-    private final EdqsQueue queue;
-    private final EdqsPartitionService partitionService;
-    private final TopicService topicService;
-
     private final TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> producer;
-
-    @Builder
-    public EdqsProducer(EdqsQueue queue,
-                        EdqsPartitionService partitionService,
-                        TopicService topicService,
-                        TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> producer) {
-        this.queue = queue;
-        this.partitionService = partitionService;
-        this.topicService = topicService;
-        this.producer = producer;
-    }
+    private final EdqsPartitionService partitionService;
 
     public void send(TenantId tenantId, ObjectType type, String key, ToEdqsMsg msg) {
-        String topic = topicService.buildTopicName(queue.getTopic());
+        TopicPartitionInfo tpi = TopicPartitionInfo.builder()
+                .topic(producer.getDefaultTopic())
+                .partition(partitionService.resolvePartition(tenantId, key))
+                .build();
         TbQueueCallback callback = new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
-                log.trace("[{}][{}][{}] Published msg to {}: {}", tenantId, type, key, topic, msg);
+                log.trace("[{}][{}][{}] Published msg to {}: {}", tenantId, type, key, tpi, msg);
             }
 
             @Override
             public void onFailure(Throwable t) {
                 if (t instanceof RecordTooLargeException) {
                     if (!log.isDebugEnabled()) {
-                        log.warn("[{}][{}][{}] Failed to publish msg to {}", tenantId, type, key, topic, t); // not logging the whole message
+                        log.warn("[{}][{}][{}] Failed to publish msg to {}", tenantId, type, key, tpi, t); // not logging the whole message
                         return;
                     }
                 }
-                log.warn("[{}][{}][{}] Failed to publish msg to {}: {}", tenantId, type, key, topic, msg, t);
+                log.warn("[{}][{}][{}] Failed to publish msg to {}: {}", tenantId, type, key, tpi, msg, t);
             }
         };
         if (producer instanceof TbKafkaProducerTemplate<TbProtoQueueMsg<ToEdqsMsg>> kafkaProducer) {
-            TopicPartitionInfo tpi = TopicPartitionInfo.builder()
-                    .topic(topic)
-                    .partition(partitionService.resolvePartition(tenantId))
-                    .useInternalPartition(true)
-                    .build();
             kafkaProducer.send(tpi, key, new TbProtoQueueMsg<>(null, msg), callback); // specifying custom key for compaction
         } else {
-            TopicPartitionInfo tpi = TopicPartitionInfo.builder()
-                    .topic(topic)
-                    .build();
             producer.send(tpi, new TbProtoQueueMsg<>(null, msg), callback);
         }
     }

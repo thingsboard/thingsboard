@@ -96,10 +96,8 @@ public class DefaultEdqsService implements EdqsService {
     private void init() {
         executor = ThingsBoardExecutors.newWorkStealingPool(12, getClass());
         eventsProducer = EdqsProducer.builder()
-                .queue(EdqsQueue.EVENTS)
-                .partitionService(edqsPartitionService)
-                .topicService(topicService)
                 .producer(queueFactory.createEdqsMsgProducer(EdqsQueue.EVENTS))
+                .partitionService(edqsPartitionService)
                 .build();
         syncLock = distributedLockService.getLock("edqs_sync");
     }
