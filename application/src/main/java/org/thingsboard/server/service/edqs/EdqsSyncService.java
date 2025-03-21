@@ -43,7 +43,6 @@ import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.relation.RelationRepository;
 import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
-import org.thingsboard.server.queue.edqs.EdqsConfig;
 
 import java.util.List;
 import java.util.Map;
@@ -76,8 +75,6 @@ public abstract class EdqsSyncService {
     @Autowired
     @Lazy
     private DefaultEdqsService edqsService;
-    @Autowired
-    protected EdqsConfig edqsConfig;
 
     private final ConcurrentHashMap<UUID, EntityIdInfo> entityInfoMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, String> keys = new ConcurrentHashMap<>();

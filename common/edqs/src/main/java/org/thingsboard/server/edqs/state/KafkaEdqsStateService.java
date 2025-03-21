@@ -143,10 +143,8 @@ public class KafkaEdqsStateService implements EdqsStateService {
                 .build();
 
         stateProducer = EdqsProducer.builder()
-                .queue(EdqsQueue.STATE)
-                .partitionService(partitionService)
-                .topicService(topicService)
                 .producer(queueFactory.createEdqsMsgProducer(EdqsQueue.STATE))
+                .partitionService(partitionService)
                 .build();
     }
 
