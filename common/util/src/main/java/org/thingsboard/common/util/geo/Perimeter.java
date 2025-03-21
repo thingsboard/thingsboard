@@ -13,12 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api;
+package org.thingsboard.common.util.geo;
 
 import lombok.Data;
 
 @Data
-public class Coordinates {
-    private final double latitude;
-    private final double longitude;
+public class Perimeter {
+
+    private PerimeterType perimeterType;
+
+    //For Polygons
+    private String polygonsDefinition;
+
+    //For Circles
+    private Double centerLatitude;
+    private Double centerLongitude;
+    private Double range;
+    private RangeUnit rangeUnit;
+
 }

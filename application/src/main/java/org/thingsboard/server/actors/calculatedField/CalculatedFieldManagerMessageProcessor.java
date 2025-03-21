@@ -141,7 +141,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {
-        log.info("Processing entity lifecycle event: [{}] for entity: [{}]", msg.getData().getEvent(), msg.getData().getEntityId());
+        log.debug("Processing entity lifecycle event: [{}] for entity: [{}]", msg.getData().getEvent(), msg.getData().getEntityId());
         var entityType = msg.getData().getEntityId().getEntityType();
         var event = msg.getData().getEvent();
         switch (entityType) {

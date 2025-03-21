@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api;
+package org.thingsboard.common.util.geo;
 
-public enum PerimeterType {
-    CIRCLE, POLYGON
+import lombok.Data;
+
+@Data
+public class Coordinates {
+    private final double latitude;
+    private final double longitude;
 }
