@@ -127,7 +127,6 @@ import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
-
 public class EdgeMsgConstructorUtils {
     public static final Map<EdgeVersion, Map<String, String>> IGNORED_PARAMS_BY_EDGE_VERSION = Map.of(
             EdgeVersion.V_3_8_0,
