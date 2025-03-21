@@ -129,7 +129,7 @@ import java.util.UUID;
 @Slf4j
 
 public class EdgeMsgConstructorUtils {
-    public static final Map<EdgeVersion, Map<String, String>> VERSION_TO_IGNORED_PARAM = Map.of(
+    public static final Map<EdgeVersion, Map<String, String>> IGNORED_PARAMS_BY_EDGE_VERSION = Map.of(
             EdgeVersion.V_3_8_0,
             Map.of(
                     TbMsgTimeseriesNode.class.getName(), "processingSettings",
@@ -144,7 +144,7 @@ public class EdgeMsgConstructorUtils {
             )
     );
 
-    public static final Map<EdgeVersion, Set<String>> VERSION_TO_MISSING_NODES = Map.of(
+    public static final Map<EdgeVersion, Set<String>> EXCLUDED_NODES_BY_EDGE_VERSION = Map.of(
             EdgeVersion.V_3_7_0,
             Set.of(
                     TbSendRestApiCallReplyNode.class.getName(),
@@ -451,7 +451,7 @@ public class EdgeMsgConstructorUtils {
     }
 
     public static RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
-        String metaData = filterMetadataForOldEdgeVersions(ruleChainMetaData, edgeVersion);
+        String metaData = sanitizeMetadataForLegacyEdgeVersion(ruleChainMetaData, edgeVersion);
 
         return RuleChainMetadataUpdateMsg.newBuilder()
                 .setMsgType(msgType)
@@ -459,21 +459,21 @@ public class EdgeMsgConstructorUtils {
                 .build();
     }
 
-    private static String filterMetadataForOldEdgeVersions(RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
+    private static String sanitizeMetadataForLegacyEdgeVersion(RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
         JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
         JsonNode nodes = jsonNode.get("nodes");
 
-        changeConfigForOldEdgeVersions(nodes, edgeVersion);
-        removeMissingNodeForOldEdge(nodes, edgeVersion);
+        updateNodeConfigurationsForLegacyEdge(nodes, edgeVersion);
+        removeExcludedNodesForLegacyEdge(nodes, edgeVersion);
 
         return JacksonUtil.toString(jsonNode);
     }
 
-    private static void changeConfigForOldEdgeVersions(JsonNode nodes, EdgeVersion edgeVersion) {
+    private static void updateNodeConfigurationsForLegacyEdge(JsonNode nodes, EdgeVersion edgeVersion) {
         nodes.forEach(node -> {
             if (node.isObject() && node.has("configuration")) {
                 String nodeType = node.get("type").asText();
-                Map<String, String> ignoredParams = VERSION_TO_IGNORED_PARAM.get(edgeVersion);
+                Map<String, String> ignoredParams = IGNORED_PARAMS_BY_EDGE_VERSION.get(edgeVersion);
 
                 if (ignoredParams != null && ignoredParams.containsKey(nodeType)) {
                     ((ObjectNode) node.get("configuration")).remove(ignoredParams.get(nodeType));
@@ -482,13 +482,13 @@ public class EdgeMsgConstructorUtils {
         });
     }
 
-    private static void removeMissingNodeForOldEdge(JsonNode nodes, EdgeVersion edgeVersion) {
+    private static void removeExcludedNodesForLegacyEdge(JsonNode nodes, EdgeVersion edgeVersion) {
         Iterator<JsonNode> iterator = nodes.iterator();
 
         while (iterator.hasNext()) {
             JsonNode node = iterator.next();
             String type = node.get("type").asText();
-            Set<String> missNodes = VERSION_TO_MISSING_NODES.get(edgeVersion);
+            Set<String> missNodes = EXCLUDED_NODES_BY_EDGE_VERSION.get(edgeVersion);
 
             if (missNodes != null && missNodes.contains(type)) {
                 iterator.remove();

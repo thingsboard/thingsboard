@@ -40,8 +40,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.VERSION_TO_IGNORED_PARAM;
-import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.VERSION_TO_MISSING_NODES;
+import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.EXCLUDED_NODES_BY_EDGE_VERSION;
+import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.IGNORED_PARAMS_BY_EDGE_VERSION;
 
 @Slf4j
 public class EdgeMsgConstructorUtilsTest {
@@ -92,8 +92,8 @@ public class EdgeMsgConstructorUtilsTest {
             List<RuleNode> ruleNodes = extractRuleNodesFromUpdateMsg(metaData, edgeVersion);
 
             // THEN
-            int leftNode = VERSION_TO_MISSING_NODES.containsKey(edgeVersion) ?
-                    CONFIG_TO_MISS_NODE_FOR_OLD_EDGE.size() - VERSION_TO_MISSING_NODES.get(edgeVersion).size() :
+            int leftNode = EXCLUDED_NODES_BY_EDGE_VERSION.containsKey(edgeVersion) ?
+                    CONFIG_TO_MISS_NODE_FOR_OLD_EDGE.size() - EXCLUDED_NODES_BY_EDGE_VERSION.get(edgeVersion).size() :
                     CONFIG_TO_MISS_NODE_FOR_OLD_EDGE.size();
 
             Assert.assertEquals(leftNode, ruleNodes.size());
@@ -136,7 +136,7 @@ public class EdgeMsgConstructorUtilsTest {
         ruleNodes.forEach(ruleNode -> {
             int configParamCount = NODE_TO_CONFIG_PARAMS_COUNT.get(ruleNode.getType());
 
-            boolean isOldEdgeVersion = VERSION_TO_IGNORED_PARAM.entrySet().stream()
+            boolean isOldEdgeVersion = IGNORED_PARAMS_BY_EDGE_VERSION.entrySet().stream()
                     .anyMatch(entry -> entry.getKey().equals(edgeVersion) &&
                             entry.getValue().containsKey(ruleNode.getType()));
             int expectedConfigAmount = isOldEdgeVersion ? configParamCount - 1 : configParamCount;
