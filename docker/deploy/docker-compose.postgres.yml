@@ -14,34 +14,34 @@
 # limitations under the License.
 #
 
-version: '3.0'
-
-volumes:
-    prometheus_data: {}
-    grafana_data: {}
-
 services:
-
-  prometheus:
-    image: prom/prometheus:v3.1.0
-    volumes:
-      - ./monitoring/prometheus/:/etc/prometheus/
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    ports:
-      - 9090:9090
+  postgres:
     restart: always
-  grafana:
-    image: grafana/grafana
-    user: "472"
-    depends_on:
-      - prometheus
+    image: "postgres:16"
     ports:
-      - 3000:3000
+    - "5432"
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_PASSWORD: postgres
     volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
+      - ../tb-node/postgres:/var/lib/postgresql/data
+  tb-core1:
     env_file:
-      - monitoring/grafana/config.monitoring
-    restart: always
+      - ../config-env/tb-node.postgres.env
+    depends_on:
+      - postgres
+  tb-core2:
+    env_file:
+      - ../config-env/tb-node.postgres.env
+    depends_on:
+      - postgres
+  tb-rule-engine1:
+    env_file:
+      - ../config-env/tb-node.postgres.env
+    depends_on:
+      - postgres
+  tb-rule-engine2:
+    env_file:
+      - ../config-env/tb-node.postgres.env
+    depends_on:
+      - postgres

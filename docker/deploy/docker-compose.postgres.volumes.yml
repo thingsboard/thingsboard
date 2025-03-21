@@ -14,17 +14,12 @@
 # limitations under the License.
 #
 
-version: '3.0'
-
 services:
-  tb-edqs-1:
+  postgres:
     volumes:
-      - tb-edqs-log-volume:/var/log/tb-edqs
-  tb-edqs-2:
-    volumes:
-      - tb-edqs-log-volume:/var/log/tb-edqs
+      - postgres-db-volume:/var/lib/postgresql/data
 
 volumes:
-  tb-edqs-log-volume:
+  postgres-db-volume:
     external:
-      name: ${TB_EDQS_LOG_VOLUME}
+      name: ${POSTGRES_DATA_VOLUME}
