@@ -22,6 +22,8 @@ import { deepClone, isDefined, isUndefined } from '@core/utils';
 import customSampleJs from './custom-sample-js.raw';
 import customSampleCss from './custom-sample-css.raw';
 import customSampleHtml from './custom-sample-html.raw';
+import placeMapItemSampleHtml from './place-map-item-sample-html.raw';
+import placeMapItemSampleJs from './place-map-item-sample-js.raw';
 
 const customActionCompletions: TbEditorCompletions = {
   ...{
@@ -93,6 +95,16 @@ export const toCustomAction = (action: WidgetAction): CustomActionDescriptor => 
     };
   }
   result.customResources = action && isDefined(action.customResources) ? deepClone(action.customResources) : [];
+  return result;
+};
+
+export const toPlaceMapItemAction = (action: WidgetAction): CustomActionDescriptor => {
+  const result: CustomActionDescriptor = {
+    customHtml: action?.customHtml ?? placeMapItemSampleHtml,
+    customCss: action?.customCss ?? '',
+    customFunction: action?.customFunction ?? placeMapItemSampleJs
+  };
+  result.customResources = isDefined(action?.customResources) ? deepClone(action.customResources) : [];
   return result;
 };
 

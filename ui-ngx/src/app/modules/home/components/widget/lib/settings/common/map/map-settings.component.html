@@ -36,7 +36,7 @@
   </div>
   <div class="tb-form-panel">
     <div class="flex flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
-      <div class="tb-form-panel-title">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'widgets.maps.overlays.overlays-hint' | translate }}">
         {{ 'widgets.maps.overlays.overlays' | translate }}
       </div>
       <tb-toggle-select [(ngModel)]="dataLayerMode"
@@ -70,7 +70,7 @@
                         [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
   </div>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title">
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'widgets.maps.data-layer.additional-datasources-hint' | translate }}">
       {{ 'widgets.maps.data-layer.additional-datasources' | translate }}
     </div>
     <tb-map-data-sources formControlName="additionalDataSources"

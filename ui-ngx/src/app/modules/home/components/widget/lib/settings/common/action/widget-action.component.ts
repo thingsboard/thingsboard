@@ -48,7 +48,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { PopoverPlacement, PopoverPlacements } from '@shared/components/popover.models';
 import {
   CustomActionEditorCompleter,
-  toCustomAction
+  toCustomAction,
+  toPlaceMapItemAction
 } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
@@ -336,7 +337,7 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
           );
           this.actionTypeFormGroup.addControl(
             'customAction',
-            this.fb.control(toCustomAction(action), [Validators.required])
+            this.fb.control(toPlaceMapItemAction(action), [Validators.required])
           );
           break;
       }
