@@ -54,10 +54,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.common.script</groupId>
-            <artifactId>script-api</artifactId>
-        </dependency>
-        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <scope>provided</scope>
