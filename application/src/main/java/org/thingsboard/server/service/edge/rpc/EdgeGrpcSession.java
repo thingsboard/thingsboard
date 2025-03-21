@@ -780,7 +780,7 @@ public abstract class EdgeGrpcSession implements Closeable {
             return null;
         }
 
-        return ctx.getProcessor(edgeEvent.getType()).convertEdgeEventToDownlink(edgeEvent);
+        return ctx.getProcessor(edgeEvent.getType()).convertEdgeEventToDownlink(edgeEvent, edgeVersion);
     }
 
     public void addEventToHighPriorityQueue(EdgeEvent edgeEvent) {
