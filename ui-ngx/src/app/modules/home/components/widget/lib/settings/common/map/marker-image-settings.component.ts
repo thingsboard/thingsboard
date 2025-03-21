@@ -80,7 +80,7 @@ export class MarkerImageSettingsComponent implements ControlValueAccessor {
         markerImageSettings: this.modelValue,
       };
       const markerImageSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, MarkerImageSettingsPanelComponent, 'left', true, null,
+        this.viewContainerRef, MarkerImageSettingsPanelComponent, 'left', false, null,
         ctx,
         {},
         {}, {}, true);

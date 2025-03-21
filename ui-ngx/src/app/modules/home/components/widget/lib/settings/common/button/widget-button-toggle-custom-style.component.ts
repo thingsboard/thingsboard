@@ -137,7 +137,7 @@ export class WidgetButtonToggleCustomStyleComponent implements OnInit, OnChanges
       };
       const widgetButtonCustomStylePanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, WidgetButtonToggleCustomStylePanelComponent,
-        ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
+        ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], false, null,
         ctx,
         {},
         {}, {}, true);

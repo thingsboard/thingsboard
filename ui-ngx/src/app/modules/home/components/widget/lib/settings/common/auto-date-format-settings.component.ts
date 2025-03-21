@@ -83,7 +83,7 @@ export class AutoDateFormatSettingsComponent implements OnInit, ControlValueAcce
         defaultValues: this.defaultValues
       };
       const autoDateFormatSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, AutoDateFormatSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        this.viewContainerRef, AutoDateFormatSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], false, null,
         ctx,
         {},
         {}, {}, true);

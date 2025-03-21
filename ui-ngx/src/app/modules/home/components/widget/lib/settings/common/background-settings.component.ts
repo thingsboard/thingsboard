@@ -37,9 +37,10 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import {
   BackgroundSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/background-settings-panel.component';
-import { Observable, of } from 'rxjs';
+import { Observable, of, pipe } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { tap } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-background-settings',
@@ -110,7 +111,7 @@ export class BackgroundSettingsComponent implements OnInit, ControlValueAccessor
         backgroundSettings: this.modelValue
       };
      const backgroundSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, BackgroundSettingsPanelComponent, ['left'], true, null,
+        this.viewContainerRef, BackgroundSettingsPanelComponent, ['left'], false, null,
         ctx,
         {},
         {}, {}, true);

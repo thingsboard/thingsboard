@@ -175,7 +175,7 @@ export class DynamicFormPropertyRowComponent implements ControlValueAccessor, On
         property: deepClone(this.modelValue)
       };
       const dynamicFormPropertyPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, DynamicFormPropertyPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        this.viewContainerRef, DynamicFormPropertyPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], false, null,
         ctx,
         {},
         {}, {}, true);

@@ -126,7 +126,7 @@ export class ColorRangeSettingsComponent implements OnInit, ControlValueAccessor
         settingsComponents: this.colorSettingsComponentService.getOtherColorSettingsComponents(this)
       };
       const colorRangeSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ColorRangePanelComponent, 'left', true, null,
+        this.viewContainerRef, ColorRangePanelComponent, 'left', false, null,
         ctx,
         {},
         {}, {}, true);

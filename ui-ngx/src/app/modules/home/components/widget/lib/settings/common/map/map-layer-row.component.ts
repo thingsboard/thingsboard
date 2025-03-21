@@ -184,7 +184,7 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
         mapLayerSettings: deepClone(this.modelValue)
       };
       const mapLayerSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, MapLayerSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        this.viewContainerRef, MapLayerSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], false, null,
         ctx,
         {},
         {}, {}, true);

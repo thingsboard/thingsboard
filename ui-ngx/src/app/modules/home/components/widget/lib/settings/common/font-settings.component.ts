@@ -110,7 +110,7 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
         }
       }
       const fontSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, FontSettingsPanelComponent, 'left', true, null,
+        this.viewContainerRef, FontSettingsPanelComponent, 'left', false, null,
         ctx,
         {},
         {}, {}, true);
