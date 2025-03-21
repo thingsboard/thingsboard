@@ -17,11 +17,12 @@
 import {
   BaseMarkerShapeSettings,
   ClusterMarkerColorFunction,
+  DataLayerColorSettings,
   DataLayerColorType,
   defaultBaseMarkersDataLayerSettings,
   isValidLatLng,
-  loadImageWithAspect, MapDataLayerType,
-  MapStringFunction,
+  loadImageWithAspect,
+  MapDataLayerType,
   MapType,
   MarkerIconInfo,
   MarkerIconSettings,
@@ -53,17 +54,19 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import {
   createColorMarkerIconElement,
-  createColorMarkerShapeURI, MarkerIconContainer,
+  createColorMarkerShapeURI,
+  MarkerIconContainer,
   MarkerShape
 } from '@shared/models/widget/maps/marker-shape.models';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
   TbLatestDataLayerItem,
-  TbLatestMapDataLayer, UnplacedMapDataItem
+  TbLatestMapDataLayer,
+  UnplacedMapDataItem
 } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 import { TbImageMap } from '@home/components/widget/lib/maps/image-map';
-import { TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import { DataLayerColorProcessor, TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 
 export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDataLayerSettings> {
 
@@ -218,8 +221,7 @@ abstract class MarkerIconProcessor<S> {
 
 abstract class BaseColorMarkerShapeProcessor<S extends BaseMarkerShapeSettings> extends MarkerIconProcessor<S> {
 
-  private markerColorFunction: CompiledTbFunction<MapStringFunction>;
-
+  private colorProcessor: DataLayerColorProcessor;
   private defaultMarkerIconInfo: MarkerIconInfo;
 
   protected constructor(protected dataProcessor: MarkerDataProcessor,
@@ -229,40 +231,28 @@ abstract class BaseColorMarkerShapeProcessor<S extends BaseMarkerShapeSettings> 
 
   public setup(): Observable<void> {
     const colorSettings = this.settings.color;
-    if (colorSettings.type === DataLayerColorType.function) {
-      return parseTbFunction<MapStringFunction>(this.dataProcessor.dataLayer.getCtx().http, colorSettings.colorFunction, ['data', 'dsData']).pipe(
-        map((parsed) => {
-          this.markerColorFunction = parsed;
-          return null;
-        })
-      );
-    } else {
+    this.colorProcessor = new DataLayerColorProcessor(this.dataProcessor.dataLayer, colorSettings);
+    const setup$: Observable<void>[] = [this.colorProcessor.setup()];
+    if (colorSettings.type === DataLayerColorType.constant) {
       const color = tinycolor(colorSettings.color);
-      return this.createMarkerShape(color, 0, this.settings.size).pipe(
-        map((info) => {
-            this.defaultMarkerIconInfo = info;
-            return null;
-          }
-        ));
+      setup$.push(
+        this.createMarkerShape(color, 0, this.settings.size).pipe(
+          map((info) => {
+              this.defaultMarkerIconInfo = info;
+              return null;
+          }))
+      );
     }
+    return forkJoin(setup$).pipe(map(() => null));
   }
 
   public createMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[], rotationAngle = 0): Observable<MarkerIconInfo> {
     const colorSettings = this.settings.color;
-    let color: tinycolor.Instance;
-    if (colorSettings.type === DataLayerColorType.function) {
-      const functionColor = safeExecuteTbFunction(this.markerColorFunction, [data, dsData]);
-      if (isDefinedAndNotNull(functionColor)) {
-        color = tinycolor(functionColor);
-      } else {
-        color = tinycolor(colorSettings.color);
-      }
-      return this.createMarkerShape(color, rotationAngle, this.settings.size);
-    } else if (rotationAngle === 0) {
+    if (colorSettings.type === DataLayerColorType.constant && rotationAngle === 0) {
       return of(this.defaultMarkerIconInfo);
     } else {
-      color = tinycolor(colorSettings.color);
-      return this.createMarkerShape(color, rotationAngle, this.settings.size);
+      const color = this.colorProcessor.processColor(data, dsData);
+      return this.createMarkerShape(tinycolor(color), rotationAngle, this.settings.size);
     }
   }
 
@@ -637,6 +627,15 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     datasource.dataKeys.push(this.settings.xKey, this.settings.yKey);
     return datasource;
+  }
+
+  protected allColorSettings(): DataLayerColorSettings[] {
+    if (this.settings.markerType === MarkerType.shape) {
+      return [this.settings.markerShape.color];
+    } else if (this.settings.markerType === MarkerType.icon) {
+      return [this.settings.markerIcon.color];
+    }
+    return [];
   }
 
   protected defaultBaseSettings(map: TbMap<any>): Partial<MarkersDataLayerSettings> {

@@ -15,15 +15,24 @@
 ///
 
 import {
-  DataLayerColorSettings, DataLayerColorType,
-  DataLayerPatternSettings, DataLayerPatternType,
-  MapDataLayerSettings, MapDataLayerType, mapDataSourceSettingsToDatasource,
-  MapStringFunction, MapType,
+  DataLayerColorSettings,
+  DataLayerColorType,
+  DataLayerPatternSettings,
+  DataLayerPatternType,
+  MapDataLayerSettings,
+  MapDataLayerType,
+  mapDataSourceSettingsToDatasource,
+  MapStringFunction,
+  MapType,
   TbMapDatasource
 } from '@shared/models/widget/maps/map.models';
 import {
   createLabelFromPattern,
-  guid, isDefined,
+  guid,
+  isDefined,
+  isDefinedAndNotNull,
+  isNumber,
+  isNumeric,
   mergeDeepIgnoreArray,
   parseTbFunction,
   safeExecuteTbFunction
@@ -32,10 +41,11 @@ import L from 'leaflet';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { FormattedData } from '@shared/models/widget.models';
+import { DataKey, FormattedData } from '@shared/models/widget.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { WidgetContext } from '@home/models/widget-component.models';
+import { ColorRange } from '@shared/models/widget-settings.models';
 
 export class DataLayerPatternProcessor {
 
@@ -77,22 +87,26 @@ export class DataLayerColorProcessor {
 
   private colorFunction: CompiledTbFunction<MapStringFunction>;
   private color: string;
+  private rangeKey: DataKey;
+  private range: ColorRange[];
 
   constructor(private dataLayer: TbMapDataLayer,
               private settings: DataLayerColorSettings) {}
 
   public setup(): Observable<void> {
     this.color = this.settings.color;
-    if (this.settings.type === DataLayerColorType.function) {
+    if (this.settings.type === DataLayerColorType.range) {
+      this.rangeKey = this.settings.rangeKey;
+      this.range = this.settings.range;
+    } else if (this.settings.type === DataLayerColorType.function) {
       return parseTbFunction<MapStringFunction>(this.dataLayer.getCtx().http, this.settings.colorFunction, ['data', 'dsData']).pipe(
         map((parsed) => {
           this.colorFunction = parsed;
           return null;
         })
       );
-    } else {
-      return of(null)
     }
+    return of(null)
   }
 
   public processColor(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): string {
@@ -102,10 +116,31 @@ export class DataLayerColorProcessor {
       if (!color) {
         color = this.color;
       }
+    } else if (this.settings.type === DataLayerColorType.range) {
+      color = this.color;
+      if (this.rangeKey && this.range?.length) {
+        const value = data[this.rangeKey.label];
+        if (isDefinedAndNotNull(value) && isNumeric(value)) {
+          const num = Number(value);
+          for (const range of this.range) {
+            if (DataLayerColorProcessor.constantRange(range) && range.from === num) {
+              color = range.color;
+              break;
+            } else if ((!isNumber(range.from) || num >= range.from) && (!isNumber(range.to) || num < range.to)) {
+              color = range.color;
+              break;
+            }
+          }
+        }
+      }
     } else {
       color = this.color;
     }
     return color;
+  }
+
+  static constantRange(range: ColorRange): boolean {
+    return isNumber(range.from) && isNumber(range.to) && range.from === range.to;
   }
 
 }
@@ -137,7 +172,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   protected datasource: TbMapDatasource;
 
-  protected mapDataId = guid();
+  protected mapDataId: string;
 
   protected dataLayerContainer: L.FeatureGroup;
 
@@ -169,6 +204,9 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
   public setup(): Observable<any> {
     this.datasource = mapDataSourceSettingsToDatasource(this.settings);
     this.datasource.dataKeys = this.settings.additionalDataKeys ? [...this.settings.additionalDataKeys] : [];
+    const colorRangeKeys = this.allColorSettings().filter(settings => settings.type === DataLayerColorType.range && settings.rangeKey)
+                                                  .map(settings => settings.rangeKey);
+    this.datasource.dataKeys.push(...colorRangeKeys);
     this.mapDataId = this.datasource.mapDataIds[0];
     this.datasource = this.setupDatasource(this.datasource);
     return forkJoin(
@@ -243,12 +281,20 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
     return false;
   }
 
+  public hasData(data: FormattedData<TbMapDatasource>): boolean {
+    return data.$datasource.mapDataIds.includes(this.mapDataId);
+  }
+
   protected createDataLayerContainer(): L.FeatureGroup {
     return L.featureGroup([], {snapIgnore: true});
   }
 
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     return datasource;
+  }
+
+  protected allColorSettings(): DataLayerColorSettings[] {
+    return [];
   }
 
   protected onDataLayerEnabled(): void {}

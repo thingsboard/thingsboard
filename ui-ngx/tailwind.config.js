@@ -180,5 +180,8 @@ module.exports = {
     preflight: false
   },
   plugins: [],
+  experimental: {
+    optimizeUniversalDefaults: true
+  }
 }
 

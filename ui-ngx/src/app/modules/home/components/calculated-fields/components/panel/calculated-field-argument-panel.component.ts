@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit, output } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, output, ViewChild } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { charsWithNumRegex, oneSpaceInsideRegex } from '@shared/models/regex.constants';
@@ -41,13 +41,14 @@ import { MINUTE } from '@shared/models/time/time.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
+import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
 
 @Component({
   selector: 'tb-calculated-field-argument-panel',
   templateUrl: './calculated-field-argument-panel.component.html',
   styleUrls: ['./calculated-field-argument-panel.component.scss']
 })
-export class CalculatedFieldArgumentPanelComponent implements OnInit {
+export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewInit {
 
   @Input() buttonTitle: string;
   @Input() index: number;
@@ -55,8 +56,11 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
   @Input() entityId: EntityId;
   @Input() tenantId: string;
   @Input() entityName: string;
+  @Input() entityHasError: boolean;
   @Input() calculatedFieldType: CalculatedFieldType;
   @Input() usedArgumentNames: string[];
+
+  @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
 
   argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
 
@@ -75,8 +79,8 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
       scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }, [Validators.required]],
     }),
     defaultValue: ['', [Validators.pattern(oneSpaceInsideRegex)]],
-    limit: [{ value: this.defaultLimit, disabled: !this.maxDataPointsPerRollingArg }],
-    timeWindow: [MINUTE * 15],
+    limit: [{ value: this.defaultLimit, disabled: !this.maxDataPointsPerRollingArg }, [Validators.required, Validators.min(1), Validators.max(this.maxDataPointsPerRollingArg)]],
+    timeWindow: [MINUTE * 15, [Validators.required]],
   });
 
   argumentTypes: ArgumentType[];
@@ -134,6 +138,12 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
     this.argumentTypes = Object.values(ArgumentType)
       .filter(type => type !== ArgumentType.Rolling || this.calculatedFieldType === CalculatedFieldType.SCRIPT);
+  }
+
+  ngAfterViewInit(): void {
+    if (this.entityHasError) {
+      this.entityAutocomplete.selectEntityFormGroup.get('entity').markAsTouched();
+    }
   }
 
   saveArgument(): void {

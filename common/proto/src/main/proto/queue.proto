@@ -63,6 +63,20 @@ enum EntityTypeProto {
   CALCULATED_FIELD_LINK = 40;
 }
 
+enum ApiUsageRecordKeyProto {
+  TRANSPORT_MSG_COUNT  = 0;
+  TRANSPORT_DP_COUNT   = 1;
+  STORAGE_DP_COUNT     = 2;
+  RE_EXEC_COUNT        = 3;
+  JS_EXEC_COUNT        = 4;
+  TBEL_EXEC_COUNT      = 5;
+  EMAIL_EXEC_COUNT     = 6;
+  SMS_EXEC_COUNT       = 7;
+  CREATED_ALARMS_COUNT = 8;
+  ACTIVE_DEVICES       = 9;
+  INACTIVE_DEVICES     = 10;
+}
+
 /**
  * Service Discovery Data Structures;
  */
@@ -1674,14 +1688,12 @@ message ToEdgeEventNotificationMsg {
 }
 
 message ToCalculatedFieldMsg {
-  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
-  CalculatedFieldTelemetryMsgProto telemetryMsg = 2;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 3;
+  CalculatedFieldTelemetryMsgProto telemetryMsg = 1;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
 }
 
 message ToCalculatedFieldNotificationMsg {
-  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 1;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
@@ -1720,12 +1732,25 @@ message ToTransportMsg {
   repeated QueueDeleteMsg queueDeleteMsgs = 16;
 }
 
-message UsageStatsKVProto{
-  string key = 1;
+message UsageStatsKVProto {
+  string key = 1 [deprecated=true];
   int64 value = 2;
+  ApiUsageRecordKeyProto recordKey = 3;
 }
 
 message ToUsageStatsServiceMsg {
+  int64 tenantIdMSB = 1 [deprecated=true];
+  int64 tenantIdLSB = 2 [deprecated=true];
+  int64 entityIdMSB = 3 [deprecated=true];
+  int64 entityIdLSB = 4 [deprecated=true];
+  repeated UsageStatsKVProto values = 5 [deprecated=true];
+  int64 customerIdMSB = 6 [deprecated=true];
+  int64 customerIdLSB = 7 [deprecated=true];
+  string serviceId = 8;
+  repeated UsageStatsServiceMsg msgs = 9;
+}
+
+message UsageStatsServiceMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   int64 entityIdMSB = 3;
@@ -1733,7 +1758,6 @@ message ToUsageStatsServiceMsg {
   repeated UsageStatsKVProto values = 5;
   int64 customerIdMSB = 6;
   int64 customerIdLSB = 7;
-  string serviceId = 8;
 }
 
 message ToOtaPackageStateServiceMsg {

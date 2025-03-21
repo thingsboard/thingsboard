@@ -16,6 +16,7 @@
 
 import { FormattedData } from '@shared/models/widget.models';
 import L from 'leaflet';
+import { Map as MapLibreGLMap, MapOptions as MapLibreGLMapOptions } from 'maplibre-gl';
 import { TbMapDatasource } from '@shared/models/widget/maps/map.models';
 import { MatIconRegistry } from '@angular/material/icon';
 
@@ -181,6 +182,27 @@ declare module 'leaflet' {
 
     namespace tileLayer {
       function chinaProvider(type: string, options?: TileLayerOptions): TileLayer.ChinaProvider;
+    }
+
+    namespace MapLibreGL {
+
+      interface LeafletMapLibreGLMapOptions extends L.InteractiveLayerOptions, Omit<MapLibreGLMapOptions, "container"> {
+        updateInterval?: number;
+        padding?: number;
+        className?: string;
+      }
+
+      class MapLibreGLLayer extends L.Layer {
+        constructor(options: LeafletMapLibreGLMapOptions);
+        getMapLibreGLMap(): MapLibreGLMap
+        getCanvas(): HTMLCanvasElement
+        getSize(): L.Point
+        getBounds(): L.LatLngBounds
+        getContainer(): HTMLDivElement
+        getPaneName(): string
+      }
+
+      function mapLibreGLLayer(options: LeafletMapLibreGLMapOptions): MapLibreGLLayer;
     }
   }
 }

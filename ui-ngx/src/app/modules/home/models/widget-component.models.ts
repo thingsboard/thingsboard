@@ -26,6 +26,7 @@ import {
   WidgetActionSource,
   WidgetConfig,
   WidgetControllerDescriptor,
+  WidgetHeaderActionButtonType,
   WidgetType,
   widgetType,
   WidgetTypeDescriptor,
@@ -126,6 +127,12 @@ export type ShowWidgetHeaderActionFunction = (ctx: WidgetContext, data: Formatte
 export interface WidgetHeaderAction extends IWidgetAction {
   displayName: string;
   descriptor: WidgetActionDescriptor;
+  buttonType?: WidgetHeaderActionButtonType;
+  showIcon?:boolean;
+  buttonColor?: string;
+  buttonFillColor?: string;
+  buttonBorderColor?: string;
+  customButtonStyle?: {[key: string]: string};
   useShowWidgetHeaderActionFunction: boolean;
   showWidgetHeaderActionFunction: CompiledTbFunction<ShowWidgetHeaderActionFunction>;
 }

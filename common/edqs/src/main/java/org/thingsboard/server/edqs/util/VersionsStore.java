@@ -26,19 +26,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class VersionsStore {
 
     private final Cache<String, Long> versions = Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
+            .expireAfterWrite(24, TimeUnit.HOURS)
             .build();
 
     public boolean isNew(String key, Long version) {
         AtomicBoolean isNew = new AtomicBoolean(false);
         versions.asMap().compute(key, (k, prevVersion) -> {
-            if (prevVersion == null || prevVersion < version) {
+            if (prevVersion == null || prevVersion <= version) {
                 isNew.set(true);
                 return version;
             } else {
-                if (version < prevVersion) {
-                    log.info("[{}] Version {} is outdated, the latest is {}", key, version, prevVersion);
-                }
+                log.info("[{}] Version {} is outdated, the latest is {}", key, version, prevVersion);
                 return prevVersion;
             }
         });

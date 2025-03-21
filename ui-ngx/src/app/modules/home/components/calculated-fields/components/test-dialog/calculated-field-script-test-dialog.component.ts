@@ -42,9 +42,17 @@ import { filter } from 'rxjs/operators';
 import {
   ArgumentType,
   CalculatedFieldEventArguments,
-  CalculatedFieldTestScriptDialogData,
+  CalculatedFieldTestScriptInputParams,
   TestArgumentTypeMap
 } from '@shared/models/calculated-field.models';
+import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import { AceHighlightRules } from '@shared/models/ace/ace.models';
+
+export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTestScriptInputParams {
+  argumentsEditorCompleter: TbEditorCompleter;
+  argumentsHighlightRules: AceHighlightRules;
+  openCalculatedFieldEdit?: boolean;
+}
 
 @Component({
   selector: 'tb-calculated-field-script-test-dialog',

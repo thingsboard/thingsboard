@@ -128,6 +128,9 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
     private void checkEntityAndPushToQueue(TenantId tenantId, EntityId entityId,
                                            Predicate<CalculatedFieldCtx> mainEntityFilter, Predicate<CalculatedFieldCtx> linkedEntityFilter,
                                            Supplier<ToCalculatedFieldMsg> msg, FutureCallback<Void> callback) {
+        if (EntityType.TENANT.equals(entityId.getEntityType())) {
+            tenantId = (TenantId) entityId;
+        }
         boolean send = checkEntityForCalculatedFields(tenantId, entityId, mainEntityFilter, linkedEntityFilter);
         if (send) {
             clusterService.pushMsgToCalculatedFields(tenantId, entityId, msg.get(), wrap(callback));
@@ -220,6 +223,10 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
 
     private CalculatedFieldTelemetryMsgProto.Builder buildTelemetryMsgProto(TenantId tenantId, EntityId entityId, List<CalculatedFieldId> calculatedFieldIds, UUID tbMsgId, TbMsgType tbMsgType) {
         CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = CalculatedFieldTelemetryMsgProto.newBuilder();
+
+        if (EntityType.TENANT.equals(entityId.getEntityType())) {
+            tenantId = (TenantId) entityId;
+        }
 
         telemetryMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         telemetryMsg.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());

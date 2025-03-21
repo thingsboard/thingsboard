@@ -41,7 +41,7 @@ import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { MarkerIconContainer, MarkerShape } from '@shared/models/widget/maps/marker-shape.models';
-import { DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
+import { ColorRange, DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -233,12 +233,15 @@ export enum MarkerType {
 
 export enum DataLayerColorType {
   constant = 'constant',
+  range = 'range',
   function = 'function'
 }
 
 export interface DataLayerColorSettings {
   type: DataLayerColorType;
   color: string;
+  rangeKey?: DataKey;
+  range?: ColorRange[];
   colorFunction?: TbFunction;
 }
 
@@ -755,9 +758,26 @@ export const mapProviderTranslationMap = new Map<MapProvider, string>(
   ]
 );
 
+export enum ReferenceLayerType {
+  openstreetmap_hybrid = 'openstreetmap_hybrid',
+  world_edition_hybrid = 'world_edition_hybrid',
+  enhanced_contrast_hybrid = 'enhanced_contrast_hybrid'
+}
+
+export const referenceLayerTypes = Object.keys(ReferenceLayerType) as ReferenceLayerType[];
+
+export const referenceLayerTypeTranslationMap = new Map<ReferenceLayerType, string>(
+  [
+    [ReferenceLayerType.openstreetmap_hybrid, 'widgets.maps.layer.reference.openstreetmap-hybrid'],
+    [ReferenceLayerType.world_edition_hybrid, 'widgets.maps.layer.reference.world-edition-hybrid'],
+    [ReferenceLayerType.enhanced_contrast_hybrid, 'widgets.maps.layer.reference.enhanced-contrast-hybrid']
+  ]
+);
+
 export interface MapLayerSettings {
   label?: string;
   provider: MapProvider;
+  referenceLayer?: ReferenceLayerType;
 }
 
 export const mapLayerValid = (layer: MapLayerSettings): boolean => {
@@ -973,9 +993,10 @@ export const defaultMapLayers: MapLayerSettings[] = [
   } as OpenStreetMapLayerSettings,
   {
     label: '{i18n:widgets.maps.layer.hybrid}',
-    provider: MapProvider.google,
-    layerType: GoogleLayerType.hybrid,
-  } as GoogleMapLayerSettings
+    provider: MapProvider.openstreet,
+    layerType: OpenStreetLayerType.esriWorldImagery,
+    referenceLayer: ReferenceLayerType.openstreetmap_hybrid
+  } as OpenStreetMapLayerSettings
 ];
 
 export interface GeoMapSettings extends BaseMapSettings {

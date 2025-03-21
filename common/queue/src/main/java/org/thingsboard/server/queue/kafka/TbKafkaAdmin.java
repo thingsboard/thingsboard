@@ -91,7 +91,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     @Override
     public void deleteTopic(String topic) {
         Set<String> topics = getTopics();
-        if (topics.contains(topic)) {
+        if (topics.remove(topic)) {
             settings.getAdminClient().deleteTopics(Collections.singletonList(topic));
         } else {
             try {

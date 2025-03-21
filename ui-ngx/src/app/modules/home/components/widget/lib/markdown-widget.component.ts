@@ -63,6 +63,8 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
   @Input()
   ctx: WidgetContext;
 
+  data: FormattedData[];
+
   markdownText: string;
 
   additionalStyles: string[];
@@ -128,15 +130,15 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     } else {
       initialData = [];
     }
-    const data = formattedDataFormDatasourceData(initialData);
+    this.data = formattedDataFormDatasourceData(initialData);
 
-    let markdownText = this.settings.useMarkdownTextFunction ?
-      this.markdownTextFunction.pipe(map(markdownTextFunction => safeExecuteTbFunction(markdownTextFunction, [data, this.ctx]))) : this.settings.markdownTextPattern;
+    const markdownText = this.settings.useMarkdownTextFunction ?
+      this.markdownTextFunction.pipe(map(markdownTextFunction => safeExecuteTbFunction(markdownTextFunction, [this.data, this.ctx]))) : this.settings.markdownTextPattern;
     if (typeof markdownText === 'string') {
-      this.updateMarkdownText(markdownText, data);
+      this.updateMarkdownText(markdownText, this.data);
     } else {
       markdownText.subscribe((text) => {
-        this.updateMarkdownText(text, data);
+        this.updateMarkdownText(text, this.data);
       });
     }
   }
@@ -146,8 +148,8 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     markdownText = createLabelFromPattern(markdownText, allData);
     if (this.markdownText !== markdownText) {
       this.markdownText = this.utils.customTranslation(markdownText, markdownText);
-      this.cd.detectChanges();
     }
+    this.cd.markForCheck();
   }
 
   markdownClick($event: MouseEvent) {

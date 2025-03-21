@@ -67,10 +67,10 @@ import static org.thingsboard.server.common.data.query.ComplexFilterPredicate.Co
 @Slf4j
 public class RepositoryUtils {
 
-    public static final Comparator<SortableEntityData> SORT_ASC = Comparator.comparing((SortableEntityData sed) -> Optional.ofNullable(sed.getSortValue()).orElse(""))
+    public static final Comparator<SortableEntityData> SORT_ASC = Comparator.comparing((SortableEntityData sed) -> Optional.ofNullable(sed.getSortValue()).orElse(""), String.CASE_INSENSITIVE_ORDER)
             .thenComparing(sp -> sp.getId().toString());
 
-    public static final Comparator<SortableEntityData> SORT_DESC = Comparator.comparing((SortableEntityData sed) -> Optional.ofNullable(sed.getSortValue()).orElse(""))
+    public static final Comparator<SortableEntityData> SORT_DESC = Comparator.comparing((SortableEntityData sed) -> Optional.ofNullable(sed.getSortValue()).orElse(""), String.CASE_INSENSITIVE_ORDER)
             .thenComparing(sp -> sp.getId().toString()).reversed();
 
     public static EntityType resolveEntityType(EntityFilter entityFilter) {

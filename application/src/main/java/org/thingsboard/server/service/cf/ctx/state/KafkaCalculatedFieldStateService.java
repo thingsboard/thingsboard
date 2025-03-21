@@ -35,7 +35,7 @@ import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
-import org.thingsboard.server.queue.common.consumer.QueueStateService;
+import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
@@ -43,10 +43,12 @@ import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.service.cf.AbstractCalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.*;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToString;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToUuid;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.stringToBytes;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.uuidToBytes;
 
 @Service
 @RequiredArgsConstructor
@@ -60,18 +62,14 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
     @Value("${queue.calculated_fields.poll_interval:25}")
     private long pollInterval;
 
-    private PartitionedQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateProto>> stateConsumer;
     private TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>> stateProducer;
-    private QueueStateService<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>> queueStateService;
 
     private final AtomicInteger counter = new AtomicInteger();
 
     @Override
     public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
-        super.init(eventConsumer);
-
         var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_STATES_QUEUE_NAME);
-        this.stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>>create()
+        PartitionedQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateProto>> stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>>create()
                 .queueKey(queueKey)
                 .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
@@ -94,13 +92,13 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                     }
                 })
                 .consumerCreator((config, partitionId) -> queueFactory.createCalculatedFieldStateConsumer())
+                .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .scheduler(eventConsumer.getScheduler())
                 .taskExecutor(eventConsumer.getTaskExecutor())
                 .build();
+        super.stateService = new KafkaQueueStateService<>(eventConsumer, stateConsumer);
         this.stateProducer = (TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>>) queueFactory.createCalculatedFieldStateProducer();
-        this.queueStateService = new QueueStateService<>();
-        this.queueStateService.init(stateConsumer, super.eventConsumer);
     }
 
     @Override
@@ -132,11 +130,6 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
         doPersist(stateId, null, callback);
     }
 
-    @Override
-    public void restore(Set<TopicPartitionInfo> partitions) {
-        queueStateService.update(partitions);
-    }
-
     private void putStateId(TbQueueMsgHeaders headers, CalculatedFieldEntityCtxId stateId) {
         headers.put("tenantId", uuidToBytes(stateId.tenantId().getId()));
         headers.put("cfId", uuidToBytes(stateId.cfId().getId()));
@@ -153,8 +146,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
 
     @Override
     public void stop() {
-        stateConsumer.stop();
-        stateConsumer.awaitStop();
+        super.stop();
         stateProducer.stop();
     }
 

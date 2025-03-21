@@ -33,7 +33,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
-import org.thingsboard.server.queue.common.consumer.QueueStateService;
+import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
+import org.thingsboard.server.queue.common.state.QueueStateService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.edqs.EdqsConfig;
@@ -89,13 +90,13 @@ public class KafkaEdqsStateService implements EdqsStateService {
                     consumer.commit();
                 })
                 .consumerCreator((config, partitionId) -> queueFactory.createEdqsMsgConsumer(EdqsQueue.STATE))
+                .queueAdmin(queueFactory.getEdqsQueueAdmin())
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .taskExecutor(eventConsumer.getTaskExecutor())
                 .scheduler(eventConsumer.getScheduler())
                 .uncaughtErrorHandler(edqsProcessor.getErrorHandler())
                 .build();
-        queueStateService = new QueueStateService<>();
-        queueStateService.init(stateConsumer, eventConsumer);
+        queueStateService = new KafkaQueueStateService<>(eventConsumer, stateConsumer);
 
         eventsToBackupConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>builder()
                 .name("edqs-events-to-backup-consumer")
@@ -149,11 +150,11 @@ public class KafkaEdqsStateService implements EdqsStateService {
 
     @Override
     public void process(Set<TopicPartitionInfo> partitions) {
-        if (queueStateService.getPartitions() == null) {
+        if (queueStateService.getPartitions().isEmpty()) {
             eventsToBackupConsumer.subscribe();
             eventsToBackupConsumer.launch();
         }
-        queueStateService.update(partitions);
+        queueStateService.update(new QueueKey(ServiceType.EDQS), partitions);
     }
 
     @Override

@@ -22,6 +22,7 @@ import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
+import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
@@ -124,6 +125,11 @@ public class KafkaEdqsQueueFactory implements EdqsQueueFactory {
                 .stats(statsFactory.createMessagesStats(StatsType.EDQS.getName()))
                 .executor(ThingsBoardExecutors.newWorkStealingPool(5, "edqs"))
                 .build();
+    }
+
+    @Override
+    public TbQueueAdmin getEdqsQueueAdmin() {
+        return edqsEventsAdmin;
     }
 
 }

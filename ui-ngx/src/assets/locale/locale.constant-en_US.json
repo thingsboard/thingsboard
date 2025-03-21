@@ -991,7 +991,7 @@
         "type-sms-sent": "SMS sent"
     },
     "debug-settings": {
-        "label": "Debug configuration",
+        "label": "Debug Configuration",
         "on-failure": "Failures only (24/7)",
         "all-messages": "All messages ({{time}})",
         "failures": "Failures",
@@ -999,10 +999,9 @@
         "rule-node": "rule node",
         "calculated-field": "calculated field",
         "hint": {
-            "main": "All node debug messages rate limited with:",
-            "main-limited": "All {{entity}} debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{time}}.",
-            "on-failure": "Save all failure debug events without time limit.",
-            "all-messages": "Save all debug events during time limit."
+            "main-limited": "No more than {{msg}} {{entity}} debug messages per {{time}} will be recorded.",
+            "on-failure": "Log all debug messages.",
+            "all-messages": "Log error messages only. "
         }
     },
     "calculated-fields": {
@@ -1074,7 +1073,8 @@
             "argument-type-required": "Argument type is required.",
             "max-args": "Maximum number of arguments reached.",
             "decimals-range": "Decimals by default should be a number between 0 and 15.",
-            "expression": "Default expression demonstrates how to transform a temperature from Fahrenheit to Celsius."
+            "expression": "Default expression demonstrates how to transform a temperature from Fahrenheit to Celsius.",
+            "arguments-entity-not-found": "Argument target entity not found."
         }
     },
     "confirm-on-exit": {
@@ -3322,6 +3322,7 @@
             "top-fluid-color": "Top fluid color",
             "bottom-fluid-color": "Bottom fluid color",
             "display": "Display",
+            "display-format": "Display format",
             "value": "Value",
             "decimals": "Decimals",
             "units": "Units",
@@ -5570,12 +5571,12 @@
         "max-calculated-fields": "Calculated fields per entity maximum number",
         "max-calculated-fields-range": "Calculated fields per entity maximum number can't be negative",
         "max-calculated-fields-required": "Calculated fields per entity maximum number is required",
-        "max-data-points-per-rolling-arg": "Maximum data points number in rolling arguments",
-        "max-data-points-per-rolling-arg-range": "Maximum data points number in rolling arguments can't be negative",
-        "max-data-points-per-rolling-arg-required": "Maximum data points number in rolling arguments is required",
-        "max-arguments-per-cf": "Arguments per calculated field maximum number",
-        "max-arguments-per-cf-range": "Arguments per calculated field maximum number can't be negative",
-        "max-arguments-per-cf-required": "Arguments per calculated field maximum number is required",
+        "max-data-points-per-rolling-arg": "Max data points number in rolling arguments",
+        "max-data-points-per-rolling-arg-range": "Max data points number in rolling arguments can't be negative",
+        "max-data-points-per-rolling-arg-required": "Max data points number in rolling arguments is required",
+        "max-arguments-per-cf": "Arguments per calculated field max number",
+        "max-arguments-per-cf-range": "Arguments per calculated field max number can't be negative",
+        "max-arguments-per-cf-required": "Arguments per calculated field max number is required",
         "max-state-size": "State maximum size in KB",
         "max-state-size-range": "State maximum size in KB can't be negative",
         "max-state-size-required": "State maximum size in KB is required",
@@ -6569,6 +6570,7 @@
         "URL": "URL",
         "url-required": "URL is required.",
         "mobile": {
+          "device-provision": "Device provision",
           "action-type": "Mobile action type",
           "select-action-type": "Select mobile action type",
           "action-type-required": "Mobile action type is required",
@@ -6698,6 +6700,22 @@
         "action-name-required": "Action name is required.",
         "action-name-not-unique": "Another action with the same name already exists.\nAction name should be unique within the same action source.",
         "action-icon": "Icon",
+        "header-button": {
+            "button-settings": "Button settings",
+            "button-type": "Button type",
+            "button-type-basic": "Basic",
+            "button-type-raised": "Raised",
+            "button-type-stroked": "Stroked",
+            "button-type-flat": "Flat",
+            "button-type-icon": "Icon",
+            "button-type-mini-fab": "FAB",
+            "colors": "Colors",
+            "color": "Color",
+            "background": "Background",
+            "border": "Border",
+            "advanced-button-style": "Advanced button style",
+            "button-style": "Button style"
+        },
         "show-hide-action-using-function": "Show/hide action using function",
         "show-action-function": "Show action function",
         "action-type": "Type",
@@ -7906,6 +7924,13 @@
                 "roadmap": "Roadmap",
                 "satellite": "Satellite",
                 "hybrid": "Hybrid",
+                "reference": {
+                    "reference-layer": "Reference layer",
+                    "no-layer": "No layer",
+                    "openstreetmap-hybrid": "OpenStreetMap Hybrid",
+                    "world-edition-hybrid": "World Edition Hybrid",
+                    "enhanced-contrast-hybrid": "Enhanced Contrast Hybrid"
+                },
                 "provider": {
                     "provider": "Provider",
                     "openstreet": {
@@ -7972,7 +7997,11 @@
                 "stroke": "Stroke",
                 "color-settings": "Color settings",
                 "color-type-constant": "Constant",
+                "color-type-range": "Range",
                 "color-type-function": "Function",
+                "color-range-source-key": "Color range source key",
+                "color-range-source-key-required": "Color range source key is required",
+                "color-range": "Color range",
                 "color-function": "Color function",
                 "label": "Label",
                 "tooltip": "Tooltip",

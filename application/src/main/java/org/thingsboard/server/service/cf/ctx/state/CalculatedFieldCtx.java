@@ -83,7 +83,7 @@ public class CalculatedFieldCtx {
         for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
             var refId = entry.getValue().getRefEntityId();
             var refKey = entry.getValue().getRefEntityKey();
-            if (refId == null) {
+            if (refId == null || refId.equals(calculatedField.getEntityId())) {
                 mainEntityArguments.put(refKey, entry.getKey());
             } else {
                 linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>()).put(refKey, entry.getKey());

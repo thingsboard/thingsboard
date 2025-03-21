@@ -82,6 +82,17 @@
         </mat-form-field>
       </div>
     </div>
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>widgets.maps.layer.reference.reference-layer</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="referenceLayer" placeholder="{{'widgets.maps.layer.reference.no-layer' | translate}}">
+          <mat-option [value]="null">{{ 'widgets.maps.layer.reference.no-layer' | translate }}</mat-option>
+          <mat-option *ngFor="let layer of referenceLayerTypes" [value]="layer">
+            {{ referenceLayerTypeTranslationMap.get(layer) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
   </div>
   <div class="tb-map-layer-settings-panel-buttons">
     <button mat-button
