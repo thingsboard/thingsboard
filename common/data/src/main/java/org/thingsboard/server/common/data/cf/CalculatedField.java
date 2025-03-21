@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.BaseData;
@@ -37,10 +36,10 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serial;
+import java.util.Objects;
 
 @Schema
 @Data
-@EqualsAndHashCode(callSuper = true)
 public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, HasDebugSettings {
 
     @Serial
@@ -112,6 +111,48 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
         return super.getCreatedTime();
     }
 
+    // Getter is ignored for serialization
+    @JsonIgnore
+    public boolean isDebugMode() {
+        return debugMode;
+    }
+
+    // Setter is annotated for deserialization
+    @JsonSetter
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CalculatedField that)) return false;
+        if (!super.equals(o)) return false;
+        return Objects.equals(tenantId, that.tenantId) &&
+                Objects.equals(entityId, that.entityId) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(debugSettings, that.debugSettings) &&
+                Objects.equals(configuration, that.configuration) &&
+                type == that.type && debugMode == that.debugMode &&
+                configurationVersion == that.configurationVersion &&
+                Objects.equals(version, that.version);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + Objects.hashCode(tenantId);
+        result = 31 * result + Objects.hashCode(entityId);
+        result = 31 * result + Objects.hashCode(type);
+        result = 31 * result + Objects.hashCode(name);
+        result = 31 * result + Boolean.hashCode(debugMode);
+        result = 31 * result + Objects.hashCode(debugSettings);
+        result = 31 * result + Integer.hashCode(configurationVersion);
+        result = 31 * result + Objects.hashCode(configuration);
+        result = 31 * result + Objects.hashCode(version);
+        return result;
+    }
+
     @Override
     public String toString() {
         return new StringBuilder()
@@ -126,18 +167,6 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
                 .append(", createdTime=").append(createdTime)
                 .append(", id=").append(id).append(']')
                 .toString();
-    }
-
-    // Getter is ignored for serialization
-    @JsonIgnore
-    public boolean isDebugMode() {
-        return debugMode;
-    }
-
-    // Setter is annotated for deserialization
-    @JsonSetter
-    public void setDebugMode(boolean debugMode) {
-        this.debugMode = debugMode;
     }
 
 }
