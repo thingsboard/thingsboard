@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 public abstract class AbstractRelationQueryProcessor<T extends EntityFilter> extends AbstractQueryProcessor<T> {
@@ -89,7 +90,7 @@ public abstract class AbstractRelationQueryProcessor<T extends EntityFilter> ext
     private List<SortableEntityData> processTenantQuery(Set<EntityData<?>> entities) {
         return entities.stream()
                 .map(this::toSortData)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private List<SortableEntityData> processCustomerQuery(Set<EntityData<?>> entities) {

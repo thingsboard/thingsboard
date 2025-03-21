@@ -67,10 +67,10 @@ import static org.thingsboard.server.common.data.query.ComplexFilterPredicate.Co
 @Slf4j
 public class RepositoryUtils {
 
-    public static final Comparator<SortableEntityData> SORT_ASC = Comparator.comparing((SortableEntityData sed) -> Optional.ofNullable(sed.getSortValue()).orElse(""), String.CASE_INSENSITIVE_ORDER)
+    public static final Comparator<SortableEntityData> SORT_ASC = Comparator.comparing(SortableEntityData::getSortValue, Comparator.nullsFirst(Comparator.naturalOrder()))
             .thenComparing(sp -> sp.getId().toString());
 
-    public static final Comparator<SortableEntityData> SORT_DESC = Comparator.comparing((SortableEntityData sed) -> Optional.ofNullable(sed.getSortValue()).orElse(""), String.CASE_INSENSITIVE_ORDER)
+    public static final Comparator<SortableEntityData> SORT_DESC =  Comparator.comparing(SortableEntityData::getSortValue, Comparator.nullsFirst(Comparator.naturalOrder()))
             .thenComparing(sp -> sp.getId().toString()).reversed();
 
     public static EntityType resolveEntityType(EntityFilter entityFilter) {
@@ -348,24 +348,11 @@ public class RepositoryUtils {
         }
     }
 
-    public static String getSortValue(EntityData entity, DataKey sortKey) {
+    public static DataPoint getSortValue(EntityData entity, DataKey sortKey, QueryContext queryContext) {
         if (sortKey == null) {
             return null;
         }
-        switch (sortKey.type()) {
-            case ENTITY_FIELD -> {
-                return entity.getField(sortKey.key());
-            }
-            case ATTRIBUTE, CLIENT_ATTRIBUTE, SHARED_ATTRIBUTE, SERVER_ATTRIBUTE -> {
-                var dp = entity.getAttr(sortKey.keyId(), sortKey.type());
-                return dp != null ? dp.valueToString() : "";
-            }
-            case TIME_SERIES -> {
-                var dp = entity.getTs(sortKey.keyId());
-                return dp != null ? dp.valueToString() : "";
-            }
-            default -> throw new IllegalStateException("toSortKey is not implemented for type: " + sortKey.type());
-        }
+       return entity.getDataPoint(sortKey, queryContext);
     }
 
     public static boolean checkFilters(EdqsQuery query, EntityData entity) {

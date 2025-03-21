@@ -16,6 +16,7 @@
 package org.thingsboard.server.edqs.query.processor;
 
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.DataPoint;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.edqs.data.EntityData;
@@ -50,7 +51,7 @@ public abstract class AbstractQueryProcessor<T extends EntityFilter> implements 
 
     protected SortableEntityData toSortData(EntityData<?> ed) {
         SortableEntityData sortData = new SortableEntityData(ed);
-        sortData.setSortValue(getSortValue(ed, sortKey));
+        sortData.setSortValue(getSortValue(ed, sortKey, ctx));
         return sortData;
     }
 
