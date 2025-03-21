@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
 
     @Override
