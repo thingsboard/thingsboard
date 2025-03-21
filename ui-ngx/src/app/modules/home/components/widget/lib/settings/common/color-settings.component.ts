@@ -171,7 +171,7 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
         maxValue: this.maxValue
       };
       const colorSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ColorSettingsPanelComponent, 'left', true, null,
+        this.viewContainerRef, ColorSettingsPanelComponent, 'left', false, null,
         ctx,
         {},
         {}, {}, true);

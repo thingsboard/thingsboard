@@ -166,7 +166,7 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
         dateFormat: deepClone(this.modelValue)
       };
       const dateFormatSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, DateFormatSettingsPanelComponent, 'top', true, null,
+        this.viewContainerRef, DateFormatSettingsPanelComponent, 'top', false, null,
         ctx,
         {},
         {}, {}, true);
@@ -192,7 +192,7 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
           defaultAutoDateFormatSettings, this.modelValue.autoDateFormatSettings)
       };
       const autoDateFormatSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, AutoDateFormatSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        this.viewContainerRef, AutoDateFormatSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], false, null,
         ctx,
         {},
         {}, {}, true);

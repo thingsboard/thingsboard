@@ -212,7 +212,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       this.popoverService.hidePopover(trigger);
     } else {
       const createVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionCreateComponent, 'leftTop', true, null,
+        this.viewContainerRef, EntityVersionCreateComponent, 'leftTop', false, null,
         {
           branch: this.branch,
           entityId: this.entityId,
@@ -244,7 +244,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       this.popoverService.hidePopover(trigger);
     } else {
       const complexCreateVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ComplexVersionCreateComponent, 'leftTop', true, null,
+        this.viewContainerRef, ComplexVersionCreateComponent, 'leftTop', false, null,
         {
           branch: this.branch,
           onClose: (result: VersionCreationResult | null, branch: string | null) => {
@@ -296,7 +296,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       this.popoverService.hidePopover(trigger);
     } else {
       const restoreVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionRestoreComponent, 'leftTop', true, null,
+        this.viewContainerRef, EntityVersionRestoreComponent, 'leftTop', false, null,
         {
           versionName: entityVersion.name,
           versionId: entityVersion.id,
@@ -323,7 +323,7 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
       this.popoverService.hidePopover(trigger);
     } else {
       const restoreEntitiesVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ComplexVersionLoadComponent, 'leftTop', true, null,
+        this.viewContainerRef, ComplexVersionLoadComponent, 'leftTop', false, null,
         {
           versionName: entityVersion.name,
           versionId: entityVersion.id,

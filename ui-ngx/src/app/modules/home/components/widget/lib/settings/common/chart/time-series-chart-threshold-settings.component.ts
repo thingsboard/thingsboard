@@ -108,7 +108,7 @@ export class TimeSeriesChartThresholdSettingsComponent implements OnInit, Contro
         yAxisIds: this.yAxisIds
       };
       const thresholdSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimeSeriesChartThresholdSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        this.viewContainerRef, TimeSeriesChartThresholdSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], false, null,
         ctx,
         {},
         {}, {}, true);

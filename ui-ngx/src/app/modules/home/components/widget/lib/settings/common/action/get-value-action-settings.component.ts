@@ -142,7 +142,7 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
       };
       const getValueSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, GetValueActionSettingsPanelComponent,
-        ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
+        ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], false, null,
         ctx,
         {},
         {}, {}, true);
