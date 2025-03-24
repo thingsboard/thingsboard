@@ -27,4 +27,5 @@ public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfi
     public CalculatedFieldType getType() {
         return CalculatedFieldType.SIMPLE;
     }
+
 }
