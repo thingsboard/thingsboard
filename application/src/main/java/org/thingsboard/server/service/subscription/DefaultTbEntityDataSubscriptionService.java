@@ -725,7 +725,11 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                             update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
                             ctx.setInitialDataSent(true);
                         } else {
-                            update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+                            // to avoid updating timeseries with empty values
+                            List<EntityData> data = ctx.getData().getData().stream()
+                                    .peek(entityData -> entityData.setTimeseries(null))
+                                    .toList();
+                            update = new EntityDataUpdate(ctx.getCmdId(), null, data, ctx.getMaxEntitiesPerDataSubscription());
                         }
                         ctx.sendWsMsg(update);
                     } finally {
