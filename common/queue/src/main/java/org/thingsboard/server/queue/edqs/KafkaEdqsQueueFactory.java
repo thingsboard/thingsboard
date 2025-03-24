@@ -103,12 +103,11 @@ public class KafkaEdqsQueueFactory implements EdqsQueueFactory {
 
     @Override
     public TbQueueResponseTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> createEdqsResponseTemplate() {
-        String requestsConsumerGroup = "edqs-requests-consumer-group-" + edqsConfig.getLabel();
         var requestConsumer = TbKafkaConsumerTemplate.<TbProtoQueueMsg<TransportProtos.ToEdqsMsg>>builder()
                 .settings(kafkaSettings)
                 .topic(topicService.buildTopicName(edqsConfig.getRequestsTopic()))
                 .clientId("edqs-requests-consumer-" + serviceInfoProvider.getServiceId())
-                .groupId(topicService.buildTopicName(requestsConsumerGroup))
+                .groupId(topicService.buildTopicName("edqs-requests-consumer-group"))
                 .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToEdqsMsg.parseFrom(msg.getData()), msg.getHeaders()))
                 .admin(edqsRequestsAdmin)
                 .statsService(consumerStatsService);

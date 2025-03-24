@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
@@ -45,6 +46,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
 
     private final TbKafkaSettings settings;
     private final Map<String, String> topicConfigs;
+    @Getter
     private final int numPartitions;
     private volatile Set<String> topics;
 

@@ -149,7 +149,7 @@ queue:
     #    value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
     topic-properties:
       # Kafka properties for EDQS events topics
-      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1}"
+      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:86400000;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1}"
       # Kafka properties for EDQS requests topic (default: 3 minutes retention)
       edqs-requests: "${TB_QUEUE_KAFKA_EDQS_REQUESTS_TOPIC_PROPERTIES:retention.ms:180000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for EDQS state topic (infinite retention, compaction)

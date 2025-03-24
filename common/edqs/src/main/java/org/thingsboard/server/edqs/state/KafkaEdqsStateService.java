@@ -36,7 +36,6 @@ import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
 import org.thingsboard.server.queue.common.state.QueueStateService;
 import org.thingsboard.server.queue.discovery.QueueKey;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.edqs.EdqsConfig;
 import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.edqs.EdqsQueueFactory;
@@ -57,7 +56,6 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private final EdqsConfig config;
     private final EdqsPartitionService partitionService;
     private final EdqsQueueFactory queueFactory;
-    private final TopicService topicService;
     @Autowired @Lazy
     private EdqsProcessor edqsProcessor;
 
@@ -91,7 +89,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
                     }
                     consumer.commit();
                 })
-                .consumerCreator((config, partitionId) -> queueFactory.createEdqsMsgConsumer(EdqsQueue.STATE))
+                .consumerCreator((config, partitionId) -> queueFactory.createEdqsMsgConsumer(EdqsQueue.STATE, null)) // not using consumer group management
                 .queueAdmin(queueFactory.getEdqsQueueAdmin())
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .taskExecutor(eventConsumer.getTaskExecutor())

@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQueueConsumerTemplate<ConsumerRecord<String, byte[]>, T> {
 
-    private final TbQueueAdmin admin;
+    private final TbKafkaAdmin admin;
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
 
@@ -78,7 +79,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
             statsService.registerClientGroup(groupId);
         }
 
-        this.admin = admin;
+        this.admin = (TbKafkaAdmin) admin;
         this.consumer = new KafkaConsumer<>(props);
         this.decoder = decoder;
         this.readFromBeginning = readFromBeginning;
@@ -105,14 +106,19 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
             List<String> toSubscribe = new ArrayList<>();
             topics.forEach((topic, kafkaPartitions) -> {
                 if (kafkaPartitions == null) {
-                    toSubscribe.add(topic);
-                } else {
-                    List<TopicPartition> topicPartitions = kafkaPartitions.stream()
-                            .map(partition -> new TopicPartition(topic, partition))
-                            .toList();
-                    consumer.assign(topicPartitions);
-                    onPartitionsAssigned(topicPartitions);
+                    if (groupId != null) {
+                        toSubscribe.add(topic);
+                        return;
+                    } else { // if no consumer group management - manually assigning all topic partitions
+                        kafkaPartitions = IntStream.range(0, admin.getNumPartitions()).boxed().toList();
+                    }
                 }
+
+                List<TopicPartition> topicPartitions = kafkaPartitions.stream()
+                        .map(partition -> new TopicPartition(topic, partition))
+                        .toList();
+                consumer.assign(topicPartitions);
+                onPartitionsAssigned(topicPartitions);
             });
             if (!toSubscribe.isEmpty()) {
                 if (readFromBeginning || stopWhenRead) {
@@ -195,7 +201,9 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
 
     @Override
     protected void doCommit() {
-        consumer.commitSync();
+        if (groupId != null) {
+            consumer.commitSync();
+        }
     }
 
     @Override
