@@ -368,7 +368,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         var proto = msg.getProto();
         var linksList = proto.getLinksList();
         if (linksList.isEmpty()) {
-            log.debug("[{}] No new linked telemetry to process for CF.", msg.getTenantId());
+            log.debug("[{}] No CF links to process new telemetry.", msg.getTenantId());
             msg.getCallback().onSuccess();
         }
         for (var linkProto : linksList) {
