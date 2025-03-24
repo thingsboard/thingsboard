@@ -7995,7 +7995,7 @@
                 "on-click": "On click",
                 "on-click-hint": "Action invoked when user clicks on the map item.",
                 "groups": "Groups",
-                "groups-hint": "List of group names assigned to this datasource. Used to toggle visibility of datasource items on the map.",
+                "groups-hint": "List of group names assigned to the overlay, used to toggle its visibility on the map.",
                 "color": "Color",
                 "fill-color": "Fill color",
                 "stroke": "Stroke",

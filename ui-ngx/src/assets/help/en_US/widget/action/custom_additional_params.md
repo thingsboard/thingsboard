@@ -32,24 +32,10 @@ An optional key/value object holding additional entity parameters depending on w
       </li>
     </ul>
   </li>
-  <li>Map widgets - <b>additionalParams</b>: <code><a href="https://github.com/thingsboard/thingsboard/blob/b881f1c2985399f9665e033e2479549e97da1f36/ui-ngx/src/app/shared/models/widget.models.ts#L513" target="_blank">FormattedData</a></code>:
+  <li>Map widgets (<i>On marker/polygon/circle click</i> or <i>Tag action</i>) - <b>additionalParams</b>: <code><a href="https://github.com/thingsboard/thingsboard/blob/b881f1c2985399f9665e033e2479549e97da1f36/ui-ngx/src/app/shared/models/widget.models.ts#L513" target="_blank">FormattedData</a></code>:
     <ul>
       <li><b>additionalParams:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/b881f1c2985399f9665e033e2479549e97da1f36/ui-ngx/src/app/shared/models/widget.models.ts#L513" target="_blank">FormattedData</a></code> - An object associated with a data layer (markers, polygons, circles) or with a specific data point of a route (for trips data layers).<br/>
           It contains basic entity properties (ex. <code>entityId</code>, <code>entityName</code>) and provides access to additional attributes and timeseries defined in datasource of the data layer configuration.
-      </li>
-    </ul>
-  </li>
-  <li>Map widgets (Action type: <i>Place map item</i>) - <b>additionalParams</b>: <code>{coordinates: Coordinates; layer: <a href="https://leafletjs.com/reference.html#layer" target="_blank">L.Layer</a>}</code>:
-    <ul>
-      <li><b>coordinates:</b> <code>Coordinates</code> - Represents geographical coordinates of the placed map item. The actual format of this parameter depends on the type of the selected map item:
-        <ul>
-          <li><b>Marker:</b> <code>{x: number; y: number}</code>, where <code>x</code> represents latitude, and <code>y</code> represents longitude.</li>
-          <li><b>Polygon, Rectangle:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/61254a68507c6def8c055b7b3ae70413c456a4ac/ui-ngx/src/app/shared/models/widget/maps/map.models.ts#L1099" target="_blank">TbPolygonRawCoordinates</a></code> contains an array of points defining the shape boundaries.</li>
-          <li><b>Circle:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/61254a68507c6def8c055b7b3ae70413c456a4ac/ui-ngx/src/app/shared/models/widget/maps/map.models.ts#L1104" target="_blank">TbCircleData</a></code> contains center coordinates and radius information.</li>
-        </ul>
-        Note: The coordinates will be automatically converted according to the selected map type.
-      </li>
-      <li><b>layer:</b> <code><a href="https://leafletjs.com/reference.html#layer" target="_blank">L.Layer</a></code> - The Leaflet map layer instance (e.g., marker, polygon, circle) associated with the placed map item. This object provides access to layer properties and methods defined in Leaflet's API.
       </li>
     </ul>
   </li>
