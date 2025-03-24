@@ -151,21 +151,23 @@ export class MapTooltipTagActionsComponent implements ControlValueAccessor, OnIn
     } else {
       const title = this.translate.instant(isAdd ? 'widgets.maps.data-layer.add-tooltip-tag-action' : 'widgets.maps.data-layer.edit-tooltip-tag-action');
       const applyTitle = this.translate.instant(isAdd ? 'action.add' : 'action.apply');
-      const ctx: any = {
-        widgetAction: action,
-        withName: true,
-        actionNames,
-        panelTitle: title,
-        applyTitle,
-        widgetType: widgetType.latest,
-        callbacks: this.context.callbacks
-      };
-      const widgetActionSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, WidgetActionSettingsPanelComponent,
-        ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const widgetActionSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: WidgetActionSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+        context: {
+          widgetAction: action,
+          withName: true,
+          actionNames,
+          panelTitle: title,
+          applyTitle,
+          widgetType: widgetType.latest,
+          callbacks: this.context.callbacks
+        },
+        isModal: true
+      });
       widgetActionSettingsPanelPopover.tbComponentRef.instance.widgetActionApplied.subscribe((widgetAction) => {
         widgetActionSettingsPanelPopover.hide();
         callback(widgetAction);

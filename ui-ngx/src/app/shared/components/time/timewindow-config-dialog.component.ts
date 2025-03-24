@@ -558,9 +558,13 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const aggregationConfigPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, AggregationOptionsConfigPanelComponent, ['left', 'leftTop', 'leftBottom'], true, null,
-        {
+      const aggregationConfigPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        hostView: this.viewContainerRef,
+        componentType: AggregationOptionsConfigPanelComponent,
+        preferredPlacement: ['left', 'leftTop', 'leftBottom'],
+        context: {
           allowedAggregationTypes: deepClone(this.timewindowForm.get('allowedAggTypes').value),
           onClose: (result: Array<AggregationType> | null) => {
             aggregationConfigPopover.hide();
@@ -570,8 +574,10 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
             }
           }
         },
-        {maxHeight: '500px', height: '100%'},
-        {}, {}, true, () => {}, {padding: 0});
+        overlayStyle: {maxHeight: '500px', height: '100%'},
+        popoverContentStyle: {padding: 0},
+        isModal: true
+      });
       aggregationConfigPopover.tbComponentRef.instance.popoverComponent = aggregationConfigPopover;
     }
     this.cd.detectChanges();
@@ -612,9 +618,13 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const intervalsConfigPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, IntervalOptionsConfigPanelComponent, ['left', 'leftTop', 'leftBottom'], true, null,
-        {
+      const intervalsConfigPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        hostView: this.viewContainerRef,
+        componentType: IntervalOptionsConfigPanelComponent,
+        preferredPlacement: ['left', 'leftTop', 'leftBottom'],
+        context: {
           aggregation: this.aggregation,
           allowedIntervals: deepClone(this.timewindowForm.get(allowedIntervalsControlName).value),
           aggIntervalsConfig: deepClone(this.timewindowForm.get(aggIntervalsConfigControlName).value),
@@ -629,8 +639,10 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
             }
           }
         },
-        {maxHeight: '500px', height: '100%'},
-        {}, {}, true, () => {}, {padding: 0});
+        overlayStyle: {maxHeight: '500px', height: '100%'},
+        popoverContentStyle: {padding: 0},
+        isModal: true
+      });
       intervalsConfigPopover.tbComponentRef.instance.popoverComponent = intervalsConfigPopover;
     }
     this.cd.detectChanges();

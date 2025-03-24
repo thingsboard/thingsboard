@@ -232,16 +232,23 @@ export class EntityTypesVersionLoadComponent extends PageComponent implements On
       if (this.popoverService.hasPopover(trigger)) {
         this.popoverService.hidePopover(trigger);
       } else {
-        const removeOtherEntitiesConfirmPopover = this.popoverService.displayPopover(trigger, this.renderer,
-          this.viewContainerRef, RemoveOtherEntitiesConfirmComponent, 'bottom', true, null,
-          {
+        const removeOtherEntitiesConfirmPopover = this.popoverService.displayPopover({
+          trigger,
+          renderer: this.renderer,
+          componentType: RemoveOtherEntitiesConfirmComponent,
+          hostView: this.viewContainerRef,
+          preferredPlacement: 'bottom',
+          context: {
             onClose: (result: boolean | null) => {
               removeOtherEntitiesConfirmPopover.hide();
               if (result) {
                 entityTypeControl.get('config').get('removeOtherEntities').patchValue(true, {emitEvent: true});
               }
             }
-          }, {}, {}, {}, false);
+          },
+          showCloseButton: false,
+          isModal: true
+        });
       }
     }
   }

@@ -76,14 +76,17 @@ export class MarkerImageSettingsComponent implements ControlValueAccessor {
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        markerImageSettings: this.modelValue,
-      };
-      const markerImageSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, MarkerImageSettingsPanelComponent, 'left', false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const markerImageSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: MarkerImageSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'left',
+        context: {
+          markerImageSettings: this.modelValue,
+        },
+        isModal: true
+      });
       markerImageSettingsPanelPopover.tbComponentRef.instance.popover = markerImageSettingsPanelPopover;
       markerImageSettingsPanelPopover.tbComponentRef.instance.markerImageSettingsApplied.subscribe((markerImageSettings) => {
         markerImageSettingsPanelPopover.hide();

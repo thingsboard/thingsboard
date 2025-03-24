@@ -114,19 +114,21 @@ export class WidgetActionSettingsComponent implements OnInit, ControlValueAccess
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        widgetAction: this.modelValue,
-        panelTitle: this.panelTitle,
-        widgetType: this.widgetType,
-        callbacks: this.callbacks,
-        additionalWidgetActionTypes: this.additionalWidgetActionTypes
-      };
-      const widgetActionSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, WidgetActionSettingsPanelComponent,
-        ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const widgetActionSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: WidgetActionSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+        context: {
+          widgetAction: this.modelValue,
+          panelTitle: this.panelTitle,
+          widgetType: this.widgetType,
+          callbacks: this.callbacks,
+          additionalWidgetActionTypes: this.additionalWidgetActionTypes
+        },
+        isModal: true
+      });
       widgetActionSettingsPanelPopover.tbComponentRef.instance.widgetActionApplied.subscribe((widgetAction) => {
         widgetActionSettingsPanelPopover.hide();
         this.modelValue = widgetAction;

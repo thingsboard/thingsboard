@@ -97,19 +97,22 @@ export class DataLayerColorSettingsComponent implements ControlValueAccessor {
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        colorSettings: this.modelValue,
-        context: this.context,
-        dsType: this.dsType,
-        dsEntityAliasId: this.dsEntityAliasId,
-        dsDeviceId: this.dsDeviceId,
-        helpId: this.helpId
-      };
-      const colorSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, DataLayerColorSettingsPanelComponent, 'left', false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const colorSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: DataLayerColorSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'left',
+        context: {
+          colorSettings: this.modelValue,
+          context: this.context,
+          dsType: this.dsType,
+          dsEntityAliasId: this.dsEntityAliasId,
+          dsDeviceId: this.dsDeviceId,
+          helpId: this.helpId
+        },
+        isModal: true
+      });
       colorSettingsPanelPopover.tbComponentRef.instance.popover = colorSettingsPanelPopover;
       colorSettingsPanelPopover.tbComponentRef.instance.colorSettingsApplied.subscribe((colorSettings) => {
         colorSettingsPanelPopover.hide();
