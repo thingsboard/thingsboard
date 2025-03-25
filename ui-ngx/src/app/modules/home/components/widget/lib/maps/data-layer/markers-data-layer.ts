@@ -480,7 +480,7 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
       });
       this.marker.pm.enableLayerDrag();
       this.marker.on('pm:dragstart', () => {
-        (this.marker.dragging as any)._draggable = { _moved: true };
+        (this.marker.dragging as any)._draggable = { _moved: true, off: (_args: any) => { return { disable: () => {}} } };
         (this.marker.dragging as any)._enabled = true;
         this.moving = true;
       });
