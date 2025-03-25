@@ -199,7 +199,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         tenantProfileService.findOrCreateDefaultTenantProfile(TenantId.SYS_TENANT_ID);
 
         TenantProfileData isolatedRuleEngineTenantProfileData = new TenantProfileData();
-        isolatedRuleEngineTenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        DefaultTenantProfileConfiguration configuration = new DefaultTenantProfileConfiguration();
+        configuration.setMaxDebugModeDurationMinutes(15);
+        isolatedRuleEngineTenantProfileData.setConfiguration(configuration);
 
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
         mainQueueConfiguration.setName(DataConstants.MAIN_QUEUE_NAME);
