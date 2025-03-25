@@ -150,8 +150,9 @@ public class TenantRepo {
                 }
             } else if (RelationTypeGroup.DASHBOARD.equals(entity.getTypeGroup())) {
                 if (EntityRelation.CONTAINS_TYPE.equals(entity.getType()) && entity.getFrom().getEntityType() == EntityType.CUSTOMER) {
-                    ((CustomerData) getEntityMap(EntityType.CUSTOMER).computeIfAbsent(entity.getFrom().getId(), CustomerData::new))
-                            .addOrUpdate(getEntityMap(EntityType.DASHBOARD).get(entity.getTo().getId()));
+                    CustomerData customerData = (CustomerData) getOrCreate(entity.getFrom());
+                    EntityData<?> dashboardData = getOrCreate(entity.getTo());
+                    customerData.addOrUpdate(dashboardData);
                 }
             }
         } finally {
@@ -170,8 +171,13 @@ public class TenantRepo {
             }
         } else if (RelationTypeGroup.DASHBOARD.equals(entityRelation.getTypeGroup())) {
             if (EntityRelation.CONTAINS_TYPE.equals(entityRelation.getType()) && entityRelation.getFrom().getEntityType() == EntityType.CUSTOMER) {
-                ((CustomerData) getEntityMap(EntityType.CUSTOMER).computeIfAbsent(entityRelation.getFrom().getId(), CustomerData::new))
-                        .remove(getEntityMap(EntityType.DASHBOARD).get(entityRelation.getTo().getId()));
+                CustomerData customerData = (CustomerData) get(entityRelation.getFrom());
+                if (customerData != null) {
+                    EntityData<?> dashboardData = get(entityRelation.getTo());
+                    if (dashboardData != null) {
+                        customerData.remove(dashboardData);
+                    }
+                }
             }
         }
     }
@@ -197,13 +203,13 @@ public class TenantRepo {
             entityData.setCustomerId(newCustomerId);
             if (entityIdMismatch(oldCustomerId, newCustomerId)) {
                 if (oldCustomerId != null) {
-                    CustomerData old = (CustomerData) getEntityMap(EntityType.CUSTOMER).get(oldCustomerId);
+                    CustomerData old = (CustomerData) get(EntityType.CUSTOMER, oldCustomerId);
                     if (old != null) {
                         old.remove(entityData);
                     }
                 }
                 if (newCustomerId != null) {
-                    CustomerData newData = (CustomerData) getEntityMap(EntityType.CUSTOMER).computeIfAbsent(newCustomerId, CustomerData::new);
+                    CustomerData newData = (CustomerData) getOrCreate(EntityType.CUSTOMER, newCustomerId);
                     newData.addOrUpdate(entityData);
                 }
             }
@@ -217,7 +223,7 @@ public class TenantRepo {
         try {
             UUID entityId = entity.getFields().getId();
             EntityType entityType = entity.getType();
-            EntityData<?> removed = getEntityMap(entityType).remove(entityId);
+            EntityData<?> removed = get(entityType, entityId);
             if (removed != null) {
                 if (removed.getFields() != null) {
                     getEntitySet(entityType).remove(removed);
@@ -225,7 +231,7 @@ public class TenantRepo {
                 edqsStatsService.ifPresent(statService -> statService.reportEvent(tenantId, ObjectType.fromEntityType(entityType), EdqsEventType.DELETED));
                 UUID customerId = removed.getCustomerId();
                 if (customerId != null) {
-                    CustomerData customerData = (CustomerData) getEntityMap(EntityType.CUSTOMER).get(customerId);
+                    CustomerData customerData = (CustomerData) get(EntityType.CUSTOMER, customerId);
                     if (customerData != null) {
                         customerData.remove(removed);
                     }
@@ -303,7 +309,11 @@ public class TenantRepo {
     }
 
     private EntityData<?> get(EntityId entityId) {
-        return getEntityMap(entityId.getEntityType()).get(entityId.getId());
+        return get(entityId.getEntityType(), entityId.getId());
+    }
+
+    private EntityData<?> get(EntityType entityType, UUID entityId) {
+        return getEntityMap(entityType).get(entityId);
     }
 
     private EntityData<?> constructEntityData(EntityType entityType, UUID id) {
@@ -425,7 +435,7 @@ public class TenantRepo {
         EntityType entityType = entityId.getEntityType();
         return switch (entityType) {
             case CUSTOMER, TENANT -> {
-                EntityFields fields = getEntityMap(entityType).get(entityId.getId()).getFields();
+                EntityFields fields = get(entityId).getFields();
                 yield fields != null ? fields.getName() : "";
             }
             default -> throw new RuntimeException("Unsupported entity type: " + entityType);

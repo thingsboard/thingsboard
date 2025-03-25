@@ -19,11 +19,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
-import org.thingsboard.server.queue.TbQueueAdmin;
-import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueResponseTemplate;
@@ -71,54 +68,68 @@ public class KafkaEdqsQueueFactory implements EdqsQueueFactory {
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgConsumer(EdqsQueue queue) {
-        String consumerGroup = "edqs-" + queue.name().toLowerCase() + "-consumer-group-" + serviceInfoProvider.getServiceId();
-        return createEdqsMsgConsumer(queue, consumerGroup);
+    public TbKafkaConsumerTemplate<TbProtoQueueMsg<ToEdqsMsg>> createEdqsEventsConsumer() {
+        return createEdqsMsgConsumer(edqsConfig.getEventsTopic(),
+                "edqs-events-" + consumerCounter.getAndIncrement() + "-consumer-" + serviceInfoProvider.getServiceId(),
+                null, // not using consumer group management, offsets from the edqs-events-to-backup-consumer-group are used (see KafkaEdqsStateService)
+                false, edqsEventsAdmin);
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgConsumer(EdqsQueue queue, String group) {
+    public TbKafkaConsumerTemplate<TbProtoQueueMsg<ToEdqsMsg>> createEdqsEventsToBackupConsumer() {
+        return createEdqsMsgConsumer(edqsConfig.getEventsTopic(),
+                "edqs-events-to-backup-consumer-" + serviceInfoProvider.getServiceId(),
+                "edqs-events-to-backup-consumer-group",
+                false, edqsEventsAdmin);
+    }
+
+    @Override
+    public TbKafkaConsumerTemplate<TbProtoQueueMsg<ToEdqsMsg>> createEdqsStateConsumer() {
+        return createEdqsMsgConsumer(edqsConfig.getStateTopic(),
+                "edqs-state-" + consumerCounter.getAndIncrement() + "-consumer-" + serviceInfoProvider.getServiceId(),
+                null, // not using consumer group management
+                true, edqsStateAdmin);
+    }
+
+    public TbKafkaConsumerTemplate<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgConsumer(String topic, String clientId, String group, boolean readFullAndStop, TbKafkaAdmin admin) {
         return TbKafkaConsumerTemplate.<TbProtoQueueMsg<ToEdqsMsg>>builder()
                 .settings(kafkaSettings)
-                .topic(topicService.buildTopicName(queue.getTopic()))
-                .readFromBeginning(queue.isReadFromBeginning())
-                .stopWhenRead(queue.isStopWhenRead())
-                .clientId("edqs-" + queue.name().toLowerCase() + "-" + consumerCounter.getAndIncrement() + "-consumer-" + serviceInfoProvider.getServiceId())
+                .topic(topicService.buildTopicName(topic))
+                .readFromBeginning(readFullAndStop)
+                .stopWhenRead(readFullAndStop)
+                .clientId(clientId)
                 .groupId(topicService.buildTopicName(group))
                 .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToEdqsMsg.parseFrom(msg.getData()), msg.getHeaders()))
-                .admin(queue == EdqsQueue.STATE ? edqsStateAdmin : edqsEventsAdmin)
+                .admin(admin)
                 .statsService(consumerStatsService)
                 .build();
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgProducer(EdqsQueue queue) {
+    public TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsStateProducer() {
         return TbKafkaProducerTemplate.<TbProtoQueueMsg<ToEdqsMsg>>builder()
-                .clientId("edqs-" + queue.name().toLowerCase() + "-producer-" + serviceInfoProvider.getServiceId())
-                .defaultTopic(topicService.buildTopicName(queue.getTopic()))
+                .clientId("edqs-state-producer-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(edqsConfig.getStateTopic()))
                 .settings(kafkaSettings)
-                .admin(queue == EdqsQueue.STATE ? edqsStateAdmin : edqsEventsAdmin)
+                .admin(edqsStateAdmin)
                 .build();
     }
 
     @Override
     public TbQueueResponseTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> createEdqsResponseTemplate() {
-        var requestConsumer = TbKafkaConsumerTemplate.<TbProtoQueueMsg<TransportProtos.ToEdqsMsg>>builder()
-                .settings(kafkaSettings)
-                .topic(topicService.buildTopicName(edqsConfig.getRequestsTopic()))
-                .clientId("edqs-requests-consumer-" + serviceInfoProvider.getServiceId())
-                .groupId(topicService.buildTopicName("edqs-requests-consumer-group"))
-                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToEdqsMsg.parseFrom(msg.getData()), msg.getHeaders()))
-                .admin(edqsRequestsAdmin)
-                .statsService(consumerStatsService);
+        var requestConsumer = createEdqsMsgConsumer(edqsConfig.getRequestsTopic(),
+                "edqs-requests-consumer-" + serviceInfoProvider.getServiceId(),
+                "edqs-requests-consumer-group",
+                false, edqsRequestsAdmin);
         var responseProducer = TbKafkaProducerTemplate.<TbProtoQueueMsg<FromEdqsMsg>>builder()
                 .settings(kafkaSettings)
                 .clientId("edqs-response-producer-" + serviceInfoProvider.getServiceId())
                 .defaultTopic(topicService.buildTopicName(edqsConfig.getResponsesTopic()))
-                .admin(edqsRequestsAdmin);
+                .admin(edqsRequestsAdmin)
+                .build();
         return DefaultTbQueueResponseTemplate.<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>>builder()
-                .requestTemplate(requestConsumer.build())
-                .responseTemplate(responseProducer.build())
+                .requestTemplate(requestConsumer)
+                .responseTemplate(responseProducer)
                 .maxPendingRequests(edqsConfig.getMaxPendingRequests())
                 .requestTimeout(edqsConfig.getMaxRequestTimeout())
                 .pollInterval(edqsConfig.getPollInterval())
@@ -128,7 +139,7 @@ public class KafkaEdqsQueueFactory implements EdqsQueueFactory {
     }
 
     @Override
-    public TbQueueAdmin getEdqsQueueAdmin() {
+    public TbKafkaAdmin getEdqsQueueAdmin() {
         return edqsEventsAdmin;
     }
 

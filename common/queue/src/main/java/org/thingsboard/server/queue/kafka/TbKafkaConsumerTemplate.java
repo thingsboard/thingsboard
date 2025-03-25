@@ -16,6 +16,8 @@
 package org.thingsboard.server.queue.kafka;
 
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -39,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -53,8 +56,11 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     private final TbKafkaDecoder<T> decoder;
 
     private final TbKafkaConsumerStatsService statsService;
+    @Getter
     private final String groupId;
 
+    @Setter
+    private Function<String, Long> startOffsetProvider;
     private final boolean readFromBeginning; // reset offset to beginning
     private final boolean stopWhenRead; // stop consuming when reached end offset remembered on start
     private int readCount;
@@ -185,9 +191,21 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
 
     private void onPartitionsAssigned(Collection<TopicPartition> partitions) {
         if (readFromBeginning) {
+            log.debug("Seeking to beginning for {}", partitions);
             consumer.seekToBeginning(partitions);
+        } else if (startOffsetProvider != null) {
+            partitions.forEach(topicPartition -> {
+                Long offset = startOffsetProvider.apply(topicPartition.topic());
+                if (offset != null) {
+                    log.debug("Seeking to offset {} for {}", offset, topicPartition);
+                    consumer.seek(topicPartition, offset);
+                } else {
+                    log.info("No start offset provided for {}", topicPartition);
+                }
+            });
         }
         if (stopWhenRead) {
+            log.debug("Getting end offsets for {}", partitions);
             endOffsets = consumer.endOffsets(partitions).entrySet().stream()
                     .filter(entry -> entry.getValue() > 0)
                     .collect(Collectors.toMap(entry -> entry.getKey().partition(), Map.Entry::getValue));

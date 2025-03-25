@@ -57,6 +57,10 @@ queue:
     partitions: "${TB_EDQS_PARTITIONS:12}"
     # EDQS partitioning strategy: tenant (partitions are resolved and distributed by tenant id) or none (partitions are resolved by message key; each instance has all the partitions)
     partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}"
+    # EDQS events topic
+    events_topic: "${TB_EDQS_EVENTS_TOPIC:edqs.events}"
+    # EDQS state topic
+    state_topic: "${TB_EDQS_STATE_TOPIC:edqs.state}"
     # EDQS requests topic
     requests_topic: "${TB_EDQS_REQUESTS_TOPIC:edqs.requests}"
     # EDQS responses topic
