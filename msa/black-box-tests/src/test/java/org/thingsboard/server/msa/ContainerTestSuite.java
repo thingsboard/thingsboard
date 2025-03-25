@@ -188,8 +188,8 @@ public class ContainerTestSuite {
                     .waitingFor("tb-vc-executor1", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-vc-executor2", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-js-executor", Wait.forLogMessage(TB_JS_EXECUTOR_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-edqs-1", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-edqs-2", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
+                    .waitingFor("tb-edqs1", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-edqs2", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
             testContainer.start();
             setActive(true);
         } catch (Exception e) {

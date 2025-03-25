@@ -367,6 +367,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         log.debug("Received linked telemetry msg from entity [{}]", sourceEntityId);
         var proto = msg.getProto();
         var linksList = proto.getLinksList();
+        if (linksList.isEmpty()) {
+            log.debug("[{}] No CF links to process new telemetry.", msg.getTenantId());
+            msg.getCallback().onSuccess();
+        }
         for (var linkProto : linksList) {
             var link = fromProto(linkProto);
             var targetEntityId = link.entityId();
