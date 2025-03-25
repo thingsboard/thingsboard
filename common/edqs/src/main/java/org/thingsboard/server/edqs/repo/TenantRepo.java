@@ -173,10 +173,7 @@ public class TenantRepo {
             if (EntityRelation.CONTAINS_TYPE.equals(entityRelation.getType()) && entityRelation.getFrom().getEntityType() == EntityType.CUSTOMER) {
                 CustomerData customerData = (CustomerData) get(entityRelation.getFrom());
                 if (customerData != null) {
-                    EntityData<?> dashboardData = get(entityRelation.getTo());
-                    if (dashboardData != null) {
-                        customerData.remove(dashboardData);
-                    }
+                    customerData.remove(EntityType.DASHBOARD, entityRelation.getTo().getId());
                 }
             }
         }
@@ -205,7 +202,7 @@ public class TenantRepo {
                 if (oldCustomerId != null) {
                     CustomerData old = (CustomerData) get(EntityType.CUSTOMER, oldCustomerId);
                     if (old != null) {
-                        old.remove(entityData);
+                        old.remove(entityType, entityId);
                     }
                 }
                 if (newCustomerId != null) {
@@ -233,7 +230,7 @@ public class TenantRepo {
                 if (customerId != null) {
                     CustomerData customerData = (CustomerData) get(EntityType.CUSTOMER, customerId);
                     if (customerData != null) {
-                        customerData.remove(removed);
+                        customerData.remove(entityType, entityId);
                     }
                 }
             }
