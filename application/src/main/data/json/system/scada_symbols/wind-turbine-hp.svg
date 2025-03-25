@@ -346,7 +346,7 @@
   <path d="m261.06 799 25.887-456h26.11l25.887 456z" stroke-width="2"/>
   <circle cx="300" cy="342" r="33" stroke-width="2"/>
   <rect x="247" y="777" width="106" height="22" rx="1" stroke-width="2"/>
- </g><path d="m201.8 0s-201.8 0-201.8 134v656.72c0 5.3024 5.3727 9.2808 12 9.2808h576c6.627 0 12-3.9784 12-9.2808v-656.72c0-134-198.21-134-198.21-134h-101.79zm201.21 162.4c-3.8661 0-6.9999 2.5072-6.9999 5.6v600.8c0 3.0928 3.1341 5.6 6.9999 5.6h43.998c3.8661 0 6.9999-2.5072 6.9999-5.6v-600.8c0-3.0928-3.1341-5.6-6.9999-5.6z" fill-opacity="0" tb:tag="clickArea"/><g transform="translate(0,716)" fill="#d12730" style="display: none;" tb:tag="critical">
+ </g><path d="m201.8 0s-201.8 0-201.8 134v656.72c0 5.3024 5.3727 9.2808 12 9.2808h576c6.627 0 12-3.9784 12-9.2808v-656.72c0-134-198.21-134-198.21-134h-101.79zm201.21 162.4c-3.8661 0-6.9999 2.5072-6.9999 5.6v600.8c0 3.0928 3.1341 5.6 6.9999 5.6h43.998c3.8661 0 6.9999-2.5072 6.9999-5.6v-600.8c0-3.0928-3.1341-5.6-6.9999-5.6z" fill-opacity="0" fill="#000" tb:tag="clickArea"/><g transform="translate(0,716)" fill="#d12730" style="display: none;" tb:tag="critical">
   <rect width="84" height="84" rx="4" fill="#fff" style=""/>
   <rect width="84" height="84" rx="4" style=""/>
   <rect x="2" y="2" width="80" height="80" rx="2" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>
