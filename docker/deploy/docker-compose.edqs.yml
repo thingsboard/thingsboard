@@ -32,7 +32,6 @@ services:
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
     environment:
       TB_SERVICE_ID: tb-edqs1
-      JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
       - ../config-env/tb-edqs.env
     volumes:
@@ -48,7 +47,6 @@ services:
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
     environment:
       TB_SERVICE_ID: tb-edqs2
-      JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
       - ../config-env/tb-edqs.env
     volumes:
