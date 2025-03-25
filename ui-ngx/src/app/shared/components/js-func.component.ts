@@ -518,14 +518,17 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        modules: deepClone(this.modules)
-      };
-      const modulesPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, JsFuncModulesComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const modulesPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: JsFuncModulesComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'leftTop',
+        context: {
+          modules: deepClone(this.modules)
+        },
+        isModal: true
+      });
       modulesPanelPopover.tbComponentRef.instance.popover = modulesPanelPopover;
       modulesPanelPopover.tbComponentRef.instance.modulesApplied.subscribe((modules) => {
         modulesPanelPopover.hide();

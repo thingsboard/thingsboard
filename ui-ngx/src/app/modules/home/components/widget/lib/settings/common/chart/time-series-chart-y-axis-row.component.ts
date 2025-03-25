@@ -151,17 +151,20 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        axisType: 'yAxis',
-        panelTitle: this.translate.instant('widgets.time-series-chart.axis.y-axis-settings'),
-        axisSettings: deepClone(this.modelValue),
-        advanced: this.advanced
-      };
-      const yAxisSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimeSeriesChartAxisSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const yAxisSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: TimeSeriesChartAxisSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: {
+          axisType: 'yAxis',
+          panelTitle: this.translate.instant('widgets.time-series-chart.axis.y-axis-settings'),
+          axisSettings: deepClone(this.modelValue),
+          advanced: this.advanced
+        },
+        isModal: true
+      });
       yAxisSettingsPanelPopover.tbComponentRef.instance.popover = yAxisSettingsPanelPopover;
       yAxisSettingsPanelPopover.tbComponentRef.instance.axisSettingsApplied.subscribe((yAxisSettings) => {
         yAxisSettingsPanelPopover.hide();

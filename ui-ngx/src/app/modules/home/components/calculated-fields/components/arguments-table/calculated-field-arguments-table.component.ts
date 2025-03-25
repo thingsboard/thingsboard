@@ -174,11 +174,15 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         entityHasError: this.entityNameErrorSet.has(argument.refEntityId?.id),
         usedArgumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argument.argumentName),
       };
-      this.popoverComponent = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, CalculatedFieldArgumentPanelComponent, isDefined(index) ? 'left' : 'right', false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      this.popoverComponent = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: CalculatedFieldArgumentPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: isDefined(index) ? 'left' : 'right',
+        context: ctx,
+        isModal: true
+      });
       this.popoverComponent.tbComponentRef.instance.argumentsDataApplied.subscribe(({ value, index }) => {
         this.popoverComponent.hide();
         const formGroup = this.fb.group(value);
