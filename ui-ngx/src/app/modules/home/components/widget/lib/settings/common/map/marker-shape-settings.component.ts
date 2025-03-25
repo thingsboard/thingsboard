@@ -49,6 +49,8 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import {
   MarkerIconShapesComponent
 } from '@home/components/widget/lib/settings/common/map/marker-icon-shapes.component';
+import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
+import { DatasourceType } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-marker-shape-settings',
@@ -68,6 +70,18 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  context: MapSettingsContext;
+
+  @Input()
+  dsType: DatasourceType;
+
+  @Input()
+  dsEntityAliasId: string;
+
+  @Input()
+  dsDeviceId: string;
 
   @Input()
   markerType: MarkerType;

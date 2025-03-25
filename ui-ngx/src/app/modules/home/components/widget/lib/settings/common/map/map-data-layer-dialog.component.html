@@ -200,11 +200,21 @@
             <ng-template matExpansionPanelContent>
               <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.shape" class="tb-form-row space-between column-xs">
                 <div translate>widgets.maps.data-layer.marker.shape</div>
-                <tb-marker-shape-settings formControlName="markerShape" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.shape"></tb-marker-shape-settings>
+                <tb-marker-shape-settings formControlName="markerShape"
+                                          [context]="context"
+                                          [dsType]="dataLayerFormGroup.get('dsType').value"
+                                          [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+                                          [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+                                          [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.shape"></tb-marker-shape-settings>
               </div>
               <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.icon" class="tb-form-row space-between column-xs">
                 <div translate>widgets.maps.data-layer.marker.icon</div>
-                <tb-marker-shape-settings formControlName="markerIcon" [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.icon"></tb-marker-shape-settings>
+                <tb-marker-shape-settings formControlName="markerIcon"
+                                          [context]="context"
+                                          [dsType]="dataLayerFormGroup.get('dsType').value"
+                                          [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+                                          [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+                                          [trip]="dataLayerType === 'trips'" [markerType]="MarkerType.icon"></tb-marker-shape-settings>
               </div>
               <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.image" class="tb-form-row space-between">
                 <div translate>widgets.maps.data-layer.marker.image</div>
@@ -275,7 +285,12 @@
                     <input matInput type="number" min="0" formControlName="pathStrokeWeight" placeholder="{{ 'widget-config.set' | translate }}">
                     <span matSuffix>px</span>
                   </mat-form-field>
-                  <tb-data-layer-color-settings helpId="widget/lib/map/path_color_fn" formControlName="pathStrokeColor"></tb-data-layer-color-settings>
+                  <tb-data-layer-color-settings
+                    [context]="context"
+                    [dsType]="dataLayerFormGroup.get('dsType').value"
+                    [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+                    [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+                    helpId="widget/lib/map/path_color_fn" formControlName="pathStrokeColor"></tb-data-layer-color-settings>
                 </div>
               </div>
               <div class="tb-form-panel tb-slide-toggle stroked">
@@ -361,7 +376,12 @@
                     <input matInput type="number" min="0" formControlName="pointSize" placeholder="{{ 'widget-config.set' | translate }}">
                     <span matSuffix>px</span>
                   </mat-form-field>
-                  <tb-data-layer-color-settings helpId="widget/lib/map/path_point_color_fn" formControlName="pointColor"></tb-data-layer-color-settings>
+                  <tb-data-layer-color-settings
+                    [context]="context"
+                    [dsType]="dataLayerFormGroup.get('dsType').value"
+                    [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+                    [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+                    helpId="widget/lib/map/path_point_color_fn" formControlName="pointColor"></tb-data-layer-color-settings>
                 </div>
               </div>
               <tb-data-layer-pattern-settings
@@ -379,7 +399,12 @@
       <ng-container *ngIf="['polygons', 'circles'].includes(dataLayerType)">
         <div class="tb-form-row space-between">
           <div translate>widgets.maps.data-layer.fill-color</div>
-          <tb-data-layer-color-settings helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_fill_color_fn' : 'widget/lib/map/circle_fill_color_fn' }}" formControlName="fillColor"></tb-data-layer-color-settings>
+          <tb-data-layer-color-settings
+            [context]="context"
+            [dsType]="dataLayerFormGroup.get('dsType').value"
+            [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+            [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+            helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_fill_color_fn' : 'widget/lib/map/circle_fill_color_fn' }}" formControlName="fillColor"></tb-data-layer-color-settings>
         </div>
         <div class="tb-form-row space-between">
           <div translate>widgets.maps.data-layer.stroke</div>
@@ -388,7 +413,12 @@
               <input matInput type="number" min="0" formControlName="strokeWeight" placeholder="{{ 'widget-config.set' | translate }}">
               <span matSuffix>px</span>
             </mat-form-field>
-            <tb-data-layer-color-settings helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_stroke_color_fn' : 'widget/lib/map/circle_stroke_color_fn' }}" formControlName="strokeColor"></tb-data-layer-color-settings>
+            <tb-data-layer-color-settings
+              [context]="context"
+              [dsType]="dataLayerFormGroup.get('dsType').value"
+              [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+              [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+              helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_stroke_color_fn' : 'widget/lib/map/circle_stroke_color_fn' }}" formControlName="strokeColor"></tb-data-layer-color-settings>
           </div>
         </div>
       </ng-container>

@@ -47,12 +47,20 @@ public class DefaultCalculatedFieldInitService implements CalculatedFieldInitSer
         PageDataIterable<ProfileEntityIdInfo> deviceIdInfos = new PageDataIterable<>(deviceService::findProfileEntityIdInfos, initFetchPackSize);
         for (ProfileEntityIdInfo idInfo : deviceIdInfos) {
             log.trace("Processing device record: {}", idInfo);
-            entityProfileCache.add(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId());
+            try {
+                entityProfileCache.add(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId());
+            } catch (Exception e) {
+                log.error("Failed to process device record: {}", idInfo, e);
+            }
         }
         PageDataIterable<ProfileEntityIdInfo> assetIdInfos = new PageDataIterable<>(assetService::findProfileEntityIdInfos, initFetchPackSize);
         for (ProfileEntityIdInfo idInfo : assetIdInfos) {
             log.trace("Processing asset record: {}", idInfo);
-            entityProfileCache.add(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId());
+            try {
+                entityProfileCache.add(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId());
+            } catch (Exception e) {
+                log.error("Failed to process asset record: {}", idInfo, e);
+            }
         }
     }
 

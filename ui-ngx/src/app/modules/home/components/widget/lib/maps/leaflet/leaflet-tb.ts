@@ -17,7 +17,7 @@
 import L, { TB } from 'leaflet';
 import { guid, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
-import '@maplibre/maplibre-gl-leaflet';
+import { Map as MapLibreGLMap, LngLat as MapLibreGLLngLat } from 'maplibre-gl';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -27,7 +27,7 @@ import { of } from 'rxjs';
 
 L.MarkerCluster = L.MarkerCluster.mergeOptions({ pmIgnore: true });
 
-class SidebarControl extends L.Control<TB.SidebarControlOptions> {
+class SidebarControl extends L.Control<TB.SidebarControlOptions> implements L.TB.SidebarControl {
 
   private readonly sidebar: JQuery<HTMLElement>;
 
@@ -95,7 +95,7 @@ class SidebarControl extends L.Control<TB.SidebarControlOptions> {
   }
 }
 
-class SidebarPaneControl<O extends TB.SidebarPaneControlOptions> extends L.Control<O> {
+class SidebarPaneControl<O extends TB.SidebarPaneControlOptions> extends L.Control<O> implements L.TB.SidebarPaneControl<O> {
 
   private button: JQuery<HTMLElement>;
   private $ui: JQuery<HTMLElement>;
@@ -155,7 +155,7 @@ class SidebarPaneControl<O extends TB.SidebarPaneControlOptions> extends L.Contr
   }
 }
 
-class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> {
+class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> implements L.TB.LayersControl {
   constructor(options: TB.LayersControlOptions) {
     super(options);
   }
@@ -215,9 +215,6 @@ class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> {
         if (!map.hasLayer(layerData.layer)) {
           map.addLayer(layerData.layer);
           map.attributionControl.setPrefix(layerData.attributionPrefix);
-          if (layerData.onAdd) {
-            layerData.onAdd();
-          }
           layers.forEach((other) => {
             if (other.layer !== layerData.layer) {
               map.removeLayer(other.layer);
@@ -238,12 +235,12 @@ class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> {
   }
 }
 
-class GroupsControl extends SidebarPaneControl<TB.GroupsControlOptions> {
+class GroupsControl extends SidebarPaneControl<TB.GroupsControlOptions> implements L.TB.GroupsControl {
   constructor(options: TB.GroupsControlOptions) {
     super(options);
   }
 
-  public onAddPane(map: L.Map, button: JQuery<HTMLElement>, $ui: JQuery<HTMLElement>, toggle: (e: JQuery.MouseEventBase) => void) {
+  public onAddPane(map: L.Map, _button: JQuery<HTMLElement>, $ui: JQuery<HTMLElement>, _toggle: (e: JQuery.MouseEventBase) => void) {
     const paneId = guid();
     const groups = this.options.groups;
     const baseSection = $("<div>")
@@ -285,7 +282,7 @@ class GroupsControl extends SidebarPaneControl<TB.GroupsControlOptions> {
   }
 }
 
-class TopToolbarButton {
+class TopToolbarButton implements L.TB.TopToolbarButton {
   private readonly button: JQuery<HTMLElement>;
   private active = false;
   private disabled = false;
@@ -393,7 +390,7 @@ class TopToolbarButton {
   }
 }
 
-class ToolbarButton {
+class ToolbarButton implements L.TB.ToolbarButton {
   private readonly id: string;
   private readonly button: JQuery<HTMLElement>;
   private active = false;
@@ -461,7 +458,7 @@ class ToolbarButton {
   }
 }
 
-class TopToolbarControl {
+class TopToolbarControl implements L.TB.TopToolbarControl {
 
   private readonly toolbarElement: JQuery<HTMLElement>;
   private buttons: Array<TopToolbarButton> = [];
@@ -490,7 +487,7 @@ class TopToolbarControl {
   }
 }
 
-class ToolbarControl extends L.Control<L.ControlOptions> {
+class ToolbarControl extends L.Control<L.ControlOptions> implements L.TB.ToolbarControl {
 
   private buttonContainer: JQuery<HTMLElement>;
 
@@ -516,7 +513,7 @@ class ToolbarControl extends L.Control<L.ControlOptions> {
 
 }
 
-class BottomToolbarControl {
+class BottomToolbarControl implements L.TB.BottomToolbarControl {
 
   private readonly buttonContainer: JQuery<HTMLElement>;
   private toolbarButtons: ToolbarButton[] = [];
@@ -575,35 +572,35 @@ class BottomToolbarControl {
 
 }
 
-const sidebar = (options: TB.SidebarControlOptions): SidebarControl => {
+const sidebar = (options: TB.SidebarControlOptions): L.TB.SidebarControl => {
   return new SidebarControl(options);
 }
 
-const sidebarPane = <O extends TB.SidebarPaneControlOptions>(options: O): SidebarPaneControl<O> => {
+const sidebarPane = <O extends TB.SidebarPaneControlOptions>(options: O): L.TB.SidebarPaneControl<O> => {
   return new SidebarPaneControl(options);
 }
 
-const layers = (options: TB.LayersControlOptions): LayersControl => {
+const layers = (options: TB.LayersControlOptions): L.TB.LayersControl => {
   return new LayersControl(options);
 }
 
-const groups = (options: TB.GroupsControlOptions): GroupsControl => {
+const groups = (options: TB.GroupsControlOptions): L.TB.GroupsControl => {
   return new GroupsControl(options);
 }
 
-const topToolbar = (options: TB.TopToolbarControlOptions): TopToolbarControl => {
+const topToolbar = (options: TB.TopToolbarControlOptions): L.TB.TopToolbarControl => {
   return new TopToolbarControl(options);
 }
 
-const toolbar = (options: L.ControlOptions): ToolbarControl => {
+const toolbar = (options: L.ControlOptions): L.TB.ToolbarControl => {
   return new ToolbarControl(options);
 }
 
-const bottomToolbar = (options: TB.BottomToolbarControlOptions): BottomToolbarControl => {
+const bottomToolbar = (options: TB.BottomToolbarControlOptions): L.TB.BottomToolbarControl => {
   return new BottomToolbarControl(options);
 }
 
-class ChinaProvider extends L.TileLayer {
+class ChinaProvider extends L.TileLayer implements L.TB.TileLayer.ChinaProvider {
 
   static chinaProviders: L.TB.TileLayer.ChinaProvidersData = {
     Tencent: {
@@ -649,8 +646,297 @@ class ChinaProvider extends L.TileLayer {
   }
 }
 
-const chinaProvider = (type: string, options?: L.TileLayerOptions): ChinaProvider => {
+const chinaProvider = (type: string, options?: L.TileLayerOptions): L.TB.TileLayer.ChinaProvider => {
   return new ChinaProvider(type, options);
+}
+
+class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
+
+  options: TB.MapLibreGL.LeafletMapLibreGLMapOptions;
+
+  private readonly _throttledUpdate: () => void;
+  private _container: HTMLDivElement;
+  private _glMap: MapLibreGLMap;
+  private _actualCanvas: HTMLCanvasElement;
+  private _offset: L.Point;
+  private _zooming: boolean;
+
+  constructor(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions) {
+    super();
+    options = {...options, ...{
+        updateInterval: 32,
+        padding: 0.1,
+        interactive: false,
+        pane: 'tilePane'
+    }};
+    options.attribution = this._loadAttribution(options);
+    this._prepareTransformRequest(options);
+    L.setOptions(this, options);
+    this._throttledUpdate = L.Util.throttle(this._update, this.options.updateInterval, this);
+  }
+
+  onAdd(map: L.Map): this {
+    let update = false;
+    if (!this._container) {
+      this._initContainer();
+    } else {
+      update = true;
+    }
+    const paneName = this.getPaneName();
+    map.getPane(paneName).appendChild(this._container);
+    this._initGL();
+
+    this._offset = this._map.containerPointToLayerPoint([0, 0]);
+    if ((this._map as any)._proxy && map.options.zoomAnimation) {
+      L.DomEvent.on((map as any)._proxy, L.DomUtil.TRANSITION_END, this._transitionEnd, this);
+    }
+    if (update) {
+      this._update();
+    }
+    return this;
+  }
+
+  onRemove(map: L.Map): this {
+    if ((this._map as any)._proxy && this._map.options.zoomAnimation) {
+      L.DomEvent.off((map as any)._proxy, L.DomUtil.TRANSITION_END, this._transitionEnd, this);
+    }
+    const paneName = this.getPaneName();
+    map.getPane(paneName).removeChild(this._container);
+
+    this._glMap.remove();
+    this._glMap = null;
+
+    return this;
+  }
+
+  getEvents(): { [p: string]: L.LeafletEventHandlerFn } {
+    return {
+      move: this._throttledUpdate, // sensibly throttle updating while panning
+      zoomanim: this._animateZoom, // applys the zoom animation to the <canvas>
+      zoom: this._pinchZoom, // animate every zoom event for smoother pinch-zooming
+      zoomstart: this._zoomStart, // flag starting a zoom to disable panning
+      zoomend: this._zoomEnd,
+      resize: this._resize
+    };
+  }
+
+  getMapLibreGLMap(): MapLibreGLMap {
+    return this._glMap;
+  }
+
+  getCanvas(): HTMLCanvasElement {
+    return this._glMap.getCanvas();
+  }
+
+  getSize(): L.Point {
+    return this._map.getSize().multiplyBy(1 + this.options.padding * 2);
+  }
+
+  getBounds(): L.LatLngBounds {
+    const halfSize = this.getSize().multiplyBy(0.5);
+    const center = this._map.latLngToContainerPoint(this._map.getCenter());
+    return L.latLngBounds(
+      this._map.containerPointToLatLng(center.subtract(halfSize)),
+      this._map.containerPointToLatLng(center.add(halfSize))
+    );
+  }
+
+  getContainer(): HTMLDivElement {
+    return this._container;
+  }
+
+  getPaneName(): string {
+    return this._map.getPane(this.options.pane) ? this.options.pane : 'tilePane';
+  }
+
+  private _roundPoint(p: L.Point): L.Point {
+    return new L.Point(Math.round(p.x), Math.round(p.y));
+  }
+
+  private _initContainer() {
+    const container = this._container = L.DomUtil.create('div', 'leaflet-gl-layer');
+    const size = this.getSize();
+    const offset = this._map.getSize().multiplyBy(this.options.padding);
+    container.style.width  = size.x + 'px';
+    container.style.height = size.y + 'px';
+    const topLeft = this._map.containerPointToLayerPoint([0, 0]).subtract(offset);
+    L.DomUtil.setPosition(container, this._roundPoint(topLeft));
+  }
+
+  private _initGL() {
+    const center = this._map.getCenter();
+    const options = L.extend({}, this.options, {
+      container: this._container,
+      center: [center.lng, center.lat],
+      zoom: this._map.getZoom() - 1,
+      attributionControl: false
+    });
+    this._glMap = new MapLibreGLMap(options);
+    this._glMap.setMaxBounds(null);
+    this._transformGL(this._glMap);
+    this._actualCanvas = this._glMap._canvas;
+    const canvas = this._actualCanvas;
+    L.DomUtil.addClass(canvas, 'leaflet-image-layer');
+    L.DomUtil.addClass(canvas, 'leaflet-zoom-animated');
+    if (this.options.interactive) {
+      L.DomUtil.addClass(canvas, 'leaflet-interactive');
+    }
+    if (this.options.className) {
+      L.DomUtil.addClass(canvas, this.options.className);
+    }
+  }
+
+  private _update() {
+    if (!this._map) {
+      return;
+    }
+    this._offset = this._map.containerPointToLayerPoint([0, 0]);
+
+    if (this._zooming) {
+      return;
+    }
+    const size = this.getSize(),
+      container = this._container,
+      gl = this._glMap,
+      offset = this._map.getSize().multiplyBy(this.options.padding),
+      topLeft = this._map.containerPointToLayerPoint([0, 0]).subtract(offset);
+
+    L.DomUtil.setPosition(container, this._roundPoint(topLeft));
+
+    this._transformGL(gl);
+
+    if (gl.transform.width !== size.x || gl.transform.height !== size.y) {
+      container.style.width  = size.x + 'px';
+      container.style.height = size.y + 'px';
+      gl.resize();
+    } else {
+      gl._update();
+    }
+  }
+
+  private _transformGL(gl: MapLibreGLMap) {
+    const center = this._map.getCenter();
+    const tr = gl._getTransformForUpdate();
+    tr.setCenter(MapLibreGLLngLat.convert([center.lng, center.lat]));
+    tr.setZoom(this._map.getZoom() - 1);
+    gl.transform.apply(tr);
+    gl._fireMoveEvents();
+  }
+
+  private _pinchZoom() {
+    this._glMap.jumpTo({
+      zoom: this._map.getZoom() - 1,
+      center: this._map.getCenter()
+    });
+  }
+
+  private _animateZoom(e: L.ZoomAnimEvent) {
+    const scale = this._map.getZoomScale(e.zoom);
+    const padding = this._map.getSize().multiplyBy(this.options.padding * scale);
+    const viewHalf = this.getSize().divideBy(2);
+
+    const topLeft = this._map.project(e.center, e.zoom)
+    .subtract(viewHalf)
+    .add((this._map as any)._getMapPanePos()
+    .add(padding)).round();
+
+    const offset = this._map.project(this._map.getBounds().getNorthWest(), e.zoom)
+                         .subtract(topLeft);
+
+    L.DomUtil.setTransform(
+      this._actualCanvas,
+      offset.subtract(this._offset),
+      scale
+    );
+  }
+
+  private _zoomStart() {
+    this._zooming = true;
+  }
+
+  private _zoomEnd() {
+    const scale = this._map.getZoomScale(this._map.getZoom());
+    L.DomUtil.setTransform(
+      this._actualCanvas,
+      null,
+      scale
+    );
+    this._zooming = false;
+    this._update();
+  }
+
+  private _transitionEnd() {
+    L.Util.requestAnimFrame(() => {
+      const zoom = this._map.getZoom();
+      const center = this._map.getCenter();
+      const offset = this._map.latLngToContainerPoint(
+        this._map.getBounds().getNorthWest()
+      );
+
+      L.DomUtil.setTransform(this._actualCanvas, offset, 1);
+
+      this._glMap.once('moveend', () => {
+        this._zoomEnd();
+      });
+      this._glMap.jumpTo({
+        center: center,
+        zoom: zoom - 1
+      });
+    });
+  }
+
+  private _resize() {
+    this._transitionEnd();
+  }
+
+  private _loadAttribution(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions): string {
+    if (options.attributionControl !== false && typeof options.attributionControl?.customAttribution === 'string') {
+      return options.attributionControl.customAttribution;
+    }
+    if (options.attributionControl !== false) {
+      const style = options.style;
+      if (typeof style !== 'string' && style?.sources) {
+        return Object.keys(style.sources)
+        .map((sourceId) => {
+          const source = style.sources[sourceId];
+          return (source && source.type !== 'video' && source.type !== 'image'
+            && typeof source.attribution === 'string') ? source.attribution.trim() : null;
+        })
+        .filter(Boolean) // Remove null/undefined values
+        .join(', ');
+      }
+    }
+    return '';
+  }
+
+  private _prepareTransformRequest(options: TB.MapLibreGL.LeafletMapLibreGLMapOptions) {
+    if (!options.transformRequest) {
+      const style = options.style;
+      if (typeof style !== 'string' && style.glyphs) {
+        const glyphs = style.glyphs;
+        const glyphsRegexString = glyphs.replace(/\//g, '\\/').replace(/\./g, '\\.').replace('{fontstack}', '(.*)').replace('{range}', '(.*)');
+        const glyphsRegex = new RegExp(glyphsRegexString);
+        options.transformRequest = (url, resourceType) => {
+          if (resourceType === 'Glyphs' && glyphsRegex && glyphsRegex.test(url)) {
+            const res = glyphsRegex.exec(url);
+            if (res.length === 3) {
+              const fontStack = res[1];
+              const fonts = fontStack.split(',');
+              if (fonts.length > 1) {
+                const newFontStack = fonts[0];
+                url = url.replace(fontStack, newFontStack);
+              }
+            }
+          }
+          return {url};
+        };
+      }
+    }
+  }
+}
+
+const mapLibreGLLayer = (options: TB.MapLibreGL.LeafletMapLibreGLMapOptions): TB.MapLibreGL.MapLibreGLLayer => {
+  return new MapLibreGLLayer(options);
 }
 
 L.TB = L.TB || {
@@ -675,5 +961,9 @@ L.TB = L.TB || {
   },
   tileLayer: {
     chinaProvider
+  },
+  MapLibreGL: {
+    MapLibreGLLayer,
+    mapLibreGLLayer
   }
 }

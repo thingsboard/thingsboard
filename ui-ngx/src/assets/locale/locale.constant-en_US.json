@@ -7910,7 +7910,8 @@
                     "reference-layer": "Reference layer",
                     "no-layer": "No layer",
                     "openstreetmap-hybrid": "OpenStreetMap Hybrid",
-                    "world-edition-hybrid": "World Edition Hybrid"
+                    "world-edition-hybrid": "World Edition Hybrid",
+                    "enhanced-contrast-hybrid": "Enhanced Contrast Hybrid"
                 },
                 "provider": {
                     "provider": "Provider",
@@ -7978,7 +7979,11 @@
                 "stroke": "Stroke",
                 "color-settings": "Color settings",
                 "color-type-constant": "Constant",
+                "color-type-range": "Range",
                 "color-type-function": "Function",
+                "color-range-source-key": "Color range source key",
+                "color-range-source-key-required": "Color range source key is required",
+                "color-range": "Color range",
                 "color-function": "Color function",
                 "label": "Label",
                 "tooltip": "Tooltip",

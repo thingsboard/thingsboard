@@ -87,6 +87,10 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   @Input()
   @coerceBoolean()
+  simpleRange = false;
+
+  @Input()
+  @coerceBoolean()
   advancedMode = false;
 
   modelValue: any;
@@ -133,7 +137,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   writeValue(value: any): void {
     if (value) {
       let rangeList: ColorRangeSettings = {};
-      if (isUndefined(value?.advancedMode) && value?.length) {
+      if (this.simpleRange || (isUndefined(value?.advancedMode) && value?.length)) {
         rangeList.advancedMode = false;
         rangeList.range = value;
       } else {
@@ -229,7 +233,11 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   }
 
   updateModel() {
-    this.propagateChange(this.colorRangeListFormGroup.value);
+    if (this.simpleRange) {
+      this.propagateChange(this.colorRangeListFormGroup.get('range').value);
+    } else {
+      this.propagateChange(this.colorRangeListFormGroup.value);
+    }
   }
 
 }
