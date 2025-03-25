@@ -18,25 +18,28 @@ package org.thingsboard.server.service.queue;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldLinkedTelemetryMsg;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.QueueConfig;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -57,6 +60,7 @@ import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -64,8 +68,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.server.common.util.ProtoUtils.fromProto;
 
 @Service
 @TbRuleEngineComponent
@@ -79,8 +81,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 
     private final TbRuleEngineQueueFactory queueFactory;
     private final CalculatedFieldStateService stateService;
-
-    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer;
 
     public DefaultTbCalculatedFieldConsumerService(TbRuleEngineQueueFactory tbQueueFactory,
                                                    ActorSystemContext actorContext,
@@ -104,12 +104,13 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
         super.init("tb-cf");
 
         var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
-        this.eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
+        PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
                 .queueKey(queueKey)
                 .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator((config, partitionId) -> queueFactory.createToCalculatedFieldMsgConsumer())
+                .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
@@ -129,9 +130,12 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        var partitions = event.getCfPartitions();
         try {
-            stateService.restore(partitions);
+            event.getNewPartitions().forEach((queueKey, partitions) -> {
+                if (queueKey.getQueueName().equals(DataConstants.CF_QUEUE_NAME)) {
+                    stateService.restore(queueKey, partitions);
+                }
+            });
             // eventConsumer's partitions will be updated by stateService
 
             // Cleanup old entities after corresponding consumers are stopped.
@@ -164,9 +168,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
                         forwardToActorSystem(toCfMsg.getTelemetryMsg(), callback);
                     } else if (toCfMsg.hasLinkedTelemetryMsg()) {
                         forwardToActorSystem(toCfMsg.getLinkedTelemetryMsg(), callback);
-                    } else if (toCfMsg.hasComponentLifecycleMsg()) {
-                        log.trace("[{}] Forwarding component lifecycle message for processing {}", id, toCfMsg.getComponentLifecycleMsg());
-                        forwardToActorSystem(toCfMsg.getComponentLifecycleMsg(), callback);
                     }
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -215,12 +216,23 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     @Override
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToCalculatedFieldNotificationMsg> msg, TbCallback callback) {
         ToCalculatedFieldNotificationMsg toCfNotification = msg.getValue();
-        if (toCfNotification.hasComponentLifecycleMsg()) {
-            handleComponentLifecycleMsg(id, ProtoUtils.fromProto(toCfNotification.getComponentLifecycleMsg()));
-            log.trace("[{}] Forwarding component lifecycle message for processing {}", id, toCfNotification.getComponentLifecycleMsg());
-            forwardToActorSystem(toCfNotification.getComponentLifecycleMsg(), callback);
-        } else if (toCfNotification.hasLinkedTelemetryMsg()) {
+        if (toCfNotification.hasLinkedTelemetryMsg()) {
             forwardToActorSystem(toCfNotification.getLinkedTelemetryMsg(), callback);
+        }
+    }
+
+    @EventListener
+    public void handleComponentLifecycleEvent(ComponentLifecycleMsg event) {
+        if (event.getEntityId().getEntityType() == EntityType.TENANT) {
+            if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
+                Set<TopicPartitionInfo> partitions = stateService.getPartitions();
+                if (CollectionUtils.isEmpty(partitions)) {
+                    return;
+                }
+                stateService.delete(partitions.stream()
+                        .filter(tpi -> tpi.getTenantId().isPresent() && tpi.getTenantId().get().equals(event.getTenantId()))
+                        .collect(Collectors.toSet()));
+            }
         }
     }
 
@@ -237,11 +249,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
         actorContext.tell(new CalculatedFieldLinkedTelemetryMsg(tenantId, entityId, linkedMsg, callback));
     }
 
-    private void forwardToActorSystem(ComponentLifecycleMsgProto proto, TbCallback callback) {
-        var msg = fromProto(proto);
-        actorContext.tell(new CalculatedFieldEntityLifecycleMsg(msg.getTenantId(), msg, callback));
-    }
-
     private TenantId toTenantId(long tenantIdMSB, long tenantIdLSB) {
         return TenantId.fromUUID(new UUID(tenantIdMSB, tenantIdLSB));
     }
@@ -249,9 +256,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     @Override
     protected void stopConsumers() {
         super.stopConsumers();
-        eventConsumer.stop();
-        eventConsumer.awaitStop();
-        stateService.stop();
+        stateService.stop(); // eventConsumer will be stopped by stateService
     }
 
 }

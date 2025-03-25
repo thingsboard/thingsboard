@@ -160,22 +160,26 @@ export class DatetimePeriodComponent implements ControlValueAccessor {
 
   private onStartDateChange(startDate: Date) {
     if (startDate) {
-      if (startDate.getTime() > this.maxStartTs) {
-        this.dateTimePeriodFormGroup.get('startDate').patchValue(new Date(this.maxStartTs), { emitEvent: false });
+      let startDateTs = startDate.getTime();
+      if (startDateTs > this.maxStartTs) {
+        startDateTs = this.maxStartTs;
+        this.dateTimePeriodFormGroup.get('startDate').patchValue(new Date(startDateTs), { emitEvent: false });
       }
-      if (startDate.getTime() > this.maxStartDateTs) {
-        this.dateTimePeriodFormGroup.get('endDate').patchValue(new Date(startDate.getTime() + this.timeShiftMs), { emitEvent: false });
+      if (startDateTs > this.maxStartDateTs) {
+        this.dateTimePeriodFormGroup.get('endDate').patchValue(new Date(startDateTs + this.timeShiftMs), { emitEvent: false });
       }
     }
   }
 
   private onEndDateChange(endDate: Date) {
     if (endDate) {
-      if (endDate.getTime() > this.maxEndTs) {
-        this.dateTimePeriodFormGroup.get('endDate').patchValue(new Date(this.maxEndTs), { emitEvent: false });
+      let endDateTs = endDate.getTime();
+      if (endDateTs > this.maxEndTs) {
+        endDateTs = this.maxEndTs;
+        this.dateTimePeriodFormGroup.get('endDate').patchValue(new Date(endDateTs), { emitEvent: false });
       }
-      if (endDate.getTime() < this.minEndDateTs) {
-        this.dateTimePeriodFormGroup.get('startDate').patchValue(new Date(endDate.getTime() - this.timeShiftMs), { emitEvent: false });
+      if (endDateTs < this.minEndDateTs) {
+        this.dateTimePeriodFormGroup.get('startDate').patchValue(new Date(endDateTs - this.timeShiftMs), { emitEvent: false });
       }
     }
   }

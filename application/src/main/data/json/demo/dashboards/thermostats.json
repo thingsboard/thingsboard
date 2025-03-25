@@ -17,7 +17,10 @@
               "realtimeType": 1,
               "interval": 1000,
               "timewindowMs": 86400000,
-              "quickInterval": "CURRENT_DAY"
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideQuickInterval": false
             },
             "history": {
               "historyType": 0,
@@ -27,7 +30,11 @@
                 "startTimeMs": 1694085177686,
                 "endTimeMs": 1694171577686
               },
-              "quickInterval": "CURRENT_DAY"
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideFixedInterval": false,
+              "hideQuickInterval": false
             },
             "aggregation": {
               "type": "NONE",
@@ -407,7 +414,10 @@
               "realtimeType": 1,
               "interval": 1000,
               "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideQuickInterval": false
             },
             "history": {
               "historyType": 0,
@@ -417,7 +427,11 @@
                 "startTimeMs": 1694085177686,
                 "endTimeMs": 1694171577686
               },
-              "quickInterval": "CURRENT_DAY"
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideFixedInterval": false,
+              "hideQuickInterval": false
             },
             "aggregation": {
               "type": "AVG",
@@ -459,466 +473,6 @@
         },
         "id": "c4631f94-2db3-523b-4d09-2a1a0a75d93f",
         "typeFullFqn": "system.input_widgets.update_multiple_attributes"
-      },
-      "3da9a9a1-0b9a-2e1f-0dcb-0ff34a695abb": {
-        "type": "latest",
-        "sizeX": 13,
-        "sizeY": 6,
-        "config": {
-          "datasources": [
-            {
-              "type": "entity",
-              "dataKeys": [
-                {
-                  "name": "temperature",
-                  "type": "timeseries",
-                  "label": "temperature",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.1371919646686739,
-                  "decimals": 1,
-                  "postFuncBody": "return value || \"\";"
-                },
-                {
-                  "name": "humidity",
-                  "type": "timeseries",
-                  "label": "humidity",
-                  "color": "#4caf50",
-                  "settings": {},
-                  "_hash": 0.043177186765847475,
-                  "decimals": 0,
-                  "postFuncBody": "return value || \"\";"
-                },
-                {
-                  "name": "longitude",
-                  "type": "attribute",
-                  "label": "longitude",
-                  "color": "#f44336",
-                  "settings": {},
-                  "_hash": 0.5548964320315584
-                },
-                {
-                  "name": "latitude",
-                  "type": "attribute",
-                  "label": "latitude",
-                  "color": "#ffc107",
-                  "settings": {},
-                  "_hash": 0.1803778014971602
-                },
-                {
-                  "name": "active",
-                  "type": "attribute",
-                  "label": "active",
-                  "color": "#607d8b",
-                  "settings": {},
-                  "_hash": 0.30926987994082844
-                }
-              ],
-              "entityAliasId": "68a058e1-fdda-8482-715b-3ae4a488568e"
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1694085177686,
-                "endTimeMs": 1694171577686
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "8px",
-          "settings": {
-            "fitMapBounds": true,
-            "latKeyName": "latitude",
-            "lngKeyName": "longitude",
-            "showLabel": true,
-            "label": "${entityName}",
-            "tooltipPattern": "<b>${entityName}</b><br/><br/><b>Temperature:</b> ${temperature:1} °C<br/><b>Humidity:</b> ${humidity:0} %<br/><br/><link-act name=\"navigate_to_details\">Thermostat details</link-act><br/>",
-            "markerImageSize": 48,
-            "useColorFunction": false,
-            "markerImages": [
-              "tb-image;/api/images/system/thermostats_dashboard_widget_thermostat_maps_marker_image_0.svg",
-              "tb-image;/api/images/system/thermostats_dashboard_widget_thermostat_maps_marker_image_1.svg"
-            ],
-            "useMarkerImageFunction": true,
-            "colorFunction": "\n",
-            "color": "#fe7569",
-            "mapProvider": "OpenStreetMap.HOT",
-            "showTooltip": true,
-            "autocloseTooltip": true,
-            "customProviderTileUrl": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            "defaultCenterPosition": [
-              0,
-              0
-            ],
-            "showTooltipAction": "click",
-            "polygonKeyName": "coordinates",
-            "polygonOpacity": 0.5,
-            "polygonStrokeOpacity": 1,
-            "polygonStrokeWeight": 1,
-            "zoomOnClick": true,
-            "showCoverageOnHover": true,
-            "animate": true,
-            "maxClusterRadius": 80,
-            "removeOutsideVisibleBounds": true,
-            "useLabelFunction": true,
-            "labelFunction": "var color;\nif(dsData[dsIndex].active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px\">' + \n           '${entityLabel}' + \n        '</span>'",
-            "defaultZoomLevel": 14,
-            "markerImageFunction": "var res;\nif(dsData[dsIndex].active !== \"true\"){\n\tvar res = {\n\t    url: images[0],\n\t    size: 48\n\t}\n} else {\n    var res = {\n\t    url: images[1],\n\t    size: 48\n\t}\n}\nreturn res;"
-          },
-          "title": "Thermostat maps",
-          "dropShadow": true,
-          "enableFullscreen": false,
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "useDashboardTimewindow": true,
-          "showLegend": false,
-          "widgetStyle": {},
-          "actions": {
-            "headerButton": [],
-            "tooltipAction": [
-              {
-                "id": "bef25673-b37a-8821-bc0f-5d6dd3680f24",
-                "name": "navigate_to_details",
-                "icon": "more_horiz",
-                "type": "openDashboardState",
-                "targetDashboardStateId": "chart",
-                "setEntityId": true
-              }
-            ]
-          },
-          "showTitleIcon": false,
-          "titleIcon": null,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "displayTimewindow": true
-        },
-        "id": "3da9a9a1-0b9a-2e1f-0dcb-0ff34a695abb",
-        "typeFullFqn": "system.maps_v2.openstreetmap"
-      },
-      "00fb2742-ba1f-7e43-673f-d6c08b72ed06": {
-        "type": "latest",
-        "sizeX": 24,
-        "sizeY": 12,
-        "config": {
-          "datasources": [
-            {
-              "type": "entity",
-              "dataKeys": [
-                {
-                  "name": "longitude",
-                  "type": "attribute",
-                  "label": "longitude",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.3640193654284214
-                },
-                {
-                  "name": "latitude",
-                  "type": "attribute",
-                  "label": "latitude",
-                  "color": "#4caf50",
-                  "settings": {},
-                  "_hash": 0.49020393887695923
-                },
-                {
-                  "name": "temperature",
-                  "type": "timeseries",
-                  "label": "temperature",
-                  "color": "#f44336",
-                  "settings": {},
-                  "_hash": 0.5885892766009955,
-                  "postFuncBody": "return value || \"\";"
-                },
-                {
-                  "name": "humidity",
-                  "type": "timeseries",
-                  "label": "humidity",
-                  "color": "#ffc107",
-                  "settings": {},
-                  "_hash": 0.21077893588180707,
-                  "postFuncBody": "return value || \"\";"
-                },
-                {
-                  "name": "active",
-                  "type": "attribute",
-                  "label": "active",
-                  "color": "#607d8b",
-                  "settings": {},
-                  "_hash": 0.34722983638504346
-                }
-              ],
-              "entityAliasId": "68a058e1-fdda-8482-715b-3ae4a488568e"
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1694085177686,
-                "endTimeMs": 1694171577686
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "8px",
-          "settings": {
-            "fitMapBounds": true,
-            "latKeyName": "latitude",
-            "lngKeyName": "longitude",
-            "showLabel": true,
-            "label": "${entityName}",
-            "tooltipPattern": "<b>${entityName}</b><br/><br/><b>Temperature:</b> ${temperature:1} °C<br/><b>Humidity:</b> ${humidity:0} %<br/><br/><link-act name='delete'>Delete</link-act>",
-            "markerImageSize": 34,
-            "useColorFunction": false,
-            "markerImages": [
-              "tb-image;/api/images/system/thermostats_dashboard_widget_thermostat_maps_marker_image_0.svg",
-              "tb-image;/api/images/system/thermostats_dashboard_widget_thermostat_maps_marker_image_1.svg"
-            ],
-            "useMarkerImageFunction": true,
-            "color": "#fe7569",
-            "mapProvider": "OpenStreetMap.HOT",
-            "showTooltip": true,
-            "autocloseTooltip": true,
-            "defaultCenterPosition": "0,0",
-            "customProviderTileUrl": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            "showTooltipAction": "click",
-            "polygonKeyName": "coordinates",
-            "polygonOpacity": 0.5,
-            "polygonStrokeOpacity": 1,
-            "polygonStrokeWeight": 1,
-            "zoomOnClick": true,
-            "showCoverageOnHover": true,
-            "animate": true,
-            "maxClusterRadius": 80,
-            "removeOutsideVisibleBounds": true,
-            "defaultZoomLevel": 12,
-            "labelFunction": "var color;\nif(dsData[dsIndex].active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px\">' + \n           '${entityLabel}' + \n        '</span>'",
-            "markerImageFunction": "var res;\nif(dsData[dsIndex].active !== \"true\"){\n\tvar res = {\n\t    url: images[0],\n\t    size: 48\n\t}\n} else {\n    var res = {\n\t    url: images[1],\n\t    size: 48\n\t}\n}\nreturn res;",
-            "useLabelFunction": true,
-            "provider": "openstreet-map",
-            "draggableMarker": true
-          },
-          "title": "New Markers Placement - OpenStreetMap",
-          "dropShadow": true,
-          "enableFullscreen": false,
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "useDashboardTimewindow": true,
-          "showLegend": false,
-          "widgetStyle": {},
-          "actions": {
-            "tooltipAction": [
-              {
-                "name": "delete",
-                "icon": "more_horiz",
-                "type": "custom",
-                "customFunction": "var entityDatasource = widgetContext.mapInstance.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.mapInstance.saveMarkerLocation(entityDatasource[0], null, null).subscribe(function success() {\n        widgetContext.updateAliases();\n});",
-                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66"
-              }
-            ]
-          },
-          "showTitleIcon": false,
-          "titleIcon": null,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "displayTimewindow": true
-        },
-        "id": "00fb2742-ba1f-7e43-673f-d6c08b72ed06",
-        "typeFullFqn": "system.input_widgets.markers_placement_openstreetmap"
-      },
-      "0a430429-9078-9ae6-2b67-e4a15a2bf8bf": {
-        "type": "latest",
-        "sizeX": 6,
-        "sizeY": 6,
-        "config": {
-          "datasources": [
-            {
-              "type": "entity",
-              "dataKeys": [
-                {
-                  "name": "longitude",
-                  "type": "attribute",
-                  "label": "longitude",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.3640193654284214
-                },
-                {
-                  "name": "latitude",
-                  "type": "attribute",
-                  "label": "latitude",
-                  "color": "#4caf50",
-                  "settings": {},
-                  "_hash": 0.49020393887695923
-                },
-                {
-                  "name": "temperature",
-                  "type": "timeseries",
-                  "label": "temperature",
-                  "color": "#f44336",
-                  "settings": {},
-                  "_hash": 0.5885892766009955,
-                  "postFuncBody": "return value || \"\";"
-                },
-                {
-                  "name": "humidity",
-                  "type": "timeseries",
-                  "label": "humidity",
-                  "color": "#ffc107",
-                  "settings": {},
-                  "_hash": 0.21077893588180707,
-                  "postFuncBody": "return value || \"\";"
-                },
-                {
-                  "name": "active",
-                  "type": "attribute",
-                  "label": "active",
-                  "color": "#607d8b",
-                  "settings": {},
-                  "_hash": 0.34722983638504346
-                }
-              ],
-              "entityAliasId": "12ae98c7-1ea2-52cf-64d5-763e9d993547"
-            }
-          ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1694085177686,
-                "endTimeMs": 1694171577686
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "#fff",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "8px",
-          "settings": {
-            "fitMapBounds": true,
-            "latKeyName": "latitude",
-            "lngKeyName": "longitude",
-            "showLabel": true,
-            "label": "${entityName}",
-            "tooltipPattern": "<b>${entityName}</b><br/><br/><b>Temperature:</b> ${temperature:1} °C<br/><b>Humidity:</b> ${humidity:0} %<br/><br/><link-act name='delete'>Delete</link-act>",
-            "markerImageSize": 34,
-            "useColorFunction": false,
-            "markerImages": [
-              "tb-image;/api/images/system/thermostats_dashboard_widget_thermostat_maps_marker_image_0.svg",
-              "tb-image;/api/images/system/thermostats_dashboard_widget_thermostat_maps_marker_image_1.svg"
-            ],
-            "useMarkerImageFunction": true,
-            "color": "#fe7569",
-            "mapProvider": "OpenStreetMap.HOT",
-            "showTooltip": true,
-            "autocloseTooltip": true,
-            "defaultCenterPosition": "0,0",
-            "customProviderTileUrl": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            "showTooltipAction": "click",
-            "polygonKeyName": "coordinates",
-            "polygonOpacity": 0.5,
-            "polygonStrokeOpacity": 1,
-            "polygonStrokeWeight": 1,
-            "zoomOnClick": true,
-            "showCoverageOnHover": true,
-            "animate": true,
-            "maxClusterRadius": 80,
-            "removeOutsideVisibleBounds": true,
-            "defaultZoomLevel": 5,
-            "labelFunction": "var color;\nif(dsData[dsIndex].active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px\">' + \n           '${entityLabel}' + \n        '</span>'",
-            "markerImageFunction": "var res;\nif(dsData[dsIndex].active !== \"true\"){\n\tvar res = {\n\t    url: images[0],\n\t    size: 48\n\t}\n} else {\n    var res = {\n\t    url: images[1],\n\t    size: 48\n\t}\n}\nreturn res;",
-            "useLabelFunction": true,
-            "provider": "openstreet-map",
-            "draggableMarker": true,
-            "editablePolygon": true
-          },
-          "title": "New Markers Placement - OpenStreetMap",
-          "dropShadow": true,
-          "enableFullscreen": false,
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400
-          },
-          "useDashboardTimewindow": true,
-          "showLegend": false,
-          "widgetStyle": {},
-          "actions": {
-            "tooltipAction": [
-              {
-                "name": "delete",
-                "icon": "more_horiz",
-                "type": "custom",
-                "customFunction": "var entityDatasource = widgetContext.mapInstance.datasources.filter(\n    function(entity) {\n        return entity.entityId === entityId.id\n    });\n\nwidgetContext.mapInstance.saveMarkerLocation(entityDatasource[0], null, null).subscribe(function success() {\n        widgetContext.updateAliases();\n});",
-                "id": "54c293c4-9ca6-e34f-dc6a-0271944c1c66"
-              }
-            ]
-          },
-          "showTitleIcon": false,
-          "titleIcon": null,
-          "iconColor": "rgba(0, 0, 0, 0.87)",
-          "iconSize": "24px",
-          "titleTooltip": "",
-          "displayTimewindow": true
-        },
-        "id": "0a430429-9078-9ae6-2b67-e4a15a2bf8bf",
-        "typeFullFqn": "system.input_widgets.markers_placement_openstreetmap"
       },
       "eda8a397-0959-690c-405c-11e2c9b2bc7e": {
         "typeFullFqn": "system.time_series_chart",
@@ -1026,9 +580,6 @@
             }
           ],
           "timewindow": {
-            "hideInterval": false,
-            "hideLastInterval": false,
-            "hideQuickInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
             "hideTimezone": false,
@@ -1419,9 +970,6 @@
             }
           ],
           "timewindow": {
-            "hideInterval": false,
-            "hideLastInterval": false,
-            "hideQuickInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
             "hideTimezone": false,
@@ -1705,6 +1253,782 @@
         "row": 0,
         "col": 0,
         "id": "ac90f089-197f-b767-82c3-2668844265a2"
+      },
+      "5186d1e3-f076-e062-5129-e4dd8e4adfb0": {
+        "typeFullFqn": "system.map",
+        "type": "latest",
+        "sizeX": 8.5,
+        "sizeY": 6,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideQuickInterval": false
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1741884755143,
+                "endTimeMs": 1741971155143
+              },
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideFixedInterval": false,
+              "hideQuickInterval": false
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "mapType": "geoMap",
+            "layers": [
+              {
+                "label": "{i18n:widgets.maps.layer.roadmap}",
+                "provider": "openstreet",
+                "layerType": "OpenStreetMap.Mapnik"
+              },
+              {
+                "label": "{i18n:widgets.maps.layer.satellite}",
+                "provider": "openstreet",
+                "layerType": "Esri.WorldImagery"
+              },
+              {
+                "label": "{i18n:widgets.maps.layer.hybrid}",
+                "provider": "openstreet",
+                "layerType": "Esri.WorldImagery",
+                "referenceLayer": "openstreetmap_hybrid"
+              }
+            ],
+            "imageSource": null,
+            "markers": [
+              {
+                "dsType": "entity",
+                "dsLabel": "",
+                "dsDeviceId": null,
+                "dsEntityAliasId": "68a058e1-fdda-8482-715b-3ae4a488568e",
+                "dsFilterId": null,
+                "additionalDataKeys": [
+                  {
+                    "name": "temperature",
+                    "type": "timeseries",
+                    "label": "temperature",
+                    "color": "#2196f3",
+                    "settings": {},
+                    "_hash": 0.570889787682481,
+                    "aggregationType": "NONE",
+                    "units": null,
+                    "decimals": null,
+                    "funcBody": null,
+                    "usePostProcessing": true,
+                    "postFuncBody": "return value || \"\";"
+                  },
+                  {
+                    "name": "humidity",
+                    "type": "timeseries",
+                    "label": "humidity",
+                    "color": "#2196f3",
+                    "settings": {},
+                    "_hash": 0.13597394595782442,
+                    "aggregationType": "NONE",
+                    "units": null,
+                    "decimals": null,
+                    "funcBody": null,
+                    "usePostProcessing": true,
+                    "postFuncBody": "return value || \"\";"
+                  },
+                  {
+                    "name": "active",
+                    "type": "attribute",
+                    "label": "active",
+                    "color": "#2196f3",
+                    "settings": {},
+                    "_hash": 0.21080919932756603
+                  }
+                ],
+                "label": {
+                  "show": true,
+                  "type": "function",
+                  "pattern": "${entityName}",
+                  "patternFunction": "var color;\nif(data.active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px; position: relative; bottom: 6px;\">' + \n           '${entityLabel}' + \n        '</span>'"
+                },
+                "tooltip": {
+                  "show": true,
+                  "trigger": "click",
+                  "autoclose": true,
+                  "type": "pattern",
+                  "pattern": "<b>${entityName}</b><br/><br/><b>Temperature:</b> ${temperature:1} °C<br/><b>Humidity:</b> ${humidity:0} %<br/><br/><link-act name=\"navigate_to_details\">Thermostat details</link-act><br/>",
+                  "offsetX": 0,
+                  "offsetY": -1,
+                  "patternFunction": null,
+                  "tagActions": [
+                    {
+                      "name": "navigate_to_details",
+                      "type": "openDashboardState",
+                      "targetDashboardStateId": "chart",
+                      "setEntityId": true,
+                      "stateEntityParamName": null,
+                      "openRightLayout": false,
+                      "openInSeparateDialog": false,
+                      "openInPopover": false
+                    }
+                  ]
+                },
+                "click": {
+                  "type": "doNothing"
+                },
+                "groups": null,
+                "edit": {
+                  "enabledActions": [],
+                  "attributeScope": "SERVER_SCOPE",
+                  "snappable": false
+                },
+                "xKey": {
+                  "name": "latitude",
+                  "label": "latitude",
+                  "type": "attribute",
+                  "settings": {},
+                  "color": "#2196f3"
+                },
+                "yKey": {
+                  "name": "longitude",
+                  "label": "longitude",
+                  "type": "attribute",
+                  "settings": {},
+                  "color": "#2196f3"
+                },
+                "markerType": "icon",
+                "markerShape": {
+                  "shape": "markerShape1",
+                  "size": 34,
+                  "color": {
+                    "type": "constant",
+                    "color": "#307FE5"
+                  }
+                },
+                "markerIcon": {
+                  "size": 48,
+                  "color": {
+                    "type": "function",
+                    "color": "rgb(255, 0, 0)",
+                    "range": null,
+                    "colorFunction": "if (data.active !== \"true\"){\n   return 'rgb(255, 0, 0)';\n} else {\n   return 'rgb(39, 134, 34)';\n}"
+                  },
+                  "iconContainer": "iconContainer1",
+                  "icon": "thermostat"
+                },
+                "markerImage": {
+                  "type": "function",
+                  "imageFunction": "return {};",
+                  "images": []
+                },
+                "markerOffsetX": 0.5,
+                "markerOffsetY": 1,
+                "markerClustering": {
+                  "enable": false,
+                  "zoomOnClick": true,
+                  "maxZoom": null,
+                  "maxClusterRadius": 80,
+                  "zoomAnimation": true,
+                  "showCoverageOnHover": true,
+                  "spiderfyOnMaxZoom": false,
+                  "chunkedLoad": false,
+                  "lazyLoad": true,
+                  "useClusterMarkerColorFunction": false,
+                  "clusterMarkerColorFunction": null
+                }
+              }
+            ],
+            "polygons": [],
+            "circles": [],
+            "additionalDataSources": [],
+            "controlsPosition": "topleft",
+            "zoomActions": [
+              "scroll",
+              "doubleClick",
+              "controlButtons"
+            ],
+            "scales": [],
+            "dragModeButton": false,
+            "fitMapBounds": true,
+            "useDefaultCenterPosition": false,
+            "defaultCenterPosition": "0,0",
+            "defaultZoomLevel": 14,
+            "mapPageSize": 16384,
+            "mapActionButtons": [],
+            "background": {
+              "type": "color",
+              "color": "#fff",
+              "overlay": {
+                "enabled": false,
+                "color": "rgba(255,255,255,0.72)",
+                "blur": 3
+              }
+            },
+            "padding": "8px"
+          },
+          "title": "Map",
+          "useDashboardTimewindow": true,
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "titleTooltip": "",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "configMode": "advanced",
+          "titleFont": null,
+          "titleColor": null,
+          "margin": "0px",
+          "borderRadius": "0px",
+          "iconSize": "24px",
+          "titleIcon": "map",
+          "iconColor": "#1F6BDD",
+          "actions": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "5186d1e3-f076-e062-5129-e4dd8e4adfb0"
+      },
+      "1bbd4b8d-db42-ed7c-70c2-3d32c771843d": {
+        "typeFullFqn": "system.map",
+        "type": "latest",
+        "sizeX": 8.5,
+        "sizeY": 6,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideQuickInterval": false
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1741884755143,
+                "endTimeMs": 1741971155143
+              },
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideFixedInterval": false,
+              "hideQuickInterval": false
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "mapType": "geoMap",
+            "layers": [
+              {
+                "label": "{i18n:widgets.maps.layer.roadmap}",
+                "provider": "openstreet",
+                "layerType": "OpenStreetMap.Mapnik"
+              },
+              {
+                "label": "{i18n:widgets.maps.layer.satellite}",
+                "provider": "openstreet",
+                "layerType": "Esri.WorldImagery"
+              },
+              {
+                "label": "{i18n:widgets.maps.layer.hybrid}",
+                "provider": "openstreet",
+                "layerType": "Esri.WorldImagery",
+                "referenceLayer": "openstreetmap_hybrid"
+              }
+            ],
+            "imageSource": null,
+            "markers": [
+              {
+                "dsType": "entity",
+                "dsLabel": "",
+                "dsDeviceId": null,
+                "dsEntityAliasId": "68a058e1-fdda-8482-715b-3ae4a488568e",
+                "dsFilterId": null,
+                "additionalDataKeys": [
+                  {
+                    "name": "temperature",
+                    "type": "timeseries",
+                    "label": "temperature",
+                    "color": "#2196f3",
+                    "settings": {},
+                    "_hash": 0.570889787682481,
+                    "aggregationType": "NONE",
+                    "units": null,
+                    "decimals": null,
+                    "funcBody": null,
+                    "usePostProcessing": true,
+                    "postFuncBody": "return value || \"\";"
+                  },
+                  {
+                    "name": "humidity",
+                    "type": "timeseries",
+                    "label": "humidity",
+                    "color": "#2196f3",
+                    "settings": {},
+                    "_hash": 0.13597394595782442,
+                    "aggregationType": "NONE",
+                    "units": null,
+                    "decimals": null,
+                    "funcBody": null,
+                    "usePostProcessing": true,
+                    "postFuncBody": "return value || \"\";"
+                  },
+                  {
+                    "name": "active",
+                    "type": "attribute",
+                    "label": "active",
+                    "color": "#2196f3",
+                    "settings": {},
+                    "_hash": 0.21080919932756603
+                  }
+                ],
+                "label": {
+                  "show": true,
+                  "type": "function",
+                  "pattern": "${entityName}",
+                  "patternFunction": "var color;\nif(data.active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px; position: relative; bottom: 6px;\">' + \n           '${entityLabel}' + \n        '</span>'"
+                },
+                "tooltip": {
+                  "show": true,
+                  "trigger": "click",
+                  "autoclose": true,
+                  "type": "pattern",
+                  "pattern": "<b>${entityName}</b><br/><br/><b>Temperature:</b> ${temperature:1} °C<br/><b>Humidity:</b> ${humidity:0} %<br/><br/><link-act name='delete'>Delete</link-act>",
+                  "offsetX": 0,
+                  "offsetY": -1,
+                  "patternFunction": null,
+                  "tagActions": [
+                    {
+                      "name": "delete",
+                      "type": "custom",
+                      "customFunction": "widgetContext.mapInstance.saveMarkerLocation(additionalParams, null, null).subscribe(function success() {\n        widgetContext.updateAliases();\n});",
+                      "openInSeparateDialog": false,
+                      "openInPopover": false
+                    }
+                  ]
+                },
+                "click": {
+                  "type": "doNothing"
+                },
+                "groups": null,
+                "edit": {
+                  "enabledActions": [
+                    "add",
+                    "move",
+                    "remove"
+                  ],
+                  "attributeScope": "SERVER_SCOPE",
+                  "snappable": false
+                },
+                "xKey": {
+                  "name": "latitude",
+                  "label": "latitude",
+                  "type": "attribute",
+                  "settings": {},
+                  "color": "#2196f3"
+                },
+                "yKey": {
+                  "name": "longitude",
+                  "label": "longitude",
+                  "type": "attribute",
+                  "settings": {},
+                  "color": "#2196f3"
+                },
+                "markerType": "icon",
+                "markerShape": {
+                  "shape": "markerShape1",
+                  "size": 34,
+                  "color": {
+                    "type": "constant",
+                    "color": "#307FE5"
+                  }
+                },
+                "markerIcon": {
+                  "size": 48,
+                  "color": {
+                    "type": "function",
+                    "color": "rgb(255, 0, 0)",
+                    "range": null,
+                    "colorFunction": "if (data.active !== \"true\"){\n   return 'rgb(255, 0, 0)';\n} else {\n   return 'rgb(39, 134, 34)';\n}"
+                  },
+                  "iconContainer": "iconContainer1",
+                  "icon": "thermostat"
+                },
+                "markerImage": {
+                  "type": "function",
+                  "imageFunction": "return {};",
+                  "images": []
+                },
+                "markerOffsetX": 0.5,
+                "markerOffsetY": 1,
+                "markerClustering": {
+                  "enable": false,
+                  "zoomOnClick": true,
+                  "maxZoom": null,
+                  "maxClusterRadius": 80,
+                  "zoomAnimation": true,
+                  "showCoverageOnHover": true,
+                  "spiderfyOnMaxZoom": false,
+                  "chunkedLoad": false,
+                  "lazyLoad": true,
+                  "useClusterMarkerColorFunction": false,
+                  "clusterMarkerColorFunction": null
+                }
+              }
+            ],
+            "polygons": [],
+            "circles": [],
+            "additionalDataSources": [],
+            "controlsPosition": "topleft",
+            "zoomActions": [
+              "scroll",
+              "doubleClick",
+              "controlButtons"
+            ],
+            "scales": [],
+            "dragModeButton": false,
+            "fitMapBounds": true,
+            "useDefaultCenterPosition": false,
+            "defaultCenterPosition": "0,0",
+            "defaultZoomLevel": null,
+            "mapPageSize": 16384,
+            "mapActionButtons": [],
+            "background": {
+              "type": "color",
+              "color": "#fff",
+              "overlay": {
+                "enabled": false,
+                "color": "rgba(255,255,255,0.72)",
+                "blur": 3
+              }
+            },
+            "padding": "8px"
+          },
+          "title": "Map",
+          "useDashboardTimewindow": true,
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "titleTooltip": "",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "configMode": "advanced",
+          "titleFont": null,
+          "titleColor": null,
+          "margin": "0px",
+          "borderRadius": "0px",
+          "iconSize": "24px",
+          "titleIcon": "map",
+          "iconColor": "#1F6BDD",
+          "actions": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "1bbd4b8d-db42-ed7c-70c2-3d32c771843d"
+      },
+      "c9da2d6b-4ba9-1ac8-63b8-68ab49b13c81": {
+        "typeFullFqn": "system.map",
+        "type": "latest",
+        "sizeX": 8.5,
+        "sizeY": 6,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideQuickInterval": false
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1741884755143,
+                "endTimeMs": 1741971155143
+              },
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideFixedInterval": false,
+              "hideQuickInterval": false
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "mapType": "geoMap",
+            "layers": [
+              {
+                "label": "{i18n:widgets.maps.layer.roadmap}",
+                "provider": "openstreet",
+                "layerType": "OpenStreetMap.Mapnik"
+              },
+              {
+                "label": "{i18n:widgets.maps.layer.satellite}",
+                "provider": "openstreet",
+                "layerType": "Esri.WorldImagery"
+              },
+              {
+                "label": "{i18n:widgets.maps.layer.hybrid}",
+                "provider": "openstreet",
+                "layerType": "Esri.WorldImagery",
+                "referenceLayer": "openstreetmap_hybrid"
+              }
+            ],
+            "imageSource": null,
+            "markers": [
+              {
+                "dsType": "entity",
+                "dsLabel": "",
+                "dsDeviceId": null,
+                "dsEntityAliasId": "12ae98c7-1ea2-52cf-64d5-763e9d993547",
+                "dsFilterId": null,
+                "additionalDataKeys": [
+                  {
+                    "name": "temperature",
+                    "type": "timeseries",
+                    "label": "temperature",
+                    "color": "#2196f3",
+                    "settings": {},
+                    "_hash": 0.570889787682481,
+                    "aggregationType": "NONE",
+                    "units": null,
+                    "decimals": null,
+                    "funcBody": null,
+                    "usePostProcessing": true,
+                    "postFuncBody": "return value || \"\";"
+                  },
+                  {
+                    "name": "humidity",
+                    "type": "timeseries",
+                    "label": "humidity",
+                    "color": "#2196f3",
+                    "settings": {},
+                    "_hash": 0.13597394595782442,
+                    "aggregationType": "NONE",
+                    "units": null,
+                    "decimals": null,
+                    "funcBody": null,
+                    "usePostProcessing": true,
+                    "postFuncBody": "return value || \"\";"
+                  },
+                  {
+                    "name": "active",
+                    "type": "attribute",
+                    "label": "active",
+                    "color": "#2196f3",
+                    "settings": {},
+                    "_hash": 0.21080919932756603
+                  }
+                ],
+                "label": {
+                  "show": true,
+                  "type": "function",
+                  "pattern": "${entityName}",
+                  "patternFunction": "var color;\nif(data.active !== \"true\"){\n    color = 'rgb(255, 0, 0)';\n} else {\n    color = 'rgb(39, 134, 34)';\n}\nreturn '<span style=\"border: solid ' + color + '; border-radius: 10px; color: ' + color + '; background-color: #fff; padding: 3px 5px; font-size: 14px; position: relative; bottom: 6px;\">' + \n           '${entityLabel}' + \n        '</span>'"
+                },
+                "tooltip": {
+                  "show": true,
+                  "trigger": "click",
+                  "autoclose": true,
+                  "type": "pattern",
+                  "pattern": "<b>${entityName}</b><br/><br/><b>Temperature:</b> ${temperature:1} °C<br/><b>Humidity:</b> ${humidity:0} %<br/><br/><link-act name='delete'>Delete</link-act>",
+                  "offsetX": 0,
+                  "offsetY": -1,
+                  "patternFunction": null,
+                  "tagActions": [
+                    {
+                      "name": "delete",
+                      "type": "custom",
+                      "customFunction": "widgetContext.mapInstance.saveMarkerLocation(additionalParams, null, null).subscribe(function success() {\n        widgetContext.updateAliases();\n});",
+                      "openInSeparateDialog": false,
+                      "openInPopover": false
+                    }
+                  ]
+                },
+                "click": {
+                  "type": "doNothing"
+                },
+                "groups": null,
+                "edit": {
+                  "enabledActions": [
+                    "add",
+                    "move",
+                    "remove"
+                  ],
+                  "attributeScope": "SERVER_SCOPE",
+                  "snappable": false
+                },
+                "xKey": {
+                  "name": "latitude",
+                  "label": "latitude",
+                  "type": "attribute",
+                  "settings": {},
+                  "color": "#2196f3"
+                },
+                "yKey": {
+                  "name": "longitude",
+                  "label": "longitude",
+                  "type": "attribute",
+                  "settings": {},
+                  "color": "#2196f3"
+                },
+                "markerType": "icon",
+                "markerShape": {
+                  "shape": "markerShape1",
+                  "size": 34,
+                  "color": {
+                    "type": "constant",
+                    "color": "#307FE5"
+                  }
+                },
+                "markerIcon": {
+                  "size": 48,
+                  "color": {
+                    "type": "function",
+                    "color": "rgb(255, 0, 0)",
+                    "range": null,
+                    "colorFunction": "if (data.active !== \"true\"){\n   return 'rgb(255, 0, 0)';\n} else {\n   return 'rgb(39, 134, 34)';\n}"
+                  },
+                  "iconContainer": "iconContainer1",
+                  "icon": "thermostat"
+                },
+                "markerImage": {
+                  "type": "function",
+                  "imageFunction": "return {};",
+                  "images": []
+                },
+                "markerOffsetX": 0.5,
+                "markerOffsetY": 1,
+                "markerClustering": {
+                  "enable": false,
+                  "zoomOnClick": true,
+                  "maxZoom": null,
+                  "maxClusterRadius": 80,
+                  "zoomAnimation": true,
+                  "showCoverageOnHover": true,
+                  "spiderfyOnMaxZoom": false,
+                  "chunkedLoad": false,
+                  "lazyLoad": true,
+                  "useClusterMarkerColorFunction": false,
+                  "clusterMarkerColorFunction": null
+                }
+              }
+            ],
+            "polygons": [],
+            "circles": [],
+            "additionalDataSources": [],
+            "controlsPosition": "topleft",
+            "zoomActions": [
+              "scroll",
+              "doubleClick",
+              "controlButtons"
+            ],
+            "scales": [],
+            "dragModeButton": false,
+            "fitMapBounds": true,
+            "useDefaultCenterPosition": false,
+            "defaultCenterPosition": "0,0",
+            "defaultZoomLevel": 5,
+            "mapPageSize": 16384,
+            "mapActionButtons": [],
+            "background": {
+              "type": "color",
+              "color": "#fff",
+              "overlay": {
+                "enabled": false,
+                "color": "rgba(255,255,255,0.72)",
+                "blur": 3
+              }
+            },
+            "padding": "8px"
+          },
+          "title": "Map",
+          "useDashboardTimewindow": true,
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "titleTooltip": "",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "configMode": "advanced",
+          "titleFont": null,
+          "titleColor": null,
+          "margin": "0px",
+          "borderRadius": "0px",
+          "iconSize": "24px",
+          "titleIcon": "map",
+          "iconColor": "#1F6BDD",
+          "actions": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "c9da2d6b-4ba9-1ac8-63b8-68ab49b13c81"
       }
     },
     "states": {
@@ -1730,11 +2054,12 @@
                 "mobileOrder": 2,
                 "mobileHeight": 5
               },
-              "3da9a9a1-0b9a-2e1f-0dcb-0ff34a695abb": {
+              "5186d1e3-f076-e062-5129-e4dd8e4adfb0": {
                 "sizeX": 13,
                 "sizeY": 6,
                 "row": 5,
                 "col": 11,
+                "resizable": true,
                 "mobileOrder": 3,
                 "mobileHeight": 5
               }
@@ -1748,7 +2073,8 @@
               "mobileAutoFillHeight": false,
               "mobileRowHeight": 70,
               "margin": 10,
-              "outerMargin": true
+              "outerMargin": true,
+              "layoutType": "default"
             }
           }
         }
@@ -1759,9 +2085,10 @@
         "layouts": {
           "main": {
             "widgets": {
-              "00fb2742-ba1f-7e43-673f-d6c08b72ed06": {
+              "1bbd4b8d-db42-ed7c-70c2-3d32c771843d": {
                 "sizeX": 24,
-                "sizeY": 12,
+                "sizeY": 11,
+                "resizable": true,
                 "row": 0,
                 "col": 0
               }
@@ -1775,7 +2102,8 @@
               "mobileAutoFillHeight": false,
               "mobileRowHeight": 70,
               "margin": 10,
-              "outerMargin": true
+              "outerMargin": true,
+              "layoutType": "default"
             }
           }
         }
@@ -1794,14 +2122,6 @@
                 "mobileOrder": 3,
                 "mobileHeight": 5
               },
-              "0a430429-9078-9ae6-2b67-e4a15a2bf8bf": {
-                "sizeX": 6,
-                "sizeY": 6,
-                "row": 6,
-                "col": 0,
-                "mobileOrder": 4,
-                "mobileHeight": 6
-              },
               "eda8a397-0959-690c-405c-11e2c9b2bc7e": {
                 "sizeX": 18,
                 "sizeY": 6,
@@ -1817,6 +2137,13 @@
                 "col": 6,
                 "mobileOrder": 2,
                 "mobileHeight": 6
+              },
+              "c9da2d6b-4ba9-1ac8-63b8-68ab49b13c81": {
+                "sizeX": 6,
+                "sizeY": 6,
+                "resizable": true,
+                "row": 6,
+                "col": 0
               }
             },
             "gridSettings": {
@@ -1828,7 +2155,8 @@
               "mobileAutoFillHeight": false,
               "mobileRowHeight": 70,
               "margin": 10,
-              "outerMargin": true
+              "outerMargin": true,
+              "layoutType": "default"
             }
           }
         }
@@ -1861,7 +2189,6 @@
     "timewindow": {
       "displayValue": "",
       "selectedTab": 0,
-      "hideInterval": false,
       "hideAggregation": false,
       "hideAggInterval": false,
       "realtime": {
@@ -1889,33 +2216,17 @@
       "showEntitiesSelect": true,
       "showDashboardTimewindow": true,
       "showDashboardExport": true,
-      "toolbarAlwaysOpen": true
+      "toolbarAlwaysOpen": true,
+      "titleColor": "rgba(0,0,0,0.870588)",
+      "showDashboardLogo": false,
+      "dashboardLogoUrl": null,
+      "hideToolbar": false,
+      "showFilters": true,
+      "showUpdateDashboardImage": true,
+      "dashboardCss": ""
     },
     "filters": {}
   },
   "name": "Thermostats",
-  "resources": [
-    {
-      "link": "/api/images/system/thermostats_dashboard_widget_thermostat_maps_marker_image_0.svg",
-      "title": "\"Thermostats\" dashboard widget \"Thermostat maps\" marker image 0",
-      "type": "IMAGE",
-      "subType": "IMAGE",
-      "fileName": "thermostats_dashboard_widget_thermostat_maps_marker_image_0.svg",
-      "publicResourceKey": "DXvJsh8m6v4NOcO6AHXXm9kQzfrVgisT",
-      "mediaType": "image/svg+xml",
-      "data": "PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJzdmc0NDA4IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHg9IjAiIHk9IjAiIHZpZXdCb3g9IjAgMCAxNTAgMTUwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48c3R5bGU+LnN0MntmaWxsOiNmNDQzMzZ9PC9zdHlsZT48ZyBpZD0ibGF5ZXIxIj48ZyBpZD0icGF0aDY4ODEtMy01LTUtMS04LTQtNC03LTgiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xNDYuNDM4IC0yNzYuMDI4KSIgb3BhY2l0eT0iLjg5MiI+PHJhZGlhbEdyYWRpZW50IGlkPSJTVkdJRF8xXyIgY3g9IjMwODUuMjE1IiBjeT0iMzE3OC40NTgiIHI9IjQ5LjkwMSIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCguNjc5MyAuMDA3NiAtLjUwOSAuNTYxMiAtMjMyLjYyOSAtMTQxMS43MjUpIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9Ii4xODgiLz48L3JhZGlhbEdyYWRpZW50PjxwYXRoIGQ9Ik0yODUuNiAzODguNWMxMC4zLTEyLjQgNC40LTIyLjQtMTQuNC0yMi40LTE4LjkgMC00Mi40IDEwLTUzLjkgMjIuNC0xNi44IDE4IC40IDIzLjUtLjIgMzUtLjEgMS44IDMuOSAxLjggNyAwIDE5LjgtMTEuNSA0Ni41LTE3IDYxLjUtMzUiIGZpbGw9InVybCgjU1ZHSURfMV8pIi8+PC9nPjxwYXRoIGlkPSJwYXRoNjg4MS0zLTUtNS0xLTgtNC00IiBjbGFzcz0ic3QyIiBkPSJNMTI0LjcgNjkuMWMtLjktMjcuNS0yMi4zLTQ5LjgtNDkuOC00OS44cy00OSAyMi4zLTQ5LjggNDkuOGMtMS4zIDQwLjEgMzAuNyA1Mi4yIDQ0LjcgNzggMi4yIDQgOCA0IDEwLjEgMCAxNC4xLTI1LjggNDYuMS0zNy45IDQ0LjgtNzgiLz48L2c+PGcgaWQ9Imc0OTI4Ij48Y2lyY2xlIGlkPSJwYXRoNDk3OCIgY2xhc3M9InN0MiIgY3g9Ijc0LjkiIGN5PSI2OS4xIiByPSI0OS45Ii8+PGcgaWQ9Imc0OTE1Ij48cGF0aCBpZD0icGF0aDY4ODMtMi0zLTUtMi00LTktNC05IiBkPSJNNzQuOCAxMDYuNGMtMjAuNiAwLTM3LjQtMTYuNy0zNy40LTM3LjQgMC0yMC42IDE2LjctMzcuNCAzNy40LTM3LjQgMjAuNiAwIDM3LjQgMTYuNyAzNy40IDM3LjRzLTE2LjcgMzcuNC0zNy40IDM3LjQiIGZpbGw9IiNmZmYiLz48L2c+PC9nPjxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik05NS45IDQ2LjZWNDloLTEwdi0yLjVsMTAgLjF6bS0yIDUuM2gtOHYyLjVoOHYtMi41em0tOCA3LjloNnYtMi41aC02djIuNXptNCAyLjloLTR2Mi41aDR2LTIuNXptLTQgNy44aDJWNjhoLTJ2Mi41em0xLjUgMTRjMCA2LjktNS41IDEyLjUtMTIuMyAxMi41cy0xMi4zLTUuNi0xMi4zLTEyLjVjMC00LjUgMi4zLTguNSA2LjEtMTAuN1Y0NS41YzAtMy41IDIuOC02LjMgNi4yLTYuM3M2LjIgMi44IDYuMiA2LjN2MjguM2MzLjggMi4yIDYuMSA2LjMgNi4xIDEwLjd6bS0yLjQgMGMwLTMuOC0yLjEtNy4yLTUuNC04LjlsLS43LS4zVjQ1LjVjMC0yLjEtMS43LTMuOC0zLjgtMy44LTIuMSAwLTMuOCAxLjctMy44IDMuOHYyOS44bC0uNy4zYy0zLjMgMS43LTUuNCA1LjEtNS40IDguOSAwIDUuNSA0LjQgMTAgOS45IDEwUzg1IDkwIDg1IDg0LjV6bS0yLjEgMGMwIDQuNC0zLjUgOC03LjggOHMtNy44LTMuNi03LjgtOGMwLTMuNiAyLjQtNi44IDUuOC03LjdsLjUtLjFWNjEuNWgzLjF2MTUuMmwuNS4xYzMuMyAxIDUuNyA0LjEgNS43IDcuN3ptLTcuNC01LjNjLS4yLS44LTEtMS40LTEuOS0xLjItMyAuNy01IDMuMy01IDYuNCAwIC45LjcgMS42IDEuNiAxLjZzMS42LS43IDEuNi0xLjZjMC0xLjYgMS4xLTMgMi42LTMuMy43LS4yIDEuMy0xIDEuMS0xLjl6Ii8+PC9zdmc+",
-      "public": true
-    },
-    {
-      "link": "/api/images/system/thermostats_dashboard_widget_thermostat_maps_marker_image_1.svg",
-      "title": "\"Thermostats\" dashboard widget \"Thermostat maps\" marker image 1",
-      "type": "IMAGE",
-      "subType": "IMAGE",
-      "fileName": "thermostats_dashboard_widget_thermostat_maps_marker_image_1.svg",
-      "publicResourceKey": "HtfNoQ7FAZKdeH4m3WGodwajcsscKrTR",
-      "mediaType": "image/svg+xml",
-      "data": "PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJzdmc0NDA4IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHg9IjAiIHk9IjAiIHZpZXdCb3g9IjAgMCAxNTAgMTUwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48c3R5bGU+LnN0MntmaWxsOiMyNzg2MjJ9PC9zdHlsZT48ZyBpZD0ibGF5ZXIxIj48ZyBpZD0icGF0aDY4ODEtMy01LTUtMS04LTQtNC03LTgiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xNDYuNDM4IC0yNzYuMDI4KSIgb3BhY2l0eT0iLjg5MiI+PHJhZGlhbEdyYWRpZW50IGlkPSJTVkdJRF8xXyIgY3g9IjMwODUuMjE1IiBjeT0iMzE3OC40NTgiIHI9IjQ5LjkwMSIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCguNjc5MyAuMDA3NiAtLjUwOSAuNTYxMiAtMjMyLjYyOSAtMTQxMS43MjUpIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9Ii4xODgiLz48L3JhZGlhbEdyYWRpZW50PjxwYXRoIGQ9Ik0yODUuNiAzODguNWMxMC4zLTEyLjQgNC40LTIyLjQtMTQuNC0yMi40LTE4LjkgMC00Mi40IDEwLTUzLjkgMjIuNC0xNi44IDE4IC40IDIzLjUtLjIgMzUtLjEgMS44IDMuOSAxLjggNyAwIDE5LjgtMTEuNSA0Ni41LTE3IDYxLjUtMzUiIGZpbGw9InVybCgjU1ZHSURfMV8pIi8+PC9nPjxwYXRoIGlkPSJwYXRoNjg4MS0zLTUtNS0xLTgtNC00IiBjbGFzcz0ic3QyIiBkPSJNMTI0LjcgNjkuMWMtLjktMjcuNS0yMi4zLTQ5LjgtNDkuOC00OS44cy00OSAyMi4zLTQ5LjggNDkuOGMtMS4zIDQwLjEgMzAuNyA1Mi4yIDQ0LjcgNzggMi4yIDQgOCA0IDEwLjEgMCAxNC4xLTI1LjggNDYuMS0zNy45IDQ0LjgtNzgiLz48L2c+PGcgaWQ9Imc0OTI4Ij48Y2lyY2xlIGlkPSJwYXRoNDk3OCIgY2xhc3M9InN0MiIgY3g9Ijc0LjkiIGN5PSI2OS4xIiByPSI0OS45Ii8+PGcgaWQ9Imc0OTE1Ij48cGF0aCBpZD0icGF0aDY4ODMtMi0zLTUtMi00LTktNC05IiBkPSJNNzQuOCAxMDYuNGMtMjAuNiAwLTM3LjQtMTYuNy0zNy40LTM3LjQgMC0yMC42IDE2LjctMzcuNCAzNy40LTM3LjQgMjAuNiAwIDM3LjQgMTYuNyAzNy40IDM3LjRzLTE2LjcgMzcuNC0zNy40IDM3LjQiIGZpbGw9IiNmZmYiLz48L2c+PC9nPjxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik05NS45IDQ2LjZWNDloLTEwdi0yLjVsMTAgLjF6bS0yIDUuM2gtOHYyLjVoOHYtMi41em0tOCA3LjloNnYtMi41aC02djIuNXptNCAyLjloLTR2Mi41aDR2LTIuNXptLTQgNy44aDJWNjhoLTJ2Mi41em0xLjUgMTRjMCA2LjktNS41IDEyLjUtMTIuMyAxMi41cy0xMi4zLTUuNi0xMi4zLTEyLjVjMC00LjUgMi4zLTguNSA2LjEtMTAuN1Y0NS41YzAtMy41IDIuOC02LjMgNi4yLTYuM3M2LjIgMi44IDYuMiA2LjN2MjguM2MzLjggMi4yIDYuMSA2LjMgNi4xIDEwLjd6bS0yLjQgMGMwLTMuOC0yLjEtNy4yLTUuNC04LjlsLS43LS4zVjQ1LjVjMC0yLjEtMS43LTMuOC0zLjgtMy44LTIuMSAwLTMuOCAxLjctMy44IDMuOHYyOS44bC0uNy4zYy0zLjMgMS43LTUuNCA1LjEtNS40IDguOSAwIDUuNSA0LjQgMTAgOS45IDEwUzg1IDkwIDg1IDg0LjV6bS0yLjEgMGMwIDQuNC0zLjUgOC03LjggOHMtNy44LTMuNi03LjgtOGMwLTMuNiAyLjQtNi44IDUuOC03LjdsLjUtLjFWNjEuNWgzLjF2MTUuMmwuNS4xYzMuMyAxIDUuNyA0LjEgNS43IDcuN3ptLTcuNC01LjNjLS4yLS44LTEtMS40LTEuOS0xLjItMyAuNy01IDMuMy01IDYuNCAwIC45LjcgMS42IDEuNiAxLjZzMS42LS43IDEuNi0xLjZjMC0xLjYgMS4xLTMgMi42LTMuMy43LS4yIDEuMy0xIDEuMS0xLjl6Ii8+PC9zdmc+Cg==",
-      "public": true
-    }
-  ]
+  "resources": []
 }

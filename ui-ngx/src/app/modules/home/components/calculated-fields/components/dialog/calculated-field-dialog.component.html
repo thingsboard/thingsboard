@@ -102,6 +102,7 @@
               [scriptLanguage]="ScriptLanguage.TBEL"
               [highlightRules]="argumentsHighlightRules$ | async"
               [editorCompleter]="argumentsEditorCompleter$ | async"
+              [helpPopupStyle]="{ width: '1200px' }"
               helpId="calculated-field/expression_fn"
             >
               <div toolbarPrefixButton class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}</div>

@@ -21,6 +21,7 @@ import org.thingsboard.server.exception.CalculatedFieldStateException;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
@@ -34,7 +35,11 @@ public interface CalculatedFieldStateService {
 
     void removeState(CalculatedFieldEntityCtxId stateId, TbCallback callback);
 
-    void restore(Set<TopicPartitionInfo> partitions);
+    void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions);
+
+    void delete(Set<TopicPartitionInfo> partitions);
+
+    Set<TopicPartitionInfo> getPartitions();
 
     void stop();
 

@@ -27,6 +27,7 @@ interface JQuery {
 
 interface JSTreeEventData {
   instance: JSTree;
+  action: string;
 }
 
 interface JSTreeModelEventData extends JSTreeEventData {

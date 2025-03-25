@@ -16,19 +16,16 @@
 package org.thingsboard.server.common.msg.cf;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 
 @Data
 public class CalculatedFieldEntityLifecycleMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
     private final ComponentLifecycleMsg data;
-    private final TbCallback callback;
 
     @Override
     public MsgType getMsgType() {

@@ -50,6 +50,7 @@ import { JsFuncModulesComponent } from '@shared/components/js-func-modules.compo
 import { HttpClient } from '@angular/common/http';
 import { map, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { tbelUtilsAutocompletes, tbelUtilsFuncHighlightRules } from '@shared/models/ace/tbel-utils.models';
 
 @Component({
   selector: 'tb-js-func',
@@ -105,6 +106,8 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   @Input() highlightRules: AceHighlightRules;
 
   @Input() globalVariables: Array<string>;
+
+  @Input() helpPopupStyle: Record<string, any> = {};
 
   @Input()
   @coerceBoolean()
@@ -560,6 +563,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
         break;
       case 'scriptLanguage':
         this.updatedScriptLanguage();
+        this.updateHighlightRules();
+        this.updateCompleters();
+        this.updateJsWorkerGlobals();
         break;
       case 'disableUndefinedCheck':
       case 'globalVariables':
@@ -576,19 +582,24 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
 
   private updateHighlightRules(): void {
     // @ts-ignore
-    if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
+    if (!!this.jsEditor.session.$mode) {
       // @ts-ignore
       const newMode = new this.jsEditor.session.$mode.constructor();
       newMode.$highlightRules = new newMode.HighlightRules();
-      for(const group in this.highlightRules) {
-        if(!!newMode.$highlightRules.$rules[group]) {
-          newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
-        } else {
-          newMode.$highlightRules.$rules[group] = this.highlightRules[group];
+      if (!!this.highlightRules) {
+        for(const group in this.highlightRules) {
+          if(!!newMode.$highlightRules.$rules[group]) {
+            newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
+          } else {
+            newMode.$highlightRules.$rules[group] = this.highlightRules[group];
+          }
         }
       }
+      if (this.scriptLanguage === ScriptLanguage.TBEL) {
+        newMode.$highlightRules.$rules.start = [...tbelUtilsFuncHighlightRules, ...newMode.$highlightRules.$rules.start];
+      }
       const identifierRule = newMode.$highlightRules.$rules.no_regex.find(rule => rule.token?.includes('identifier'));
-      if (identifierRule) {
+      if (identifierRule && identifierRule.next === 'no_regex') {
         identifierRule.next = 'start';
       }
       // @ts-ignore
@@ -640,6 +651,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
       }
       if (modulesCompleter) {
         completers.push(modulesCompleter);
+      }
+      if (this.scriptLanguage === ScriptLanguage.TBEL) {
+        completers.push(tbelUtilsAutocompletes);
       }
       completers.push(...this.initialCompleters);
       this.jsEditor.completers = completers;

@@ -116,8 +116,22 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
               map((referenceLayer) => {
                   if (referenceLayer) {
                     const layer = L.featureGroup();
+                    let baseLayerLoaded = false;
+                    let referenceLayerLoaded = false;
                     baseLayer.addTo(layer);
                     referenceLayer.addTo(layer);
+                    baseLayer.once('load', () => {
+                      baseLayerLoaded = true;
+                      if (referenceLayerLoaded) {
+                        layer.fire('load');
+                      }
+                    });
+                    referenceLayer.once('load', () => {
+                      referenceLayerLoaded = true;
+                      if (baseLayerLoaded) {
+                        layer.fire('load');
+                      }
+                    });
                     return {
                       layer,
                       attribution: !!baseLayer.getAttribution() || !!referenceLayer.getAttribution()

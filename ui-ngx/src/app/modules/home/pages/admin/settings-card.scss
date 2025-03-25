@@ -19,6 +19,10 @@
  .mat-mdc-card.settings-card {
    margin: 8px;
 
+   mat-card-header.mat-mdc-card-header {
+     align-items: center;
+   }
+
    .fields-group {
      padding: 0 16px 8px;
      margin: 10px 0;
