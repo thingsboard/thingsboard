@@ -149,7 +149,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     if (this.markdownText !== markdownText) {
       this.markdownText = this.utils.customTranslation(markdownText, markdownText);
     }
-    this.cd.markForCheck();
+    this.cd.detectChanges();
   }
 
   markdownClick($event: MouseEvent) {
