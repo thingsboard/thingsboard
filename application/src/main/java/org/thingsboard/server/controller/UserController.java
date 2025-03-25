@@ -127,6 +127,35 @@ public class UserController extends BaseController {
     private final EntityQueryService entityQueryService;
     private final EntityService entityService;
 
+    // start my code
+
+    @ApiOperation(value = "Create User (saveUserV2)",
+            notes = "Create or update the User. When creating user, platform generates User Id as " + UUID_WIKI_LINK +
+                    "The newly created User Id will be present in the response. " +
+                    "Specify existing User Id to update the device. " +
+                    "Referencing non-existing User Id will cause 'Not Found' error." +
+                    "\n\nDevice email is unique for entire platform setup." +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new User entity." +
+                    "\n\nAvailable for users with 'SYS_ADMIN', 'TENANT_ADMIN' or 'CUSTOMER_USER' authority.")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/create-user-z", method = RequestMethod.POST)
+    @ResponseBody
+    public User saveUserV2(
+            @Parameter(description = "A JSON value representing the User.", required = true)
+            @RequestBody User user,
+            @Parameter(description = "Send activation email (or use activation link)", schema = @Schema(defaultValue = "true"))
+            @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail, HttpServletRequest request) throws ThingsboardException {
+//        System.out.println("TENANTID: " + getCurrentUser().getTenantId());
+//        if (!Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+//            user.setTenantId(getCurrentUser().getTenantId());
+//        }
+//        checkEntity(user.getId(), user, Resource.USER);
+//        user.setTenantId(getCurrentUser().getTenantId());
+        return tbUserService.save(getCurrentUser().getTenantId(), user.getCustomerId(), user, sendActivationMail, request, getCurrentUser());
+    }
+
+    // end my code
+
     @ApiOperation(value = "Get User (getUserById)",
             notes = "Fetch the User object based on the provided User Id. " +
                     "If the user has the authority of 'SYS_ADMIN', the server does not perform additional checks. " +

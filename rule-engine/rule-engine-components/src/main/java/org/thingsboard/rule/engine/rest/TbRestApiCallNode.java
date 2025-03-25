@@ -103,5 +103,4 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
         }
         return new TbPair<>(hasChanges, oldConfiguration);
     }
-
 }

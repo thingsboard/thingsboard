@@ -49,6 +49,9 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -189,6 +192,8 @@ public class DeviceController extends BaseController {
 //        else {
 //            checkEntity(null, device, Resource.DEVICE);
 //        }
+
+        // them share_attribute vao device
 
         // Lưu thiết bị vào hệ thống
         Device savedDevice = tbDeviceService.save(device, accessToken, currentUser);
