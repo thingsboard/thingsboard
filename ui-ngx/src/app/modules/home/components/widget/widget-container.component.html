@@ -37,7 +37,7 @@
          class="tb-widget-actions"
          [class]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel && !widgetComponent.widgetContext?.embedTitlePanel && (widget.showTitle||widget.hasAggregation))}"
          (mousedown)="$event.stopPropagation()">
-      <div class="flex items-center">
+      <div class="flex items-center" #widgetHeaderActionButtonContainer>
         @for (action of widget.customHeaderActions; track action.name; let last = $last) {
           <ng-container *ngTemplateOutlet="widgetHeaderActionButton; context:{ action, last }"></ng-container>
         }
@@ -107,7 +107,7 @@
   @case (widgetHeaderActionButtonType.miniFab) {
     <button mat-mini-fab
             [style]="action.customButtonStyle"
-            [class.!hidden]="isEdit"
+            [class.!invisible]="isEdit"
             [class.mr-2]="!last"
             (click)="action.onAction($event)"
             matTooltip="{{ action.displayName }}"
@@ -116,7 +116,7 @@
     </button>
   }
   @case (widgetHeaderActionButtonType.basic) {
-    <button [class.!hidden]="isEdit" mat-button
+    <button [class.!invisible]="isEdit" mat-button
             [class.mr-2]="!last"
             [style]="action.customButtonStyle"
             (click)="action.onAction($event)"
@@ -127,7 +127,7 @@
     </button>
   }
   @case (widgetHeaderActionButtonType.raised) {
-    <button [class.!hidden]="isEdit" mat-raised-button
+    <button [class.!invisible]="isEdit" mat-raised-button
             [class.mr-2]="!last"
             [style]="action.customButtonStyle"
             (click)="action.onAction($event)"
@@ -138,7 +138,7 @@
     </button>
   }
   @case (widgetHeaderActionButtonType.stroked) {
-    <button [class.!hidden]="isEdit" mat-stroked-button
+    <button [class.!invisible]="isEdit" mat-stroked-button
             [class.mr-2]="!last"
             [style]="action.customButtonStyle"
             (click)="action.onAction($event)"
@@ -149,7 +149,7 @@
     </button>
   }
   @case (widgetHeaderActionButtonType.flat) {
-    <button [class.!hidden]="isEdit" mat-flat-button
+    <button [class.!invisible]="isEdit" mat-flat-button
             [class.mr-2]="!last"
             [style]="action.customButtonStyle"
             (click)="action.onAction($event)"
@@ -162,7 +162,7 @@
   @default {
     <button mat-icon-button
             [style]="action.customButtonStyle"
-            [class.!hidden]="isEdit"
+            [class.!invisible]="isEdit"
             (click)="action.onAction($event)"
             matTooltip="{{ action.displayName }}"
             matTooltipPosition="above">

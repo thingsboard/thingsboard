@@ -445,6 +445,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       this.widgetContext.subscriptions = {};
       if (this.widgetContext.inited) {
         this.widgetContext.inited = false;
+        this.widgetContext.inited$.next(false);
         for (const cafId of Object.keys(this.cafs)) {
           if (this.cafs[cafId]) {
             this.cafs[cafId]();
@@ -523,6 +524,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       },
       (err) => {
         this.widgetContext.inited = true;
+        this.widgetContext.inited$.next(true);
         // console.log(err);
       }
     );
@@ -554,6 +556,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     }
     if (!this.widgetContext.inited && this.isReady()) {
       this.widgetContext.inited = true;
+      this.widgetContext.inited$.next(true);
       this.widgetContext.destroyed = false;
       this.dashboardWidget.updateWidgetParams();
       this.widgetContext.detectContainerChanges();

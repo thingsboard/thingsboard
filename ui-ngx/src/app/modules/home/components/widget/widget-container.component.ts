@@ -80,6 +80,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   @ViewChild('tbWidgetElement', {static: true})
   tbWidgetElement: ElementRef;
 
+  @ViewChild('widgetHeaderActionButtonContainer')
+  widgetHeaderActionButtonContainer: ElementRef;
+
+
   @Input()
   gridsterItem: GridsterItemComponent;
 
@@ -159,6 +163,17 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     const dashboardContentElement = this.widget.widgetContext.dashboardContentElement;
     if (dashboardContentElement) {
       this.initEditWidgetActionTooltip(dashboardContentElement);
+    }
+    if (this.widget.showTitle && this.widget.widgetContext.widgetConfig.actions?.headerButton?.length) {
+      this.widget.widgetContext.inited$.subscribe((value) => {
+        if (value) {
+          Promise.resolve().then(() => {
+            if (this.widgetHeaderActionButtonContainer.nativeElement?.offsetHeight) {
+              this.widget.widgetContext.widgetActionsHeaderButtonHeight = this.widgetHeaderActionButtonContainer.nativeElement.offsetHeight;
+            }
+          })
+        }
+      });
     }
   }
 

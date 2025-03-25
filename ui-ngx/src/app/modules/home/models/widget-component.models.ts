@@ -49,9 +49,11 @@ import {
 } from '@core/api/widget-api.models';
 import {
   ChangeDetectorRef,
+  EventEmitter,
   InjectionToken,
   Injector,
-  NgZone, Renderer2,
+  NgZone,
+  Renderer2,
   TemplateRef,
   Type,
   ViewContainerRef
@@ -237,6 +239,7 @@ export class WidgetContext {
   private containerChangeDetectorValue: ChangeDetectorRef;
 
   inited = false;
+  inited$ = new EventEmitter<boolean>();
   destroyed = false;
 
   subscriptions: {[id: string]: IWidgetSubscription} = {};
@@ -320,6 +323,7 @@ export class WidgetContext {
   widgetTitleTooltip?: string;
   customHeaderActions?: Array<WidgetHeaderAction>;
   widgetActions?: Array<WidgetAction>;
+  widgetActionsHeaderButtonHeight?: number;
 
   servicesMap?: Map<string, Type<any>>;
 

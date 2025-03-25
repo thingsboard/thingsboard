@@ -50,6 +50,9 @@ export class MapWidgetComponent implements OnInit, OnDestroy {
   @ViewChild('mapElement', {static: false})
   mapElement: ElementRef<HTMLElement>;
 
+  @ViewChild('mapTitle', {static: false, read: ElementRef})
+  mapTitle: ElementRef<HTMLElement>;
+
   settings: MapWidgetSettings;
 
   @Input()
@@ -88,6 +91,10 @@ export class MapWidgetComponent implements OnInit, OnDestroy {
   public onInit() {
     const borderRadius = this.ctx.$widgetElement.css('borderRadius');
     this.overlayStyle = {...this.overlayStyle, ...{borderRadius}};
+    if (this.widgetComponent.dashboardWidget.showWidgetTitlePanel && !this.ctx.settings.background?.overlay?.enabled &&
+      (this.ctx?.widgetActionsHeaderButtonHeight > this.mapTitle.nativeElement?.offsetHeight)) {
+      this.mapTitle.nativeElement.style.minHeight = `${this.ctx.widgetActionsHeaderButtonHeight}px`;
+    }
     this.cd.detectChanges();
     this.map = createMap(this.ctx, this.settings, this.mapElement.nativeElement);
   }
