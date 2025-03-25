@@ -112,11 +112,7 @@ export interface DisplayPopoverWithComponentRefConfig<T> {
   isModal?: boolean;
 }
 
-export const defaultPopoverConfig: DisplayPopoverWithComponentRefConfig<any> = {
-  componentRef: undefined,
-  trigger: undefined,
-  renderer: undefined,
-  componentType: undefined,
+export const defaultPopoverConfig: Partial<DisplayPopoverWithComponentRefConfig<any>> = {
   preferredPlacement: 'top',
   hideOnClickOutside: true,
   overlayStyle: {},
