@@ -343,13 +343,28 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                 s -> {
                     TbTimeSeriesSubscription sub = (TbTimeSeriesSubscription) s;
                     List<TsKvEntry> updateData = null;
-                    for (TsKvEntry kv : data) {
-                        if (sub.getKeyStates().containsKey((kv.getKey()))) {
-                            if (!sub.isLatestValues() || kv.getTs() > sub.getKeyStates().get(kv.getKey())) {
-                                if (updateData == null) {
-                                    updateData = new ArrayList<>();
+                    if (sub.isAllKeys()) {
+                        if (sub.isLatestValues()) {
+                            for (TsKvEntry kv : data) {
+                                if (!sub.getKeyStates().containsKey((kv.getKey())) || kv.getTs() > sub.getKeyStates().get(kv.getKey())) {
+                                    if (updateData == null) {
+                                        updateData = new ArrayList<>();
+                                    }
+                                    updateData.add(kv);
                                 }
-                                updateData.add(kv);
+                            }
+                        } else {
+                            updateData = data;
+                        }
+                    } else {
+                        for (TsKvEntry kv : data) {
+                            if (sub.getKeyStates().containsKey((kv.getKey()))) {
+                                if (!sub.isLatestValues() || kv.getTs() > sub.getKeyStates().get(kv.getKey())) {
+                                    if (updateData == null) {
+                                        updateData = new ArrayList<>();
+                                    }
+                                    updateData.add(kv);
+                                }
                             }
                         }
                     }
