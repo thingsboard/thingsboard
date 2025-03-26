@@ -42,6 +42,7 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
 import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
   selector: 'tb-calculated-field-argument-panel',
@@ -51,18 +52,16 @@ import { EntityAutocompleteComponent } from '@shared/components/entity/entity-au
 export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewInit {
 
   @Input() buttonTitle: string;
-  @Input() index: number;
   @Input() argument: CalculatedFieldArgumentValue;
   @Input() entityId: EntityId;
   @Input() tenantId: string;
   @Input() entityName: string;
-  @Input() entityHasError: boolean;
   @Input() calculatedFieldType: CalculatedFieldType;
   @Input() usedArgumentNames: string[];
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
 
-  argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
+  argumentsDataApplied = output<CalculatedFieldArgumentValue>();
 
   readonly maxDataPointsPerRollingArg = getCurrentAuthState(this.store).maxDataPointsPerRollingArg;
   readonly defaultLimit = Math.floor(this.maxDataPointsPerRollingArg / 10);
@@ -106,7 +105,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     private store: Store<AppState>
   ) {
     this.observeEntityFilterChanges();
-    this.observeEntityTypeChanges()
+    this.observeEntityTypeChanges();
     this.observeEntityKeyChanges();
     this.observeUpdatePosition();
   }
@@ -141,7 +140,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   }
 
   ngAfterViewInit(): void {
-    if (this.entityHasError) {
+    if (this.argument.refEntityId.id === NULL_UUID) {
       this.entityAutocomplete.selectEntityFormGroup.get('entity').markAsTouched();
     }
   }
@@ -156,7 +155,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
       value.defaultValue = value.defaultValue.trim();
     }
     value.refEntityKey.key = value.refEntityKey.key.trim();
-    this.argumentsDataApplied.emit({ value, index: this.index });
+    this.argumentsDataApplied.emit(value);
   }
 
   cancel(): void {

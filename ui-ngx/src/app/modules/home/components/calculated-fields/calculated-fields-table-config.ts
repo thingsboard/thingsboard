@@ -160,7 +160,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
   private getExpressionLabel(entity: CalculatedField): string {
     if (entity.type === CalculatedFieldType.SCRIPT) {
-      return 'function calculate(' + Object.keys(entity.configuration.arguments).join(', ') + ')';
+      return 'function calculate(ctx, ' + Object.keys(entity.configuration.arguments).join(', ') + ')';
     } else {
       return entity.configuration.expression;
     }
