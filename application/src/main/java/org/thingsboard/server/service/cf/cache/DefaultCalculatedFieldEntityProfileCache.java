@@ -28,10 +28,14 @@ import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 @TbRuleEngineComponent
 @Service
@@ -46,18 +50,32 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        var tenantPartitions = event.getCfPartitions().stream()
+        Map<TenantId, List<Integer>> tenantPartitions = new HashMap<>();
+        List<Integer> systemPartitions = new ArrayList<>();
+
+        event.getCfPartitions().stream()
                 .filter(TopicPartitionInfo::isMyPartition)
-                .filter(tpi -> tpi.getTenantId().isPresent())
-                .collect(Collectors.groupingBy(
-                        tpi -> tpi.getTenantId().get(),
-                        Collectors.mapping(tpi -> tpi.getPartition().orElse(UNKNOWN), Collectors.toList())
-                ));
+                .forEach(tpi -> {
+                    Integer partition = tpi.getPartition().orElse(UNKNOWN);
+                    Optional<TenantId> tenantIdOpt = tpi.getTenantId();
+                    if (tenantIdOpt.isPresent()) {
+                        tenantPartitions.computeIfAbsent(tenantIdOpt.get(), id -> new ArrayList<>()).add(partition);
+                    } else {
+                        systemPartitions.add(partition);
+                    }
+                });
 
         tenantPartitions.forEach((tenantId, partitions) -> {
             var cache = tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache());
             cache.setMyPartitions(partitions);
         });
+
+        tenantCache.keySet().stream()
+                .filter(tenantId -> !tenantPartitions.containsKey(tenantId))
+                .forEach(tenantId -> {
+                    var cache = tenantCache.get(tenantId);
+                    cache.setMyPartitions(systemPartitions);
+                });
     }
 
     @Override
