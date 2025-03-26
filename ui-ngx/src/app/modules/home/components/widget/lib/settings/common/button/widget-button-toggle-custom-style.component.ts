@@ -127,20 +127,22 @@ export class WidgetButtonToggleCustomStyleComponent implements OnInit, OnChanges
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        appearance: this.appearance,
-        borderRadius: this.borderRadius,
-        autoScale: this.autoScale,
-        state: this.state,
-        value: this.value,
-        customStyle: this.modelValue
-      };
-      const widgetButtonCustomStylePanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, WidgetButtonToggleCustomStylePanelComponent,
-        ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const widgetButtonCustomStylePanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: WidgetButtonToggleCustomStylePanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+        context: {
+          appearance: this.appearance,
+          borderRadius: this.borderRadius,
+          autoScale: this.autoScale,
+          state: this.state,
+          value: this.value,
+          customStyle: this.modelValue
+        },
+        isModal: true
+      });
       widgetButtonCustomStylePanelPopover.tbComponentRef.instance.popover = widgetButtonCustomStylePanelPopover;
       widgetButtonCustomStylePanelPopover.tbComponentRef.instance.customStyleApplied.subscribe((customStyle) => {
         widgetButtonCustomStylePanelPopover.hide();

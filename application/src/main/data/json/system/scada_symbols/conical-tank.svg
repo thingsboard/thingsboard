@@ -371,7 +371,7 @@
   <rect x="841" y="957" width="100" height="29" rx="7" fill="#fff" style=""/>
   <rect x="841" y="957" width="100" height="29" rx="7" fill="url(#paint638_linear_2901_184325)" style=""/>
   <rect x="842.5" y="958.5" width="97" height="26" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3" style=""/>
- </g><path d="m336.32 0s-336.32 0-336.32 167.5v820.9c0 6.628 8.9543 11.601 20 11.601h960c11.045 0 20-4.973 20-11.601v-820.9c0-167.5-330.35-167.5-330.35-167.5h-169.65zm335.35 203c-6.4433 0-11.667 3.134-11.667 7v751c0 3.866 5.2233 7 11.667 7h73.333c6.4433 0 11.667-3.134 11.667-7v-751c0-3.866-5.2233-7-11.667-7z" fill="#000" fill-opacity="0" style="stroke-width:1.6667" tb:tag="clickArea"/><defs>
+ </g><path d="m336.32 0s-336.32 0-336.32 167.5v820.9c0 6.628 8.9543 11.601 20 11.601h960c11.045 0 20-4.973 20-11.601v-820.9c0-167.5-330.35-167.5-330.35-167.5h-169.65zm335.35 203c-6.4433 0-11.667 3.134-11.667 7v751c0 3.866 5.2233 7 11.667 7h73.333c6.4433 0 11.667-3.134 11.667-7v-751c0-3.866-5.2233-7-11.667-7z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><defs>
   <linearGradient id="paint0_linear_2901_184325" x1="1e3" x2="2.2785" y1="818.55" y2="867.09" gradientUnits="userSpaceOnUse">
    <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
    <stop stop-color="#020202" stop-opacity=".12" offset=".23574"/>

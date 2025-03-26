@@ -107,14 +107,17 @@ export class BackgroundSettingsComponent implements OnInit, ControlValueAccessor
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        backgroundSettings: this.modelValue
-      };
-     const backgroundSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, BackgroundSettingsPanelComponent, ['left'], false, null,
-        ctx,
-        {},
-        {}, {}, true);
+     const backgroundSettingsPanelPopover = this.popoverService.displayPopover({
+       trigger,
+       renderer: this.renderer,
+       componentType: BackgroundSettingsPanelComponent,
+       hostView: this.viewContainerRef,
+       preferredPlacement: 'left',
+       context: {
+         backgroundSettings: this.modelValue
+       },
+       isModal: true
+     });
       backgroundSettingsPanelPopover.tbComponentRef.instance.popover = backgroundSettingsPanelPopover;
       backgroundSettingsPanelPopover.tbComponentRef.instance.backgroundSettingsApplied.subscribe((backgroundSettings) => {
         backgroundSettingsPanelPopover.hide();

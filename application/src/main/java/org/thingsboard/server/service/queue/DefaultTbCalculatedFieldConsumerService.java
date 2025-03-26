@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.queue;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -55,7 +54,7 @@ import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
+import org.thingsboard.server.service.queue.processing.AbstractConsumerPartitionedService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
@@ -72,7 +71,7 @@ import java.util.stream.Collectors;
 @Service
 @TbRuleEngineComponent
 @Slf4j
-public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerService<ToCalculatedFieldNotificationMsg> implements TbCalculatedFieldConsumerService {
+public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPartitionedService<ToCalculatedFieldNotificationMsg> implements TbCalculatedFieldConsumerService {
 
     @Value("${queue.calculated_fields.poll_interval:25}")
     private long pollInterval;
@@ -99,10 +98,8 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
         this.stateService = stateService;
     }
 
-    @PostConstruct
-    public void init() {
-        super.init("tb-cf");
-
+    @Override
+    protected void doAfterStartUp() {
         var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
         PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
                 .queueKey(queueKey)
@@ -129,7 +126,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     }
 
     @Override
-    protected void onTbApplicationEvent(PartitionChangeEvent event) {
+    protected void processPartitionChangeEvent(PartitionChangeEvent event) {
         try {
             event.getNewPartitions().forEach((queueKey, partitions) -> {
                 if (queueKey.getQueueName().equals(DataConstants.CF_QUEUE_NAME)) {
@@ -144,6 +141,11 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
         } catch (Throwable t) {
             log.error("Failed to process partition change event: {}", event, t);
         }
+    }
+
+    @Override
+    protected String getPrefix() {
+        return "tb-cf";
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToCalculatedFieldMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> consumer, QueueConfig config) throws Exception {
