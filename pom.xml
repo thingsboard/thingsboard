@@ -42,6 +42,7 @@
         <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jaxb-runtime.version>4.0.5</jaxb-runtime.version>
+        <tomcat.version>10.1.39</tomcat.version> <!--Remove after update spring-boot to new version-->
         <spring-boot.version>3.2.12</spring-boot.version>
         <spring-data.version>3.2.12</spring-data.version>
         <spring-data-redis.version>3.2.12</spring-data-redis.version>
@@ -52,7 +53,7 @@
         <jjwt.version>0.12.5</jjwt.version>
         <slf4j.version>2.0.13</slf4j.version>
         <log4j.version>2.23.1</log4j.version>
-        <logback.version>1.5.5</logback.version>
+        <logback.version>1.5.18</logback.version>
         <rat.version>0.10</rat.version> <!-- unused -->
         <cassandra.version>4.17.0</cassandra.version>
         <metrics.version>4.2.25</metrics.version>
@@ -88,7 +89,7 @@
         <lombok.version>1.18.32</lombok.version>
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
-        <netty.version>4.1.115.Final</netty.version>
+        <netty.version>4.1.119.Final</netty.version>
         <netty-tcnative.version>2.0.65.Final</netty-tcnative.version>
         <reactor-netty.version>1.1.18</reactor-netty.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
@@ -1146,6 +1147,21 @@
                 <groupId>org.glassfish.jaxb</groupId>
                 <artifactId>jaxb-runtime</artifactId>
                 <version>${jaxb-runtime.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-el</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-websocket</artifactId>
+                <version>${tomcat.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
