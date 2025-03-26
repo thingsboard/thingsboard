@@ -937,7 +937,13 @@ export abstract class TbMap<S extends BaseMapSettings> {
       bounds = new L.LatLngBounds(null, null);
       dataLayersBounds.forEach(b => bounds.extend(b));
       const mapBounds = this.map.getBounds();
-      if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || (!this.bounds.equals(bounds) || force) && this.settings.fitMapBounds && !mapBounds.contains(bounds))) {
+      if (bounds.isValid() &&
+        (
+          (!this.bounds || !this.bounds.isValid() || (!this.bounds.equals(bounds) || force) && this.settings.fitMapBounds)
+          && !mapBounds.contains(bounds)
+        )
+      )
+      {
         this.bounds = bounds;
         if (!this.ignoreUpdateBounds && !this.isPlacingItem) {
           this.fitBounds(bounds);
