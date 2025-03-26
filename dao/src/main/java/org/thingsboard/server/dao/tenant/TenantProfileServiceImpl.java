@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.thingsboard.common.util.DebugModeUtil.DEBUG_MODE_DEFAULT_DURATION_MINUTES;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("TenantProfileDaoService")
@@ -161,7 +162,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
             defaultTenantProfile.setName("Default");
             TenantProfileData profileData = new TenantProfileData();
             DefaultTenantProfileConfiguration configuration = new DefaultTenantProfileConfiguration();
-            configuration.setMaxDebugModeDurationMinutes(15);
+            configuration.setMaxDebugModeDurationMinutes(DEBUG_MODE_DEFAULT_DURATION_MINUTES);
             profileData.setConfiguration(configuration);
             defaultTenantProfile.setProfileData(profileData);
             defaultTenantProfile.setDescription("Default tenant profile");

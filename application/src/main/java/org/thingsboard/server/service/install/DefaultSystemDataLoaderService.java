@@ -122,6 +122,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.thingsboard.common.util.DebugModeUtil.DEBUG_MODE_DEFAULT_DURATION_MINUTES;
 import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
 import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.isSigningKeyDefault;
 import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.validateKeyLength;
@@ -200,7 +201,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         TenantProfileData isolatedRuleEngineTenantProfileData = new TenantProfileData();
         DefaultTenantProfileConfiguration configuration = new DefaultTenantProfileConfiguration();
-        configuration.setMaxDebugModeDurationMinutes(15);
+        configuration.setMaxDebugModeDurationMinutes(DEBUG_MODE_DEFAULT_DURATION_MINUTES);
         isolatedRuleEngineTenantProfileData.setConfiguration(configuration);
 
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
