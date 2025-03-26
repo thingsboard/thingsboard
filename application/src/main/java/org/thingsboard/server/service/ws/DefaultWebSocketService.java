@@ -669,7 +669,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 Lock subLock = new ReentrantLock();
-                TbTimeSeriesSubscription sub = createTbTimeSeriesSubscription(subState, subLock, sessionId, sessionRef, cmd, entityId, queryTs, true);
+                TbTimeSeriesSubscription sub = getTsSubscription(subState, subLock, sessionId, sessionRef, cmd, entityId, queryTs, true);
 
                 subLock.lock();
                 try {
@@ -697,7 +697,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 on(r -> Futures.addCallback(tsService.findAllLatest(sessionRef.getSecurityCtx().getTenantId(), entityId), callback, executor), callback::onFailure));
     }
 
-    private TbTimeSeriesSubscription createTbTimeSeriesSubscription(Map<String, Long> subState, Lock subLock, String sessionId, WebSocketSessionRef sessionRef, TimeseriesSubscriptionCmd cmd, EntityId entityId, long queryTs, boolean allKeys) {
+    private TbTimeSeriesSubscription getTsSubscription(Map<String, Long> subState, Lock subLock, String sessionId, WebSocketSessionRef sessionRef, TimeseriesSubscriptionCmd cmd, EntityId entityId, long queryTs, boolean allKeys) {
         return TbTimeSeriesSubscription.builder()
                 .serviceId(serviceId)
                 .sessionId(sessionId)
@@ -729,7 +729,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 Lock subLock = new ReentrantLock();
-                TbTimeSeriesSubscription sub = createTbTimeSeriesSubscription(subState, subLock, sessionId, sessionRef, cmd, entityId, queryTs, false);
+                TbTimeSeriesSubscription sub = getTsSubscription(subState, subLock, sessionId, sessionRef, cmd, entityId, queryTs, false);
 
                 subLock.lock();
                 try {
