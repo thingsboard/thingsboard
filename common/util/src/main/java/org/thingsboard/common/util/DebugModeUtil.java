@@ -22,7 +22,7 @@ import java.util.Set;
 
 public final class DebugModeUtil {
 
-    private static final int DEBUG_MODE_DEFAULT_DURATION_MINUTES = 15;
+    public static final int DEBUG_MODE_DEFAULT_DURATION_MINUTES = 15;
 
     private DebugModeUtil() {
     }
