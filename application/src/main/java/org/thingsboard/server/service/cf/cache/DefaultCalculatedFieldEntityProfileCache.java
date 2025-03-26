@@ -24,14 +24,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -46,15 +43,21 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
     private static final Integer UNKNOWN = 0;
     private final ConcurrentMap<TenantId, TenantEntityProfileCache> tenantCache = new ConcurrentHashMap<>();
     private final PartitionService partitionService;
-    private volatile List<Integer> myPartitions = Collections.emptyList();
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        myPartitions = event.getCfPartitions().stream()
+        var tenantPartitions = event.getCfPartitions().stream()
                 .filter(TopicPartitionInfo::isMyPartition)
-                .map(tpi -> tpi.getPartition().orElse(UNKNOWN)).collect(Collectors.toList());
-        //Naive approach that need to be improved.
-        tenantCache.values().forEach(cache -> cache.setMyPartitions(myPartitions));
+                .filter(tpi -> tpi.getTenantId().isPresent())
+                .collect(Collectors.groupingBy(
+                        tpi -> tpi.getTenantId().get(),
+                        Collectors.mapping(tpi -> tpi.getPartition().orElse(UNKNOWN), Collectors.toList())
+                ));
+
+        tenantPartitions.forEach((tenantId, partitions) -> {
+            var cache = tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache());
+            cache.setMyPartitions(partitions);
+        });
     }
 
     @Override
