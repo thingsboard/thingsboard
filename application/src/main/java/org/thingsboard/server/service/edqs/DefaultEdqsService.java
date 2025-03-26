@@ -147,9 +147,12 @@ public class DefaultEdqsService implements EdqsService {
                     syncLock.lock();
                     try {
                         EdqsSyncState syncState = getSyncState();
-                        if (syncState != null && syncState.getStatus() == EdqsSyncStatus.FINISHED) {
-                            log.info("EDQS sync is already finished");
-                            return;
+                        if (syncState != null) {
+                            EdqsSyncStatus status = syncState.getStatus();
+                            if (status == EdqsSyncStatus.FINISHED || status == EdqsSyncStatus.FAILED) {
+                                log.info("EDQS sync is already " + status + ", ignoring the msg");
+                                return;
+                            }
                         }
 
                         saveSyncState(EdqsSyncStatus.STARTED);
