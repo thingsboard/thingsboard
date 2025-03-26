@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.ws.telemetry.sub;
 
 import lombok.AllArgsConstructor;
-import net.minidev.json.annotate.JsonIgnore;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 
