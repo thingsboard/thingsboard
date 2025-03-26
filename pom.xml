@@ -53,7 +53,7 @@
         <jjwt.version>0.12.5</jjwt.version>
         <slf4j.version>2.0.13</slf4j.version>
         <log4j.version>2.23.1</log4j.version>
-        <logback.version>1.5.18</logback.version>
+        <logback.version>1.5.5</logback.version>
         <rat.version>0.10</rat.version> <!-- unused -->
         <cassandra.version>4.17.0</cassandra.version>
         <metrics.version>4.2.25</metrics.version>
