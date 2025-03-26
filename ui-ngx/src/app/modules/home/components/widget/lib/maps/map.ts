@@ -176,6 +176,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private setupControls(): Observable<any> {
     if (this.settings.scales?.length) {
       L.control.scale({
+        position: 'bottomright',
         metric: this.settings.scales.includes(MapScale.metric),
         imperial: this.settings.scales.includes(MapScale.imperial)
       }).addTo(this.map);
