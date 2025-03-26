@@ -264,7 +264,7 @@ function getValueDec(ctx: WidgetContext, settings: AnalogueGaugeSettings): numbe
   if (dataKey && isDefined(dataKey.decimals)) {
     return dataKey.decimals;
   } else {
-    return isDefinedAndNotNull(ctx.decimals) ? ctx.decimals : (settings.valueDec || 0);
+    return isDefinedAndNotNull(ctx.decimals) ? ctx.decimals : 0;
   }
 }
 
