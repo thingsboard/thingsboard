@@ -140,7 +140,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   }
 
   ngAfterViewInit(): void {
-    if (this.argument.refEntityId.id === NULL_UUID) {
+    if (this.argument.refEntityId?.id === NULL_UUID) {
       this.entityAutocomplete.selectEntityFormGroup.get('entity').markAsTouched();
     }
   }

@@ -180,7 +180,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         ctx,
         {},
         {}, {}, true);
-      this.popoverComponent.tbComponentRef.instance.argumentsDataApplied.subscribe((value ) => {
+      this.popoverComponent.tbComponentRef.instance.argumentsDataApplied.subscribe(value=> {
         this.popoverComponent.hide();
         if (isExists) {
           this.argumentsFormArray.at(index).setValue(value);

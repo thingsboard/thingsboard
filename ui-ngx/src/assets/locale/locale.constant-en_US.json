@@ -1000,8 +1000,8 @@
         "calculated-field": "calculated field",
         "hint": {
             "main-limited": "No more than {{msg}} {{entity}} debug messages per {{time}} will be recorded.",
-            "on-failure": "Log all debug messages.",
-            "all-messages": "Log error messages only. "
+            "on-failure": "Log error messages only.",
+            "all-messages": "Log all debug messages."
         }
     },
     "calculated-fields": {
