@@ -14,24 +14,14 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  Component,
-  DestroyRef,
-  forwardRef,
-  Input,
-  OnChanges,
-  OnInit,
-  SimpleChanges
-} from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@app/shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-type-select',
@@ -43,7 +33,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     multi: true
   }]
 })
-export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnChanges {
+export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
 
   entityTypeFormGroup: UntypedFormGroup;
 
@@ -72,12 +62,14 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   @Input()
   additionEntityTypes: {[key in string]: string} = {};
 
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
   entityTypes: Array<EntityType | AliasEntityType | string>;
 
   private propagateChange = (v: any) => { };
 
-  constructor(private store: Store<AppState>,
-              private entityService: EntityService,
+  constructor(private entityService: EntityService,
               public translate: TranslateService,
               private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {
@@ -134,9 +126,6 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
         }
       }
     }
-  }
-
-  ngAfterViewInit(): void {
   }
 
   setDisabledState(isDisabled: boolean): void {

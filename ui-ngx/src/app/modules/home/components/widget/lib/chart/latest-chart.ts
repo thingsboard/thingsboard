@@ -223,40 +223,42 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
   }
 
   protected updateSeriesData(initial = false) {
-    this.total = 0;
-    this.totalText = 'N/A';
-    let hasValue = false;
-    for (const dataItem of this.dataItems) {
-      if (dataItem.enabled && dataItem.hasValue) {
-        hasValue = true;
-        this.total += dataItem.value;
-      }
-      if (this.settings.showLegend) {
-        const legendItem = this.legendItems.find(item => item.dataKey === dataItem.dataKey);
-        if (dataItem.hasValue) {
-          legendItem.hasValue = true;
-          legendItem.value = formatValue(dataItem.value, this.decimals, this.units, false);
-        } else {
-          legendItem.hasValue = false;
-          legendItem.value = '--';
+    if (!this.latestChart.isDisposed()) {
+      this.total = 0;
+      this.totalText = 'N/A';
+      let hasValue = false;
+      for (const dataItem of this.dataItems) {
+        if (dataItem.enabled && dataItem.hasValue) {
+          hasValue = true;
+          this.total += dataItem.value;
+        }
+        if (this.settings.showLegend) {
+          const legendItem = this.legendItems.find(item => item.dataKey === dataItem.dataKey);
+          if (dataItem.hasValue) {
+            legendItem.hasValue = true;
+            legendItem.value = formatValue(dataItem.value, this.decimals, this.units, false);
+          } else {
+            legendItem.hasValue = false;
+            legendItem.value = '--';
+          }
         }
       }
-    }
-    if (this.settings.showTotal || this.settings.showLegend) {
-      if (hasValue) {
-        this.totalText = formatValue(this.total, this.decimals, this.units, false);
-        if (this.settings.showLegend && !this.settings.showTotal) {
-          this.legendItems[this.legendItems.length - 1].hasValue = true;
-          this.legendItems[this.legendItems.length - 1].value = this.totalText;
+      if (this.settings.showTotal || this.settings.showLegend) {
+        if (hasValue) {
+          this.totalText = formatValue(this.total, this.decimals, this.units, false);
+          if (this.settings.showLegend && !this.settings.showTotal) {
+            this.legendItems[this.legendItems.length - 1].hasValue = true;
+            this.legendItems[this.legendItems.length - 1].value = this.totalText;
+          }
+        } else if (this.settings.showLegend && !this.settings.showTotal) {
+          this.legendItems[this.legendItems.length - 1].hasValue = false;
+          this.legendItems[this.legendItems.length - 1].value = '--';
         }
-      } else if (this.settings.showLegend && !this.settings.showTotal) {
-        this.legendItems[this.legendItems.length - 1].hasValue = false;
-        this.legendItems[this.legendItems.length - 1].value = '--';
       }
+      this.doUpdateSeriesData();
+      this.latestChart.setOption(this.latestChartOption);
+      this.afterUpdateSeriesData(initial);
     }
-    this.doUpdateSeriesData();
-    this.latestChart.setOption(this.latestChartOption);
-    this.afterUpdateSeriesData(initial);
   }
 
   private drawChart() {

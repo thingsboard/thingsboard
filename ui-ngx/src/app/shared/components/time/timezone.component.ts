@@ -155,9 +155,13 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit {
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const timezoneSelectionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimezonePanelComponent, ['bottomRight', 'leftBottom'], true, null,
-        {
+      const timezoneSelectionPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        hostView: this.viewContainerRef,
+        componentType: TimezonePanelComponent,
+        preferredPlacement: ['bottomRight', 'leftBottom'],
+        context: {
           timezone: this.modelValue,
           userTimezoneByDefault: this.userTimezoneByDefaultValue,
           localBrowserTimezonePlaceholderOnEmpty: this.localBrowserTimezonePlaceholderOnEmptyValue,
@@ -173,8 +177,9 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit {
             }
           }
         },
-        {},
-        {}, {}, false);
+        showCloseButton: false,
+        isModal: true
+      });
       timezoneSelectionPopover.tbComponentRef.instance.popoverComponent = timezoneSelectionPopover;
     }
     this.cd.detectChanges();

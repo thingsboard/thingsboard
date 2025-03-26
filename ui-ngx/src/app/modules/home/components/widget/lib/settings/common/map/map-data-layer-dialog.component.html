@@ -430,7 +430,7 @@
       <ng-container *ngTemplateOutlet="behavior"></ng-container>
     }
     <div class="tb-form-panel">
-      <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.groups' | translate }}</div>
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'widgets.maps.data-layer.groups-hint' | translate }}">{{ 'widgets.maps.data-layer.groups' | translate }}</div>
       <tb-string-items-list class="tb-inline-chips"
                             editable
                             placeholder="{{'widgets.maps.data-layer.groups' | translate}}"
@@ -462,7 +462,9 @@
       </div>
       <div class="tb-form-row">
         <mat-slide-toggle class="mat-slide" formControlName="snappable">
-          {{ 'widgets.maps.data-layer.enable-snapping' | translate }}
+          <span tb-hint-tooltip-icon="{{ 'widgets.maps.data-layer.enable-snapping-hint' | translate }}">
+            {{ 'widgets.maps.data-layer.enable-snapping' | translate }}
+          </span>
         </mat-slide-toggle>
       </div>
     </div>

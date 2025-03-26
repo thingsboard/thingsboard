@@ -107,7 +107,9 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
   }
 
   resize() {
-    this.gauge.update({width: this.ctx.width, height: this.ctx.height} as GenericOptions);
+    if (this.ctx.width > 0 && this.ctx.height > 0) {
+      this.gauge.update({width: this.ctx.width, height: this.ctx.height} as GenericOptions);
+    }
   }
 
   destroy() {
