@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.queue;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -50,7 +49,7 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
+import org.thingsboard.server.service.queue.processing.AbstractConsumerPartitionedService;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineConsumerContext;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumerManager;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -67,7 +66,7 @@ import java.util.stream.Collectors;
 @Service
 @TbRuleEngineComponent
 @Slf4j
-public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
+public class DefaultTbRuleEngineConsumerService extends AbstractConsumerPartitionedService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
 
     private final TbRuleEngineConsumerContext ctx;
     private final QueueService queueService;
@@ -93,9 +92,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         this.queueService = queueService;
     }
 
-    @PostConstruct
-    public void init() {
-        super.init("tb-rule-engine");
+    @Override
+    protected void doAfterStartUp() {
         List<Queue> queues = queueService.findAllQueues();
         for (Queue configuration : queues) {
             if (partitionService.isManagedByCurrentService(configuration.getTenantId())) {
@@ -106,7 +104,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     @Override
-    protected void onTbApplicationEvent(PartitionChangeEvent event) {
+    protected void processPartitionChangeEvent(PartitionChangeEvent event) {
         event.getNewPartitions().forEach((queueKey, partitions) -> {
             if (DataConstants.CF_QUEUE_NAME.equals(queueKey.getQueueName()) || DataConstants.CF_STATES_QUEUE_NAME.equals(queueKey.getQueueName())) {
                 return;
@@ -136,6 +134,11 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                         });
                     }
                 });
+    }
+
+    @Override
+    protected String getPrefix() {
+        return "tb-rule-engine";
     }
 
     @Override
