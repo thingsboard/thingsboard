@@ -183,7 +183,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         context: ctx,
         isModal: true
       });
-      this.popoverComponent.tbComponentRef.instance.argumentsDataApplied.subscribe(({ value, index }) => {
+      this.popoverComponent.tbComponentRef.instance.argumentsDataApplied.subscribe(({ entityName, ...value }) => {
         this.popoverComponent.hide();
         if (entityName) {
           this.entityNameMap.set(value.refEntityId.id, entityName);
