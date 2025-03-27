@@ -36,7 +36,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityFilter } from '@shared/models/query/query.models';
 import { AliasFilterType } from '@shared/models/alias.models';
-import { merge } from 'rxjs';
+import { BehaviorSubject, merge } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
@@ -84,6 +84,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
 
   argumentTypes: ArgumentType[];
   entityFilter: EntityFilter;
+  entityNameSubject = new BehaviorSubject<string>(null);
 
   readonly argumentEntityTypes = Object.values(ArgumentEntityType) as ArgumentEntityType[];
   readonly ArgumentEntityTypeTranslations = ArgumentEntityTypeTranslations;
@@ -151,6 +152,9 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     if (refEntityId.entityType === ArgumentEntityType.Tenant) {
       refEntityId.id = this.tenantId;
     }
+    if (refEntityId.entityType !== ArgumentEntityType.Current && refEntityId.entityType !== ArgumentEntityType.Tenant) {
+      value.entityName = this.entityNameSubject.value;
+    }
     if (value.defaultValue) {
       value.defaultValue = value.defaultValue.trim();
     }
@@ -211,12 +215,16 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   }
 
   private observeEntityTypeChanges(): void {
-    this.argumentFormGroup.get('refEntityId').get('entityType').valueChanges
+    this.refEntityIdFormGroup.get('entityType').valueChanges
       .pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(type => {
         this.argumentFormGroup.get('refEntityId').get('id').setValue('');
+        const isEntityWithId = type !== ArgumentEntityType.Tenant && type !== ArgumentEntityType.Current;
         this.argumentFormGroup.get('refEntityId')
-          .get('id')[type === ArgumentEntityType.Tenant || type === ArgumentEntityType.Current ? 'disable' : 'enable']();
+          .get('id')[isEntityWithId ? 'enable' : 'disable']();
+        if (!isEntityWithId) {
+          this.entityNameSubject.next(null);
+        }
         if (!this.enableAttributeScopeSelection) {
           this.refEntityKeyFormGroup.get('scope').setValue(AttributeScope.SERVER_SCOPE);
         }
