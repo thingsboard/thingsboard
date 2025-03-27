@@ -22,17 +22,12 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -50,50 +45,23 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        Map<TenantId, List<Integer>> tenantPartitions = new HashMap<>();
-        List<Integer> systemPartitions = new ArrayList<>();
-
-        event.getCfPartitions().stream()
-                .filter(TopicPartitionInfo::isMyPartition)
-                .forEach(tpi -> {
-                    Integer partition = tpi.getPartition().orElse(UNKNOWN);
-                    Optional<TenantId> tenantIdOpt = tpi.getTenantId();
-                    if (tenantIdOpt.isPresent()) {
-                        tenantPartitions.computeIfAbsent(tenantIdOpt.get(), id -> new ArrayList<>()).add(partition);
-                    } else {
-                        systemPartitions.add(partition);
-                    }
-                });
-
-        tenantPartitions.forEach((tenantId, partitions) -> {
-            var cache = tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache());
-            cache.setMyPartitions(partitions);
+        event.getCfPartitions().forEach(tpi -> {
+            Optional<TenantId> tenantIdOpt = tpi.getTenantId();
+            tenantIdOpt.ifPresent(tenantId -> tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache()));
         });
-
-        tenantCache.keySet().stream()
-                .filter(tenantId -> !tenantPartitions.containsKey(tenantId))
-                .forEach(tenantId -> {
-                    var cache = tenantCache.get(tenantId);
-                    cache.setMyPartitions(systemPartitions);
-                });
     }
 
     @Override
     public void add(TenantId tenantId, EntityId profileId, EntityId entityId) {
-        var tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId);
-        var partition = tpi.getPartition().orElse(UNKNOWN);
-        tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache())
-                .add(profileId, entityId, partition, tpi.isMyPartition());
+        tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache()).add(profileId, entityId);
     }
 
     @Override
     public void update(TenantId tenantId, EntityId oldProfileId, EntityId newProfileId, EntityId entityId) {
-        var tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId);
-        var partition = tpi.getPartition().orElse(UNKNOWN);
         var cache = tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache());
         //TODO: make this method atomic;
         cache.remove(oldProfileId, entityId);
-        cache.add(newProfileId, entityId, partition, tpi.isMyPartition());
+        cache.add(newProfileId, entityId);
     }
 
     @Override
@@ -103,8 +71,18 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
     }
 
     @Override
-    public Collection<EntityId> getMyEntityIdsByProfileId(TenantId tenantId, EntityId profileId) {
-        return tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache()).getMyEntityIdsByProfileId(profileId);
+    public void evictProfile(TenantId tenantId, EntityId profileId) {
+        tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache()).removeProfileId(profileId);
+    }
+
+    @Override
+    public void removeTenant(TenantId tenantId) {
+        tenantCache.remove(tenantId);
+    }
+
+    @Override
+    public Collection<EntityId> getEntityIdsByProfileId(TenantId tenantId, EntityId profileId) {
+        return tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache()).getEntityIdsByProfileId(profileId);
     }
 
     @Override

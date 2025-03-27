@@ -322,11 +322,15 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             EntityId entityId = cfCtx.getEntityId();
             EntityType entityType = cfCtx.getEntityId().getEntityType();
             if (isProfileEntity(entityType)) {
-                var entityIds = cfEntityCache.getMyEntityIdsByProfileId(tenantId, entityId);
+                var entityIds = cfEntityCache.getEntityIdsByProfileId(tenantId, entityId);
                 if (!entityIds.isEmpty()) {
                     //TODO: no need to do this if we cache all created actors and know which one belong to us;
                     var multiCallback = new MultipleTbCallback(entityIds.size(), callback);
-                    entityIds.forEach(id -> deleteCfForEntity(id, cfId, multiCallback));
+                    entityIds.forEach(id -> {
+                        if (isMyPartition(id, multiCallback)) {
+                            deleteCfForEntity(id, cfId, multiCallback);
+                        }
+                    });
                 } else {
                     callback.onSuccess();
                 }
@@ -366,10 +370,11 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         EntityId sourceEntityId = msg.getEntityId();
         log.debug("Received linked telemetry msg from entity [{}]", sourceEntityId);
         var proto = msg.getProto();
+        var callback = msg.getCallback();
         var linksList = proto.getLinksList();
         if (linksList.isEmpty()) {
             log.debug("[{}] No CF links to process new telemetry.", msg.getTenantId());
-            msg.getCallback().onSuccess();
+            callback.onSuccess();
         }
         for (var linkProto : linksList) {
             var link = fromProto(linkProto);
@@ -378,21 +383,25 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             var cf = calculatedFields.get(link.cfId());
             if (EntityType.DEVICE_PROFILE.equals(targetEntityType) || EntityType.ASSET_PROFILE.equals(targetEntityType)) {
                 // iterate over all entities that belong to profile and push the message for corresponding CF
-                var entityIds = cfEntityCache.getMyEntityIdsByProfileId(tenantId, targetEntityId);
+                var entityIds = cfEntityCache.getEntityIdsByProfileId(tenantId, targetEntityId);
                 if (!entityIds.isEmpty()) {
-                    MultipleTbCallback callback = new MultipleTbCallback(entityIds.size(), msg.getCallback());
-                    var newMsg = new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, callback);
+                    MultipleTbCallback multipleCallback = new MultipleTbCallback(entityIds.size(), callback);
+                    var newMsg = new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, multipleCallback);
                     entityIds.forEach(entityId -> {
-                        log.debug("Pushing linked telemetry msg to specific actor [{}]", entityId);
-                        getOrCreateActor(entityId).tell(newMsg);
+                        if (isMyPartition(entityId, multipleCallback)) {
+                            log.debug("Pushing linked telemetry msg to specific actor [{}]", entityId);
+                            getOrCreateActor(entityId).tell(newMsg);
+                        }
                     });
                 } else {
-                    msg.getCallback().onSuccess();
+                    callback.onSuccess();
                 }
             } else {
-                log.debug("Pushing linked telemetry msg to specific actor [{}]", targetEntityId);
-                var newMsg = new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, msg.getCallback());
-                getOrCreateActor(targetEntityId).tell(newMsg);
+                if (isMyPartition(targetEntityId, callback)) {
+                    log.debug("Pushing linked telemetry msg to specific actor [{}]", targetEntityId);
+                    var newMsg = new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, callback);
+                    getOrCreateActor(targetEntityId).tell(newMsg);
+                }
             }
         }
     }
@@ -436,10 +445,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         EntityId entityId = cfCtx.getEntityId();
         EntityType entityType = cfCtx.getEntityId().getEntityType();
         if (isProfileEntity(entityType)) {
-            var entityIds = cfEntityCache.getMyEntityIdsByProfileId(tenantId, entityId);
+            var entityIds = cfEntityCache.getEntityIdsByProfileId(tenantId, entityId);
             if (!entityIds.isEmpty()) {
                 var multiCallback = new MultipleTbCallback(entityIds.size(), callback);
-                entityIds.forEach(id -> initCfForEntity(id, cfCtx, forceStateReinit, multiCallback));
+                entityIds.forEach(id -> {
+                    if (isMyPartition(id, multiCallback)) {
+                        initCfForEntity(id, cfCtx, forceStateReinit, multiCallback);
+                    }
+                });
             } else {
                 callback.onSuccess();
             }
