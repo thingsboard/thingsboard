@@ -89,7 +89,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
 
   errorText = '';
   argumentsFormArray = this.fb.array<CalculatedFieldArgumentValue>([]);
-  entityNameMap = new Map<string, string>([[NULL_UUID, '']]);
+  entityNameMap = new Map<string, string>();
   sortOrder = { direction: 'asc', property: '' };
   dataSource = new CalculatedFieldArgumentDatasource();
 
