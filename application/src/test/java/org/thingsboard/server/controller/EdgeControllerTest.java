@@ -107,6 +107,7 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import static org.thingsboard.server.edge.AbstractEdgeTest.CONNECT_MESSAGE_COUNT;
 
 @TestPropertySource(properties = {
         "edges.enabled=true",
@@ -138,6 +139,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         public EdgeDao edgeDao(EdgeDao edgeDao) {
             return Mockito.mock(EdgeDao.class, AdditionalAnswers.delegatesTo(edgeDao));
         }
+
     }
 
     @Before
@@ -897,9 +899,13 @@ public class EdgeControllerTest extends AbstractControllerTest {
         edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(27);
+        // 18 connect message
+        // -1 UserCredentialsUpdateMsg
+        // + 5 fetchers messages (DeviceProfile, Device, DeviceCredentials, AssetProfile, Asset) in sync process
+        // + 5 queue messages the same
+        edgeImitator.expectMessageAmount(CONNECT_MESSAGE_COUNT + 9);
         edgeImitator.connect();
-        waitForMessages(edgeImitator);
+        edgeImitator.waitForMessages();
 
         verifyFetchersMsgs(edgeImitator, savedDevice);
         // verify queue msgs
@@ -910,9 +916,12 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
         printQueueMsgsIfNotEmpty(edgeImitator);
 
-        edgeImitator.expectMessageAmount(21);
+        // 18 connect messages
+        // -1 UserCredentialsUpdateMsg
+        // + 5 fetchers messages (DeviceProfile, Device, DeviceCredentials, AssetProfile, Asset) in sync process
+        edgeImitator.expectMessageAmount(CONNECT_MESSAGE_COUNT + 4);
         doPost("/api/edge/sync/" + edge.getId()).andExpect(status().isOk());
-        waitForMessages(edgeImitator);
+        edgeImitator.waitForMessages();
 
         verifyFetchersMsgs(edgeImitator, savedDevice);
         printQueueMsgsIfNotEmpty(edgeImitator);
@@ -981,17 +990,6 @@ public class EdgeControllerTest extends AbstractControllerTest {
                     Map<String, Object> activeAttr = activeAttrOpt.get();
                     return "true".equals(activeAttr.get("value").toString()) && ruleChains.size() == 1;
                 });
-    }
-
-    private void waitForMessages(EdgeImitator edgeImitator) throws Exception {
-        boolean success = edgeImitator.waitForMessages();
-        if (!success) {
-            List<AbstractMessage> downlinkMsgs = edgeImitator.getDownlinkMsgs();
-            for (AbstractMessage downlinkMsg : downlinkMsgs) {
-                log.error("{}\n{}", downlinkMsg.getClass(), downlinkMsg);
-            }
-            Assert.fail("Await for messages was not successful!");
-        }
     }
 
     private void verifyFetchersMsgs(EdgeImitator edgeImitator, Device savedDevice) {

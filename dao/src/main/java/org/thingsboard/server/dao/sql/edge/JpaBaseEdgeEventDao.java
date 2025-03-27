@@ -176,10 +176,12 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
     @Override
     public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink) {
         List<SortOrder> sortOrders = new ArrayList<>();
+
+        sortOrders.add(new SortOrder("seqId"));
         if (pageLink.getSortOrder() != null) {
             sortOrders.add(pageLink.getSortOrder());
         }
-        sortOrders.add(new SortOrder("seqId"));
+
         return DaoUtil.toPageData(
                 edgeEventRepository
                         .findEdgeEventsByTenantIdAndEdgeId(
