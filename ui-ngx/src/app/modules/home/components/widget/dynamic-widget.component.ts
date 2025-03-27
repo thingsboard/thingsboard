@@ -19,7 +19,7 @@ import { Directive, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import {
   IDynamicWidgetComponent,
   widgetContextToken,
-  widgetErrorMessagesToken, widgetHeaderButtonActionToken,
+  widgetErrorMessagesToken,
   widgetTitlePanelToken
 } from '@home/models/widget-component.models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -72,7 +72,6 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
   public readonly ctx = inject(widgetContextToken);
   public readonly errorMessages = inject(widgetErrorMessagesToken);
   public readonly widgetTitlePanel = inject(widgetTitlePanelToken);
-  public readonly widgetHeaderButtonAction = inject(widgetHeaderButtonActionToken);
 
   constructor() {
     super();

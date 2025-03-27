@@ -312,6 +312,7 @@ export class WidgetContext {
   timeWindow?: WidgetTimewindow;
 
   embedTitlePanel?: boolean;
+  embedActionsPanel?: boolean;
   overflowVisible?: boolean;
 
   hideTitlePanel = false;
@@ -559,7 +560,6 @@ export class LabelVariablePattern {
 export const widgetContextToken = new InjectionToken<WidgetContext>('widgetContext');
 export const widgetErrorMessagesToken = new InjectionToken<string[]>('errorMessages');
 export const widgetTitlePanelToken = new InjectionToken<TemplateRef<any>>('widgetTitlePanel');
-export const widgetHeaderButtonActionToken = new InjectionToken<TemplateRef<any>>('widgetHeaderButtonAction');
 
 export interface IDynamicWidgetComponent {
   readonly ctx: WidgetContext;

@@ -15,14 +15,12 @@
 ///
 
 import {
-  AfterViewInit,
   ChangeDetectorRef,
   Component,
   ElementRef,
   Input,
   OnDestroy,
   OnInit,
-  TemplateRef,
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
@@ -46,7 +44,7 @@ import { DomSanitizer } from '@angular/platform-browser';
   styleUrls: ['./map-widget.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class MapWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+export class MapWidgetComponent implements OnInit, OnDestroy {
 
   @ViewChild('mapElement', {static: false})
   mapElement: ElementRef<HTMLElement>;
@@ -55,12 +53,6 @@ export class MapWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @Input()
   ctx: WidgetContext;
-
-  @Input()
-  widgetTitlePanel: TemplateRef<any>;
-
-  @Input()
-  widgetHeaderButtonAction: TemplateRef<any>;
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
@@ -81,14 +73,6 @@ export class MapWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
     this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
-  }
-
-  ngAfterViewInit() {
-    if (this.widgetComponent.dashboardWidget.showWidgetTitlePanel && !!this.widgetHeaderButtonAction) {
-      const tbWidgetTitle = $(".tb-widget-title")[0];
-      if (getComputedStyle(tbWidgetTitle).getPropertyValue('min-height') === 'auto')
-        tbWidgetTitle.style.minHeight = $(".tb-widget-actions")[0].offsetHeight + 'px';
-    }
   }
 
   ngOnDestroy() {

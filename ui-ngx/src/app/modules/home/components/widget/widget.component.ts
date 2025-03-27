@@ -75,7 +75,6 @@ import {
   widgetContextToken,
   widgetErrorMessagesToken,
   WidgetHeaderAction,
-  widgetHeaderButtonActionToken,
   WidgetInfo,
   widgetTitlePanelToken,
   WidgetTypeInstance
@@ -141,7 +140,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   widgetTitlePanel: TemplateRef<any>;
 
   @Input()
-  widgetHeaderButtonAction: TemplateRef<any>;
+  widgetHeaderActionsPanel: TemplateRef<any>;
 
   @Input()
   isEdit: boolean;
@@ -487,6 +486,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     this.widgetType = this.widgetInfo.widgetTypeFunction;
     this.typeParameters = this.widgetInfo.typeParameters;
     this.widgetContext.embedTitlePanel = this.typeParameters.embedTitlePanel;
+    this.widgetContext.embedActionsPanel = this.typeParameters.embedActionsPanel;
     this.widgetContext.overflowVisible = this.typeParameters.overflowVisible;
 
     if (!this.widgetType) {
@@ -821,10 +821,6 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
             {
               provide: widgetTitlePanelToken,
               useValue: this.widgetTitlePanel
-            },
-            {
-              provide: widgetHeaderButtonActionToken,
-              useValue: this.widgetHeaderButtonAction
             }
           ],
           parent: this.injector
