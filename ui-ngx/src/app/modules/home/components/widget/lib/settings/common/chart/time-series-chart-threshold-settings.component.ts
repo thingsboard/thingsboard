@@ -107,11 +107,21 @@ export class TimeSeriesChartThresholdSettingsComponent implements OnInit, Contro
         hideYAxis: this.hideYAxis,
         yAxisIds: this.yAxisIds
       };
-      const thresholdSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimeSeriesChartThresholdSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const thresholdSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: TimeSeriesChartThresholdSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: {
+          thresholdSettings: deepClone(this.modelValue),
+          panelTitle: this.title,
+          widgetConfig: this.widgetConfig,
+          hideYAxis: this.hideYAxis,
+          yAxisIds: this.yAxisIds
+        },
+        isModal: true
+      });
       thresholdSettingsPanelPopover.tbComponentRef.instance.popover = thresholdSettingsPanelPopover;
       thresholdSettingsPanelPopover.tbComponentRef.instance.thresholdSettingsApplied.subscribe((thresholdSettings) => {
         thresholdSettingsPanelPopover.hide();

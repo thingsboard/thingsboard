@@ -109,11 +109,15 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
           ctx.previewText = previewText;
         }
       }
-      const fontSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, FontSettingsPanelComponent, 'left', false, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const fontSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: FontSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'left',
+        context: ctx,
+        isModal: true
+      });
       fontSettingsPanelPopover.tbComponentRef.instance.popover = fontSettingsPanelPopover;
       fontSettingsPanelPopover.tbComponentRef.instance.fontApplied.subscribe((font) => {
         fontSettingsPanelPopover.hide();

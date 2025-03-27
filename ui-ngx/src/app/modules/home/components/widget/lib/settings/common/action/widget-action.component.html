@@ -274,7 +274,8 @@
                                   || widgetActionFormGroup.get('type').value === widgetActionType.placeMapItem
                                   ? widgetActionFormGroup.get('type').value : ''">
       <tb-custom-action-pretty-editor
-          formControlName="customAction">
+        [widgetActionType]="widgetActionFormGroup.get('type').value"
+        formControlName="customAction">
       </tb-custom-action-pretty-editor>
     </ng-template>
     <ng-template [ngSwitchCase]="widgetActionType.mobileAction">

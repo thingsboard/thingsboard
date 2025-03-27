@@ -176,6 +176,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private setupControls(): Observable<any> {
     if (this.settings.scales?.length) {
       L.control.scale({
+        position: 'bottomright',
         metric: this.settings.scales.includes(MapScale.metric),
         imperial: this.settings.scales.includes(MapScale.imperial)
       }).addTo(this.map);
@@ -937,7 +938,13 @@ export abstract class TbMap<S extends BaseMapSettings> {
       bounds = new L.LatLngBounds(null, null);
       dataLayersBounds.forEach(b => bounds.extend(b));
       const mapBounds = this.map.getBounds();
-      if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || (!this.bounds.equals(bounds) || force) && this.settings.fitMapBounds && !mapBounds.contains(bounds))) {
+      if (bounds.isValid() &&
+        (
+          (!this.bounds || !this.bounds.isValid() || (!this.bounds.equals(bounds) || force) && this.settings.fitMapBounds)
+          && !mapBounds.contains(bounds)
+        )
+      )
+      {
         this.bounds = bounds;
         if (!this.ignoreUpdateBounds && !this.isPlacingItem) {
           this.fitBounds(bounds);
