@@ -75,6 +75,7 @@ import {
   widgetContextToken,
   widgetErrorMessagesToken,
   WidgetHeaderAction,
+  widgetHeaderButtonActionToken,
   WidgetInfo,
   widgetTitlePanelToken,
   WidgetTypeInstance
@@ -138,6 +139,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
 
   @Input()
   widgetTitlePanel: TemplateRef<any>;
+
+  @Input()
+  widgetHeaderButtonAction: TemplateRef<any>;
 
   @Input()
   isEdit: boolean;
@@ -817,6 +821,10 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
             {
               provide: widgetTitlePanelToken,
               useValue: this.widgetTitlePanel
+            },
+            {
+              provide: widgetHeaderButtonActionToken,
+              useValue: this.widgetHeaderButtonAction
             }
           ],
           parent: this.injector

@@ -17,9 +17,10 @@
 -->
 <div class="tb-map-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-map-overlay" [style]="overlayStyle"></div>
-  <ng-container *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel">
-    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
-  </ng-container>
+    <ng-container *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel">
+      <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+    </ng-container>
+    <ng-container *ngTemplateOutlet="widgetHeaderButtonAction"></ng-container>
   <div #mapElement>
   </div>
 </div>
