@@ -73,6 +73,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   @Input() widgetType: widgetType;
 
+  @Input() defaultIconColor: string;
+
   @Input() callbacks: WidgetActionCallbacks;
 
   @Input() actionSources: {[actionSourceId: string]: WidgetActionSource};
@@ -239,6 +241,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
         actionsData,
         action: deepClone(action),
         widgetType: this.widgetType,
+        defaultIconColor: this.defaultIconColor,
         additionalWidgetActionTypes: this.additionalWidgetActionTypes
       }
     }).afterClosed().subscribe(
