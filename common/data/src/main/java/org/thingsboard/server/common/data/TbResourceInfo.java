@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 @Schema
@@ -152,48 +151,4 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         this.descriptor = value != null ? mapper.valueToTree(value) : null;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        TbResourceInfo that = (TbResourceInfo) o;
-
-        if (isPublic != that.isPublic) return false;
-        if (!Objects.equals(tenantId, that.tenantId)) return false;
-        if (!Objects.equals(title, that.title)) return false;
-        if (resourceType != that.resourceType) return false;
-        if (resourceSubType != that.resourceSubType) return false;
-        if (!Objects.equals(resourceKey, that.resourceKey)) return false;
-        if (!Objects.equals(publicResourceKey, that.publicResourceKey))
-            return false;
-        if (!Objects.equals(getSearchText(), that.getSearchText())) return false;
-        if (!Objects.equals(etag, that.etag)) return false;
-        if (!Objects.equals(fileName, that.fileName)) return false;
-        if (!Objects.equals(descriptor, that.descriptor)) {
-            if (!((descriptor == null || descriptor.isNull()) && (that.descriptor == null || that.descriptor.isNull()))){
-                return false;
-            }
-        }
-        return Objects.equals(externalId, that.externalId);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (tenantId != null ? tenantId.hashCode() : 0);
-        result = 31 * result + (title != null ? title.hashCode() : 0);
-        result = 31 * result + (resourceType != null ? resourceType.hashCode() : 0);
-        result = 31 * result + (resourceSubType != null ? resourceSubType.hashCode() : 0);
-        result = 31 * result + (resourceKey != null ? resourceKey.hashCode() : 0);
-        result = 31 * result + (isPublic ? 1 : 0);
-        result = 31 * result + (publicResourceKey != null ? publicResourceKey.hashCode() : 0);
-        result = 31 * result + (searchText != null ? searchText.hashCode() : 0);
-        result = 31 * result + (etag != null ? etag.hashCode() : 0);
-        result = 31 * result + (fileName != null ? fileName.hashCode() : 0);
-        result = 31 * result + (descriptor != null ? descriptor.hashCode() : 0);
-        result = 31 * result + (externalId != null ? externalId.hashCode() : 0);
-        return result;
-    }
 }
