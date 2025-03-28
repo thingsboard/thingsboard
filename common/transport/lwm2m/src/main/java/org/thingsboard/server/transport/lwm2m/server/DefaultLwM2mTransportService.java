@@ -125,6 +125,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         /* Set securityStore with new registrationStore */
         builder.setSecurityStore(securityStore);
         builder.setRegistrationStore(registrationStore);
+        builder.setAuthorizer(authorizer);
 
 
         // Create Californium Endpoints Provider:
