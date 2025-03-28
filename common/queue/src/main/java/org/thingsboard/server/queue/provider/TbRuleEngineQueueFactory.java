@@ -121,7 +121,7 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
 
     TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate();
 
-    TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer(Queue configuration, Integer partitionId);
 
     TbQueueAdmin getCalculatedFieldQueueAdmin();
 

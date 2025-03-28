@@ -37,10 +37,10 @@ public interface CalculatedFieldStateService {
 
     void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions);
 
-    void delete(Set<TopicPartitionInfo> partitions);
+    void delete(QueueKey queueKey, Set<TopicPartitionInfo> partitions);
 
-    Set<TopicPartitionInfo> getPartitions();
+    Set<TopicPartitionInfo> getPartitions(QueueKey queueKey);
 
-    void stop();
+    void stop(QueueKey queueKey);
 
 }

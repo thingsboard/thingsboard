@@ -30,12 +30,14 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -79,7 +81,10 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPar
     private long packProcessingTimeout;
 
     private final TbRuleEngineQueueFactory queueFactory;
+    private final QueueService queueService;
+
     private final CalculatedFieldStateService stateService;
+    private final ConcurrentMap<QueueKey, PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>>> consumers = new ConcurrentHashMap<>();
 
     public DefaultTbCalculatedFieldConsumerService(TbRuleEngineQueueFactory tbQueueFactory,
                                                    ActorSystemContext actorContext,
@@ -91,28 +96,40 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPar
                                                    ApplicationEventPublisher eventPublisher,
                                                    JwtSettingsService jwtSettingsService,
                                                    CalculatedFieldCache calculatedFieldCache,
+                                                   QueueService queueService,
                                                    CalculatedFieldStateService stateService) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.queueFactory = tbQueueFactory;
+        this.queueService = queueService;
         this.stateService = stateService;
     }
 
     @Override
     protected void doAfterStartUp() {
-        var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
-        PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
+        List<Queue> queues = queueService.findAllQueues();
+        for (Queue configuration : queues) {
+            if (partitionService.isManagedByCurrentService(configuration.getTenantId())) {
+                stateService.init(createConsumer(configuration));
+            }
+        }
+    }
+
+    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> createConsumer(Queue queue) {
+        QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, queue.getTenantId());
+        var eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
                 .queueKey(queueKey)
                 .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
                 .msgPackProcessor(this::processMsgs)
-                .consumerCreator((config, partitionId) -> queueFactory.createToCalculatedFieldMsgConsumer())
+                .consumerCreator((config, partitionId) -> queueFactory.createToCalculatedFieldMsgConsumer(queue, partitionId))
                 .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
                 .build();
-        stateService.init(eventConsumer);
+        consumers.put(queueKey, eventConsumer);
+        return eventConsumer;
     }
 
     @PreDestroy
@@ -227,13 +244,20 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPar
     public void handleComponentLifecycleEvent(ComponentLifecycleMsg event) {
         if (event.getEntityId().getEntityType() == EntityType.TENANT) {
             if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
-                Set<TopicPartitionInfo> partitions = stateService.getPartitions();
-                if (CollectionUtils.isEmpty(partitions)) {
-                    return;
-                }
-                stateService.delete(partitions.stream()
-                        .filter(tpi -> tpi.getTenantId().isPresent() && tpi.getTenantId().get().equals(event.getTenantId()))
-                        .collect(Collectors.toSet()));
+                consumers.keySet().removeIf(queueKey -> {
+                    boolean toRemove = queueKey.getTenantId().equals(event.getTenantId());
+                    if (toRemove) {
+                        Set<TopicPartitionInfo> partitions = stateService.getPartitions(queueKey);
+                        if (!CollectionUtils.isEmpty(partitions)) {
+                            stateService.delete(queueKey, partitions);
+                        }
+                        var consumer = consumers.remove(queueKey);
+                        if (consumer != null) {
+                            consumer.stop();
+                        }
+                    }
+                    return toRemove;
+                });
             }
         }
     }
@@ -258,7 +282,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPar
     @Override
     protected void stopConsumers() {
         super.stopConsumers();
-        stateService.stop(); // eventConsumer will be stopped by stateService
+        consumers.keySet().forEach(stateService::stop); // eventConsumer will be stopped by stateService
     }
 
 }
