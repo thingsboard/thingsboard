@@ -172,7 +172,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   protected datasource: TbMapDatasource;
 
-  protected mapDataId = guid();
+  protected mapDataId: string;
 
   protected dataLayerContainer: L.FeatureGroup;
 
@@ -279,6 +279,10 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
       }
     }
     return false;
+  }
+
+  public hasData(data: FormattedData<TbMapDatasource>): boolean {
+    return data.$datasource.mapDataIds.includes(this.mapDataId);
   }
 
   protected createDataLayerContainer(): L.FeatureGroup {

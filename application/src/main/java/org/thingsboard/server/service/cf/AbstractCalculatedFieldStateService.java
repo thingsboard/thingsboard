@@ -19,13 +19,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldStateRestoreMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.exception.CalculatedFieldStateException;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
+import org.thingsboard.server.queue.common.state.QueueStateService;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+
+import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
@@ -35,12 +41,7 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
     @Autowired
     private ActorSystemContext actorSystemContext;
 
-    protected PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer;
-
-    @Override
-    public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
-        this.eventConsumer = eventConsumer;
-    }
+    protected QueueStateService<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>> stateService;
 
     @Override
     public final void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
@@ -67,6 +68,26 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
 
     protected void processRestoredState(CalculatedFieldEntityCtxId id, CalculatedFieldState state) {
         actorSystemContext.tell(new CalculatedFieldStateRestoreMsg(id, state));
+    }
+
+    @Override
+    public void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
+        stateService.update(queueKey, partitions);
+    }
+
+    @Override
+    public void delete(Set<TopicPartitionInfo> partitions) {
+        stateService.delete(partitions);
+    }
+
+    @Override
+    public Set<TopicPartitionInfo> getPartitions() {
+        return stateService.getPartitions().values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+    }
+
+    @Override
+    public void stop() {
+        stateService.stop();
     }
 
 }

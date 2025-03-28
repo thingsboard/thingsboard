@@ -208,9 +208,4 @@ export interface EntityTestScriptResult {
   error: string;
 }
 
-export interface AdditionalDebugActionConfig<Action = (...args: unknown[]) => void> {
-  action: Action;
-  title: string;
-}
-
 export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;

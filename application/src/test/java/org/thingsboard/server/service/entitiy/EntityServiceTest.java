@@ -282,6 +282,10 @@ public class EntityServiceTest extends AbstractControllerTest {
         data.forEach(entityData -> Assert.assertNotNull(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("phone")));
 
         countByQueryAndCheck(query, 5);
+
+        // delete user
+        userService.deleteUser(tenantId, users.get(0));
+        countByQueryAndCheck(query, 4);
     }
 
     private void createTestUserRelations(TenantId tenantId, List<User> users) {

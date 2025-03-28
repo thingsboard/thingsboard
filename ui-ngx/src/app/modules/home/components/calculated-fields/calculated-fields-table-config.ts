@@ -33,36 +33,32 @@ import { AppState } from '@core/core.state';
 import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { DestroyRef, Renderer2 } from '@angular/core';
 import { EntityDebugSettings } from '@shared/models/entity.models';
-import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { EntityDebugSettingsPanelComponent } from '@home/components/entity/debug/entity-debug-settings-panel.component';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import {
   ArgumentType,
   CalculatedField,
   CalculatedFieldEventArguments,
-  CalculatedFieldDebugDialogData,
-  CalculatedFieldDialogData,
-  CalculatedFieldTestScriptDialogData,
+  CalculatedFieldType,
+  CalculatedFieldTypeTranslations,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
-  CalculatedFieldTypeTranslations,
-  CalculatedFieldType,
 } from '@shared/models/calculated-field.models';
 import {
-  CalculatedFieldDebugDialogComponent,
+  CalculatedFieldDebugDialogComponent, CalculatedFieldDebugDialogData,
   CalculatedFieldDialogComponent,
-  CalculatedFieldScriptTestDialogComponent
+  CalculatedFieldDialogData,
+  CalculatedFieldScriptTestDialogComponent,
+  CalculatedFieldTestScriptDialogData
 } from './components/public-api';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { isObject } from '@core/utils';
+import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
 
-export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
+export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField> {
 
-  // TODO: [Calculated Fields] remove hardcode when BE variable implemented
   readonly calculatedFieldsDebugPerTenantLimitsConfiguration =
     getCurrentAuthState(this.store)['calculatedFieldsDebugPerTenantLimitsConfiguration'] || '1:1';
   readonly maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
@@ -78,12 +74,11 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private datePipe: DatePipe,
               public entityId: EntityId = null,
               private store: Store<AppState>,
-              private durationLeft: DurationLeftPipe,
-              private popoverService: TbPopoverService,
               private destroyRef: DestroyRef,
               private renderer: Renderer2,
               public entityName: string,
-              private importExportService: ImportExportService
+              private importExportService: ImportExportService,
+              private entityDebugSettingsService: EntityDebugSettingsService,
   ) {
     super();
     this.tableTitle = this.translate.instant('entity.type-calculated-fields');
@@ -147,10 +142,10 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       },
       {
         name: '',
-        nameFunction: entity => this.getDebugConfigLabel(entity?.debugSettings),
+        nameFunction: entity => this.entityDebugSettingsService.getDebugConfigLabel(entity?.debugSettings),
         icon: 'mdi:bug',
         isEnabled: () => true,
-        iconFunction: ({ debugSettings }) => this.isDebugActive(debugSettings?.allEnabledUntil) || debugSettings?.failuresEnabled ? 'mdi:bug' : 'mdi:bug-outline',
+        iconFunction: ({ debugSettings }) => this.entityDebugSettingsService.isDebugActive(debugSettings?.allEnabledUntil) || debugSettings?.failuresEnabled ? 'mdi:bug' : 'mdi:bug-outline',
         onAction: ($event, entity) => this.onOpenDebugConfig($event, entity),
       },
       {
@@ -180,30 +175,26 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       ...this.additionalDebugActionConfig,
       action: () => this.openDebugEventsDialog(calculatedField)
     };
-    const { viewContainerRef } = this.getTable();
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = $event.target as Element;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-    } else {
-      const debugStrategyPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        viewContainerRef, EntityDebugSettingsPanelComponent, 'bottom', true, null,
-        {
-          debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
-          maxDebugModeDuration: this.maxDebugModeDuration,
-          entityLabel: this.translate.instant('debug-settings.calculated-field'),
-          additionalActionConfig,
-          ...debugSettings
-        },
-        {},
-        {}, {}, true);
-      debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((settings: EntityDebugSettings) => {
-        this.onDebugConfigChanged(id.id, settings);
-        debugStrategyPopover.hide();
-      });
+
+    const { viewContainerRef, renderer } = this.entityDebugSettingsService;
+    if (!viewContainerRef || !renderer) {
+      this.entityDebugSettingsService.viewContainerRef = this.getTable().viewContainerRef;
+      this.entityDebugSettingsService.renderer = this.renderer;
     }
+
+    this.entityDebugSettingsService.openDebugStrategyPanel({
+      debugSettings,
+      debugConfig: {
+        debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
+        maxDebugModeDuration: this.maxDebugModeDuration,
+        entityLabel: this.translate.instant('debug-settings.calculated-field'),
+        additionalActionConfig,
+      },
+      onSettingsAppliedFn: settings => this.onDebugConfigChanged(id.id, settings)
+    }, $event.target as Element);
   }
 
   private editCalculatedField(calculatedField: CalculatedField, isDirty = false): void {
@@ -258,23 +249,16 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private importCalculatedField(): void {
-    this.importExportService.importCalculatedField(this.entityId)
-      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+    this.importExportService.openCalculatedFieldImportDialog()
+      .pipe(
+        filter(Boolean),
+        switchMap(calculatedField => this.getCalculatedFieldDialog(calculatedField, 'action.add')),
+        filter(Boolean),
+        switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField(calculatedField)),
+        filter(Boolean),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(() => this.updateData());
-  }
-
-  private getDebugConfigLabel(debugSettings: EntityDebugSettings): string {
-    const isDebugActive = this.isDebugActive(debugSettings?.allEnabledUntil);
-
-    if (!isDebugActive) {
-      return debugSettings?.failuresEnabled ? this.translate.instant('debug-settings.failures') : this.translate.instant('common.disabled');
-    } else {
-      return this.durationLeft.transform(debugSettings?.allEnabledUntil);
-    }
-  }
-
-  private isDebugActive(allEnabledUntil: number): boolean {
-    return allEnabledUntil > new Date().getTime();
   }
 
   private onDebugConfigChanged(id: string, debugSettings: EntityDebugSettings): void {

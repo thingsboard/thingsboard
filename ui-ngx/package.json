@@ -61,7 +61,7 @@
     "leaflet": "1.9.4",
     "leaflet-polylinedecorator": "1.6.0",
     "leaflet-providers": "2.0.0",
-    "leaflet.gridlayer.googlemutant": "0.14.1",
+    "leaflet.gridlayer.googlemutant": "0.15.0",
     "leaflet.markercluster": "1.5.3",
     "libphonenumber-js": "^1.11.15",
     "maplibre-gl": "^5.2.0",
