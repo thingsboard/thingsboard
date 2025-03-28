@@ -220,12 +220,13 @@ public class TenantRepo {
         try {
             UUID entityId = entity.getFields().getId();
             EntityType entityType = entity.getType();
-            EntityData<?> removed = get(entityType, entityId);
+            EntityData<?> removed = getEntityMap(entityType).remove(entityId);
             if (removed != null) {
                 if (removed.getFields() != null) {
                     getEntitySet(entityType).remove(removed);
                 }
                 edqsStatsService.ifPresent(statService -> statService.reportEvent(tenantId, ObjectType.fromEntityType(entityType), EdqsEventType.DELETED));
+
                 UUID customerId = removed.getCustomerId();
                 if (customerId != null) {
                     CustomerData customerData = (CustomerData) get(EntityType.CUSTOMER, customerId);
