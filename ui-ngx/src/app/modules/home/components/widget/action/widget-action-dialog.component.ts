@@ -61,6 +61,7 @@ export interface WidgetActionDialogData {
   actionsData: WidgetActionsData;
   action?: WidgetActionDescriptorInfo;
   widgetType: widgetType;
+  defaultIconColor?: string;
   additionalWidgetActionTypes?: WidgetActionType[];
 }
 
@@ -77,6 +78,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
 
   isAdd: boolean;
   action: WidgetActionDescriptorInfo;
+
+  defaultIconColor: string;
 
   customActionEditorCompleter = CustomActionEditorCompleter;
 
@@ -106,6 +109,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
               private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
+    this.defaultIconColor = data.defaultIconColor;
     if (this.isAdd) {
       this.action = {
         id: this.utils.guid(),
@@ -130,7 +134,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       buttonType: [{ value: this.action.buttonType ?? WidgetHeaderActionButtonType.icon, disabled: true}, []],
       showIcon: [{ value: this.action.showIcon ?? true, disabled: true}, []],
       icon: [this.action.icon, Validators.required],
-      buttonColor: [{ value: this.action.buttonColor ?? 'rgba(0, 0, 0, 0.87)', disabled: true}, []],
+      buttonColor: [{ value: this.action.buttonColor ?? this.defaultIconColor, disabled: true}, []],
       buttonFillColor: [{ value: this.action.buttonFillColor ?? '#3F52DD', disabled: true}, []],
       buttonBorderColor: [{ value: this.action.buttonBorderColor ?? '#3F52DD', disabled: true}, []],
       customButtonStyle: [{ value: this.action.customButtonStyle ?? {}, disabled: true}, []],
