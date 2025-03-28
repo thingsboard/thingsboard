@@ -156,4 +156,10 @@ $maxLegendHeight: 35%;
       }
     }
   }
+  .tb-widget-title-row .tb-widget-actions {
+    margin: 0;
+  }
+  .tb-widget-actions.tb-widget-actions-absolute {
+    z-index: 2;
+  }
 }
