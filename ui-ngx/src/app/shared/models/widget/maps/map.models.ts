@@ -1151,6 +1151,21 @@ export const parseCenterPosition = (position: string | [number, number]): [numbe
   return [0, 0];
 }
 
+export const updateDataKeyToNewDsType = (dataKey: DataKey | null, newDsType: DatasourceType, timeSeries = false): boolean => {
+  if (newDsType === DatasourceType.function) {
+    if (dataKey && dataKey.type !== DataKeyType.function) {
+      dataKey.type = DataKeyType.function;
+      return true;
+    }
+  } else {
+    if (dataKey?.type === DataKeyType.function) {
+      dataKey.type = timeSeries ? DataKeyType.timeseries : DataKeyType.attribute;
+      return true;
+    }
+  }
+  return false;
+}
+
 export const mergeMapDatasources = (target: TbMapDatasource[], source: TbMapDatasource[]): TbMapDatasource[] => {
   const appendDatasources: TbMapDatasource[] = [];
   for (const sourceDs of source) {

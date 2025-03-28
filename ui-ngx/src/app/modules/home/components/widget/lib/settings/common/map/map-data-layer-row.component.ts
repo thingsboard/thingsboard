@@ -41,7 +41,8 @@ import {
   MapType,
   MarkersDataLayerSettings,
   PolygonsDataLayerSettings,
-  TripsDataLayerSettings
+  TripsDataLayerSettings,
+  updateDataKeyToNewDsType
 } from '@shared/models/widget/maps/map.models';
 import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -271,26 +272,26 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
       case 'trips':
       case 'markers':
         const xKey: DataKey = this.dataLayerFormGroup.get('xKey').value;
-        if (this.updateDataKeyToNewDsType(xKey, newDsType, this.dataLayerType === 'trips')) {
+        if (updateDataKeyToNewDsType(xKey, newDsType, this.dataLayerType === 'trips')) {
           this.dataLayerFormGroup.get('xKey').patchValue(xKey, {emitEvent: false});
           updateModel = true;
         }
         const yKey: DataKey = this.dataLayerFormGroup.get('yKey').value;
-        if (this.updateDataKeyToNewDsType(yKey, newDsType, this.dataLayerType === 'trips')) {
+        if (updateDataKeyToNewDsType(yKey, newDsType, this.dataLayerType === 'trips')) {
           this.dataLayerFormGroup.get('yKey').patchValue(yKey, {emitEvent: false});
           updateModel = true;
         }
         break;
       case 'polygons':
         const polygonKey: DataKey = this.dataLayerFormGroup.get('polygonKey').value;
-        if (this.updateDataKeyToNewDsType(polygonKey, newDsType)) {
+        if (updateDataKeyToNewDsType(polygonKey, newDsType)) {
           this.dataLayerFormGroup.get('polygonKey').patchValue(polygonKey, {emitEvent: false});
           updateModel = true;
         }
         break;
       case 'circles':
         const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
-        if (this.updateDataKeyToNewDsType(circleKey, newDsType)) {
+        if (updateDataKeyToNewDsType(circleKey, newDsType)) {
           this.dataLayerFormGroup.get('circleKey').patchValue(circleKey, {emitEvent: false});
           updateModel = true;
         }
@@ -300,21 +301,6 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
     if (updateModel) {
       this.updateModel();
     }
-  }
-
-  private updateDataKeyToNewDsType(dataKey: DataKey, newDsType: DatasourceType, timeSeries = false): boolean {
-    if (newDsType === DatasourceType.function) {
-      if (dataKey.type !== DataKeyType.function) {
-        dataKey.type = DataKeyType.function;
-        return true;
-      }
-    } else {
-      if (dataKey.type === DataKeyType.function) {
-        dataKey.type = timeSeries ? DataKeyType.timeseries : DataKeyType.attribute;
-        return true;
-      }
-    }
-    return false;
   }
 
   private updateValidators() {
