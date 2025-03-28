@@ -18,8 +18,6 @@ import org.thingsboard.server.common.data.StringUtils; // Import StringUtils
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-
-
 import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -113,6 +111,8 @@ public class FirebasePushNotificationNode extends TbAbstractExternalNode {
     }
 
     private String replaceTemplateVariablesMeta(String template, TbMsg msg) {
+        Logger logger = Logger.getLogger("FirebasePushNotificationNode-replace");
+        logger.info("Original template: " + msg.getMetaData());
         for (Map.Entry<String, String> entry : msg.getMetaData().getData().entrySet()) {
             template = template.replace("${" + entry.getKey() + "}", entry.getValue());
             Logger.getLogger("FirebasePushNotificationNode-replace").info("Replace " + entry.getKey() + " with " + entry.getValue());

@@ -44,11 +44,7 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -61,6 +57,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
@@ -79,41 +76,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
-import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ACTIVE_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_INFO_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_NAME_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_TEXT_SEARCH_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_TYPE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_UPDATE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_UPDATE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_UPDATE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_UPDATE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DEFAULT_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_ACCESS_TOKEN_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
-import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+import static org.thingsboard.server.controller.ControllerConstants.*;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 @RestController
@@ -129,7 +92,92 @@ public class DeviceController extends BaseController {
 
     private final TbDeviceService tbDeviceService;
 
+    private final AttributesService attributesService;
+
     // start my code
+
+    // get setting device
+    @ApiOperation(value = "Get setting device")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/device/{deviceId}/setting", method = RequestMethod.GET)
+    @ResponseBody
+    public ResponseEntity<?> getDeviceSetting(@PathVariable String deviceId) throws Exception {
+        DeviceId deviceID = new DeviceId(toUUID(deviceId));
+        TenantId tenantId = getCurrentUser().getTenantId();
+
+        Device device = checkDeviceId(deviceID, Operation.READ);
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceId);
+        List<AttributeKvEntry> attributeKvEntries = attributesService.findAll(tenantId, entityId, AttributeScope.SHARED_SCOPE).get();
+
+        DeviceSetting deviceSetting = new DeviceSetting();
+        deviceSetting.setDevice(device);
+        deviceSetting.setAttributes(attributeKvEntries);
+
+        return ResponseEntity.ok(deviceSetting);
+    }
+
+    // update setting device
+    @ApiOperation(value = "Update setting device")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/device/{deviceId}/setting", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity<?>  updateDeviceSetting(
+            @RequestBody DeviceSettingRequest deviceSettingRequest,
+                                      @PathVariable String deviceId) throws Exception {
+        DeviceId deviceID = new DeviceId(toUUID(deviceId));
+        TenantId tenantId = getCurrentUser().getTenantId();
+
+        Device device = checkDeviceId(deviceID, Operation.READ);
+        if(deviceSettingRequest.getDeviceName() != null) device.setName(deviceSettingRequest.getDeviceName());
+
+        tbDeviceService.save(device, null, getCurrentUser());
+
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceId);
+
+        List<AttributeKvEntry> attributeKvEntries = new ArrayList<>();
+        if(deviceSettingRequest.getWifiPass() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("wifiPass", deviceSettingRequest.getWifiPass().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getWifiSsid() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("wifiSsid", deviceSettingRequest.getWifiSsid().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMinCircleNotification() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("minCircleNotification", deviceSettingRequest.getMinCircleNotification().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMinTemperature() != null)  attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("minTemperature", deviceSettingRequest.getMinTemperature().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMinHumidity() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("minHumidity", deviceSettingRequest.getMinHumidity().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMaxTemperature() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("maxTemperature", deviceSettingRequest.getMaxTemperature().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMaxHumidity() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("maxHumidity", deviceSettingRequest.getMaxHumidity().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMinRain() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("minRain", deviceSettingRequest.getMinRain().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMaxRain() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("maxRain", deviceSettingRequest.getMaxRain().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMinLight() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("minLight", deviceSettingRequest.getMinLight().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMaxLight() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("maxLight", deviceSettingRequest.getMaxLight().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMinQuality() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("minAirQuality", deviceSettingRequest.getMinQuality().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getMaxQuality() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("maxAirQuality", deviceSettingRequest.getMaxQuality().toString()), System.currentTimeMillis()));
+
+        attributesService.save(tenantId, entityId, AttributeScope.SHARED_SCOPE, attributeKvEntries);
+
+        return  ResponseEntity.ok(attributesService.save(tenantId, entityId, AttributeScope.SHARED_SCOPE, attributeKvEntries));
+    }
+
+    // get setting deivce
+
+    // update device
+    @ApiOperation(value = "Create Or Update Device (saveDevice)",
+            notes = "Create or update the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
+                    "Device credentials are also generated if not provided in the 'accessToken' request parameter. " +
+                    "The newly created device id will be present in the response. " +
+                    "Specify existing Device id to update the device. " +
+                    "Referencing non-existing device Id will cause 'Not Found' error." +
+                    "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes." +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/update-device", method = RequestMethod.POST)
+    @ResponseBody
+    public Device updateDevice(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Id device") @RequestBody String deviceId,
+                             @RequestBody String deviceName, @RequestBody String deviceDescription,
+                             @Parameter(description = "Optional value of the device credentials to be used during device creation. " +
+                                     "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws Exception {
+        DeviceId deviceId1 = new DeviceId(toUUID(deviceId));
+        Device device = checkDeviceId(deviceId1, Operation.READ);
+        device.setName(deviceName);
+        return tbDeviceService.save(device, accessToken, getCurrentUser());
+    }
 
     // get device
     @ApiOperation(value = "Get Customer Devices (getCustomerDevicesV2)",
@@ -161,6 +209,44 @@ public class DeviceController extends BaseController {
         } else {
             return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink));
         }
+    }
+
+    // create deivce with profile id
+    @ApiOperation(value = "Create device with profile id",
+            notes = "Create the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
+                    "Device credentials are also generated if not provided in the 'accessToken' request parameter. " +
+                    "The newly created device id will be present in the response. " +
+                    "Specify existing Device id to update the device. " +
+                    "Referencing non-existing device Id will cause 'Not Found' error." +
+                    "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes." +
+                    "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/create-device-with-profileId", method = RequestMethod.POST)
+    @ResponseBody
+    public Device createDeviceWithProfileId(@Parameter(description = "Optional value of the device credentials to be used during device creation. " +
+                                                    "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken,
+                                            @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
+                                            @RequestParam(name = "deviceProfileId", required = false) String deviceProfileId) throws Exception {
+        User currentUser = getCurrentUser();
+        Device device = new Device();
+        device.setTenantId(currentUser.getTenantId());
+        DeviceProfileId profileId = new DeviceProfileId(toUUID(deviceProfileId));
+        device.setDeviceProfileId(profileId);
+
+        Device deviceSave = tbDeviceService.save(device, accessToken, currentUser);
+
+        if (currentUser.getAuthority() == Authority.CUSTOMER_USER) {
+            CustomerId customerId = currentUser.getCustomerId();
+            if (customerId != null && !customerId.isNullUid()) {
+                Customer customer = new Customer(customerId);
+                tbDeviceService.assignDeviceToCustomer(currentUser.getTenantId(), deviceSave.getId(), customer, currentUser);
+            } else {
+                throw new ThingsboardException("CUSTOMER_USER không có CustomerId hợp lệ!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+        }
+
+        return deviceSave;
     }
 
     // create device
@@ -236,7 +322,6 @@ public class DeviceController extends BaseController {
         System.out.println("Xoa thiet bi");
         tbDeviceService.delete(device, getCurrentUser());
     }
-
 
     // end my code
 
