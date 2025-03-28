@@ -1000,8 +1000,8 @@
         "calculated-field": "calculated field",
         "hint": {
             "main-limited": "No more than {{msg}} {{entity}} debug messages per {{time}} will be recorded.",
-            "on-failure": "Log all debug messages.",
-            "all-messages": "Log error messages only. "
+            "on-failure": "Log error messages only.",
+            "all-messages": "Log all debug messages."
         }
     },
     "calculated-fields": {
@@ -8013,7 +8013,7 @@
                 "pattern-type-function": "Function",
                 "label-pattern": "Label (pattern examples: '${entityName}', '${entityName}: (Text ${keyName} units.)' )",
                 "label-function": "Label function",
-                "tooltip-pattern": "Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
+                "tooltip-pattern": "Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>)",
                 "tooltip-function": "Tooltip function",
                 "tooltip-trigger": "Tooltip trigger",
                 "tooltip-trigger-click": "Show tooltip on click",

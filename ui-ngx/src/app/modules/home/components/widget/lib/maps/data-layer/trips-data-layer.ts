@@ -351,10 +351,10 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
         rotationAngle: this.settings.rotateMarker ? this.settings.offsetAngle : 0
       };
     }
+    const timeStamp = Object.keys(result);
     if (timeline) {
       const xKey = this.settings.xKey.label;
       const yKey = this.settings.yKey.label;
-      const timeStamp = Object.keys(result);
       for (let i = 0; i < timeStamp.length - 1; i++) {
         if (isUndefined(result[timeStamp[i + 1]][xKey]) || isUndefined(result[timeStamp[i + 1]][yKey])) {
           for (let j = i + 2; j < timeStamp.length - 1; j++) {
@@ -374,6 +374,13 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
           result[timeStamp[i]].rotationAngle += findRotationAngle(startPoint, endPoint);
         }
       }
+      if (this.settings.rotateMarker && timeStamp.length > 1) {
+        result[timeStamp[timeStamp.length - 1]].rotationAngle = result[timeStamp[timeStamp.length - 2]].rotationAngle;
+      }
+    } else if (this.settings.rotateMarker && timeStamp.length > 1) {
+      const startPoint = this.dataLayer.dataProcessor.extractLocation(result[timeStamp[timeStamp.length - 2]], dsData);
+      const endPoint = this.dataLayer.dataProcessor.extractLocation(result[timeStamp[timeStamp.length - 1]], dsData);
+      result[timeStamp[timeStamp.length - 1]].rotationAngle += findRotationAngle(startPoint, endPoint);
     }
     return result;
   }

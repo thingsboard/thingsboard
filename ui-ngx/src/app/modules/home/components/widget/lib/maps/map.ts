@@ -133,6 +133,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private currentEditButton: L.TB.ToolbarButton;
 
   private dragMode = true;
+  private createMapItemActionId: string;
 
   private get isPlacingItem(): boolean {
     return !!this.currentEditButton;
@@ -176,6 +177,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private setupControls(): Observable<any> {
     if (this.settings.scales?.length) {
       L.control.scale({
+        position: 'bottomright',
         metric: this.settings.scales.includes(MapScale.metric),
         imperial: this.settings.scales.includes(MapScale.imperial)
       }).addTo(this.map);
@@ -685,8 +687,13 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private createItem(actionData: PlaceMapItemActionData, prepareDrawMode: () => void) {
-    if (this.isPlacingItem) {
+    const actionId = 'id' in actionData.action ? actionData.action.id : 'map-button';
+    if (this.createMapItemActionId === actionId) {
+      this.finishCreatedItem();
       return;
+    }
+    if (isDefined(this.createMapItemActionId)) {
+      this.finishCreatedItem();
     }
     this.updatePlaceItemState(actionData.additionalParams?.button, true);
 
@@ -700,7 +707,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       // @ts-ignore
       e.layer._pmTempLayer = true;
       e.layer.remove();
-      this.finishAdd();
+      this.finishCreatedItem();
     });
 
     prepareDrawMode();
@@ -713,9 +720,11 @@ export abstract class TbMap<S extends BaseMapSettings> {
         iconClass: 'tb-close',
         title: this.ctx.translate.instant('action.cancel'),
         showText: true,
-        click: this.finishAdd
+        click: this.finishCreatedItem
       }
     ], false);
+
+    this.createMapItemActionId = actionId;
 
     const convertLayerToCoordinates = (type: MapItemType, layer: L.Layer): {x: number; y: number} | TbPolygonRawCoordinates | TbCircleData => {
       switch (type) {
@@ -746,6 +755,11 @@ export abstract class TbMap<S extends BaseMapSettings> {
           return null;
       }
     }
+  }
+
+  private finishCreatedItem = () => {
+    delete this.createMapItemActionId;
+    this.finishAdd();
   }
 
   private finishAdd = () => {
@@ -937,7 +951,13 @@ export abstract class TbMap<S extends BaseMapSettings> {
       bounds = new L.LatLngBounds(null, null);
       dataLayersBounds.forEach(b => bounds.extend(b));
       const mapBounds = this.map.getBounds();
-      if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || (!this.bounds.equals(bounds) || force) && this.settings.fitMapBounds && !mapBounds.contains(bounds))) {
+      if (bounds.isValid() &&
+        (
+          (!this.bounds || !this.bounds.isValid() || (!this.bounds.equals(bounds) || force) && this.settings.fitMapBounds)
+          && !mapBounds.contains(bounds)
+        )
+      )
+      {
         this.bounds = bounds;
         if (!this.ignoreUpdateBounds && !this.isPlacingItem) {
           this.fitBounds(bounds);
