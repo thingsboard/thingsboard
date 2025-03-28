@@ -793,7 +793,7 @@ export class TbTimeSeriesChart {
           }
         } else {
           if (!axis.option.name) {
-            axis.option.name = axis.settings.label;
+            axis.option.name = this.ctx.utilsService.customTranslation(axis.settings.label, axis.settings.label);
             result.changed = true;
           }
           const nameGap = size;
