@@ -1646,7 +1646,7 @@ queue:
       # Kafka properties for Calculated Field State topics
       calculated-field-state: "${TB_QUEUE_KAFKA_CF_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:104857600000;partitions:1;min.insync.replicas:1;cleanup.policy:compact}"
       # Kafka properties for EDQS events topics
-      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1}"
+      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:86400000;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1}"
       # Kafka properties for EDQS requests topic (default: 3 minutes retention)
       edqs-requests: "${TB_QUEUE_KAFKA_EDQS_REQUESTS_TOPIC_PROPERTIES:retention.ms:180000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for EDQS state topic (infinite retention, compaction)
@@ -1748,6 +1748,10 @@ queue:
     partitions: "${TB_EDQS_PARTITIONS:12}"
     # EDQS partitioning strategy: tenant (partition is resolved by tenant id) or none (no specific strategy, resolving by message key)
     partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}"
+    # EDQS events topic
+    events_topic: "${TB_EDQS_EVENTS_TOPIC:edqs.events}"
+    # EDQS state topic
+    state_topic: "${TB_EDQS_STATE_TOPIC:edqs.state}"
     # EDQS requests topic
     requests_topic: "${TB_EDQS_REQUESTS_TOPIC:edqs.requests}"
     # EDQS responses topic

@@ -31,24 +31,22 @@ import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsServ
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public abstract class AbstractConsumerPartitionedService<N extends com.google.protobuf.GeneratedMessageV3> extends AbstractConsumerService<N> {
+public abstract class AbstractPartitionBasedConsumerService<N extends com.google.protobuf.GeneratedMessageV3> extends AbstractConsumerService<N> {
 
-    private final Lock startupLock;
-    private volatile boolean consumersInitialized;
+    private final Lock startupLock = new ReentrantLock();
+    private volatile boolean started = false;
     private PartitionChangeEvent lastPartitionChangeEvent;
 
-    public AbstractConsumerPartitionedService(ActorSystemContext actorContext,
-                                              TbTenantProfileCache tenantProfileCache,
-                                              TbDeviceProfileCache deviceProfileCache,
-                                              TbAssetProfileCache assetProfileCache,
-                                              CalculatedFieldCache calculatedFieldCache,
-                                              TbApiUsageStateService apiUsageStateService,
-                                              PartitionService partitionService,
-                                              ApplicationEventPublisher eventPublisher,
-                                              JwtSettingsService jwtSettingsService) {
+    public AbstractPartitionBasedConsumerService(ActorSystemContext actorContext,
+                                                 TbTenantProfileCache tenantProfileCache,
+                                                 TbDeviceProfileCache deviceProfileCache,
+                                                 TbAssetProfileCache assetProfileCache,
+                                                 CalculatedFieldCache calculatedFieldCache,
+                                                 TbApiUsageStateService apiUsageStateService,
+                                                 PartitionService partitionService,
+                                                 ApplicationEventPublisher eventPublisher,
+                                                 JwtSettingsService jwtSettingsService) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
-        this.startupLock = new ReentrantLock();
-        this.consumersInitialized = false;
     }
 
     @PostConstruct
@@ -57,13 +55,14 @@ public abstract class AbstractConsumerPartitionedService<N extends com.google.pr
     }
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
+    @Override
     public void afterStartUp() {
         super.afterStartUp();
-        doAfterStartUp();
+        onStartUp();
         startupLock.lock();
         try {
-            processPartitionChangeEvent(lastPartitionChangeEvent);
-            consumersInitialized = true;
+            onPartitionChangeEvent(lastPartitionChangeEvent);
+            started = true;
         } finally {
             startupLock.unlock();
         }
@@ -71,10 +70,10 @@ public abstract class AbstractConsumerPartitionedService<N extends com.google.pr
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        if (!consumersInitialized) {
+        if (!started) {
             startupLock.lock();
             try {
-                if (!consumersInitialized) {
+                if (!started) {
                     lastPartitionChangeEvent = event;
                     return;
                 }
@@ -82,12 +81,12 @@ public abstract class AbstractConsumerPartitionedService<N extends com.google.pr
                 startupLock.unlock();
             }
         }
-        processPartitionChangeEvent(event);
+        onPartitionChangeEvent(event);
     }
 
-    protected abstract void doAfterStartUp();
+    protected abstract void onStartUp();
 
-    protected abstract void processPartitionChangeEvent(PartitionChangeEvent event);
+    protected abstract void onPartitionChangeEvent(PartitionChangeEvent event);
 
     protected abstract String getPrefix();
 
