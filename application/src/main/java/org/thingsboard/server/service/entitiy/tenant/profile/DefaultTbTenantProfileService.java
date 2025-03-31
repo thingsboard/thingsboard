@@ -19,8 +19,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -41,18 +43,23 @@ public class DefaultTbTenantProfileService extends AbstractTbEntityService imple
     private final TbTenantProfileCache tenantProfileCache;
 
     @Override
-    public TenantProfile save(TenantId tenantId, TenantProfile tenantProfile, TenantProfile oldTenantProfile) throws ThingsboardException {
+    public TenantProfile save(TenantId tenantId, TenantProfile tenantProfile, TenantProfile oldTenantProfile, User user) throws ThingsboardException {
+        ActionType actionType = tenantProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantProfile savedTenantProfile = checkNotNull(tenantProfileService.saveTenantProfile(tenantId, tenantProfile));
         tenantProfileCache.put(savedTenantProfile);
 
         List<TenantId> tenantIds = tenantService.findTenantIdsByTenantProfileId(savedTenantProfile.getId());
         tbQueueService.updateQueuesByTenants(tenantIds, savedTenantProfile, oldTenantProfile);
+        logEntityActionService.logEntityAction(tenantId, savedTenantProfile.getId(), savedTenantProfile, null,
+                actionType, user);
 
         return savedTenantProfile;
     }
 
     @Override
-    public void delete(TenantId tenantId, TenantProfile tenantProfile) throws ThingsboardException {
+    public void delete(TenantId tenantId, TenantProfile tenantProfile, User user) throws ThingsboardException {
+        ActionType actionType = ActionType.DELETED;
         tenantProfileService.deleteTenantProfile(tenantId, tenantProfile.getId());
+        logEntityActionService.logEntityAction(tenantId, tenantProfile.getId(), tenantProfile, null, actionType, user);
     }
 }
