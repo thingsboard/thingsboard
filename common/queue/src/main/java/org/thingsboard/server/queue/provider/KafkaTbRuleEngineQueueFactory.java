@@ -20,6 +20,8 @@ import jakarta.annotation.PreDestroy;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
@@ -313,11 +315,11 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer(Queue configuration, Integer partitionId) {
-        String queueName = configuration.getName();
-        String groupId = topicService.buildConsumerGroupId("cf-", configuration.getTenantId(), queueName, partitionId);
+    public TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer(TenantId tenantId, Integer partitionId) {
+        String queueName = DataConstants.CF_QUEUE_NAME;
+        String groupId = topicService.buildConsumerGroupId("cf-", tenantId, queueName, partitionId);
 
-        cfAdmin.syncOffsets(topicService.buildConsumerGroupId("cf-", configuration.getTenantId(), queueName, null), // the fat groupId
+        cfAdmin.syncOffsets(topicService.buildConsumerGroupId("cf-", tenantId, queueName, null), // the fat groupId
                 groupId, partitionId);
 
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToCalculatedFieldMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();

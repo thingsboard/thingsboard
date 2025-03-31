@@ -46,7 +46,7 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
 
     @Override
     public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
-        super.stateServices.put(new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_STATES_QUEUE_NAME), new DefaultQueueStateService<>(eventConsumer));
+        super.stateServices.put(new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME), new DefaultQueueStateService<>(eventConsumer));
     }
 
     @Override

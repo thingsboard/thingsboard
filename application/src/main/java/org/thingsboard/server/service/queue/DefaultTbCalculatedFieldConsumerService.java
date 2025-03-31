@@ -29,16 +29,16 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
@@ -81,7 +81,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
     private long packProcessingTimeout;
 
     private final TbRuleEngineQueueFactory queueFactory;
-    private final QueueService queueService;
+    private final TenantService tenantService;
 
     private final CalculatedFieldStateService stateService;
     private final ConcurrentMap<QueueKey, PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>>> consumers = new ConcurrentHashMap<>();
@@ -96,33 +96,33 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                                                    ApplicationEventPublisher eventPublisher,
                                                    JwtSettingsService jwtSettingsService,
                                                    CalculatedFieldCache calculatedFieldCache,
-                                                   QueueService queueService,
-                                                   CalculatedFieldStateService stateService) {
+                                                   CalculatedFieldStateService stateService,
+                                                   TenantService tenantService) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.queueFactory = tbQueueFactory;
-        this.queueService = queueService;
         this.stateService = stateService;
+        this.tenantService = tenantService;
     }
 
     @Override
     protected void onStartUp() {
-        List<Queue> queues = queueService.findAllQueues();
-        for (Queue configuration : queues) {
-            if (partitionService.isManagedByCurrentService(configuration.getTenantId())) {
-                stateService.init(createConsumer(configuration));
+        PageDataIterable<TenantId> iterator = new PageDataIterable<>(tenantService::findTenantsIds, 1024);
+        for (TenantId tenantId : iterator) {
+            if (partitionService.isManagedByCurrentService(tenantId)) {
+                stateService.init(createConsumer(tenantId));
             }
         }
     }
 
-    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> createConsumer(Queue queue) {
-        QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, queue.getTenantId());
+    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> createConsumer(TenantId tenantId) {
+        QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
         var eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
                 .queueKey(queueKey)
                 .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
                 .msgPackProcessor(this::processMsgs)
-                .consumerCreator((config, partitionId) -> queueFactory.createToCalculatedFieldMsgConsumer(queue, partitionId))
+                .consumerCreator((config, partitionId) -> queueFactory.createToCalculatedFieldMsgConsumer(tenantId, partitionId))
                 .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
@@ -251,7 +251,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                         if (!CollectionUtils.isEmpty(partitions)) {
                             stateService.delete(queueKey, partitions);
                         }
-                        var consumer = consumers.remove(queueKey);
+                        var consumer = consumers.get(queueKey);
                         if (consumer != null) {
                             consumer.stop();
                         }
