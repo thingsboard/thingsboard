@@ -17,7 +17,11 @@ package org.thingsboard.server.service.edge;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode;
 import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNodeConfiguration;
@@ -32,11 +36,12 @@ import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
 import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,106 +49,109 @@ import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.EXCLUD
 import static org.thingsboard.server.service.edge.EdgeMsgConstructorUtils.IGNORED_PARAMS_BY_EDGE_VERSION;
 
 @Slf4j
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EdgeMsgConstructorUtilsTest {
     private static final int CONFIGURATION_VERSION = 5;
 
-    public static final List<EdgeVersion> SUPPORTED_EDGE_VERSIONS_FOR_TESTS = Arrays.asList(
-            EdgeVersion.V_4_0_0, EdgeVersion.V_3_9_0, EdgeVersion.V_3_8_0, EdgeVersion.V_3_7_0
-    );
-
-    private static final Map<NodeConfiguration, String> CONFIG_TO_NODE_NAME = Map.of(
+    private static final Map<NodeConfiguration, String> NODE_CONFIG_TO_NAME_MAP = Map.of(
             new TbMsgTimeseriesNodeConfiguration(), TbMsgTimeseriesNode.class.getName(),
             new TbMsgAttributesNodeConfiguration(), TbMsgAttributesNode.class.getName(),
             new TbSaveToCustomCassandraTableNodeConfiguration(), TbSaveToCustomCassandraTableNode.class.getName()
     );
 
-    private static final Map<String, Integer> NODE_TO_CONFIG_PARAMS_COUNT = Map.of(
+    private static final Map<String, Integer> NODE_NAME_TO_CONFIG_PARAM_COUNT_MAP = Map.of(
             TbMsgTimeseriesNode.class.getName(), 3,
             TbMsgAttributesNode.class.getName(), 5,
             TbSaveToCustomCassandraTableNode.class.getName(), 3
     );
 
-    private static final Map<NodeConfiguration, String> CONFIG_TO_MISS_NODE_FOR_OLD_EDGE = Map.of(
+
+    private static final Map<NodeConfiguration, String> MISSING_NODE_CONFIGS_FOR_OLD_EDGES = Map.of(
             new TbSendRestApiCallReplyNodeConfiguration(), TbSendRestApiCallReplyNode.class.getName(),
             new TbAwsLambdaNodeConfiguration(), TbAwsLambdaNode.class.getName()
     );
 
-    @Test
-    public void testRuleChainMetadataUpdateMsgForOldEdgeVersions() {
+    @ParameterizedTest(name = "Testing metadata update for EdgeVersion: {0}")
+    @EnumSource(value = EdgeVersion.class, names = {"V_4_0_0", "V_3_9_0", "V_3_8_0", "V_3_7_0"})
+    @DisplayName("Test RuleChain Metadata Update for Supported Edge Versions")
+    public void testRuleChainMetadataUpdateForSupportedEdgeVersions(EdgeVersion edgeVersion) {
         // GIVEN
-        RuleChainMetaData metaData = createMetadataWithProblemNodes(CONFIG_TO_NODE_NAME);
+        RuleChainMetaData metaData = createMetadataWithNodes(NODE_CONFIG_TO_NAME_MAP);
 
-        SUPPORTED_EDGE_VERSIONS_FOR_TESTS.forEach(edgeVersion -> {
-            // WHEN
-            List<RuleNode> ruleNodes = extractRuleNodesFromUpdateMsg(metaData, edgeVersion);
+        // WHEN
+        List<RuleNode> ruleNodes = extractRuleNodesFromMetadata(metaData, edgeVersion);
 
-            // THEN
-            assertRuleNodeConfig(ruleNodes, edgeVersion);
-        });
+        // THEN
+        verifyRuleNodeConfigurations(ruleNodes, edgeVersion);
     }
 
-    @Test
-    public void testRuleChainMetadataWithMissingNodeForOldEdgeVersions() {
+    @ParameterizedTest(name = "Testing metadata with missing nodes for EdgeVersion: {0}")
+    @EnumSource(value = EdgeVersion.class, names = {"V_4_0_0", "V_3_9_0", "V_3_8_0", "V_3_7_0"})
+    @DisplayName("Test RuleChain Metadata with Missing Nodes for Old Edge Versions")
+    public void testRuleChainMetadataWithMissingNodesForOldEdgeVersions(EdgeVersion edgeVersion) {
         // GIVEN
-        RuleChainMetaData metaData = createMetadataWithProblemNodes(CONFIG_TO_MISS_NODE_FOR_OLD_EDGE);
+        RuleChainMetaData metaData = createMetadataWithNodes(MISSING_NODE_CONFIGS_FOR_OLD_EDGES);
 
-        SUPPORTED_EDGE_VERSIONS_FOR_TESTS.forEach(edgeVersion -> {
-            // WHEN
-            List<RuleNode> ruleNodes = extractRuleNodesFromUpdateMsg(metaData, edgeVersion);
+        // WHEN
+        List<RuleNode> ruleNodes = extractRuleNodesFromMetadata(metaData, edgeVersion);
 
-            // THEN
-            int leftNode = EXCLUDED_NODES_BY_EDGE_VERSION.containsKey(edgeVersion) ?
-                    CONFIG_TO_MISS_NODE_FOR_OLD_EDGE.size() - EXCLUDED_NODES_BY_EDGE_VERSION.get(edgeVersion).size() :
-                    CONFIG_TO_MISS_NODE_FOR_OLD_EDGE.size();
-
-            Assert.assertEquals(leftNode, ruleNodes.size());
-        });
+        // THEN
+        int expectedNodeCount = EXCLUDED_NODES_BY_EDGE_VERSION.containsKey(edgeVersion) ?
+                MISSING_NODE_CONFIGS_FOR_OLD_EDGES.size() - EXCLUDED_NODES_BY_EDGE_VERSION.get(edgeVersion).size() :
+                MISSING_NODE_CONFIGS_FOR_OLD_EDGES.size();
+        Assertions.assertEquals(
+                expectedNodeCount,
+                ruleNodes.size(),
+                String.format("EdgeVersion '%s' should have %d nodes, but found %d.", edgeVersion, expectedNodeCount, ruleNodes.size())
+        );
     }
 
-    private RuleChainMetaData createMetadataWithProblemNodes(Map<NodeConfiguration, String> nodeMap) {
+    private RuleChainMetaData createMetadataWithNodes(Map<NodeConfiguration, String> nodeConfigMap) {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         List<RuleNode> ruleNodes = new ArrayList<>();
 
-        nodeMap.forEach((key, value) -> {
+        nodeConfigMap.forEach((config, nodeName) -> {
             RuleNode ruleNode = new RuleNode();
-
-            ruleNode.setName(value);
-            ruleNode.setType(value);
+            ruleNode.setName(nodeName);
+            ruleNode.setType(nodeName);
             ruleNode.setConfigurationVersion(CONFIGURATION_VERSION);
-            ruleNode.setConfiguration(JacksonUtil.valueToTree(key.defaultConfiguration()));
-
+            ruleNode.setConfiguration(JacksonUtil.valueToTree(config.defaultConfiguration()));
             ruleNodes.add(ruleNode);
         });
 
         ruleChainMetaData.setFirstNodeIndex(0);
         ruleChainMetaData.setNodes(ruleNodes);
-
         return ruleChainMetaData;
     }
 
-    private List<RuleNode> extractRuleNodesFromUpdateMsg(RuleChainMetaData metaData, EdgeVersion edgeVersion) {
-        String ruleChainMetadataUpdateMsg =
-                EdgeMsgConstructorUtils.constructRuleChainMetadataUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, metaData, edgeVersion).getEntity();
+    private List<RuleNode> extractRuleNodesFromMetadata(RuleChainMetaData metaData, EdgeVersion edgeVersion) {
+        String metadataUpdateMsg = EdgeMsgConstructorUtils.constructRuleChainMetadataUpdatedMsg(
+                UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE,
+                metaData,
+                edgeVersion
+        ).getEntity();
 
-        RuleChainMetaData ruleChainMetaData = JacksonUtil.fromString(ruleChainMetadataUpdateMsg, RuleChainMetaData.class, true);
-
-        Assert.assertNotNull("RuleChainMetaData is null", ruleChainMetaData);
-
-        return ruleChainMetaData.getNodes();
+        RuleChainMetaData updatedMetaData = JacksonUtil.fromString(metadataUpdateMsg, RuleChainMetaData.class, true);
+        Assertions.assertNotNull(updatedMetaData, "RuleChainMetaData should not be null after update.");
+        return updatedMetaData.getNodes();
     }
 
-    private void assertRuleNodeConfig(List<RuleNode> ruleNodes, EdgeVersion edgeVersion) {
+    private void verifyRuleNodeConfigurations(List<RuleNode> ruleNodes, EdgeVersion edgeVersion) {
         ruleNodes.forEach(ruleNode -> {
-            int configParamCount = NODE_TO_CONFIG_PARAMS_COUNT.get(ruleNode.getType());
+            String nodeType = ruleNode.getType();
+            int expectedParamCount = NODE_NAME_TO_CONFIG_PARAM_COUNT_MAP.getOrDefault(nodeType, 0);
 
-            boolean isOldEdgeVersion = IGNORED_PARAMS_BY_EDGE_VERSION.entrySet().stream()
-                    .anyMatch(entry -> entry.getKey().equals(edgeVersion) &&
-                            entry.getValue().containsKey(ruleNode.getType()));
-            int expectedConfigAmount = isOldEdgeVersion ? configParamCount - 1 : configParamCount;
+            boolean isRuleNodeModified = IGNORED_PARAMS_BY_EDGE_VERSION
+                    .getOrDefault(edgeVersion, Map.of())
+                    .containsKey(nodeType);
 
-            Assert.assertEquals(
-                    String.format("For ruleNode '%s', edgeVersion '%s", ruleNode.getName(), edgeVersion),
-                    expectedConfigAmount, ruleNode.getConfiguration().size()
+            int actualParamCount = isRuleNodeModified ? expectedParamCount - 1 : expectedParamCount;
+
+            Assertions.assertEquals(
+                    actualParamCount,
+                    ruleNode.getConfiguration().size(),
+                    String.format("RuleNode '%s' for EdgeVersion '%s' should have %d config parameters.",
+                            ruleNode.getName(), edgeVersion, actualParamCount)
             );
         });
     }
