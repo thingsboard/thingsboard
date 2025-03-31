@@ -22,7 +22,7 @@ import {
   TbMapDatasource
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
-import { FormattedData } from '@shared/models/widget.models';
+import { DataKey, FormattedData } from '@shared/models/widget.models';
 import { TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable } from 'rxjs';
@@ -213,9 +213,8 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
     );
   }
 
-  protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
-    datasource.dataKeys.push(this.settings.circleKey);
-    return datasource;
+  protected getDataKeys(): DataKey[] {
+    return [this.settings.circleKey];
   }
 
   protected defaultBaseSettings(map: TbMap<any>): Partial<CirclesDataLayerSettings> {

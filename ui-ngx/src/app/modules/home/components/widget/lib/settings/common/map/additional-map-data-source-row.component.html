@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [formGroup]="dataSourceFormGroup" class="tb-form-table-row tb-map-data-source-row">
+<div [formGroup]="dataSourceFormGroup" class="tb-form-table-row tb-additional-map-data-source-row">
   <div class="tb-source-field">
     <mat-form-field class="tb-ds-type-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="dsType">
@@ -23,6 +23,11 @@
           {{ datasourceTypesTranslations.get(type) | translate }}
         </mat-option>
       </mat-select>
+    </mat-form-field>
+    <mat-form-field
+      *ngIf="dataSourceFormGroup.get('dsType').value === DatasourceType.function"
+      class="tb-label-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="dsLabel" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
     <tb-entity-autocomplete
       class="tb-device-field"
@@ -43,13 +48,24 @@
       [callbacks]="context.callbacks">
     </tb-entity-alias-select>
   </div>
-  <tb-filter-select
-    class="tb-filter-field"
+  <tb-data-keys
+    class="tb-data-keys-field"
+    formControlName="dataKeys"
     inlineField
+    hideDataKeyColor
+    hideDataKeyDecimals
+    hideDataKeyUnits
+    disableDrag
+    [required]="true"
+    [widgetType]="widgetType.latest"
+    [widget]="context.widget"
+    [datasourceType]="dataSourceFormGroup.get('dsType').value"
+    [entityAliasId]="dataSourceFormGroup.get('dsEntityAliasId').value"
+    [deviceId]="dataSourceFormGroup.get('dsDeviceId').value"
     [aliasController]="context.aliasController"
-    formControlName="dsFilterId"
-    [callbacks]="context.callbacks">
-  </tb-filter-select>
+    [callbacks]="context.callbacks"
+    [generateKey]="generateAdditionalDataKey">
+  </tb-data-keys>
   <div class="tb-form-table-row-cell-buttons">
     <div class="tb-remove-button">
       <button type="button"

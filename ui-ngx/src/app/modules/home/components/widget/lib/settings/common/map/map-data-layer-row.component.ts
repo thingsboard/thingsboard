@@ -336,6 +336,9 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
 
   private updateModel() {
     this.modelValue = {...this.modelValue, ...this.dataLayerFormGroup.value};
+    if (this.modelValue.dsType === DatasourceType.function) {
+      delete this.modelValue.additionalDataSources;
+    }
     this.propagateChange(this.modelValue);
   }
 }

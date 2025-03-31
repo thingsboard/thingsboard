@@ -179,6 +179,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       dsDeviceId: [this.settings.dsDeviceId, [Validators.required]],
       dsEntityAliasId: [this.settings.dsEntityAliasId, [Validators.required]],
       dsFilterId: [this.settings.dsFilterId, []],
+      additionalDataSources: [this.settings.additionalDataSources, []],
       additionalDataKeys: [this.settings.additionalDataKeys, []],
       label: [this.settings.label, []],
       tooltip: [this.settings.tooltip, []],
@@ -345,14 +346,17 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   private updateValidators() {
     const dsType: DatasourceType = this.dataLayerFormGroup.get('dsType').value;
     if (dsType === DatasourceType.function) {
+      this.dataLayerFormGroup.get('additionalDataSources').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsLabel').enable({emitEvent: false});
       this.dataLayerFormGroup.get('dsDeviceId').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').disable({emitEvent: false});
     } else if (dsType === DatasourceType.device) {
+      this.dataLayerFormGroup.get('additionalDataSources').enable({emitEvent: false});
       this.dataLayerFormGroup.get('dsLabel').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsDeviceId').enable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').disable({emitEvent: false});
     } else {
+      this.dataLayerFormGroup.get('additionalDataSources').enable({emitEvent: false});
       this.dataLayerFormGroup.get('dsLabel').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsDeviceId').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').enable({emitEvent: false});

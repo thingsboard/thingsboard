@@ -535,22 +535,33 @@ export class TbTripsDataLayer extends TbMapDataLayer<TripsDataLayerSettings, TbT
     };
   }
 
-  protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
-    datasource.dataKeys = [this.settings.xKey, this.settings.yKey];
+  protected calculateDataKeys(): DataKey[] {
+    const dataKeys = [this.settings.xKey, this.settings.yKey];
     const additionalKeys = this.allColorSettings().filter(settings => settings.type === DataLayerColorType.range && settings.rangeKey)
-                                                  .map(settings => settings.rangeKey);
+    .map(settings => settings.rangeKey);
     if (this.settings.additionalDataKeys?.length) {
       additionalKeys.push(...this.settings.additionalDataKeys);
     }
     if (additionalKeys.length) {
       const tsKeys = additionalKeys.filter(key => key.type === DataKeyType.timeseries);
+      dataKeys.push(...tsKeys);
+    }
+    return dataKeys;
+  }
+
+  protected calculateLatestDataKeys(): DataKey[] {
+    const additionalKeys = this.allColorSettings().filter(settings => settings.type === DataLayerColorType.range && settings.rangeKey)
+    .map(settings => settings.rangeKey);
+    if (this.settings.additionalDataKeys?.length) {
+      additionalKeys.push(...this.settings.additionalDataKeys);
+    }
+    if (additionalKeys.length) {
       const latestKeys = additionalKeys.filter(key => key.type !== DataKeyType.timeseries);
-      datasource.dataKeys.push(...tsKeys);
       if (latestKeys.length) {
-        datasource.latestDataKeys = latestKeys;
+        return latestKeys;
       }
     }
-    return datasource;
+    return [];
   }
 
   protected allColorSettings(): DataLayerColorSettings[] {
