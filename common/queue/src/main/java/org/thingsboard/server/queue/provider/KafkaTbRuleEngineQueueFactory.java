@@ -48,7 +48,7 @@ import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.edqs.EdqsQueue;
+import org.thingsboard.server.queue.edqs.EdqsConfig;
 import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
 import org.thingsboard.server.queue.kafka.TbKafkaConsumerStatsService;
 import org.thingsboard.server.queue.kafka.TbKafkaConsumerTemplate;
@@ -79,6 +79,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbQueueEdgeSettings edgeSettings;
     private final TbQueueCalculatedFieldSettings calculatedFieldSettings;
+    private final EdqsConfig edqsConfig;
 
     private final TbQueueAdmin coreAdmin;
     private final TbKafkaAdmin ruleEngineAdmin;
@@ -101,7 +102,9 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
                                          TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                          TbKafkaConsumerStatsService consumerStatsService,
                                          TbQueueTransportNotificationSettings transportNotificationSettings,
-                                         TbQueueEdgeSettings edgeSettings, TbQueueCalculatedFieldSettings calculatedFieldSettings,
+                                         TbQueueEdgeSettings edgeSettings,
+                                         TbQueueCalculatedFieldSettings calculatedFieldSettings,
+                                         EdqsConfig edqsConfig,
                                          TbKafkaTopicConfigs kafkaTopicConfigs) {
         this.topicService = topicService;
         this.kafkaSettings = kafkaSettings;
@@ -113,6 +116,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
         this.transportNotificationSettings = transportNotificationSettings;
         this.edgeSettings = edgeSettings;
         this.calculatedFieldSettings = calculatedFieldSettings;
+        this.edqsConfig = edqsConfig;
 
         this.coreAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCoreConfigs());
         this.ruleEngineAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getRuleEngineConfigs());
@@ -391,10 +395,10 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgProducer(EdqsQueue queue) {
+    public TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsEventsProducer() {
         return TbKafkaProducerTemplate.<TbProtoQueueMsg<ToEdqsMsg>>builder()
-                .clientId("edqs-producer-" + queue.name().toLowerCase() + "-" + serviceInfoProvider.getServiceId())
-                .defaultTopic(topicService.buildTopicName(queue.getTopic()))
+                .clientId("edqs-events-producer-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(edqsConfig.getEventsTopic()))
                 .settings(kafkaSettings)
                 .admin(edqsEventsAdmin)
                 .build();

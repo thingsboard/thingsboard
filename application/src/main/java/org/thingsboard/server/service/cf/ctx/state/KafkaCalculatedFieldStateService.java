@@ -97,7 +97,10 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                 .scheduler(eventConsumer.getScheduler())
                 .taskExecutor(eventConsumer.getTaskExecutor())
                 .build();
-        super.stateServices.put(queueKey, new KafkaQueueStateService<>(eventConsumer, stateConsumer));
+        super.stateServices.put(queueKey, KafkaQueueStateService.<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>>builder()
+                .eventConsumer(eventConsumer)
+                .stateConsumer(stateConsumer)
+                .build());
         this.stateProducer = (TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>>) queueFactory.createCalculatedFieldStateProducer();
     }
 
