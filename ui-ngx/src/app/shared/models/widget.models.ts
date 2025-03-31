@@ -185,6 +185,7 @@ export interface WidgetTypeParameters {
   previewWidth?: string;
   previewHeight?: string;
   embedTitlePanel?: boolean;
+  embedActionsPanel?: boolean;
   overflowVisible?: boolean;
   hideDataTab?: boolean;
   hideDataSettings?: boolean;

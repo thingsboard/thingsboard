@@ -226,10 +226,10 @@ import { MarkerShapesComponent } from '@home/components/widget/lib/settings/comm
 import {
   MarkerClusteringSettingsComponent
 } from '@home/components/widget/lib/settings/common/map/marker-clustering-settings.component';
-import { MapDataSourcesComponent } from '@home/components/widget/lib/settings/common/map/map-data-sources.component';
+import { AdditionalMapDataSourcesComponent } from '@home/components/widget/lib/settings/common/map/additional-map-data-sources.component';
 import {
-  MapDataSourceRowComponent
-} from '@home/components/widget/lib/settings/common/map/map-data-source-row.component';
+  AdditionalMapDataSourceRowComponent
+} from '@home/components/widget/lib/settings/common/map/additional-map-data-source-row.component';
 import {
   ImageMapSourceSettingsComponent
 } from '@home/components/widget/lib/settings/common/map/image-map-source-settings.component';
@@ -248,6 +248,10 @@ import {
 import {
   MarkerIconShapesComponent
 } from '@home/components/widget/lib/settings/common/map/marker-icon-shapes.component';
+import { MapDataSourcesComponent } from '@home/components/widget/lib/settings/common/map/map-data-sources.component';
+import {
+  MapDataSourceRowComponent
+} from '@home/components/widget/lib/settings/common/map/map-data-source-row.component';
 
 @NgModule({
   declarations: [
@@ -339,6 +343,8 @@ import {
     MapDataLayersComponent,
     MapDataSourceRowComponent,
     MapDataSourcesComponent,
+    AdditionalMapDataSourceRowComponent,
+    AdditionalMapDataSourcesComponent,
     TripTimelineSettingsComponent,
     MapSettingsComponent,
     EntityAliasSelectComponent,

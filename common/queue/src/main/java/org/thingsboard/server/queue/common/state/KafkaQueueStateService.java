@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.queue.common.state;
 
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTopic;
 
@@ -29,14 +32,21 @@ import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTop
 public class KafkaQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> extends QueueStateService<E, S> {
 
     private final PartitionedQueueConsumerManager<S> stateConsumer;
+    private final Supplier<Map<String, Long>> eventsStartOffsetsProvider;
 
-    public KafkaQueueStateService(PartitionedQueueConsumerManager<E> eventConsumer, PartitionedQueueConsumerManager<S> stateConsumer) {
+    @Builder
+    public KafkaQueueStateService(PartitionedQueueConsumerManager<E> eventConsumer,
+                                  PartitionedQueueConsumerManager<S> stateConsumer,
+                                  Supplier<Map<String, Long>> eventsStartOffsetsProvider) {
         super(eventConsumer);
         this.stateConsumer = stateConsumer;
+        this.eventsStartOffsetsProvider = eventsStartOffsetsProvider;
     }
 
     @Override
     protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
+        Map<String, Long> eventsStartOffsets = eventsStartOffsetsProvider != null ? eventsStartOffsetsProvider.get() : null; // remembering the offsets before subscribing to states
+
         Set<TopicPartitionInfo> statePartitions = withTopic(partitions, stateConsumer.getTopic());
         partitionsInProgress.addAll(statePartitions);
         stateConsumer.addPartitions(statePartitions, statePartition -> {
@@ -51,12 +61,12 @@ public class KafkaQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> 
 
                 TopicPartitionInfo eventPartition = statePartition.withTopic(eventConsumer.getTopic());
                 if (this.partitions.get(queueKey).contains(eventPartition)) {
-                    eventConsumer.addPartitions(Set.of(eventPartition));
+                    eventConsumer.addPartitions(Set.of(eventPartition), null, eventsStartOffsets != null ? eventsStartOffsets::get : null);
                 }
             } finally {
                 readLock.unlock();
             }
-        });
+        }, null);
     }
 
     @Override

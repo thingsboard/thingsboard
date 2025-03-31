@@ -15,19 +15,19 @@
  */
 @import '../../../../../../../../../scss/constants';
 
-.tb-form-table-row.tb-map-data-source-row {
+.tb-form-table-row.tb-additional-map-data-source-row {
 
   .tb-source-field {
-    flex: 1 1 70%;
+    flex: 1 1 50%;
     display: flex;
     gap: 12px;
-    .tb-ds-type-field, .tb-device-field, .tb-entity-alias-field {
+    .tb-ds-type-field, .tb-label-field, .tb-device-field, .tb-entity-alias-field {
       flex: 1;
     }
   }
 
-  .tb-filter-field {
-    flex: 1 1 30%;
+  .tb-data-keys-field {
+    flex: 1 1 50%;
     min-width: 0;
   }
 
@@ -36,13 +36,21 @@
     min-width: 40px;
   }
 
-  @media #{$mat-lt-sm} {
+  @media #{$mat-lt-lg} {
     .tb-source-field {
-      flex: 1 1 60%;
       flex-direction: column;
+      flex: 1 1 30%;
     }
-    .tb-filter-field {
-      flex: 1 1 40%;
+    .tb-data-keys-field {
+      flex: 1 1 70%;
+    }
+    @media #{$mat-lt-md} {
+      .tb-source-field {
+        flex: 1 1 50%;
+      }
+      .tb-data-keys-field {
+        flex: 1 1 50%;
+      }
     }
   }
 }

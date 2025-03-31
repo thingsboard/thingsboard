@@ -308,7 +308,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
         () => {
           let datasources: TbMapDatasource[];
           for (const layerType of mapDataLayerTypes) {
-            const typeDatasources = this.latestDataLayers.filter(dl => dl.dataLayerType() === layerType).map(dl => dl.getDatasource());
+            const typeDatasources = this.latestDataLayers.filter(dl => dl.dataLayerType() === layerType)
+            .map(dl => dl.getDataSources()).flat();
             if (!datasources) {
               datasources = typeDatasources;
             } else {
@@ -349,7 +350,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
             );
           }
           if (this.tripDataLayers.length) {
-            const tripDatasources = this.tripDataLayers.map(dl => dl.getDatasource());
+            const tripDatasources = this.tripDataLayers.map(dl => dl.getDataSources()).flat();
             const tripDataLayersSubscriptionOptions: WidgetSubscriptionOptions = {
               datasources: tripDatasources,
               hasDataPageLink: true,
@@ -926,7 +927,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   private calculateCurrentTime(minTime: number, maxTime: number): number {
     if (minTime !== this.minTime || maxTime !== this.maxTime) {
-      if (this.minTime >= this.currentTime || isUndefined(this.currentTime)) {
+      if (this.minTime >= this.currentTime || isUndefined(this.currentTime) || this.currentTime === Infinity) {
         return this.minTime;
       } else if (this.maxTime <= this.currentTime) {
         return this.maxTime;

@@ -7984,9 +7984,11 @@
             },
             "data-layer": {
                 "source": "Source",
+                "filter": "Filter",
                 "additional-data-keys": "Additional data keys",
                 "additional-datasources": "Additional datasources",
                 "additional-datasources-hint": "Datasource for accessing attributes or telemetry from entities not displayed on the map, usable in map overlay functions.",
+                "more-datasources": "More datasources",
                 "data-keys": "Data keys",
                 "add-datasource": "Add datasource",
                 "no-datasources": "No datasources configured",
