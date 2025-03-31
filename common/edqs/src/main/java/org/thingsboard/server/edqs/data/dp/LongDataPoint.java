@@ -51,6 +51,12 @@ public class LongDataPoint extends AbstractDataPoint {
 
     @Override
     public int compareTo(DataPoint dataPoint) {
-        return Long.compare(value, dataPoint.getLong());
+        if (dataPoint.getType() == DataType.DOUBLE) {
+            return Double.compare(getDouble(), dataPoint.getDouble());
+        } else if (dataPoint.getType() == DataType.LONG) {
+            return Long.compare(value, dataPoint.getLong());
+        } else {
+            return super.compareTo(dataPoint);
+        }
     }
 }
