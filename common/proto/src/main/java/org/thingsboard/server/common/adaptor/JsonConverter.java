@@ -590,7 +590,8 @@ public class JsonConverter {
 
     public static Map<Long, List<KvEntry>> convertToSortedTelemetry(JsonElement jsonElement, long systemTs) throws
             JsonSyntaxException {
-        return convertToTelemetry(jsonElement, systemTs, true);
+        JsonElement timeseriesElement = jsonElement.isJsonObject() ? jsonElement.getAsJsonObject().get("timeseries") : null;
+        return convertToTelemetry(timeseriesElement != null ? timeseriesElement : jsonElement, systemTs, true);
     }
 
     public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, boolean sorted) throws

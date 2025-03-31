@@ -66,6 +66,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_UNASSIGNED
 import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.TIMESERIES_UPDATED;
 
 @Slf4j
 class DeviceState {
@@ -148,7 +149,7 @@ class DeviceState {
             latestValues = fetchLatestValues(ctx, deviceId);
         }
         boolean stateChanged = false;
-        if (msg.isTypeOf(POST_TELEMETRY_REQUEST)) {
+        if (msg.isTypeOf(POST_TELEMETRY_REQUEST) || msg.isTypeOf(TIMESERIES_UPDATED)) {
             stateChanged = processTelemetry(ctx, msg);
         } else if (msg.isTypeOf(POST_ATTRIBUTES_REQUEST)) {
             stateChanged = processAttributesUpdateRequest(ctx, msg);
