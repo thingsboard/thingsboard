@@ -192,6 +192,11 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
 
   widgetHeaderButtonValidators() {
     const buttonType = this.widgetActionFormGroup.get('buttonType').value;
+    if (buttonType !== WidgetHeaderActionButtonType.icon) {
+      this.widgetActionFormGroup.get('buttonColor').patchValue('#ffffff', {emitEvent: false});
+    } else {
+      this.widgetActionFormGroup.get('buttonColor').patchValue(this.defaultIconColor, {emitEvent: false});
+    }
     this.widgetActionFormGroup.get('showIcon').disable({emitEvent: false});
     this.widgetActionFormGroup.get('buttonFillColor').disable({emitEvent: false});
     this.widgetActionFormGroup.get('buttonBorderColor').disable({emitEvent: false});
