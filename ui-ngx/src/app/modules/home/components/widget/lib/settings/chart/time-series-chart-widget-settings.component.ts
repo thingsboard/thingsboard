@@ -105,6 +105,17 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
     const params = widgetConfig.typeParameters as any;
     if (isDefinedAndNotNull(params.chartType)) {
       this.chartType = params.chartType;
+    } else {
+      this.chartType = TimeSeriesChartType.default;
+    }
+    if (this.timeSeriesChartWidgetSettingsForm) {
+      const isStateChartType = this.chartType === TimeSeriesChartType.state;
+      const hasStatesControl = this.timeSeriesChartWidgetSettingsForm.contains('states');
+      if (isStateChartType && !hasStatesControl) {
+        this.timeSeriesChartWidgetSettingsForm.addControl('states', this.fb.control(widgetConfig.config.settings.states), { emitEvent: false });
+      } else if (!isStateChartType && hasStatesControl) {
+        this.timeSeriesChartWidgetSettingsForm.removeControl('states', { emitEvent: false });
+      }
     }
   }
 
