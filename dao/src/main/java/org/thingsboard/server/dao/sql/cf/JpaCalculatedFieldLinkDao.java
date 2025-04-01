@@ -55,6 +55,11 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     }
 
     @Override
+    public List<CalculatedFieldLink> findCalculatedFieldLinksByTenantId(TenantId tenantId) {
+        return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAllByTenantId(tenantId.getId()));
+    }
+
+    @Override
     public List<CalculatedFieldLink> findAll() {
         return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAll());
     }

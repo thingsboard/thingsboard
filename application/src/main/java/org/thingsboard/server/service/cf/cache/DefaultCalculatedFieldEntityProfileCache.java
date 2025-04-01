@@ -15,20 +15,26 @@
  */
 package org.thingsboard.server.service.cf.cache;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -42,13 +48,16 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
     private static final Integer UNKNOWN = 0;
     private final ConcurrentMap<TenantId, TenantEntityProfileCache> tenantCache = new ConcurrentHashMap<>();
     private final PartitionService partitionService;
+    private final AssetService assetService;
+    private final DeviceService deviceService;
+
+    @Value("${calculated_fields.init_fetch_pack_size:50000}")
+    @Getter
+    private int initFetchPackSize;
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        event.getCfPartitions().forEach(tpi -> {
-            Optional<TenantId> tenantIdOpt = tpi.getTenantId();
-            tenantIdOpt.ifPresent(tenantId -> tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache()));
-        });
+        event.getCfPartitions().forEach(tpi -> tpi.getTenantId().ifPresent(this::initCacheForNewTenant));
     }
 
     @Override
@@ -58,10 +67,14 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
 
     @Override
     public void update(TenantId tenantId, EntityId oldProfileId, EntityId newProfileId, EntityId entityId) {
-        var cache = tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache());
-        //TODO: make this method atomic;
-        cache.remove(oldProfileId, entityId);
-        cache.add(newProfileId, entityId);
+        tenantCache.compute(tenantId, (id, cache) -> {
+            if (cache == null) {
+                cache = new TenantEntityProfileCache();
+            }
+            cache.remove(oldProfileId, entityId);
+            cache.add(newProfileId, entityId);
+            return cache;
+        });
     }
 
     @Override
@@ -89,6 +102,31 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
     public int getEntityIdPartition(TenantId tenantId, EntityId entityId) {
         var tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId);
         return tpi.getPartition().orElse(UNKNOWN);
+    }
+
+    private void initCacheForNewTenant(TenantId tenantId) {
+        PageDataIterable<Device> devices = new PageDataIterable<>(pageLink -> deviceService.findDevicesByTenantId(tenantId, pageLink), initFetchPackSize);
+        for (Device device : devices) {
+            log.trace("Processing device record: {}", device);
+            try {
+                if (partitionService.isManagedByCurrentService(device.getTenantId())) {
+                    add(device.getTenantId(), device.getDeviceProfileId(), device.getId());
+                }
+            } catch (Exception e) {
+                log.error("Failed to process device record: {}", device, e);
+            }
+        }
+        PageDataIterable<Asset> assets = new PageDataIterable<>(pageLink -> assetService.findAssetsByTenantId(tenantId, pageLink), initFetchPackSize);
+        for (Asset asset : assets) {
+            log.trace("Processing asset record: {}", asset);
+            try {
+                if (partitionService.isManagedByCurrentService(asset.getTenantId())) {
+                    add(asset.getTenantId(), asset.getAssetProfileId(), asset.getId());
+                }
+            } catch (Exception e) {
+                log.error("Failed to process asset record: {}", asset, e);
+            }
+        }
     }
 
 }

@@ -39,6 +39,8 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     PageData<CalculatedField> findAllCalculatedFields(PageLink pageLink);
 
+    List<CalculatedField> findCalculatedFieldsByTenantId(TenantId tenantId);
+
     PageData<CalculatedField> findAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
 
     void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
@@ -52,6 +54,8 @@ public interface CalculatedFieldService extends EntityDaoService {
     List<CalculatedFieldLink> findAllCalculatedFieldLinksById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     List<CalculatedFieldLink> findAllCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId);
+
+    List<CalculatedFieldLink> findAllCalculatedFieldLinksByTenantId(TenantId tenantId);
 
     PageData<CalculatedFieldLink> findAllCalculatedFieldLinks(PageLink pageLink);
 

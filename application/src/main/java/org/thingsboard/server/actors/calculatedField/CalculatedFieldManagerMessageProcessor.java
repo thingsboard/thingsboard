@@ -513,6 +513,21 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     public void onPartitionChange(CalculatedFieldPartitionChangeMsg msg) {
+        initCalculatedFields();
         ctx.broadcastToChildren(msg, true);
     }
+
+    public void initCalculatedFields() {
+        cfDaoService.findCalculatedFieldsByTenantId(tenantId).forEach(cf -> {
+            try {
+                onFieldInitMsg(new CalculatedFieldInitMsg(cf.getTenantId(), cf));
+            } catch (CalculatedFieldException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        cfDaoService.findAllCalculatedFieldLinksByTenantId(tenantId).forEach(cfLink -> {
+            onLinkInitMsg(new CalculatedFieldLinkInitMsg(cfLink.getTenantId(), cfLink));
+        });
+    }
+
 }
