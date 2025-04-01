@@ -80,6 +80,8 @@ final class MqttClientImpl implements MqttClient {
 
     private final MqttHandler defaultHandler;
 
+    private final ReconnectStrategy reconnectStrategy;
+
     private EventLoopGroup eventLoop;
 
     private volatile Channel channel;
@@ -110,6 +112,7 @@ final class MqttClientImpl implements MqttClient {
         this.clientConfig = clientConfig;
         this.defaultHandler = defaultHandler;
         this.handlerExecutor = handlerExecutor;
+        this.reconnectStrategy = new ReconnectStrategyExponential(getClientConfig().getReconnectDelay());
     }
 
     /**
@@ -191,7 +194,7 @@ final class MqttClientImpl implements MqttClient {
             if (reconnect) {
                 this.reconnect = true;
             }
-            eventLoop.schedule((Runnable) () -> connect(host, port, reconnect), clientConfig.getReconnectDelay(), TimeUnit.SECONDS);
+            eventLoop.schedule((Runnable) () -> connect(host, port, reconnect), reconnectStrategy.getNextReconnectDelay(), TimeUnit.SECONDS);
         }
     }
 
