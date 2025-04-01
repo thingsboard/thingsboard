@@ -70,6 +70,9 @@ import {
 import { CssSizeInputComponent } from '@home/components/widget/lib/settings/common/css-size-input.component';
 import { WidgetActionComponent } from '@home/components/widget/lib/settings/common/action/widget-action.component';
 import {
+  MapItemTooltipsComponent
+} from '@home/components/widget/lib/settings/common/action/map-item-tooltips.component';
+import {
   CustomActionPrettyResourcesTabsComponent
 } from '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component';
 import {
@@ -283,6 +286,7 @@ import {
     SetValueActionSettingsComponent,
     SetValueActionSettingsPanelComponent,
     WidgetActionComponent,
+    MapItemTooltipsComponent,
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,

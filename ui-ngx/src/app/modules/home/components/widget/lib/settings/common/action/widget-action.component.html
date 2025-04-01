@@ -270,6 +270,10 @@
           </mat-select>
         </mat-form-field>
       </div>
+      <tb-map-item-tooltips
+        [mapItemType]="actionTypeFormGroup.get('mapItemType').value"
+        formControlName="mapItemTooltips">
+      </tb-map-item-tooltips>
     </ng-template>
     <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.customPretty
                                   || widgetActionFormGroup.get('type').value === widgetActionType.placeMapItem
