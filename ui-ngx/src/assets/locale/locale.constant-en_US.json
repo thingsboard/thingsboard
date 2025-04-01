@@ -6592,7 +6592,18 @@
             "rectangle": "Rectangle",
             "circle": "Circle"
         },
-        "place-map-item": "Place map item"
+        "place-map-item": "Place map item",
+        "map-item-tooltip": {
+            "customize-map-item-tooltips": "Customize map item tooltips",
+            "place-marker": "Place marker",
+            "start-draw-rectangle": "Start draw rectangle",
+            "finish-draw-rectangle": "Finish draw rectangle",
+            "start-draw-polygon": "Start draw polygon",
+            "continue-draw-polygon": "Continue draw polygon",
+            "finish-draw-polygon": "Finish draw polygon",
+            "start-draw-circle": "Start draw circle",
+            "finish-draw-circle": "Finish draw circle"
+        }
     },
     "widgets-bundle": {
         "current": "Current bundle",

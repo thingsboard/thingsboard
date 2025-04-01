@@ -50,7 +50,14 @@ import {
   UnplacedMapDataItem,
 } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 import { IWidgetSubscription, PlaceMapItemActionData, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { FormattedData, MapItemType, WidgetAction, WidgetActionType, widgetType } from '@shared/models/widget.models';
+import {
+  FormattedData,
+  mapItemTooltipsTranslation,
+  MapItemType,
+  WidgetAction,
+  WidgetActionType,
+  widgetType
+} from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMarkersDataLayer } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
@@ -661,29 +668,45 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   private createMarker(actionData: PlaceMapItemActionData) {
     this.createItem(actionData, () => this.prepareDrawMode('Marker', {
-      placeMarker: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint')
+      placeMarker: actionData.action.mapItemTooltips.placeMarker
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.placeMarker)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.placeMarker)
     }));
   }
 
   private createRectangle(actionData: PlaceMapItemActionData): void {
     this.createItem(actionData, () => this.prepareDrawMode('Rectangle', {
-      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.rectangle-place-first-point-hint'),
-      finishRect: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-rectangle-hint')
+      firstVertex: actionData.action.mapItemTooltips.startRect
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.startRect)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.startRect),
+      finishRect: actionData.action.mapItemTooltips.finishRect
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.finishRect)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.finishRect),
     }));
   }
 
   private createPolygon(actionData: PlaceMapItemActionData): void {
     this.createItem(actionData, () => this.prepareDrawMode('Polygon', {
-      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-hint'),
-      continueLine: this.ctx.translate.instant('widgets.maps.data-layer.polygon.continue-polygon-hint'),
-      finishPoly: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-polygon-hint')
+      firstVertex: actionData.action.mapItemTooltips.firstVertex
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.firstVertex)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.firstVertex),
+      continueLine: actionData.action.mapItemTooltips.continueLine
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.continueLine)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.continueLine),
+      finishPoly: actionData.action.mapItemTooltips.finishPoly
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.finishPoly)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.finishPoly),
     }));
   }
 
   private createCircle(actionData: PlaceMapItemActionData): void {
     this.createItem(actionData, () => this.prepareDrawMode('Circle', {
-      startCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.place-circle-center-hint'),
-      finishCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.finish-circle-hint')
+      startCircle: actionData.action.mapItemTooltips.startCircle
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.startCircle)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.startCircle),
+      finishCircle: actionData.action.mapItemTooltips.finishCircle
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.finishCircle)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.finishCircle),
     }));
   }
 
