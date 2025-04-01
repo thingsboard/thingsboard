@@ -91,8 +91,7 @@
           <label class="tb-title no-padding tb-required"
                  [class.tb-error]="entityForm.get('content').invalid && entityForm.get('content').touched"
                  style="font-size: 16px;">
-            {{ 'javascript.module-script' | translate }}
-          </label>
+            {{ 'javascript.module-script' | translate }}</label>
           <tb-file-input *ngIf="(isAdd || isEdit)"
                          asButton
                          uploadButtonText="{{ 'javascript.upload-from-file' | translate }}"
