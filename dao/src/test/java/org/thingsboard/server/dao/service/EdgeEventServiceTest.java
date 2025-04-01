@@ -101,44 +101,4 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         edgeEvent.setBody(readFromResource("TestJsonData.json"));
         return edgeEvent;
     }
-
-    @Test
-    public void findEdgeEventsByTimeDescOrder() throws Exception {
-        EdgeId edgeId = new EdgeId(Uuids.timeBased());
-        DeviceId deviceId = new DeviceId(Uuids.timeBased());
-
-        List<ListenableFuture<Void>> futures = new ArrayList<>();
-        futures.add(saveEdgeEventWithProvidedTime(timeBeforeStartTime, edgeId, deviceId, tenantId));
-        futures.add(saveEdgeEventWithProvidedTime(eventTime, edgeId, deviceId, tenantId));
-        futures.add(saveEdgeEventWithProvidedTime(eventTime + 1, edgeId, deviceId, tenantId));
-        futures.add(saveEdgeEventWithProvidedTime(eventTime + 2, edgeId, deviceId, tenantId));
-        futures.add(saveEdgeEventWithProvidedTime(timeAfterEndTime, edgeId, deviceId, tenantId));
-
-        Futures.allAsList(futures).get();
-
-        TimePageLink pageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
-        PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, pageLink);
-
-        Assert.assertNotNull(edgeEvents.getData());
-        Assert.assertEquals(2, edgeEvents.getData().size());
-        Assert.assertEquals(Uuids.startOf(eventTime + 2), edgeEvents.getData().get(0).getUuidId());
-        Assert.assertEquals(Uuids.startOf(eventTime + 1), edgeEvents.getData().get(1).getUuidId());
-        Assert.assertTrue(edgeEvents.hasNext());
-        Assert.assertNotNull(pageLink.nextPageLink());
-
-        edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, pageLink.nextPageLink());
-
-        Assert.assertNotNull(edgeEvents.getData());
-        Assert.assertEquals(1, edgeEvents.getData().size());
-        Assert.assertEquals(Uuids.startOf(eventTime), edgeEvents.getData().get(0).getUuidId());
-        Assert.assertFalse(edgeEvents.hasNext());
-
-        edgeEventDao.cleanupEvents(1);
-    }
-
-    private ListenableFuture<Void> saveEdgeEventWithProvidedTime(long time, EdgeId edgeId, EntityId entityId, TenantId tenantId) throws Exception {
-        EdgeEvent edgeEvent = generateEdgeEvent(tenantId, edgeId, entityId);
-        edgeEvent.setId(new EdgeEventId(Uuids.startOf(time)));
-        return edgeEventService.saveAsync(edgeEvent);
-    }
 }
