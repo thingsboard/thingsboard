@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -70,7 +70,7 @@ import { MatDialog } from '@angular/material/dialog';
     }
   ]
 })
-export class MapSettingsComponent implements OnInit, ControlValueAccessor, Validator {
+export class MapSettingsComponent implements OnInit, ControlValueAccessor, Validator, OnChanges {
 
   mapControlPositions = mapControlPositions;
 
@@ -202,6 +202,23 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
     } else {
       this.mapSettingsFormGroup.enable({emitEvent: false});
       this.updateValidators();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.trip) {
+      const tripChange = changes.trip;
+      if (!tripChange.firstChange && tripChange.currentValue !== tripChange.previousValue) {
+        if (this.trip) {
+          this.dataLayerMode = 'trips'
+          this.mapSettingsFormGroup.addControl('trips', this.fb.control(this.modelValue.trips), {emitEvent: false});
+          this.mapSettingsFormGroup.addControl('tripTimeline', this.fb.control(this.modelValue.tripTimeline), {emitEvent: false});
+        } else {
+          this.dataLayerMode = 'markers';
+          this.mapSettingsFormGroup.removeControl('trips', {emitEvent: false});
+          this.mapSettingsFormGroup.removeControl('tripTimeline', {emitEvent: false});
+        }
+      }
     }
   }
 

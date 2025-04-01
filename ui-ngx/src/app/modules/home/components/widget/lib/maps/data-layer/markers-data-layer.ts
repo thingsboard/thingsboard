@@ -37,7 +37,7 @@ import {
   TbMapDatasource
 } from '@shared/models/widget/maps/map.models';
 import L, { FeatureGroup } from 'leaflet';
-import { FormattedData } from '@shared/models/widget.models';
+import { DataKey, FormattedData } from '@shared/models/widget.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import {
@@ -628,9 +628,8 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
     }
   }
 
-  protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
-    datasource.dataKeys.push(this.settings.xKey, this.settings.yKey);
-    return datasource;
+  protected getDataKeys(): DataKey[] {
+    return [this.settings.xKey, this.settings.yKey];
   }
 
   protected allColorSettings(): DataLayerColorSettings[] {

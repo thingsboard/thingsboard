@@ -29,10 +29,10 @@ import {
 import { mergeDeep } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  AdditionalMapDataSourceSettings,
-  additionalMapDataSourceValid,
-  additionalMapDataSourceValidator,
-  defaultAdditionalMapDataSourceSettings
+  defaultMapDataSourceSettings,
+  MapDataSourceSettings,
+  mapDataSourceValid,
+  mapDataSourceValidator
 } from '@shared/models/widget/maps/map.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
@@ -78,9 +78,9 @@ export class MapDataSourcesComponent implements ControlValueAccessor, OnInit, Va
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(
       () => {
-        let dataSources: AdditionalMapDataSourceSettings[] = this.dataSourcesFormGroup.get('dataSources').value;
+        let dataSources: MapDataSourceSettings[] = this.dataSourcesFormGroup.get('dataSources').value;
         if (dataSources) {
-          dataSources = dataSources.filter(dataSource => additionalMapDataSourceValid(dataSource));
+          dataSources = dataSources.filter(dataSource => mapDataSourceValid(dataSource));
         }
         this.propagateChange(dataSources);
       }
@@ -103,8 +103,8 @@ export class MapDataSourcesComponent implements ControlValueAccessor, OnInit, Va
     }
   }
 
-  writeValue(value: AdditionalMapDataSourceSettings[] | undefined): void {
-    const dataSources: AdditionalMapDataSourceSettings[] = value || [];
+  writeValue(value: MapDataSourceSettings[] | undefined): void {
+    const dataSources: MapDataSourceSettings[] = value || [];
     this.dataSourcesFormGroup.setControl('dataSources', this.prepareDataSourcesFormArray(dataSources), {emitEvent: false});
   }
 
@@ -130,17 +130,17 @@ export class MapDataSourcesComponent implements ControlValueAccessor, OnInit, Va
   }
 
   addDataSource() {
-    const dataSource = mergeDeep<AdditionalMapDataSourceSettings>({} as AdditionalMapDataSourceSettings,
-      defaultAdditionalMapDataSourceSettings(this.context.functionsOnly));
+    const dataSource = mergeDeep<MapDataSourceSettings>({} as MapDataSourceSettings,
+      defaultMapDataSourceSettings);
     const dataSourcesArray = this.dataSourcesFormGroup.get('dataSources') as UntypedFormArray;
-    const dataSourceControl = this.fb.control(dataSource, [additionalMapDataSourceValidator]);
+    const dataSourceControl = this.fb.control(dataSource, [mapDataSourceValidator]);
     dataSourcesArray.push(dataSourceControl);
   }
 
-  private prepareDataSourcesFormArray(dataSources: AdditionalMapDataSourceSettings[]): UntypedFormArray {
+  private prepareDataSourcesFormArray(dataSources: MapDataSourceSettings[]): UntypedFormArray {
     const dataSourcesControls: Array<AbstractControl> = [];
     dataSources.forEach((dataSource) => {
-      dataSourcesControls.push(this.fb.control(dataSource, [additionalMapDataSourceValidator]));
+      dataSourcesControls.push(this.fb.control(dataSource, [mapDataSourceValidator]));
     });
     return this.fb.array(dataSourcesControls);
   }

@@ -18,13 +18,24 @@ import { EntityAliases, EntityAliasInfo, getEntityAliasId } from '@shared/models
 import { FilterInfo, Filters, getFilterId } from '@shared/models/query/query.models';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { DatasourceType, Widget } from '@shared/models/widget.models';
-import { BaseMapSettings, MapDataSourceSettings, MapType } from '@shared/models/widget/maps/map.models';
+import {
+  BaseMapSettings,
+  MapDataLayerSettings,
+  MapDataSourceSettings,
+  MapType
+} from '@shared/models/widget/maps/map.models';
 import { WidgetExportDefinition } from '@shared/models/widget/widget-export.models';
 
-interface ExportDataSourceInfo {
-  aliases: {[dataLayerIndex: number]: EntityAliasInfo};
-  filters: {[dataLayerIndex: number]: FilterInfo};
+interface AliasFilterPair {
+  alias?: EntityAliasInfo,
+  filter?: FilterInfo
 }
+
+interface MapDataLayerDsInfo extends AliasFilterPair {
+  additionalDsInfo?: {[dsIndex: number]: AliasFilterPair}
+}
+
+type ExportDataSourceInfo = {[dataLayerIndex: number]: MapDataLayerDsInfo};
 
 interface MapDatasourcesInfo {
   trips?: ExportDataSourceInfo;
@@ -96,43 +107,67 @@ export const MapExportDefinition: WidgetExportDefinition<MapDatasourcesInfo> = {
 };
 
 const updateMapDatasourceFromExportInfo = (entityAliases: EntityAliases,
-                                           filters: Filters, settings: MapDataSourceSettings[], info: ExportDataSourceInfo): void => {
-  if (info.aliases) {
-    for (const dsIndexStr of Object.keys(info.aliases)) {
-      const dsIndex = Number(dsIndexStr);
-      if (settings[dsIndex] && settings[dsIndex].dsType === DatasourceType.entity) {
-        const aliasInfo = info.aliases[dsIndex];
-        settings[dsIndex].dsEntityAliasId = getEntityAliasId(entityAliases, aliasInfo);
+                                                            filters: Filters, settings: MapDataLayerSettings[] | MapDataSourceSettings[],
+                                                            info: MapDataLayerDsInfo | {[dsIndex: number]: AliasFilterPair}): void => {
+  for (const dsIndexStr of Object.keys(info)) {
+    const dsIndex = Number(dsIndexStr);
+    const dsInfo = info[dsIndex];
+    if (settings[dsIndex]) {
+      if (settings[dsIndex].dsType === DatasourceType.entity) {
+        if (settings[dsIndex].dsType === DatasourceType.entity) {
+          if (dsInfo.alias) {
+            settings[dsIndex].dsEntityAliasId = getEntityAliasId(entityAliases, dsInfo.alias);
+          }
+          if (dsInfo.filter) {
+            settings[dsIndex].dsFilterId = getFilterId(filters, dsInfo.filter);
+          }
+        }
       }
-    }
-  }
-  if (info.filters) {
-    for (const dsIndexStr of Object.keys(info.filters)) {
-      const dsIndex = Number(dsIndexStr);
-      if (settings[dsIndex] && settings[dsIndex].dsType === DatasourceType.entity) {
-        const filterInfo = info.filters[dsIndex];
-        settings[dsIndex].dsFilterId = getFilterId(filters, filterInfo);
+      if (dsInfo.additionalDsInfo && (settings[dsIndex] as MapDataLayerSettings).additionalDataSources?.length) {
+        updateMapDatasourceFromExportInfo(entityAliases,
+          filters, (settings[dsIndex] as MapDataLayerSettings).additionalDataSources, dsInfo.additionalDsInfo);
       }
     }
   }
 }
 
-const prepareExportDataSourcesInfo = (dashboard: Dashboard, settings: MapDataSourceSettings[]): ExportDataSourceInfo => {
-  const info: ExportDataSourceInfo = {
-    aliases: {},
-    filters: {}
-  };
+const prepareExportDataSourcesInfo = (dashboard: Dashboard, settings: MapDataLayerSettings[] | MapDataSourceSettings[]): ExportDataSourceInfo => {
+  const info: ExportDataSourceInfo = {};
   settings.forEach((dsSettings, index) => {
     prepareExportDataSourceInfo(dashboard, info, dsSettings, index);
   });
   return info;
 }
 
-const prepareExportDataSourceInfo = (dashboard: Dashboard, info: ExportDataSourceInfo, settings: MapDataSourceSettings, index: number): void => {
+const prepareExportDataSourceInfo = (dashboard: Dashboard, info: ExportDataSourceInfo, settings: MapDataLayerSettings | MapDataSourceSettings, index: number): void => {
+  const dsInfo: MapDataLayerDsInfo = {};
+  const aliasAndFilter = prepareAliasAndFilterPair(dashboard, settings);
+  if (aliasAndFilter) {
+    dsInfo.alias = aliasAndFilter.alias;
+    dsInfo.filter = aliasAndFilter.filter;
+  }
+  if ((settings as MapDataLayerSettings).additionalDataSources?.length && settings.dsType !== DatasourceType.function) {
+    (settings as MapDataLayerSettings).additionalDataSources.forEach((ds, index) => {
+      const dsAliasAndFilter = prepareAliasAndFilterPair(dashboard, ds);
+      if (dsAliasAndFilter) {
+        if (!dsInfo.additionalDsInfo) {
+          dsInfo.additionalDsInfo = {};
+        }
+        dsInfo.additionalDsInfo[index] = dsAliasAndFilter;
+      }
+    });
+  }
+  if (!!dsInfo.alias || !!dsInfo.filter || !!dsInfo.additionalDsInfo) {
+    info[index] = dsInfo;
+  }
+}
+
+const prepareAliasAndFilterPair = (dashboard: Dashboard, settings: MapDataSourceSettings): AliasFilterPair => {
+  const aliasAndFilter: AliasFilterPair = {};
   if (settings.dsType === DatasourceType.entity) {
     const entityAlias = dashboard.configuration.entityAliases[settings.dsEntityAliasId];
     if (entityAlias) {
-      info.aliases[index] = {
+      aliasAndFilter.alias = {
         alias: entityAlias.alias,
         filter: entityAlias.filter
       };
@@ -140,12 +175,17 @@ const prepareExportDataSourceInfo = (dashboard: Dashboard, info: ExportDataSourc
     if (settings.dsFilterId && dashboard.configuration.filters) {
       const filter = dashboard.configuration.filters[settings.dsFilterId];
       if (filter) {
-        info.filters[index] = {
+        aliasAndFilter.filter = {
           filter: filter.filter,
           keyFilters: filter.keyFilters,
           editable: filter.editable
         };
       }
     }
+  }
+  if (!!aliasAndFilter.alias || !!aliasAndFilter.filter) {
+    return aliasAndFilter;
+  } else {
+    return null;
   }
 }

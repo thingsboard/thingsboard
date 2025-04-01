@@ -50,7 +50,14 @@ import {
   UnplacedMapDataItem,
 } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 import { IWidgetSubscription, PlaceMapItemActionData, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { FormattedData, MapItemType, WidgetAction, WidgetActionType, widgetType } from '@shared/models/widget.models';
+import {
+  FormattedData,
+  mapItemTooltipsTranslation,
+  MapItemType,
+  WidgetAction,
+  WidgetActionType,
+  widgetType
+} from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMarkersDataLayer } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
@@ -133,6 +140,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private currentEditButton: L.TB.ToolbarButton;
 
   private dragMode = true;
+  private createMapItemActionId: string;
 
   private get isPlacingItem(): boolean {
     return !!this.currentEditButton;
@@ -307,7 +315,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
         () => {
           let datasources: TbMapDatasource[];
           for (const layerType of mapDataLayerTypes) {
-            const typeDatasources = this.latestDataLayers.filter(dl => dl.dataLayerType() === layerType).map(dl => dl.getDatasource());
+            const typeDatasources = this.latestDataLayers.filter(dl => dl.dataLayerType() === layerType)
+            .map(dl => dl.getDataSources()).flat();
             if (!datasources) {
               datasources = typeDatasources;
             } else {
@@ -348,7 +357,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
             );
           }
           if (this.tripDataLayers.length) {
-            const tripDatasources = this.tripDataLayers.map(dl => dl.getDatasource());
+            const tripDatasources = this.tripDataLayers.map(dl => dl.getDataSources()).flat();
             const tripDataLayersSubscriptionOptions: WidgetSubscriptionOptions = {
               datasources: tripDatasources,
               hasDataPageLink: true,
@@ -659,35 +668,56 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   private createMarker(actionData: PlaceMapItemActionData) {
     this.createItem(actionData, () => this.prepareDrawMode('Marker', {
-      placeMarker: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint')
+      placeMarker: actionData.action.mapItemTooltips.placeMarker
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.placeMarker)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.placeMarker)
     }));
   }
 
   private createRectangle(actionData: PlaceMapItemActionData): void {
     this.createItem(actionData, () => this.prepareDrawMode('Rectangle', {
-      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.rectangle-place-first-point-hint'),
-      finishRect: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-rectangle-hint')
+      firstVertex: actionData.action.mapItemTooltips.startRect
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.startRect)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.startRect),
+      finishRect: actionData.action.mapItemTooltips.finishRect
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.finishRect)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.finishRect),
     }));
   }
 
   private createPolygon(actionData: PlaceMapItemActionData): void {
     this.createItem(actionData, () => this.prepareDrawMode('Polygon', {
-      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-hint'),
-      continueLine: this.ctx.translate.instant('widgets.maps.data-layer.polygon.continue-polygon-hint'),
-      finishPoly: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-polygon-hint')
+      firstVertex: actionData.action.mapItemTooltips.firstVertex
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.firstVertex)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.firstVertex),
+      continueLine: actionData.action.mapItemTooltips.continueLine
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.continueLine)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.continueLine),
+      finishPoly: actionData.action.mapItemTooltips.finishPoly
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.finishPoly)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.finishPoly),
     }));
   }
 
   private createCircle(actionData: PlaceMapItemActionData): void {
     this.createItem(actionData, () => this.prepareDrawMode('Circle', {
-      startCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.place-circle-center-hint'),
-      finishCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.finish-circle-hint')
+      startCircle: actionData.action.mapItemTooltips.startCircle
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.startCircle)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.startCircle),
+      finishCircle: actionData.action.mapItemTooltips.finishCircle
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.finishCircle)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.finishCircle),
     }));
   }
 
   private createItem(actionData: PlaceMapItemActionData, prepareDrawMode: () => void) {
-    if (this.isPlacingItem) {
+    const actionId = 'id' in actionData.action ? actionData.action.id : 'map-button';
+    if (this.createMapItemActionId === actionId) {
+      this.finishCreatedItem();
       return;
+    }
+    if (isDefined(this.createMapItemActionId)) {
+      this.finishCreatedItem();
     }
     this.updatePlaceItemState(actionData.additionalParams?.button, true);
 
@@ -701,7 +731,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       // @ts-ignore
       e.layer._pmTempLayer = true;
       e.layer.remove();
-      this.finishAdd();
+      this.finishCreatedItem();
     });
 
     prepareDrawMode();
@@ -714,9 +744,11 @@ export abstract class TbMap<S extends BaseMapSettings> {
         iconClass: 'tb-close',
         title: this.ctx.translate.instant('action.cancel'),
         showText: true,
-        click: this.finishAdd
+        click: this.finishCreatedItem
       }
     ], false);
+
+    this.createMapItemActionId = actionId;
 
     const convertLayerToCoordinates = (type: MapItemType, layer: L.Layer): {x: number; y: number} | TbPolygonRawCoordinates | TbCircleData => {
       switch (type) {
@@ -747,6 +779,11 @@ export abstract class TbMap<S extends BaseMapSettings> {
           return null;
       }
     }
+  }
+
+  private finishCreatedItem = () => {
+    delete this.createMapItemActionId;
+    this.finishAdd();
   }
 
   private finishAdd = () => {
@@ -913,7 +950,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   private calculateCurrentTime(minTime: number, maxTime: number): number {
     if (minTime !== this.minTime || maxTime !== this.maxTime) {
-      if (this.minTime >= this.currentTime || isUndefined(this.currentTime)) {
+      if (this.minTime >= this.currentTime || isUndefined(this.currentTime) || this.currentTime === Infinity) {
         return this.minTime;
       } else if (this.maxTime <= this.currentTime) {
         return this.maxTime;

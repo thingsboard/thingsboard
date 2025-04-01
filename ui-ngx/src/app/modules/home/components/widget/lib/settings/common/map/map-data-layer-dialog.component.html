@@ -65,6 +65,18 @@
           [callbacks]="context.callbacks">
         </tb-filter-select>
       </div>
+      <mat-expansion-panel *ngIf="dataLayerFormGroup.get('dsType').value !== DatasourceType.function" class="tb-settings">
+        <mat-expansion-panel-header>
+          <mat-panel-description class="flex items-stretch justify-start" translate>
+            widgets.maps.data-layer.more-datasources
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-map-data-sources formControlName="additionalDataSources"
+                               [context]="context">
+          </tb-map-data-sources>
+        </ng-template>
+      </mat-expansion-panel>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'datakey.keys' | translate }}</div>

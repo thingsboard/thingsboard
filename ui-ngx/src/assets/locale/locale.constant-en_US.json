@@ -1000,8 +1000,8 @@
         "calculated-field": "calculated field",
         "hint": {
             "main-limited": "No more than {{msg}} {{entity}} debug messages per {{time}} will be recorded.",
-            "on-failure": "Log all debug messages.",
-            "all-messages": "Log error messages only. "
+            "on-failure": "Log error messages only.",
+            "all-messages": "Log all debug messages."
         }
     },
     "calculated-fields": {
@@ -6592,7 +6592,18 @@
             "rectangle": "Rectangle",
             "circle": "Circle"
         },
-        "place-map-item": "Place map item"
+        "place-map-item": "Place map item",
+        "map-item-tooltip": {
+            "customize-map-item-tooltips": "Customize map item tooltips",
+            "place-marker": "Place marker",
+            "start-draw-rectangle": "Start draw rectangle",
+            "finish-draw-rectangle": "Finish draw rectangle",
+            "start-draw-polygon": "Start draw polygon",
+            "continue-draw-polygon": "Continue draw polygon",
+            "finish-draw-polygon": "Finish draw polygon",
+            "start-draw-circle": "Start draw circle",
+            "finish-draw-circle": "Finish draw circle"
+        }
     },
     "widgets-bundle": {
         "current": "Current bundle",
@@ -7984,9 +7995,11 @@
             },
             "data-layer": {
                 "source": "Source",
+                "filter": "Filter",
                 "additional-data-keys": "Additional data keys",
                 "additional-datasources": "Additional datasources",
                 "additional-datasources-hint": "Datasource for accessing attributes or telemetry from entities not displayed on the map, usable in map overlay functions.",
+                "more-datasources": "More datasources",
                 "data-keys": "Data keys",
                 "add-datasource": "Add datasource",
                 "no-datasources": "No datasources configured",
@@ -8013,7 +8026,7 @@
                 "pattern-type-function": "Function",
                 "label-pattern": "Label (pattern examples: '${entityName}', '${entityName}: (Text ${keyName} units.)' )",
                 "label-function": "Label function",
-                "tooltip-pattern": "Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
+                "tooltip-pattern": "Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>)",
                 "tooltip-function": "Tooltip function",
                 "tooltip-trigger": "Tooltip trigger",
                 "tooltip-trigger-click": "Show tooltip on click",

@@ -140,6 +140,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
   widgetTitlePanel: TemplateRef<any>;
 
   @Input()
+  widgetHeaderActionsPanel: TemplateRef<any>;
+
+  @Input()
   isEdit: boolean;
 
   @Input()
@@ -365,7 +368,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
 
   headerButtonStyle(buttonType: WidgetHeaderActionButtonType = WidgetHeaderActionButtonType.icon,
                     customButtonStyle:{[key: string]: string},
-                    buttonColor: string = 'rgba(0,0,0,0.87)',
+                    buttonColor: string = this.widget.config.color,
                     backgroundColor: string,
                     borderColor: string) {
     const buttonStyle = {};
@@ -483,6 +486,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     this.widgetType = this.widgetInfo.widgetTypeFunction;
     this.typeParameters = this.widgetInfo.typeParameters;
     this.widgetContext.embedTitlePanel = this.typeParameters.embedTitlePanel;
+    this.widgetContext.embedActionsPanel = this.typeParameters.embedActionsPanel;
     this.widgetContext.overflowVisible = this.typeParameters.overflowVisible;
 
     if (!this.widgetType) {
