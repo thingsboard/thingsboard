@@ -16,7 +16,6 @@
 package org.thingsboard.server.edqs.data.dp;
 
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.edqs.DataPoint;
 import org.thingsboard.server.common.data.kv.DataType;
 
@@ -48,7 +47,7 @@ public class BoolDataPoint extends AbstractDataPoint {
     @Override
     public int compareTo(DataPoint dataPoint) {
         if (dataPoint.getType() == DataType.BOOLEAN) {
-            return StringUtils.compareIgnoreCase(valueToString(), dataPoint.valueToString());
+            return Boolean.compare(value, dataPoint.getBool());
         } else {
             return super.compareTo(dataPoint);
         }
