@@ -44,8 +44,10 @@ import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -175,7 +177,7 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
     @Override
     public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink) {
         //sorting EdgeEvents only by seqId on the TB side
-        pageLink.toSort(new SortOrder("seqId"), Collections.emptyMap(), true);
+        List<SortOrder> sortOrders = Collections.singletonList(new SortOrder("seqId"));
 
         return DaoUtil.toPageData(
                 edgeEventRepository
@@ -187,7 +189,7 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
                                 pageLink.getEndTime(),
                                 seqIdStart,
                                 seqIdEnd,
-                                DaoUtil.toPageable(pageLink)));
+                                DaoUtil.toPageable(pageLink, sortOrders)));
     }
 
     @Override
