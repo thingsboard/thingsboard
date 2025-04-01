@@ -23,7 +23,7 @@
       <div class="tb-form-table-header-cell tb-layer-header" translate>widgets.maps.layer.layer</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="layersFormArray().controls.length; else noLayers" class="tb-form-table-body tb-drop-list"
+    <div *ngIf="layersFormArray().controls.length; else noLayers" class="tb-form-table-body tb-drop-list max-h-64 overflow-y-auto"
          cdkDropList cdkDropListOrientation="vertical"
          [cdkDropListDisabled]="!dragEnabled"
          (cdkDropListDropped)="layerDrop($event)">

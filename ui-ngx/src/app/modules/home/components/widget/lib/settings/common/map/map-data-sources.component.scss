@@ -13,35 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../../../../../scss/constants';
 
 .tb-map-data-sources {
   .tb-form-table-header-cell {
     &.tb-source-header {
-      flex: 1 1 50%;
+      flex: 1 1 70%;
     }
-    &.tb-data-keys-header {
-      flex: 1 1 50%;
+    &.tb-filter-header {
+      flex: 1 1 30%;
     }
     &.tb-actions-header {
       width: 40px;
       min-width: 40px;
-    }
-    @media #{$mat-lt-lg} {
-      &.tb-source-header {
-        flex: 1 1 30%;
-      }
-      &.tb-data-keys-header {
-        flex: 1 1 70%;
-      }
-      @media #{$mat-lt-md} {
-        &.tb-source-header {
-          flex: 1 1 50%;
-        }
-        &.tb-data-keys-header {
-          flex: 1 1 50%;
-        }
-      }
     }
   }
 

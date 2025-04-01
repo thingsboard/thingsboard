@@ -92,6 +92,12 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         this.ctx = ctx;
     }
 
+    public void stop() {
+        log.info("[{}][{}] Stopping entity actor.", tenantId, entityId);
+        states.clear();
+        ctx.stop(ctx.getSelf());
+    }
+
     public void process(CalculatedFieldPartitionChangeMsg msg) {
         if (!systemContext.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId).isMyPartition()) {
             log.info("[{}] Stopping entity actor due to change partition event.", entityId);
@@ -296,6 +302,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                         systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
                     }
                 }
+            } else {
+                callback.onSuccess();
             }
         } catch (Exception e) {
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(tbMsgId).msgType(tbMsgType).arguments(state.getArguments()).cause(e).build();
@@ -414,7 +422,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private Map<String, ArgumentEntry> mapToArgumentsWithFetchedValue(CalculatedFieldCtx ctx, List<String> removedTelemetryKeys) {
         Map<String, Argument> deletedArguments = ctx.getArguments().entrySet().stream()
-                .filter(entry -> removedTelemetryKeys.contains(entry.getKey()))
+                .filter(entry -> removedTelemetryKeys.contains(entry.getValue().getRefEntityKey().getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, entityId, deletedArguments);

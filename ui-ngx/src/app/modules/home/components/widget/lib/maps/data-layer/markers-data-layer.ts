@@ -37,7 +37,7 @@ import {
   TbMapDatasource
 } from '@shared/models/widget/maps/map.models';
 import L, { FeatureGroup } from 'leaflet';
-import { FormattedData } from '@shared/models/widget.models';
+import { DataKey, FormattedData } from '@shared/models/widget.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import {
@@ -480,10 +480,14 @@ class TbMarkerDataLayerItem extends TbLatestDataLayerItem<MarkersDataLayerSettin
       });
       this.marker.pm.enableLayerDrag();
       this.marker.on('pm:dragstart', () => {
+        (this.marker.dragging as any)._draggable = { _moved: true, off: (_args: any) => { return { disable: () => {}} } };
+        (this.marker.dragging as any)._enabled = true;
         this.moving = true;
       });
       this.marker.on('pm:dragend', () => {
         this.saveMarkerLocation();
+        delete (this.marker.dragging as any)._draggable;
+        delete (this.marker.dragging as any)._enabled;
         this.moving = false;
       });
     }
@@ -624,9 +628,8 @@ export class TbMarkersDataLayer extends TbLatestMapDataLayer<MarkersDataLayerSet
     }
   }
 
-  protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
-    datasource.dataKeys.push(this.settings.xKey, this.settings.yKey);
-    return datasource;
+  protected getDataKeys(): DataKey[] {
+    return [this.settings.xKey, this.settings.yKey];
   }
 
   protected allColorSettings(): DataLayerColorSettings[] {

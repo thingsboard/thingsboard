@@ -78,15 +78,18 @@ export class AutoDateFormatSettingsComponent implements OnInit, ControlValueAcce
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        autoDateFormatSettings: deepClone(this.modelValue),
-        defaultValues: this.defaultValues
-      };
-      const autoDateFormatSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, AutoDateFormatSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const autoDateFormatSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: AutoDateFormatSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: {
+          autoDateFormatSettings: deepClone(this.modelValue),
+          defaultValues: this.defaultValues
+        },
+        isModal: true
+      });
       autoDateFormatSettingsPanelPopover.tbComponentRef.instance.popover = autoDateFormatSettingsPanelPopover;
       autoDateFormatSettingsPanelPopover.tbComponentRef.instance.autoDateFormatSettingsApplied.subscribe((autoDateFormatSettings) => {
         autoDateFormatSettingsPanelPopover.hide();

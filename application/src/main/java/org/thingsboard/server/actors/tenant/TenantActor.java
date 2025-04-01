@@ -28,6 +28,7 @@ import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.TbStringActorId;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldManagerActorCreator;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldStateRestoreMsg;
 import org.thingsboard.server.actors.device.DeviceActorCreator;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -126,6 +127,9 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     public void destroy(TbActorStopReason stopReason, Throwable cause) {
         log.info("[{}] Stopping tenant actor.", tenantId);
+        if (cfActor != null) {
+            ctx.stop(cfActor.getActorId());
+        }
     }
 
     @Override
@@ -190,7 +194,11 @@ public class TenantActor extends RuleChainManagerActor {
 
     private void onToCalculatedFieldSystemActorMsg(ToCalculatedFieldSystemMsg msg, boolean priority) {
         if (cfActor == null) {
-            log.warn("[{}] CF Actor is not initialized.", tenantId);
+            if (msg instanceof CalculatedFieldStateRestoreMsg) {
+                log.warn("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
+            } else {
+                log.debug("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
+            }
             return;
         }
         if (priority) {

@@ -202,7 +202,10 @@ export class MapTimelinePanelComponent implements OnInit, OnDestroy {
   public moveNext() {
     if (this.index < this.maxTimeIndex) {
       if (this.settings.snapToRealLocation) {
-        const anchorIndex = this.findIndex(this.currentTime, this.anchors) + 1;
+        let anchorIndex = this.findIndex(this.currentTime, this.anchors) + 1;
+        if (anchorIndex >= this.anchors.length) {
+          anchorIndex = this.anchors.length - 1;
+        }
         this.index = Math.floor((this.anchors[anchorIndex] - this.minValue) / this.settings.timeStep);
       } else {
         this.index++;
@@ -214,7 +217,10 @@ export class MapTimelinePanelComponent implements OnInit, OnDestroy {
   public movePrev() {
     if (this.index > this.minTimeIndex) {
       if (this.settings.snapToRealLocation) {
-        const anchorIndex = this.findIndex(this.currentTime, this.anchors) - 1;
+        let anchorIndex = this.findIndex(this.currentTime, this.anchors) - 1;
+        if (anchorIndex < 0) {
+          anchorIndex = 0;
+        }
         this.index = Math.floor((this.anchors[anchorIndex] - this.minValue) / this.settings.timeStep);
       } else {
         this.index--;

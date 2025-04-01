@@ -21,7 +21,7 @@ import {
   TbMapDatasource, TbPolyData, TbPolygonCoordinates, TbPolygonRawCoordinates
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
-import { FormattedData } from '@shared/models/widget.models';
+import { DataKey, FormattedData } from '@shared/models/widget.models';
 import { TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable } from 'rxjs';
@@ -410,9 +410,8 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
     );
   }
 
-  protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
-    datasource.dataKeys.push(this.settings.polygonKey);
-    return datasource;
+  protected getDataKeys(): DataKey[] {
+    return [this.settings.polygonKey];
   }
 
   protected defaultBaseSettings(map: TbMap<any>): Partial<PolygonsDataLayerSettings> {

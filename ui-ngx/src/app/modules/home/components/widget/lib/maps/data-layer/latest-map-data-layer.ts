@@ -117,6 +117,7 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
   public dragModeUpdated() {
     if (this.dataLayer.isEditMode() && !this.selected) {
       if (this.dataLayer.allowDrag()) {
+        this.disableDrag();
         this.enableDrag();
         this.addItemClass('tb-draggable');
       } else {
@@ -164,6 +165,7 @@ export abstract class TbLatestDataLayerItem<S extends MapDataLayerSettings = Map
       this.addItemClass('tb-hoverable');
     }
     if (this.dataLayer.allowDrag()) {
+      this.disableDrag();
       this.enableDrag();
       this.addItemClass('tb-draggable');
     }

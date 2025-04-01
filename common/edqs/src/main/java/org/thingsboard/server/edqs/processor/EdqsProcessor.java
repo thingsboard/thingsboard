@@ -62,7 +62,6 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.edqs.EdqsComponent;
 import org.thingsboard.server.queue.edqs.EdqsConfig;
 import org.thingsboard.server.queue.edqs.EdqsConfig.EdqsPartitioningStrategy;
-import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.edqs.EdqsQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
@@ -123,8 +122,8 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         };
 
         eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>create()
-                .queueKey(new QueueKey(ServiceType.EDQS, EdqsQueue.EVENTS.getTopic()))
-                .topic(EdqsQueue.EVENTS.getTopic())
+                .queueKey(new QueueKey(ServiceType.EDQS, config.getEventsTopic()))
+                .topic(config.getEventsTopic())
                 .pollInterval(config.getPollInterval())
                 .msgPackProcessor((msgs, consumer, config) -> {
                     for (TbProtoQueueMsg<ToEdqsMsg> queueMsg : msgs) {
@@ -133,14 +132,14 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
                         }
                         try {
                             ToEdqsMsg msg = queueMsg.getValue();
-                            process(msg, EdqsQueue.EVENTS);
+                            process(msg, true);
                         } catch (Exception t) {
                             log.error("Failed to process message: {}", queueMsg, t);
                         }
                     }
                     consumer.commit();
                 })
-                .consumerCreator((config, partitionId) -> queueFactory.createEdqsMsgConsumer(EdqsQueue.EVENTS))
+                .consumerCreator((config, partitionId) -> queueFactory.createEdqsEventsConsumer())
                 .queueAdmin(queueFactory.getEdqsQueueAdmin())
                 .consumerExecutor(consumersExecutor)
                 .taskExecutor(taskExecutor)
@@ -164,25 +163,27 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         }
         try {
             Set<TopicPartitionInfo> newPartitions = event.getNewPartitions().get(new QueueKey(ServiceType.EDQS));
-            Set<TopicPartitionInfo> partitions = newPartitions.stream()
-                    .map(tpi -> tpi.withUseInternalPartition(true))
-                    .collect(Collectors.toSet());
 
-            stateService.process(withTopic(partitions, EdqsQueue.STATE.getTopic()));
+            stateService.process(withTopic(newPartitions, config.getStateTopic()));
             // eventsConsumer's partitions are updated by stateService
-            responseTemplate.subscribe(withTopic(partitions, config.getRequestsTopic())); // FIXME: we subscribe to partitions before we are ready. implement consumer-per-partition version for request template
+            responseTemplate.subscribe(withTopic(newPartitions, config.getRequestsTopic())); // TODO: we subscribe to partitions before we are ready. implement consumer-per-partition version for request template
 
             Set<TopicPartitionInfo> oldPartitions = event.getOldPartitions().get(new QueueKey(ServiceType.EDQS));
             if (CollectionsUtil.isNotEmpty(oldPartitions)) {
                 Set<Integer> removedPartitions = Sets.difference(oldPartitions, newPartitions).stream()
                         .map(tpi -> tpi.getPartition().orElse(-1)).collect(Collectors.toSet());
-                if (config.getPartitioningStrategy() != EdqsPartitioningStrategy.TENANT && !removedPartitions.isEmpty()) {
+                if (removedPartitions.isEmpty()) {
+                    return;
+                }
+
+                if (config.getPartitioningStrategy() == EdqsPartitioningStrategy.TENANT) {
+                    repository.clearIf(tenantId -> {
+                        Integer partition = partitionService.resolvePartition(tenantId, null);
+                        return removedPartitions.contains(partition);
+                    });
+                } else {
                     log.warn("Partitions {} were removed but shouldn't be (due to NONE partitioning strategy)", removedPartitions);
                 }
-                repository.clearIf(tenantId -> {
-                    Integer partition = partitionService.resolvePartition(tenantId);
-                    return partition != null && removedPartitions.contains(partition);
-                });
             }
         } catch (Throwable t) {
             log.error("Failed to handle partition change event {}", event, t);
@@ -233,7 +234,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         return response;
     }
 
-    public void process(ToEdqsMsg edqsMsg, EdqsQueue queue) {
+    public void process(ToEdqsMsg edqsMsg, boolean backup) {
         log.trace("Processing message: {}", edqsMsg);
         if (edqsMsg.hasEventMsg()) {
             EdqsEventMsg eventMsg = edqsMsg.getEventMsg();
@@ -250,7 +251,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             } else if (!ObjectType.unversionedTypes.contains(objectType)) {
                 log.warn("[{}] {} {} doesn't have version", tenantId, objectType, key);
             }
-            if (queue != EdqsQueue.STATE) {
+            if (backup) {
                 stateService.save(tenantId, objectType, key, eventType, edqsMsg);
             }
 

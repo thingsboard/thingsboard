@@ -83,3 +83,13 @@ SET profile_data = profile_data
 WHERE profile_data->'configuration'->>'maxCalculatedFieldsPerEntity' IS NULL;
 
 -- UPDATE TENANT PROFILE CALCULATED FIELD LIMITS END
+
+-- UPDATE TENANT PROFILE DEBUG DURATION START
+
+UPDATE tenant_profile
+SET profile_data = jsonb_set(profile_data, '{configuration,maxDebugModeDurationMinutes}', '15', true)
+WHERE
+    profile_data->'configuration' ? 'maxDebugModeDurationMinutes' = false
+    OR (profile_data->'configuration'->>'maxDebugModeDurationMinutes')::int = 0;
+
+-- UPDATE TENANT PROFILE DEBUG DURATION END

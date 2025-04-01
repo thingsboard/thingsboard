@@ -264,7 +264,7 @@
   <rect transform="matrix(-4.3711e-8 1 1 4.3711e-8 -4.3711e-8 350)" x="1" y="1" width="46" height="184" rx="1" stroke-width="2"/>
   <rect transform="matrix(-4.3711e-8 1 1 4.3711e-8 214 350)" x="1" y="1" width="46" height="184" rx="1" stroke-width="2"/>
   <rect x="185" y="1" width="30" height="798" rx="5" stroke-width="2"/>
- </g><path d="m134.53 0s-134.53 0-134.53 134v656.72c0 5.3024 3.5818 9.2806 8 9.2806h384c4.418 0 8-3.9784 8-9.2806v-656.72c0-134-132.14-134-132.14-134h-67.86zm134.14 162.4c-2.5774 0-4.6666 2.5072-4.6666 5.6v600.8c0 3.0928 2.0894 5.6 4.6666 5.6h29.332c2.5774 0 4.6666-2.5072 4.6666-5.6v-600.8c0-3.0928-2.0894-5.6-4.6666-5.6z" fill-opacity="0" style="stroke-width:2.0908" tb:tag="clickArea"/><g fill="#d12730" style="display: none;" tb:tag="critical">
+ </g><path d="m134.53 0s-134.53 0-134.53 134v656.72c0 5.3024 3.5818 9.2806 8 9.2806h384c4.418 0 8-3.9784 8-9.2806v-656.72c0-134-132.14-134-132.14-134h-67.86zm134.14 162.4c-2.5774 0-4.6666 2.5072-4.6666 5.6v600.8c0 3.0928 2.0894 5.6 4.6666 5.6h29.332c2.5774 0 4.6666-2.5072 4.6666-5.6v-600.8c0-3.0928-2.0894-5.6-4.6666-5.6z" fill-opacity="0" fill="#000" tb:tag="clickArea"/><g fill="#d12730" style="display: none;" tb:tag="critical">
   <rect width="84" height="84" rx="4" fill="#fff" style=""/>
   <rect width="84" height="84" rx="4" style=""/>
   <rect x="2" y="2" width="80" height="80" rx="2" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>

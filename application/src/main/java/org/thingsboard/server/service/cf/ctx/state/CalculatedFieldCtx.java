@@ -122,6 +122,15 @@ public class CalculatedFieldCtx {
         }
     }
 
+    public void stop() {
+        if (calculatedFieldScriptEngine != null) {
+            calculatedFieldScriptEngine.destroy();
+        }
+        if (customExpression != null) {
+            customExpression.remove();
+        }
+    }
+
     private CalculatedFieldScriptEngine initEngine(TenantId tenantId, String expression, TbelInvokeService tbelInvokeService) {
         if (tbelInvokeService == null) {
             throw new IllegalArgumentException("TBEL script engine is disabled!");

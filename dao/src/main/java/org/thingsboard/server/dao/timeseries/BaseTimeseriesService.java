@@ -295,7 +295,12 @@ public class BaseTimeseriesService implements TimeseriesService {
             throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Aggregation can't be empty");
         }
         if (!Aggregation.NONE.equals(query.getAggregation())) {
-            long step = Math.max(query.getInterval(), 1000);
+            long interval = query.getInterval();
+            if (interval < 1) {
+                throw new IncorrectParameterException("Invalid TsKvQuery: 'interval' must be greater than 0, but got " + interval +
+                        ". Please check your query parameters and ensure 'endTs' is greater than 'startTs' or increase 'interval'.");
+            }
+            long step = Math.max(interval, 1000);
             long intervalCounts = (query.getEndTs() - query.getStartTs()) / step;
             if (intervalCounts > maxTsIntervals || intervalCounts < 0) {
                 throw new IncorrectParameterException("Incorrect TsKvQuery. Number of intervals is to high - " + intervalCounts + ". " +

@@ -690,12 +690,14 @@ export class TbTimeSeriesChart {
   }
 
   private updateSeriesData(updateScale = false): void {
-    this.updateSeries();
-    if (updateScale && this.updateYAxisScale(this.yAxisList)) {
-      this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
+    if (!this.timeSeriesChart.isDisposed()) {
+      this.updateSeries();
+      if (updateScale && this.updateYAxisScale(this.yAxisList)) {
+        this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
+      }
+      this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
+      this.updateAxes();
     }
-    this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
-    this.updateAxes();
   }
 
   private updateSeries(): void {
@@ -791,7 +793,7 @@ export class TbTimeSeriesChart {
           }
         } else {
           if (!axis.option.name) {
-            axis.option.name = axis.settings.label;
+            axis.option.name = this.ctx.utilsService.customTranslation(axis.settings.label, axis.settings.label);
             result.changed = true;
           }
           const nameGap = size;

@@ -37,14 +37,18 @@ export class EntityDebugSettingsService {
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const debugStrategyPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityDebugSettingsPanelComponent, 'bottom', true, null,
-        {
+      const debugStrategyPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: EntityDebugSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'bottom',
+        context: {
           ...panelConfig.debugSettings,
           ...panelConfig.debugConfig,
         },
-        {},
-        {}, {}, true);
+        isModal: true,
+      });
       debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.subscribe(settings => {
         panelConfig.onSettingsAppliedFn(settings);
         debugStrategyPopover.hide();

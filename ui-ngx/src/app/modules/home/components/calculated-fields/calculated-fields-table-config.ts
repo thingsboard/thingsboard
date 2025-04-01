@@ -37,6 +37,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import {
+  ArgumentEntityType,
   ArgumentType,
   CalculatedField,
   CalculatedFieldEventArguments,
@@ -60,7 +61,7 @@ import { DatePipe } from '@angular/common';
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField> {
 
   readonly calculatedFieldsDebugPerTenantLimitsConfiguration =
-    getCurrentAuthState(this.store)['calculatedFieldsDebugPerTenantLimitsConfiguration'] || '1:1';
+    getCurrentAuthState(this.store)['calculatedFieldsDebugPerTenantLimitsConfiguration'];
   readonly maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
@@ -159,7 +160,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
   private getExpressionLabel(entity: CalculatedField): string {
     if (entity.type === CalculatedFieldType.SCRIPT) {
-      return 'function calculate(' + Object.keys(entity.configuration.arguments).join(', ') + ')';
+      return 'function calculate(ctx, ' + Object.keys(entity.configuration.arguments).join(', ') + ')';
     } else {
       return entity.configuration.expression;
     }
@@ -252,13 +253,25 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.importExportService.openCalculatedFieldImportDialog()
       .pipe(
         filter(Boolean),
-        switchMap(calculatedField => this.getCalculatedFieldDialog(calculatedField, 'action.add')),
+        switchMap(calculatedField => this.getCalculatedFieldDialog(this.updateImportedCalculatedField(calculatedField), 'action.add', true)),
         filter(Boolean),
         switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField(calculatedField)),
         filter(Boolean),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => this.updateData());
+  }
+
+  private updateImportedCalculatedField(calculatedField: CalculatedField): CalculatedField {
+    calculatedField.configuration.arguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
+      const arg = calculatedField.configuration.arguments[key];
+      acc[key] = arg.refEntityId?.entityType === ArgumentEntityType.Tenant
+        ? { ...arg, refEntityId: { id: this.tenantId, entityType: ArgumentEntityType.Tenant } }
+        : arg;
+      return acc;
+    }, {});
+
+    return calculatedField;
   }
 
   private onDebugConfigChanged(id: string, debugSettings: EntityDebugSettings): void {
