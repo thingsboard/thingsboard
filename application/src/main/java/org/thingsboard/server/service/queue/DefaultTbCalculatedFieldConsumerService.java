@@ -258,6 +258,10 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                     }
                     return toRemove;
                 });
+            } else if (event.getEvent() == ComponentLifecycleEvent.CREATED) {
+                if (partitionService.isManagedByCurrentService(event.getTenantId())) {
+                    stateService.init(createConsumer(event.getTenantId()));
+                }
             }
         }
     }
