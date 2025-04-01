@@ -37,7 +37,7 @@
     <div translate>widget-config.action</div>
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select required formControlName="type" placeholder="{{ 'widget-config.set' | translate }}">
-        <mat-option *ngFor="let actionType of widgetActionTypes" [value]="actionType">
+        <mat-option *ngFor="let actionType of actionTypes()" [value]="actionType">
           {{ widgetActionTypeTranslations.get(widgetActionType[actionType]) | translate }}
         </mat-option>
       </mat-select>

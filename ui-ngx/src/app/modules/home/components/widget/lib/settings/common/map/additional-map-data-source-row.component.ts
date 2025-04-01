@@ -33,7 +33,7 @@ import {
   Validators
 } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AdditionalMapDataSourceSettings } from '@shared/models/widget/maps/map.models';
+import { AdditionalMapDataSourceSettings, updateDataKeyToNewDsType } from '@shared/models/widget/maps/map.models';
 import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -156,7 +156,7 @@ export class AdditionalMapDataSourceRowComponent implements ControlValueAccessor
     const dataKeys: DataKey[] = this.dataSourceFormGroup.get('dataKeys').value;
     if (dataKeys?.length) {
       for (const key of dataKeys) {
-        updateModel = this.updateDataKeyToNewDsType(key, newDsType) || updateModel;
+        updateModel = updateDataKeyToNewDsType(key, newDsType) || updateModel;
       }
       if (updateModel) {
         this.dataSourceFormGroup.get('dataKeys').patchValue(dataKeys, {emitEvent: false});
@@ -166,21 +166,6 @@ export class AdditionalMapDataSourceRowComponent implements ControlValueAccessor
     if (updateModel) {
       this.updateModel();
     }
-  }
-
-  private updateDataKeyToNewDsType(dataKey: DataKey, newDsType: DatasourceType): boolean {
-    if (newDsType === DatasourceType.function) {
-      if (dataKey.type !== DataKeyType.function) {
-        dataKey.type = DataKeyType.function;
-        return true;
-      }
-    } else {
-      if (dataKey.type === DataKeyType.function) {
-        dataKey.type = DataKeyType.attribute;
-        return true;
-      }
-    }
-    return false;
   }
 
   private updateValidators() {

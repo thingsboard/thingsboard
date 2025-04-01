@@ -47,6 +47,8 @@ export class MapWidgetSettingsComponent extends WidgetSettingsComponent {
     const params = widgetConfig.typeParameters as any;
     if (isDefinedAndNotNull(params.trip)) {
       this.trip = params.trip === true;
+    } else {
+      this.trip = false;
     }
   }
 

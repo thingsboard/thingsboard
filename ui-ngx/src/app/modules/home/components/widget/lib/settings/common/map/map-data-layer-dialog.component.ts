@@ -31,7 +31,8 @@ import {
   pathDecoratorSymbolTranslationMap,
   PolygonsDataLayerSettings,
   ShapeDataLayerSettings,
-  TripsDataLayerSettings
+  TripsDataLayerSettings,
+  updateDataKeyToNewDsType
 } from '@shared/models/widget/maps/map.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -294,23 +295,23 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       case 'trips':
       case 'markers':
         const xKey: DataKey = this.dataLayerFormGroup.get('xKey').value;
-        if (this.updateDataKeyToNewDsType(xKey, newDsType, this.dataLayerType === 'trips')) {
+        if (updateDataKeyToNewDsType(xKey, newDsType, this.dataLayerType === 'trips')) {
           this.dataLayerFormGroup.get('xKey').patchValue(xKey, {emitEvent: false});
         }
         const yKey: DataKey = this.dataLayerFormGroup.get('yKey').value;
-        if (this.updateDataKeyToNewDsType(yKey, newDsType, this.dataLayerType === 'trips')) {
+        if (updateDataKeyToNewDsType(yKey, newDsType, this.dataLayerType === 'trips')) {
           this.dataLayerFormGroup.get('yKey').patchValue(yKey, {emitEvent: false});
         }
         break;
       case 'polygons':
         const polygonKey: DataKey = this.dataLayerFormGroup.get('polygonKey').value;
-        if (this.updateDataKeyToNewDsType(polygonKey, newDsType)) {
+        if (updateDataKeyToNewDsType(polygonKey, newDsType)) {
           this.dataLayerFormGroup.get('polygonKey').patchValue(polygonKey, {emitEvent: false});
         }
         break;
       case 'circles':
         const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
-        if (this.updateDataKeyToNewDsType(circleKey, newDsType)) {
+        if (updateDataKeyToNewDsType(circleKey, newDsType)) {
           this.dataLayerFormGroup.get('circleKey').patchValue(circleKey, {emitEvent: false});
         }
         break;
@@ -319,28 +320,13 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     if (additionalDataKeys?.length) {
       let updated = false;
       for (const key of additionalDataKeys) {
-        updated = this.updateDataKeyToNewDsType(key, newDsType) || updated;
+        updated = updateDataKeyToNewDsType(key, newDsType) || updated;
       }
       if (updated) {
         this.dataLayerFormGroup.get('additionalDataKeys').patchValue(additionalDataKeys, {emitEvent: false});
       }
     }
     this.updateValidators();
-  }
-
-  private updateDataKeyToNewDsType(dataKey: DataKey, newDsType: DatasourceType, timeSeries = false): boolean {
-    if (newDsType === DatasourceType.function) {
-      if (dataKey.type !== DataKeyType.function) {
-        dataKey.type = DataKeyType.function;
-        return true;
-      }
-    } else {
-      if (dataKey.type === DataKeyType.function) {
-        dataKey.type = timeSeries ? DataKeyType.timeseries : DataKeyType.attribute;
-        return true;
-      }
-    }
-    return false;
   }
 
   private updateValidators() {
