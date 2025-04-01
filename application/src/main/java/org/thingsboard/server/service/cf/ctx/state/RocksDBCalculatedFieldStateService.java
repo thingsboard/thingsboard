@@ -20,13 +20,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.queue.common.state.DefaultQueueStateService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
+import org.thingsboard.server.queue.common.state.DefaultQueueStateService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.cf.AbstractCalculatedFieldStateService;
 import org.thingsboard.server.service.cf.CfRocksDb;
@@ -44,7 +46,7 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
 
     @Override
     public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
-        super.stateService = new DefaultQueueStateService<>(eventConsumer);
+        super.stateServices.put(new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME), new DefaultQueueStateService<>(eventConsumer));
     }
 
     @Override
@@ -61,7 +63,7 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
 
     @Override
     public void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
-        if (stateService.getPartitions().isEmpty()) {
+        if (stateServices.get(queueKey).getPartitions().isEmpty()) {
             cfRocksDb.forEach((key, value) -> {
                 try {
                     processRestoredState(CalculatedFieldStateProto.parseFrom(value));
