@@ -29,32 +29,32 @@ import {
 import { mergeDeep } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  defaultMapDataSourceSettings,
-  MapDataSourceSettings,
-  mapDataSourceValid,
-  mapDataSourceValidator
+  AdditionalMapDataSourceSettings,
+  additionalMapDataSourceValid,
+  additionalMapDataSourceValidator,
+  defaultAdditionalMapDataSourceSettings
 } from '@shared/models/widget/maps/map.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
-  selector: 'tb-map-data-sources',
-  templateUrl: './map-data-sources.component.html',
-  styleUrls: ['./map-data-sources.component.scss'],
+  selector: 'tb-additional-map-data-sources',
+  templateUrl: './additional-map-data-sources.component.html',
+  styleUrls: ['./additional-map-data-sources.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapDataSourcesComponent),
+      useExisting: forwardRef(() => AdditionalMapDataSourcesComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MapDataSourcesComponent),
+      useExisting: forwardRef(() => AdditionalMapDataSourcesComponent),
       multi: true
     }
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class MapDataSourcesComponent implements ControlValueAccessor, OnInit, Validator {
+export class AdditionalMapDataSourcesComponent implements ControlValueAccessor, OnInit, Validator {
 
   @Input()
   disabled: boolean;
@@ -78,9 +78,9 @@ export class MapDataSourcesComponent implements ControlValueAccessor, OnInit, Va
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(
       () => {
-        let dataSources: MapDataSourceSettings[] = this.dataSourcesFormGroup.get('dataSources').value;
+        let dataSources: AdditionalMapDataSourceSettings[] = this.dataSourcesFormGroup.get('dataSources').value;
         if (dataSources) {
-          dataSources = dataSources.filter(dataSource => mapDataSourceValid(dataSource));
+          dataSources = dataSources.filter(dataSource => additionalMapDataSourceValid(dataSource));
         }
         this.propagateChange(dataSources);
       }
@@ -103,8 +103,8 @@ export class MapDataSourcesComponent implements ControlValueAccessor, OnInit, Va
     }
   }
 
-  writeValue(value: MapDataSourceSettings[] | undefined): void {
-    const dataSources: MapDataSourceSettings[] = value || [];
+  writeValue(value: AdditionalMapDataSourceSettings[] | undefined): void {
+    const dataSources: AdditionalMapDataSourceSettings[] = value || [];
     this.dataSourcesFormGroup.setControl('dataSources', this.prepareDataSourcesFormArray(dataSources), {emitEvent: false});
   }
 
@@ -130,17 +130,17 @@ export class MapDataSourcesComponent implements ControlValueAccessor, OnInit, Va
   }
 
   addDataSource() {
-    const dataSource = mergeDeep<MapDataSourceSettings>({} as MapDataSourceSettings,
-      defaultMapDataSourceSettings);
+    const dataSource = mergeDeep<AdditionalMapDataSourceSettings>({} as AdditionalMapDataSourceSettings,
+      defaultAdditionalMapDataSourceSettings(this.context.functionsOnly));
     const dataSourcesArray = this.dataSourcesFormGroup.get('dataSources') as UntypedFormArray;
-    const dataSourceControl = this.fb.control(dataSource, [mapDataSourceValidator]);
+    const dataSourceControl = this.fb.control(dataSource, [additionalMapDataSourceValidator]);
     dataSourcesArray.push(dataSourceControl);
   }
 
-  private prepareDataSourcesFormArray(dataSources: MapDataSourceSettings[]): UntypedFormArray {
+  private prepareDataSourcesFormArray(dataSources: AdditionalMapDataSourceSettings[]): UntypedFormArray {
     const dataSourcesControls: Array<AbstractControl> = [];
     dataSources.forEach((dataSource) => {
-      dataSourcesControls.push(this.fb.control(dataSource, [mapDataSourceValidator]));
+      dataSourcesControls.push(this.fb.control(dataSource, [additionalMapDataSourceValidator]));
     });
     return this.fb.array(dataSourcesControls);
   }

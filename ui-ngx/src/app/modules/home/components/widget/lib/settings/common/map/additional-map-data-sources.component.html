@@ -16,19 +16,19 @@
 
 -->
 <div class="tb-form-panel no-padding no-border">
-  <div class="tb-form-table tb-map-data-sources">
+  <div class="tb-form-table tb-additional-map-data-sources">
     <div class="tb-form-table-header no-padding-right">
       <div class="tb-form-table-header-cell tb-source-header" translate>widgets.maps.data-layer.source</div>
-      <div class="tb-form-table-header-cell tb-filter-header" translate>widgets.maps.data-layer.filter</div>
+      <div class="tb-form-table-header-cell tb-data-keys-header" translate>widgets.maps.data-layer.data-keys</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
     <div *ngIf="dataSourcesFormArray().controls.length; else noDataSources" class="tb-form-table-body">
       <div *ngFor="let dataSourceControl of dataSourcesFormArray().controls; trackBy: trackByDataSource; let $index = index;">
-        <tb-map-data-source-row class="flex-1"
-                                [context]="context"
-                                [formControl]="dataSourceControl"
-                                (dataSourceRemoved)="removeDataSource($index)">
-        </tb-map-data-source-row>
+        <tb-additional-map-data-source-row class="flex-1"
+                               [context]="context"
+                               [formControl]="dataSourceControl"
+                               (dataSourceRemoved)="removeDataSource($index)">
+        </tb-additional-map-data-source-row>
       </div>
     </div>
   </div>

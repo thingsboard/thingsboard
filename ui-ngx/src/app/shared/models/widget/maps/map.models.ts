@@ -42,6 +42,7 @@ import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { MarkerIconContainer, MarkerShape } from '@shared/models/widget/maps/marker-shape.models';
 import { ColorRange, DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
+import _ from 'lodash';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -60,7 +61,7 @@ export interface TbMapDatasource extends Datasource {
   mapDataIds: string[];
 }
 
-export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSettings): TbMapDatasource => {
+export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSettings, id = guid()): TbMapDatasource => {
   return {
     type: settings.dsType,
     name: settings.dsLabel,
@@ -68,7 +69,8 @@ export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSetting
     entityAliasId: settings.dsEntityAliasId,
     filterId: settings.dsFilterId,
     dataKeys: [],
-    mapDataIds: [guid()]
+    latestDataKeys: [],
+    mapDataIds: [id]
   };
 };
 
@@ -132,6 +134,7 @@ export interface DataLayerEditSettings {
 }
 
 export interface MapDataLayerSettings extends MapDataSourceSettings {
+  additionalDataSources?: MapDataSourceSettings[];
   additionalDataKeys?: DataKey[];
   label: DataLayerPatternSettings;
   tooltip: DataLayerTooltipSettings;
@@ -584,6 +587,34 @@ export const additionalMapDataSourcesToDatasources = (additionalMapDataSources: 
     res.dataKeys = addDs.dataKeys;
     return res;
   });
+};
+
+export const mapDataSourceValid = (dataSource: MapDataSourceSettings): boolean => {
+  if (!dataSource.dsType || ![DatasourceType.device, DatasourceType.entity].includes(dataSource.dsType)) {
+    return false;
+  }
+  if (dataSource.dsType === DatasourceType.device && !dataSource.dsDeviceId) {
+    return false;
+  }
+  if (dataSource.dsType === DatasourceType.entity && !dataSource.dsEntityAliasId) {
+    return false;
+  }
+  return true;
+};
+
+export const mapDataSourceValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const dataSource: MapDataSourceSettings = control.value;
+  if (!mapDataSourceValid(dataSource)) {
+    return {
+      dataSource: true
+    };
+  }
+  return null;
+};
+
+export const defaultMapDataSourceSettings = {
+  dsType: DatasourceType.entity,
+  dsLabel: ''
 };
 
 export const additionalMapDataSourceValid = (dataSource: AdditionalMapDataSourceSettings): boolean => {
@@ -1151,6 +1182,21 @@ export const parseCenterPosition = (position: string | [number, number]): [numbe
   return [0, 0];
 }
 
+export const updateDataKeyToNewDsType = (dataKey: DataKey | null, newDsType: DatasourceType, timeSeries = false): boolean => {
+  if (newDsType === DatasourceType.function) {
+    if (dataKey && dataKey.type !== DataKeyType.function) {
+      dataKey.type = DataKeyType.function;
+      return true;
+    }
+  } else {
+    if (dataKey?.type === DataKeyType.function) {
+      dataKey.type = timeSeries ? DataKeyType.timeseries : DataKeyType.attribute;
+      return true;
+    }
+  }
+  return false;
+}
+
 export const mergeMapDatasources = (target: TbMapDatasource[], source: TbMapDatasource[]): TbMapDatasource[] => {
   const appendDatasources: TbMapDatasource[] = [];
   for (const sourceDs of source) {
@@ -1191,7 +1237,7 @@ const mapDatasourceIsSame = (ds1: TbMapDatasource, ds2: TbMapDatasource): boolea
 }
 
 const mergeMapDatasource = (target: TbMapDatasource, source: TbMapDatasource): TbMapDatasource => {
-  target.mapDataIds.push(...source.mapDataIds);
+  target.mapDataIds = _.union(target.mapDataIds, source.mapDataIds);
   const appendKeys: DataKey[] = [];
   for (const sourceKey of source.dataKeys) {
     const found =

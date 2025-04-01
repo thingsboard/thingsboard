@@ -26,6 +26,7 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.UpdateConfigTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.UpdatePartitionsTask;
 import org.thingsboard.server.queue.discovery.QueueKey;
+import org.thingsboard.server.queue.kafka.TbKafkaConsumerTemplate;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Slf4j
 public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
@@ -296,7 +298,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
 
             log.info("[{}] Added partitions: {}, removed partitions: {}", queueKey, addedPartitions, removedPartitions);
             removePartitions(removedPartitions);
-            addPartitions(addedPartitions, null);
+            addPartitions(addedPartitions, null, null);
         }
 
         protected void removePartitions(Set<TopicPartitionInfo> removedPartitions) {
@@ -304,13 +306,19 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
             removedPartitions.forEach((tpi) -> Optional.ofNullable(consumers.remove(tpi)).ifPresent(TbQueueConsumerTask::awaitCompletion));
         }
 
-        protected void addPartitions(Set<TopicPartitionInfo> partitions, Consumer<TopicPartitionInfo> onStop) {
+        protected void addPartitions(Set<TopicPartitionInfo> partitions, Consumer<TopicPartitionInfo> onStop, Function<String, Long> startOffsetProvider) {
             partitions.forEach(tpi -> {
                 Integer partitionId = tpi.getPartition().orElse(-1);
                 String key = queueKey + "-" + partitionId;
                 Runnable callback = onStop != null ? () -> onStop.accept(tpi) : null;
 
-                TbQueueConsumerTask<M> consumer = new TbQueueConsumerTask<>(key, () -> consumerCreator.apply(config, partitionId), callback);
+                TbQueueConsumerTask<M> consumer = new TbQueueConsumerTask<>(key, () -> {
+                    TbQueueConsumer<M> queueConsumer = consumerCreator.apply(config, partitionId);
+                    if (startOffsetProvider != null && queueConsumer instanceof TbKafkaConsumerTemplate<M> kafkaConsumer) {
+                        kafkaConsumer.setStartOffsetProvider(startOffsetProvider);
+                    }
+                    return queueConsumer;
+                }, callback);
                 consumers.put(tpi, consumer);
                 consumer.subscribe(Set.of(tpi));
                 launchConsumer(consumer);

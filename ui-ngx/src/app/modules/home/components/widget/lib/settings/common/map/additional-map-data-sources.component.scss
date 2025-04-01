@@ -15,34 +15,39 @@
  */
 @import '../../../../../../../../../scss/constants';
 
-.tb-form-table-row.tb-map-data-source-row {
-
-  .tb-source-field {
-    flex: 1 1 70%;
-    display: flex;
-    gap: 12px;
-    .tb-ds-type-field, .tb-device-field, .tb-entity-alias-field {
-      flex: 1;
+.tb-additional-map-data-sources {
+  .tb-form-table-header-cell {
+    &.tb-source-header {
+      flex: 1 1 50%;
+    }
+    &.tb-data-keys-header {
+      flex: 1 1 50%;
+    }
+    &.tb-actions-header {
+      width: 40px;
+      min-width: 40px;
+    }
+    @media #{$mat-lt-lg} {
+      &.tb-source-header {
+        flex: 1 1 30%;
+      }
+      &.tb-data-keys-header {
+        flex: 1 1 70%;
+      }
+      @media #{$mat-lt-md} {
+        &.tb-source-header {
+          flex: 1 1 50%;
+        }
+        &.tb-data-keys-header {
+          flex: 1 1 50%;
+        }
+      }
     }
   }
 
-  .tb-filter-field {
-    flex: 1 1 30%;
-    min-width: 0;
-  }
-
-  .tb-remove-button {
-    width: 40px;
-    min-width: 40px;
-  }
-
-  @media #{$mat-lt-sm} {
-    .tb-source-field {
-      flex: 1 1 60%;
-      flex-direction: column;
-    }
-    .tb-filter-field {
-      flex: 1 1 40%;
+  .tb-form-table-body {
+    tb-additional-map-data-source-row {
+      overflow: hidden;
     }
   }
 }

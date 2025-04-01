@@ -55,7 +55,7 @@ import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.processing.AbstractConsumerPartitionedService;
+import org.thingsboard.server.service.queue.processing.AbstractPartitionBasedConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
@@ -72,7 +72,7 @@ import java.util.stream.Collectors;
 @Service
 @TbRuleEngineComponent
 @Slf4j
-public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPartitionedService<ToCalculatedFieldNotificationMsg> implements TbCalculatedFieldConsumerService {
+public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBasedConsumerService<ToCalculatedFieldNotificationMsg> implements TbCalculatedFieldConsumerService {
 
     @Value("${queue.calculated_fields.poll_interval:25}")
     private long pollInterval;
@@ -103,7 +103,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPar
     }
 
     @Override
-    protected void doAfterStartUp() {
+    protected void onStartUp() {
         var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
         PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
                 .queueKey(queueKey)
@@ -130,7 +130,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPar
     }
 
     @Override
-    protected void processPartitionChangeEvent(PartitionChangeEvent event) {
+    protected void onPartitionChangeEvent(PartitionChangeEvent event) {
         try {
             event.getNewPartitions().forEach((queueKey, partitions) -> {
                 if (queueKey.getQueueName().equals(DataConstants.CF_QUEUE_NAME)) {
@@ -145,11 +145,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPar
         } catch (Throwable t) {
             log.error("Failed to process partition change event: {}", event, t);
         }
-    }
-
-    @Override
-    protected String getPrefix() {
-        return "tb-cf";
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToCalculatedFieldMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> consumer, QueueConfig config) throws Exception {
@@ -197,6 +192,11 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerPar
     @Override
     protected ServiceType getServiceType() {
         return ServiceType.TB_RULE_ENGINE;
+    }
+
+    @Override
+    protected String getPrefix() {
+        return "tb-cf";
     }
 
     @Override
