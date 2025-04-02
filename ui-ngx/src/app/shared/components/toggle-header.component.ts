@@ -39,19 +39,18 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { BehaviorSubject, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { startWith, takeUntil } from 'rxjs/operators';
 import { Platform } from '@angular/cdk/platform';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
-import { isDefined } from '@core/utils';
 
 export interface ToggleHeaderOption {
   name: string;
   value: any;
-  error?: string;
+  error$?: Observable<string>;
 }
 
 export type ToggleHeaderAppearance = 'fill' | 'fill-invert' | 'stroked';
@@ -65,13 +64,13 @@ export type ScrollDirection = 'after' | 'before';
   }
 )
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
-export class ToggleOption implements OnChanges {
+export class ToggleOption implements OnChanges, OnDestroy {
 
   @Input() value: any;
 
   @Input() error: string;
 
-  @Output() errorChange = new EventEmitter<string>();
+  currentError = new ReplaySubject<string>(1);
 
   get viewValue(): string {
     return (this._element?.nativeElement.textContent || '').trim();
@@ -83,10 +82,14 @@ export class ToggleOption implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes?.error) {
-      if (!changes.error.firstChange && changes.error.currentValue !== changes.error.previousValue) {
-        this.errorChange.emit(this.error);
+      if (changes.error.currentValue !== changes.error.previousValue) {
+        this.currentError.next(this.error);
       }
     }
+  }
+
+  ngOnDestroy() {
+    this.currentError.complete();
   }
 }
 
@@ -106,7 +109,6 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
 
   ngAfterContentInit(): void {
     this.toggleOptions.changes.pipe(startWith(null), takeUntil(this._destroyed)).subscribe(() => {
-      this.subscribeToToggleOptions();
       this.syncToggleHeaderOptions();
     });
   }
@@ -114,16 +116,6 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
   ngOnDestroy() {
     this._destroyed.next();
     this._destroyed.complete();
-  }
-
-  private subscribeToToggleOptions() {
-    this.toggleOptions.forEach(option => {
-      if (isDefined(option.error)) {
-        option.errorChange.pipe(takeUntil(this._destroyed)).subscribe(() => {
-          this.syncToggleHeaderOptions();
-        });
-      }
-    });
   }
 
   private syncToggleHeaderOptions() {
@@ -134,7 +126,7 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
           {
             name: option.viewValue,
             value: option.value,
-            error: option.error
+            error$: option.currentError.asObservable()
           }
         );
       });
