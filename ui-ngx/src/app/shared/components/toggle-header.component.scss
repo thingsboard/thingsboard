@@ -85,6 +85,12 @@
         border-radius: 100px;
       }
     }
+    .tb-toggle-button-error {
+      .mat-button-toggle-button {
+        border: 1px solid rgb(221, 44, 0);
+        border-radius: 20px;
+      }
+    }
     .mat-button-toggle + .mat-button-toggle {
       border-left: none;
     }

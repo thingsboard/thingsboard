@@ -41,7 +41,7 @@
                            [name]="name"
                            [(ngModel)]="value"
                            (ngModelChange)="valueChange.emit(value)">
-    <mat-button-toggle *ngFor="let option of options; trackBy: trackByHeaderOption" [value]="option.value" [disabled]="disabled">
+    <mat-button-toggle *ngFor="let option of options; trackBy: trackByHeaderOption" [value]="option.value" [disabled]="disabled" [class.tb-toggle-button-error]="option.error && value !== option.value">
       {{ option.name }}
       <mat-icon matTooltipPosition="above"
                 matTooltipClass="tb-error-tooltip"
