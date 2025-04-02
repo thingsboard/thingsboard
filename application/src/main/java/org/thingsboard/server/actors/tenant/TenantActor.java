@@ -274,6 +274,7 @@ public class TenantActor extends RuleChainManagerActor {
                                 () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
                                 () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
                                 () -> true);
+                        cfActor.tellWithHighPriority(msg);
                     } catch (Exception e) {
                         log.info("[{}] Failed to init CF Actor.", tenantId, e);
                     }

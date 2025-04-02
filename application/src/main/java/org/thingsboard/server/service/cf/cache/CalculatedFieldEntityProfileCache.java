@@ -30,7 +30,11 @@ public interface CalculatedFieldEntityProfileCache extends ApplicationListener<P
 
     void evict(TenantId tenantId, EntityId entityId);
 
-    Collection<EntityId> getMyEntityIdsByProfileId(TenantId tenantId, EntityId profileId);
+    void evictProfile(TenantId tenantId, EntityId profileId);
+
+    void removeTenant(TenantId tenantId);
+
+    Collection<EntityId> getEntityIdsByProfileId(TenantId tenantId, EntityId profileId);
 
     int getEntityIdPartition(TenantId tenantId, EntityId entityId);
 }

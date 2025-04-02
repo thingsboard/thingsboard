@@ -105,6 +105,13 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public List<CalculatedField> findCalculatedFieldsByTenantId(TenantId tenantId) {
+        log.trace("Executing findAllByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        return calculatedFieldDao.findAllByTenantId(tenantId);
+    }
+
+    @Override
     public PageData<CalculatedField> findAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
         log.trace("Executing findAllByEntityId, entityId [{}], pageLink [{}]", entityId, pageLink);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
@@ -172,6 +179,12 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     public List<CalculatedFieldLink> findAllCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing findAllCalculatedFieldLinksByEntityId, entityId [{}]", entityId);
         return calculatedFieldLinkDao.findCalculatedFieldLinksByEntityId(tenantId, entityId);
+    }
+
+    @Override
+    public List<CalculatedFieldLink> findAllCalculatedFieldLinksByTenantId(TenantId tenantId) {
+        log.trace("Executing findAllCalculatedFieldLinksByTenantId, tenantId [{}]", tenantId);
+        return calculatedFieldLinkDao.findCalculatedFieldLinksByTenantId(tenantId);
     }
 
     @Override

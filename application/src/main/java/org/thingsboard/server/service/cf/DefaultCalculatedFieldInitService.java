@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
@@ -37,6 +38,7 @@ public class DefaultCalculatedFieldInitService implements CalculatedFieldInitSer
     private final CalculatedFieldEntityProfileCache entityProfileCache;
     private final AssetService assetService;
     private final DeviceService deviceService;
+    private final PartitionService partitionService;
 
     @Value("${calculated_fields.init_fetch_pack_size:50000}")
     @Getter
@@ -48,7 +50,9 @@ public class DefaultCalculatedFieldInitService implements CalculatedFieldInitSer
         for (ProfileEntityIdInfo idInfo : deviceIdInfos) {
             log.trace("Processing device record: {}", idInfo);
             try {
-                entityProfileCache.add(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId());
+                if (partitionService.isManagedByCurrentService(idInfo.getTenantId())) {
+                    entityProfileCache.add(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId());
+                }
             } catch (Exception e) {
                 log.error("Failed to process device record: {}", idInfo, e);
             }
@@ -57,7 +61,9 @@ public class DefaultCalculatedFieldInitService implements CalculatedFieldInitSer
         for (ProfileEntityIdInfo idInfo : assetIdInfos) {
             log.trace("Processing asset record: {}", idInfo);
             try {
-                entityProfileCache.add(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId());
+                if (partitionService.isManagedByCurrentService(idInfo.getTenantId())) {
+                    entityProfileCache.add(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId());
+                }
             } catch (Exception e) {
                 log.error("Failed to process asset record: {}", idInfo, e);
             }
