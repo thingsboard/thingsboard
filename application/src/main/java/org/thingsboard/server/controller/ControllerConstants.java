@@ -189,6 +189,29 @@ public class ControllerConstants {
     protected static final String EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{\n" +
             "   \"eventType\":\"DEBUG_RULE_CHAIN\",\n" + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
 
+    protected static final String EVENT_DEBUG_CALCULATED_FIELD_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{\n" +
+            "   \"eventType\":\"DEBUG_CALCULATED_FIELD\",\n" +
+            "   \"server\":\"ip-172-31-24-152\",\n" +
+            "   \"isError\":\"false\",\n" +
+            "   \"errorStr\":\"Error Message\"\n" +
+            "   \"entityId\":\"cf4b8741-f618-471f-ae08-d881ca7f9fe9\",\n" +
+            "   \"msgId\":\"5cf7d3a0-aee7-40dd-a737-ade05528e7eb\",\n" +
+            "   \"msgType\":\"POST_TELEMETRY_REQUEST\",\n" +
+            "   \"arguments\":\"{\n" +
+            "    \"x\": {\n" +
+            "      \"ts\": 1739432016629,\n" +
+            "      \"value\": 20\n" +
+            "    },\n" +
+            "    \"y\": {\n" +
+            "      \"ts\": 1739429717656,\n" +
+            "      \"value\": 12\n" +
+            "    }\n" +
+            "  }\",\n" +
+            "   \"result\":\"{\n" +
+            "    \"x + y\": 32\n" +
+            "  }\",\n" +
+            "}" + MARKDOWN_CODE_BLOCK_END;
+
     protected static final String IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION = "A Boolean value representing the Server SecurityInfo for future Bootstrap client mode settings. Values: 'true' for Bootstrap Server; 'false' for Lwm2m Server. ";
 
     protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_ACCESS_TOKEN_PARAM_DESCRIPTION =
