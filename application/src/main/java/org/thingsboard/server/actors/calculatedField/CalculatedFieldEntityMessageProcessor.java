@@ -107,7 +107,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     public void process(CalculatedFieldStateRestoreMsg msg) {
         CalculatedFieldId cfId = msg.getId().cfId();
-        log.info("[{}] [{}] Processing CF state restore msg.", msg.getId().entityId(), cfId);
+        log.debug("[{}] [{}] Processing CF state restore msg.", msg.getId().entityId(), cfId);
         if (msg.getState() != null) {
             states.put(cfId, msg.getState());
         } else {
@@ -116,10 +116,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(EntityInitCalculatedFieldMsg msg) throws CalculatedFieldException {
-        log.info("[{}] Processing entity init CF msg.", msg.getCtx().getCfId());
+        log.debug("[{}] Processing entity init CF msg.", msg.getCtx().getCfId());
         var ctx = msg.getCtx();
         if (msg.isForceReinit()) {
-            log.info("Force reinitialization of CF: [{}].", ctx.getCfId());
+            log.debug("Force reinitialization of CF: [{}].", ctx.getCfId());
             states.remove(ctx.getCfId());
         }
         try {
@@ -138,7 +138,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(CalculatedFieldEntityDeleteMsg msg) {
-        log.info("[{}] Processing CF entity delete msg.", msg.getEntityId());
+        log.debug("[{}] Processing CF entity delete msg.", msg.getEntityId());
         if (this.entityId.equals(msg.getEntityId())) {
             if (states.isEmpty()) {
                 msg.getCallback().onSuccess();
@@ -244,7 +244,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     private void processArgumentValuesUpdate(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback,
                                              Map<String, ArgumentEntry> newArgValues, UUID tbMsgId, TbMsgType tbMsgType) throws CalculatedFieldException {
         if (newArgValues.isEmpty()) {
-            log.info("[{}] No new argument values to process for CF.", ctx.getCfId());
+            log.debug("[{}] No new argument values to process for CF.", ctx.getCfId());
             callback.onSuccess(CALLBACKS_PER_CF);
         }
         CalculatedFieldState state = states.get(ctx.getCfId());
