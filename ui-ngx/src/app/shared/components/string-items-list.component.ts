@@ -30,6 +30,7 @@ import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { Observable, of } from 'rxjs';
 import { filter, mergeMap, share, tap } from 'rxjs/operators';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { isDefined } from '@core/utils';
 
 export interface StringItemsOption {
   name: string;
@@ -116,6 +117,9 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
   @coerceArray()
   predefinedValues: StringItemsOption[];
 
+  @Input()
+  fetchOptionsFn: (searchText?: string) => Observable<Array<StringItemsOption>>;
+
   get itemsControl(): AbstractControl {
     return this.stringItemsForm.get('items');
   }
@@ -124,7 +128,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     return this.stringItemsForm.get('item');
   }
 
-  onTouched = () => {};
+  private onTouched = () => {};
   private propagateChange: (value: any) => void = () => {};
   private dirty = false;
 
@@ -136,7 +140,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
   }
 
   ngOnInit() {
-    if (this.predefinedValues) {
+    if (this.predefinedValues || isDefined(this.fetchOptionsFn)) {
       this.filteredValues = this.itemControl.valueChanges
         .pipe(
           tap((value) => {
@@ -147,7 +151,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
             }
           }),
           filter((value) => typeof value === 'string'),
-          mergeMap(name => this.fetchValues(name)),
+          mergeMap(name => this.fetchOptionsFn ? this.fetchOptionsFn(name) : this.fetchValues(name)),
           share()
         );
     }
@@ -199,19 +203,16 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     this.dirty = true;
   }
 
-  addItem(event: MatChipInputEvent): void {
-    const item = event.value?.trim() ?? '';
-    if (item) {
-      if (this.predefinedValues) {
-        const findItems = this.predefinedValues
-          .filter(value => value.name.toLowerCase().includes(item.toLowerCase()));
-        if (findItems.length === 1) {
-          this.add(findItems[0]);
-        }
-      } else {
-        this.add({value: item, name: item});
-      }
+  addOnBlur(event: FocusEvent) {
+    const target: HTMLElement = event.relatedTarget as HTMLElement;
+    if (target && target.tagName !== 'MAT-OPTION') {
+      this.addItem(this.stringItemInput.nativeElement.value ?? '')
     }
+    this.onTouched();
+  }
+
+  addOnEnd(event: MatChipInputEvent): void {
+    this.addItem(event.value ?? '')
   }
 
   removeItems(item: StringItemsOption) {
@@ -237,6 +238,21 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
 
   displayValueFn(values?: StringItemsOption): string | undefined {
     return values ? values.name : undefined;
+  }
+
+  private addItem(value: string) {
+    const item = value.trim();
+    if (item) {
+      if (this.predefinedValues) {
+        const findItems = this.predefinedValues
+          .filter(value => value.name.toLowerCase().includes(item.toLowerCase()));
+        if (findItems.length === 1) {
+          this.add(findItems[0]);
+        }
+      } else {
+        this.add({value: item, name: item});
+      }
+    }
   }
 
   private add(item: StringItemsOption) {
