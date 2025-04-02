@@ -46,13 +46,12 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { startWith, takeUntil } from 'rxjs/operators';
 import { Platform } from '@angular/cdk/platform';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefined } from '@core/utils';
 
 export interface ToggleHeaderOption {
   name: string;
   value: any;
-  error?: boolean;
-  errorText?: any;
+  error?: string;
 }
 
 export type ToggleHeaderAppearance = 'fill' | 'fill-invert' | 'stroked';
@@ -70,11 +69,9 @@ export class ToggleOption implements OnChanges {
 
   @Input() value: any;
 
-  @Input() error: boolean;
+  @Input() error: string;
 
-  @Input() errorText: any;
-
-  @Output() errorChange = new EventEmitter<boolean>();
+  @Output() errorChange = new EventEmitter<string>();
 
   get viewValue(): string {
     return (this._element?.nativeElement.textContent || '').trim();
@@ -85,8 +82,8 @@ export class ToggleOption implements OnChanges {
   ) {}
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['error']) {
-      if (!changes['error'].firstChange && changes['error'].currentValue !== changes['error'].previousValue) {
+    if (changes?.error) {
+      if (!changes.error.firstChange && changes.error.currentValue !== changes.error.previousValue) {
         this.errorChange.emit(this.error);
       }
     }
@@ -121,7 +118,7 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
 
   private subscribeToToggleOptions() {
     this.toggleOptions.forEach(option => {
-      if (isDefinedAndNotNull(option.error) || isDefinedAndNotNull(option.errorText)) {
+      if (isDefined(option.error)) {
         option.errorChange.pipe(takeUntil(this._destroyed)).subscribe(() => {
           this.syncToggleHeaderOptions();
         });
@@ -137,8 +134,7 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
           {
             name: option.viewValue,
             value: option.value,
-            error: option.error,
-            errorText: option.errorText
+            error: option.error
           }
         );
       });

@@ -45,7 +45,7 @@
       {{ option.name }}
       <mat-icon matTooltipPosition="above"
                 matTooltipClass="tb-error-tooltip"
-                [matTooltip]="option.errorText | translate"
+                [matTooltip]="option.error"
                 *ngIf="option.error && value !== option.value"
                 class="tb-error tb-error-icon">
         warning

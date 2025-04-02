@@ -1137,7 +1137,8 @@
             "key-required": "Key is required.",
             "key-pattern": "Key is invalid.",
             "key-max-length": "Key should be less than 256 characters."
-        }
+        },
+        "required-fields": "Missing required fields"
     },
     "content-type": {
         "json": "Json",
@@ -7980,8 +7981,7 @@
                 "trips": "Trips",
                 "markers": "Markers",
                 "polygons": "Polygons",
-                "circles": "Circles",
-                "required-fields": "Required fields are not filled in."
+                "circles": "Circles"
             },
             "data-layer": {
                 "source": "Source",
