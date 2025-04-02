@@ -16,7 +16,8 @@
 
 import {
   AfterContentChecked,
-  AfterContentInit, AfterViewChecked,
+  AfterContentInit,
+  AfterViewChecked,
   AfterViewInit,
   ChangeDetectorRef,
   Component,
@@ -25,11 +26,14 @@ import {
   ElementRef,
   EventEmitter,
   HostBinding,
-  Input, NgZone,
+  Input,
+  NgZone,
+  OnChanges,
   OnDestroy,
   OnInit,
   Output,
   QueryList,
+  SimpleChanges,
   ViewChild
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -42,10 +46,13 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { startWith, takeUntil } from 'rxjs/operators';
 import { Platform } from '@angular/cdk/platform';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export interface ToggleHeaderOption {
   name: string;
   value: any;
+  error?: boolean;
+  errorText?: any;
 }
 
 export type ToggleHeaderAppearance = 'fill' | 'fill-invert' | 'stroked';
@@ -59,9 +66,15 @@ export type ScrollDirection = 'after' | 'before';
   }
 )
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
-export class ToggleOption {
+export class ToggleOption implements OnChanges {
 
   @Input() value: any;
+
+  @Input() error: boolean;
+
+  @Input() errorText: any;
+
+  @Output() errorChange = new EventEmitter<boolean>();
 
   get viewValue(): string {
     return (this._element?.nativeElement.textContent || '').trim();
@@ -70,6 +83,14 @@ export class ToggleOption {
   constructor(
     private _element: ElementRef<HTMLElement>
   ) {}
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['error']) {
+      if (!changes['error'].firstChange && changes['error'].currentValue !== changes['error'].previousValue) {
+        this.errorChange.emit(this.error);
+      }
+    }
+  }
 }
 
 @Directive()
@@ -88,6 +109,7 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
 
   ngAfterContentInit(): void {
     this.toggleOptions.changes.pipe(startWith(null), takeUntil(this._destroyed)).subscribe(() => {
+      this.subscribeToToggleOptions();
       this.syncToggleHeaderOptions();
     });
   }
@@ -97,13 +119,26 @@ export abstract class _ToggleBase extends PageComponent implements AfterContentI
     this._destroyed.complete();
   }
 
+  private subscribeToToggleOptions() {
+    this.toggleOptions.forEach(option => {
+      if (isDefinedAndNotNull(option.error) || isDefinedAndNotNull(option.errorText)) {
+        option.errorChange.pipe(takeUntil(this._destroyed)).subscribe(() => {
+          this.syncToggleHeaderOptions();
+        });
+      }
+    });
+  }
+
   private syncToggleHeaderOptions() {
     if (this.toggleOptions?.length) {
       this.options.length = 0;
       this.toggleOptions.forEach(option => {
         this.options.push(
-          { name: option.viewValue,
-            value: option.value
+          {
+            name: option.viewValue,
+            value: option.value,
+            error: option.error,
+            errorText: option.errorText
           }
         );
       });

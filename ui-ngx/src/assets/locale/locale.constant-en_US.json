@@ -7980,7 +7980,8 @@
                 "trips": "Trips",
                 "markers": "Markers",
                 "polygons": "Polygons",
-                "circles": "Circles"
+                "circles": "Circles",
+                "required-fields": "Required fields are not filled in."
             },
             "data-layer": {
                 "source": "Source",

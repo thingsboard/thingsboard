@@ -43,6 +43,12 @@
   .tb-toggle-header {
     transition: transform 500ms cubic-bezier(0.35, 0, 0.25, 1);
   }
+
+  .tb-error-icon {
+    width: 12px;
+    height: 12px;
+    font-size: 12px;
+  }
 }
 
 :host ::ng-deep {
