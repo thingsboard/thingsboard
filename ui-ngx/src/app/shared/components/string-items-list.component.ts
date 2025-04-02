@@ -14,16 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  DestroyRef,
-  ElementRef,
-  forwardRef,
-  Input,
-  OnInit,
-  ViewChild,
-  ViewEncapsulation
-} from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -39,8 +30,7 @@ import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { Observable, of } from 'rxjs';
 import { filter, mergeMap, share, tap } from 'rxjs/operators';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { isDefined } from '@core/utils';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { isDefined, isUndefined } from '@core/utils';
 
 export interface StringItemsOption {
   name: string;
@@ -146,8 +136,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
   private propagateChange: (value: any) => void = () => {};
   private dirty = false;
 
-  constructor(private fb: FormBuilder,
-              private destroyRef: DestroyRef) {
+  constructor(private fb: FormBuilder) {
     this.stringItemsForm = this.fb.group({
       item: [null],
       items: [null]
@@ -200,7 +189,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     if (value != null && value.length > 0) {
       this.modelValue = [...value];
       this.itemList = [];
-      if (this.predefinedValues) {
+      if (this.predefinedValues && !this.allowUserValue) {
         value.forEach(item => {
           const findItem = this.predefinedValues.find(option => option.value === item);
           if (findItem) {
@@ -256,25 +245,23 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     return values ? values.name : undefined;
   }
 
-  private addItem(value: string) {
-    const item = value.trim();
-    if (item) {
-      if (this.predefinedValues && !this.allowUserValue) {
+  private addItem(searchText: string) {
+    searchText = searchText.trim();
+    if (searchText) {
+      if (this.allowUserValue || !this.predefinedValues && isUndefined(this.fetchOptionsFn)) {
+        this.add({value: searchText, name: searchText});
+      } else if (this.predefinedValues) {
         const findItems = this.predefinedValues
-          .filter(value => value.name.toLowerCase().includes(item.toLowerCase()));
+          .filter(value => value.name.toLowerCase().includes(searchText.toLowerCase()));
         if (findItems.length === 1) {
           this.add(findItems[0]);
         }
-      } else if (isDefined(this.fetchOptionsFn) && !this.allowUserValue) {
-        this.fetchOptionsFn(item).pipe(
-          takeUntilDestroyed(this.destroyRef)
-        ).subscribe((findItems) => {
+      } else if (isDefined(this.fetchOptionsFn)) {
+        this.fetchOptionsFn(searchText).subscribe((findItems) => {
           if (findItems.length === 1) {
             this.add(findItems[0]);
           }
         })
-      } else {
-        this.add({value: item, name: item});
       }
     }
   }
