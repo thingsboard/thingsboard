@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.edge.EdgeEventService;
@@ -99,7 +100,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void findEdgeEventsBySeqIdOrder() throws Exception {
+    public void findEdgeEventsBySeqIdOrder_createdTimeOrderIgnored() throws Exception {
         EdgeId edgeId = new EdgeId(Uuids.timeBased());
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
 
@@ -109,7 +110,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         saveEdgeEventWithProvidedTime(eventTime + 1, edgeId, deviceId, tenantId).get();
         saveEdgeEventWithProvidedTime(timeAfterEndTime, edgeId, deviceId, tenantId).get();
 
-        TimePageLink pageLink = new TimePageLink(2, 0, "", null, startTime, endTime);
+        TimePageLink pageLink = new TimePageLink(2, 0, "", new SortOrder("createdTime", SortOrder.Direction.DESC), startTime, endTime);
         PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null, pageLink);
 
         Assert.assertNotNull(edgeEvents.getData());
