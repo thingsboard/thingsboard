@@ -18,6 +18,7 @@ package org.thingsboard.server.queue.discovery.event;
 import lombok.Getter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.QueueKey;

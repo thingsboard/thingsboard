@@ -514,12 +514,12 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer(TenantId tenantId, Integer partitionId) {
+    public TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer(TenantId tenantId) {
         String queueName = DataConstants.CF_QUEUE_NAME;
-        String groupId = topicService.buildConsumerGroupId("cf-", tenantId, queueName, partitionId);
+        String groupId = topicService.buildConsumerGroupId("cf-", tenantId, queueName, null);
 
         cfAdmin.syncOffsets(topicService.buildConsumerGroupId("cf-", tenantId, queueName, null), // the fat groupId
-                groupId, partitionId);
+                groupId, null);
 
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToCalculatedFieldMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
@@ -572,18 +572,25 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateConsumer() {
-        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<CalculatedFieldStateProto>>builder()
-                .settings(kafkaSettings)
-                .topic(topicService.buildTopicName(calculatedFieldSettings.getStateTopic()))
-                .readFromBeginning(true)
-                .stopWhenRead(true)
-                .clientId("monolith-calculated-field-state-consumer-" + serviceInfoProvider.getServiceId() + "-" + consumerCount.incrementAndGet())
-                .groupId(topicService.buildTopicName("monolith-calculated-field-state-consumer"))
-                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), msg.getData() != null ? CalculatedFieldStateProto.parseFrom(msg.getData()) : null, msg.getHeaders()))
-                .admin(cfStateAdmin)
-                .statsService(consumerStatsService)
-                .build();
+    public TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateConsumer(TenantId tenantId) {
+        String queueName = DataConstants.CF_STATES_QUEUE_NAME;
+        String groupId = topicService.buildConsumerGroupId("cf-", tenantId, queueName, null);
+
+        cfAdmin.syncOffsets(topicService.buildConsumerGroupId("cf-", tenantId, queueName, null), // the fat groupId
+                groupId, null);
+
+        TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<CalculatedFieldStateProto>> consumerBuilder = TbKafkaConsumerTemplate.builder();
+        consumerBuilder.settings(kafkaSettings);
+        consumerBuilder.topic(topicService.buildTopicName(calculatedFieldSettings.getStateTopic()));
+        consumerBuilder.readFromBeginning(true);
+        consumerBuilder.stopWhenRead(true);
+        consumerBuilder.clientId("cf-" + queueName + "-consumer-" + serviceInfoProvider.getServiceId() + "-" + consumerCount.incrementAndGet());
+        consumerBuilder.groupId(groupId);
+        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), msg.getData() != null ? CalculatedFieldStateProto.parseFrom(msg.getData()) : null, msg.getHeaders()));
+        consumerBuilder.admin(cfStateAdmin);
+        consumerBuilder.statsService(consumerStatsService);
+
+        return consumerBuilder.build();
     }
 
     @Override

@@ -67,7 +67,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
     private final AtomicInteger counter = new AtomicInteger();
 
     @Override
-    public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
+    public void init(TenantId tenantId, PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
         var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
         PartitionedQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateProto>> stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>>create()
                 .queueKey(queueKey)
@@ -91,7 +91,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                         }
                     }
                 })
-                .consumerCreator((config, partitionId) -> queueFactory.createCalculatedFieldStateConsumer())
+                .consumerCreator((config, partitionId) -> queueFactory.createCalculatedFieldStateConsumer(tenantId))
                 .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .scheduler(eventConsumer.getScheduler())
