@@ -150,9 +150,11 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         doDelete("/api/deviceProfile/" + deviceProfile.getUuidId())
                 .andExpect(status().isOk());
         edgeImitator.connect();
-        // 27 sync message
-        // + 1 delete message
-        edgeImitator.expectMessageAmount(28);
+
+        // 25 sync message
+        // + 2 rule chain message
+        // + 1 delete device profile
+        edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT + 3);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         latestMessage = edgeImitator.getLatestMessage();

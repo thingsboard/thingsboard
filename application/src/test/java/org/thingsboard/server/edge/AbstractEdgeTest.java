@@ -115,7 +115,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @Slf4j
 abstract public class AbstractEdgeTest extends AbstractControllerTest {
-
+    public static final Integer CONNECT_MESSAGE_COUNT = 18;
+    public static final Integer INSTALLATION_MESSAGE_COUNT = 7;
+    public static final Integer SYNC_MESSAGE_COUNT = CONNECT_MESSAGE_COUNT + INSTALLATION_MESSAGE_COUNT;
     private static final String THERMOSTAT_DEVICE_PROFILE_NAME = "Thermostat";
 
     protected DeviceProfile thermostatDeviceProfile;
@@ -136,11 +138,12 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         doPost("/api/admin/jwtSettings", settings).andExpect(status().isOk());
 
         loginTenantAdmin();
-
+        //7 installation messages
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(25);
+        // 18 connect messages + 7 installation messages
+        edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT);
         edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
         edgeImitator.connect();
@@ -164,12 +167,13 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         thermostatDeviceProfile = this.createDeviceProfile(THERMOSTAT_DEVICE_PROFILE_NAME,
                 createMqttDeviceProfileTransportConfiguration(new JsonTransportPayloadConfiguration(), false));
         extendDeviceProfileData(thermostatDeviceProfile);
+        //3 messages
         thermostatDeviceProfile = doPost("/api/deviceProfile", thermostatDeviceProfile, DeviceProfile.class);
-
+        //1 message
         Device savedDevice = saveDevice("Edge Device 1", THERMOSTAT_DEVICE_PROFILE_NAME);
-
+        //1 message
         Asset savedAsset = saveAsset("Edge Asset 1");
-
+        //2 messages
         updateRootRuleChainMetadata();
 
         edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
