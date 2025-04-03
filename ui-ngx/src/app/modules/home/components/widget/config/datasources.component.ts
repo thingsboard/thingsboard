@@ -161,7 +161,7 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
-    if (this.validate(null)) {
+    if (this.validate(null) && fn.name !== 'noop') {
       setTimeout(() => {
         this.datasourcesUpdated(this.datasourcesFormGroup.get('datasources').value);
       }, 0);
