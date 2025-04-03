@@ -17,6 +17,7 @@ package org.thingsboard.mqtt;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -384,8 +385,33 @@ final class MqttClientImpl implements MqttClient {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, qos, retain, 0);
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, getNewMessageId().messageId());
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
-        MqttPendingPublish pendingPublish = new MqttPendingPublish(variableHeader.packetId(), future,
-                payload.retain(), message, qos, () -> !pendingPublishes.containsKey(variableHeader.packetId()));
+
+        final var pendingPublish = MqttPendingPublish.builder()
+                .messageId(variableHeader.packetId())
+                .future(future)
+                .payload(payload.retain())
+                .message(message)
+                .qos(qos)
+                .ownerId(clientConfig.getOwnerId())
+                .retransmissionConfig(clientConfig.getRetransmissionConfig())
+                .pendingOperation(new PendingOperation() {
+                    @Override
+                    public boolean isCancelled() {
+                        return !pendingPublishes.containsKey(variableHeader.packetId());
+                    }
+
+                    @Override
+                    public void onMaxRetransmissionAttemptsReached() {
+                        pendingPublishes.computeIfPresent(variableHeader.packetId(), (__, pendingPublish) -> {
+                            var message = "Unable to deliver publish message due to max retransmission attempts (%s) being reached for client '%s' on topic '%s' (message ID: %d)"
+                                    .formatted(clientConfig.getRetransmissionConfig().maxAttempts(), clientConfig.getClientId(), topic, variableHeader.packetId());
+                            pendingPublish.getFuture().tryFailure(new MaxRetransmissionsReachedException(message));
+                            pendingPublish.getPayload().release();
+                            return null;
+                        });
+                    }
+                }).build();
+
         this.pendingPublishes.put(pendingPublish.getMessageId(), pendingPublish);
         ChannelFuture channelFuture = this.sendAndFlushPacket(message);
 
@@ -499,9 +525,30 @@ final class MqttClientImpl implements MqttClient {
         MqttSubscribePayload payload = new MqttSubscribePayload(Collections.singletonList(subscription));
         MqttSubscribeMessage message = new MqttSubscribeMessage(fixedHeader, variableHeader, payload);
 
-        final MqttPendingSubscription pendingSubscription = new MqttPendingSubscription(future, topic, message,
-                () -> !pendingSubscriptions.containsKey(variableHeader.messageId()));
-        pendingSubscription.addHandler(handler, once);
+        final var pendingSubscription = MqttPendingSubscription.builder()
+                .future(future)
+                .topic(topic)
+                .handlers(Sets.newHashSet(new MqttPendingSubscription.MqttPendingHandler(handler, once)))
+                .subscribeMessage(message)
+                .ownerId(clientConfig.getOwnerId())
+                .retransmissionConfig(clientConfig.getRetransmissionConfig())
+                .pendingOperation(new PendingOperation() {
+                    @Override
+                    public boolean isCancelled() {
+                        return !pendingSubscriptions.containsKey(variableHeader.messageId());
+                    }
+
+                    @Override
+                    public void onMaxRetransmissionAttemptsReached() {
+                        pendingSubscriptions.computeIfPresent(variableHeader.messageId(), (__, pendingSubscription) -> {
+                            var message = "Unable to deliver subscribe message due to max retransmission attempts (%s) being reached for client '%s' on topic '%s' (message ID: %d)"
+                                    .formatted(clientConfig.getRetransmissionConfig().maxAttempts(), clientConfig.getClientId(), topic, variableHeader.messageId());
+                            pendingSubscription.getFuture().tryFailure(new MaxRetransmissionsReachedException(message));
+                            return null;
+                        });
+                    }
+                }).build();
+
         this.pendingSubscriptions.put(variableHeader.messageId(), pendingSubscription);
         this.pendingSubscribeTopics.add(topic);
         pendingSubscription.setSent(this.sendAndFlushPacket(message) != null); //If not sent, we will send it when the connection is opened
@@ -518,8 +565,29 @@ final class MqttClientImpl implements MqttClient {
             MqttUnsubscribePayload payload = new MqttUnsubscribePayload(Collections.singletonList(topic));
             MqttUnsubscribeMessage message = new MqttUnsubscribeMessage(fixedHeader, variableHeader, payload);
 
-            MqttPendingUnsubscription pendingUnsubscription = new MqttPendingUnsubscription(promise, topic, message,
-                    () -> !pendingServerUnsubscribes.containsKey(variableHeader.messageId()));
+            final var pendingUnsubscription = MqttPendingUnsubscription.builder()
+                    .future(promise)
+                    .topic(topic)
+                    .unsubscribeMessage(message)
+                    .ownerId(clientConfig.getOwnerId())
+                    .retransmissionConfig(clientConfig.getRetransmissionConfig())
+                    .pendingOperation(new PendingOperation() {
+                        @Override
+                        public boolean isCancelled() {
+                            return !pendingServerUnsubscribes.containsKey(variableHeader.messageId());
+                        }
+
+                        @Override
+                        public void onMaxRetransmissionAttemptsReached() {
+                            pendingServerUnsubscribes.computeIfPresent(variableHeader.messageId(), (__, pendingUnsubscription) -> {
+                                var message = "Unable to deliver unsubscribe message due to max retransmission attempts (%s) being reached for client '%s' on topic '%s' (message ID: %d)"
+                                        .formatted(clientConfig.getRetransmissionConfig().maxAttempts(), clientConfig.getClientId(), topic, variableHeader.messageId());
+                                pendingUnsubscription.getFuture().tryFailure(new MaxRetransmissionsReachedException(message));
+                                return null;
+                            });
+                        }
+                    }).build();
+
             this.pendingServerUnsubscribes.put(variableHeader.messageId(), pendingUnsubscription);
             pendingUnsubscription.startRetransmissionTimer(this.eventLoop.next(), this::sendAndFlushPacket);
 

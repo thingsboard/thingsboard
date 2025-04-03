@@ -639,6 +639,18 @@ public class ActorSystemContext {
     @Getter
     private long cfCalculationResultTimeout;
 
+    @Value("${mqtt.client.retransmission.max_attempts:5}")
+    @Getter
+    private int mqttClientRetransmissionMaxAttempts;
+
+    @Value("${mqtt.client.retransmission.initial_delay_millis:5000}")
+    @Getter
+    private long mqttClientRetransmissionInitialDelayMillis;
+
+    @Value("${mqtt.client.retransmission.jitter_factor:0.1}")
+    @Getter
+    private double mqttClientRetransmissionJitterFactor;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;

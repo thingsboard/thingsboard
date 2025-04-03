@@ -219,9 +219,9 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         }
         pendingSubscription.onSubackReceived();
         for (MqttPendingSubscription.MqttPendingHandler handler : pendingSubscription.getHandlers()) {
-            MqttSubscription subscription = new MqttSubscription(pendingSubscription.getTopic(), handler.getHandler(), handler.isOnce());
+            MqttSubscription subscription = new MqttSubscription(pendingSubscription.getTopic(), handler.handler(), handler.once());
             this.client.getSubscriptions().put(pendingSubscription.getTopic(), subscription);
-            this.client.getHandlerToSubscription().put(handler.getHandler(), subscription);
+            this.client.getHandlerToSubscription().put(handler.handler(), subscription);
         }
         this.client.getPendingSubscribeTopics().remove(pendingSubscription.getTopic());
 
@@ -282,17 +282,15 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handlePuback(MqttPubAckMessage message) {
-        MqttPendingPublish pendingPublish = this.client.getPendingPublishes().get(message.variableHeader().messageId());
-        if (pendingPublish == null) {
-            return;
-        }
-        pendingPublish.getFuture().setSuccess(null);
-        pendingPublish.onPubackReceived();
-        this.client.getPendingPublishes().remove(message.variableHeader().messageId());
-        pendingPublish.getPayload().release();
-        if (this.client.getCallback() != null) {
-            this.client.getCallback().onPubAck(message);
-        }
+        client.getPendingPublishes().computeIfPresent(message.variableHeader().messageId(), (__, pendingPublish) -> {
+            pendingPublish.getFuture().setSuccess(null);
+            pendingPublish.onPubackReceived();
+            pendingPublish.getPayload().release();
+            if (client.getCallback() != null) {
+                client.getCallback().onPubAck(message);
+            }
+            return null;
+        });
     }
 
     private void handlePubrec(Channel channel, MqttMessage message) {
