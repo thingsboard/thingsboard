@@ -392,7 +392,7 @@ final class MqttClientImpl implements MqttClient {
                 .payload(payload.retain())
                 .message(message)
                 .qos(qos)
-                .ownerId(clientConfig.getClientId())
+                .ownerId(clientConfig.getOwnerId())
                 .retransmissionConfig(clientConfig.getRetransmissionConfig())
                 .pendingOperation(new PendingOperation() {
                     @Override

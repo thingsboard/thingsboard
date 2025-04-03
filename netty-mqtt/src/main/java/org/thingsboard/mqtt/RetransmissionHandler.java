@@ -45,9 +45,10 @@ final class RetransmissionHandler<T extends MqttMessage> {
     @Setter
     private BiConsumer<MqttFixedHeader, T> handler;
 
-    // owner ID and message ID are used for logging purposes
+    // the three fields below are used for logging only
     private final String ownerId;
     private String originalMessageId;
+    private long totalWaitingTimeMillis;
 
     private T originalMessage;
 
@@ -70,7 +71,7 @@ final class RetransmissionHandler<T extends MqttMessage> {
         if (handler == null) {
             throw new NullPointerException("handler");
         }
-        log.debug("[{}][{}] Starting retransmission handler", ownerId, originalMessageId);
+        log.info("{}MessageID[{}] Starting retransmission handler", ownerId, originalMessageId);
         startTimer(eventLoop);
     }
 
@@ -87,6 +88,7 @@ final class RetransmissionHandler<T extends MqttMessage> {
         double maxFactor = 1.0 + config.jitterFactor();
         double randomFactor = ThreadLocalRandom.current().nextDouble(minFactor, maxFactor);
         long delayMillisWithJitter = (long) (baseDelay * randomFactor);
+        totalWaitingTimeMillis += delayMillisWithJitter;
 
         timer = eventLoop.schedule(() -> {
             if (stopped || pendingOperation.isCancelled()) {
@@ -95,13 +97,16 @@ final class RetransmissionHandler<T extends MqttMessage> {
 
             attemptCount++;
             if (attemptCount > config.maxAttempts()) {
-                log.debug("[{}][{}] Maximum ({}) retransmission attempts reached", ownerId, originalMessageId, config.maxAttempts());
+                log.info(
+                        "{}MessageID[{}] Gave up after {} retransmission attempts; waited a total of {} ms without receiving acknowledgement",
+                        ownerId, originalMessageId, config.maxAttempts(), totalWaitingTimeMillis
+                );
                 stop();
                 pendingOperation.onMaxRetransmissionAttemptsReached();
                 return;
             }
 
-            log.debug("[{}][{}] Retransmission attempt #{} out of {}", ownerId, originalMessageId, attemptCount, config.maxAttempts());
+            log.info("{}MessageID[{}] Retransmission attempt #{} out of {}", ownerId, originalMessageId, attemptCount, config.maxAttempts());
 
             var originalFixedHeader = originalMessage.fixedHeader();
             var newFixedHeader = new MqttFixedHeader(
@@ -121,7 +126,7 @@ final class RetransmissionHandler<T extends MqttMessage> {
     }
 
     void stop() {
-        log.debug("[{}][{}] Stopping retransmission handler", ownerId, originalMessageId);
+        log.info("{}MessageID[{}] Stopping retransmission handler", ownerId, originalMessageId);
         stopped = true;
         if (timer != null) {
             timer.cancel(true);
