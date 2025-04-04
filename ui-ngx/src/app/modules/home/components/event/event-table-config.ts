@@ -462,7 +462,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case DebugEventType.DEBUG_CALCULATED_FIELD:
         this.cellActionDescriptors.push({
-          name: this.translate.instant('common.test-with-this-message', {test: this.translate.instant(this.testButtonLabel)}),
+          name: this.translate.instant('calculated-fields.test-with-this-message'),
           icon: 'bug_report',
           isEnabled: () => true,
           onAction: (_, entity) => this.debugEventSelected.next(entity.body)

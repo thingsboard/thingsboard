@@ -1059,6 +1059,7 @@
         "delete-text": "Be careful, after the confirmation the calculated field and all related data will become unrecoverable.",
         "delete-multiple-title": "Are you sure you want to delete { count, plural, =1 {1 calculated field} other {# calculated fields} }?",
         "delete-multiple-text": "Be careful, after the confirmation all selected calculated fields will be removed and all related data will become unrecoverable.",
+        "test-with-this-message": "Test with this message",
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
             "arguments-empty": "Arguments should not be empty.",
@@ -1121,8 +1122,6 @@
         "documentation": "Documentation",
         "time-left": "{{time}} left",
         "output": "Output",
-        "test-function": "Test function",
-        "test-with-this-message": "{{test}} with this message",
         "suffix": {
             "s": "s",
             "ms": "ms"
