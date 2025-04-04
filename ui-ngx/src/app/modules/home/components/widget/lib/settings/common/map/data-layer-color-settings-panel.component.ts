@@ -82,9 +82,9 @@ export class DataLayerColorSettingsPanelComponent extends PageComponent implemen
       {
         type: [this.colorSettings?.type || DataLayerColorType.constant, []],
         color: [this.colorSettings?.color, []],
-        rangeKey: [this.colorSettings?.rangeKey, [Validators.required]],
-        range: [this.colorSettings?.range, []],
-        colorFunction: [this.colorSettings?.colorFunction, []]
+        rangeKey: [{value: this.colorSettings?.rangeKey, disabled: this.colorSettings.type !== DataLayerColorType.range}, [Validators.required]],
+        range: [{value: this.colorSettings?.range, disabled: this.colorSettings.type !== DataLayerColorType.range}, []],
+        colorFunction: [{value: this.colorSettings?.colorFunction, disabled: this.colorSettings.type !== DataLayerColorType.function}, []]
       }
     );
     this.colorSettingsFormGroup.get('type').valueChanges.pipe(
@@ -101,7 +101,7 @@ export class DataLayerColorSettingsPanelComponent extends PageComponent implemen
   }
 
   applyColorSettings() {
-    const colorSettings: DataLayerColorSettings = this.colorSettingsFormGroup.value;
+    const colorSettings: DataLayerColorSettings = {...this.colorSettings ,...this.colorSettingsFormGroup.value};
     this.colorSettingsApplied.emit(colorSettings);
   }
 
@@ -122,8 +122,15 @@ export class DataLayerColorSettingsPanelComponent extends PageComponent implemen
     const type: DataLayerColorType = this.colorSettingsFormGroup.get('type').value;
     if (type === DataLayerColorType.range) {
       this.colorSettingsFormGroup.get('rangeKey').enable({emitEvent: false});
+      this.colorSettingsFormGroup.get('range').enable({emitEvent: false});
     } else {
       this.colorSettingsFormGroup.get('rangeKey').disable({emitEvent: false});
+      this.colorSettingsFormGroup.get('range').disable({emitEvent: false});
+    }
+    if (type === DataLayerColorType.function) {
+      this.colorSettingsFormGroup.get('colorFunction').enable({emitEvent: false});
+    } else {
+      this.colorSettingsFormGroup.get('colorFunction').disable({emitEvent: false});
     }
   }
 }
