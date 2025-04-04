@@ -102,30 +102,36 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
       {
         type: [this.colorSettings?.type || ColorType.constant, []],
         color: [this.colorSettings?.color, []],
-        gradient: [{value: this.colorSettings?.gradient || defaultGradient(this.minValue, this.maxValue), disabled: this.colorSettings?.type !== ColorType.gradient}, []],
-        rangeList: [{value: this.colorSettings?.rangeList || defaultRange(), disabled: this.colorSettings?.type !== ColorType.range}, []],
-        colorFunction: [{value: this.colorSettings?.colorFunction, disabled: this.colorSettings?.type !== ColorType.function}, []]
+        gradient: [this.colorSettings?.gradient || defaultGradient(this.minValue, this.maxValue), []],
+        rangeList: [this.colorSettings?.rangeList || defaultRange(), []],
+        colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
     this.colorSettingsFormGroup.get('type').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe((type: ColorType) => {
-      this.colorSettingsFormGroup.get('gradient').disable({emitEvent: false});
-      this.colorSettingsFormGroup.get('rangeList').disable({emitEvent: false});
-      this.colorSettingsFormGroup.get('colorFunction').disable({emitEvent: false});
-      switch (type) {
-        case ColorType.gradient:
-          this.colorSettingsFormGroup.get('gradient').enable({emitEvent: false});
-          break;
-        case ColorType.range:
-          this.colorSettingsFormGroup.get('rangeList').enable({emitEvent: false});
-          break;
-        case ColorType.function:
-          this.colorSettingsFormGroup.get('colorFunction').enable({emitEvent: false});
-          break;
-      }
+    ).subscribe(() => {
+      this.updateValidators();
       setTimeout(() => {this.popover?.updatePosition();}, 0);
     });
+    this.updateValidators();
+  }
+
+  updateValidators() {
+    const type: ColorType = this.colorSettingsFormGroup.get('type').value;
+    this.colorSettingsFormGroup.get('gradient').disable({emitEvent: false});
+    this.colorSettingsFormGroup.get('rangeList').disable({emitEvent: false});
+    this.colorSettingsFormGroup.get('colorFunction').disable({emitEvent: false});
+    switch (type) {
+      case ColorType.gradient:
+        this.colorSettingsFormGroup.get('gradient').enable({emitEvent: false});
+        break;
+      case ColorType.range:
+        this.colorSettingsFormGroup.get('rangeList').enable({emitEvent: false});
+        break;
+      case ColorType.function:
+        this.colorSettingsFormGroup.get('colorFunction').enable({emitEvent: false});
+        break;
+    }
   }
 
   copyColorSettings(comp: ColorSettingsComponent) {
@@ -145,7 +151,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
   }
 
   applyColorSettings() {
-    const colorSettings: ColorSettings = {...this.colorSettings, ...this.colorSettingsFormGroup.value};
+    const colorSettings: ColorSettings = this.colorSettingsFormGroup.getRawValue();
     this.colorSettingsApplied.emit(colorSettings);
   }
 

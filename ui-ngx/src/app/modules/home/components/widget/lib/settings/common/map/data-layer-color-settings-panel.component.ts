@@ -82,9 +82,9 @@ export class DataLayerColorSettingsPanelComponent extends PageComponent implemen
       {
         type: [this.colorSettings?.type || DataLayerColorType.constant, []],
         color: [this.colorSettings?.color, []],
-        rangeKey: [{value: this.colorSettings?.rangeKey, disabled: this.colorSettings.type !== DataLayerColorType.range}, [Validators.required]],
-        range: [{value: this.colorSettings?.range, disabled: this.colorSettings.type !== DataLayerColorType.range}, []],
-        colorFunction: [{value: this.colorSettings?.colorFunction, disabled: this.colorSettings.type !== DataLayerColorType.function}, []]
+        rangeKey: [this.colorSettings?.rangeKey, [Validators.required]],
+        range: [this.colorSettings?.range, []],
+        colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
     this.colorSettingsFormGroup.get('type').valueChanges.pipe(
@@ -101,7 +101,7 @@ export class DataLayerColorSettingsPanelComponent extends PageComponent implemen
   }
 
   applyColorSettings() {
-    const colorSettings: DataLayerColorSettings = {...this.colorSettings ,...this.colorSettingsFormGroup.value};
+    const colorSettings: DataLayerColorSettings = this.colorSettingsFormGroup.getRawValue();
     this.colorSettingsApplied.emit(colorSettings);
   }
 
