@@ -14,17 +14,25 @@
 # limitations under the License.
 #
 
-version: '3.0'
-
 services:
-  tb-edqs1:
+  # Redis sentinel
+  redis-master:
     volumes:
-      - tb-edqs-log-volume:/var/log/tb-edqs
-  tb-edqs2:
+      - redis-sentinel-data-master:/bitnami/redis/data
+  redis-slave:
     volumes:
-      - tb-edqs-log-volume:/var/log/tb-edqs
+      - redis-sentinel-data-slave:/bitnami/redis/data
+  redis-sentinel:
+    volumes:
+      - redis-sentinel-data-sentinel:/bitnami/redis/data
 
 volumes:
-  tb-edqs-log-volume:
+  redis-sentinel-data-master:
     external:
-      name: ${TB_EDQS_LOG_VOLUME}
+      name: ${REDIS_SENTINEL_DATA_VOLUME_MASTER}
+  redis-sentinel-data-slave:
+    external:
+      name: ${REDIS_SENTINEL_DATA_VOLUME_SLAVE}
+  redis-sentinel-data-sentinel:
+    external:
+      name: ${REDIS_SENTINEL_DATA_VOLUME_SENTINEL}

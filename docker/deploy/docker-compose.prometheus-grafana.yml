@@ -14,27 +14,32 @@
 # limitations under the License.
 #
 
-version: '3.0'
+volumes:
+    prometheus_data: {}
+    grafana_data: {}
 
 services:
-  # Redis sentinel
-  redis-master:
-    volumes:
-      - redis-sentinel-data-master:/bitnami/redis/data
-  redis-slave:
-    volumes:
-      - redis-sentinel-data-slave:/bitnami/redis/data
-  redis-sentinel:
-    volumes:
-      - redis-sentinel-data-sentinel:/bitnami/redis/data
 
-volumes:
-  redis-sentinel-data-master:
-    external:
-      name: ${REDIS_SENTINEL_DATA_VOLUME_MASTER}
-  redis-sentinel-data-slave:
-    external:
-      name: ${REDIS_SENTINEL_DATA_VOLUME_SLAVE}
-  redis-sentinel-data-sentinel:
-    external:
-      name: ${REDIS_SENTINEL_DATA_VOLUME_SENTINEL}
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    volumes:
+      - ./monitoring/prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: always
+  grafana:
+    image: grafana/grafana
+    user: "472"
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
+    env_file:
+      - monitoring/grafana/config.monitoring
+    restart: always

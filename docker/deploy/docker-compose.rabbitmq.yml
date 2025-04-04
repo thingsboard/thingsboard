@@ -14,85 +14,46 @@
 # limitations under the License.
 #
 
-version: '3.0'
-
 services:
-  kafka:
-    restart: always
-    image: "bitnami/kafka:3.7.0"
-    ports:
-      - "9092:9092"
-    env_file:
-      - kafka.env
-    depends_on:
-      - zookeeper
   tb-js-executor:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-core1:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-core2:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-rule-engine1:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-rule-engine2:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-mqtt-transport1:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-mqtt-transport2:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-http-transport1:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-http-transport2:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-coap-transport:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-lwm2m-transport:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-snmp-transport:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-vc-executor1:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
   tb-vc-executor2:
     env_file:
-      - queue-kafka.env
-    depends_on:
-      - kafka
+      - ../config-env/queue-rabbitmq.env
