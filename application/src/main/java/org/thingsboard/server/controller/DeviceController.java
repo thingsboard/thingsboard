@@ -15,17 +15,25 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.JsonParseException;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,15 +47,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.*;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -63,17 +73,23 @@ import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.exception.InvalidParametersException;
+import org.thingsboard.server.exception.UncheckedApiException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
+import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.*;
@@ -148,10 +164,34 @@ public class DeviceController extends BaseController {
         if(deviceSettingRequest.getMaxLight() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("maxLight", deviceSettingRequest.getMaxLight().toString()), System.currentTimeMillis()));
         if(deviceSettingRequest.getMinQuality() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("minAirQuality", deviceSettingRequest.getMinQuality().toString()), System.currentTimeMillis()));
         if(deviceSettingRequest.getMaxQuality() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("maxAirQuality", deviceSettingRequest.getMaxQuality().toString()), System.currentTimeMillis()));
+        if(deviceSettingRequest.getTimeSend() != null) attributeKvEntries.add(new BaseAttributeKvEntry(new StringDataEntry("timeSend", deviceSettingRequest.getTimeSend().toString()), System.currentTimeMillis()));
+
 
         attributesService.save(tenantId, entityId, AttributeScope.SHARED_SCOPE, attributeKvEntries);
 
-        return  ResponseEntity.ok(attributesService.save(tenantId, entityId, AttributeScope.SHARED_SCOPE, attributeKvEntries));
+//        return  ResponseEntity.ok(attributesService.save(tenantId, entityId, AttributeScope.SHARED_SCOPE, attributeKvEntries));
+
+        tsSubService.saveAttributes(
+                AttributesSaveRequest.builder()
+                        .tenantId(tenantId)
+                        .entityId(entityId)
+                        .scope(AttributeScope.SHARED_SCOPE)
+                        .entries(attributeKvEntries)
+                        .callback(new FutureCallback<>() {
+                            @Override
+                            public void onSuccess(@Nullable Void result) {
+                                log.info("Attributes saved and MQTT event published for device {}", deviceId);
+                            }
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.error("Failed to publish MQTT event for device {}", deviceId, t);
+                            }
+                        })
+                        .build()
+        );
+
+
+        return ResponseEntity.ok("Settings updated and MQTT notification sent");
     }
 
     // get setting deivce
@@ -975,5 +1015,4 @@ public class DeviceController extends BaseController {
         SecurityUser user = getCurrentUser();
         return deviceBulkImportService.processBulkImport(request, user);
     }
-
 }

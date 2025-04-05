@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -33,12 +34,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.cache.limits.RateLimitService;
+import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserRegister;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
@@ -58,6 +67,10 @@ import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
@@ -75,6 +88,47 @@ public class AuthController extends BaseController {
     private final RateLimitService rateLimitService;
     private final ApplicationEventPublisher eventPublisher;
 
+    @ApiOperation(value = "Create new User (createUser)",
+            notes = "Create a new User in the system. " +
+                    "The user will be created with the 'PENDING' status, and the activation email will be sent to the specified email address. " +
+                    "The user will be able to activate his account by following the link in the email. " +
+                    "The response already contains the [JWT](https://jwt.io) activation and refresh tokens, " +
+                    "to simplify the user activation flow and avoid asking user to input password again after activation.")
+    @PostMapping(value = "/noauth/register")
+    public JwtPair registerUser(@RequestBody UserRegister userRegister) throws ThingsboardException {
+
+        // create customer
+        Customer customer = new Customer();
+        customer.setTitle(userRegister.getFirstName() + " " + userRegister.getLastName());
+        customer.setTenantId(new TenantId(toUUID("60e9a5b0-0211-11f0-87b6-9f1de160d4f5")));
+        customer = customerService.saveCustomer(customer);
+
+        List<AttributeKvEntry> attributes = new ArrayList<>();
+        attributes.add(new BaseAttributeKvEntry(new StringDataEntry("fmcToken", userRegister.getFmcToken()), System.currentTimeMillis()));
+        attributesService.save(customer.getTenantId(), customer.getId(), AttributeScope.SERVER_SCOPE, attributes);
+
+        // create user
+        User user = new User();
+        user.setTenantId(customer.getTenantId());
+        user.setCustomerId(customer.getId());
+        user.setEmail(userRegister.getEmail());
+        user.setFirstName(userRegister.getFirstName());
+        user.setLastName(userRegister.getLastName());
+        user.setAuthority(Authority.CUSTOMER_USER);
+        user = userService.saveUser(customer.getTenantId(), user);
+
+        // Create and save UserCredentials
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(customer.getTenantId(), user.getId());
+        userCredentials = userService.generateUserActivationToken(userCredentials);
+        userCredentials.setPassword(passwordEncoder.encode(userRegister.getPassword()));
+        userCredentials = userService.saveUserCredentials(customer.getTenantId(), userCredentials);
+        userCredentials = userService.activateUserCredentials(customer.getTenantId(), userCredentials.getActivateToken(), userCredentials.getPassword());
+
+        // retuen token
+        UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+        SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
+        return tokenFactory.createTokenPair(securityUser);
+    }
 
     @ApiOperation(value = "Get current User (getUser)",
             notes = "Get the information about the User which credentials are used to perform this REST API call.")

@@ -127,6 +127,14 @@ public class UserController extends BaseController {
     private final EntityQueryService entityQueryService;
     private final EntityService entityService;
 
+
+    @RequestMapping(value = "/hello-zuno", method = RequestMethod.GET)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ResponseBody
+    public String helloZuno() {
+        return "Hello Zuno!";
+    }
+
     // start my code
 
     @ApiOperation(value = "Create User (saveUserV2)",

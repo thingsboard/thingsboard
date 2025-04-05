@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.controller.cusomize;
 
 import lombok.Data;
-import lombok.ToString;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 
-import java.util.List;
-
-@ToString(callSuper = true)
 @Data
-public class DeviceSetting {
-    private Device device;  // Thay đổi từ DeviceId sang Device để có thể lấy được các thông tin của device
-    private List<AttributeKvEntry> attributes;
+public class DeviceType {
+    private String name;
+    private Long number;
+    private Long numberActive;
+    private DeviceProfileId deviceProfileId;
 }
