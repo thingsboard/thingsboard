@@ -687,9 +687,7 @@ public class TenantServiceTest extends AbstractServiceTest {
         deviceProfile.setTransportType(DeviceTransportType.MQTT);
         deviceProfile.setName("Test device profile");
         deviceProfile.setType(DeviceProfileType.DEFAULT);
-        DeviceProfileData profileData = new DeviceProfileData();
-        profileData.setTransportConfiguration(new MqttDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(profileData);
+        deviceProfile.configureData(new MqttDeviceProfileTransportConfiguration());
         return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 

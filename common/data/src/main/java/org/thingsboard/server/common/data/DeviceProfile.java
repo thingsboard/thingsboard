@@ -25,7 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.*;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 
 @Schema
 @Data
@@ -163,6 +164,66 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
                 return null;
             }
         }
+    }
+
+    public DeviceProfile configureData() {
+        configureData(null, null, null, null);
+        return this;
+    }
+
+    public DeviceProfile configureData(DeviceProfileConfiguration config) {
+        configureData(config, null, null, null);
+        return this;
+    }
+
+    public DeviceProfile configureData(DeviceProfileTransportConfiguration transportConfig) {
+        configureData(null, transportConfig, null, null);
+        return this;
+    }
+
+    public DeviceProfile configureData(DeviceProfileProvisionConfiguration provisionConfig) {
+        configureData(null, null, provisionConfig, null);
+        return this;
+    }
+
+    public DeviceProfile configureData(List<DeviceProfileAlarm> alarms) {
+        configureData(null, null, null, alarms);
+        return this;
+    }
+
+    public DeviceProfile configureData(DeviceProfileConfiguration config, DeviceProfileTransportConfiguration transportConfig, DeviceProfileProvisionConfiguration provisionConfig) {
+        configureData(config, transportConfig, provisionConfig, null);
+        return this;
+    }
+
+    public DeviceProfile configureData(DeviceProfileConfiguration config, DeviceProfileTransportConfiguration transportConfig, DeviceProfileProvisionConfiguration provisionConfig, List<DeviceProfileAlarm> alarms) {
+        DeviceProfileData deviceProfileData;
+
+        if (this.profileData != null) {
+            deviceProfileData = profileData;
+        } else {
+            deviceProfileData = new DeviceProfileData();
+        }
+
+        if (config != null) {
+            deviceProfileData.setConfiguration(config);
+        }
+
+        if (transportConfig != null) {
+            deviceProfileData.setTransportConfiguration(transportConfig);
+        }
+
+        if (provisionConfig != null) {
+            deviceProfileData.setProvisionConfiguration(provisionConfig);
+        }
+
+        if (alarms != null) {
+            deviceProfileData.setAlarms(alarms);
+        }
+
+        this.setProfileData(deviceProfileData);
+
+        return this;
     }
 
     public void setProfileData(DeviceProfileData data) {

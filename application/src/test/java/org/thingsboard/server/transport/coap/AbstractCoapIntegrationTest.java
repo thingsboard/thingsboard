@@ -97,7 +97,6 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
             deviceProfile.setProvisionType(provisionType);
             deviceProfile.setProvisionDeviceKey(config.getProvisionKey());
             deviceProfile.setDescription(transportPayloadType.name() + " Test");
-            DeviceProfileData deviceProfileData = new DeviceProfileData();
             DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
             deviceProfile.setTransportType(DeviceTransportType.COAP);
             CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = new CoapDeviceProfileTransportConfiguration();
@@ -133,7 +132,6 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
                 coapDeviceTypeConfiguration = new EfentoCoapDeviceTypeConfiguration();
             }
             coapDeviceProfileTransportConfiguration.setCoapDeviceTypeConfiguration(coapDeviceTypeConfiguration);
-            deviceProfileData.setTransportConfiguration(coapDeviceProfileTransportConfiguration);
             DeviceProfileProvisionConfiguration provisionConfiguration;
             switch (provisionType) {
                 case ALLOW_CREATE_NEW_DEVICES:
@@ -147,9 +145,7 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
                     provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(config.getProvisionSecret());
                     break;
             }
-            deviceProfileData.setProvisionConfiguration(provisionConfiguration);
-            deviceProfileData.setConfiguration(configuration);
-            deviceProfile.setProfileData(deviceProfileData);
+            deviceProfile.configureData(configuration, coapDeviceProfileTransportConfiguration, provisionConfiguration);
             deviceProfile.setDefault(false);
             deviceProfile.setDefaultRuleChainId(null);
             return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
