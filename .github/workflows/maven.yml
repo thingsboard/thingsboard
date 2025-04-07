@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 
-name: Build with Maven
+
+name: Build jar, deb with Maven
 
 on:
   push:
