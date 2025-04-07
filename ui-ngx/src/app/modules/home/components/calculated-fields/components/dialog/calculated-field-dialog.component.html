@@ -49,8 +49,7 @@
           <tb-entity-debug-settings-button
             formControlName="debugSettings"
             [class.mb-5]="fieldFormGroup.get('name').errors && fieldFormGroup.get('name').touched"
-            [entityLabel]="'debug-settings.calculated-field' | translate"
-            [debugLimitsConfiguration]="data.debugLimitsConfiguration"
+            [entityType]="EntityType.CALCULATED_FIELD"
             [additionalActionConfig]="additionalDebugActionConfig"
           />
         </div>
