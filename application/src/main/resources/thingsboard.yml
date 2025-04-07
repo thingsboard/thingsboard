@@ -1422,6 +1422,7 @@ device:
       # Path to the COAP CA root certificate file
       pem_cert_file: "${DEVICE_CONNECTIVITY_COAPS_CA_ROOT_CERT:cafile.pem}"
     gateway:
+      # The docker tag for thingsboard/tb-gateway image used in docker-compose file for gateway launch
       image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:latest}"
 
 # Edges parameters
