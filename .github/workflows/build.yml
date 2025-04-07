@@ -44,7 +44,6 @@ jobs:
 
       - name: Install dependencies with Yarn
         run: yarn install
-        if: files.exists('yarn.lock')
 
       - name: Build with Maven (skip tests)
         run: mvn clean install -DskipTests  # Lệnh build giống local của bạn
