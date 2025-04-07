@@ -1,4 +1,20 @@
-name: Build JAR with Maven
+#
+# Copyright © 2016-2025 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: Build with Maven
 
 on:
   push:
@@ -17,7 +33,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'temurin'  # JDK từ Eclipse Temurin (ổn định)
+          distribution: 'temurin'  # JDK từ Eclipse Temurgin (ổn định)
 
       - name: Build with Maven (skip tests)
         run: mvn clean install -DskipTests  # Lệnh build giống local của bạn
