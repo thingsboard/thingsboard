@@ -15,11 +15,10 @@
     limitations under the License.
 
 -->
-<mat-form-field class="flex-1" [appearance]="inlineField ? 'outline': 'fill'"
+<mat-form-field class="mat-block flex-1" [appearance]="inlineField ? 'outline': 'fill'"
                 [subscriptSizing]="inlineField ? 'dynamic' : 'fixed'"
                 [class]="{'tb-inline-field': inlineField, 'flex': inlineField,
                           'tb-suffix-absolute': (inlineField && !deviceKeyFormGroup.get('key').value)}"
-                class="mat-block"
                 [formGroup]="deviceKeyFormGroup">
   <mat-label *ngIf="!inlineField">{{ (keyType === dataKeyType.attribute
     ? attributeLabel

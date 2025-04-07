@@ -351,7 +351,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 device.setAdditionalInfo(additionalInfo);
                 device = deviceService.saveDevice(device);
 
-                relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
+                relationService.saveRelation(tenantId, new EntityRelation(gateway.getId(), device.getId(), "Created"));
 
                 TbMsgMetaData metaData = new TbMsgMetaData();
                 CustomerId customerId = gateway.getCustomerId();

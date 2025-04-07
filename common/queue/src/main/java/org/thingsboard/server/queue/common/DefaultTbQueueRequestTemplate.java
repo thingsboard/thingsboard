@@ -211,6 +211,15 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     @Override
     public ListenableFuture<Response> send(Request request, long requestTimeoutNs) {
+        return send(request, requestTimeoutNs, null);
+    }
+
+    @Override
+    public ListenableFuture<Response> send(Request request, Integer partition) {
+        return send(request, this.maxRequestTimeoutNs, partition);
+    }
+
+    private ListenableFuture<Response> send(Request request, long requestTimeoutNs, Integer partition) {
         if (pendingRequests.mappingCount() >= maxPendingRequests) {
             log.warn("Pending request map is full [{}]! Consider to increase maxPendingRequests or increase processing performance. Request is {}", maxPendingRequests, request);
             return Futures.immediateFailedFuture(new RuntimeException("Pending request map is full!"));
@@ -227,7 +236,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
             log.warn("Pending request already exists [{}]!", maxPendingRequests);
             return Futures.immediateFailedFuture(new RuntimeException("Pending request already exists !" + requestId));
         }
-        sendToRequestTemplate(request, requestId, future, responseMetaData);
+        sendToRequestTemplate(request, requestId, partition, future, responseMetaData);
         return future;
     }
 
@@ -246,12 +255,17 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         return System.currentTimeMillis();
     }
 
-    void sendToRequestTemplate(Request request, UUID requestId, SettableFuture<Response> future, ResponseMetaData<Response> responseMetaData) {
+    void sendToRequestTemplate(Request request, UUID requestId, Integer partition, SettableFuture<Response> future, ResponseMetaData<Response> responseMetaData) {
         log.trace("[{}] Sending request, key [{}], expTime [{}], request {}", requestId, request.getKey(), responseMetaData.expTime, request);
         if (messagesStats != null) {
             messagesStats.incrementTotal();
         }
-        requestTemplate.send(TopicPartitionInfo.builder().topic(requestTemplate.getDefaultTopic()).build(), request, new TbQueueCallback() {
+        TopicPartitionInfo tpi = TopicPartitionInfo.builder()
+                .topic(requestTemplate.getDefaultTopic())
+                .partition(partition)
+                .useInternalPartition(partition != null)
+                .build();
+        requestTemplate.send(tpi, request, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
                 if (messagesStats != null) {

@@ -42,11 +42,12 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityInfoData, HasTenantId, HasVersion } from '@shared/models/entity.models';
-import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { TbFunction } from '@shared/models/js-function.models';
 import { FormProperty, jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Device } from '@shared/models/device.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -185,12 +186,14 @@ export interface WidgetTypeParameters {
   previewHeight?: string;
   embedTitlePanel?: boolean;
   overflowVisible?: boolean;
+  hideDataTab?: boolean;
   hideDataSettings?: boolean;
   defaultDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   defaultLatestDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   dataKeySettingsFunction?: DataKeySettingsFunction;
   displayRpcMessageToast?: boolean;
   targetDeviceOptional?: boolean;
+  additionalWidgetActionTypes?: WidgetActionType[];
 }
 
 export interface WidgetControllerDescriptor {
@@ -510,8 +513,8 @@ export const datasourcesHasOnlyComparisonAggregation = (datasources?: Array<Data
   return true;
 };
 
-export interface FormattedData {
-  $datasource: Datasource;
+export interface FormattedData<D extends Datasource = Datasource> {
+  $datasource: D;
   entityName: string;
   deviceName: string;
   entityId: string;
@@ -567,6 +570,26 @@ export interface LegendData {
   data: Array<LegendKeyData>;
 }
 
+export enum WidgetHeaderActionButtonType {
+  basic = 'basic',
+  raised = 'raised',
+  stroked = 'stroked',
+  flat = 'flat',
+  icon = 'icon',
+  miniFab = 'miniFab'
+}
+
+export const WidgetHeaderActionButtonTypes = Object.keys(WidgetHeaderActionButtonType) as WidgetHeaderActionButtonType[];
+
+export const widgetHeaderActionButtonTypeTranslationMap = new Map<WidgetHeaderActionButtonType, string>([
+  [WidgetHeaderActionButtonType.basic, 'widget-config.header-button.button-type-basic'],
+  [WidgetHeaderActionButtonType.raised, 'widget-config.header-button.button-type-raised'],
+  [WidgetHeaderActionButtonType.stroked, 'widget-config.header-button.button-type-stroked'],
+  [WidgetHeaderActionButtonType.flat, 'widget-config.header-button.button-type-flat'],
+  [WidgetHeaderActionButtonType.icon, 'widget-config.header-button.button-type-icon'],
+  [WidgetHeaderActionButtonType.miniFab, 'widget-config.header-button.button-type-mini-fab']
+]);
+
 export enum WidgetActionType {
   doNothing = 'doNothing',
   openDashboardState = 'openDashboardState',
@@ -575,7 +598,8 @@ export enum WidgetActionType {
   custom = 'custom',
   customPretty = 'customPretty',
   mobileAction = 'mobileAction',
-  openURL = 'openURL'
+  openURL = 'openURL',
+  placeMapItem = 'placeMapItem'
 }
 
 export enum WidgetMobileActionType {
@@ -586,10 +610,19 @@ export enum WidgetMobileActionType {
   scanQrCode = 'scanQrCode',
   makePhoneCall = 'makePhoneCall',
   getLocation = 'getLocation',
-  takeScreenshot = 'takeScreenshot'
+  takeScreenshot = 'takeScreenshot',
+  deviceProvision = 'deviceProvision',
 }
 
-export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
+export enum MapItemType {
+  marker = 'marker',
+  polygon = 'polygon',
+  rectangle = 'rectangle',
+  circle = 'circle'
+}
+
+export const widgetActionTypes = Object.keys(WidgetActionType)
+  .filter(value => value !== WidgetActionType.placeMapItem) as WidgetActionType[];
 
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   [
@@ -600,7 +633,8 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.custom, 'widget-action.custom' ],
     [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ],
     [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ],
-    [ WidgetActionType.openURL, 'widget-action.open-URL' ]
+    [ WidgetActionType.openURL, 'widget-action.open-URL' ],
+    [ WidgetActionType.placeMapItem, 'widget-action.place-map-item' ],
   ]
 );
 
@@ -613,9 +647,19 @@ export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionTy
     [ WidgetMobileActionType.scanQrCode, 'widget-action.mobile.scan-qr-code' ],
     [ WidgetMobileActionType.makePhoneCall, 'widget-action.mobile.make-phone-call' ],
     [ WidgetMobileActionType.getLocation, 'widget-action.mobile.get-location' ],
-    [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ]
+    [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ],
+    [ WidgetMobileActionType.deviceProvision, 'widget-action.mobile.device-provision' ]
   ]
 );
+
+export const mapItemTypeTranslationMap = new Map<MapItemType, string>(
+  [
+    [ MapItemType.marker, 'widget-action.map-item.marker' ],
+    [ MapItemType.polygon, 'widget-action.map-item.polygon' ],
+    [ MapItemType.rectangle, 'widget-action.map-item.rectangle' ],
+    [ MapItemType.circle, 'widget-action.map-item.circle' ],
+  ]
+)
 
 export interface MobileLaunchResult {
   launched: boolean;
@@ -635,16 +679,25 @@ export interface MobileLocationResult {
   longitude: number;
 }
 
+export interface MobileDeviceProvisionResult {
+  deviceName: string;
+}
+
 export type MobileActionResult = MobileLaunchResult &
                                  MobileImageResult &
                                  MobileQrCodeResult &
-                                 MobileLocationResult;
+                                 MobileLocationResult &
+                                 MobileDeviceProvisionResult;
 
 export interface WidgetMobileActionResult<T extends MobileActionResult> {
   result?: T;
   hasResult: boolean;
   error?: string;
   hasError: boolean;
+}
+
+export interface ProvisionSuccessDescriptor {
+  handleProvisionSuccessFunction: TbFunction;
 }
 
 export interface ProcessImageDescriptor {
@@ -675,7 +728,8 @@ export type WidgetMobileActionDescriptors = ProcessImageDescriptor &
                                             LaunchMapDescriptor &
                                             ScanQrCodeDescriptor &
                                             MakePhoneCallDescriptor &
-                                            GetLocationDescriptor;
+                                            GetLocationDescriptor &
+                                            ProvisionSuccessDescriptor;
 
 export interface WidgetMobileActionDescriptor extends WidgetMobileActionDescriptors {
   type: WidgetMobileActionType;
@@ -692,6 +746,7 @@ export interface CustomActionDescriptor {
 }
 
 export interface WidgetAction extends CustomActionDescriptor {
+  name?: string;
   type: WidgetActionType;
   targetDashboardId?: string;
   targetDashboardStateId?: string;
@@ -713,12 +768,19 @@ export interface WidgetAction extends CustomActionDescriptor {
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
   url?: string;
+  mapItemType?: MapItemType;
 }
 
 export interface WidgetActionDescriptor extends WidgetAction {
   id: string;
   name: string;
+  buttonType?: WidgetHeaderActionButtonType;
+  showIcon?: boolean;
   icon: string;
+  buttonColor?: string;
+  buttonFillColor?: string;
+  buttonBorderColor?: string;
+  customButtonStyle?: string;
   displayName?: string;
   useShowWidgetActionFunction?: boolean;
   showWidgetActionFunction?: TbFunction;
@@ -729,7 +791,13 @@ export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): Wi
   const result: WidgetActionDescriptor = {...descriptor};
   delete result.id;
   delete result.name;
+  delete result.buttonType;
+  delete result.showIcon;
   delete result.icon;
+  delete result.buttonColor;
+  delete result.buttonFillColor;
+  delete result.buttonBorderColor;
+  delete result.customButtonStyle;
   delete result.displayName;
   delete result.useShowWidgetActionFunction;
   delete result.showWidgetActionFunction;
@@ -861,6 +929,7 @@ export interface IWidgetSettingsComponent {
   aliasController: IAliasController;
   callbacks: WidgetConfigCallbacks;
   dataKeyCallbacks: DataKeysCallbacks;
+  functionsOnly: boolean;
   dashboard: Dashboard;
   widget: Widget;
   widgetConfig: WidgetConfigComponentData;
@@ -881,6 +950,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   callbacks: WidgetConfigCallbacks;
 
   dataKeyCallbacks: DataKeysCallbacks;
+
+  functionsOnly: boolean;
 
   dashboard: Dashboard;
 

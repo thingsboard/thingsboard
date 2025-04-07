@@ -40,11 +40,12 @@ import {
   migrateWidgetTypeToDynamicForms,
   Widget,
   widgetActionSources,
+  WidgetActionType,
   WidgetControllerDescriptor,
   WidgetType
 } from '@shared/models/widget.models';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { isFunction, isUndefined } from '@core/utils';
+import { isDefinedAndNotNull, isFunction, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
 import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
@@ -185,7 +186,7 @@ export class WidgetComponentService {
           (window as any).TbCanvasDigitalGauge = mod.TbCanvasDigitalGauge;
         }))
       );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps/map-widget2')).pipe(
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps-legacy/map-widget2')).pipe(
         tap((mod) => {
           (window as any).TbMapWidgetV2 = mod.TbMapWidgetV2;
         }))
@@ -633,6 +634,9 @@ export class WidgetComponentService {
         if (isUndefined(result.typeParameters.overflowVisible)) {
           result.typeParameters.overflowVisible = false;
         }
+        if (isUndefined(result.typeParameters.hideDataTab)) {
+          result.typeParameters.hideDataTab = false;
+        }
         if (isUndefined(result.typeParameters.hideDataSettings)) {
           result.typeParameters.hideDataSettings = false;
         }
@@ -650,6 +654,13 @@ export class WidgetComponentService {
         }
         if (isUndefined(result.typeParameters.targetDeviceOptional)) {
           result.typeParameters.targetDeviceOptional = false;
+        }
+        if (isDefinedAndNotNull(result.typeParameters.additionalWidgetActionTypes)) {
+          if (Array.isArray(result.typeParameters.additionalWidgetActionTypes)) {
+            result.typeParameters.additionalWidgetActionTypes = result.typeParameters.additionalWidgetActionTypes.filter(type => WidgetActionType[type]);
+          } else {
+            result.typeParameters.additionalWidgetActionTypes = null;
+          }
         }
         if (isFunction(widgetTypeInstance.actionSources)) {
           result.actionSources = widgetTypeInstance.actionSources();

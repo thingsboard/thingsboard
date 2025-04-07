@@ -79,4 +79,10 @@
       background: #f3f3f3;
     }
   }
+
+  .ace_tb {
+    &.ace_tbel-utils-func {
+      color: rgb(49, 132, 149);
+    }
+  }
 }

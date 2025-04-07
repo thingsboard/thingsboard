@@ -44,7 +44,7 @@ import {
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-thresholds-panel.component';
 import { IAliasController } from '@core/api/widget-api.models';
 import { DataKey, Datasource, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { deepClone } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';

@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
@@ -87,6 +88,7 @@ public class AppActor extends ContextAwareActor {
             case APP_INIT_MSG:
                 break;
             case PARTITION_CHANGE_MSG:
+            case CF_PARTITIONS_CHANGE_MSG:
                 ctx.broadcastToChildren(msg, true);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
@@ -110,6 +112,17 @@ public class AppActor extends ContextAwareActor {
                 break;
             case SESSION_TIMEOUT_MSG:
                 ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
+                break;
+            case CF_INIT_MSG:
+            case CF_LINK_INIT_MSG:
+            case CF_STATE_RESTORE_MSG:
+                //TODO: use priority from the message body. For example, messages about CF lifecycle are important and Device lifecycle are not.
+                //      same for the Linked telemetry.
+                onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, true);
+                break;
+            case CF_TELEMETRY_MSG:
+            case CF_LINKED_TELEMETRY_MSG:
+                onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, false);
                 break;
             default:
                 return false;
@@ -174,6 +187,19 @@ public class AppActor extends ContextAwareActor {
             log.debug("[{}] Invalid component lifecycle msg: {}", msg.getTenantId(), msg);
         }
     }
+
+    private void onToCalculatedFieldSystemActorMsg(ToCalculatedFieldSystemMsg msg, boolean priority) {
+        getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {
+            if (priority) {
+                tenantActor.tellWithHighPriority(msg);
+            } else {
+                tenantActor.tell(msg);
+            }
+        }, () -> {
+            msg.getCallback().onSuccess();
+        });
+    }
+
 
     private void onToDeviceActorMsg(TenantAwareMsg msg, boolean priority) {
         getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {

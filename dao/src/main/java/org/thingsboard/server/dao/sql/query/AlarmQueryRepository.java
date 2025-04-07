@@ -30,6 +30,6 @@ public interface AlarmQueryRepository {
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
-    long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
+    long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query, Collection<EntityId> orderedEntityIds);
 
 }

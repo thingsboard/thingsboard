@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.device;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,7 +30,9 @@ import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.edqs.fields.DeviceFields;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -174,6 +177,17 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
+    public PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(UUID tenantId, UUID deviceProfileId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(
+                deviceRepository.findIdsByTenantIdAndDeviceProfileId(
+                        tenantId,
+                        deviceProfileId,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)))
+                .mapData(DeviceId::new);
+    }
+
+    @Override
     public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(UUID tenantId,
                                                                            UUID deviceProfileId,
                                                                            OtaPackageType type,
@@ -262,6 +276,12 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink) {
+        log.debug("Find profile device id infos by pageLink [{}]", pageLink);
+        return nativeDeviceRepository.findProfileEntityIdInfos(DaoUtil.toPageable(pageLink));
+    }
+
+    @Override
     public Device findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
         return DaoUtil.getData(deviceRepository.findByTenantIdAndExternalId(tenantId, externalId));
     }
@@ -280,6 +300,16 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     public DeviceId getExternalIdByInternal(DeviceId internalId) {
         return Optional.ofNullable(deviceRepository.getExternalIdById(internalId.getId()))
                 .map(DeviceId::new).orElse(null);
+    }
+
+    @Override
+    public PageData<Device> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<DeviceFields> findNextBatch(UUID id, int batchSize) {
+        return deviceRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

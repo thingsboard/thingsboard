@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { firstValueFrom, merge, Observable, of, Subject } from 'rxjs';
@@ -106,11 +115,18 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   requiredText: string;
 
   @Input()
+  placeholder: string;
+
+  @Input()
   @coerceBoolean()
   useFullEntityId: boolean;
 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
 
   @Input()
   @coerceBoolean()
@@ -375,7 +391,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   private updateView(value: string | EntityId | null, entity: BaseData<EntityId> | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
-      this.entityURL = !entity ? '' : getEntityDetailsPageURL(entity.id.id, entity.id.entityType as EntityType);
+      this.entityURL = (typeof entity === 'string' || !entity) ? '' : getEntityDetailsPageURL(entity.id.id, entity.id.entityType as EntityType);
       this.propagateChange(this.modelValue);
       this.entityChanged.emit(entity);
     }

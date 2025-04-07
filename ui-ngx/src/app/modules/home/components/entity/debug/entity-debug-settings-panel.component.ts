@@ -21,7 +21,7 @@ import {
   Component,
   EventEmitter,
   Input,
-  OnInit
+  OnInit,
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
@@ -34,6 +34,7 @@ import { of, shareReplay, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs/operators';
+import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 
 @Component({
   selector: 'tb-entity-debug-settings-panel',
@@ -48,13 +49,13 @@ import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs
 })
 export class EntityDebugSettingsPanelComponent extends PageComponent implements OnInit {
 
-  @Input() popover: TbPopoverComponent<EntityDebugSettingsPanelComponent>;
   @Input({ transform: booleanAttribute }) failuresEnabled = false;
   @Input({ transform: booleanAttribute }) allEnabled = false;
   @Input() entityLabel: string;
   @Input() allEnabledUntil = 0;
   @Input() maxDebugModeDuration: number;
   @Input() debugLimitsConfiguration: string;
+  @Input() additionalActionConfig: AdditionalDebugActionConfig;
 
   onFailuresControl = this.fb.control(false);
   debugAllControl = this.fb.control(false);
@@ -82,7 +83,8 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
   onSettingsApplied = new EventEmitter<EntityDebugSettings>();
 
   constructor(private fb: FormBuilder,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private popover: TbPopoverComponent<EntityDebugSettingsPanelComponent>) {
     super();
 
     this.debugAllControl.valueChanges.pipe(
@@ -107,7 +109,7 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
   }
 
   onCancel(): void {
-    this.popover?.hide();
+    this.popover.hide();
   }
 
   onApply(): void {

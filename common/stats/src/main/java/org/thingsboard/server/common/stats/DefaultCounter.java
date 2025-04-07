@@ -41,6 +41,10 @@ public class DefaultCounter {
         return aiCounter.get();
     }
 
+    public int getAndClear() {
+        return aiCounter.getAndSet(0);
+    }
+
     public void add(int delta){
         aiCounter.addAndGet(delta);
         micrometerCounter.increment(delta);

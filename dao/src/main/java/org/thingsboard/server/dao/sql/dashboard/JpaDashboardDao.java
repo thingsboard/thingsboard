@@ -16,10 +16,12 @@
 package org.thingsboard.server.dao.sql.dashboard;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.fields.DashboardFields;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -88,6 +90,16 @@ public class JpaDashboardDao extends JpaAbstractDao<DashboardEntity, Dashboard> 
     @Override
     public PageData<DashboardId> findAllIds(PageLink pageLink) {
         return DaoUtil.pageToPageData(dashboardRepository.findAllIds(DaoUtil.toPageable(pageLink)).map(DashboardId::new));
+    }
+
+    @Override
+    public PageData<Dashboard> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<DashboardFields> findNextBatch(UUID id, int batchSize) {
+        return dashboardRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override
