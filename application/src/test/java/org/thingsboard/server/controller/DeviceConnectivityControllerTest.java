@@ -176,7 +176,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         DeviceProfileData deviceProfileData2 = new DeviceProfileData();
         deviceProfileData2.setConfiguration(new DefaultDeviceProfileConfiguration());
         deviceProfileData2.setTransportConfiguration(new CoapDeviceProfileTransportConfiguration());
-        coapProfile.setProfileData(deviceProfileData);
+        coapProfile.setProfileData(deviceProfileData2);
         coapProfile.setDefault(false);
         coapProfile.setDefaultRuleChainId(null);
 
