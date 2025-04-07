@@ -60,6 +60,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -766,6 +767,27 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     @Test
     public void testFindAllByQueriesWithAggregationAndNegativeInterval() throws Exception {
         testFindAllByQueriesWithAggregationAndInvalidInterval(-1);
+    }
+
+    @Test
+    public void testRemoveLatestAndNoValuePresentInDB() throws ExecutionException, InterruptedException, TimeoutException {
+        TsKvEntry tsKvEntry = toTsEntry(TS, stringKvEntry);
+        tsService.save(tenantId, deviceId, tsKvEntry).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+
+        Optional<TsKvEntry> tsKvEntryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+
+        assertThat(tsKvEntryOpt).isPresent();
+        equalsIgnoreVersion(tsKvEntry, tsKvEntryOpt.get());
+        assertThat(tsKvEntryOpt.get().getVersion()).isNotNull();
+
+        tsService.removeLatest(tenantId, deviceId, List.of(STRING_KEY));
+
+        await().alias("Wait until ts last is removed from the cache").atMost(MAX_TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    Optional<TsKvEntry> tsKvEntryAfterRemoval = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+                    assertThat(tsKvEntryAfterRemoval).isNotPresent();
+                });
     }
 
     private void testFindAllByQueriesWithAggregationAndInvalidInterval(long interval) {
