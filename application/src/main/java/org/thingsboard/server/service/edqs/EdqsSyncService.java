@@ -161,13 +161,17 @@ public abstract class EdqsSyncService {
 
     private void processRelationBatch(List<RelationEntity> relations) {
         for (RelationEntity relation : relations) {
-            if (RelationTypeGroup.COMMON.name().equals(relation.getRelationTypeGroup())) {
-                EntityIdInfo entityIdInfo = entityInfoMap.get(relation.getFromId());
-                if (entityIdInfo != null) {
-                    process(entityIdInfo.tenantId(), RELATION, relation.toData());
-                } else {
-                    log.info("Relation from id not found: {} ", relation);
+            try {
+                if (RelationTypeGroup.COMMON.name().equals(relation.getRelationTypeGroup())) {
+                    EntityIdInfo entityIdInfo = entityInfoMap.get(relation.getFromId());
+                    if (entityIdInfo != null) {
+                        process(entityIdInfo.tenantId(), RELATION, relation.toData());
+                    } else {
+                        log.info("Relation from id not found: {} ", relation);
+                    }
                 }
+            } catch (Exception e) {
+                log.error("Failed to sync relation batch: {}", relation, e);
             }
         }
     }
@@ -207,19 +211,23 @@ public abstract class EdqsSyncService {
 
     private void processAttributeBatch(List<AttributeKvEntity> batch) {
         for (AttributeKvEntity attribute : batch) {
-            attribute.setStrKey(getStrKeyOrFetchFromDb(attribute.getId().getAttributeKey()));
-            UUID entityId = attribute.getId().getEntityId();
-            EntityIdInfo entityIdInfo = entityInfoMap.get(entityId);
-            if (entityIdInfo == null) {
-                log.debug("Skipping attribute with entity UUID {} as it is not found in entityInfoMap", entityId);
-                continue;
+            try {
+                attribute.setStrKey(getStrKeyOrFetchFromDb(attribute.getId().getAttributeKey()));
+                UUID entityId = attribute.getId().getEntityId();
+                EntityIdInfo entityIdInfo = entityInfoMap.get(entityId);
+                if (entityIdInfo == null) {
+                    log.debug("Skipping attribute with entity UUID {} as it is not found in entityInfoMap", entityId);
+                    continue;
+                }
+                AttributeKv attributeKv = new AttributeKv(
+                        EntityIdFactory.getByTypeAndUuid(entityIdInfo.entityType(), entityId),
+                        AttributeScope.valueOf(attribute.getId().getAttributeType()),
+                        attribute.toData(),
+                        attribute.getVersion());
+                process(entityIdInfo.tenantId(), ATTRIBUTE_KV, attributeKv);
+            } catch (Exception e) {
+                log.error("Failed to sync attribute batch: {}", attribute, e);
             }
-            AttributeKv attributeKv = new AttributeKv(
-                    EntityIdFactory.getByTypeAndUuid(entityIdInfo.entityType(), entityId),
-                    AttributeScope.valueOf(attribute.getId().getAttributeType()),
-                    attribute.toData(),
-                    attribute.getVersion());
-            process(entityIdInfo.tenantId(), ATTRIBUTE_KV, attributeKv);
         }
     }
 
