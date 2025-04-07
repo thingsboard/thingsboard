@@ -1,0 +1,31 @@
+name: Build JAR with Maven
+
+on:
+  push:
+    branches: [ "master" ]  # Kích hoạt khi push lên master
+  pull_request:
+    branches: [ "master" ]  # Kích hoạt khi có pull request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4  # Checkout code
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'  # JDK từ Eclipse Temurin (ổn định)
+
+      - name: Build with Maven (skip tests)
+        run: mvn clean install -DskipTests  # Lệnh build giống local của bạn
+
+      - name: Upload JAR Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: target-build
+          path: |
+            target/*.jar
+            target/*.deb
