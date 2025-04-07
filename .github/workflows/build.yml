@@ -39,7 +39,7 @@ jobs:
       - name: Set up Nodejs
         uses: actions/setup-node@v4
         with:
-          node-version: '18'  # Phiên bản Nodejs bạn muốn sử dụng
+          node-version: '20.4.0'  # Phiên bản Nodejs bạn muốn sử dụng
 
       - name: Build with Maven (skip tests)
         run: mvn clean install -DskipTests  # Lệnh build giống local của bạn
