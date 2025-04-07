@@ -60,7 +60,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -82,21 +81,21 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     protected static final int MAX_TIMEOUT = 30;
 
-    private static final String STRING_KEY = "stringKey";
+    protected static final String STRING_KEY = "stringKey";
     private static final String LONG_KEY = "longKey";
     private static final String DOUBLE_KEY = "doubleKey";
     private static final String BOOLEAN_KEY = "booleanKey";
 
-    private static final long TS = 42L;
+    protected static final long TS = 42L;
     private static final String DESC_ORDER = "DESC";
 
-    KvEntry stringKvEntry = new StringDataEntry(STRING_KEY, "value");
+    protected KvEntry stringKvEntry = new StringDataEntry(STRING_KEY, "value");
     KvEntry longKvEntry = new LongDataEntry(LONG_KEY, Long.MAX_VALUE);
     KvEntry doubleKvEntry = new DoubleDataEntry(DOUBLE_KEY, Double.MAX_VALUE);
     KvEntry booleanKvEntry = new BooleanDataEntry(BOOLEAN_KEY, Boolean.TRUE);
 
     protected TenantId tenantId;
-    DeviceId deviceId = new DeviceId(Uuids.timeBased());
+    protected DeviceId deviceId = new DeviceId(Uuids.timeBased());
 
     @Before
     public void before() {
@@ -769,27 +768,6 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         testFindAllByQueriesWithAggregationAndInvalidInterval(-1);
     }
 
-    @Test
-    public void testRemoveLatestAndNoValuePresentInDB() throws ExecutionException, InterruptedException, TimeoutException {
-        TsKvEntry tsKvEntry = toTsEntry(TS, stringKvEntry);
-        tsService.save(tenantId, deviceId, tsKvEntry).get(MAX_TIMEOUT, TimeUnit.SECONDS);
-
-        Optional<TsKvEntry> tsKvEntryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
-
-        assertThat(tsKvEntryOpt).isPresent();
-        equalsIgnoreVersion(tsKvEntry, tsKvEntryOpt.get());
-        assertThat(tsKvEntryOpt.get().getVersion()).isNotNull();
-
-        tsService.removeLatest(tenantId, deviceId, List.of(STRING_KEY));
-
-        await().alias("Wait until ts last is removed from the cache").atMost(MAX_TIMEOUT, TimeUnit.SECONDS)
-                .pollInterval(1, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    Optional<TsKvEntry> tsKvEntryAfterRemoval = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
-                    assertThat(tsKvEntryAfterRemoval).isNotPresent();
-                });
-    }
-
     private void testFindAllByQueriesWithAggregationAndInvalidInterval(long interval) {
         BaseReadTsKvQuery query = new BaseReadTsKvQuery(STRING_KEY, TS, TS, interval, 1000, Aggregation.SUM, "DESC");
         Assert.assertThrows(IncorrectParameterException.class, () -> findAndVerifyQueryId(deviceId, query));
@@ -833,11 +811,11 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         tsService.saveWithoutLatest(tenantId, deviceId, tsKvEntry, 0).get(MAX_TIMEOUT, TimeUnit.SECONDS);
     }
 
-    private static TsKvEntry toTsEntry(long ts, KvEntry entry) {
+    protected static TsKvEntry toTsEntry(long ts, KvEntry entry) {
         return new BasicTsKvEntry(ts, entry);
     }
 
-    private static void equalsIgnoreVersion(TsKvEntry expected, TsKvEntry actual) {
+    protected static void equalsIgnoreVersion(TsKvEntry expected, TsKvEntry actual) {
         assertEquals(expected.getKey(), actual.getKey());
         assertEquals(expected.getValue(), actual.getValue());
         assertEquals(expected.getTs(), actual.getTs());
