@@ -25,6 +25,18 @@ declare module 'leaflet' {
   interface MarkerOptions {
     tbMarkerData?: FormattedData<TbMapDatasource>;
   }
+  interface Map {
+    _patterns: {[id: number]: L.TB.Pattern};
+    _defRoot: SVGDefsElement;
+    addPattern(pattern: L.TB.Pattern): Map;
+    removePattern(pattern: L.TB.Pattern): Map;
+    hasPattern(pattern: L.TB.Pattern): boolean;
+    _initDefRoot(): void;
+  }
+
+  interface PathOptions {
+    fillPattern?: L.TB.Pattern | undefined;
+  }
 
   interface TileLayer {
     _url: string;
@@ -150,6 +162,109 @@ declare module 'leaflet' {
       open(buttons: ToolbarButtonOptions[], showCloseButton?: boolean): void;
       close(): void;
       container: HTMLElement;
+    }
+
+    interface PathOptions {
+      fillPattern?: Pattern | undefined;
+    }
+
+    interface PatternOptions {
+      x?: number | undefined;
+      y?: number | undefined;
+      width?: number | undefined;
+      height?: number | undefined;
+      patternUnits?: "userSpaceOnUse" | "objectBoundingBox" | undefined;
+      patternContentUnits?: "userSpaceOnUse" | "objectBoundingBox" | undefined;
+      patternTransform?: string | null | undefined;
+      preserveAspectRatioAlign?: "none" | "xMinYMin" | "xMidYMin" | "xMaxYMin" | "xMinYMid" | "xMidYMid" | "xMaxYMid" | "xMinYMax" | "xMidYMax" | "xMaxYMax" | undefined;
+      preserveAspectRatioMeetOrSlice?: "meet" | "slice" | undefined;
+      viewBox?: [number, number, number, number] | undefined;
+      angle?: number | null | undefined;
+      className?: string | undefined;
+    }
+
+    interface PatternElementOptions {
+      className?: string | undefined;
+    }
+
+    interface PatternShapeOptions extends PatternElementOptions {
+      stroke?: boolean | undefined;
+      color?: string | undefined;
+      weight?: number | undefined;
+      opacity?: number | undefined;
+      lineCap?: "butt" | "round" | "square" | "inherit" | undefined;
+      lineJoin?: "butt" | "round" | "square" | "inherit" | undefined;
+      dashArray?: number[] | null | undefined;
+      dashOffset?: number | null | undefined;
+      fill?: boolean | undefined;
+      fillColor?: string | undefined;
+      fillOpacity?: number | undefined;
+      fillRule?: "nonzero" | "evenodd" | "inherit" | undefined;
+      fillPattern?: Pattern | null | undefined;
+      pointerEvents?: string | undefined;
+      interactive?: boolean | undefined;
+    }
+
+    interface PatternRectOptions extends PatternShapeOptions {
+      x?: number | undefined;
+      y?: number | undefined;
+      width?: number | undefined;
+      height?: number | undefined;
+      rx?: number | null | undefined;
+      ry?: number | null | undefined;
+    }
+
+    interface PatternPathOptions extends PatternShapeOptions {
+      d?: string | null | undefined;
+    }
+
+    interface PatternImageOptions extends PatternElementOptions {
+      imageUrl: string;
+      width: number;
+      height: number;
+      opacity?: number;
+      angle?: number;
+      scale?: number;
+    }
+
+    class Pattern extends L.Evented {
+      constructor(options?: PatternOptions);
+      onAdd(map: L.Map): void;
+      onRemove(map: L.Map): void;
+      redraw(): this;
+      setStyle(style: PatternOptions): this;
+      addTo(map: L.Map): this;
+      remove(): this;
+      removeFrom(map: L.Map): this;
+      addElement(element: PatternElement): PatternElement | undefined;
+    }
+
+    abstract class PatternElement extends L.Class {
+      protected constructor(options?: PatternElementOptions);
+      onAdd(pattern: Pattern): void;
+      addTo(pattern: Pattern): this;
+      redraw(): this;
+      setStyle(style: PatternElementOptions): this;
+    }
+
+    abstract class PatternShape extends PatternElement {
+      protected constructor(options?: PatternShapeOptions);
+      setStyle(style: PatternShapeOptions): this;
+    }
+
+    class PatternRect extends PatternShape {
+      constructor(options?: PatternRectOptions);
+      setStyle(style: PatternRectOptions): this;
+    }
+
+    class PatternPath extends PatternShape {
+      constructor(options?: PatternPathOptions);
+      setStyle(style: PatternPathOptions): this;
+    }
+
+    class PatternImage extends PatternElement {
+      constructor(options: PatternImageOptions);
+      setStyle(style: PatternImageOptions): this;
     }
 
     function sidebar(options: SidebarControlOptions): SidebarControl;

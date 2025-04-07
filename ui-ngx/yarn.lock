@@ -1581,10 +1581,10 @@
   dependencies:
     tslib "^2.3.0"
 
-"@geoman-io/leaflet-geoman-free@2.17.0":
-  version "2.17.0"
-  resolved "https://registry.yarnpkg.com/@geoman-io/leaflet-geoman-free/-/leaflet-geoman-free-2.17.0.tgz#9c8fce5c7a85e5d7ece3a7e5d0b82dbf2329bd81"
-  integrity sha512-vAY9tKB2I/Ui8d3QUBuebWnunI2sGjsfAUTXMMcf5UpISvPz67io4hpbKXid9GNsW6P4LGv1+ZzrmkpM78GzHA==
+"@geoman-io/leaflet-geoman-free@2.18.3":
+  version "2.18.3"
+  resolved "https://registry.yarnpkg.com/@geoman-io/leaflet-geoman-free/-/leaflet-geoman-free-2.18.3.tgz#a41489920b175931fba2a1e8e81347f9e3be5481"
+  integrity sha512-XzxSKRk2UJUVeGiOt1jU2hyo412Qee1Q0Xsfw4A2r8EoUIo48XKSWfusYe7E53fSPr0aYgZxPevnFdcUXimpdA==
   dependencies:
     "@turf/boolean-contains" "^6.5.0"
     "@turf/kinks" "^6.5.0"

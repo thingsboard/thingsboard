@@ -14,45 +14,326 @@
 /// limitations under the License.
 ///
 
-import { DataLayerColorSettings, ShapeDataLayerSettings, TbMapDatasource } from '@shared/models/widget/maps/map.models';
+import {
+  DataLayerColorSettings,
+  loadImageWithAspect,
+  ShapeDataLayerSettings,
+  ShapeFillImageFunction,
+  ShapeFillImageInfo,
+  ShapeFillImageSettings,
+  ShapeFillImageType,
+  ShapeFillStripeSettings,
+  ShapeFillType,
+  TbMapDatasource
+} from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { FormattedData } from '@shared/models/widget.models';
 import { TbLatestMapDataLayer } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
-import { DataLayerColorProcessor } from './map-data-layer';
+import { DataLayerColorProcessor, TbMapDataLayer } from './map-data-layer';
+import { map } from 'rxjs/operators';
+import { isDefinedAndNotNull, objectHashCode, parseTbFunction, safeExecuteTbFunction } from '@core/utils';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+
+export type ShapePatternStorage = {[id: string]: {
+  pattern: L.TB.Pattern;
+  refCount: number;
+}};
+
+interface ShapePatternInfo {
+  type: ShapeFillType;
+  fillColor?: string;
+  fillImage?: {
+    image: string;
+    width: number;
+    height: number;
+    opacity?: number;
+    angle?: number;
+    scale?: number;
+  };
+  fillStripe?: {
+    weight: number;
+    color: string;
+    spaceWeight: number;
+    spaceColor: string;
+    angle: number;
+  }
+}
+
+interface PatternWithId {
+  patternId: string;
+  pattern: L.TB.Pattern;
+}
+
+export interface ShapeStyleInfo {
+  patternId: string;
+  style: L.PathOptions;
+}
+
+abstract class ShapePatternProcessor<S = any> {
+
+  static fromSettings(dataLayer: TbMapDataLayer,
+                      settings: ShapeDataLayerSettings): ShapePatternProcessor {
+    switch (settings.fillType) {
+      case ShapeFillType.color:
+        return new ShapeColorPatternProcessor(dataLayer, settings.fillColor);
+      case ShapeFillType.image:
+        return new ShapeImagePatternProcessor(dataLayer, settings.fillImage);
+      case ShapeFillType.stripe:
+        return new ShapeStripePatternProcessor(dataLayer, settings.fillStripe);
+    }
+  }
+
+  protected constructor(protected dataLayer: TbMapDataLayer,
+                        protected settings: S) {}
+
+  public abstract setup(): Observable<any>;
+
+  protected abstract computePattern(data: FormattedData<TbMapDatasource>,
+                                    dsData: FormattedData<TbMapDatasource>[]): Observable<ShapePatternInfo>;
+
+  public processPattern(data: FormattedData<TbMapDatasource>,
+                        dsData: FormattedData<TbMapDatasource>[], prevPatternId?: string): Observable<PatternWithId> {
+    return this.computePattern(data, dsData).pipe(
+      map((patternInfo) => this.patternFromPatternInfo(patternInfo, prevPatternId))
+    );
+  }
+
+  private patternFromPatternInfo(patternInfo: ShapePatternInfo, prevPatternId?: string): PatternWithId {
+    const patternId = objectHashCode(patternInfo) + '';
+    let pattern = this.dataLayer.getMap().useShapePattern(patternId, prevPatternId);
+    if (!pattern) {
+      pattern = this.constructPattern(patternInfo);
+      this.dataLayer.getMap().storeShapePattern(patternId, pattern);
+    }
+    return {
+      pattern,
+      patternId
+    };
+  }
+
+  private constructPattern(patternInfo: ShapePatternInfo): L.TB.Pattern {
+    let pattern: L.TB.Pattern;
+    if (patternInfo.type === ShapeFillType.color) {
+      pattern = new L.TB.Pattern({width: 1, height: 1});
+      const fillRect = new L.TB.PatternRect({x: 0, y: 0, width: 1, height: 1,
+        fillOpacity: 1, stroke: false, fill: true, fillColor: patternInfo.fillColor});
+      pattern.addElement(fillRect);
+    } else if (patternInfo.type === ShapeFillType.image) {
+      pattern = new L.TB.Pattern({
+        width: 1,
+        height: 1,
+        patternUnits: 'objectBoundingBox',
+        patternContentUnits: 'objectBoundingBox',
+        preserveAspectRatioAlign: 'xMidYMid',
+        preserveAspectRatioMeetOrSlice: 'slice',
+        viewBox: [0,0,patternInfo.fillImage.width,patternInfo.fillImage.height]
+      });
+      const imagePatternShape = new L.TB.PatternImage({
+        imageUrl: patternInfo.fillImage.image,
+        width: patternInfo.fillImage.width,
+        height: patternInfo.fillImage.height,
+        opacity: patternInfo.fillImage.opacity,
+        angle: patternInfo.fillImage.angle,
+        scale: patternInfo.fillImage.scale
+      });
+      pattern.addElement(imagePatternShape);
+    } else if (patternInfo.type === ShapeFillType.stripe) {
+      const stripeInfo = patternInfo.fillStripe;
+      const height = stripeInfo.weight + stripeInfo.spaceWeight;
+      pattern = new L.TB.Pattern({width: 8, height, angle: stripeInfo.angle});
+      const stripePattern = new L.TB.PatternPath({
+        d: 'M0 ' + stripeInfo.weight / 2 + ' H ' + 8,
+        stroke: true,
+        weight: stripeInfo.weight,
+        color: stripeInfo.color,
+        opacity: 1
+      });
+      pattern.addElement(stripePattern);
+      const spacePattern = new L.TB.PatternPath({
+        d: 'M0 ' + (stripeInfo.weight + stripeInfo.spaceWeight / 2) + ' H ' + 8,
+        stroke: true,
+        weight: stripeInfo.spaceWeight,
+        color: stripeInfo.spaceColor,
+        opacity: 1
+      });
+      pattern.addElement(spacePattern);
+    }
+    return pattern;
+  }
+
+}
+
+class ShapeColorPatternProcessor extends ShapePatternProcessor<DataLayerColorSettings> {
+
+  private fillColorProcessor: DataLayerColorProcessor;
+
+  constructor(protected dataLayer: TbMapDataLayer,
+              protected settings: DataLayerColorSettings) {
+    super(dataLayer, settings);
+  }
+
+  public setup(): Observable<any> {
+    this.fillColorProcessor = new DataLayerColorProcessor(this.dataLayer, this.settings);
+    return this.fillColorProcessor.setup();
+  }
+
+  protected computePattern(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): Observable<ShapePatternInfo> {
+    const fillColor = this.fillColorProcessor.processColor(data, dsData);
+    const shapePatternInfo: ShapePatternInfo = {
+      type: ShapeFillType.color,
+      fillColor
+    };
+    return of(shapePatternInfo);
+  }
+
+}
+
+class ShapeImagePatternProcessor extends ShapePatternProcessor<ShapeFillImageSettings> {
+
+  private shapeFillImageFunction: CompiledTbFunction<ShapeFillImageFunction>;
+
+  constructor(protected dataLayer: TbMapDataLayer,
+              protected settings: ShapeFillImageSettings) {
+    super(dataLayer, settings);
+  }
+
+  public setup(): Observable<any> {
+    if (this.settings.type === ShapeFillImageType.function) {
+      return parseTbFunction<ShapeFillImageFunction>(this.dataLayer.getCtx().http, this.settings.imageFunction, ['data', 'images', 'dsData']).pipe(
+        map((parsed) => {
+          this.shapeFillImageFunction = parsed;
+          return null;
+        })
+      );
+    } else {
+      return of(null);
+    }
+  }
+
+  protected computePattern(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): Observable<ShapePatternInfo> {
+    let currentImage: ShapeFillImageInfo;
+    if (this.settings.type === ShapeFillImageType.function) {
+      currentImage = safeExecuteTbFunction(this.shapeFillImageFunction, [data, this.settings.images, dsData]);
+    }
+    if (!currentImage?.url) {
+      currentImage = {
+        url: this.settings.image,
+        opacity: this.settings.opacity,
+        angle: this.settings.angle,
+        scale: this.settings.scale
+      };
+    }
+    return this.loadPatternInfoFromImage(currentImage);
+  }
+
+  private loadPatternInfoFromImage(image: ShapeFillImageInfo): Observable<ShapePatternInfo> {
+    const imageUrl = image?.url || '/assets/widget-preview-empty.svg';
+    const opacity = isDefinedAndNotNull(image?.opacity) ? image.opacity : 1;
+    const imagePipe = this.dataLayer.getCtx().$injector.get(ImagePipe);
+    return loadImageWithAspect(imagePipe, imageUrl).pipe(
+      map((res) => {
+        const shapePatternInfo: ShapePatternInfo = {
+          type: ShapeFillType.image,
+          fillImage: {
+            image: res.url,
+            width: res.width,
+            height: res.height,
+            opacity,
+            angle: image?.angle,
+            scale: image?.scale
+          }
+        };
+        return shapePatternInfo;
+      })
+    );
+  }
+}
+
+class ShapeStripePatternProcessor extends ShapePatternProcessor<ShapeFillStripeSettings> {
+
+  private colorProcessor: DataLayerColorProcessor;
+  private spaceColorProcessor: DataLayerColorProcessor;
+
+  constructor(protected dataLayer: TbMapDataLayer,
+              protected settings: ShapeFillStripeSettings) {
+    super(dataLayer, settings);
+  }
+
+  public setup(): Observable<any> {
+    this.colorProcessor = new DataLayerColorProcessor(this.dataLayer, this.settings.color);
+    this.spaceColorProcessor = new DataLayerColorProcessor(this.dataLayer, this.settings.spaceColor);
+    return forkJoin([this.colorProcessor.setup(), this.spaceColorProcessor.setup()]);
+  }
+
+  protected computePattern(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): Observable<ShapePatternInfo> {
+    const color = this.colorProcessor.processColor(data, dsData);
+    const spaceColor = this.spaceColorProcessor.processColor(data, dsData);
+    return of({
+      type: ShapeFillType.stripe,
+      fillStripe: {
+        color,
+        spaceColor,
+        angle: this.settings.angle,
+        weight: this.settings.weight,
+        spaceWeight: this.settings.spaceWeight
+      }
+    });
+  }
+
+}
 
 export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L extends TbLatestMapDataLayer<S,L>> extends TbLatestMapDataLayer<S, L> {
 
-  public fillColorProcessor: DataLayerColorProcessor;
-  public strokeColorProcessor: DataLayerColorProcessor;
+  private shapePatternProcessor: ShapePatternProcessor;
+  private strokeColorProcessor: DataLayerColorProcessor;
 
   protected constructor(protected map: TbMap<any>,
                         inputSettings: S) {
     super(map, inputSettings);
   }
 
-  public getShapeStyle(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.PathOptions {
-    const fill = this.fillColorProcessor.processColor(data, dsData);
-    const stroke = this.strokeColorProcessor.processColor(data, dsData);
-    return {
-      fill: true,
-      fillColor: fill,
-      color: stroke,
-      weight: this.settings.strokeWeight,
-      fillOpacity: 1,
-      opacity: 1
-    };
+  public getShapeStyle(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[], fillPatternId: string): Observable<ShapeStyleInfo> {
+    return this.shapePatternProcessor.processPattern(data, dsData, fillPatternId).pipe(
+      map((patternWithId) => {
+        const stroke = this.strokeColorProcessor.processColor(data, dsData);
+        const style: L.PathOptions = {
+          fill: true,
+          fillPattern: patternWithId.pattern,
+          color: stroke,
+          weight: this.settings.strokeWeight,
+          fillOpacity: 1,
+          opacity: 1
+        };
+        return {
+          patternId: patternWithId.patternId,
+          style
+        }
+      })
+    );
   }
 
   protected allColorSettings(): DataLayerColorSettings[] {
-    return [this.settings.fillColor, this.settings.strokeColor];
+    const colorSettings:  DataLayerColorSettings[] = [this.settings.strokeColor];
+    if (this.settings.fillType === ShapeFillType.color) {
+      colorSettings.push(this.settings.fillColor)
+    } else if (this.settings.fillType === ShapeFillType.stripe) {
+      if (this.settings.fillStripe?.color) {
+        colorSettings.push(this.settings.fillStripe.color);
+      }
+      if (this.settings.fillStripe?.spaceColor) {
+        colorSettings.push(this.settings.fillStripe.spaceColor);
+      }
+    }
+    return colorSettings;
   }
 
   protected doSetup(): Observable<any> {
-    this.fillColorProcessor = new DataLayerColorProcessor(this, this.settings.fillColor);
+    this.shapePatternProcessor = ShapePatternProcessor.fromSettings(this, this.settings);
     this.strokeColorProcessor = new DataLayerColorProcessor(this, this.settings.strokeColor);
-    return forkJoin([this.fillColorProcessor.setup(), this.strokeColorProcessor.setup()]);
+    return forkJoin([this.shapePatternProcessor.setup(), this.strokeColorProcessor.setup()]);
   }
 
 }

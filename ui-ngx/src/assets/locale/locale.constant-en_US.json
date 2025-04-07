@@ -8011,8 +8011,6 @@
                 "groups": "Groups",
                 "groups-hint": "List of group names assigned to the overlay, used to toggle its visibility on the map.",
                 "color": "Color",
-                "fill-color": "Fill color",
-                "stroke": "Stroke",
                 "color-settings": "Color settings",
                 "color-type-constant": "Constant",
                 "color-type-range": "Range",
@@ -8126,6 +8124,27 @@
                 "points": {
                     "points": "Points",
                     "point-tooltip": "Point tooltip"
+                },
+                "shape": {
+                    "fill": "Fill",
+                    "fill-type-color": "Color",
+                    "fill-type-stripe": "Stripe",
+                    "fill-type-image": "Image",
+                    "color": "Color",
+                    "stripe": "Stripe",
+                    "image": "Image",
+                    "stroke": "Stroke",
+                    "fill-image": "Fill image",
+                    "fill-image-type-image": "Image",
+                    "fill-image-type-function": "Function",
+                    "opacity": "Opacity",
+                    "angle": "Rotation angle",
+                    "scale": "Scale",
+                    "fill-image-function": "Shape fill image function",
+                    "fill-images": "Shape fill images",
+                    "stripe-pattern": "Stripe pattern",
+                    "first-stripe": "First stripe",
+                    "second-stripe": "Second stripe"
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",
