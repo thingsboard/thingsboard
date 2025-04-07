@@ -171,7 +171,7 @@ public abstract class EdqsSyncService {
                     }
                 }
             } catch (Exception e) {
-                log.error("Failed to sync relation batch: {}", relation, e);
+                log.error("Failed to sync relation: {}", relation, e);
             }
         }
     }
@@ -226,7 +226,7 @@ public abstract class EdqsSyncService {
                         attribute.getVersion());
                 process(entityIdInfo.tenantId(), ATTRIBUTE_KV, attributeKv);
             } catch (Exception e) {
-                log.error("Failed to sync attribute batch: {}", attribute, e);
+                log.error("Failed to sync attribute: {}", attribute, e);
             }
         }
     }
