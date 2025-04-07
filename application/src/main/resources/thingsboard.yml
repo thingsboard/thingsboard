@@ -1421,6 +1421,8 @@ device:
       port: "${DEVICE_CONNECTIVITY_COAPS_PORT:5684}"
       # Path to the COAP CA root certificate file
       pem_cert_file: "${DEVICE_CONNECTIVITY_COAPS_CA_ROOT_CERT:cafile.pem}"
+    gateway:
+      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:latest}"
 
 # Edges parameters
 edges:

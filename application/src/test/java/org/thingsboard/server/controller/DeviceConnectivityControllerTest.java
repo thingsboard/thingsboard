@@ -298,7 +298,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 "services:\n" +
                 "  # ThingsBoard IoT Gateway Service Configuration\n" +
                 "  tb-gateway:\n" +
-                "    image: thingsboard/tb-gateway\n" +
+                "    image: thingsboard/tb-gateway:latest\n" +
                 "    container_name: tb-gateway\n" +
                 "    restart: always\n" +
                 "\n" +
