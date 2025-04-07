@@ -19,9 +19,9 @@ name: Build jar, deb with Maven
 
 on:
   push:
-    branches: [ "master" ]  # Kích hoạt khi push lên master
+    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]  # Kích hoạt khi có pull request
+    branches: [ "master" ]
 
 jobs:
   build:
@@ -36,16 +36,28 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Set up Nodejs
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '16'  # Khuyên dùng với ThingsBoard
 
-      - name: Install Yarn
+      - name: Install Yarn globally
         run: npm install -g yarn
 
+      - name: Check Node and Yarn version
+        run: |
+          node -v
+          yarn -v
+
+      - name: Debug yarn install in ui-ngx
+        run: |
+          cd ui-ngx
+          echo "Running yarn install manually in ui-ngx..."
+          yarn install --verbose || true  # Không dừng pipeline để bạn thấy log lỗi
+          echo "Finished manual yarn install step."
+
       - name: Build with Maven (skip tests)
-        run: mvn clean install -DskipTests
+        run: mvn clean install -DskipTests -X
 
       - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
