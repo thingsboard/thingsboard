@@ -71,7 +71,7 @@ final class RetransmissionHandler<T extends MqttMessage> {
         if (handler == null) {
             throw new NullPointerException("handler");
         }
-        log.info("{}MessageID[{}] Starting retransmission handler", ownerId, originalMessageId);
+        log.debug("{}MessageID[{}] Starting retransmission handler", ownerId, originalMessageId);
         startTimer(eventLoop);
     }
 
@@ -97,7 +97,7 @@ final class RetransmissionHandler<T extends MqttMessage> {
 
             attemptCount++;
             if (attemptCount > config.maxAttempts()) {
-                log.info(
+                log.debug(
                         "{}MessageID[{}] Gave up after {} retransmission attempts; waited a total of {} ms without receiving acknowledgement",
                         ownerId, originalMessageId, config.maxAttempts(), totalWaitingTimeMillis
                 );
@@ -106,7 +106,7 @@ final class RetransmissionHandler<T extends MqttMessage> {
                 return;
             }
 
-            log.info("{}MessageID[{}] Retransmission attempt #{} out of {}", ownerId, originalMessageId, attemptCount, config.maxAttempts());
+            log.debug("{}MessageID[{}] Retransmission attempt #{} out of {}", ownerId, originalMessageId, attemptCount, config.maxAttempts());
 
             var originalFixedHeader = originalMessage.fixedHeader();
             var newFixedHeader = new MqttFixedHeader(
@@ -126,7 +126,7 @@ final class RetransmissionHandler<T extends MqttMessage> {
     }
 
     void stop() {
-        log.info("{}MessageID[{}] Stopping retransmission handler", ownerId, originalMessageId);
+        log.debug("{}MessageID[{}] Stopping retransmission handler", ownerId, originalMessageId);
         stopped = true;
         if (timer != null) {
             timer.cancel(true);
