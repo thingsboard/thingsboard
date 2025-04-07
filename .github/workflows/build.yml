@@ -40,10 +40,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'  # Phiên bản Nodejs bạn muốn sử dụng
-          cache: 'yarn'  # Cache cho Yarn
 
-      - name: Install dependencies with Yarn
-        run: yarn install
+      - name: Install dependencies with npm
+        run: npm install
 
       - name: Build with Maven (skip tests)
         run: mvn clean install -DskipTests  # Lệnh build giống local của bạn
