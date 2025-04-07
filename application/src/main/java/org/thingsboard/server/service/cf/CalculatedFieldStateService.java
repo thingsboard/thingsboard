@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.cf;
 
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.exception.CalculatedFieldStateException;
@@ -30,7 +29,7 @@ import java.util.Set;
 
 public interface CalculatedFieldStateService {
 
-    void init(TenantId tenantId, PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer);
+    void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer);
 
     void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) throws CalculatedFieldStateException;
 
@@ -38,10 +37,10 @@ public interface CalculatedFieldStateService {
 
     void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions);
 
-    void delete(QueueKey queueKey, Set<TopicPartitionInfo> partitions);
+    void delete(Set<TopicPartitionInfo> partitions);
 
-    Set<TopicPartitionInfo> getPartitions(QueueKey queueKey);
+    Set<TopicPartitionInfo> getPartitions();
 
-    void stop(QueueKey queueKey);
+    void stop();
 
 }

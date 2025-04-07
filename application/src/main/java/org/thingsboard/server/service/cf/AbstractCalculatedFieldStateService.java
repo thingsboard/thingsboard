@@ -30,9 +30,7 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
@@ -43,7 +41,7 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
     @Autowired
     private ActorSystemContext actorSystemContext;
 
-    protected Map<QueueKey, QueueStateService<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>>> stateServices = new ConcurrentHashMap<>();
+    protected QueueStateService<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>> stateService;
 
     @Override
     public final void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
@@ -74,22 +72,22 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
 
     @Override
     public void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
-        stateServices.get(queueKey).update(queueKey, partitions);
+        stateService.update(queueKey, partitions);
     }
 
     @Override
-    public void delete(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
-        stateServices.get(queueKey).delete(partitions);
+    public void delete(Set<TopicPartitionInfo> partitions) {
+        stateService.delete(partitions);
     }
 
     @Override
-    public Set<TopicPartitionInfo> getPartitions(QueueKey queueKey) {
-        return stateServices.get(queueKey).getPartitions().values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+    public Set<TopicPartitionInfo> getPartitions() {
+        return stateService.getPartitions().values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
     @Override
-    public void stop(QueueKey queueKey) {
-        stateServices.get(queueKey).stop();
+    public void stop() {
+        stateService.stop();
     }
 
 }

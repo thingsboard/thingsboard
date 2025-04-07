@@ -67,8 +67,8 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
     private final AtomicInteger counter = new AtomicInteger();
 
     @Override
-    public void init(TenantId tenantId, PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
-        var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
+    public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
+        var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_STATES_QUEUE_NAME);
         PartitionedQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateProto>> stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>>create()
                 .queueKey(queueKey)
                 .topic(partitionService.getTopic(queueKey))
@@ -91,16 +91,16 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                         }
                     }
                 })
-                .consumerCreator((config, partitionId) -> queueFactory.createCalculatedFieldStateConsumer(tenantId))
+                .consumerCreator((queueConfig, partitionId) -> queueFactory.createCalculatedFieldStateConsumer())
                 .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .scheduler(eventConsumer.getScheduler())
                 .taskExecutor(eventConsumer.getTaskExecutor())
                 .build();
-        super.stateServices.put(queueKey, KafkaQueueStateService.<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>>builder()
+        super.stateService = KafkaQueueStateService.<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>>builder()
                 .eventConsumer(eventConsumer)
                 .stateConsumer(stateConsumer)
-                .build());
+                .build();
         this.stateProducer = (TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>>) queueFactory.createCalculatedFieldStateProducer();
     }
 
@@ -148,8 +148,8 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
     }
 
     @Override
-    public void stop(QueueKey queueKey) {
-        super.stop(queueKey);
+    public void stop() {
+        super.stop();
         stateProducer.stop();
     }
 
