@@ -39,9 +39,16 @@ jobs:
         run: mvn clean install -DskipTests  # Lệnh build giống local của bạn
 
       - name: Upload JAR Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: target-build
           path: |
+            target/*.jar
+            target/*.deb
+      - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files:  |
             target/*.jar
             target/*.deb
