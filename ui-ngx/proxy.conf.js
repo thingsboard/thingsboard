@@ -18,20 +18,6 @@ const wsForwardUrl = "ws://localhost:8080";
 const ruleNodeUiforwardUrl = forwardUrl;
 
 const PROXY_CONFIG = {
-  "/api/resource/js_module/system/gateway-management-extension.js": {
-    "target": "http://localhost:4201",
-    "secure": false,
-    "pathRewrite": {
-      "^/api/resource/js_module/system/gateway-management-extension.js": "/static/gateway/gateway-management-extension.js"
-    }
-  },
-  "/api/resource/js_module/system/gateway-management-extension.js.map": {
-    "target": "http://localhost:4201",
-    "secure": false,
-    "pathRewrite": {
-      "^/api/resource/js_module/system/gateway-management-extension.js.map": "/static/gateway/gateway-management-extension.js.map"
-    }
-  },
   "/api": {
     "target": forwardUrl,
     "secure": false,
