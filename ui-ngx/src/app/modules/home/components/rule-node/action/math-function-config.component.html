@@ -32,6 +32,12 @@
     <legend class="group-title">{{'rule-node-config.custom-expression-field-input' | translate }} *</legend>
     <mat-form-field class="mat-block no-margin-top flex-1" subscriptSizing="dynamic">
       <input matInput formControlName="customFunction" required/>
+      <div  matSuffix
+            class="pr-2"
+            [tb-help-popup]="'math/math-methods_fn'"
+            tb-help-popup-placement="left"
+            [tb-help-popup-style]="{maxWidth: '970px'}">
+      </div>
       <mat-error *ngIf="mathFunctionConfigForm.get('customFunction').hasError('required')" translate>
         rule-node-config.custom-expression-field-input-required
       </mat-error>
@@ -73,7 +79,7 @@
           <input matInput formControlName="key" required/>
           <mat-icon class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon" matSuffix
                     color="primary"
-                    matTooltip="{{ 'rule-node-config.math-templatization-tooltip' | translate }}">help</mat-icon>
+                    matTooltip="{{ 'rule-node-config.math-templatization-tooltip' | translate }}">info</mat-icon>
           <mat-error *ngIf="mathFunctionConfigForm.get('result.key').hasError('required')" translate>
             rule-node-config.key-field-input-required
           </mat-error>
