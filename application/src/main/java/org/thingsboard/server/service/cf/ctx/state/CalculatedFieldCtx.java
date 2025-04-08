@@ -18,8 +18,6 @@ package org.thingsboard.server.service.cf.ctx.state;
 import lombok.Data;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
-import net.objecthunter.exp4j.function.Function;
-import net.objecthunter.exp4j.function.Functions;
 import org.mvel2.MVEL;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -45,6 +43,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.thingsboard.common.util.ExpressionFunctionsUtil.userDefinedFunctions;
 
 @Data
 public class CalculatedFieldCtx {
@@ -281,51 +281,5 @@ public class CalculatedFieldCtx {
     public String getSizeExceedsLimitMessage() {
         return "Failed to init CF state. State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
     }
-
-    private static final List<Function> userDefinedFunctions = List.of(
-            new Function("ln") {
-                @Override
-                public double apply(double... args) {
-                    return Math.log(args[0]);
-                }
-            },
-            new Function("lg") {
-                @Override
-                public double apply(double... args) {
-                    return Math.log10(args[0]);
-                }
-            },
-            new Function("logab", 2) {
-                @Override
-                public double apply(double... args) {
-                    return Math.log(args[1]) / Math.log(args[0]);
-                }
-            },
-
-            // Manually listing built-in functions to avoid inefficient equals-based lookup in Functions.getBuiltinFunction during each evaluation.
-            Functions.getBuiltinFunction("sin"),
-            Functions.getBuiltinFunction("cos"),
-            Functions.getBuiltinFunction("tan"),
-            Functions.getBuiltinFunction("cot"),
-            Functions.getBuiltinFunction("log"),
-            Functions.getBuiltinFunction("log2"),
-            Functions.getBuiltinFunction("log10"),
-            Functions.getBuiltinFunction("log1p"),
-            Functions.getBuiltinFunction("abs"),
-            Functions.getBuiltinFunction("acos"),
-            Functions.getBuiltinFunction("asin"),
-            Functions.getBuiltinFunction("atan"),
-            Functions.getBuiltinFunction("cbrt"),
-            Functions.getBuiltinFunction("floor"),
-            Functions.getBuiltinFunction("sinh"),
-            Functions.getBuiltinFunction("sqrt"),
-            Functions.getBuiltinFunction("tanh"),
-            Functions.getBuiltinFunction("cosh"),
-            Functions.getBuiltinFunction("ceil"),
-            Functions.getBuiltinFunction("pow"),
-            Functions.getBuiltinFunction("exp"),
-            Functions.getBuiltinFunction("expm1"),
-            Functions.getBuiltinFunction("signum")
-    );
 
 }

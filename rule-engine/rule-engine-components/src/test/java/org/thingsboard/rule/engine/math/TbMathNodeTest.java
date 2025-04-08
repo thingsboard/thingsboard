@@ -56,6 +56,8 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -846,6 +848,42 @@ public class TbMathNodeTest {
 
         softly.assertAll();
         verify(ctx, never()).tellFailure(any(), any());
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void testCustomFunctions(String customFunction, double result) {
+        var node = initNodeWithCustomFunction(customFunction,
+                new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null),
+                new TbMathArgument("a", TbMathArgumentType.MESSAGE_BODY, "argumentA"),
+                new TbMathArgument("b", TbMathArgumentType.MESSAGE_BODY, "argumentB")
+        );
+
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(originator)
+                .metaData(TbMsgMetaData.EMPTY)
+                .data("{\"argumentA\":2,\"argumentB\":5}")
+                .build();
+
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
+        TbMsg outMsg = msgCaptor.getValue();
+        assertThat(outMsg).isNotNull();
+        assertThat(outMsg.getData()).isNotNull();
+        var resultJson = JacksonUtil.toJsonNode(outMsg.getData());
+        assertThat(resultJson.has("result")).isTrue();
+        assertThat(resultJson.get("result").asDouble()).isEqualTo(new BigDecimal(result).setScale(2, RoundingMode.HALF_UP).doubleValue());
+    }
+
+    private static Stream<Arguments> testCustomFunctions() {
+        return Stream.of(
+                Arguments.of("ln(a)", Math.log(2)),
+                Arguments.of("lg(a)", Math.log10(2)),
+                Arguments.of("logab(a, b)", Math.log(5) / Math.log(2))
+        );
     }
 
     static class RuleDispatcherExecutor extends AbstractListeningExecutor {
