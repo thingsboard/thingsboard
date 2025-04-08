@@ -49,6 +49,7 @@ import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
@@ -222,7 +223,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
     }
 
     @Override
-    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         DeviceId deviceId = new DeviceId(edgeEvent.getEntityId());
         switch (edgeEvent.getAction()) {
             case ADDED:

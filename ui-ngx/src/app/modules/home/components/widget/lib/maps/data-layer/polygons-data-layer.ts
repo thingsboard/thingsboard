@@ -22,7 +22,7 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
+import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable } from 'rxjs';
 import { isNotEmptyStr, isString } from '@core/utils';
@@ -36,7 +36,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
 
   private polygonContainer: L.FeatureGroup;
   private polygon: L.Polygon;
-  private polygonStyle: L.PathOptions;
+  private polygonStyleInfo: ShapeStyleInfo;
   private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -54,14 +54,27 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     this.polygon.options.bubblingMouseEvents = !this.dataLayer.isEditMode();
   }
 
+  public remove() {
+    super.remove();
+    if (this.polygonStyleInfo?.patternId) {
+      this.dataLayer.getMap().unUseShapePattern(this.polygonStyleInfo.patternId);
+    }
+  }
+
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const polyData = this.dataLayer.extractPolygonCoordinates(data);
     const polyConstructor = isCutPolygon(polyData) || polyData.length !== 2 ? L.polygon : L.rectangle;
-    this.polygonStyle = this.dataLayer.getShapeStyle(data, dsData);
     this.polygon = polyConstructor(polyData as (TbPolygonRawCoordinates & L.LatLngTuple[]), {
-      ...this.polygonStyle,
+      noClip: true,
       snapIgnore: !this.dataLayer.isSnappable(),
       bubblingMouseEvents: !this.dataLayer.isEditMode()
+    });
+
+    this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
+      this.polygonStyleInfo = styleInfo;
+      if (this.polygon) {
+        this.polygon.setStyle(this.polygonStyleInfo.style);
+      }
     });
 
     this.polygonContainer = L.featureGroup();
@@ -81,13 +94,15 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.polygonStyle = this.dataLayer.getShapeStyle(data, dsData);
-    this.updatePolygonShape(data);
-    this.updateTooltip(data, dsData);
-    this.updateLabel(data, dsData);
-    if (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled()) {
-      this.polygon.setStyle(this.polygonStyle);
-    }
+    this.dataLayer.getShapeStyle(data, dsData, this.polygonStyleInfo?.patternId).subscribe((styleInfo) => {
+      this.polygonStyleInfo = styleInfo;
+      this.updatePolygonShape(data);
+      this.updateTooltip(data, dsData);
+      this.updateLabel(data, dsData);
+      if (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled()) {
+        this.polygon.setStyle(this.polygonStyleInfo.style);
+      }
+    });
   }
 
   protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
@@ -230,7 +245,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     this.polygonContainer.closePopup();
     this.editing = true;
     this.polygon.options.bubblingMouseEvents = true;
-    this.polygon.setStyle({...this.polygonStyle, dashArray: '5 5', weight: 3,
+    this.polygon.setStyle({...this.polygonStyleInfo.style, dashArray: '5 5', weight: 3,
       color: '#3388ff', opacity: 1, fillColor: '#3388ff', fillOpacity: 0.2});
     this.addItemClass('tb-cut-mode');
     this.polygon.once('pm:cut', (e) => {
@@ -238,7 +253,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
         if (this.polygon instanceof L.Rectangle) {
           this.polygonContainer.removeLayer(this.polygon);
           this.polygon = L.polygon(e.layer.getLatLngs(), {
-            ...this.polygonStyle,
+            ...this.polygonStyleInfo.style,
             snapIgnore: !this.dataLayer.isSnappable(),
             bubblingMouseEvents: !this.dataLayer.isEditMode()
           });
@@ -284,7 +299,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   private disablePolygonCutMode(cutButton?: L.TB.ToolbarButton) {
     this.editing = false;
     this.polygon.options.bubblingMouseEvents = !this.dataLayer.isEditMode();
-    this.polygon.setStyle({...this.polygonStyle, dashArray: null});
+    this.polygon.setStyle({...this.polygonStyleInfo.style, dashArray: null});
     this.removeItemClass('tb-cut-mode');
     this.polygon.off('pm:cut');
     const map = this.dataLayer.getMap().getMap();
@@ -338,9 +353,10 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
       if (this.polygon instanceof L.Rectangle) {
         this.polygonContainer.removeLayer(this.polygon);
         this.polygon = L.polygon(polyData, {
-          ...this.polygonStyle,
+          ...this.polygonStyleInfo.style,
           snapIgnore: !this.dataLayer.isSnappable(),
-          bubblingMouseEvents: !this.dataLayer.isEditMode()
+          bubblingMouseEvents: !this.dataLayer.isEditMode(),
+          noClip: true
         });
         this.polygon.addTo(this.polygonContainer);
         this.editModeUpdated();

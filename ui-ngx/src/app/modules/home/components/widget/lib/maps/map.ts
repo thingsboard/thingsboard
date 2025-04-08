@@ -50,7 +50,14 @@ import {
   UnplacedMapDataItem,
 } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 import { IWidgetSubscription, PlaceMapItemActionData, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { FormattedData, MapItemType, WidgetAction, WidgetActionType, widgetType } from '@shared/models/widget.models';
+import {
+  FormattedData,
+  mapItemTooltipsTranslation,
+  MapItemType,
+  WidgetAction,
+  WidgetActionType,
+  widgetType
+} from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMarkersDataLayer } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
@@ -75,6 +82,7 @@ import { TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-
 import { EntityType } from '@shared/models/entity-type.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
+import { ShapePatternStorage } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 
 type TooltipInstancesData = {root: HTMLElement, instances: ITooltipsterInstance[]};
 
@@ -124,6 +132,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected addMarkerDataLayers: TbLatestMapDataLayer<any>[];
   protected addPolygonDataLayers: TbLatestMapDataLayer<any>[];
   protected addCircleDataLayers: TbLatestMapDataLayer<any>[];
+
+  protected shapePatternStorage: ShapePatternStorage = {};
 
   private readonly mapResize$: ResizeObserver;
 
@@ -326,7 +336,11 @@ export abstract class TbMap<S extends BaseMapSettings> {
               type: widgetType.latest,
               callbacks: {
                 onDataUpdated: (subscription) => {
-                  this.update(subscription);
+                  try {
+                    this.update(subscription);
+                  } catch (e) {
+                    console.error(e);
+                  }
                 }
               }
             };
@@ -360,10 +374,18 @@ export abstract class TbMap<S extends BaseMapSettings> {
               type: widgetType.timeseries,
               callbacks: {
                 onDataUpdated: (subscription) => {
-                  this.updateTrips(subscription);
+                  try {
+                    this.updateTrips(subscription);
+                  } catch (e) {
+                    console.error(e);
+                  }
                 },
                 onLatestDataUpdated: (subscription) => {
-                  this.updateTripsWithLatestData(subscription);
+                  try {
+                    this.updateTripsWithLatestData(subscription);
+                  } catch (e) {
+                    console.error(e);
+                  }
                 }
               }
             };
@@ -661,29 +683,45 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   private createMarker(actionData: PlaceMapItemActionData) {
     this.createItem(actionData, () => this.prepareDrawMode('Marker', {
-      placeMarker: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint')
+      placeMarker: actionData.action.mapItemTooltips.placeMarker
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.placeMarker)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.placeMarker)
     }));
   }
 
   private createRectangle(actionData: PlaceMapItemActionData): void {
     this.createItem(actionData, () => this.prepareDrawMode('Rectangle', {
-      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.rectangle-place-first-point-hint'),
-      finishRect: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-rectangle-hint')
+      firstVertex: actionData.action.mapItemTooltips.startRect
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.startRect)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.startRect),
+      finishRect: actionData.action.mapItemTooltips.finishRect
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.finishRect)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.finishRect),
     }));
   }
 
   private createPolygon(actionData: PlaceMapItemActionData): void {
     this.createItem(actionData, () => this.prepareDrawMode('Polygon', {
-      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-hint'),
-      continueLine: this.ctx.translate.instant('widgets.maps.data-layer.polygon.continue-polygon-hint'),
-      finishPoly: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-polygon-hint')
+      firstVertex: actionData.action.mapItemTooltips.firstVertex
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.firstVertex)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.firstVertex),
+      continueLine: actionData.action.mapItemTooltips.continueLine
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.continueLine)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.continueLine),
+      finishPoly: actionData.action.mapItemTooltips.finishPoly
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.finishPoly)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.finishPoly),
     }));
   }
 
   private createCircle(actionData: PlaceMapItemActionData): void {
     this.createItem(actionData, () => this.prepareDrawMode('Circle', {
-      startCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.place-circle-center-hint'),
-      finishCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.finish-circle-hint')
+      startCircle: actionData.action.mapItemTooltips.startCircle
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.startCircle)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.startCircle),
+      finishCircle: actionData.action.mapItemTooltips.finishCircle
+        ? this.ctx.utilsService.customTranslation(actionData.action.mapItemTooltips.finishCircle)
+        : this.ctx.translate.instant(mapItemTooltipsTranslation.finishCircle),
     }));
   }
 
@@ -1064,6 +1102,42 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public type(): MapType {
     return this.settings.mapType;
+  }
+
+  public useShapePattern(patternId: string, prevPatternId?: string): L.TB.Pattern {
+    if (prevPatternId && patternId !== prevPatternId) {
+      this.unUseShapePattern(prevPatternId);
+    }
+    if (this.shapePatternStorage[patternId]) {
+      const patternItem = this.shapePatternStorage[patternId];
+      if (patternId !== prevPatternId) {
+        patternItem.refCount++;
+        return patternItem.pattern;
+      } else {
+        return patternItem.pattern;
+      }
+    }
+  }
+
+  public unUseShapePattern(patternId: string): void {
+    if (patternId) {
+      const patternItem = this.shapePatternStorage[patternId];
+      if (patternItem) {
+        patternItem.refCount--;
+        if (patternItem.refCount === 0) {
+          patternItem.pattern.remove();
+          delete this.shapePatternStorage[patternId];
+        }
+      }
+    }
+  }
+
+  public storeShapePattern(patternId: string, pattern: L.TB.Pattern): void {
+    pattern.addTo(this.map);
+    this.shapePatternStorage[patternId] = {
+      pattern,
+      refCount: 1
+    };
   }
 
   public enabledDataLayersUpdated() {

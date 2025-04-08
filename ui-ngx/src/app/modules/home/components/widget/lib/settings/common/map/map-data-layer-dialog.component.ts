@@ -30,7 +30,7 @@ import {
   pathDecoratorSymbols,
   pathDecoratorSymbolTranslationMap,
   PolygonsDataLayerSettings,
-  ShapeDataLayerSettings,
+  ShapeDataLayerSettings, ShapeFillType,
   TripsDataLayerSettings,
   updateDataKeyToNewDsType
 } from '@shared/models/widget/maps/map.models';
@@ -77,6 +77,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   widgetType = widgetType;
 
   MarkerType = MarkerType;
+
+  ShapeFillType = ShapeFillType;
 
   datasourceTypes: Array<DatasourceType> = [];
   datasourceTypesTranslations = datasourceTypeTranslationMap;
@@ -266,7 +268,10 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       case 'circles':
         this.dataLayerEditActions = dataLayerEditActions;
         const shapeDataLayer = this.settings as ShapeDataLayerSettings;
+        this.dataLayerFormGroup.addControl('fillType', this.fb.control(shapeDataLayer.fillType, Validators.required));
         this.dataLayerFormGroup.addControl('fillColor', this.fb.control(shapeDataLayer.fillColor, Validators.required));
+        this.dataLayerFormGroup.addControl('fillStripe', this.fb.control(shapeDataLayer.fillStripe, Validators.required));
+        this.dataLayerFormGroup.addControl('fillImage', this.fb.control(shapeDataLayer.fillImage, Validators.required));
         this.dataLayerFormGroup.addControl('strokeColor', this.fb.control(shapeDataLayer.strokeColor, Validators.required));
         this.dataLayerFormGroup.addControl('strokeWeight', this.fb.control(shapeDataLayer.strokeWeight, [Validators.required, Validators.min(0)]));
         if (this.dataLayerType === 'polygons') {
@@ -280,6 +285,11 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
           const circlesDataLayer = this.settings as CirclesDataLayerSettings;
           this.dataLayerFormGroup.addControl('circleKey', this.fb.control(circlesDataLayer.circleKey, Validators.required));
         }
+        this.dataLayerFormGroup.get('fillType').valueChanges.pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() =>
+          this.updateValidators()
+        );
         break;
     }
     this.dataLayerFormGroup.get('dsType').valueChanges.pipe(
@@ -349,8 +359,9 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     }
     if (this.dataLayerType === 'markers') {
       this.updateMarkerTypeValidators();
-    }
-    if (this.dataLayerType === 'trips') {
+    } else if (['polygons', 'circles'].includes(this.dataLayerType)) {
+      this.updateFillTypeValidators();
+    } else if (this.dataLayerType === 'trips') {
       const showMarker: boolean = this.dataLayerFormGroup.get('showMarker').value;
       if (showMarker) {
         this.dataLayerFormGroup.get('markerType').enable({emitEvent: false});
@@ -439,6 +450,23 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       this.dataLayerFormGroup.get('markerShape').disable({emitEvent: false});
       this.dataLayerFormGroup.get('markerIcon').disable({emitEvent: false});
       this.dataLayerFormGroup.get('markerImage').enable({emitEvent: false});
+    }
+  }
+
+  private updateFillTypeValidators(): void {
+    const fillType: ShapeFillType = this.dataLayerFormGroup.get('fillType').value;
+    if (fillType === ShapeFillType.color) {
+      this.dataLayerFormGroup.get('fillColor').enable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillStripe').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillImage').disable({emitEvent: false});
+    } else if (fillType === ShapeFillType.stripe) {
+      this.dataLayerFormGroup.get('fillColor').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillStripe').enable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillImage').disable({emitEvent: false});
+    } else {
+      this.dataLayerFormGroup.get('fillColor').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillStripe').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillImage').enable({emitEvent: false});
     }
   }
 

@@ -15,7 +15,7 @@
 ///
 
 import L, { TB } from 'leaflet';
-import { guid, isNotEmptyStr } from '@core/utils';
+import { guid, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
 import { Map as MapLibreGLMap, LngLat as MapLibreGLLngLat } from 'maplibre-gl';
 import '@geoman-io/leaflet-geoman-free';
@@ -26,6 +26,64 @@ import { catchError, take } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 L.MarkerCluster = L.MarkerCluster.mergeOptions({ pmIgnore: true });
+
+L.Map.addInitHook(function () {
+  this._patterns = {};
+});
+
+L.Map.include({
+
+  addPattern: function (pattern: Pattern) {
+    const id = L.stamp(pattern);
+    if (this._patterns[id]) {
+      return pattern;
+    }
+    this._patterns[id] = pattern;
+    this.whenReady(() => {
+      pattern.onAdd(this);
+    });
+    return this;
+  },
+
+  removePattern: function (pattern: Pattern) {
+    const id = L.stamp(pattern);
+    if (!this._patterns[id]) {
+      return this;
+    }
+    if (this._loaded) {
+      pattern.onRemove(this);
+    }
+    delete this._patterns[id];
+
+    if (this._loaded) {
+      this.fire('patternremove', {pattern: pattern});
+      pattern.fire('remove');
+    }
+
+    pattern._map = null;
+    return this;
+  },
+
+  _initDefRoot: function () {
+    if (!this._defRoot) {
+      const renderer: L.Renderer = this.getRenderer(this);
+      this._defRoot = Pattern.prototype._createElement('defs');
+      ((renderer as any)._container).appendChild(this._defRoot);
+    }
+  }
+});
+
+L.SVG.include({
+  _superUpdateStyle: (L.SVG.prototype as any)._updateStyle,
+
+  _updateStyle: function (layer: L.Layer){
+    this._superUpdateStyle(layer);
+    const options: L.PathOptions = layer.options;
+    if (options.fill && options.fillPattern) {
+      ((layer as any)._path as SVGElement).setAttribute('fill', 'url(#' + L.stamp(options.fillPattern) + ")");
+    }
+  }
+})
 
 class SidebarControl extends L.Control<TB.SidebarControlOptions> implements L.TB.SidebarControl {
 
@@ -572,6 +630,373 @@ class BottomToolbarControl implements L.TB.BottomToolbarControl {
 
 }
 
+class Pattern extends L.Evented implements L.TB.Pattern {
+
+  _map: L.Map;
+  _dom: SVGPatternElement & HTMLElement;
+
+  private options: L.TB.PatternOptions = {
+    x: 0,
+    y: 0,
+    width: 8,
+    height: 8,
+    patternUnits: 'userSpaceOnUse',
+    patternContentUnits: 'userSpaceOnUse'
+  };
+  private _elements: {[id: string]: PatternElement} = {};
+
+  constructor(options: L.TB.PatternOptions) {
+    super();
+    this.options = {...this.options, ...options};
+  }
+
+  onAdd(map: L.Map): void {
+    this._map = map;
+    this._map._initDefRoot();
+
+    this._initDom();
+
+    for (const i in this._elements) {
+      this._elements[i].onAdd(this);
+    }
+
+    this._addElements();
+    this._addDom();
+    this.redraw();
+    this.fire('add');
+    this._map.fire('patternadd', {pattern: this});
+  }
+
+  onRemove(_map: L.Map): void {
+    this._removeDom();
+  }
+
+  redraw(): this {
+    if (this._map) {
+      this._update();
+      for (const i in this._elements) {
+        this._elements[i].redraw();
+      }
+    }
+    return this;
+  }
+
+  setStyle(style: L.TB.PatternOptions): this {
+    L.setOptions(this, style);
+    if (this._map) {
+      this._updateStyle();
+      this.redraw();
+    }
+    return this;
+  }
+
+  addTo(map: L.Map): this {
+    map.addPattern(this);
+    return this;
+  }
+
+  remove(): this {
+    return this.removeFrom(this._map);
+  }
+
+  removeFrom(map: L.Map): this {
+    if (map) {
+      map.removePattern(this);
+    }
+    return this;
+  }
+
+  addElement(element: PatternElement): PatternElement | undefined {
+    const id = L.stamp(element);
+    if (this._elements[id]) {
+      return element;
+    }
+    this._elements[id] = element;
+    element.onAdd(this);
+  }
+
+  _createElement<E extends SVGElement> (name: string): E {
+    return document.createElementNS("http://www.w3.org/2000/svg", name) as E;
+  }
+
+  _initDom(): void {
+    this._dom = this._createElement('pattern');
+    if (this.options.className) {
+      L.DomUtil.addClass(this._dom, this.options.className);
+    }
+    this._updateStyle();
+  }
+
+  _addDom(): void {
+    this._map._defRoot.appendChild(this._dom);
+  }
+
+  _removeDom(): void {
+    L.DomUtil.remove(this._dom);
+  }
+
+  _updateStyle(): void {
+    const dom = this._dom;
+    const options = this.options;
+    if (!dom) { return; }
+    dom.setAttribute('id', `${L.stamp(this)}`);
+    dom.setAttribute('x', `${options.x}`);
+    dom.setAttribute('y', `${options.y}`);
+    dom.setAttribute('width', `${options.width}`);
+    dom.setAttribute('height', `${options.height}`);
+    dom.setAttribute('patternUnits', options.patternUnits);
+    dom.setAttribute('patternContentUnits', options.patternContentUnits);
+
+    if (options.patternTransform || options.angle) {
+      let transform = options.patternTransform ? options.patternTransform + " " : "";
+      transform += options.angle ?  "rotate(" + options.angle + ") " : "";
+      dom.setAttribute('patternTransform', transform);
+    } else {
+      dom.removeAttribute('patternTransform');
+    }
+    if (options.viewBox) {
+      dom.setAttribute('viewBox', options.viewBox.join(' '));
+    } else {
+      dom.removeAttribute('viewBox');
+    }
+    if (options.preserveAspectRatioAlign) {
+      let preserveAspectRatioValue = options.preserveAspectRatioAlign;
+      if (preserveAspectRatioValue !== 'none' && options.preserveAspectRatioMeetOrSlice) {
+        preserveAspectRatioValue += (' ' + options.preserveAspectRatioMeetOrSlice);
+      }
+      dom.setAttribute('preserveAspectRatio', preserveAspectRatioValue);
+    } else {
+      dom.removeAttribute('preserveAspectRatio');
+    }
+
+    for (const i in this._elements) {
+      this._elements[i]._updateStyle();
+    }
+  }
+
+  protected _addElements() {};
+  protected _update() {};
+
+}
+
+abstract class PatternElement<O extends L.TB.PatternElementOptions = L.TB.PatternElementOptions> extends L.Class implements L.TB.PatternElement {
+
+  protected options: O;
+
+  protected _pattern: Pattern;
+  protected _dom: SVGElement & HTMLElement;
+
+  protected constructor(options: L.TB.PatternElementOptions) {
+    super();
+    this.options = {...this._defaultOptions(), ...options};
+  }
+
+  onAdd(pattern: Pattern): void {
+    this._pattern = pattern;
+    if (this._pattern._dom) {
+      this._initDom();
+      this._addDom();
+    }
+  }
+
+  addTo(pattern: Pattern): this {
+    pattern.addElement(this);
+    return this;
+  }
+
+  redraw(): this {
+    if (this._pattern) {
+      this._updateElement();
+    }
+    return this;
+  }
+
+  setStyle(style: L.TB.PatternElementOptions): this {
+    L.setOptions(this, style);
+    if (this._pattern) {
+      this._updateStyle();
+    }
+    return this;
+  }
+
+  _createElement<E extends SVGElement> (name: string): E {
+    return document.createElementNS("http://www.w3.org/2000/svg", name) as E;
+  }
+
+  _initDomElement(type: string): void {
+    this._dom = this._createElement(type);
+    if (this.options.className) {
+      L.DomUtil.addClass(this._dom, this.options.className);
+    }
+    this._updateStyle();
+  }
+
+  _addDom(): void {
+    this._pattern._dom.appendChild(this._dom);
+  }
+
+  _updateStyle(): void {}
+
+  protected _initDom() {}
+  protected _updateElement() {}
+
+  protected abstract _defaultOptions(): O;
+}
+
+const defaultPatternShapeOptions: L.TB.PatternShapeOptions = {
+  stroke: true,
+  color: '#3388ff',
+  weight: 3,
+  opacity: 1,
+  lineCap: 'round',
+  lineJoin: 'round',
+  fillOpacity: 0.2,
+  fillRule: 'evenodd'
+};
+
+
+abstract class PatternShape<O extends L.TB.PatternShapeOptions> extends PatternElement<O> implements L.TB.PatternShape {
+
+  protected constructor(options: O) {
+    super(options);
+  }
+
+  _updateStyle(): void {
+    const dom = this._dom;
+    const options = this.options;
+    if (!dom) { return; }
+    if (options.stroke) {
+      dom.setAttribute('stroke', options.color);
+      dom.setAttribute('stroke-opacity', `${options.opacity}`);
+      dom.setAttribute('stroke-width', `${options.weight}`);
+      dom.setAttribute('stroke-linecap', options.lineCap);
+      dom.setAttribute('stroke-linejoin', options.lineJoin);
+
+      if (options.dashArray) {
+        dom.setAttribute('stroke-dasharray', options.dashArray.join(' '));
+      } else {
+        dom.removeAttribute('stroke-dasharray');
+      }
+
+      if (options.dashOffset) {
+        dom.setAttribute('stroke-dashoffset', `${options.dashOffset}`);
+      } else {
+        dom.removeAttribute('stroke-dashoffset');
+      }
+    } else {
+      dom.setAttribute('stroke', 'none');
+    }
+
+    if (options.fill) {
+      if (options.fillPattern) {
+        dom.setAttribute('fill', 'url(#' + L.stamp(options.fillPattern) + ")");
+      }
+      else {
+        dom.setAttribute('fill', options.fillColor || options.color);
+      }
+      dom.setAttribute('fill-opacity', `${options.fillOpacity}`);
+      dom.setAttribute('fill-rule', options.fillRule || 'evenodd');
+    } else {
+      dom.setAttribute('fill', 'none');
+    }
+    dom.setAttribute('pointer-events', options.pointerEvents || (options.interactive ? 'visiblePainted' : 'none'));
+  }
+}
+
+class PatternRect extends PatternShape<L.TB.PatternRectOptions> implements L.TB.PatternRect {
+
+  constructor(options: L.TB.PatternRectOptions) {
+    super(options);
+  }
+
+  protected _initDom() {
+    this._initDomElement('rect');
+  }
+
+  protected _updateElement() {
+    if (!this._dom) { return; }
+    this._dom.setAttribute('x', `${this.options.x}`);
+    this._dom.setAttribute('y', `${this.options.y}`);
+    this._dom.setAttribute('width', `${this.options.width}`);
+    this._dom.setAttribute('height', `${this.options.height}`);
+    if (this.options.rx) { this._dom.setAttribute('rx', `${this.options.rx}`); }
+    if (this.options.ry) { this._dom.setAttribute('ry', `${this.options.ry}`); }
+  }
+
+  protected _defaultOptions(): L.TB.PatternRectOptions {
+    return {
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      ...defaultPatternShapeOptions
+    };
+  }
+}
+
+class PatternPath extends PatternShape<L.TB.PatternPathOptions> implements L.TB.PatternPath {
+
+  constructor(options: L.TB.PatternPathOptions) {
+    super(options);
+  }
+
+  protected _initDom() {
+    this._initDomElement('path');
+  }
+
+  protected _updateElement() {
+    if (!this._dom) { return; }
+    this._dom.setAttribute('d', this.options.d);
+  }
+
+  protected _defaultOptions(): L.TB.PatternPathOptions {
+    return {...defaultPatternShapeOptions};
+  }
+}
+
+class PatternImage extends PatternElement<L.TB.PatternImageOptions> implements L.TB.PatternImage {
+
+  constructor(options: TB.PatternImageOptions) {
+    super(options);
+  }
+
+  protected _initDom() {
+    this._initDomElement('image');
+  }
+
+  _updateStyle(): void {
+    const dom = this._dom;
+    const options = this.options;
+    if (!dom) { return; }
+    this._dom.setAttribute('href', options.imageUrl);
+    this._dom.setAttribute('opacity', isDefinedAndNotNull(options.opacity) ? `${options.opacity}` : '1');
+    this._dom.setAttribute('x', '0');
+    this._dom.setAttribute('y', '0');
+    this._dom.setAttribute('width', `${options.width}`);
+    this._dom.setAttribute('height', `${options.height}`);
+    this._dom.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+    const transforms: string[] = [];
+    if (options.angle) {
+      transforms.push(`rotate(${options.angle})`);
+    }
+    if (options.scale && options.scale !== 1) {
+      transforms.push(`scale(${options.scale})`);
+    }
+    if (transforms.length) {
+      this._dom.setAttribute('transform', transforms.join(' '));
+      this._dom.setAttribute('transform-origin', `${options.width/2} ${options.height/2}`);
+    }
+  }
+
+  protected _defaultOptions(): L.TB.PatternImageOptions {
+    return {
+      imageUrl: '',
+      width: 0,
+      height: 0
+    };
+  }
+}
+
 const sidebar = (options: TB.SidebarControlOptions): L.TB.SidebarControl => {
   return new SidebarControl(options);
 }
@@ -952,6 +1377,12 @@ L.TB = L.TB || {
   ToolbarButton,
   ToolbarControl,
   BottomToolbarControl,
+  Pattern,
+  PatternElement,
+  PatternShape,
+  PatternRect,
+  PatternPath,
+  PatternImage,
   sidebar,
   sidebarPane,
   layers,

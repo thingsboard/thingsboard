@@ -329,6 +329,7 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
             'mapItemType',
             this.fb.control(action?.mapItemType ?? MapItemType.marker, [Validators.required])
           );
+          this.actionTypeFormGroup.addControl('mapItemTooltips', this.fb.control(action?.mapItemTooltips ?? {}));
           this.actionTypeFormGroup.addControl(
             'customAction',
             this.fb.control(toPlaceMapItemAction(action), [Validators.required])
@@ -528,7 +529,8 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
       result = {
         ...this.widgetActionFormGroup.value,
         ...this.actionTypeFormGroup.get('customAction').value,
-        mapItemType: this.actionTypeFormGroup.get('mapItemType').value
+        mapItemType: this.actionTypeFormGroup.get('mapItemType').value,
+        mapItemTooltips: this.actionTypeFormGroup.get('mapItemTooltips').value,
       };
     } else {
       result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.value};

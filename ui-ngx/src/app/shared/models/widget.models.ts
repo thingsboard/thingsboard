@@ -770,7 +770,30 @@ export interface WidgetAction extends CustomActionDescriptor {
   mobileAction?: WidgetMobileActionDescriptor;
   url?: string;
   mapItemType?: MapItemType;
+  mapItemTooltips?: MapItemTooltips;
 }
+
+export interface MapItemTooltips {
+  placeMarker?: string;
+  firstVertex?: string;
+  continueLine?: string;
+  finishPoly?: string;
+  startRect?: string;
+  finishRect?: string;
+  startCircle?: string;
+  finishCircle?: string;
+}
+
+export const mapItemTooltipsTranslation: Required<MapItemTooltips> = Object.freeze({
+  placeMarker: 'widgets.maps.data-layer.marker.place-marker-hint',
+  firstVertex: 'widgets.maps.data-layer.polygon.polygon-place-first-point-hint',
+  continueLine: 'widgets.maps.data-layer.polygon.continue-polygon-hint',
+  finishPoly: 'widgets.maps.data-layer.polygon.finish-polygon-hint',
+  startRect: 'widgets.maps.data-layer.polygon.rectangle-place-first-point-hint',
+  finishRect: 'widgets.maps.data-layer.polygon.finish-rectangle-hint',
+  startCircle: 'widgets.maps.data-layer.circle.place-circle-center-hint',
+  finishCircle: 'widgets.maps.data-layer.circle.finish-circle-hint'
+})
 
 export interface WidgetActionDescriptor extends WidgetAction {
   id: string;
