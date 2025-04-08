@@ -207,14 +207,17 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
 
         if (config != null) {
             deviceProfileData.setConfiguration(config);
+            this.setType(config.getType());
         }
 
         if (transportConfig != null) {
             deviceProfileData.setTransportConfiguration(transportConfig);
+            this.setTransportType(transportConfig.getType());
         }
 
         if (provisionConfig != null) {
             deviceProfileData.setProvisionConfiguration(provisionConfig);
+            this.setProvisionType(provisionConfig.getType());
         }
 
         if (alarms != null) {
