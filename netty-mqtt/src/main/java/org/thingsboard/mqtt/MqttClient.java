@@ -184,7 +184,7 @@ public interface MqttClient {
      * @param config The config object to use while looking for settings
      * @param defaultHandler The handler for incoming messages that do not match any topic subscriptions
      */
-    static MqttClient create(MqttClientConfig config, MqttHandler defaultHandler, ListeningExecutor handlerExecutor){
+    static MqttClient create(MqttClientConfig config, MqttHandler defaultHandler, ListeningExecutor handlerExecutor) {
         return new MqttClientImpl(config, defaultHandler, handlerExecutor);
     }
 

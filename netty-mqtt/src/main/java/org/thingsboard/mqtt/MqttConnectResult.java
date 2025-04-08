@@ -17,7 +17,9 @@ package org.thingsboard.mqtt;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
+import lombok.ToString;
 
+@ToString
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class MqttConnectResult {
 
@@ -42,4 +44,5 @@ public final class MqttConnectResult {
     public ChannelFuture getCloseFuture() {
         return closeFuture;
     }
+
 }

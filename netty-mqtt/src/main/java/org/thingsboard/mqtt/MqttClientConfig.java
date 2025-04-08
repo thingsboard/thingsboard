@@ -55,13 +55,13 @@ public final class MqttClientConfig {
 
         public RetransmissionConfig {
             if (maxAttempts < 0) {
-                throw new IllegalArgumentException("Max retransmission attempts (maxAttempts) must be positive, but was " + maxAttempts);
+                throw new IllegalArgumentException("Max retransmission attempts (maxAttempts) must be zero or greater, but was " + maxAttempts);
             }
             if (initialDelayMillis < 0) {
-                throw new IllegalArgumentException("Initial retransmission delay (initialDelayMillis) must be positive, but was " + initialDelayMillis);
+                throw new IllegalArgumentException("Initial retransmission delay (initialDelayMillis) must be zero or greater, but was " + initialDelayMillis);
             }
             if (jitterFactor < 0) {
-                throw new IllegalArgumentException("Jitter factor (jitterFactor) must be positive, but was " + jitterFactor);
+                throw new IllegalArgumentException("Jitter factor (jitterFactor) must be zero or greater, but was " + jitterFactor);
             }
         }
 

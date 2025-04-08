@@ -86,7 +86,7 @@ final class RetransmissionHandler<T extends MqttMessage> {
         // Apply jitter: random factor between (1 - jitterFactor) and (1 + jitterFactor).
         double minFactor = 1.0 - config.jitterFactor();
         double maxFactor = 1.0 + config.jitterFactor();
-        double randomFactor = ThreadLocalRandom.current().nextDouble(minFactor, maxFactor);
+        double randomFactor = config.jitterFactor() == 0 ? 1 : ThreadLocalRandom.current().nextDouble(minFactor, maxFactor);
         long delayMillisWithJitter = (long) (baseDelay * randomFactor);
         totalWaitingTimeMillis += delayMillisWithJitter;
 

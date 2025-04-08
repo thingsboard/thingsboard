@@ -57,7 +57,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, MqttMessage msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, MqttMessage msg) {
         if (msg.decoderResult().isSuccess()) {
             switch (msg.fixedHeader().messageType()) {
                 case CONNACK:
@@ -120,6 +120,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
                 this.client.getClientConfig().getUsername(),
                 this.client.getClientConfig().getPassword() != null ? this.client.getClientConfig().getPassword().getBytes(CharsetUtil.UTF_8) : null
         );
+        log.debug("{} Sending CONNECT", client.getClientConfig().getOwnerId());
         ctx.channel().writeAndFlush(new MqttConnectMessage(fixedHeader, variableHeader, payload));
     }
 
@@ -173,6 +174,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handleConack(Channel channel, MqttConnAckMessage message) {
+        log.debug("{} Handling CONNACK", client.getClientConfig().getOwnerId());
         switch (message.variableHeader().connectReturnCode()) {
             case CONNECTION_ACCEPTED:
                 this.connectFuture.setSuccess(new MqttConnectResult(true, MqttConnectReturnCode.CONNECTION_ACCEPTED, channel.closeFuture()));
@@ -282,6 +284,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handlePuback(MqttPubAckMessage message) {
+        log.debug("{} Handling PUBACK", client.getClientConfig().getOwnerId());
         client.getPendingPublishes().computeIfPresent(message.variableHeader().messageId(), (__, pendingPublish) -> {
             pendingPublish.getFuture().setSuccess(null);
             pendingPublish.onPubackReceived();
@@ -333,6 +336,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handleDisconnect(MqttMessage message) {
+        log.debug("{} Handling DISCONNECT", client.getClientConfig().getOwnerId());
         if (this.client.getCallback() != null) {
             this.client.getCallback().onDisconnect(message);
         }
