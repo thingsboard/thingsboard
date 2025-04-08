@@ -1,5 +1,30 @@
+## Built-in operators
+The following operators can be used in expressions:
+
+| Operator | Description                   | Example         |
+|----------|-------------------------------|-----------------|
+| `+`      | Addition or unary plus        | `2 + 3` or `+3` |
+| `-`      | Subtraction or unary minus    | `5 - 2` or `-3` |
+| `*`      | Multiplication                | `4 * 2`         |
+| `/`      | Division                      | `10 / 2`        |
+| `^`      | Exponentiation                | `2 ^ 3`         |
+| `%`      | Modulo                        | `10 % 3`        |
+
+
+## Implicit multiplication
+Expressions supports implicit multiplication, allowing you to omit the multiplication operator in certain cases. For example, the expression `2cos(yx)` is interpreted as `2*cos(y*x)`. Similarly, `3x` is interpreted as `3*x`, and `xy` as `x*y`. This feature makes writing expressions more concise and natural.
+
+## Built-in constants
+Available constants for calculations:
+
+| Constant    | Description                 | Value             |
+|-------------|-----------------------------|-------------------|
+| `π` or `pi` | The mathematical constant π | 3.141592653589793 |
+| `e`         | Euler's number              | 2.718281828459045 |
+| `φ`         | The golden ratio            | 1.618033988749895 |
+
 ## Built-in mathematical functions
-The following expression field provides support for built-in mathematical functions that you can utilize for various calculations.
+The following built-in mathematical functions can be used to perform various calculations:
 
 | Function      | Description                                                         | Example           |
 |---------------|---------------------------------------------------------------------|-------------------|
