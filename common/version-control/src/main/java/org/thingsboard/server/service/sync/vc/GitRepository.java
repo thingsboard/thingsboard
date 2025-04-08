@@ -42,7 +42,6 @@ import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.errors.LargeObjectException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
-import org.eclipse.jgit.errors.TransportException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -158,7 +157,7 @@ public class GitRepository {
                 return repository;
             } catch (RepositoryNotFoundException e) {
                 log.warn("{} not a git repository, reinitializing", directory);
-            } catch (TransportException e) {
+            } catch (org.eclipse.jgit.errors.TransportException | org.eclipse.jgit.api.errors.TransportException e) {
                 if (StringUtils.containsIgnoreCase(e.getMessage(), "missing commit")) {
                     log.warn("Couldn't fetch {} due to {}, reinitializing", directory, e.getMessage());
                 } else {
