@@ -25,7 +25,6 @@ import org.thingsboard.server.common.data.edqs.EdqsEventType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
 import org.thingsboard.server.common.data.edqs.Entity;
 import org.thingsboard.server.common.data.edqs.LatestTsKv;
-import org.thingsboard.server.common.data.edqs.fields.AssetFields;
 import org.thingsboard.server.common.data.edqs.fields.EntityFields;
 import org.thingsboard.server.common.data.edqs.query.QueryResult;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -57,7 +56,6 @@ import org.thingsboard.server.edqs.query.processor.EntityQueryProcessor;
 import org.thingsboard.server.edqs.query.processor.EntityQueryProcessorFactory;
 import org.thingsboard.server.edqs.stats.EdqsStatsService;
 import org.thingsboard.server.edqs.util.RepositoryUtils;
-import org.thingsboard.server.edqs.util.TbStringPool;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -144,7 +142,7 @@ public class TenantRepo {
                 RelationsRepo repo = relations.computeIfAbsent(entity.getTypeGroup(), tg -> new RelationsRepo());
                 EntityData<?> from = getOrCreate(entity.getFrom());
                 EntityData<?> to = getOrCreate(entity.getTo());
-                boolean added = repo.add(from, to, TbStringPool.intern(entity.getType()));
+                boolean added = repo.add(from, to, entity.getType());
                 if (added) {
                     edqsStatsService.ifPresent(statService -> statService.reportEvent(tenantId, ObjectType.RELATION, EdqsEventType.UPDATED));
                 }
@@ -188,7 +186,6 @@ public class TenantRepo {
             EntityType entityType = entity.getType();
 
             EntityData entityData = getOrCreate(entityType, entityId);
-            processFields(fields);
             EntityFields oldFields = entityData.getFields();
             entityData.setFields(fields);
             if (oldFields == null) {
@@ -279,12 +276,6 @@ public class TenantRepo {
             if (removed) {
                 edqsStatsService.ifPresent(statService -> statService.reportEvent(tenantId, ObjectType.LATEST_TS_KV, EdqsEventType.DELETED));
             }
-        }
-    }
-
-    public void processFields(EntityFields fields) {
-        if (fields instanceof AssetFields assetFields) {
-            assetFields.setType(TbStringPool.intern(assetFields.getType()));
         }
     }
 
