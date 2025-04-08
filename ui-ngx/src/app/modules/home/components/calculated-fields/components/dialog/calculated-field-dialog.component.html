@@ -110,7 +110,7 @@
               <div toolbarPrefixButton class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}</div>
               <button toolbarSuffixButton
                       mat-icon-button
-                      matTooltip="{{ 'common.test-function' | translate }}"
+                      matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                       matTooltipPosition="above"
                       class="tb-mat-32"
                       [disabled]="configFormGroup.get('arguments').invalid"
@@ -123,7 +123,7 @@
                       type="button"
                       (click)="onTestScript()"
                       [disabled]="configFormGroup.get('arguments').invalid">
-                {{ 'common.test-function' | translate }}
+                {{ 'calculated-fields.test-script-function' | translate }}
               </button>
             </div>
           </div>
