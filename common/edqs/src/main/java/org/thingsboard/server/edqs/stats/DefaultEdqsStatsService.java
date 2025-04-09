@@ -17,7 +17,7 @@ package org.thingsboard.server.edqs.stats;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,16 +27,14 @@ import org.thingsboard.server.common.stats.EdqsStatsService;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsTimer;
 import org.thingsboard.server.common.stats.StatsType;
-import org.thingsboard.server.queue.edqs.EdqsComponent;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@EdqsComponent
 @Service
 @Slf4j
-@ConditionalOnProperty(name = "queue.edqs.stats.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnExpression("'${queue.edqs.api.supported:true}' == 'true' && '${queue.edqs.stats.enabled:true}' == 'true'")
 public class DefaultEdqsStatsService implements EdqsStatsService {
 
     private final StatsFactory statsFactory;
