@@ -220,13 +220,10 @@ export class TbPopoverService {
       component.tbDestroy.subscribe(() => {
         this.removePopoverByComponent(component);
       });
-      const showHelpMarkdownComponent = (detectChanges = false) => {
+      const showHelpMarkdownComponent = () => {
         component.tbOverlayStyle = {...component.tbOverlayStyle, opacity: '1' };
         component.tbAnimationState = 'active';
         component.updatePosition();
-        if (detectChanges) {
-          component.cdr.detectChanges();
-        }
         readyFn(true);
         setTimeout(() => {
           component.updatePosition();
@@ -237,7 +234,7 @@ export class TbPopoverService {
           showHelpMarkdownComponent();
         } else {
           helpMarkdownComponent.markdownReady.subscribe(() => {
-            showHelpMarkdownComponent(true);
+            showHelpMarkdownComponent();
           });
         }
       };

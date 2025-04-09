@@ -25,12 +25,16 @@ import {
   EventEmitter,
   Injector,
   Input,
+  KeyValueChangeRecord,
+  KeyValueDiffer,
+  KeyValueDiffers,
   OnChanges,
   OnDestroy,
   OnInit,
   Optional,
   Output,
   Renderer2,
+  RendererStyleFlags2,
   SimpleChanges,
   TemplateRef,
   Type,
@@ -368,6 +372,17 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   @ViewChild('popoverRoot', { static: false }) popoverRoot!: ElementRef<HTMLElement>;
   @ViewChild('popover', { static: false }) popover!: ElementRef<HTMLElement>;
 
+  set tbOverlayStyle(value: { [klass: string]: any }) {
+    if (this.popover?.nativeElement) {
+      this.applyStyleChanges();
+    }
+    this._tbOverlayStyle = value;
+  }
+
+  get tbOverlayStyle(): { [klass: string]: any } {
+    return this._tbOverlayStyle;
+  }
+
   tbContent: string | TemplateRef<void> | null = null;
   tbComponent: Type<T> | null = null;
   tbComponentRef: ComponentRef<T> | null = null;
@@ -375,7 +390,6 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   tbComponentInjector: Injector | null = null;
   tbComponentStyle: { [klass: string]: any }  = {};
   tbOverlayClassName!: string;
-  tbOverlayStyle: { [klass: string]: any } = {};
   tbPopoverInnerStyle: { [klass: string]: any } = {};
   tbPopoverInnerContentStyle: { [klass: string]: any } = {};
   tbBackdrop = false;
@@ -392,6 +406,9 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   tbAnimationDone = new Subject<void>();
   tbComponentChange = new Subject<ComponentRef<any>>();
   tbDestroy = new Subject<void>();
+
+  private _tbOverlayStyle: { [klass: string]: any } = {};
+  private _stylesDiffer: KeyValueDiffer<string, any>;
 
   set tbVisible(value: boolean) {
     const visible = value;
@@ -490,8 +507,11 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
     public cdr: ChangeDetectorRef,
     private renderer: Renderer2,
     private animationBuilder: AnimationBuilder,
-    @Optional() private directionality: Directionality
-  ) {}
+    @Optional() private directionality: Directionality,
+    private differs: KeyValueDiffers
+  ) {
+    this._stylesDiffer = this.differs.find(this._tbOverlayStyle).create();
+  }
 
   ngOnInit(): void {
     this.directionality.change?.pipe(takeUntil(this.tbDestroy)).subscribe((direction: Direction) => {
@@ -622,6 +642,27 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
     this.preferredPlacement = getPlacementName(position);
     this.updateStyles();
     this.cdr.detectChanges();
+  }
+
+  private applyStyleChanges(): void {
+    const changes = this._stylesDiffer.diff(this._tbOverlayStyle);
+    if (changes) {
+      changes.forEachRemovedItem(record =>
+        this.renderer.removeStyle(this.popover.nativeElement, record.key)
+      );
+
+      changes.forEachAddedItem(record => this.setStyle(record));
+      changes.forEachChangedItem(record => this.setStyle(record));
+    }
+  }
+
+  private setStyle(record: KeyValueChangeRecord<string, any>): void {
+    this.renderer.setStyle(
+      this.popover.nativeElement,
+      record.key,
+      record.currentValue,
+      RendererStyleFlags2.DashCase
+    );
   }
 
   updateStyles(): void {
