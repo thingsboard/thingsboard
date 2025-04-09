@@ -68,7 +68,7 @@ public class DefaultEdqsStatsService implements EdqsStatsService {
     public void reportDataQuery(TenantId tenantId, EntityDataQuery query, long timingNanos) {
         double timingMs = timingNanos / 1000_000.0;
         if (timingMs < slowQueryThreshold) {
-            log.info("[{}] Executed data query in {} ms: {}", tenantId, timingMs, query);
+            log.debug("[{}] Executed data query in {} ms: {}", tenantId, timingMs, query);
         } else {
             log.warn("[{}] Executed slow data query in {} ms: {}", tenantId, timingMs, query);
         }
@@ -79,7 +79,7 @@ public class DefaultEdqsStatsService implements EdqsStatsService {
     public void reportCountQuery(TenantId tenantId, EntityCountQuery query, long timingNanos) {
         double timingMs = timingNanos / 1000_000.0;
         if (timingMs < slowQueryThreshold) {
-            log.info("[{}] Executed count query in {} ms: {}", tenantId, timingMs, query);
+            log.debug("[{}] Executed count query in {} ms: {}", tenantId, timingMs, query);
         } else {
             log.warn("[{}] Executed slow count query in {} ms: {}", tenantId, timingMs, query);
         }
