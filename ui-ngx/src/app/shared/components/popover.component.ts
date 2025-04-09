@@ -474,10 +474,10 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   }
 
   set tbOverlayStyle(value: { [klass: string]: any }) {
+    this._tbOverlayStyle = value;
     if (this.popover?.nativeElement) {
       this.applyStyleChanges();
     }
-    this._tbOverlayStyle = value;
   }
 
   get tbOverlayStyle(): { [klass: string]: any } {
