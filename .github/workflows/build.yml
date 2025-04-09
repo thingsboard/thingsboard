@@ -50,7 +50,7 @@ jobs:
           yarn -v
 
       - name: Build with Maven (skip tests)
-        run:  mvn clean install -DskipTests -Dmaven.frontend.skip=true
+        run:  ./build.sh
 
       - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
