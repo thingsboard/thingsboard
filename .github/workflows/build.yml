@@ -49,15 +49,8 @@ jobs:
           node -v
           yarn -v
 
-      - name: Debug yarn install in ui-ngx
-        run: |
-          cd ui-ngx
-          echo "Running yarn install manually in ui-ngx..."
-          yarn install --verbose || true  # Không dừng pipeline để bạn thấy log lỗi
-          echo "Finished manual yarn install step."
-
       - name: Build with Maven (skip tests)
-        run: mvn clean install -DskipTests -X
+        run:  mvn clean install -DskipTests -Dmaven.frontend.skip=true
 
       - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
