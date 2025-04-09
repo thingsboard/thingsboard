@@ -105,7 +105,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     private final TbQueueAdmin housekeeperReprocessingAdmin;
     private final TbQueueAdmin edgeAdmin;
     private final TbQueueAdmin edgeEventAdmin;
-    private final TbKafkaAdmin cfAdmin;
+    private final TbQueueAdmin cfAdmin;
     private final TbQueueAdmin cfStateAdmin;
     private final TbQueueAdmin edqsEventsAdmin;
     private final TbKafkaAdmin edqsRequestsAdmin;
@@ -515,9 +515,10 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer(TopicPartitionInfo tpi, Integer partitionId) {
+    public TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer(TopicPartitionInfo tpi) {
         String queueName = DataConstants.CF_QUEUE_NAME;
         TenantId tenantId = tpi.getTenantId().orElse(TenantId.SYS_TENANT_ID);
+        Integer partitionId = tpi.getPartition().orElseThrow(() -> new IllegalArgumentException("PartitionId is required."));
         String groupId = topicService.buildConsumerGroupId("cf-", tenantId, queueName, partitionId);
 
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToCalculatedFieldMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();

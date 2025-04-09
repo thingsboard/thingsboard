@@ -54,7 +54,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     @Getter
     protected C config;
     protected final MsgPackProcessor<M, C> msgPackProcessor;
-    protected final BiFunction<C, Integer, TbQueueConsumer<M>> consumerCreator;
+    protected final BiFunction<C, TopicPartitionInfo, TbQueueConsumer<M>> consumerCreator;
     @Getter
     protected final ExecutorService consumerExecutor;
     @Getter
@@ -74,7 +74,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     @Builder
     public MainQueueConsumerManager(QueueKey queueKey, C config,
                                     MsgPackProcessor<M, C> msgPackProcessor,
-                                    BiFunction<C, Integer, TbQueueConsumer<M>> consumerCreator,
+                                    BiFunction<C, TopicPartitionInfo, TbQueueConsumer<M>> consumerCreator,
                                     ExecutorService consumerExecutor,
                                     ScheduledExecutorService scheduler,
                                     ExecutorService taskExecutor,
@@ -313,7 +313,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
                 Runnable callback = onStop != null ? () -> onStop.accept(tpi) : null;
 
                 TbQueueConsumerTask<M> consumer = new TbQueueConsumerTask<>(key, () -> {
-                    TbQueueConsumer<M> queueConsumer = consumerCreator.apply(config, partitionId);
+                    TbQueueConsumer<M> queueConsumer = consumerCreator.apply(config, tpi);
                     if (startOffsetProvider != null && queueConsumer instanceof TbKafkaConsumerTemplate<M> kafkaConsumer) {
                         kafkaConsumer.setStartOffsetProvider(startOffsetProvider);
                     }

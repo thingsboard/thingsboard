@@ -17,6 +17,7 @@ package org.thingsboard.server.service.queue;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -35,7 +36,6 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -43,7 +43,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
@@ -61,7 +60,6 @@ import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,8 +83,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
     private final CalculatedFieldStateService stateService;
     private final CalculatedFieldEntityProfileCache entityProfileCache;
 
-    private final ConcurrentMap<QueueKey, PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>>> consumers = new ConcurrentHashMap<>();
-
     public DefaultTbCalculatedFieldConsumerService(TbRuleEngineQueueFactory tbQueueFactory,
                                                    ActorSystemContext actorContext,
                                                    TbDeviceProfileCache deviceProfileCache,
@@ -109,32 +105,18 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
     @Override
     protected void onStartUp() {
         var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
-        createConsumer(queueKey);
-    }
-
-    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> createConsumer(QueueKey queueKey) {
-        String topic = partitionService.getTopic(queueKey);
         var eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>>create()
                 .queueKey(queueKey)
-                .topic(topic)
+                .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
                 .msgPackProcessor(this::processMsgs)
-                .consumerCreator((queueConfig, partitionId) -> {
-                    TopicPartitionInfo tpi = TopicPartitionInfo.builder()
-                            .tenantId(queueKey.getTenantId())
-                            .topic(partitionService.getTopic(queueKey))
-                            .partition(partitionId)
-                            .build();
-                    return queueFactory.createToCalculatedFieldMsgConsumer(tpi, partitionId);
-                })
+                .consumerCreator((queueConfig, tpi) -> queueFactory.createToCalculatedFieldMsgConsumer(tpi))
                 .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
                 .build();
         stateService.init(eventConsumer);
-        consumers.put(queueKey, eventConsumer);
-        return eventConsumer;
     }
 
     @PreDestroy
@@ -151,25 +133,10 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
     protected void onPartitionChangeEvent(PartitionChangeEvent event) {
         try {
             event.getNewPartitions().forEach((queueKey, partitions) -> {
-                if (DataConstants.CF_QUEUE_NAME.equals(queueKey.getQueueName()) || DataConstants.CF_STATES_QUEUE_NAME.equals(queueKey.getQueueName())) {
-                    if (partitionService.isManagedByCurrentService(queueKey.getTenantId())) {
-                        var consumer = Optional.ofNullable(consumers.get(queueKey)).orElseGet(() -> createConsumer(queueKey));
-                        if (consumer != null) {
-                            stateService.restore(queueKey, partitions);
-                        }
-                    }
+                if (DataConstants.CF_QUEUE_NAME.equals(queueKey.getQueueName())) {
+                    stateService.restore(queueKey, partitions);
                 }
             });
-
-            consumers.keySet().stream()
-                    .collect(Collectors.groupingBy(QueueKey::getTenantId))
-                    .forEach((tenantId, queueKeys) -> {
-                        if (!partitionService.isManagedByCurrentService(tenantId)) {
-                            queueKeys.forEach(queueKey -> {
-                                Optional.ofNullable(consumers.remove(queueKey)).ifPresent(MainQueueConsumerManager::stop);
-                            });
-                        }
-                    });
 
             // Cleanup old entities after corresponding consumers are stopped.
             // Any periodic tasks need to check that the entity is still managed by the current server before processing.
@@ -265,19 +232,13 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
             if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                 entityProfileCache.removeTenant(event.getTenantId());
 
-                List<QueueKey> toRemove = consumers.keySet().stream()
-                        .filter(queueKey -> queueKey.getTenantId().equals(event.getTenantId()))
-                        .toList();
-                toRemove.forEach(queueKey -> {
-                    Optional.ofNullable(consumers.remove(queueKey)).ifPresent(consumer -> {
-                        Set<TopicPartitionInfo> partitions = stateService.getPartitions().stream()
-                                .filter(tpi -> tpi.getTenantId().isPresent() && tpi.getTenantId().get().equals(event.getTenantId()))
-                                .collect(Collectors.toSet());
-                        if (!partitions.isEmpty()) {
-                            consumer.delete(partitions);
-                        }
-                    });
-                });
+                Set<TopicPartitionInfo> partitions = stateService.getPartitions();
+                if (CollectionUtils.isEmpty(partitions)) {
+                    return;
+                }
+                stateService.delete(partitions.stream()
+                        .filter(tpi -> tpi.getTenantId().isPresent() && tpi.getTenantId().get().equals(event.getTenantId()))
+                        .collect(Collectors.toSet()));
             }
         } else if (event.getEntityId().getEntityType() == EntityType.ASSET_PROFILE) {
             if (event.getEvent() == ComponentLifecycleEvent.DELETED) {

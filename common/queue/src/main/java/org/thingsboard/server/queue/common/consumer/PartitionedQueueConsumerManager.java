@@ -45,7 +45,7 @@ public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQ
 
     @Builder(builderMethodName = "create") // not to conflict with super.builder()
     public PartitionedQueueConsumerManager(QueueKey queueKey, String topic, long pollInterval, MsgPackProcessor<M, QueueConfig> msgPackProcessor,
-                                           BiFunction<QueueConfig, Integer, TbQueueConsumer<M>> consumerCreator, TbQueueAdmin queueAdmin,
+                                           BiFunction<QueueConfig, TopicPartitionInfo, TbQueueConsumer<M>> consumerCreator, TbQueueAdmin queueAdmin,
                                            ExecutorService consumerExecutor, ScheduledExecutorService scheduler,
                                            ExecutorService taskExecutor, Consumer<Throwable> uncaughtErrorHandler) {
         super(queueKey, QueueConfig.of(true, pollInterval), msgPackProcessor, consumerCreator, consumerExecutor, scheduler, taskExecutor, uncaughtErrorHandler);

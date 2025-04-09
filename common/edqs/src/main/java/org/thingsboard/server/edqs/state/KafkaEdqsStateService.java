@@ -59,7 +59,8 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private final EdqsConfig config;
     private final EdqsPartitionService partitionService;
     private final KafkaEdqsQueueFactory queueFactory;
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private EdqsProcessor edqsProcessor;
 
     private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> stateConsumer;
@@ -93,7 +94,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
                     }
                     consumer.commit();
                 })
-                .consumerCreator((config, partitionId) -> queueFactory.createEdqsStateConsumer())
+                .consumerCreator((config, tpi) -> queueFactory.createEdqsStateConsumer())
                 .queueAdmin(queueAdmin)
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .taskExecutor(eventConsumer.getTaskExecutor())
