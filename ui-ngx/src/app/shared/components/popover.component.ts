@@ -372,17 +372,6 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   @ViewChild('popoverRoot', { static: false }) popoverRoot!: ElementRef<HTMLElement>;
   @ViewChild('popover', { static: false }) popover!: ElementRef<HTMLElement>;
 
-  set tbOverlayStyle(value: { [klass: string]: any }) {
-    if (this.popover?.nativeElement) {
-      this.applyStyleChanges();
-    }
-    this._tbOverlayStyle = value;
-  }
-
-  get tbOverlayStyle(): { [klass: string]: any } {
-    return this._tbOverlayStyle;
-  }
-
   tbContent: string | TemplateRef<void> | null = null;
   tbComponent: Type<T> | null = null;
   tbComponentRef: ComponentRef<T> | null = null;
@@ -406,9 +395,6 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   tbAnimationDone = new Subject<void>();
   tbComponentChange = new Subject<ComponentRef<any>>();
   tbDestroy = new Subject<void>();
-
-  private _tbOverlayStyle: { [klass: string]: any } = {};
-  private _stylesDiffer: KeyValueDiffer<string, any>;
 
   set tbVisible(value: boolean) {
     const visible = value;
@@ -487,6 +473,17 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
     return this.tbModal ? 'tb-popover-overlay-backdrop' : '';
   }
 
+  set tbOverlayStyle(value: { [klass: string]: any }) {
+    if (this.popover?.nativeElement) {
+      this.applyStyleChanges();
+    }
+    this._tbOverlayStyle = value;
+  }
+
+  get tbOverlayStyle(): { [klass: string]: any } {
+    return this._tbOverlayStyle;
+  }
+
   preferredPlacement: PopoverPlacement = 'top';
   strictPosition = false;
   origin!: CdkOverlayOrigin;
@@ -502,6 +499,8 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
       this.cdr.markForCheck();
     }
   }, {threshold: [0.5]});
+  private _tbOverlayStyle: { [klass: string]: any } = {};
+  private _stylesDiffer: KeyValueDiffer<string, any>;
 
   constructor(
     public cdr: ChangeDetectorRef,
@@ -644,27 +643,6 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
     this.cdr.detectChanges();
   }
 
-  private applyStyleChanges(): void {
-    const changes = this._stylesDiffer.diff(this._tbOverlayStyle);
-    if (changes) {
-      changes.forEachRemovedItem(record =>
-        this.renderer.removeStyle(this.popover.nativeElement, record.key)
-      );
-
-      changes.forEachAddedItem(record => this.setStyle(record));
-      changes.forEachChangedItem(record => this.setStyle(record));
-    }
-  }
-
-  private setStyle(record: KeyValueChangeRecord<string, any>): void {
-    this.renderer.setStyle(
-      this.popover.nativeElement,
-      record.key,
-      record.currentValue,
-      RendererStyleFlags2.DashCase
-    );
-  }
-
   updateStyles(): void {
     this.classMap = {
       [`tb-popover-placement-${this.preferredPlacement}`]: true,
@@ -699,6 +677,27 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
 
   animationDone() {
     this.tbAnimationDone.next();
+  }
+
+  private applyStyleChanges(): void {
+    const changes = this._stylesDiffer.diff(this._tbOverlayStyle);
+    if (changes) {
+      changes.forEachRemovedItem(record =>
+        this.renderer.removeStyle(this.popover.nativeElement, record.key)
+      );
+
+      changes.forEachAddedItem(record => this.setStyle(record));
+      changes.forEachChangedItem(record => this.setStyle(record));
+    }
+  }
+
+  private setStyle(record: KeyValueChangeRecord<string, any>): void {
+    this.renderer.setStyle(
+      this.popover.nativeElement,
+      record.key,
+      record.currentValue,
+      RendererStyleFlags2.DashCase
+    );
   }
 
   private isTopOverlay(targetElement: Element): boolean {
