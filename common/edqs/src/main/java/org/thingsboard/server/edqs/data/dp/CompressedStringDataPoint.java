@@ -18,7 +18,7 @@ package org.thingsboard.server.edqs.data.dp;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.edqs.util.TbBytePool;
+import org.thingsboard.common.util.TbBytePool;
 import org.xerial.snappy.Snappy;
 
 public class CompressedStringDataPoint extends AbstractDataPoint {

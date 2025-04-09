@@ -13,35 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs.data.dp;
+package org.thingsboard.common.util;
 
-import lombok.Getter;
-import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.common.util.TbStringPool;
+import com.google.common.hash.Hashing;
+import org.springframework.util.ConcurrentReferenceHashMap;
 
-public class JsonDataPoint extends AbstractDataPoint {
+import java.util.concurrent.ConcurrentMap;
 
-    @Getter
-    private final String value;
+public class TbBytePool {
 
-    public JsonDataPoint(long ts, String value) {
-        super(ts);
-        this.value = TbStringPool.intern(value);
+    private static final ConcurrentMap<String, byte[]> pool = new ConcurrentReferenceHashMap<>();
+
+    public static byte[] intern(byte[] data) {
+        if (data == null) {
+            return null;
+        }
+        var checksum = Hashing.sha512().hashBytes(data).toString();
+        return pool.computeIfAbsent(checksum, c -> data);
     }
 
-    @Override
-    public DataType getType() {
-        return DataType.JSON;
-    }
-
-    @Override
-    public String getJson() {
-        return value;
-    }
-
-    @Override
-    public String valueToString() {
-        return value;
+    public static int size(){
+        return pool.size();
     }
 
 }

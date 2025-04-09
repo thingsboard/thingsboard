@@ -13,27 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs.util;
+package org.thingsboard.server.common.stats;
 
-import com.google.common.hash.Hashing;
-import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
 
-import java.util.concurrent.ConcurrentMap;
+public interface EdqsStatsService {
 
-public class TbBytePool {
+    void reportAdded(ObjectType objectType);
 
-    private static final ConcurrentMap<String, byte[]> pool = new ConcurrentReferenceHashMap<>();
+    void reportRemoved(ObjectType objectType);
 
-    public static byte[] intern(byte[] data) {
-        if (data == null) {
-            return null;
-        }
-        var checksum = Hashing.sha512().hashBytes(data).toString();
-        return pool.computeIfAbsent(checksum, c -> data);
-    }
+    void reportDataQuery(TenantId tenantId, EntityDataQuery query, long timingNanos);
 
-    public static int size(){
-        return pool.size();
-    }
+    void reportCountQuery(TenantId tenantId, EntityCountQuery query, long timingNanos);
 
 }
