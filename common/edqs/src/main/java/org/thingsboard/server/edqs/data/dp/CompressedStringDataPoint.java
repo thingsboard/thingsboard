@@ -17,13 +17,12 @@ package org.thingsboard.server.edqs.data.dp;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.common.util.TbBytePool;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.xerial.snappy.Snappy;
 
 public class CompressedStringDataPoint extends AbstractDataPoint {
 
-    public static final int MIN_STR_SIZE_TO_COMPRESS = 512;
     @Getter
     private final byte[] compressedValue;
 
