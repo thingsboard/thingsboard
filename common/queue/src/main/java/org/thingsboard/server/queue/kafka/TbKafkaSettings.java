@@ -50,7 +50,7 @@ import java.util.Properties;
 @Component
 public class TbKafkaSettings {
 
-    private static final List<String> DYNAMIC_TOPICS = List.of("tb_edge_event.notifications");
+    private static final List<String> DYNAMIC_TOPICS = List.of("tb_edge.notifications", "tb_edge_event.notifications");
 
     @Value("${queue.kafka.bootstrap.servers}")
     private String servers;

@@ -62,7 +62,7 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
     @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
     private long ttlSeconds;
 
-    @Value("${queue.edge.event-notifications-topic:tb_edge_event.notifications}")
+    @Value("${queue.edge.event_notifications_topic:tb_edge_event.notifications}")
     private String tbEdgeEventNotificationsTopic;
 
     public KafkaEdgeTopicsCleanUpService(PartitionService partitionService, EdgeService edgeService,
