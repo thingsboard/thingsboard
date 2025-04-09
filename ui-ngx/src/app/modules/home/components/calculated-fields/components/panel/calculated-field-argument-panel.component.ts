@@ -67,7 +67,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   readonly defaultLimit = Math.floor(this.maxDataPointsPerRollingArg / 10);
 
   argumentFormGroup = this.fb.group({
-    argumentName: ['', [Validators.required, this.uniqNameRequired(), this.notEqualCtxValidator(), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
+    argumentName: ['', [Validators.required, this.uniqNameRequired(), this.forbiddenArgumentNameValidator(), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
     refEntityId: this.fb.group({
       entityType: [ArgumentEntityType.Current],
       id: ['']
@@ -254,10 +254,11 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     }
   }
 
-  private notEqualCtxValidator(): ValidatorFn {
+  private forbiddenArgumentNameValidator(): ValidatorFn {
     return (control: FormControl) => {
       const trimmedValue = control.value.trim().toLowerCase();
-      return trimmedValue === 'ctx' ? { equalCtx: true } : null;
+      const forbiddenArgumentNames = ['ctx', 'e', 'pi'];
+      return forbiddenArgumentNames.includes(trimmedValue) ? { forbiddenName: true } : null;
     };
   }
 

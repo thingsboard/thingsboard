@@ -1069,7 +1069,7 @@
             "argument-name-pattern": "Argument name is invalid.",
             "argument-name-duplicate": "Argument with such name already exists.",
             "argument-name-max-length": "Argument name should be less than 256 characters.",
-            "argument-name-ctx": "Argument name 'ctx' is reserved and cannot be used.",
+            "argument-name-forbidden": "Argument name is reserved and cannot be used.",
             "argument-type-required": "Argument type is required.",
             "max-args": "Maximum number of arguments reached.",
             "decimals-range": "Decimals by default should be a number between 0 and 15.",
