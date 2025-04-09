@@ -7832,33 +7832,6 @@
         "items-per-page-separator": "至"
     },
     "language": {
-        "language": "语言",
-        "locales": {
-            "ar_AE": "العربية (الإمارات العربية المتحدة)",
-            "ca_ES": "català (Espanya)",
-            "cs_CZ": "čeština (Česko)",
-            "da_DK": "dansk (Danmark)",
-            "de_DE": "Deutsch (Deutschland)",
-            "el_GR": "Ελληνικά (Ελλάδα)",
-            "en_US": "English (United States)",
-            "es_ES": "español (España)",
-            "fa_IR": "فارسی (ایران)",
-            "fr_FR": "français (France)",
-            "it_IT": "italiano (Italia)",
-            "ja_JP": "日本語 (日本)",
-            "ka_GE": "ქართული (საქართველო)",
-            "ko_KR": "한국어 (대한민국)",
-            "lt_LT": "lietuvių (Lietuva)",
-            "lv_LV": "latviešu (Latvija)",
-            "nl_BE": "Nederlands (België)",
-            "pl_PL": "polski (Polska)",
-            "pt_BR": "português (Brasil)",
-            "ro_RO": "română (România)",
-            "sl_SI": "slovenščina (Slovenija)",
-            "tr_TR": "Türkçe (Türkiye)",
-            "uk_UA": "українська (Україна)",
-            "zh_CN": "中文 (中国)",
-            "zh_TW": "中文 (台灣)"
-        }
+        "language": "语言"
     }
 }
