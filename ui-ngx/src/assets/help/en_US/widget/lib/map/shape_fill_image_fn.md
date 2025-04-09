@@ -39,12 +39,33 @@ In case no data is returned, default fill image will be used.
 
 <ul>
 <li>
-TODO:
+Calculate image URL and rotation angle depending on <code>windSpeed</code> and <code>windDirection</code> telemetry values for a <code>weather station</code> device type.<br/>
+Let's assume 3 images are defined in the Shape fill images section. Each image corresponds to a particular wind speed level: low (e.g., <5 m/s), medium (e.g., 5-15 m/s), and high (e.g., >15 m/s).
 </li>
 </ul>
 
 ```javascript
-TODO:
+const type = data.Type;
+if (type === 'weather station') {
+  const result = {
+    url: images[0],
+    opacity: 0.8,
+    angle: 0
+  };
+  const windSpeed = data.windSpeed;
+  const windDirection = data.windDirection;
+  if (typeof windSpeed !== 'undefined' && typeof windDirection !== 'undefined') {
+    if (windSpeed < 5) {
+      result.url = images[0];
+    } else if (windSpeed < 15) {
+      result.url = images[1];
+    } else {
+      result.url = images[2];
+    }
+    result.angle = windDirection;
+  }
+  return result;
+}
 {:copy-code}
 ```
 

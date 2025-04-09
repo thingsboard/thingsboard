@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasEmail;
@@ -46,6 +47,7 @@ import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.msg.edqs.EdqsApiService;
+import org.thingsboard.server.common.stats.EdqsStatsService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.ArrayList;
@@ -89,6 +91,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Lazy
     private EdqsApiService edqsApiService;
 
+    @Autowired
+    private EdqsStatsService edqsStatsService;
+
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
         log.trace("Executing countEntitiesByQuery, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
@@ -96,14 +101,19 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityCountQuery(query);
 
+        TbStopWatch stopWatch = TbStopWatch.create();
+        Long result;
         if (edqsApiService.isEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityCountQuery(query)
                     .build();
             EdqsResponse response = processEdqsRequest(tenantId, customerId, request);
-            return response.getEntityCountQueryResult();
+            result = response.getEntityCountQueryResult();
+        } else {
+            result = entityQueryDao.countEntitiesByQuery(tenantId, customerId, query);
         }
-        return this.entityQueryDao.countEntitiesByQuery(tenantId, customerId, query);
+        edqsStatsService.reportCountQuery(tenantId, query, stopWatch.stopAndGetTotalTimeNanos());
+        return result;
     }
 
     @Override
@@ -113,27 +123,31 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityDataQuery(query);
 
+        TbStopWatch stopWatch = TbStopWatch.create();
+        PageData<EntityData> result;
         if (edqsApiService.isEnabled() && validForEdqs(query)) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityDataQuery(query)
                     .build();
             EdqsResponse response = processEdqsRequest(tenantId, customerId, request);
-            return response.getEntityDataQueryResult();
+            result = response.getEntityDataQueryResult();
+        } else {
+            if (!isValidForOptimization(query)) {
+                result = entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
+            } else {
+                // 1 step - find entity data by filter and sort columns
+                PageData<EntityData> entityDataByQuery = findEntityIdsByFilterAndSorterColumns(tenantId, customerId, query);
+                if (entityDataByQuery == null || entityDataByQuery.getData().isEmpty()) {
+                    result = entityDataByQuery;
+                } else {
+                    // 2 step - find entity data by entity ids from the 1st step
+                    List<EntityData> entities = fetchEntityDataByIdsFromInitialQuery(tenantId, customerId, query, entityDataByQuery.getData());
+                    result = new PageData<>(entities, entityDataByQuery.getTotalPages(), entityDataByQuery.getTotalElements(), entityDataByQuery.hasNext());
+                }
+            }
         }
-
-        if (!isValidForOptimization(query)) {
-            return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
-        }
-
-        // 1 step - find entity data by filter and sort columns
-        PageData<EntityData> entityDataByQuery = findEntityIdsByFilterAndSorterColumns(tenantId, customerId, query);
-        if (entityDataByQuery == null || entityDataByQuery.getData().isEmpty()) {
-            return entityDataByQuery;
-        }
-
-        // 2 step - find entity data by entity ids from the 1st step
-        List<EntityData> result = fetchEntityDataByIdsFromInitialQuery(tenantId, customerId, query, entityDataByQuery.getData());
-        return new PageData<>(result, entityDataByQuery.getTotalPages(), entityDataByQuery.getTotalElements(), entityDataByQuery.hasNext());
+        edqsStatsService.reportDataQuery(tenantId, query, stopWatch.stopAndGetTotalTimeNanos());
+        return result;
     }
 
     private boolean validForEdqs(EntityCountQuery query) { // for compatibility with PE

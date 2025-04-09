@@ -36,7 +36,7 @@ public class JavaSerDesUtil {
         try (ObjectInputStream ois = new ObjectInputStream(is)) {
             return (T) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            log.error("Error during deserialization message, [{}]", e.getMessage());
+            log.error("Error during deserialization", e);
             return null;
         }
     }
@@ -50,7 +50,7 @@ public class JavaSerDesUtil {
             ois.writeObject(msq);
             return boas.toByteArray();
         } catch (IOException e) {
-            log.error("Error during serialization message, [{}]", e.getMessage());
+            log.error("Error during serialization", e);
             throw new RuntimeException(e);
         }
     }

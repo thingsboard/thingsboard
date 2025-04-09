@@ -17,13 +17,19 @@ package org.thingsboard.server.edqs.util;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.TbStringPool;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ObjectType;
@@ -49,6 +55,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DataPointProto;
 import org.xerial.snappy.Snappy;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -56,6 +63,9 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class EdqsConverter {
+
+    @Value("${queue.edqs.string_compression_length_threshold:512}")
+    private int stringCompressionLengthThreshold;
 
     private final Map<ObjectType, Converter<? extends EdqsObject>> converters = new HashMap<>();
     private final Converter<Entity> defaultConverter = new JsonConverter<>(Entity.class);
@@ -125,7 +135,7 @@ public class EdqsConverter {
         });
     }
 
-    public static DataPointProto toDataPointProto(long ts, KvEntry kvEntry) {
+    public DataPointProto toDataPointProto(long ts, KvEntry kvEntry) {
         DataPointProto.Builder proto = DataPointProto.newBuilder();
         proto.setTs(ts);
         switch (kvEntry.getDataType()) {
@@ -134,7 +144,7 @@ public class EdqsConverter {
             case DOUBLE -> proto.setDoubleV(kvEntry.getDoubleValue().get());
             case STRING -> {
                 String strValue = kvEntry.getStrValue().get();
-                if (strValue.length() < CompressedStringDataPoint.MIN_STR_SIZE_TO_COMPRESS) {
+                if (strValue.length() < stringCompressionLengthThreshold) {
                     proto.setStringV(strValue);
                 } else {
                     proto.setCompressedStringV(ByteString.copyFrom(compress(strValue)));
@@ -142,7 +152,7 @@ public class EdqsConverter {
             }
             case JSON -> {
                 String jsonValue = kvEntry.getJsonValue().get();
-                if (jsonValue.length() < CompressedStringDataPoint.MIN_STR_SIZE_TO_COMPRESS) {
+                if (jsonValue.length() < stringCompressionLengthThreshold) {
                     proto.setJsonV(jsonValue);
                 } else {
                     proto.setCompressedJsonV(ByteString.copyFrom(compress(jsonValue)));
@@ -152,7 +162,7 @@ public class EdqsConverter {
         return proto.build();
     }
 
-    public static DataPoint fromDataPointProto(DataPointProto proto) {
+    public DataPoint fromDataPointProto(DataPointProto proto) {
         long ts = proto.getTs();
         if (proto.hasBoolV()) {
             return new BoolDataPoint(ts, proto.getBoolV());
@@ -188,14 +198,6 @@ public class EdqsConverter {
         return edqsEntity;
     }
 
-    public EdqsObject check(ObjectType type, Object object) {
-        if (object instanceof EdqsObject edqsObject) {
-            return edqsObject;
-        } else {
-            return toEntity(type.toEntityType(), object);
-        }
-    }
-
     @SuppressWarnings("unchecked")
     @SneakyThrows
     public <T extends EdqsObject> byte[] serialize(ObjectType type, T value) {
@@ -220,11 +222,17 @@ public class EdqsConverter {
     @RequiredArgsConstructor
     private static class JsonConverter<T> implements Converter<T> {
 
+        private static final SimpleModule module = new SimpleModule();
         private static final ObjectMapper mapper = JsonMapper.builder()
                 .visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
                 .visibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE)
                 .visibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE)
                 .build();
+
+        static {
+            module.addDeserializer(String.class, new InterningStringDeserializer());
+            mapper.registerModule(module);
+        }
 
         private final Class<T> type;
 
@@ -247,6 +255,19 @@ public class EdqsConverter {
         byte[] serialize(ObjectType type, T value) throws Exception;
 
         T deserialize(ObjectType type, byte[] bytes) throws Exception;
+
+    }
+
+    public static class InterningStringDeserializer extends StdDeserializer<String> {
+
+        public InterningStringDeserializer() {
+            super(String.class);
+        }
+
+        @Override
+        public String deserialize(JsonParser p, DeserializationContext ctx) throws IOException {
+            return TbStringPool.intern(p.getText());
+        }
 
     }
 
