@@ -1768,6 +1768,8 @@ queue:
     stats:
       # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
+      # Threshold for slow queries to log, in milliseconds
+      slow_query_threshold: "${TB_EDQS_SLOW_QUERY_THRESHOLD_MS:3000}"
   vc:
     # Default topic name
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
