@@ -39,7 +39,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'  # Khuyên dùng với ThingsBoard
+          node-version: '18'  # Khuyên dùng với ThingsBoard
 
       - name: Install Yarn globally
         run: npm install -g yarn
