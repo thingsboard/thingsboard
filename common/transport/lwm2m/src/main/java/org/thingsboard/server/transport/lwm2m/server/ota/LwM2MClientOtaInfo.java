@@ -74,18 +74,16 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
             } else {
                 if (targetPackageId.equals(currentPackageId)) {
                     return false;
-                } else if (StringUtils.isNotEmpty(targetTag) && targetTag.equals(currentPackageId)) {
-                    return false;
-                } else if (StringUtils.isNotEmpty(currentVersion3)) {
-                    if (StringUtils.isNotEmpty(targetTag) && currentVersion3.contains(targetTag)) {
+                } else{
+                    if (targetTag.equals(currentPackageId)) {
                         return false;
+                    } else if (StringUtils.isNotEmpty(currentVersion3)) {
+                        return !(currentVersion3.contains(targetTag) || targetTag.contains(currentVersion3));
                     }
-                    return !currentVersion3.contains(targetPackageId);
-                } else {
-                    return true;
                 }
             }
         }
+        return true;
     }
 
     @JsonIgnore
