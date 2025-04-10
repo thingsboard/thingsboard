@@ -27,14 +27,14 @@ public interface StatsFactory {
 
     <T extends Number> T createGauge(String key, T number, String... tags);
 
-    <T extends Number> T createGauge(StatsType statsType, String name, T number, String... tags);
+    <T extends Number> T createGauge(String type, String name, T number, String... tags);
 
-    <S> void createGauge(StatsType statsType, String name, S stateObject, ToDoubleFunction<S> numberProvider, String... tags);
+    <S> void createGauge(String type, String name, S stateObject, ToDoubleFunction<S> numberProvider, String... tags);
 
     MessagesStats createMessagesStats(String key);
 
     Timer createTimer(String key, String... tags);
 
-    StatsTimer createTimer(StatsType type, String name, String... tags);
+    StatsTimer createStatsTimer(String type, String name, String... tags);
 
 }

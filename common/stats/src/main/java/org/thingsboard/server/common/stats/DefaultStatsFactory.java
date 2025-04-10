@@ -88,13 +88,13 @@ public class DefaultStatsFactory implements StatsFactory {
     }
 
     @Override
-    public <T extends Number> T createGauge(StatsType statsType, String name, T number, String... tags) {
-        return createGauge(statsType.getName(), number, getTags(name, tags));
+    public <T extends Number> T createGauge(String type, String name, T number, String... tags) {
+        return createGauge(type, number, getTags(name, tags));
     }
 
     @Override
-    public <S> void createGauge(StatsType statsType, String name, S stateObject, ToDoubleFunction<S> numberProvider, String... tags) {
-        meterRegistry.gauge(statsType.getName(), Tags.of(getTags(name, tags)), stateObject, numberProvider);
+    public <S> void createGauge(String type, String name, S stateObject, ToDoubleFunction<S> numberProvider, String... tags) {
+        meterRegistry.gauge(type, Tags.of(getTags(name, tags)), stateObject, numberProvider);
     }
 
     @Override
@@ -117,8 +117,8 @@ public class DefaultStatsFactory implements StatsFactory {
     }
 
     @Override
-    public StatsTimer createTimer(StatsType type, String name, String... tags) {
-        return new StatsTimer(name, Timer.builder(type.getName())
+    public StatsTimer createStatsTimer(String type, String name, String... tags) {
+        return new StatsTimer(name, Timer.builder(type)
                 .tags(getTags(name, tags))
                 .register(meterRegistry));
     }

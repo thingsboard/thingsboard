@@ -31,7 +31,6 @@ import org.thingsboard.server.common.stats.EdqsStatsService;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsTimer;
-import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.edqs.repo.DefaultEdqsRepository;
 
 import java.util.Map;
@@ -58,9 +57,9 @@ public class DefaultEdqsStatsService implements EdqsStatsService {
 
     @PostConstruct
     private void init() {
-        statsFactory.createGauge(StatsType.EDQS, "stringPoolSize", TbStringPool.getPool(), Map::size);
-        statsFactory.createGauge(StatsType.EDQS, "bytePoolSize", TbBytePool.getPool(), Map::size);
-        statsFactory.createGauge(StatsType.EDQS, "tenantReposSize", DefaultEdqsRepository.getRepos(), Map::size);
+        statsFactory.createGauge("edqsGauges", "stringPoolSize", TbStringPool.getPool(), Map::size);
+        statsFactory.createGauge("edqsGauges", "bytePoolSize", TbBytePool.getPool(), Map::size);
+        statsFactory.createGauge("edqsGauges", "tenantReposSize", DefaultEdqsRepository.getRepos(), Map::size);
     }
 
     @Override
@@ -118,20 +117,20 @@ public class DefaultEdqsStatsService implements EdqsStatsService {
     }
 
     private StatsTimer getTimer(String name) {
-        return timers.computeIfAbsent(name, __ -> statsFactory.createTimer(StatsType.EDQS, name));
+        return timers.computeIfAbsent(name, __ -> statsFactory.createStatsTimer("edqsTimers", name));
     }
 
     private StatsCounter getCounter(String name) {
-        return counters.computeIfAbsent(name, __ -> statsFactory.createStatsCounter(StatsType.EDQS.getName(), name));
+        return counters.computeIfAbsent(name, __ -> statsFactory.createStatsCounter("edqsCounters", name));
     }
 
     private AtomicInteger getGauge(String name) {
-        return gauges.computeIfAbsent(name, __ -> statsFactory.createGauge(StatsType.EDQS, name, new AtomicInteger()));
+        return gauges.computeIfAbsent(name, __ -> statsFactory.createGauge("edqsGauges", name, new AtomicInteger()));
     }
 
     private AtomicInteger getObjectGauge(ObjectType objectType) {
         return objectCounters.computeIfAbsent(objectType, type ->
-                statsFactory.createGauge(StatsType.EDQS, "objectsCount", new AtomicInteger(), "objectType", type.name()));
+                statsFactory.createGauge("edqsGauges", "objectsCount", new AtomicInteger(), "objectType", type.name()));
     }
 
 }

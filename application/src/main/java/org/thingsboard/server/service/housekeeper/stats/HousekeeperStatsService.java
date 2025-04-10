@@ -106,7 +106,7 @@ public class HousekeeperStatsService {
             this.failedProcessingCounter = register("failedProcessing", statsFactory);
             this.reprocessedCounter = register("reprocessed", statsFactory);
             this.failedReprocessingCounter = register("failedReprocessing", statsFactory);
-            this.processingTimer = statsFactory.createTimer(StatsType.HOUSEKEEPER, "processingTime", "taskType", taskType.name());
+            this.processingTimer = statsFactory.createStatsTimer(StatsType.HOUSEKEEPER.getName(), "processingTime", "taskType", taskType.name());
         }
 
         private StatsCounter register(String statsName, StatsFactory statsFactory) {
