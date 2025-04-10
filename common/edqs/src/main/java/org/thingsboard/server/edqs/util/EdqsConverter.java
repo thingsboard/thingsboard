@@ -171,11 +171,21 @@ public class EdqsConverter {
         } else if (proto.hasDoubleV()) {
             return new DoubleDataPoint(ts, proto.getDoubleV());
         } else if (proto.hasStringV()) {
-            return new StringDataPoint(ts, proto.getStringV());
+            String stringV = proto.getStringV();
+            if (stringV.length() < stringCompressionLengthThreshold) {
+                return new StringDataPoint(ts, stringV);
+            } else {
+                return new CompressedStringDataPoint(ts, compress(stringV));
+            }
         } else if (proto.hasCompressedStringV()) {
             return new CompressedStringDataPoint(ts, proto.getCompressedStringV().toByteArray());
         } else if (proto.hasJsonV()) {
-            return new JsonDataPoint(ts, proto.getJsonV());
+            String jsonV = proto.getJsonV();
+            if (jsonV.length() < stringCompressionLengthThreshold) {
+                return new JsonDataPoint(ts, jsonV);
+            } else {
+                return new CompressedJsonDataPoint(ts, compress(jsonV));
+            }
         } else if (proto.hasCompressedJsonV()) {
             return new CompressedJsonDataPoint(ts, proto.getCompressedJsonV().toByteArray());
         } else {
