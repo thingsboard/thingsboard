@@ -523,7 +523,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             } else {
                 strategy = info.getDeliveryMethod() == FirmwareDeliveryMethod.PULL.code ? LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL : LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
             }
-            if (clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings().getUseObject19ForOta()){
+            Boolean useObject19ForOta = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings().getUseObject19ForOta();
+            if (useObject19ForOta != null && useObject19ForOta){
                 sendInfoFwToObject19ForOta(client, convertObjectIdToVersionedId(FW_INFO_19_INSTANCE_ID, client), response, otaPackageId);
             }
             switch (strategy) {
