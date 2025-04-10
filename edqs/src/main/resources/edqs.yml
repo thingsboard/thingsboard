@@ -66,7 +66,7 @@ queue:
     # EDQS responses topic
     responses_topic: "${TB_EDQS_RESPONSES_TOPIC:edqs.responses}"
     # Poll interval for EDQS topics
-    poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:125}"
+    poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:25}"
     # Maximum amount of pending requests to EDQS
     max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
     # Maximum timeout for requests to EDQS
