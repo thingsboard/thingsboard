@@ -41,10 +41,10 @@
       </div>
       <tb-toggle-select [(ngModel)]="dataLayerMode"
                         [ngModelOptions]="{ standalone: true }">
-        <tb-toggle-option *ngIf="trip" value="trips">{{ 'widgets.maps.overlays.trips' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="markers">{{ 'widgets.maps.overlays.markers' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="polygons">{{ 'widgets.maps.overlays.polygons' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="circles">{{ 'widgets.maps.overlays.circles' | translate }}</tb-toggle-option>
+        <tb-toggle-option *ngIf="trip" value="trips" [error]="mapSettingsFormGroup.get('trips').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.trips' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="markers" [error]="mapSettingsFormGroup.get('markers').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.markers' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="polygons" [error]="mapSettingsFormGroup.get('polygons').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.polygons' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="circles" [error]="mapSettingsFormGroup.get('circles').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.circles' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
     <tb-map-data-layers *ngIf="trip"

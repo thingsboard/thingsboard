@@ -46,6 +46,10 @@ public class BoolDataPoint extends AbstractDataPoint {
 
     @Override
     public int compareTo(DataPoint dataPoint) {
-        return Boolean.compare(value, dataPoint.getBool());
+        if (dataPoint.getType() == DataType.BOOLEAN) {
+            return Boolean.compare(value, dataPoint.getBool());
+        } else {
+            return super.compareTo(dataPoint);
+        }
     }
 }

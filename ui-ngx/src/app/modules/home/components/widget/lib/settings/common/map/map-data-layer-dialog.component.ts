@@ -30,8 +30,9 @@ import {
   pathDecoratorSymbols,
   pathDecoratorSymbolTranslationMap,
   PolygonsDataLayerSettings,
-  ShapeDataLayerSettings,
-  TripsDataLayerSettings
+  ShapeDataLayerSettings, ShapeFillType,
+  TripsDataLayerSettings,
+  updateDataKeyToNewDsType
 } from '@shared/models/widget/maps/map.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -76,6 +77,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   widgetType = widgetType;
 
   MarkerType = MarkerType;
+
+  ShapeFillType = ShapeFillType;
 
   datasourceTypes: Array<DatasourceType> = [];
   datasourceTypesTranslations = datasourceTypeTranslationMap;
@@ -265,7 +268,10 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       case 'circles':
         this.dataLayerEditActions = dataLayerEditActions;
         const shapeDataLayer = this.settings as ShapeDataLayerSettings;
+        this.dataLayerFormGroup.addControl('fillType', this.fb.control(shapeDataLayer.fillType, Validators.required));
         this.dataLayerFormGroup.addControl('fillColor', this.fb.control(shapeDataLayer.fillColor, Validators.required));
+        this.dataLayerFormGroup.addControl('fillStripe', this.fb.control(shapeDataLayer.fillStripe, Validators.required));
+        this.dataLayerFormGroup.addControl('fillImage', this.fb.control(shapeDataLayer.fillImage, Validators.required));
         this.dataLayerFormGroup.addControl('strokeColor', this.fb.control(shapeDataLayer.strokeColor, Validators.required));
         this.dataLayerFormGroup.addControl('strokeWeight', this.fb.control(shapeDataLayer.strokeWeight, [Validators.required, Validators.min(0)]));
         if (this.dataLayerType === 'polygons') {
@@ -279,6 +285,11 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
           const circlesDataLayer = this.settings as CirclesDataLayerSettings;
           this.dataLayerFormGroup.addControl('circleKey', this.fb.control(circlesDataLayer.circleKey, Validators.required));
         }
+        this.dataLayerFormGroup.get('fillType').valueChanges.pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() =>
+          this.updateValidators()
+        );
         break;
     }
     this.dataLayerFormGroup.get('dsType').valueChanges.pipe(
@@ -294,23 +305,23 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       case 'trips':
       case 'markers':
         const xKey: DataKey = this.dataLayerFormGroup.get('xKey').value;
-        if (this.updateDataKeyToNewDsType(xKey, newDsType, this.dataLayerType === 'trips')) {
+        if (updateDataKeyToNewDsType(xKey, newDsType, this.dataLayerType === 'trips')) {
           this.dataLayerFormGroup.get('xKey').patchValue(xKey, {emitEvent: false});
         }
         const yKey: DataKey = this.dataLayerFormGroup.get('yKey').value;
-        if (this.updateDataKeyToNewDsType(yKey, newDsType, this.dataLayerType === 'trips')) {
+        if (updateDataKeyToNewDsType(yKey, newDsType, this.dataLayerType === 'trips')) {
           this.dataLayerFormGroup.get('yKey').patchValue(yKey, {emitEvent: false});
         }
         break;
       case 'polygons':
         const polygonKey: DataKey = this.dataLayerFormGroup.get('polygonKey').value;
-        if (this.updateDataKeyToNewDsType(polygonKey, newDsType)) {
+        if (updateDataKeyToNewDsType(polygonKey, newDsType)) {
           this.dataLayerFormGroup.get('polygonKey').patchValue(polygonKey, {emitEvent: false});
         }
         break;
       case 'circles':
         const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
-        if (this.updateDataKeyToNewDsType(circleKey, newDsType)) {
+        if (updateDataKeyToNewDsType(circleKey, newDsType)) {
           this.dataLayerFormGroup.get('circleKey').patchValue(circleKey, {emitEvent: false});
         }
         break;
@@ -319,28 +330,13 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     if (additionalDataKeys?.length) {
       let updated = false;
       for (const key of additionalDataKeys) {
-        updated = this.updateDataKeyToNewDsType(key, newDsType) || updated;
+        updated = updateDataKeyToNewDsType(key, newDsType) || updated;
       }
       if (updated) {
         this.dataLayerFormGroup.get('additionalDataKeys').patchValue(additionalDataKeys, {emitEvent: false});
       }
     }
     this.updateValidators();
-  }
-
-  private updateDataKeyToNewDsType(dataKey: DataKey, newDsType: DatasourceType, timeSeries = false): boolean {
-    if (newDsType === DatasourceType.function) {
-      if (dataKey.type !== DataKeyType.function) {
-        dataKey.type = DataKeyType.function;
-        return true;
-      }
-    } else {
-      if (dataKey.type === DataKeyType.function) {
-        dataKey.type = timeSeries ? DataKeyType.timeseries : DataKeyType.attribute;
-        return true;
-      }
-    }
-    return false;
   }
 
   private updateValidators() {
@@ -363,8 +359,9 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     }
     if (this.dataLayerType === 'markers') {
       this.updateMarkerTypeValidators();
-    }
-    if (this.dataLayerType === 'trips') {
+    } else if (['polygons', 'circles'].includes(this.dataLayerType)) {
+      this.updateFillTypeValidators();
+    } else if (this.dataLayerType === 'trips') {
       const showMarker: boolean = this.dataLayerFormGroup.get('showMarker').value;
       if (showMarker) {
         this.dataLayerFormGroup.get('markerType').enable({emitEvent: false});
@@ -453,6 +450,23 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       this.dataLayerFormGroup.get('markerShape').disable({emitEvent: false});
       this.dataLayerFormGroup.get('markerIcon').disable({emitEvent: false});
       this.dataLayerFormGroup.get('markerImage').enable({emitEvent: false});
+    }
+  }
+
+  private updateFillTypeValidators(): void {
+    const fillType: ShapeFillType = this.dataLayerFormGroup.get('fillType').value;
+    if (fillType === ShapeFillType.color) {
+      this.dataLayerFormGroup.get('fillColor').enable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillStripe').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillImage').disable({emitEvent: false});
+    } else if (fillType === ShapeFillType.stripe) {
+      this.dataLayerFormGroup.get('fillColor').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillStripe').enable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillImage').disable({emitEvent: false});
+    } else {
+      this.dataLayerFormGroup.get('fillColor').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillStripe').disable({emitEvent: false});
+      this.dataLayerFormGroup.get('fillImage').enable({emitEvent: false});
     }
   }
 

@@ -201,7 +201,7 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
           renderer: this.renderer,
           hostView: this.viewContainerRef,
           componentType: ColorPickerPanelComponent,
-          preferredPlacement: ['left'],
+          preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
           context: {
             color: this.colorFormGroup.get('color').value,
             colorClearButton: this.colorClearButton,

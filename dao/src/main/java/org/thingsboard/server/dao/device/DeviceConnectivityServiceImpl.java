@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
@@ -86,6 +85,8 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     private String mqttsPemCertFile;
     @Value("${device.connectivity.coaps.pem_cert_file:}")
     private String coapsPemCertFile;
+    @Value("${device.connectivity.gateway.image_version:3.7-stable}")
+    private String gatewayImageVersion;
 
     @Override
     public JsonNode findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
@@ -157,7 +158,8 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         String mqttType = isEnabled(MQTTS) ? MQTTS : MQTT;
         DeviceConnectivityInfo properties = getConnectivity(mqttType);
         DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
-        return DeviceConnectivityUtil.getGatewayDockerComposeFile(baseUrl, properties, creds, mqttType);
+        String host = getHost(baseUrl, properties, mqttType);
+        return DeviceConnectivityUtil.getGatewayDockerComposeFile(host, gatewayImageVersion, creds);
     }
 
     private DeviceConnectivityInfo getConnectivity(String protocol) {

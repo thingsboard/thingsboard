@@ -70,6 +70,9 @@ import {
 import { CssSizeInputComponent } from '@home/components/widget/lib/settings/common/css-size-input.component';
 import { WidgetActionComponent } from '@home/components/widget/lib/settings/common/action/widget-action.component';
 import {
+  MapItemTooltipsComponent
+} from '@home/components/widget/lib/settings/common/action/map-item-tooltips.component';
+import {
   CustomActionPrettyResourcesTabsComponent
 } from '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component';
 import {
@@ -252,6 +255,18 @@ import { MapDataSourcesComponent } from '@home/components/widget/lib/settings/co
 import {
   MapDataSourceRowComponent
 } from '@home/components/widget/lib/settings/common/map/map-data-source-row.component';
+import {
+  ShapeFillImageSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-image-settings.component';
+import {
+  ShapeFillImageSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-image-settings-panel.component';
+import {
+  ShapeFillStripeSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-stripe-settings.component';
+import {
+  ShapeFillStripeSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-stripe-settings-panel.component';
 
 @NgModule({
   declarations: [
@@ -283,6 +298,7 @@ import {
     SetValueActionSettingsComponent,
     SetValueActionSettingsPanelComponent,
     WidgetActionComponent,
+    MapItemTooltipsComponent,
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,
@@ -338,6 +354,10 @@ import {
     MarkerImageSettingsComponent,
     MarkerImageSettingsPanelComponent,
     MarkerClusteringSettingsComponent,
+    ShapeFillStripeSettingsComponent,
+    ShapeFillStripeSettingsPanelComponent,
+    ShapeFillImageSettingsComponent,
+    ShapeFillImageSettingsPanelComponent,
     MapDataLayerDialogComponent,
     MapDataLayerRowComponent,
     MapDataLayersComponent,

@@ -344,7 +344,7 @@ public class RepositoryUtils {
         if (dp != null) {
             return new TsValue(dp.getTs() > 0 ? dp.getTs() : ts, dp.valueToString());
         } else {
-            return new TsValue(ts, "");
+            return TsValue.EMPTY;
         }
     }
 

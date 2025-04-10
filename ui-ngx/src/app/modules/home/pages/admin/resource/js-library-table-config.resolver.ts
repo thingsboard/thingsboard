@@ -97,7 +97,7 @@ export class JsLibraryTableConfigResolver  {
         entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
     );
 
-    this.config.cellActionDescriptors = this.configureCellActions(getCurrentAuthUser(this.store));
+    this.config.cellActionDescriptors = this.configureCellActions();
 
     this.config.groupActionDescriptors = [{
       name: this.translate.instant('action.delete'),
@@ -137,6 +137,7 @@ export class JsLibraryTableConfigResolver  {
       resourceSubType: ''
     };
     const authUser = getCurrentAuthUser(this.store);
+    this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.detailsReadonly = (resource) => this.detailsReadonly(resource, authUser.authority);
     return this.config;
@@ -309,7 +310,7 @@ export class JsLibraryTableConfigResolver  {
     }
   }
 
-  private configureCellActions(authUser: AuthUser): Array<CellActionDescriptor<ResourceInfo>> {
+  private configureCellActions(): Array<CellActionDescriptor<ResourceInfo>> {
     const actions: Array<CellActionDescriptor<ResourceInfo>> = [];
     actions.push(
       {
@@ -321,7 +322,7 @@ export class JsLibraryTableConfigResolver  {
       {
         name: this.translate.instant('javascript.delete'),
         icon: 'delete',
-        isEnabled: (resource) => this.isResourceEditable(resource, authUser.authority),
+        isEnabled: (resource) => this.config.deleteEnabled(resource),
         onAction: ($event, entity) => this.deleteResource($event, entity)
       },
     );
