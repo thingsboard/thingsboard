@@ -76,6 +76,11 @@ public class TenantEntityProfileCache {
         }
     }
 
+    public void update(EntityId oldProfileId, EntityId newProfileId, EntityId entityId) {
+        remove(oldProfileId, entityId);
+        add(newProfileId, entityId);
+    }
+
     public Collection<EntityId> getEntityIdsByProfileId(EntityId profileId) {
         lock.readLock().lock();
         try {

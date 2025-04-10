@@ -37,4 +37,6 @@ public interface CalculatedFieldLinkDao extends Dao<CalculatedFieldLink> {
 
     PageData<CalculatedFieldLink> findAll(PageLink pageLink);
 
+    PageData<CalculatedFieldLink> findAllByTenantId(TenantId tenantId, PageLink pageLink);
+
 }

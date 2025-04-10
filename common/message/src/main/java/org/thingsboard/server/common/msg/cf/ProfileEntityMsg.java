@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.device;
+package org.thingsboard.server.common.msg.cf;
 
-import org.springframework.data.domain.Pageable;
-import org.thingsboard.server.common.data.ProfileEntityIdInfo;
-import org.thingsboard.server.common.data.page.PageData;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
-import java.util.UUID;
+@Data
+public class ProfileEntityMsg implements ToCalculatedFieldSystemMsg {
 
-public interface NativeProfileEntityRepository {
+    private final TenantId tenantId;
+    private final EntityId profileEntityId;
+    private final EntityId entityId;
 
-    PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(Pageable pageable);
-
-    PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable);
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.CF_PROFILE_ENTITY_MSG;
+    }
 
 }

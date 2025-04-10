@@ -136,6 +136,8 @@ public enum MsgType {
     EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG,
 
 
+    CF_ACTOR_INIT_MSG, // Sent to init caches for CF actor;
+    CF_PROFILE_ENTITY_MSG, // Sent to init profile entities cache;
     CF_INIT_MSG, // Sent to init particular calculated field;
     CF_LINK_INIT_MSG, // Sent to init particular calculated field;
     CF_STATE_RESTORE_MSG, // Sent to restore particular calculated field entity state;

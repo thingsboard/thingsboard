@@ -179,11 +179,11 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     @Override
     public PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(UUID tenantId, UUID deviceProfileId, PageLink pageLink) {
         return DaoUtil.pageToPageData(
-                deviceRepository.findIdsByTenantIdAndDeviceProfileId(
-                        tenantId,
-                        deviceProfileId,
-                        pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink)))
+                        deviceRepository.findIdsByTenantIdAndDeviceProfileId(
+                                tenantId,
+                                deviceProfileId,
+                                pageLink.getTextSearch(),
+                                DaoUtil.toPageable(pageLink)))
                 .mapData(DeviceId::new);
     }
 
@@ -279,6 +279,12 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink) {
         log.debug("Find profile device id infos by pageLink [{}]", pageLink);
         return nativeDeviceRepository.findProfileEntityIdInfos(DaoUtil.toPageable(pageLink));
+    }
+
+    @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink) {
+        log.debug("Find profile device id infos by tenantId[{}], pageLink [{}]", tenantId, pageLink);
+        return nativeDeviceRepository.findProfileEntityIdInfosByTenantId(tenantId, DaoUtil.toPageable(pageLink));
     }
 
     @Override

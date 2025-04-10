@@ -20,12 +20,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 
@@ -43,8 +40,8 @@ public class DefaultNativeAssetRepository extends AbstractNativeRepository imple
 
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(Pageable pageable) {
-        String PROFILE_DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, asset_profile_id as profileId, id as id FROM asset ORDER BY created_time ASC LIMIT %s OFFSET %s";
-        return find(COUNT_QUERY, PROFILE_DEVICE_ID_INFO_QUERY, pageable, row -> {
+        String PROFILE_ASSET_ID_INFO_QUERY = "SELECT tenant_id as tenantId, asset_profile_id as profileId, id as id FROM asset ORDER BY created_time ASC LIMIT %s OFFSET %s";
+        return find(COUNT_QUERY, PROFILE_ASSET_ID_INFO_QUERY, pageable, row -> {
             AssetId id = new AssetId((UUID) row.get("id"));
             AssetProfileId profileId = new AssetProfileId((UUID) row.get("profileId"));
             var tenantIdObj = row.get("tenantId");
@@ -52,4 +49,14 @@ public class DefaultNativeAssetRepository extends AbstractNativeRepository imple
         });
     }
 
+    @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable) {
+        String PROFILE_ASSET_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = %s ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
+        return find(COUNT_QUERY, PROFILE_ASSET_ID_INFO_QUERY, pageable, row -> {
+            AssetId id = new AssetId((UUID) row.get("id"));
+            AssetProfileId profileId = new AssetProfileId((UUID) row.get("profileId"));
+            var tenantIdObj = row.get("tenantId");
+            return ProfileEntityIdInfo.create(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), profileId, id);
+        });
+    }
 }

@@ -71,6 +71,12 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     }
 
     @Override
+    public PageData<CalculatedFieldLink> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.debug("Try to find calculated field links by tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        return DaoUtil.toPageData(calculatedFieldLinkRepository.findAllByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
     protected Class<CalculatedFieldLinkEntity> getEntityClass() {
         return CalculatedFieldLinkEntity.class;
     }

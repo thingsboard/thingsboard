@@ -379,7 +379,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
                 .readFromBeginning(true)
                 .stopWhenRead(true)
                 .clientId("tb-rule-engine-calculated-field-state-consumer-" + serviceInfoProvider.getServiceId() + "-" + consumerCount.incrementAndGet())
-                .groupId(topicService.buildTopicName("tb-rule-engine-calculated-field-state-consumer"))
+                .groupId(null) // not using consumer group management
                 .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), msg.getData() != null ? CalculatedFieldStateProto.parseFrom(msg.getData()) : null, msg.getHeaders()))
                 .admin(cfStateAdmin)
                 .statsService(consumerStatsService)

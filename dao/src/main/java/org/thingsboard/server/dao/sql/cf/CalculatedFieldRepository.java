@@ -32,6 +32,8 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
 
     List<CalculatedFieldEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
+    Page<CalculatedFieldEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
+
     Page<CalculatedFieldEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId, Pageable pageable);
 
     List<CalculatedFieldEntity> findAllByTenantId(UUID tenantId);

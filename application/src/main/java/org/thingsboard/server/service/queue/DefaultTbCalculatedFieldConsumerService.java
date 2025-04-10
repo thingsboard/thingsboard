@@ -52,7 +52,6 @@ import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
-import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractPartitionBasedConsumerService;
@@ -81,7 +80,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
 
     private final TbRuleEngineQueueFactory queueFactory;
     private final CalculatedFieldStateService stateService;
-    private final CalculatedFieldEntityProfileCache entityProfileCache;
 
     public DefaultTbCalculatedFieldConsumerService(TbRuleEngineQueueFactory tbQueueFactory,
                                                    ActorSystemContext actorContext,
@@ -93,13 +91,11 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                                                    ApplicationEventPublisher eventPublisher,
                                                    JwtSettingsService jwtSettingsService,
                                                    CalculatedFieldCache calculatedFieldCache,
-                                                   CalculatedFieldStateService stateService,
-                                                   CalculatedFieldEntityProfileCache entityProfileCache) {
+                                                   CalculatedFieldStateService stateService) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.queueFactory = tbQueueFactory;
         this.stateService = stateService;
-        this.entityProfileCache = entityProfileCache;
     }
 
     @Override
@@ -230,8 +226,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
     public void handleComponentLifecycleEvent(ComponentLifecycleMsg event) {
         if (event.getEntityId().getEntityType() == EntityType.TENANT) {
             if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
-                entityProfileCache.removeTenant(event.getTenantId());
-
                 Set<TopicPartitionInfo> partitions = stateService.getPartitions();
                 if (CollectionUtils.isEmpty(partitions)) {
                     return;
@@ -239,14 +233,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                 stateService.delete(partitions.stream()
                         .filter(tpi -> tpi.getTenantId().isPresent() && tpi.getTenantId().get().equals(event.getTenantId()))
                         .collect(Collectors.toSet()));
-            }
-        } else if (event.getEntityId().getEntityType() == EntityType.ASSET_PROFILE) {
-            if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
-                entityProfileCache.evictProfile(event.getTenantId(), event.getEntityId());
-            }
-        } else if (event.getEntityId().getEntityType() == EntityType.DEVICE_PROFILE) {
-            if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
-                entityProfileCache.evictProfile(event.getTenantId(), event.getEntityId());
             }
         }
     }
