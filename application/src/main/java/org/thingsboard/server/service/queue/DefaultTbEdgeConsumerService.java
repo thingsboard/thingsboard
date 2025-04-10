@@ -51,6 +51,7 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
+import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 
@@ -195,36 +196,42 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToEdgeNotificationMsg> msg, TbCallback callback) {
         ToEdgeNotificationMsg toEdgeNotificationMsg = msg.getValue();
         try {
+            EdgeRpcService edgeRpcService = edgeCtx.getEdgeRpcService();
+            if (edgeRpcService == null) {
+                log.debug("No EdgeRpcService available (edge functionality disabled), ignoring msg: {}", toEdgeNotificationMsg);
+                callback.onSuccess();
+                return;
+            }
             if (toEdgeNotificationMsg.hasEdgeHighPriority()) {
                 EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeHighPriority());
-                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                edgeRpcService.onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
                 callback.onSuccess();
             } else if (toEdgeNotificationMsg.hasEdgeEventUpdate()) {
                 EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeEventUpdate());
-                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                edgeRpcService.onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
                 callback.onSuccess();
             } else if (toEdgeNotificationMsg.hasToEdgeSyncRequest()) {
                 EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getToEdgeSyncRequest());
-                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                edgeRpcService.onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
                 callback.onSuccess();
             } else if (toEdgeNotificationMsg.hasFromEdgeSyncResponse()) {
                 EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getFromEdgeSyncResponse());
-                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                edgeRpcService.onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
                 callback.onSuccess();
             } else if (toEdgeNotificationMsg.hasComponentLifecycle()) {
                 ComponentLifecycleMsg componentLifecycle = ProtoUtils.fromProto(toEdgeNotificationMsg.getComponentLifecycle());
                 TenantId tenantId = componentLifecycle.getTenantId();
                 EdgeId edgeId = new EdgeId(componentLifecycle.getEntityId().getId());
                 if (ComponentLifecycleEvent.DELETED.equals(componentLifecycle.getEvent())) {
-                    edgeCtx.getEdgeRpcService().deleteEdge(tenantId, edgeId);
+                    edgeRpcService.deleteEdge(tenantId, edgeId);
                 } else if (ComponentLifecycleEvent.UPDATED.equals(componentLifecycle.getEvent())) {
                     Edge edge = edgeCtx.getEdgeService().findEdgeById(tenantId, edgeId);
-                    edgeCtx.getEdgeRpcService().updateEdge(tenantId, edge);
+                    edgeRpcService.updateEdge(tenantId, edge);
                 }
                 callback.onSuccess();
             }
         } catch (Exception e) {
-            log.error("Error processing edge notification message", e);
+            log.error("Error processing edge notification message {}", toEdgeNotificationMsg, e);
             callback.onFailure(e);
         }
 
