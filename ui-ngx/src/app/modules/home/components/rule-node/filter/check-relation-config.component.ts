@@ -19,7 +19,6 @@ import { isDefinedAndNotNull } from '@core/public-api';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EntitySearchDirection, entitySearchDirectionTranslations } from '@app/shared/models/relation.models';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-filter-node-check-relation-config',
@@ -61,20 +60,21 @@ export class CheckRelationConfigComponent extends RuleNodeConfigurationComponent
         configuration && configuration.checkForSingleEntity ? [Validators.required] : []],
       relationType: [configuration.relationType, [Validators.required]]
     });
-    this.checkRelationConfigForm.get('entityType').valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.checkRelationConfigForm.get('entityId').reset());
   }
 
   protected validatorTriggers(): string[] {
-    return ['checkForSingleEntity'];
+    return ['checkForSingleEntity', 'entityType'];
   }
 
-  protected updateValidators(emitEvent: boolean) {
-    const checkForSingleEntity: boolean = this.checkRelationConfigForm.get('checkForSingleEntity').value;
-    this.checkRelationConfigForm.get('entityType').setValidators(checkForSingleEntity ? [Validators.required] : []);
-    this.checkRelationConfigForm.get('entityType').updateValueAndValidity({emitEvent});
-    this.checkRelationConfigForm.get('entityId').setValidators(checkForSingleEntity ? [Validators.required] : []);
+  protected updateValidators(emitEvent: boolean, trigger: string): void {
+    if (trigger === 'checkForSingleEntity') {
+      const checkForSingleEntity: boolean = this.checkRelationConfigForm.get('checkForSingleEntity').value;
+      this.checkRelationConfigForm.get('entityType').setValidators(checkForSingleEntity ? [Validators.required] : []);
+      this.checkRelationConfigForm.get('entityType').updateValueAndValidity({emitEvent});
+      this.checkRelationConfigForm.get('entityId').setValidators(checkForSingleEntity ? [Validators.required] : []);
+    } else if (trigger === 'entityType') {
+      this.checkRelationConfigForm.get('entityId').setValue(null, {emitEvent});
+    }
     this.checkRelationConfigForm.get('entityId').updateValueAndValidity({emitEvent});
   }
 
