@@ -55,8 +55,8 @@ public class ContainerTestSuite {
     private static final String TB_JS_EXECUTOR_LOG_REGEXP = ".*template started.*";
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(400);
 
-    private  DockerComposeContainer<?> testContainer;
-    private  ThingsBoardDbInstaller installTb;
+    private DockerComposeContainer<?> testContainer;
+    private ThingsBoardDbInstaller installTb;
     private boolean isActive;
 
     private static ContainerTestSuite containerTestSuite;
@@ -194,7 +194,7 @@ public class ContainerTestSuite {
             setActive(true);
         } catch (Exception e) {
             log.error("Failed to create test container", e);
-            fail("Failed to create test container");
+            fail("Failed to create test container", e);
         }
     }
 
@@ -263,7 +263,7 @@ public class ContainerTestSuite {
             log.info("Trying to delete temp dir {}", targetDir);
             FileUtils.deleteDirectory(new File(targetDir));
         } catch (IOException e) {
-            log.error("Can't delete temp directory " + targetDir, e);
+            log.error("Can't delete temp directory {}", targetDir, e);
         }
     }
 
@@ -286,8 +286,8 @@ public class ContainerTestSuite {
             FileUtils.writeStringToFile(file, outputContent, StandardCharsets.UTF_8);
             assertThat(FileUtils.readFileToString(file, StandardCharsets.UTF_8), is(outputContent));
         } catch (IOException e) {
-            log.error("failed to update file " + sourceFilename, e);
-            fail("failed to update file");
+            log.error("failed to update file {}", sourceFilename, e);
+            fail("failed to update file", e);
         }
     }
 
