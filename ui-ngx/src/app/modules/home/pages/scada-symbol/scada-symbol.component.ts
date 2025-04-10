@@ -214,10 +214,8 @@ export class ScadaSymbolComponent extends PageComponent
         this.editObjectCallbacks.tagsUpdated(tags);
       }
       const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
-      const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
-      if (scadaSymbolContent.includes('parsererror')) {
-        this.store.dispatch(new ActionNotificationShow({ message: scadaSymbolContent, type: 'error' }));
-      } else {
+      try {
+        const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
         const file = createFileFromContent(scadaSymbolContent, this.symbolData.imageResource.fileName,
           this.symbolData.imageResource.descriptor.mediaType);
         const type = imageResourceType(this.symbolData.imageResource);
@@ -243,6 +241,8 @@ export class ScadaSymbolComponent extends PageComponent
           this.init(data);
           this.updateBreadcrumbs.emit();
         });
+      } catch (e) {
+        this.store.dispatch(new ActionNotificationShow({ message: e.message, type: 'error' }));
       }
     }
   }
