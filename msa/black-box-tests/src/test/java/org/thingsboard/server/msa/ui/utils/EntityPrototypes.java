@@ -104,11 +104,9 @@ public class EntityPrototypes {
         deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
-        deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
+                new DefaultDeviceProfileTransportConfiguration(),
+                new DisabledDeviceProfileProvisionConfiguration(null));
         return deviceProfile;
     }
 
@@ -119,11 +117,9 @@ public class EntityPrototypes {
         deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
-        deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
+                new DefaultDeviceProfileTransportConfiguration(),
+                new DisabledDeviceProfileProvisionConfiguration(null));
         return deviceProfile;
     }
 

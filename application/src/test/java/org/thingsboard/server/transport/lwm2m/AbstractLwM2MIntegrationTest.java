@@ -296,11 +296,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         lwm2mDeviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         lwm2mDeviceProfile.setDescription(name);
 
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
-        deviceProfileData.setTransportConfiguration(transportConfiguration);
-        lwm2mDeviceProfile.setProfileData(deviceProfileData);
+        lwm2mDeviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
+                transportConfiguration, new DisabledDeviceProfileProvisionConfiguration(null));
 
         lwm2mDeviceProfile = doPost("/api/deviceProfile", lwm2mDeviceProfile, DeviceProfile.class);
         Assert.assertNotNull(lwm2mDeviceProfile);

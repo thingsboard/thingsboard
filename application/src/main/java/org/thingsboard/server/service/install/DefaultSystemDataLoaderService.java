@@ -385,14 +385,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         thermostatDeviceProfile.setDefaultRuleChainId(ruleChainService.findTenantRuleChainsByType(
                 demoTenant.getId(), RuleChainType.CORE, new PageLink(1, 0, "Thermostat")).getData().get(0).getId());
 
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        DefaultDeviceProfileTransportConfiguration transportConfiguration = new DefaultDeviceProfileTransportConfiguration();
-        DisabledDeviceProfileProvisionConfiguration provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
-        deviceProfileData.setConfiguration(configuration);
-        deviceProfileData.setTransportConfiguration(transportConfiguration);
-        deviceProfileData.setProvisionConfiguration(provisionConfiguration);
-        thermostatDeviceProfile.setProfileData(deviceProfileData);
+        thermostatDeviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
+                new DefaultDeviceProfileTransportConfiguration(),
+                new DisabledDeviceProfileProvisionConfiguration(null));
 
         DeviceProfileAlarm highTemperature = new DeviceProfileAlarm();
         highTemperature.setId("highTemperatureAlarmID");
@@ -495,7 +490,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearHumidityRule.setAlarmDetails("Current humidity = ${humidity}");
         lowHumidity.setClearRule(clearHumidityRule);
 
-        deviceProfileData.setAlarms(Arrays.asList(highTemperature, lowHumidity));
+        defaultDeviceProfile.configureData(Arrays.asList(highTemperature, lowHumidity));
 
         DeviceProfile savedThermostatDeviceProfile = deviceProfileService.saveDeviceProfile(thermostatDeviceProfile);
 

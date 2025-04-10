@@ -418,10 +418,8 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         deviceProfile.setDefaultRuleChainId(defaultRuleChainId);
         deviceProfile.setDefaultDashboardId(defaultDashboardId);
-        DeviceProfileData profileData = new DeviceProfileData();
-        profileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        profileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(profileData);
+        deviceProfile.configureData(new DefaultDeviceProfileConfiguration())
+                .configureData(new DefaultDeviceProfileTransportConfiguration());
         return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 

@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -300,14 +299,9 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         deviceProfile.setDescription("Default device profile");
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        DefaultDeviceProfileTransportConfiguration transportConfiguration = new DefaultDeviceProfileTransportConfiguration();
-        DisabledDeviceProfileProvisionConfiguration provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
-        deviceProfileData.setConfiguration(configuration);
-        deviceProfileData.setTransportConfiguration(transportConfiguration);
-        deviceProfileData.setProvisionConfiguration(provisionConfiguration);
-        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
+                new DefaultDeviceProfileTransportConfiguration(),
+                new DisabledDeviceProfileProvisionConfiguration(null));
         return saveDeviceProfile(deviceProfile, true, publishSaveEvent);
     }
 
@@ -406,10 +400,8 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         String formattedCertificateValue = formatCertificateValue(x509Configuration.getProvisionDeviceSecret());
         String cert = fetchLeafCertificateFromChain(formattedCertificateValue);
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
-        DeviceProfileData deviceProfileData = deviceProfile.getProfileData();
         x509Configuration.setProvisionDeviceSecret(formattedCertificateValue);
-        deviceProfileData.setProvisionConfiguration(x509Configuration);
-        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.configureData(x509Configuration);
         deviceProfile.setProvisionDeviceKey(sha3Hash);
     }
 

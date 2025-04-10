@@ -344,14 +344,6 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         unAssignFromEdgeAndDeleteRuleChain(ruleChainId);
     }
 
-    private DeviceProfileData createProfileData() {
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-        deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration("Device Secret"));
-        return deviceProfileData;
-    }
-
     private DeviceProfile createDeviceProfileAndDoBasicAssert(String deviceProfileName, DeviceProfileTransportConfiguration deviceProfileTransportConfiguration) throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile(deviceProfileName, deviceProfileTransportConfiguration);
         extendDeviceProfileData(deviceProfile);
@@ -485,7 +477,9 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         deviceProfile.setDefault(false);
         deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-        deviceProfile.setProfileData(createProfileData());
+        deviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
+                new DefaultDeviceProfileTransportConfiguration(),
+                new DisabledDeviceProfileProvisionConfiguration("Device Secret"));
         return deviceProfile;
     }
 

@@ -158,12 +158,9 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         mqttProfile.setName("Mqtt device profile");
         mqttProfile.setType(DeviceProfileType.DEFAULT);
         mqttProfile.setTransportType(DeviceTransportType.MQTT);
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
         MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
         transportConfiguration.setDeviceTelemetryTopic(DEVICE_TELEMETRY_TOPIC);
-        deviceProfileData.setTransportConfiguration(transportConfiguration);
-        mqttProfile.setProfileData(deviceProfileData);
+        mqttProfile.configureData(new DefaultDeviceProfileConfiguration()).configureData(transportConfiguration);
         mqttProfile.setDefault(false);
         mqttProfile.setDefaultRuleChainId(null);
 
@@ -173,10 +170,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
         coapProfile.setName("Coap device profile");
         coapProfile.setType(DeviceProfileType.DEFAULT);
         coapProfile.setTransportType(DeviceTransportType.COAP);
-        DeviceProfileData deviceProfileData2 = new DeviceProfileData();
-        deviceProfileData2.setConfiguration(new DefaultDeviceProfileConfiguration());
-        deviceProfileData2.setTransportConfiguration(new CoapDeviceProfileTransportConfiguration());
-        coapProfile.setProfileData(deviceProfileData);
+        coapProfile.configureData(new DefaultDeviceProfileConfiguration()).configureData(new CoapDeviceProfileTransportConfiguration());
         coapProfile.setDefault(false);
         coapProfile.setDefaultRuleChainId(null);
 

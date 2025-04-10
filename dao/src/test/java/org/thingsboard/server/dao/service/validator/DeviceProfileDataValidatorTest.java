@@ -112,9 +112,7 @@ class DeviceProfileDataValidatorTest {
         deviceProfile.setName("default");
         deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-        DeviceProfileData data = new DeviceProfileData();
-        data.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(data);
+        deviceProfile.configureData(new DefaultDeviceProfileTransportConfiguration());
         deviceProfile.setTenantId(tenantId);
 
         validator.validateDataImpl(tenantId, deviceProfile);
@@ -168,9 +166,7 @@ class DeviceProfileDataValidatorTest {
         deviceProfile.setName("default");
         deviceProfile.setType(DeviceProfileType.DEFAULT);
         deviceProfile.setTransportType(DeviceTransportType.LWM2M);
-        DeviceProfileData data = new DeviceProfileData();
-        data.setTransportConfiguration(transportConfiguration);
-        deviceProfile.setProfileData(data);
+        deviceProfile.configureData(transportConfiguration);
         deviceProfile.setTenantId(tenantId);
         return deviceProfile;
     }

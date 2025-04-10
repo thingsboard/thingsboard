@@ -100,7 +100,6 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
             deviceProfile.setProvisionType(provisionType);
             deviceProfile.setProvisionDeviceKey(config.getProvisionKey());
             deviceProfile.setDescription(transportPayloadType.name() + " Test");
-            DeviceProfileData deviceProfileData = new DeviceProfileData();
             DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
             MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
             if (StringUtils.hasLength(config.getTelemetryTopicFilter())) {
@@ -143,7 +142,6 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
                 transportPayloadTypeConfiguration = protoTransportPayloadConfiguration;
             }
             mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(transportPayloadTypeConfiguration);
-            deviceProfileData.setTransportConfiguration(mqttDeviceProfileTransportConfiguration);
             DeviceProfileProvisionConfiguration provisionConfiguration;
             switch (provisionType) {
                 case ALLOW_CREATE_NEW_DEVICES:
@@ -157,9 +155,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
                     provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(config.getProvisionSecret());
                     break;
             }
-            deviceProfileData.setProvisionConfiguration(provisionConfiguration);
-            deviceProfileData.setConfiguration(configuration);
-            deviceProfile.setProfileData(deviceProfileData);
+            deviceProfile.configureData(configuration, mqttDeviceProfileTransportConfiguration, provisionConfiguration);
             deviceProfile.setDefault(false);
             deviceProfile.setDefaultRuleChainId(null);
             return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);

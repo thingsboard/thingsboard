@@ -840,10 +840,8 @@ public class VersionControlTest extends AbstractControllerTest {
         deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         deviceProfile.setDefaultRuleChainId(defaultRuleChainId);
         deviceProfile.setDefaultDashboardId(defaultDashboardId);
-        DeviceProfileData profileData = new DeviceProfileData();
-        profileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        profileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(profileData);
+        deviceProfile.configureData(new DefaultDeviceProfileConfiguration())
+                .configureData(new DefaultDeviceProfileTransportConfiguration());
         return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
     }
 
