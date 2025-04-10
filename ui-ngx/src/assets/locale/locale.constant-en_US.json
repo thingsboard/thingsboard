@@ -5258,7 +5258,7 @@
         "advanced-mode": "Advanced",
         "save-time-series": {
             "processing-settings": "Processing settings",
-            "processing-settings-hint": "Define how incoming messages are processed. In Basic mode, select a preconfigured processing strategy or enable only WebSocket updates. Advanced mode allows you to select individual processing strategies for each action.",
+            "processing-settings-hint": "Define how incoming messages are processed. Basic processing settings allow you to select preconfigured strategies, while Advanced settings allow you to select individual processing strategies for each action.",
             "advanced-settings-hint": "Be cautious when configuring processing strategies. Certain combinations can lead to unexpected behavior.",
             "strategy": "Strategy",
             "deduplication-interval": "Deduplication interval",
@@ -5277,7 +5277,7 @@
         },
         "save-attribute": {
             "processing-settings": "Processing settings",
-            "processing-settings-hint": "Define how incoming messages are processed. In Basic mode, select a preconfigured processing strategy or enable only WebSocket updates. Advanced mode allows you to select individual processing strategies for each action.",
+            "processing-settings-hint": "Define how incoming messages are processed. Basic processing settings allow you to select preconfigured strategies, while Advanced settings allow you to select individual processing strategies for each action.",
             "advanced-settings-hint": "Be cautious when configuring processing strategies. Certain combinations can lead to unexpected behavior.",
             "strategy": "Strategy",
             "deduplication-interval": "Deduplication interval",
