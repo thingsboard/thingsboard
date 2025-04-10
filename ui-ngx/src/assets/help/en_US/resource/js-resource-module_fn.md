@@ -14,8 +14,7 @@ JavaScript resource modules are advantageous for reusing custom logic. They can 
 - Cell content functions.
 - Custom actions.
 
-These modules can contain any JavaScript code, facilitating the reuse of specific logic. This includes variables or functions<br>
-that are exported for use in other parts of the application.
+These modules can contain any JavaScript code, facilitating the reuse of specific logic. This includes variables or functions that are exported for use in other parts of the application.
 ##### Examples
 
 You can declare variables:
