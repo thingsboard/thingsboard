@@ -38,7 +38,7 @@ public class TopicService {
     @Value("${queue.rule-engine.notifications-topic:tb_rule_engine.notifications}")
     private String tbRuleEngineNotificationsTopic;
 
-    @Value("${queue.transport.notifications-topics:tb_transport.notifications}")
+    @Value("${queue.transport.notifications-topic:tb_transport.notifications}")
     private String tbTransportNotificationsTopic;
 
     @Value("${queue.edge.notifications-topic:tb_edge.notifications}")
