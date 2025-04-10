@@ -33,9 +33,21 @@ public class DummyEdqsStatsService implements EdqsStatsService {
     public void reportRemoved(ObjectType objectType) {}
 
     @Override
-    public void reportDataQuery(TenantId tenantId, EntityDataQuery query, long timingNanos) {}
+    public void reportEntityDataQuery(TenantId tenantId, EntityDataQuery query, long timingNanos) {}
 
     @Override
-    public void reportCountQuery(TenantId tenantId, EntityCountQuery query, long timingNanos) {}
+    public void reportEntityCountQuery(TenantId tenantId, EntityCountQuery query, long timingNanos) {}
+
+    @Override
+    public void reportEdqsDataQuery(TenantId tenantId, EntityDataQuery query, long timingNanos) {}
+
+    @Override
+    public void reportEdqsCountQuery(TenantId tenantId, EntityCountQuery query, long timingNanos) {}
+
+    @Override
+    public void reportStringCompressed() {}
+
+    @Override
+    public void reportStringUncompressed() {}
 
 }

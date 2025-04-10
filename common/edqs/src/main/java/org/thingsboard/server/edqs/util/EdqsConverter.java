@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.stats.EdqsStatsService;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.edqs.data.dp.BoolDataPoint;
 import org.thingsboard.server.edqs.data.dp.CompressedJsonDataPoint;
@@ -56,13 +57,17 @@ import org.thingsboard.server.gen.transport.TransportProtos.DataPointProto;
 import org.xerial.snappy.Snappy;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class EdqsConverter {
+
+    private final EdqsStatsService edqsStatsService;
 
     @Value("${queue.edqs.string_compression_length_threshold:512}")
     private int stringCompressionLengthThreshold;
@@ -175,30 +180,38 @@ public class EdqsConverter {
             if (stringV.length() < stringCompressionLengthThreshold) {
                 return new StringDataPoint(ts, stringV);
             } else {
-                return new CompressedStringDataPoint(ts, compress(stringV));
+                return new CompressedStringDataPoint(ts, compress(stringV), this::uncompress);
             }
         } else if (proto.hasCompressedStringV()) {
-            return new CompressedStringDataPoint(ts, proto.getCompressedStringV().toByteArray());
+            return new CompressedStringDataPoint(ts, proto.getCompressedStringV().toByteArray(), this::uncompress);
         } else if (proto.hasJsonV()) {
             String jsonV = proto.getJsonV();
             if (jsonV.length() < stringCompressionLengthThreshold) {
                 return new JsonDataPoint(ts, jsonV);
             } else {
-                return new CompressedJsonDataPoint(ts, compress(jsonV));
+                return new CompressedJsonDataPoint(ts, compress(jsonV), this::uncompress);
             }
         } else if (proto.hasCompressedJsonV()) {
-            return new CompressedJsonDataPoint(ts, proto.getCompressedJsonV().toByteArray());
+            return new CompressedJsonDataPoint(ts, proto.getCompressedJsonV().toByteArray(), this::uncompress);
         } else {
             throw new IllegalArgumentException("Unsupported data point proto: " + proto);
         }
     }
 
     @SneakyThrows
-    private static byte[] compress(String value) {
-        byte[] compressed = Snappy.compress(value);
-        // TODO: limit the size
-        log.debug("Compressed {} bytes to {} bytes", value.length(), compressed.length);
+    private byte[] compress(String value) {
+        byte[] compressed = Snappy.compress(value, StandardCharsets.UTF_8);
+        log.debug("Compressed {} chars to {} bytes", value.length(), compressed.length);
+        edqsStatsService.reportStringCompressed();
         return compressed;
+    }
+
+    @SneakyThrows
+    private String uncompress(byte[] compressed) {
+        String value = Snappy.uncompressString(compressed, StandardCharsets.UTF_8);
+        log.debug("Uncompressed {} bytes to {} chars", compressed.length, value.length());
+        edqsStatsService.reportStringUncompressed();
+        return value;
     }
 
     public static Entity toEntity(EntityType entityType, Object entity) {

@@ -76,6 +76,8 @@ queue:
     stats:
       # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
+      # Threshold for slow queries to log, in milliseconds
+      slow_query_threshold: "${TB_EDQS_SLOW_QUERY_THRESHOLD_MS:200}"
 
   kafka:
     # Kafka Bootstrap nodes in "host:port" format

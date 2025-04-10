@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.ToDoubleFunction;
 
 @Service
 public class DefaultStatsFactory implements StatsFactory {
@@ -84,6 +85,16 @@ public class DefaultStatsFactory implements StatsFactory {
     @Override
     public <T extends Number> T createGauge(String key, T number, String... tags) {
         return meterRegistry.gauge(key, Tags.of(tags), number);
+    }
+
+    @Override
+    public <T extends Number> T createGauge(StatsType statsType, String name, T number, String... tags) {
+        return createGauge(statsType.getName(), number, getTags(name, tags));
+    }
+
+    @Override
+    public <S> void createGauge(StatsType statsType, String name, S stateObject, ToDoubleFunction<S> numberProvider, String... tags) {
+        meterRegistry.gauge(statsType.getName(), Tags.of(getTags(name, tags)), stateObject, numberProvider);
     }
 
     @Override

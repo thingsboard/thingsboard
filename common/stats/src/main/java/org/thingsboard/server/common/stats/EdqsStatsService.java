@@ -26,8 +26,16 @@ public interface EdqsStatsService {
 
     void reportRemoved(ObjectType objectType);
 
-    void reportDataQuery(TenantId tenantId, EntityDataQuery query, long timingNanos);
+    void reportEntityDataQuery(TenantId tenantId, EntityDataQuery query, long timingNanos);
 
-    void reportCountQuery(TenantId tenantId, EntityCountQuery query, long timingNanos);
+    void reportEntityCountQuery(TenantId tenantId, EntityCountQuery query, long timingNanos);
+
+    void reportEdqsDataQuery(TenantId tenantId, EntityDataQuery query, long timingNanos);
+
+    void reportEdqsCountQuery(TenantId tenantId, EntityCountQuery query, long timingNanos);
+
+    void reportStringCompressed();
+
+    void reportStringUncompressed();
 
 }

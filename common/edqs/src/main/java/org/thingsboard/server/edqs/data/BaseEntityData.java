@@ -125,7 +125,7 @@ public abstract class BaseEntityData<T extends EntityFields> implements EntityDa
         return switch (key) {
             case "createdTime" -> new LongDataPoint(System.currentTimeMillis(), fields.getCreatedTime());
             case "edgeTemplate" -> new BoolDataPoint(System.currentTimeMillis(), fields.isEdgeTemplate());
-            case "parentId" -> new StringDataPoint(System.currentTimeMillis(), getRelatedParentId(ctx));
+            case "parentId" -> new StringDataPoint(System.currentTimeMillis(), getRelatedParentId(ctx), false);
             default -> new StringDataPoint(System.currentTimeMillis(), getField(key), false);
         };
     }
