@@ -107,7 +107,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         try {
             cfCtx.init();
         } catch (Exception e) {
-            throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
+            if (isMyPartition(cf.getEntityId())) {
+                throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
+            }
         }
         calculatedFields.put(cf.getId(), cfCtx);
         // We use copy on write lists to safely pass the reference to another actor for the iteration.
@@ -248,7 +250,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 try {
                     cfCtx.init();
                 } catch (Exception e) {
-                    throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
+                    if (isMyPartition(cf.getEntityId())) {
+                        throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
+                    }
                 }
                 calculatedFields.put(cf.getId(), cfCtx);
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
@@ -275,7 +279,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 try {
                     newCfCtx.init();
                 } catch (Exception e) {
-                    throw CalculatedFieldException.builder().ctx(newCfCtx).eventEntity(newCfCtx.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
+                    if (isMyPartition(newCf.getEntityId())) {
+                        throw CalculatedFieldException.builder().ctx(newCfCtx).eventEntity(newCfCtx.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
+                    }
                 }
                 calculatedFields.put(newCf.getId(), newCfCtx);
                 List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
@@ -463,12 +469,16 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private boolean isMyPartition(EntityId entityId, TbCallback callback) {
-        if (!systemContext.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId).isMyPartition()) {
+        if (!isMyPartition(entityId)) {
             log.debug("[{}] Entity belongs to external partition.", entityId);
             callback.onSuccess();
             return false;
         }
         return true;
+    }
+
+    private boolean isMyPartition(EntityId entityId) {
+        return systemContext.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId).isMyPartition();
     }
 
     private static boolean isProfileEntity(EntityType entityType) {
