@@ -72,10 +72,9 @@ export class CheckRelationConfigComponent extends RuleNodeConfigurationComponent
       this.checkRelationConfigForm.get('entityType').setValidators(checkForSingleEntity ? [Validators.required] : []);
       this.checkRelationConfigForm.get('entityType').updateValueAndValidity({emitEvent});
       this.checkRelationConfigForm.get('entityId').setValidators(checkForSingleEntity ? [Validators.required] : []);
+      this.checkRelationConfigForm.get('entityId').updateValueAndValidity({emitEvent});
     } else if (trigger === 'entityType') {
-      this.checkRelationConfigForm.get('entityId').setValue(null, {emitEvent});
+      this.checkRelationConfigForm.get('entityId').reset(null, {emitEvent});
     }
-    this.checkRelationConfigForm.get('entityId').updateValueAndValidity({emitEvent});
   }
-
 }
