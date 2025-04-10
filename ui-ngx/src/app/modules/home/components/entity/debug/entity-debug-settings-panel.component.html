@@ -17,10 +17,10 @@
 -->
 <div class="flex w-96 flex-col gap-3 p-2">
   <div class="tb-form-panel-title" translate>debug-settings.label</div>
-  @if (debugLimitsConfiguration) {
+  @if (maxMessagesCount) {
     <div class="hint-container">
       <div class="tb-form-hint tb-primary-fill tb-flex center">
-        {{ 'debug-settings.hint.main-limited' | translate: { entity: entityLabel ?? ('debug-settings.entity' | translate), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
+        {{ 'debug-settings.hint.main-limited' | translate: { entity: (entityLabel | translate | lowercase), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
       </div>
     </div>
   }

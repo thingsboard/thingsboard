@@ -148,4 +148,6 @@ public class DataConstants {
     public static final String CF_QUEUE_NAME = "CalculatedFields";
     public static final String CF_STATES_QUEUE_NAME = "CalculatedFieldStates";
 
+    public static final String LATEST_TELEMETRY_SCOPE = "LATEST_TELEMETRY";
+
 }

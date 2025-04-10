@@ -1,0 +1,84 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-shape-fill-stripe-settings-panel" [formGroup]="shapeFillStripeSettingsFormGroup">
+  <div class="tb-shape-fill-stripe-settings-title" translate>widgets.maps.data-layer.shape.stripe-pattern</div>
+  <div class="tb-shape-fill-stripe-settings-panel-body">
+    <div class="tb-form-panel no-padding no-border">
+      <div class="tb-form-row space-between">
+        <div translate>widgets.maps.data-layer.shape.first-stripe</div>
+        <div class="flex flex-row items-center gap-2">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput type="number" min="0" formControlName="weight" placeholder="{{ 'widget-config.set' | translate }}">
+            <span matSuffix>px</span>
+          </mat-form-field>
+          <tb-data-layer-color-settings
+            [context]="context"
+            [dsType]="dsType"
+            [dsEntityAliasId]="dsEntityAliasId"
+            [dsDeviceId]="dsDeviceId"
+            helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_stroke_color_fn' : 'widget/lib/map/circle_stroke_color_fn' }}" formControlName="color"></tb-data-layer-color-settings>
+        </div>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.maps.data-layer.shape.second-stripe</div>
+        <div class="flex flex-row items-center gap-2">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput type="number" min="0" formControlName="spaceWeight" placeholder="{{ 'widget-config.set' | translate }}">
+            <span matSuffix>px</span>
+          </mat-form-field>
+          <tb-data-layer-color-settings
+            [context]="context"
+            [dsType]="dsType"
+            [dsEntityAliasId]="dsEntityAliasId"
+            [dsDeviceId]="dsDeviceId"
+            helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_stroke_color_fn' : 'widget/lib/map/circle_stroke_color_fn' }}" formControlName="spaceColor"></tb-data-layer-color-settings>
+        </div>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.maps.data-layer.shape.angle</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="angle" type="number" min="0" max="180" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix>deg</div>
+        </mat-form-field>
+      </div>
+      <div class="tb-shape-fill-stripe-settings-preview">
+        <div class="tb-shape-fill-stripe-settings-preview-title" translate>
+          widgets.background.preview
+        </div>
+        <div class="tb-shape-fill-stripe-settings-preview-box mat-elevation-z4" [style]="stripePreviewStyle">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tb-shape-fill-stripe-settings-panel-buttons">
+    <span class="flex-1"></span>
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyShapeFillStripeSettings()"
+            [disabled]="shapeFillStripeSettingsFormGroup.invalid || !shapeFillStripeSettingsFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

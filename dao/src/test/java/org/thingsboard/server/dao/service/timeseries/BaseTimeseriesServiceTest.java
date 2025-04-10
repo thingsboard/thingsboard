@@ -81,21 +81,21 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     protected static final int MAX_TIMEOUT = 30;
 
-    private static final String STRING_KEY = "stringKey";
+    protected static final String STRING_KEY = "stringKey";
     private static final String LONG_KEY = "longKey";
     private static final String DOUBLE_KEY = "doubleKey";
     private static final String BOOLEAN_KEY = "booleanKey";
 
-    private static final long TS = 42L;
+    protected static final long TS = 42L;
     private static final String DESC_ORDER = "DESC";
 
-    KvEntry stringKvEntry = new StringDataEntry(STRING_KEY, "value");
+    protected KvEntry stringKvEntry = new StringDataEntry(STRING_KEY, "value");
     KvEntry longKvEntry = new LongDataEntry(LONG_KEY, Long.MAX_VALUE);
     KvEntry doubleKvEntry = new DoubleDataEntry(DOUBLE_KEY, Double.MAX_VALUE);
     KvEntry booleanKvEntry = new BooleanDataEntry(BOOLEAN_KEY, Boolean.TRUE);
 
     protected TenantId tenantId;
-    DeviceId deviceId = new DeviceId(Uuids.timeBased());
+    protected DeviceId deviceId = new DeviceId(Uuids.timeBased());
 
     @Before
     public void before() {
@@ -811,11 +811,11 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         tsService.saveWithoutLatest(tenantId, deviceId, tsKvEntry, 0).get(MAX_TIMEOUT, TimeUnit.SECONDS);
     }
 
-    private static TsKvEntry toTsEntry(long ts, KvEntry entry) {
+    protected static TsKvEntry toTsEntry(long ts, KvEntry entry) {
         return new BasicTsKvEntry(ts, entry);
     }
 
-    private static void equalsIgnoreVersion(TsKvEntry expected, TsKvEntry actual) {
+    protected static void equalsIgnoreVersion(TsKvEntry expected, TsKvEntry actual) {
         assertEquals(expected.getKey(), actual.getKey());
         assertEquals(expected.getValue(), actual.getValue());
         assertEquals(expected.getTs(), actual.getTs());

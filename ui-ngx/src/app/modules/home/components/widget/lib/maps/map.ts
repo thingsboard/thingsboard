@@ -82,6 +82,7 @@ import { TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-
 import { EntityType } from '@shared/models/entity-type.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
+import { ShapePatternStorage } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 
 type TooltipInstancesData = {root: HTMLElement, instances: ITooltipsterInstance[]};
 
@@ -131,6 +132,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected addMarkerDataLayers: TbLatestMapDataLayer<any>[];
   protected addPolygonDataLayers: TbLatestMapDataLayer<any>[];
   protected addCircleDataLayers: TbLatestMapDataLayer<any>[];
+
+  protected shapePatternStorage: ShapePatternStorage = {};
 
   private readonly mapResize$: ResizeObserver;
 
@@ -333,7 +336,11 @@ export abstract class TbMap<S extends BaseMapSettings> {
               type: widgetType.latest,
               callbacks: {
                 onDataUpdated: (subscription) => {
-                  this.update(subscription);
+                  try {
+                    this.update(subscription);
+                  } catch (e) {
+                    console.error(e);
+                  }
                 }
               }
             };
@@ -367,10 +374,18 @@ export abstract class TbMap<S extends BaseMapSettings> {
               type: widgetType.timeseries,
               callbacks: {
                 onDataUpdated: (subscription) => {
-                  this.updateTrips(subscription);
+                  try {
+                    this.updateTrips(subscription);
+                  } catch (e) {
+                    console.error(e);
+                  }
                 },
                 onLatestDataUpdated: (subscription) => {
-                  this.updateTripsWithLatestData(subscription);
+                  try {
+                    this.updateTripsWithLatestData(subscription);
+                  } catch (e) {
+                    console.error(e);
+                  }
                 }
               }
             };
@@ -1087,6 +1102,42 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public type(): MapType {
     return this.settings.mapType;
+  }
+
+  public useShapePattern(patternId: string, prevPatternId?: string): L.TB.Pattern {
+    if (prevPatternId && patternId !== prevPatternId) {
+      this.unUseShapePattern(prevPatternId);
+    }
+    if (this.shapePatternStorage[patternId]) {
+      const patternItem = this.shapePatternStorage[patternId];
+      if (patternId !== prevPatternId) {
+        patternItem.refCount++;
+        return patternItem.pattern;
+      } else {
+        return patternItem.pattern;
+      }
+    }
+  }
+
+  public unUseShapePattern(patternId: string): void {
+    if (patternId) {
+      const patternItem = this.shapePatternStorage[patternId];
+      if (patternItem) {
+        patternItem.refCount--;
+        if (patternItem.refCount === 0) {
+          patternItem.pattern.remove();
+          delete this.shapePatternStorage[patternId];
+        }
+      }
+    }
+  }
+
+  public storeShapePattern(patternId: string, pattern: L.TB.Pattern): void {
+    pattern.addTo(this.map);
+    this.shapePatternStorage[patternId] = {
+      pattern,
+      refCount: 1
+    };
   }
 
   public enabledDataLayersUpdated() {

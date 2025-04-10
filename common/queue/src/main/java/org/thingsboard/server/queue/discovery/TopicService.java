@@ -38,7 +38,7 @@ public class TopicService {
     @Value("${queue.rule-engine.notifications-topic:tb_rule_engine.notifications}")
     private String tbRuleEngineNotificationsTopic;
 
-    @Value("${queue.transport.notifications-topics:tb_transport.notifications}")
+    @Value("${queue.transport.notifications-topic:tb_transport.notifications}")
     private String tbTransportNotificationsTopic;
 
     @Value("${queue.edge.notifications-topic:tb_edge.notifications}")
@@ -47,7 +47,7 @@ public class TopicService {
     @Value("${queue.edge.event-notifications-topic:tb_edge_event.notifications}")
     private String tbEdgeEventNotificationsTopic;
 
-    @Value("${queue.calculated_fields.notifications-topic:calculated_field.notifications}")
+    @Value("${queue.calculated-fields.notifications-topic:calculated_field.notifications}")
     private String tbCalculatedFieldNotificationsTopic;
 
     private final ConcurrentMap<String, TopicPartitionInfo> tbCoreNotificationTopics = new ConcurrentHashMap<>();

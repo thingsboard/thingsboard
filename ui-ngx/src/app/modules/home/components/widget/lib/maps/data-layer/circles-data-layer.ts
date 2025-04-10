@@ -23,7 +23,7 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
 import { DataKey, FormattedData } from '@shared/models/widget.models';
-import { TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
+import { ShapeStyleInfo, TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable } from 'rxjs';
 import { isNotEmptyStr } from '@core/utils';
@@ -36,7 +36,7 @@ import { map } from 'rxjs/operators';
 class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettings, TbCirclesDataLayer> {
 
   private circle: L.Circle;
-  private circleStyle: L.PathOptions;
+  private circleStyleInfo: ShapeStyleInfo;
   private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -54,16 +54,29 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
     this.circle.options.bubblingMouseEvents =  !this.dataLayer.isEditMode();
   }
 
+  public remove() {
+    super.remove();
+    if (this.circleStyleInfo?.patternId) {
+      this.dataLayer.getMap().unUseShapePattern(this.circleStyleInfo.patternId);
+    }
+  }
+
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const circleData = this.dataLayer.extractCircleCoordinates(data);
     const center = new L.LatLng(circleData.latitude, circleData.longitude);
-    this.circleStyle = this.dataLayer.getShapeStyle(data, dsData);
     this.circle = L.circle(center, {
       bubblingMouseEvents: !this.dataLayer.isEditMode(),
       radius: circleData.radius,
-      ...this.circleStyle,
       snapIgnore: !this.dataLayer.isSnappable()
     });
+
+    this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
+      this.circleStyleInfo = styleInfo;
+      if (this.circle) {
+        this.circle.setStyle(this.circleStyleInfo.style);
+      }
+    });
+
     this.updateLabel(data, dsData);
     return this.circle;
   }
@@ -78,11 +91,13 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.circleStyle = this.dataLayer.getShapeStyle(data, dsData);
-    this.updateCircleShape(data);
-    this.updateTooltip(data, dsData);
-    this.updateLabel(data, dsData);
-    this.circle.setStyle(this.circleStyle);
+    this.dataLayer.getShapeStyle(data, dsData, this.circleStyleInfo?.patternId).subscribe((styleInfo) => {
+      this.circleStyleInfo = styleInfo;
+      this.updateCircleShape(data);
+      this.updateTooltip(data, dsData);
+      this.updateLabel(data, dsData);
+      this.circle.setStyle(this.circleStyleInfo.style);
+    });
   }
 
   protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
@@ -126,7 +141,7 @@ class TbCircleDataLayerItem extends TbLatestDataLayerItem<CirclesDataLayerSettin
       this.circle.on('pm:markerdragstart', () => this.editing = true);
       this.circle.on('pm:markerdragend', () => this.editing = false);
       this.circle.on('pm:edit', () => this.saveCircleCoordinates());
-      this.circle.pm.enable();
+      this.circle.pm.enable({draggable: true, snappable: this.dataLayer.isSnappable()});
     }
     return [];
   }

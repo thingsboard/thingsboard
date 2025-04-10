@@ -27,10 +27,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
-import org.thingsboard.server.edqs.stats.EdqsStatsService;
+import org.thingsboard.server.common.stats.EdqsStatsService;
 import org.thingsboard.server.queue.edqs.EdqsComponent;
 
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
@@ -42,7 +41,7 @@ import java.util.function.Predicate;
 public class DefaultEdqsRepository implements EdqsRepository {
 
     private final static ConcurrentMap<TenantId, TenantRepo> repos = new ConcurrentHashMap<>();
-    private final Optional<EdqsStatsService> statsService;
+    private final EdqsStatsService statsService;
 
     public TenantRepo get(TenantId tenantId) {
         return repos.computeIfAbsent(tenantId, id -> new TenantRepo(id, statsService));

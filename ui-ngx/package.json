@@ -26,7 +26,7 @@
     "@auth0/angular-jwt": "^5.2.0",
     "@flowjs/flow.js": "^2.14.1",
     "@flowjs/ngx-flow": "18.0.1",
-    "@geoman-io/leaflet-geoman-free": "2.17.0",
+    "@geoman-io/leaflet-geoman-free": "2.18.3",
     "@iplab/ngx-color-picker": "^18.0.1",
     "@mat-datetimepicker/core": "~14.0.0",
     "@mdi/svg": "^7.4.47",

@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -24,6 +25,11 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode;
+import org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode;
+import org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode;
+import org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode;
+import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -89,6 +95,7 @@ import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationRuleUpdateMsg;
@@ -113,11 +120,36 @@ import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 public class EdgeMsgConstructorUtils {
+    public static final Map<EdgeVersion, Map<String, String>> IGNORED_PARAMS_BY_EDGE_VERSION = Map.of(
+            EdgeVersion.V_3_8_0,
+            Map.of(
+                    TbMsgTimeseriesNode.class.getName(), "processingSettings",
+                    TbMsgAttributesNode.class.getName(), "processingSettings",
+                    TbSaveToCustomCassandraTableNode.class.getName(), "defaultTtl"
+            ),
+            EdgeVersion.V_3_7_0,
+            Map.of(
+                    TbMsgTimeseriesNode.class.getName(), "processingSettings",
+                    TbMsgAttributesNode.class.getName(), "processingSettings",
+                    TbSaveToCustomCassandraTableNode.class.getName(), "defaultTtl"
+            )
+    );
+
+    public static final Map<EdgeVersion, Set<String>> EXCLUDED_NODES_BY_EDGE_VERSION = Map.of(
+            EdgeVersion.V_3_7_0,
+            Set.of(
+                    TbSendRestApiCallReplyNode.class.getName(),
+                    TbAwsLambdaNode.class.getName()
+            )
+    );
 
     public static AlarmUpdateMsg constructAlarmUpdatedMsg(UpdateMsgType msgType, Alarm alarm) {
         return AlarmUpdateMsg.newBuilder().setMsgType(msgType)
@@ -417,8 +449,50 @@ public class EdgeMsgConstructorUtils {
                 .setIdLSB(ruleChainId.getId().getLeastSignificantBits()).build();
     }
 
-    public static RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData) {
-        return RuleChainMetadataUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(ruleChainMetaData)).build();
+    public static RuleChainMetadataUpdateMsg constructRuleChainMetadataUpdatedMsg(UpdateMsgType msgType, RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
+        String metaData = sanitizeMetadataForLegacyEdgeVersion(ruleChainMetaData, edgeVersion);
+
+        return RuleChainMetadataUpdateMsg.newBuilder()
+                .setMsgType(msgType)
+                .setEntity(metaData)
+                .build();
+    }
+
+    private static String sanitizeMetadataForLegacyEdgeVersion(RuleChainMetaData ruleChainMetaData, EdgeVersion edgeVersion) {
+        JsonNode jsonNode = JacksonUtil.valueToTree(ruleChainMetaData);
+        JsonNode nodes = jsonNode.get("nodes");
+
+        updateNodeConfigurationsForLegacyEdge(nodes, edgeVersion);
+        removeExcludedNodesForLegacyEdge(nodes, edgeVersion);
+
+        return JacksonUtil.toString(jsonNode);
+    }
+
+    private static void updateNodeConfigurationsForLegacyEdge(JsonNode nodes, EdgeVersion edgeVersion) {
+        nodes.forEach(node -> {
+            if (node.isObject() && node.has("configuration")) {
+                String nodeType = node.get("type").asText();
+                Map<String, String> ignoredParams = IGNORED_PARAMS_BY_EDGE_VERSION.get(edgeVersion);
+
+                if (ignoredParams != null && ignoredParams.containsKey(nodeType)) {
+                    ((ObjectNode) node.get("configuration")).remove(ignoredParams.get(nodeType));
+                }
+            }
+        });
+    }
+
+    private static void removeExcludedNodesForLegacyEdge(JsonNode nodes, EdgeVersion edgeVersion) {
+        Iterator<JsonNode> iterator = nodes.iterator();
+
+        while (iterator.hasNext()) {
+            JsonNode node = iterator.next();
+            String type = node.get("type").asText();
+            Set<String> missNodes = EXCLUDED_NODES_BY_EDGE_VERSION.get(edgeVersion);
+
+            if (missNodes != null && missNodes.contains(type)) {
+                iterator.remove();
+            }
+        }
     }
 
     public static EntityDataProto constructEntityDataMsg(TenantId tenantId, EntityId entityId, EdgeEventActionType actionType, JsonElement entityData) {
@@ -433,7 +507,7 @@ public class EdgeMsgConstructorUtils {
                     JsonObject data = entityData.getAsJsonObject();
                     builder.setPostTelemetryMsg(JsonConverter.convertToTelemetryProto(data.getAsJsonObject("data"), ts));
                 } catch (Exception e) {
-                    log.warn("[{}][{}] Can't convert to telemetry proto, entityData [{}]", tenantId, entityId, entityData, e);
+                    log.trace("[{}][{}] Can't convert to telemetry proto, entityData [{}]", tenantId, entityId, entityData, e);
                 }
                 break;
             case ATTRIBUTES_UPDATED:
@@ -448,7 +522,7 @@ public class EdgeMsgConstructorUtils {
                     builder.setPostAttributeScope(getScopeOfDefault(data));
                     builder.setAttributeTs(ts);
                 } catch (Exception e) {
-                    log.warn("[{}][{}] Can't convert to AttributesUpdatedMsg proto, entityData [{}]", tenantId, entityId, entityData, e);
+                    log.trace("[{}][{}] Can't convert to AttributesUpdatedMsg proto, entityData [{}]", tenantId, entityId, entityData, e);
                 }
                 break;
             case POST_ATTRIBUTES:
@@ -459,7 +533,7 @@ public class EdgeMsgConstructorUtils {
                     builder.setPostAttributeScope(getScopeOfDefault(data));
                     builder.setAttributeTs(ts);
                 } catch (Exception e) {
-                    log.warn("[{}][{}] Can't convert to PostAttributesMsg, entityData [{}]", tenantId, entityId, entityData, e);
+                    log.trace("[{}][{}] Can't convert to PostAttributesMsg, entityData [{}]", tenantId, entityId, entityData, e);
                 }
                 break;
             case ATTRIBUTES_DELETED:
@@ -467,12 +541,12 @@ public class EdgeMsgConstructorUtils {
                     AttributeDeleteMsg.Builder attributeDeleteMsg = AttributeDeleteMsg.newBuilder();
                     attributeDeleteMsg.setScope(entityData.getAsJsonObject().getAsJsonPrimitive("scope").getAsString());
                     JsonArray jsonArray = entityData.getAsJsonObject().getAsJsonArray("keys");
-                    List<String> keys = new Gson().fromJson(jsonArray.toString(), new TypeToken<>(){}.getType());
+                    List<String> keys = new Gson().fromJson(jsonArray.toString(), new TypeToken<>() {}.getType());
                     attributeDeleteMsg.addAllAttributeNames(keys);
                     attributeDeleteMsg.build();
                     builder.setAttributeDeleteMsg(attributeDeleteMsg);
                 } catch (Exception e) {
-                    log.warn("[{}][{}] Can't convert to AttributeDeleteMsg proto, entityData [{}]", tenantId, entityId, entityData, e);
+                    log.trace("[{}][{}] Can't convert to AttributeDeleteMsg proto, entityData [{}]", tenantId, entityId, entityData, e);
                 }
                 break;
         }

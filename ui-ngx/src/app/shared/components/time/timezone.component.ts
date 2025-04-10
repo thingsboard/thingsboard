@@ -151,7 +151,7 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit {
     if (this.disablePanel) {
       return;
     }
-    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    const trigger = ($event.target || $event.currentTarget) as Element;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {

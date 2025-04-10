@@ -554,7 +554,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    const trigger = ($event.target || $event.currentTarget) as Element;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
@@ -614,7 +614,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    const trigger = ($event.target || $event.currentTarget) as Element;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {

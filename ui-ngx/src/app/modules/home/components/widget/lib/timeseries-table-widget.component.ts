@@ -455,7 +455,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       $event.stopPropagation();
     }
     if (this.sources.length) {
-      const target = $event.target || $event.srcElement || $event.currentTarget;
+      const target = $event.target || $event.currentTarget;
       const config = new OverlayConfig({
         panelClass: 'tb-panel-container',
         backdropClass: 'cdk-overlay-transparent-backdrop',

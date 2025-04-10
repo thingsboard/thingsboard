@@ -203,7 +203,7 @@ public abstract class EdgeGrpcSession implements Closeable {
 
             @Override
             public void onError(Throwable t) {
-                log.error("[{}][{}] Stream was terminated due to error:", tenantId, sessionId, t);
+                log.trace("[{}][{}] Stream was terminated due to error:", tenantId, sessionId, t);
                 closeSession();
             }
 
@@ -255,7 +255,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     private void doSync(EdgeSyncCursor cursor) {
         if (cursor.hasNext()) {
             EdgeEventFetcher next = cursor.getNext();
-            log.info("[{}][{}] starting sync process, cursor current idx = {}, class = {}",
+            log.debug("[{}][{}] starting sync process, cursor current idx = {}, class = {}",
                     tenantId, edge.getId(), cursor.getCurrentIdx(), next.getClass().getSimpleName());
             ListenableFuture<Pair<Long, Long>> future = startProcessingEdgeEvents(next);
             Futures.addCallback(future, new FutureCallback<>() {
@@ -651,7 +651,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                     default -> log.warn("[{}][{}] Unsupported action type [{}]", tenantId, sessionId, edgeEvent.getAction());
                 }
             } catch (Exception e) {
-                log.error("[{}][{}] Exception during converting edge event to downlink msg", tenantId, sessionId, e);
+                log.trace("[{}][{}] Exception during converting edge event to downlink msg", tenantId, sessionId, e);
             }
             if (downlinkMsg != null) {
                 result.add(downlinkMsg);
@@ -763,7 +763,7 @@ public abstract class EdgeGrpcSession implements Closeable {
             try {
                 outputStream.onNext(responseMsg);
             } catch (Exception e) {
-                log.error("[{}][{}] Failed to send downlink message [{}]", tenantId, sessionId, downlinkMsgStr, e);
+                log.trace("[{}][{}] Failed to send downlink message [{}]", tenantId, sessionId, downlinkMsgStr, e);
                 connected = false;
                 sessionCloseListener.accept(edge, sessionId);
             } finally {
@@ -780,7 +780,7 @@ public abstract class EdgeGrpcSession implements Closeable {
             return null;
         }
 
-        return ctx.getProcessor(edgeEvent.getType()).convertEdgeEventToDownlink(edgeEvent);
+        return ctx.getProcessor(edgeEvent.getType()).convertEdgeEventToDownlink(edgeEvent, edgeVersion);
     }
 
     public void addEventToHighPriorityQueue(EdgeEvent edgeEvent) {
@@ -909,7 +909,7 @@ public abstract class EdgeGrpcSession implements Closeable {
             }
         } catch (Exception e) {
             String failureMsg = String.format("Can't process uplink msg [%s] from edge", uplinkMsg);
-            log.error("[{}][{}] Can't process uplink msg [{}]", edge.getTenantId(), sessionId, uplinkMsg, e);
+            log.trace("[{}][{}] Can't process uplink msg [{}]", edge.getTenantId(), sessionId, uplinkMsg, e);
             ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(edge.getTenantId()).edgeId(edge.getId())
                     .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(e.getMessage()).build());
             return Futures.immediateFailedFuture(e);

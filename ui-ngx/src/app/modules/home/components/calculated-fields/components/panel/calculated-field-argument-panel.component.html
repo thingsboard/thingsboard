@@ -55,11 +55,11 @@
                       class="tb-error">
               warning
             </mat-icon>
-          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('equalCtx')) {
+          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('forbiddenName')) {
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'calculated-fields.hint.argument-name-ctx' | translate"
+                      [matTooltip]="'calculated-fields.hint.argument-name-forbidden' | translate"
                       class="tb-error">
               warning
             </mat-icon>
