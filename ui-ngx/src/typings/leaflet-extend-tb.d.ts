@@ -168,6 +168,9 @@ declare module 'leaflet' {
       fillPattern?: Pattern | undefined;
     }
 
+    type aspectRatioAlign = "none" | "xMinYMin" | "xMidYMin" | "xMaxYMin" | "xMinYMid" | "xMidYMid" | "xMaxYMid" | "xMinYMax" | "xMidYMax" | "xMaxYMax";
+    type aspectRatioMeetOrSlice = "meet" | "slice";
+
     interface PatternOptions {
       x?: number | undefined;
       y?: number | undefined;
@@ -176,8 +179,8 @@ declare module 'leaflet' {
       patternUnits?: "userSpaceOnUse" | "objectBoundingBox" | undefined;
       patternContentUnits?: "userSpaceOnUse" | "objectBoundingBox" | undefined;
       patternTransform?: string | null | undefined;
-      preserveAspectRatioAlign?: "none" | "xMinYMin" | "xMidYMin" | "xMaxYMin" | "xMinYMid" | "xMidYMid" | "xMaxYMid" | "xMinYMax" | "xMidYMax" | "xMaxYMax" | undefined;
-      preserveAspectRatioMeetOrSlice?: "meet" | "slice" | undefined;
+      preserveAspectRatioAlign?: aspectRatioAlign | undefined;
+      preserveAspectRatioMeetOrSlice?: aspectRatioMeetOrSlice | undefined;
       viewBox?: [number, number, number, number] | undefined;
       angle?: number | null | undefined;
       className?: string | undefined;
@@ -222,6 +225,8 @@ declare module 'leaflet' {
       imageUrl: string;
       width: number;
       height: number;
+      preserveAspectRatioAlign?: aspectRatioAlign | undefined;
+      preserveAspectRatioMeetOrSlice?: aspectRatioMeetOrSlice | undefined;
       opacity?: number;
       angle?: number;
       scale?: number;

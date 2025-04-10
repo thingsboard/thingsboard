@@ -996,8 +996,6 @@
         "all-messages": "All messages ({{time}})",
         "failures": "Failures",
         "entity": "entity",
-        "rule-node": "rule node",
-        "calculated-field": "calculated field",
         "hint": {
             "main-limited": "No more than {{msg}} {{entity}} debug messages per {{time}} will be recorded.",
             "on-failure": "Log error messages only.",
@@ -1059,6 +1057,7 @@
         "delete-text": "Be careful, after the confirmation the calculated field and all related data will become unrecoverable.",
         "delete-multiple-title": "Are you sure you want to delete { count, plural, =1 {1 calculated field} other {# calculated fields} }?",
         "delete-multiple-text": "Be careful, after the confirmation all selected calculated fields will be removed and all related data will become unrecoverable.",
+        "test-with-this-message": "Test with this message",
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
             "arguments-empty": "Arguments should not be empty.",
@@ -1069,7 +1068,7 @@
             "argument-name-pattern": "Argument name is invalid.",
             "argument-name-duplicate": "Argument with such name already exists.",
             "argument-name-max-length": "Argument name should be less than 256 characters.",
-            "argument-name-ctx": "Argument name 'ctx' is reserved and cannot be used.",
+            "argument-name-forbidden": "Argument name is reserved and cannot be used.",
             "argument-type-required": "Argument type is required.",
             "max-args": "Maximum number of arguments reached.",
             "decimals-range": "Decimals by default should be a number between 0 and 15.",
@@ -1121,8 +1120,6 @@
         "documentation": "Documentation",
         "time-left": "{{time}} left",
         "output": "Output",
-        "test-function": "Test function",
-        "test-with-this-message": "{{test}} with this message",
         "suffix": {
             "s": "s",
             "ms": "ms"
@@ -8137,6 +8134,7 @@
                     "fill-image": "Fill image",
                     "fill-image-type-image": "Image",
                     "fill-image-type-function": "Function",
+                    "preserve-aspect-ratio": "Preserve aspect ratio",
                     "opacity": "Opacity",
                     "angle": "Rotation angle",
                     "scale": "Scale",

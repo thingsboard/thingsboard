@@ -974,7 +974,15 @@ class PatternImage extends PatternElement<L.TB.PatternImageOptions> implements L
     this._dom.setAttribute('y', '0');
     this._dom.setAttribute('width', `${options.width}`);
     this._dom.setAttribute('height', `${options.height}`);
-    this._dom.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+    if (options.preserveAspectRatioAlign) {
+      let preserveAspectRatioValue = options.preserveAspectRatioAlign;
+      if (preserveAspectRatioValue !== 'none' && options.preserveAspectRatioMeetOrSlice) {
+        preserveAspectRatioValue += (' ' + options.preserveAspectRatioMeetOrSlice);
+      }
+      dom.setAttribute('preserveAspectRatio', preserveAspectRatioValue);
+    } else {
+      dom.removeAttribute('preserveAspectRatio');
+    }
     const transforms: string[] = [];
     if (options.angle) {
       transforms.push(`rotate(${options.angle})`);

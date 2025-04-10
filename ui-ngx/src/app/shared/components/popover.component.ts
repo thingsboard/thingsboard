@@ -375,7 +375,6 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   tbComponentInjector: Injector | null = null;
   tbComponentStyle: { [klass: string]: any }  = {};
   tbOverlayClassName!: string;
-  tbOverlayStyle: { [klass: string]: any } = {};
   tbPopoverInnerStyle: { [klass: string]: any } = {};
   tbPopoverInnerContentStyle: { [klass: string]: any } = {};
   tbBackdrop = false;
@@ -470,6 +469,16 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
     return this.tbModal ? 'tb-popover-overlay-backdrop' : '';
   }
 
+
+  set tbOverlayStyle(value: { [klass: string]: any }) {
+    this._tbOverlayStyle = value;
+    this.cdr.markForCheck();
+  }
+
+  get tbOverlayStyle(): { [klass: string]: any } {
+    return this._tbOverlayStyle;
+  }
+
   preferredPlacement: PopoverPlacement = 'top';
   strictPosition = false;
   origin!: CdkOverlayOrigin;
@@ -485,6 +494,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
       this.cdr.markForCheck();
     }
   }, {threshold: [0.5]});
+  private _tbOverlayStyle: { [klass: string]: any } = {};
 
   constructor(
     public cdr: ChangeDetectorRef,

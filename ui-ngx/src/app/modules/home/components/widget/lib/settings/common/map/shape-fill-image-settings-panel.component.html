@@ -30,6 +30,11 @@
   <div class="tb-shape-fill-image-settings-panel-body" [class.!hidden]="shapeFillImageSettingsFormGroup.get('type').value !== ShapeFillImageType.image">
     <div class="tb-form-panel no-padding no-border">
       <tb-gallery-image-input required formControlName="image"></tb-gallery-image-input>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="preserveAspectRatio">
+          {{ 'widgets.maps.data-layer.shape.preserve-aspect-ratio' | translate }}
+        </mat-slide-toggle>
+      </div>
       <div class="tb-form-row space-between">
         <div translate>widgets.maps.data-layer.shape.opacity</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
@@ -58,7 +63,8 @@
                   [functionArgs]="['data', 'images', 'dsData']"
                   [globalVariables]="functionScopeVariables"
                   functionTitle="{{ 'widgets.maps.data-layer.shape.fill-image-function' | translate }}"
-                  helpId="widget/lib/map/shape_fill_image_fn">
+                  helpId="widget/lib/map/shape_fill_image_fn"
+                  [helpPopupStyle]="{width: '900px'}">
       </tb-js-func>
       <tb-multiple-gallery-image-input label="{{ 'widgets.maps.data-layer.shape.fill-images' | translate }}"
                                        formControlName="images">

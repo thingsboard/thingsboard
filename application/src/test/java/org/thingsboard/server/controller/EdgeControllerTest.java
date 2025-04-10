@@ -885,6 +885,10 @@ public class EdgeControllerTest extends AbstractControllerTest {
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
 
+        // create public customer
+        doPost("/api/customer/public/device/" + savedDevice.getId().getId(), Device.class);
+        doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
+
         simulateEdgeActivation(edge);
 
         doPost("/api/edge/" + edge.getId().getId().toString()

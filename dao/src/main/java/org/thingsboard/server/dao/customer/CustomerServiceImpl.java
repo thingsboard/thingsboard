@@ -213,12 +213,11 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Override
     public Customer findOrCreatePublicCustomer(TenantId tenantId) {
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
-        if (publicCustomerOpt.isPresent()) {
-            return publicCustomerOpt.get();
+        var publicCustomer = findPublicCustomer(tenantId);
+        if (publicCustomer != null) {
+            return publicCustomer;
         }
-        var publicCustomer = new Customer();
+        publicCustomer = new Customer();
         publicCustomer.setTenantId(tenantId);
         publicCustomer.setTitle(PUBLIC_CUSTOMER_TITLE);
         try {
@@ -230,13 +229,21 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
             return saveCustomer(publicCustomer, false);
         } catch (DataValidationException e) {
             if (CUSTOMER_UNIQUE_TITLE_EX_MSG.equals(e.getMessage())) {
-                publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
+                Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
                 if (publicCustomerOpt.isPresent()) {
                     return publicCustomerOpt.get();
                 }
             }
             throw new RuntimeException("Failed to create public customer.", e);
         }
+    }
+
+    @Override
+    public Customer findPublicCustomer(TenantId tenantId) {
+        log.trace("Executing findPublicCustomer, tenantId [{}]", tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
+        return publicCustomerOpt.orElse(null);
     }
 
     @Override

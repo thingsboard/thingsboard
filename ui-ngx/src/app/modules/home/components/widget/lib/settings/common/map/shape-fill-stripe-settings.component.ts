@@ -126,15 +126,15 @@ export class ShapeFillStripeSettingsComponent implements ControlValueAccessor {
   }
 }
 
-export const generateStripePreviewUrl = (settings: ShapeFillStripeSettings): string => {
+export const generateStripePreviewUrl = (settings: ShapeFillStripeSettings, previewWidth = 48, previewHeight = 48): string => {
   const weight = isDefinedAndNotNull(settings?.weight) ? settings.weight : 3;
   const spaceWeight = isDefinedAndNotNull(settings?.spaceWeight) ? settings.spaceWeight : 9;
   const angle = isDefinedAndNotNull(settings?.angle) ? settings.angle : 45;
   const height = weight + spaceWeight;
   const color = settings?.color?.color || '#8f8f8f';
   const spaceColor = settings?.spaceColor?.color || 'rgba(143,143,143,0)';
-  const svgStr = `<svg x="0" y="0" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="0" y="0" width="48" height="48" fill="url(#stripePattern)" fill-opacity="1"></rect>
+  const svgStr = `<svg x="0" y="0" width="${previewWidth}" height="${previewHeight}" viewBox="0 0 ${previewWidth} ${previewHeight}" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="${previewWidth}" height="${previewHeight}" fill="url(#stripePattern)" fill-opacity="1"></rect>
         <defs>
           <pattern id="stripePattern" x="0" y="0" width="8" height="${height}" patternUnits="userSpaceOnUse"
                     patternContentUnits="userSpaceOnUse" patternTransform="rotate(${angle})">

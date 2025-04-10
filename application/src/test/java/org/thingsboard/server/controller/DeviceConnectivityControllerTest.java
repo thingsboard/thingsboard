@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
@@ -93,6 +94,9 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     private User tenantAdmin;
     private DeviceProfileId mqttDeviceProfileId;
     private DeviceProfileId coapDeviceProfileId;
+
+    @Value("${device.connectivity.gateway.image_version:3.7-stable}")
+    private String gatewayImageVersion;
 
     @Before
     public void beforeTest() throws Exception {
@@ -298,7 +302,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 "services:\n" +
                 "  # ThingsBoard IoT Gateway Service Configuration\n" +
                 "  tb-gateway:\n" +
-                "    image: thingsboard/tb-gateway:latest\n" +
+                "    image: thingsboard/tb-gateway:" + gatewayImageVersion + "\n" +
                 "    container_name: tb-gateway\n" +
                 "    restart: always\n" +
                 "\n" +
@@ -847,7 +851,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 "-t \"application/json\" -e \"{temperature:25}\" coap://test.domain:5683/api/v1/%s/telemetry", credentials.getCredentialsId()));
         assertThat(linuxCoapCommands.get(COAPS).get(0).asText()).isEqualTo("curl -f -S -o " + CA_ROOT_CERT_PEM + " http://localhost:80/api/device-connectivity/coaps/certificate/download");
         assertThat(linuxCoapCommands.get(COAPS).get(1).asText()).isEqualTo(String.format("coap-client-openssl -v 6 -m POST " +
-                "-R "+ CA_ROOT_CERT_PEM + " -t \"application/json\" -e \"{temperature:25}\" coaps://test.domain:5684/api/v1/%s/telemetry", credentials.getCredentialsId()));
+                "-R " + CA_ROOT_CERT_PEM + " -t \"application/json\" -e \"{temperature:25}\" coaps://test.domain:5684/api/v1/%s/telemetry", credentials.getCredentialsId()));
 
         JsonNode dockerCoapCommands = commands.get(COAP).get(DOCKER);
         assertThat(dockerCoapCommands.get(COAP).asText()).isEqualTo(String.format("docker run --rm -it " +

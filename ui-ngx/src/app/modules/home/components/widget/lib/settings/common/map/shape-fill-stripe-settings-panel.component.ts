@@ -97,7 +97,7 @@ export class ShapeFillStripeSettingsPanelComponent implements OnInit {
 
   private updatePreview() {
     const shapeFillStripeSettings: ShapeFillStripeSettings = this.shapeFillStripeSettingsFormGroup.value;
-    const previewUrl = generateStripePreviewUrl(shapeFillStripeSettings);
+    const previewUrl = generateStripePreviewUrl(shapeFillStripeSettings, 136, 118);
     this.stripePreviewStyle = {
       background: this.sanitizer.bypassSecurityTrustStyle(`url(${previewUrl}) no-repeat 50% 50% / cover`)
     };

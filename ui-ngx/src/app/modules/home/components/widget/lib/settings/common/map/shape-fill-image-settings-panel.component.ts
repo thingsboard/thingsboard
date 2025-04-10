@@ -53,6 +53,7 @@ export class ShapeFillImageSettingsPanelComponent implements OnInit {
       {
         type: [this.shapeFillImageSettings?.type || ShapeFillImageType.image, []],
         image: [this.shapeFillImageSettings?.image, [Validators.required]],
+        preserveAspectRatio: [this.shapeFillImageSettings?.preserveAspectRatio, []],
         opacity: [this.shapeFillImageSettings?.opacity, [Validators.min(0), Validators.max(1)]],
         angle: [this.shapeFillImageSettings?.angle, [Validators.min(0), Validators.max(360)]],
         scale: [this.shapeFillImageSettings?.scale, [Validators.min(0)]],
@@ -83,6 +84,7 @@ export class ShapeFillImageSettingsPanelComponent implements OnInit {
     const type: ShapeFillImageType = this.shapeFillImageSettingsFormGroup.get('type').value;
     if (type === ShapeFillImageType.image) {
       this.shapeFillImageSettingsFormGroup.get('image').enable({emitEvent: false});
+      this.shapeFillImageSettingsFormGroup.get('preserveAspectRatio').enable({emitEvent: false});
       this.shapeFillImageSettingsFormGroup.get('opacity').enable({emitEvent: false});
       this.shapeFillImageSettingsFormGroup.get('angle').enable({emitEvent: false});
       this.shapeFillImageSettingsFormGroup.get('scale').enable({emitEvent: false});
@@ -90,6 +92,7 @@ export class ShapeFillImageSettingsPanelComponent implements OnInit {
       this.shapeFillImageSettingsFormGroup.get('images').disable({emitEvent: false});
     } else {
       this.shapeFillImageSettingsFormGroup.get('image').disable({emitEvent: false});
+      this.shapeFillImageSettingsFormGroup.get('preserveAspectRatio').disable({emitEvent: false});
       this.shapeFillImageSettingsFormGroup.get('opacity').disable({emitEvent: false});
       this.shapeFillImageSettingsFormGroup.get('angle').disable({emitEvent: false});
       this.shapeFillImageSettingsFormGroup.get('scale').disable({emitEvent: false});

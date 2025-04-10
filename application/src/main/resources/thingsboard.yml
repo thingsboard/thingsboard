@@ -1423,7 +1423,7 @@ device:
       pem_cert_file: "${DEVICE_CONNECTIVITY_COAPS_CA_ROOT_CERT:cafile.pem}"
     gateway:
       # The docker tag for thingsboard/tb-gateway image used in docker-compose file for gateway launch
-      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:latest}"
+      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:3.7-stable}"
 
 # Edges parameters
 edges:
@@ -1590,11 +1590,24 @@ queue:
     #      tb_rule_engine.sq:
     #        - key: max.poll.records
     #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
-      tb_edge_event.notifications:
-        # Example of specific consumer properties value per topic for edge event
+      tb_edge:
+        # Properties for consumers targeting edge service update topics.
         - key: max.poll.records
-          # Example of specific consumer properties value per topic for edge event
-          value: "${TB_QUEUE_KAFKA_EDGE_EVENT_MAX_POLL_RECORDS:50}"
+          # Define the maximum number of records that can be polled from tb_edge topics per request.
+          value: "${TB_QUEUE_KAFKA_EDGE_EVENTS_MAX_POLL_RECORDS:10}"
+      tb_edge.notifications:
+        # Properties for consumers targeting high-priority edge notifications.
+        # These notifications include RPC calls, lifecycle events, and new queue messages,
+        # requiring minimal latency and swift processing.
+        - key: max.poll.records
+          # Define the maximum number of records that can be polled from tb_edge.notifications.<SERVICE_ID> topics.
+          value: "${TB_QUEUE_KAFKA_EDGE_HP_EVENTS_MAX_POLL_RECORDS:10}"
+      tb_edge_event.notifications:
+        # Properties for consumers targeting downlinks meant for specific edge topics.
+        # Topic names are dynamically constructed using tenant and edge identifiers.
+        - key: max.poll.records
+          # Define the maximum number of records that can be polled from tb_edge_event.notifications.<TENANT_ID>.<EDGE_ID> topics.
+          value: "${TB_QUEUE_KAFKA_EDGE_NOTIFICATIONS_MAX_POLL_RECORDS:10}"
       tb_housekeeper:
         # Consumer properties for Housekeeper tasks topic
         - key: max.poll.records
@@ -1765,9 +1778,13 @@ queue:
     max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
     # Maximum timeout for requests to EDQS
     max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:20000}"
+    # Strings longer than this threshold will be compressed
+    string_compression_length_threshold: "${TB_EDQS_STRING_COMPRESSION_LENGTH_THRESHOLD:512}"
     stats:
       # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
+      # Threshold for slow queries to log, in milliseconds
+      slow_query_threshold: "${TB_EDQS_SLOW_QUERY_THRESHOLD_MS:3000}"
   vc:
     # Default topic name
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
@@ -1837,11 +1854,13 @@ queue:
     # Interval in milliseconds to poll messages
     poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
   edge:
-    # Default topic name
+    # Topic name to notify edge service on entity updates, assignment, etc.
     topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
-    # For high-priority notifications that require minimum latency and processing time
+    # Topic prefix for high-priority edge notifications (rpc, lifecycle, new messages in queue) that require minimum latency and processing time.
+    # Each tb-core has its own topic: <PREFIX>.<SERVICE_ID>
     notifications_topic: "${TB_QUEUE_EDGE_NOTIFICATIONS_TOPIC:tb_edge.notifications}"
-    # For edge events messages
+    # Topic prefix for downlinks to be pushed to specific edge.
+    # Every edge has its own unique topic: <PREFIX>.<TENANT_ID>.<EDGE_ID>
     event_notifications_topic: "${TB_QUEUE_EDGE_EVENT_NOTIFICATIONS_TOPIC:tb_edge_event.notifications}"
     # Amount of partitions used by Edge services
     partitions: "${TB_QUEUE_EDGE_PARTITIONS:10}"
