@@ -49,9 +49,10 @@ interface ShapePatternInfo {
     image: string;
     width: number;
     height: number;
-    opacity?: number;
-    angle?: number;
-    scale?: number;
+    preserveAspectRatio: boolean;
+    opacity: number;
+    angle: number;
+    scale: number;
   };
   fillStripe?: {
     weight: number;
@@ -122,23 +123,35 @@ abstract class ShapePatternProcessor<S = any> {
         fillOpacity: 1, stroke: false, fill: true, fillColor: patternInfo.fillColor});
       pattern.addElement(fillRect);
     } else if (patternInfo.type === ShapeFillType.image) {
-      pattern = new L.TB.Pattern({
+      const patternOptions: L.TB.PatternOptions = {
         width: 1,
         height: 1,
         patternUnits: 'objectBoundingBox',
         patternContentUnits: 'objectBoundingBox',
-        preserveAspectRatioAlign: 'xMidYMid',
-        preserveAspectRatioMeetOrSlice: 'slice',
         viewBox: [0,0,patternInfo.fillImage.width,patternInfo.fillImage.height]
-      });
-      const imagePatternShape = new L.TB.PatternImage({
+      };
+      if (patternInfo.fillImage.preserveAspectRatio) {
+        patternOptions.preserveAspectRatioAlign = 'xMidYMid';
+        patternOptions.preserveAspectRatioMeetOrSlice = 'slice';
+      } else {
+        patternOptions.preserveAspectRatioAlign = 'none';
+      }
+      pattern = new L.TB.Pattern(patternOptions);
+      const imagePatternOptions: L.TB.PatternImageOptions = {
         imageUrl: patternInfo.fillImage.image,
         width: patternInfo.fillImage.width,
         height: patternInfo.fillImage.height,
         opacity: patternInfo.fillImage.opacity,
         angle: patternInfo.fillImage.angle,
         scale: patternInfo.fillImage.scale
-      });
+      };
+      if (patternInfo.fillImage.preserveAspectRatio) {
+        imagePatternOptions.preserveAspectRatioAlign = 'xMidYMid';
+        imagePatternOptions.preserveAspectRatioMeetOrSlice = 'slice';
+      } else {
+        imagePatternOptions.preserveAspectRatioAlign = 'none';
+      }
+      const imagePatternShape = new L.TB.PatternImage(imagePatternOptions);
       pattern.addElement(imagePatternShape);
     } else if (patternInfo.type === ShapeFillType.stripe) {
       const stripeInfo = patternInfo.fillStripe;
@@ -221,6 +234,7 @@ class ShapeImagePatternProcessor extends ShapePatternProcessor<ShapeFillImageSet
     if (!currentImage?.url) {
       currentImage = {
         url: this.settings.image,
+        preserveAspectRatio: this.settings.preserveAspectRatio,
         opacity: this.settings.opacity,
         angle: this.settings.angle,
         scale: this.settings.scale
@@ -231,6 +245,7 @@ class ShapeImagePatternProcessor extends ShapePatternProcessor<ShapeFillImageSet
 
   private loadPatternInfoFromImage(image: ShapeFillImageInfo): Observable<ShapePatternInfo> {
     const imageUrl = image?.url || '/assets/widget-preview-empty.svg';
+    const preserveAspectRatio = isDefinedAndNotNull(image?.preserveAspectRatio) ? image.preserveAspectRatio : true;
     const opacity = isDefinedAndNotNull(image?.opacity) ? image.opacity : 1;
     const imagePipe = this.dataLayer.getCtx().$injector.get(ImagePipe);
     return loadImageWithAspect(imagePipe, imageUrl).pipe(
@@ -241,6 +256,7 @@ class ShapeImagePatternProcessor extends ShapePatternProcessor<ShapeFillImageSet
             image: res.url,
             width: res.width,
             height: res.height,
+            preserveAspectRatio,
             opacity,
             angle: image?.angle,
             scale: image?.scale

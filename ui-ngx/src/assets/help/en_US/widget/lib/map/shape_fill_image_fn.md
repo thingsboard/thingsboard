@@ -20,6 +20,7 @@ Should return shape fill image data having the following structure:
 ```typescript
 {
   url: string;
+  preserveAspectRatio?: boolean;
   opacity?: number;
   angle?: number;
   scale?: number;
@@ -27,6 +28,7 @@ Should return shape fill image data having the following structure:
 ```
 
 - *url* - fill image url;
+- *preserveAspectRatio* - optional property indicating whether to preserve image aspect ratio (`true` if not specified);
 - *opacity* - optional image opacity, number value from 0 to 1;
 - *angle* - optional image rotation angle, number value from 0 to 360;
 - *scale* - optional image scale, number value (1 - original size, smaller value - scale down, bigger value - scale up);

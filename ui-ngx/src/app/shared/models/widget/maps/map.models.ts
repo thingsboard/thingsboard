@@ -501,6 +501,7 @@ export enum ShapeFillImageType {
 export interface ShapeFillImageSettings {
   type: ShapeFillImageType;
   image?: string;
+  preserveAspectRatio?: boolean;
   opacity?: number; // (0-1)
   angle?: number; // (0-360)
   scale?: number; // (0-...)
@@ -550,6 +551,7 @@ export const defaultBasePolygonsDataLayerSettings = (mapType: MapType): Partial<
     fillImage: {
       type: ShapeFillImageType.image,
       image: '/assets/widget-preview-empty.svg',
+      preserveAspectRatio: true,
       opacity: 1,
       angle: 0,
       scale: 1
@@ -600,6 +602,7 @@ export const defaultBaseCirclesDataLayerSettings = (mapType: MapType): Partial<C
     fillImage: {
       type: ShapeFillImageType.image,
       image: '/assets/widget-preview-empty.svg',
+      preserveAspectRatio: true,
       opacity: 1,
       angle: 0,
       scale: 1
@@ -1186,6 +1189,7 @@ export interface MarkerIconInfo {
 
 export interface ShapeFillImageInfo {
   url: string;
+  preserveAspectRatio?: boolean;
   opacity?: number;
   angle?: number;
   scale?: number;
