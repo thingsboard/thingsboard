@@ -52,39 +52,47 @@
       <ng-template matTabContent [formGroup]="lwm2mDeviceProfileFormGroup">
         <section formGroupName="clientLwM2mSettings">
           <fieldset class="fields-group">
-            <legend class="group-title" translate>device-profile.lwm2m.fw-update</legend>
-            <mat-form-field class="mat-block flex-1">
-              <mat-label>{{ 'device-profile.lwm2m.fw-update-strategy' | translate }}</mat-label>
-              <mat-select formControlName="fwUpdateStrategy">
-                <mat-option [value]=1>{{ 'device-profile.lwm2m.fw-update-strategy-package' | translate }}</mat-option>
-                <mat-option [value]=2>{{ 'device-profile.lwm2m.fw-update-strategy-package-uri' | translate }}</mat-option>
-                <mat-option [value]=3>{{ 'device-profile.lwm2m.fw-update-strategy-data' | translate }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field class="mat-block flex-1" *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').value === 2">
-              <mat-label>{{ 'device-profile.lwm2m.fw-update-resource' | translate }}</mat-label>
-              <input matInput formControlName="fwUpdateResource" required>
-              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource').hasError('required')">
-                {{ 'device-profile.lwm2m.fw-update-resource-required' | translate }}
-              </mat-error>
-            </mat-form-field>
-          </fieldset>
-          <fieldset class="fields-group">
-            <legend class="group-title" translate>device-profile.lwm2m.sw-update</legend>
-            <mat-form-field class="mat-block flex-1">
-              <mat-label>{{ 'device-profile.lwm2m.sw-update-strategy' | translate }}</mat-label>
-              <mat-select formControlName="swUpdateStrategy">
-                <mat-option [value]=1>{{ 'device-profile.lwm2m.sw-update-strategy-package' | translate }}</mat-option>
-                <mat-option [value]=2>{{ 'device-profile.lwm2m.sw-update-strategy-package-uri' | translate }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field class="mat-block flex-1" *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').value === 2">
-              <mat-label>{{ 'device-profile.lwm2m.sw-update-resource' | translate }}</mat-label>
-              <input matInput formControlName="swUpdateResource" required>
-              <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').hasError('required')">
-                {{ 'device-profile.lwm2m.sw-update-resource-required' | translate }}
-              </mat-error>
-            </mat-form-field>
+            <legend class="group-title" translate>device-profile.lwm2m.ota-update</legend>
+            <mat-checkbox formControlName="useObject19ForOta">
+              <span tb-hint-tooltip-icon="{{ 'device-profile.lwm2m.use-object-19-for-ota-update-hint' | translate }}">
+                {{ 'device-profile.lwm2m.use-object-19-for-ota-update' | translate }}
+              </span>
+            </mat-checkbox>
+            <fieldset class="fields-group">
+              <legend class="group-title" translate>device-profile.lwm2m.fw-update</legend>
+              <mat-form-field class="mat-block flex-1">
+                <mat-label>{{ 'device-profile.lwm2m.fw-update-strategy' | translate }}</mat-label>
+                <mat-select formControlName="fwUpdateStrategy">
+                  <mat-option [value]=1>{{ 'device-profile.lwm2m.fw-update-strategy-package' | translate }}</mat-option>
+                  <mat-option [value]=2>{{ 'device-profile.lwm2m.fw-update-strategy-package-uri' | translate }}</mat-option>
+                  <mat-option [value]=3>{{ 'device-profile.lwm2m.fw-update-strategy-data' | translate }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="mat-block flex-1" *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').value === 2">
+                <mat-label>{{ 'device-profile.lwm2m.fw-update-resource' | translate }}</mat-label>
+                <input matInput formControlName="fwUpdateResource" required>
+                <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource').hasError('required')">
+                  {{ 'device-profile.lwm2m.fw-update-resource-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </fieldset>
+            <fieldset class="fields-group">
+              <legend class="group-title" translate>device-profile.lwm2m.sw-update</legend>
+              <mat-form-field class="mat-block flex-1">
+                <mat-label>{{ 'device-profile.lwm2m.sw-update-strategy' | translate }}</mat-label>
+                <mat-select formControlName="swUpdateStrategy">
+                  <mat-option [value]=1>{{ 'device-profile.lwm2m.sw-update-strategy-package' | translate }}</mat-option>
+                  <mat-option [value]=2>{{ 'device-profile.lwm2m.sw-update-strategy-package-uri' | translate }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="mat-block flex-1" *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').value === 2">
+                <mat-label>{{ 'device-profile.lwm2m.sw-update-resource' | translate }}</mat-label>
+                <input matInput formControlName="swUpdateResource" required>
+                <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').hasError('required')">
+                  {{ 'device-profile.lwm2m.sw-update-resource-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </fieldset>
           </fieldset>
           <fieldset class="fields-group">
             <legend class="group-title" translate>device-profile.power-saving-mode</legend>

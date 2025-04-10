@@ -77,7 +77,7 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
                 } else if (StringUtils.isNotEmpty(targetTag) && targetTag.equals(currentPackageId)) {
                     return false;
                 } else if (StringUtils.isNotEmpty(currentVersion3)) {
-                    if (StringUtils.isNotEmpty(targetTag) && currentVersion3.contains(targetTag)) {
+                    if (StringUtils.isNotEmpty(targetTag) && (currentVersion3.contains(targetTag) || targetTag.contains(currentVersion3))) {
                         return false;
                     }
                     return !currentVersion3.contains(targetPackageId);
