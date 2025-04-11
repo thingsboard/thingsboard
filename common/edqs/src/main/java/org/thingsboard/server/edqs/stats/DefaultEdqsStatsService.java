@@ -53,13 +53,12 @@ public class DefaultEdqsStatsService implements EdqsStatsService {
     private final ConcurrentMap<ObjectType, AtomicInteger> objectCounters = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, StatsTimer> timers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, StatsCounter> counters = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, AtomicInteger> gauges = new ConcurrentHashMap<>();
 
     @PostConstruct
     private void init() {
-        statsFactory.createGauge("edqsGauges", "stringPoolSize", TbStringPool.getPool(), Map::size);
-        statsFactory.createGauge("edqsGauges", "bytePoolSize", TbBytePool.getPool(), Map::size);
-        statsFactory.createGauge("edqsGauges", "tenantReposSize", DefaultEdqsRepository.getRepos(), Map::size);
+        statsFactory.createGauge("edqsMapGauges", "stringPoolSize", TbStringPool.getPool(), Map::size);
+        statsFactory.createGauge("edqsMapGauges", "bytePoolSize", TbBytePool.getPool(), Map::size);
+        statsFactory.createGauge("edqsMapGauges", "tenantReposSize", DefaultEdqsRepository.getRepos(), Map::size);
     }
 
     @Override
@@ -122,10 +121,6 @@ public class DefaultEdqsStatsService implements EdqsStatsService {
 
     private StatsCounter getCounter(String name) {
         return counters.computeIfAbsent(name, __ -> statsFactory.createStatsCounter("edqsCounters", name));
-    }
-
-    private AtomicInteger getGauge(String name) {
-        return gauges.computeIfAbsent(name, __ -> statsFactory.createGauge("edqsGauges", name, new AtomicInteger()));
     }
 
     private AtomicInteger getObjectGauge(ObjectType objectType) {
