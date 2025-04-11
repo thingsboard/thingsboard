@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
@@ -107,6 +108,106 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         var monthResult = result.get("t").get(0);
         Assert.assertEquals(22L, monthResult.get("value").asLong());
         Assert.assertEquals(middleOfTheInterval, monthResult.get("ts").asLong());
+    }
+
+    @Test
+    public void testTelemetryRequestsForMultipleDevices() throws Exception {
+        loginTenantAdmin();
+        Device firstDevice = createDevice();
+        Device secondDevice = createSecondDevice();
+
+        var startTs = 1704899727000L; // Wednesday, January 10 15:15:27 GMT
+        var endOfWeek1Ts = 1705269600000L;  // Monday, January 15, 2024 0:00:00 GMT+02:00
+        var endOfWeek2Ts = 1705874400000L;  // Monday, January 22, 2024 0:00:00 GMT+02:00
+        var endTs = endOfWeek2Ts + TimeUnit.DAYS.toMillis(1) + TimeUnit.HOURS.toMillis(1); // Monday, January 23, 2024 1:00:00 GMT+02:00
+
+        var firstIntervalTs = startTs + (endOfWeek1Ts - startTs) / 2;
+        var secondIntervalTs = endOfWeek1Ts + (endOfWeek2Ts - endOfWeek1Ts) / 2;
+        var thirdIntervalTs = endOfWeek2Ts + (endTs - endOfWeek2Ts) / 2;
+
+        var middleOfTheInterval = startTs + (endTs - startTs) / 2;
+
+        tsService.save(tenantId, firstDevice.getId(), new BasicTsKvEntry(1704899728000L, new LongDataEntry("t", 1L))); // Wednesday, January 10 15:15:28 GMT
+        tsService.save(tenantId, firstDevice.getId(), new BasicTsKvEntry(1704899729000L, new LongDataEntry("t", 3L))); // Wednesday, January 10 15:15:29 GMT
+        tsService.save(tenantId, firstDevice.getId(), new BasicTsKvEntry(endOfWeek1Ts, new LongDataEntry("t", 2L))); // Monday, January 15, 2024 0:00:00 GMT+02:00
+        tsService.save(tenantId, firstDevice.getId(), new BasicTsKvEntry(endOfWeek1Ts + 1000, new LongDataEntry("t", 5L))); // Monday, January 15, 2024 0:00:01 GMT+02:00
+        tsService.save(tenantId, firstDevice.getId(), new BasicTsKvEntry(endOfWeek2Ts, new LongDataEntry("t", 9L))); // Monday, January 22, 2024 0:00:00 GMT+02:00
+        tsService.save(tenantId, firstDevice.getId(), new BasicTsKvEntry(endOfWeek2Ts + 1000, new LongDataEntry("t", 2L))); // Monday, January 22, 2024 0:00:01 GMT+02:00
+
+        tsService.save(tenantId, secondDevice.getId(), new BasicTsKvEntry(1704899728000L, new LongDataEntry("t", 2L))); // Wednesday, January 10 15:15:28 GMT
+        tsService.save(tenantId, secondDevice.getId(), new BasicTsKvEntry(1704899729000L, new LongDataEntry("t", 6L))); // Wednesday, January 10 15:15:29 GMT
+        tsService.save(tenantId, secondDevice.getId(), new BasicTsKvEntry(endOfWeek1Ts, new LongDataEntry("t", 4L))); // Monday, January 15, 2024 0:00:00 GMT+02:00
+        tsService.save(tenantId, secondDevice.getId(), new BasicTsKvEntry(endOfWeek1Ts + 1000, new LongDataEntry("t", 10L))); // Monday, January 15, 2024 0:00:01 GMT+02:00
+        tsService.save(tenantId, secondDevice.getId(), new BasicTsKvEntry(endOfWeek2Ts, new LongDataEntry("t", 18L))); // Monday, January 22, 2024 0:00:00 GMT+02:00
+        tsService.save(tenantId, secondDevice.getId(), new BasicTsKvEntry(endOfWeek2Ts + 1000, new LongDataEntry("t", 4L))); // Monday, January 22, 2024 0:00:01 GMT+02:00
+
+
+        ObjectNode result = doGetAsync("/api/plugins/telemetry/devices/values/timeseries?deviceIds="
+                        +firstDevice.getId()+","+secondDevice.getId()
+                        +"&keys=t&startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
+                ObjectNode.class, startTs, endTs, "SUM", "WEEK_ISO", "Europe/Kyiv");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(2, result.size());
+        Assert.assertTrue(result.has(firstDevice.getId().toString()));
+        Assert.assertTrue(result.has(secondDevice.getId().toString()));
+
+
+        JsonNode tOfFirstDevice = result.get(firstDevice.getId().toString()).get("t");
+        Assert.assertNotNull(tOfFirstDevice);
+
+        Assert.assertEquals(3, tOfFirstDevice.size());
+
+        var firstIntervalResult = tOfFirstDevice.get(0);
+        Assert.assertEquals(4L, firstIntervalResult.get("value").asLong());
+        Assert.assertEquals(firstIntervalTs, firstIntervalResult.get("ts").asLong());
+
+        var secondIntervalResult = tOfFirstDevice.get(1);
+        Assert.assertEquals(7L, secondIntervalResult.get("value").asLong());
+        Assert.assertEquals(secondIntervalTs, secondIntervalResult.get("ts").asLong());
+
+        var thirdIntervalResult = tOfFirstDevice.get(2);
+        Assert.assertEquals(11L, thirdIntervalResult.get("value").asLong());
+        Assert.assertEquals(thirdIntervalTs, thirdIntervalResult.get("ts").asLong());
+
+
+        // Second Device
+
+        JsonNode tOfsecondDevice =  result.get(secondDevice.getId().toString()).get("t");
+        Assert.assertNotNull(tOfsecondDevice);
+
+        Assert.assertEquals(3, tOfsecondDevice.size());
+
+        Assert.assertEquals(8L,  tOfsecondDevice.get(0).get("value").asLong());
+        Assert.assertEquals(firstIntervalTs,  tOfsecondDevice.get(0).get("ts").asLong());
+
+        Assert.assertEquals(14L, tOfsecondDevice.get(1).get("value").asLong());
+        Assert.assertEquals(secondIntervalTs, tOfsecondDevice.get(1).get("ts").asLong());
+
+        Assert.assertEquals(22L, tOfsecondDevice.get(2).get("value").asLong());
+        Assert.assertEquals(thirdIntervalTs, tOfsecondDevice.get(2).get("ts").asLong());
+
+        result = doGetAsync("/api/plugins/telemetry/devices/values/timeseries?deviceIds="
+                        +firstDevice.getId()+","+secondDevice.getId()
+                        +"&keys=t&startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
+                ObjectNode.class, startTs, endTs, "SUM", "MONTH", "Europe/Kyiv");
+        Assert.assertNotNull(result);
+        Assert.assertEquals(2, result.size());
+        Assert.assertTrue(result.has(firstDevice.getId().toString()));
+        Assert.assertTrue(result.has(secondDevice.getId().toString()));
+
+        tOfFirstDevice = result.get(firstDevice.getId().toString()).get("t");
+        Assert.assertNotNull(tOfFirstDevice);
+        Assert.assertEquals(1, tOfFirstDevice.size());
+
+        tOfsecondDevice = result.get(secondDevice.getId().toString()).get("t");
+        Assert.assertNotNull(tOfsecondDevice);
+        Assert.assertEquals(1, tOfsecondDevice.size());
+
+        Assert.assertEquals(22L, tOfFirstDevice.get(0).get("value").asLong());
+        Assert.assertEquals(middleOfTheInterval, tOfFirstDevice.get(0).get("ts").asLong());
+
+        Assert.assertEquals(44L, tOfsecondDevice.get(0).get("value").asLong());
+        Assert.assertEquals(middleOfTheInterval, tOfsecondDevice.get(0).get("ts").asLong());
     }
 
     @Test
@@ -225,6 +326,22 @@ public class TelemetryControllerTest extends AbstractControllerTest {
 
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
+
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(testToken);
+
+        SaveDeviceWithCredentialsRequest saveRequest = new SaveDeviceWithCredentialsRequest(device, deviceCredentials);
+
+        return readResponse(doPost("/api/device-with-credentials", saveRequest).andExpect(status().isOk()), Device.class);
+    }
+
+    private Device createSecondDevice() throws Exception {
+        String testToken = "TEST_2_TOKEN";
+
+        Device device = new Device();
+        device.setName("My second device");
         device.setType("default");
 
         DeviceCredentials deviceCredentials = new DeviceCredentials();

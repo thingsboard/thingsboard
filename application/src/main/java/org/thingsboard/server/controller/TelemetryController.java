@@ -104,40 +104,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_JSON_REQUEST_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_KEYS_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SCOPE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTE_DATA_EXAMPLE;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
-import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ENTITY_GET_ATTRIBUTE_SCOPES;
-import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ENTITY_SAVE_ATTRIBUTE_SCOPES;
-import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.INVALID_STRUCTURE_OF_THE_REQUEST;
-import static org.thingsboard.server.controller.ControllerConstants.LATEST_TS_NON_STRICT_DATA_EXAMPLE;
-import static org.thingsboard.server.controller.ControllerConstants.LATEST_TS_STRICT_DATA_EXAMPLE;
-import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
-import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_ATTIRIBUTES_STATUS_BAD_REQUEST;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_ATTIRIBUTES_STATUS_OK;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_ATTRIBUTES_REQUEST_PAYLOAD;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_ENTITY_ATTRIBUTES_STATUS_INTERNAL_SERVER_ERROR;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_ENTITY_ATTRIBUTES_STATUS_OK;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_ENTITY_ATTRIBUTES_STATUS_UNAUTHORIZED;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_ENTITY_TIMESERIES_STATUS_INTERNAL_SERVER_ERROR;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_ENTITY_TIMESERIES_STATUS_OK;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_ENTITY_TIMESERIES_STATUS_UNAUTHORIZED;
-import static org.thingsboard.server.controller.ControllerConstants.SAVE_TIMESERIES_REQUEST_PAYLOAD;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.STRICT_DATA_TYPES_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TELEMETRY_JSON_REQUEST_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TELEMETRY_KEYS_BASE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TELEMETRY_KEYS_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TELEMETRY_SCOPE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.TS_STRICT_DATA_EXAMPLE;
+import static org.thingsboard.server.controller.ControllerConstants.*;
 
 
 /**
@@ -338,6 +305,67 @@ public class TelemetryController extends BaseController {
                     Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
                 });
     }
+
+
+    @ApiOperation(value = "Get time-series data for multiple devices at the same time (getDevicesTimeseries)",
+            notes = "Returns a range of time-series values for specified device entities. " +
+                    "Returns not aggregated data by default. " +
+                    "Use aggregation function ('agg') and aggregation interval ('interval') to enable aggregation of the results on the database / server side. " +
+                    "The aggregation is generally more efficient then fetching all records. \n\n"
+                    + MARKDOWN_CODE_BLOCK_START
+                    + TS_STRICT_DATA_EXAMPLE_DEVICES
+                    + MARKDOWN_CODE_BLOCK_END
+                    + "\n\n" + INVALID_DEVICE_ID_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/devices/values/timeseries", method = RequestMethod.GET, params = {"deviceIds", "keys", "startTs", "endTs"})
+    @ResponseBody
+    public DeferredResult<ResponseEntity> getDevicesTimeseries(
+            @Parameter(description = "A list of devices ids, separated by comma ','")
+            @RequestParam("deviceIds") String[] strDeviceIds,
+            @Parameter(description = TELEMETRY_KEYS_BASE_DESCRIPTION, required = true) @RequestParam(name = "keys") String keys,
+            @Parameter(description = "A long value representing the start timestamp of the time range in milliseconds, UTC.")
+            @RequestParam(name = "startTs") Long startTs,
+            @Parameter(description = "A long value representing the end timestamp of the time range in milliseconds, UTC.")
+            @RequestParam(name = "endTs") Long endTs,
+            @Parameter(description = "A string value representing the type fo the interval.", schema = @Schema(allowableValues = {"MILLISECONDS", "WEEK", "WEEK_ISO", "MONTH", "QUARTER"}))
+            @RequestParam(name = "intervalType", required = false) IntervalType intervalType,
+            @Parameter(description = "A long value representing the aggregation interval range in milliseconds.")
+            @RequestParam(name = "interval", defaultValue = "0") Long interval,
+            @Parameter(description = "A string value representing the timezone that will be used to calculate exact timestamps for 'WEEK', 'WEEK_ISO', 'MONTH' and 'QUARTER' interval types.")
+            @RequestParam(name = "timeZone", required = false) String timeZone,
+            @Parameter(description = "An integer value that represents a max number of timeseries data points to fetch." +
+                    " This parameter is used only in the case if 'agg' parameter is set to 'NONE'.", schema = @Schema(defaultValue = "100"))
+            @RequestParam(name = "limit", defaultValue = "100") Integer limit,
+            @Parameter(description = "A string value representing the aggregation function. " +
+                    "If the interval is not specified, 'agg' parameter will use 'NONE' value.",
+                    schema = @Schema(allowableValues = {"MIN", "MAX", "AVG", "SUM", "COUNT", "NONE"}))
+            @RequestParam(name = "agg", defaultValue = "NONE") String aggStr,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
+            @Parameter(description = STRICT_DATA_TYPES_DESCRIPTION)
+            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
+        checkArrayParameter("deviceIds", strDeviceIds);
+
+        return accessValidator.validateEntitiesAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, "DEVICE", strDeviceIds,
+                (result, tenantId, entitiesId) -> {
+
+                    AggregationParams params;
+                    Aggregation agg = Aggregation.valueOf(aggStr);
+                    if (Aggregation.NONE.equals(agg)) {
+                        params = AggregationParams.none();
+                    } else if (intervalType == null || IntervalType.MILLISECONDS.equals(intervalType)) {
+                        params = interval == 0L ? AggregationParams.none() : AggregationParams.milliseconds(agg, interval);
+                    } else {
+                        params = AggregationParams.calendar(agg, intervalType, timeZone);
+                    }
+
+                    List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, params, limit, orderBy))
+                            .collect(Collectors.toList());
+                    Futures.addCallback(tsService.findAll(tenantId, entitiesId, queries), getTsKvMapListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
+                });
+
+    }
+
 
     @ApiOperation(value = "Save device attributes (saveDeviceAttributes)",
             notes = "Creates or updates the device attributes based on device id and specified attribute scope. " +
@@ -830,6 +858,30 @@ public class TelemetryController extends BaseController {
                 for (TsKvEntry entry : data) {
                     Object value = useStrictDataTypes ? getKvValue(entry) : entry.getValueAsString();
                     result.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(new TsData(entry.getTs(), value));
+                }
+                response.setResult(new ResponseEntity<>(result, HttpStatus.OK));
+            }
+
+            @Override
+            public void onFailure(Throwable e) {
+                log.error("Failed to fetch historical data", e);
+                AccessValidator.handleError(e, response, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        };
+    }
+
+    private FutureCallback<Map<EntityId, List<TsKvEntry>>> getTsKvMapListCallback(final DeferredResult<ResponseEntity> response, Boolean useStrictDataTypes) {
+        return new FutureCallback<>() {
+            @Override
+            public void onSuccess(Map<EntityId, List<TsKvEntry>> data) {
+                Map<String, Map<String, List<TsData>>> result = new LinkedHashMap<>();
+                for (var item : data.entrySet()) {
+                    Map<String, List<TsData>> list = new LinkedHashMap<>();
+                    for (TsKvEntry entry : item.getValue()) {
+                        Object value = useStrictDataTypes ? getKvValue(entry) : entry.getValueAsString();
+                        list.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(new TsData(entry.getTs(), value));
+                    }
+                    result.put(item.getKey().getId().toString(), list);
                 }
                 response.setResult(new ResponseEntity<>(result, HttpStatus.OK));
             }

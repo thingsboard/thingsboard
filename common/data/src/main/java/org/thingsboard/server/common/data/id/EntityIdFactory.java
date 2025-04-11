@@ -18,12 +18,22 @@ package org.thingsboard.server.common.data.id;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
  * Created by ashvayka on 25.04.17.
  */
 public class EntityIdFactory {
+
+    public static List<EntityId> getByTypeAndIds(String type, String[] uuid) {
+        List<EntityId> result = new ArrayList<>();
+        for(String item : uuid) {
+            result.add(getByTypeAndUuid(EntityType.valueOf(type), UUID.fromString(item)));
+        }
+        return result;
+    }
 
     public static EntityId getByTypeAndUuid(int type, String uuid) {
         return getByTypeAndUuid(EntityType.values()[type], UUID.fromString(uuid));

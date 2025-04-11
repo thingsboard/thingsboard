@@ -50,7 +50,7 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
         tsDao = spy(AbstractChunkedAggregationTimeseriesDao.class);
         Optional<TsKvEntry> optionalListenableFuture = Optional.of(mock(TsKvEntry.class));
         willReturn(Futures.immediateFuture(optionalListenableFuture)).given(tsDao).findAndAggregateAsync(any(), anyString(), anyLong(), anyLong(), anyLong(), any());
-        willReturn(Futures.immediateFuture(mock(ReadTsKvQueryResult.class))).given(tsDao).getReadTsKvQueryResultFuture(any(), any());
+        willReturn(Futures.immediateFuture(mock(ReadTsKvQueryResult.class))).given(tsDao).getReadTsKvQueryResultFuture(any(), any(), any());
     }
 
     @Test

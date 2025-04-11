@@ -117,6 +117,11 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     }
 
     @Override
+    public ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, List<EntityId> entitiesId, List<ReadTsKvQuery> queries) {
+        return processFindAllAsync(tenantId, entitiesId, queries);
+    }
+
+    @Override
     public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         var aggParams = query.getAggParameters();
         if (Aggregation.NONE.equals(aggParams.getAggregation())) {
@@ -140,7 +145,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 futures.add(aggregateTsKvEntry);
                 startPeriod = endTs;
             }
-            return getReadTsKvQueryResultFuture(query, Futures.allAsList(futures));
+            return getReadTsKvQueryResultFuture(entityId, query, Futures.allAsList(futures));
         }
     }
 
@@ -155,7 +160,9 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
         tsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(query.getKey()));
         List<TsKvEntry> tsKvEntries = DaoUtil.convertDataList(tsKvEntities);
         long lastTs = tsKvEntries.stream().map(TsKvEntry::getTs).max(Long::compare).orElse(query.getStartTs());
-        return new ReadTsKvQueryResult(query.getId(), tsKvEntries, lastTs);
+        ReadTsKvQueryResult result = new  ReadTsKvQueryResult(query.getId(), tsKvEntries, lastTs);
+        result.setEntityId(entityId);
+        return result;
     }
 
     ListenableFuture<Optional<TsKvEntity>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
