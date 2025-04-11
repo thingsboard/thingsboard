@@ -472,7 +472,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
 
   set tbOverlayStyle(value: { [klass: string]: any }) {
     this._tbOverlayStyle = value;
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
   }
 
   get tbOverlayStyle(): { [klass: string]: any } {
