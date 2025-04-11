@@ -47,6 +47,7 @@
         class="flex-1"
         required
         *ngIf="checkRelationConfigForm.get('entityType').value"
+        (entityChanged)="currentEntity = $event"
         [entityType]="checkRelationConfigForm.get('entityType').value"
         formControlName="entityId">
       </tb-entity-autocomplete>
