@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.actors.calculatedField;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorRef;
@@ -47,6 +45,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.queue.settings.TbQueueCalculatedFieldSettings;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.cache.TenantEntityProfileCache;
@@ -82,13 +81,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final TbAssetProfileCache assetProfileCache;
     private final TbDeviceProfileCache deviceProfileCache;
     private final TenantEntityProfileCache entityProfileCache;
+    private final TbQueueCalculatedFieldSettings cfSettings;
     protected final TenantId tenantId;
 
     protected TbActorCtx ctx;
-
-    @Value("${queue.calculated_fields.init_tenant_fetch_pack_size:1000}")
-    @Getter
-    private int initFetchPackSize;
 
     CalculatedFieldManagerMessageProcessor(ActorSystemContext systemContext, TenantId tenantId) {
         super(systemContext);
@@ -100,6 +96,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         this.assetProfileCache = systemContext.getAssetProfileCache();
         this.deviceProfileCache = systemContext.getDeviceProfileCache();
         this.entityProfileCache = new TenantEntityProfileCache();
+        this.cfSettings = systemContext.getCalculatedFieldSettings();
         this.tenantId = tenantId;
     }
 
@@ -538,8 +535,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         return switch (entityId.getEntityType()) {
             case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId).getId();
             case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
-            default ->
-                    throw new IllegalArgumentException("'" + entityId.getEntityType() + "' is not profile entity." + entityId);
+            default -> null;
         };
     }
 
@@ -566,7 +562,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     public void initCalculatedFields() {
-        PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(pageLink -> cfDaoService.findCalculatedFieldsByTenantId(tenantId, pageLink), initFetchPackSize);
+        PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(pageLink -> cfDaoService.findCalculatedFieldsByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
         cfs.forEach(cf -> {
             log.trace("Processing calculated field record: {}", cf);
             try {
@@ -578,14 +574,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         calculatedFields.values().forEach(cf -> {
             entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cf);
         });
-        PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(pageLink -> cfDaoService.findAllCalculatedFieldLinksByTenantId(tenantId, pageLink), initFetchPackSize);
+        PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(pageLink -> cfDaoService.findAllCalculatedFieldLinksByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
         cfls.forEach(link -> {
             onLinkInitMsg(new CalculatedFieldLinkInitMsg(link.getTenantId(), link));
         });
     }
 
     private void initEntityProfileCache() {
-        PageDataIterable<ProfileEntityIdInfo> deviceIdInfos = new PageDataIterable<>(pageLink -> deviceService.findProfileEntityIdInfosByTenantId(tenantId, pageLink), initFetchPackSize);
+        PageDataIterable<ProfileEntityIdInfo> deviceIdInfos = new PageDataIterable<>(pageLink -> deviceService.findProfileEntityIdInfosByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
         for (ProfileEntityIdInfo idInfo : deviceIdInfos) {
             log.trace("Processing device record: {}", idInfo);
             try {
@@ -594,7 +590,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 log.error("Failed to process device record: {}", idInfo, e);
             }
         }
-        PageDataIterable<ProfileEntityIdInfo> assetIdInfos = new PageDataIterable<>(pageLink -> assetService.findProfileEntityIdInfosByTenantId(tenantId, pageLink), initFetchPackSize);
+        PageDataIterable<ProfileEntityIdInfo> assetIdInfos = new PageDataIterable<>(pageLink -> assetService.findProfileEntityIdInfosByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
         for (ProfileEntityIdInfo idInfo : assetIdInfos) {
             log.trace("Processing asset record: {}", idInfo);
             try {

@@ -31,5 +31,7 @@ public class TbQueueCalculatedFieldSettings {
     @Value("${queue.calculated_fields.state_topic}")
     private String stateTopic;
 
+    @Value("${queue.calculated_fields.init_tenant_fetch_pack_size:1000}")
+    private int initTenantFetchPackSize;
 
 }
