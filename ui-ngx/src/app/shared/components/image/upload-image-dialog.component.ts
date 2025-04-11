@@ -174,7 +174,7 @@ export class UploadImageDialogComponent extends
       this.store.dispatch(new ActionNotificationShow({
         message: e.message,
         type: 'error',
-        verticalPosition: 'bottom',
+        verticalPosition: 'top',
         horizontalPosition: 'right',
         target: 'uploadRoot'
       }));
