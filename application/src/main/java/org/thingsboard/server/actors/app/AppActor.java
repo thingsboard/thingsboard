@@ -113,6 +113,8 @@ public class AppActor extends ContextAwareActor {
             case SESSION_TIMEOUT_MSG:
                 ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
                 break;
+            case CF_ACTOR_INIT_MSG:
+            case CF_PROFILE_ENTITY_MSG:
             case CF_INIT_MSG:
             case CF_LINK_INIT_MSG:
             case CF_STATE_RESTORE_MSG:

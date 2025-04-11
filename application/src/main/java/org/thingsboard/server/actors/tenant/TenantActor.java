@@ -282,6 +282,7 @@ public class TenantActor extends RuleChainManagerActor {
                         log.info("[{}] Failed to init CF Actor.", tenantId, e);
                     }
                 }
+                cfActor.tellWithHighPriority(msg);
                 if (!ruleChainsInitialized) {
                     log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
                     initRuleChains();
