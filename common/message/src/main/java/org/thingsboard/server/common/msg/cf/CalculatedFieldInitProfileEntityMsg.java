@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.cache;
+package org.thingsboard.server.common.msg.cf;
 
-import org.springframework.context.ApplicationListener;
+import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
-import java.util.Collection;
+@Data
+public class CalculatedFieldInitProfileEntityMsg implements ToCalculatedFieldSystemMsg {
 
-public interface CalculatedFieldEntityProfileCache extends ApplicationListener<PartitionChangeEvent> {
+    private final TenantId tenantId;
+    private final EntityId profileEntityId;
+    private final EntityId entityId;
 
-    void add(TenantId tenantId, EntityId profileId, EntityId entityId);
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.CF_INIT_PROFILE_ENTITY_MSG;
+    }
 
-    void update(TenantId tenantId, EntityId oldProfileId, EntityId newProfileId, EntityId entityId);
-
-    void evict(TenantId tenantId, EntityId entityId);
-
-    Collection<EntityId> getMyEntityIdsByProfileId(TenantId tenantId, EntityId profileId);
-
-    int getEntityIdPartition(TenantId tenantId, EntityId entityId);
 }

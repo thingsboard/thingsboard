@@ -76,6 +76,8 @@ public interface DeviceService extends EntityDaoService {
 
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink);
 
+    PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink);
+
     PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink);
 
     PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink);

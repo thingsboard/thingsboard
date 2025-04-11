@@ -28,6 +28,8 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,7 +37,7 @@ public abstract class AbstractPartitionBasedConsumerService<N extends com.google
 
     private final Lock startupLock = new ReentrantLock();
     private volatile boolean started = false;
-    private PartitionChangeEvent lastPartitionChangeEvent;
+    private List<PartitionChangeEvent> pendingEvents = new ArrayList<>();
 
     public AbstractPartitionBasedConsumerService(ActorSystemContext actorContext,
                                                  TbTenantProfileCache tenantProfileCache,
@@ -61,8 +63,16 @@ public abstract class AbstractPartitionBasedConsumerService<N extends com.google
         onStartUp();
         startupLock.lock();
         try {
-            onPartitionChangeEvent(lastPartitionChangeEvent);
+            for (PartitionChangeEvent partitionChangeEvent : pendingEvents) {
+                log.info("Handling partition change event: {}", partitionChangeEvent);
+                try {
+                    onPartitionChangeEvent(partitionChangeEvent);
+                } catch (Throwable t) {
+                    log.error("Failed to handle partition change event: {}", partitionChangeEvent, t);
+                }
+            }
             started = true;
+            pendingEvents = null;
         } finally {
             startupLock.unlock();
         }
@@ -70,17 +80,20 @@ public abstract class AbstractPartitionBasedConsumerService<N extends com.google
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
+        log.debug("Received partition change event: {}", event);
         if (!started) {
             startupLock.lock();
             try {
                 if (!started) {
-                    lastPartitionChangeEvent = event;
+                    log.debug("App not started yet, storing event for later: {}", event);
+                    pendingEvents.add(event);
                     return;
                 }
             } finally {
                 startupLock.unlock();
             }
         }
+        log.info("Handling partition change event: {}", event);
         onPartitionChangeEvent(event);
     }
 

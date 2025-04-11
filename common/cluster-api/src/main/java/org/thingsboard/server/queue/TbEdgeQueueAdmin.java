@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.common.util;
+package org.thingsboard.server.queue;
 
-import lombok.Getter;
-import org.springframework.util.ConcurrentReferenceHashMap;
+public interface TbEdgeQueueAdmin extends TbQueueAdmin {
+    void syncEdgeNotificationsOffsets(String fatGroupId, String newGroupId);
 
-import java.util.concurrent.ConcurrentMap;
-
-public class TbStringPool {
-
-    @Getter
-    private static final ConcurrentMap<String, String> pool = new ConcurrentReferenceHashMap<>();
-
-    public static String intern(String data) {
-        if (data == null) {
-            return null;
-        }
-        return pool.computeIfAbsent(data, str -> str);
-    }
-
+    void deleteConsumerGroup(String consumerGroupId);
 }
