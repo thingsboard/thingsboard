@@ -16,6 +16,7 @@
 package org.thingsboard.server.edqs.repo;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
@@ -40,6 +41,7 @@ import java.util.function.Predicate;
 @Slf4j
 public class DefaultEdqsRepository implements EdqsRepository {
 
+    @Getter
     private final static ConcurrentMap<TenantId, TenantRepo> repos = new ConcurrentHashMap<>();
     private final EdqsStatsService statsService;
 
@@ -52,6 +54,7 @@ public class DefaultEdqsRepository implements EdqsRepository {
         if (event.getEventType() == EdqsEventType.DELETED && event.getObjectType() == ObjectType.TENANT) {
             log.info("Tenant {} deleted", event.getTenantId());
             repos.remove(event.getTenantId());
+            statsService.reportRemoved(ObjectType.TENANT);
         } else {
             get(event.getTenantId()).processEvent(event);
         }
@@ -61,8 +64,7 @@ public class DefaultEdqsRepository implements EdqsRepository {
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query, boolean ignorePermissionCheck) {
         long startNs = System.nanoTime();
         long result = get(tenantId).countEntitiesByQuery(customerId, query, ignorePermissionCheck);
-        double timingMs = (double) (System.nanoTime() - startNs) / 1000_000;
-        log.info("countEntitiesByQuery done in {} ms", timingMs);
+        statsService.reportEdqsCountQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }
 
@@ -71,8 +73,7 @@ public class DefaultEdqsRepository implements EdqsRepository {
                                                        EntityDataQuery query, boolean ignorePermissionCheck) {
         long startNs = System.nanoTime();
         var result = get(tenantId).findEntityDataByQuery(customerId, query, ignorePermissionCheck);
-        double timingMs = (double) (System.nanoTime() - startNs) / 1000_000;
-        log.info("findEntityDataByQuery done in {} ms", timingMs);
+        statsService.reportEdqsDataQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }
 
