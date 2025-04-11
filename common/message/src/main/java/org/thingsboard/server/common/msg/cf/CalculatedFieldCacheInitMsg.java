@@ -21,13 +21,13 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
 @Data
-public class CalculatedFieldActorInitMsg implements ToCalculatedFieldSystemMsg {
+public class CalculatedFieldCacheInitMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.CF_ACTOR_INIT_MSG;
+        return MsgType.CF_CACHE_INIT_MSG;
     }
 
 }

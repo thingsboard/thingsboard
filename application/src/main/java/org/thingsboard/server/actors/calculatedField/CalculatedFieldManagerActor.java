@@ -22,12 +22,12 @@ import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldActorInitMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
-import org.thingsboard.server.common.msg.cf.ProfileEntityMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldProfileEntityMsg;
 
 /**
  * Created by ashvayka on 15.03.18.
@@ -67,11 +67,11 @@ public class CalculatedFieldManagerActor extends AbstractCalculatedFieldActor {
             case CF_PARTITIONS_CHANGE_MSG:
                 processor.onPartitionChange((CalculatedFieldPartitionChangeMsg) msg);
                 break;
-            case CF_ACTOR_INIT_MSG:
-                processor.onActorInitMsg((CalculatedFieldActorInitMsg) msg);
+            case CF_CACHE_INIT_MSG:
+                processor.onCacheInitMsg((CalculatedFieldCacheInitMsg) msg);
                 break;
             case CF_PROFILE_ENTITY_MSG:
-                processor.onProfileEntityMsg((ProfileEntityMsg) msg);
+                processor.onProfileEntityMsg((CalculatedFieldProfileEntityMsg) msg);
                 break;
             case CF_INIT_MSG:
                 processor.onFieldInitMsg((CalculatedFieldInitMsg) msg);

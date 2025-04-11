@@ -22,7 +22,7 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
 @Data
-public class ProfileEntityMsg implements ToCalculatedFieldSystemMsg {
+public class CalculatedFieldProfileEntityMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
     private final EntityId profileEntityId;

@@ -35,12 +35,12 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldActorInitMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
-import org.thingsboard.server.common.msg.cf.ProfileEntityMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldProfileEntityMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -116,14 +116,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         ctx.stop(ctx.getSelf());
     }
 
-    public void onActorInitMsg(CalculatedFieldActorInitMsg msg) {
+    public void onCacheInitMsg(CalculatedFieldCacheInitMsg msg) {
         log.debug("[{}] Processing CF actor init message.", msg.getTenantId().getId());
         initEntityProfileCache();
         initCalculatedFields();
         msg.getCallback().onSuccess();
     }
 
-    public void onProfileEntityMsg(ProfileEntityMsg msg) {
+    public void onProfileEntityMsg(CalculatedFieldProfileEntityMsg msg) {
         log.debug("[{}] Processing profile entity message.", msg.getTenantId().getId());
         entityProfileCache.add(msg.getProfileEntityId(), msg.getEntityId());
         msg.getCallback().onSuccess();

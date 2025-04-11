@@ -50,7 +50,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldActorInitMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
@@ -177,7 +177,7 @@ public class TenantActor extends RuleChainManagerActor {
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
                 onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;
-            case CF_ACTOR_INIT_MSG:
+            case CF_CACHE_INIT_MSG:
             case CF_PROFILE_ENTITY_MSG:
             case CF_INIT_MSG:
             case CF_LINK_INIT_MSG:
@@ -277,7 +277,7 @@ public class TenantActor extends RuleChainManagerActor {
                                 () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
                                 () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
                                 () -> true);
-                        cfActor.tellWithHighPriority(new CalculatedFieldActorInitMsg(tenantId));
+                        cfActor.tellWithHighPriority(new CalculatedFieldCacheInitMsg(tenantId));
                     } catch (Exception e) {
                         log.info("[{}] Failed to init CF Actor.", tenantId, e);
                     }
