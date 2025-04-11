@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.queue;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -65,7 +64,6 @@ import java.util.stream.Collectors;
 
 @Service
 @TbRuleEngineComponent
-@Slf4j
 public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
 
     private final TbRuleEngineConsumerContext ctx;

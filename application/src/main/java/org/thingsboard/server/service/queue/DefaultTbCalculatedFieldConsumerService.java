@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.queue;
 
 import jakarta.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -70,7 +69,6 @@ import java.util.stream.Collectors;
 
 @Service
 @TbRuleEngineComponent
-@Slf4j
 public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBasedConsumerService<ToCalculatedFieldNotificationMsg> implements TbCalculatedFieldConsumerService {
 
     @Value("${queue.calculated_fields.poll_interval:25}")
