@@ -73,8 +73,8 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                                             ScheduledExecutorService scheduler,
                                             ExecutorService taskExecutor) {
         super(queueKey, null, null,
-                (queueConfig, topicPartitionInfo) -> {
-                    Integer partitionId = topicPartitionInfo.getPartition().orElse(-1);
+                (queueConfig, tpi) -> {
+                    Integer partitionId = tpi != null ? tpi.getPartition().orElse(-1) : null;
                     return ctx.getQueueFactory().createToRuleEngineMsgConsumer(queueConfig, partitionId);
                 },
                 consumerExecutor, scheduler, taskExecutor, null);
