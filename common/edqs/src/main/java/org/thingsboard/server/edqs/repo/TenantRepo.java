@@ -332,7 +332,6 @@ public class TenantRepo {
 
     public PageData<QueryResult> findEntityDataByQuery(CustomerId customerId, EntityDataQuery oldQuery, boolean ignorePermissionCheck) {
         EdqsDataQuery query = RepositoryUtils.toNewQuery(oldQuery);
-        log.info("[{}][{}] findEntityDataByQuery: {}", tenantId, customerId, query);
         QueryContext ctx = buildContext(customerId, query.getEntityFilter(), ignorePermissionCheck);
         EntityQueryProcessor queryProcessor = EntityQueryProcessorFactory.create(this, ctx, query);
         return sortAndConvert(query, queryProcessor.processQuery(), ctx);
@@ -340,7 +339,6 @@ public class TenantRepo {
 
     public long countEntitiesByQuery(CustomerId customerId, EntityCountQuery oldQuery, boolean ignorePermissionCheck) {
         EdqsQuery query = RepositoryUtils.toNewQuery(oldQuery);
-        log.info("[{}][{}] countEntitiesByQuery: {}", tenantId, customerId, query);
         QueryContext ctx = buildContext(customerId, query.getEntityFilter(), ignorePermissionCheck);
         EntityQueryProcessor queryProcessor = EntityQueryProcessorFactory.create(this, ctx, query);
         return queryProcessor.count();
