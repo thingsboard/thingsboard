@@ -535,8 +535,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         return switch (entityId.getEntityType()) {
             case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId).getId();
             case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
-            default ->
-                    throw new IllegalArgumentException("'" + entityId.getEntityType() + "' is not profile entity." + entityId);
+            default -> null;
         };
     }
 
