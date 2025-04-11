@@ -178,7 +178,7 @@ public class TenantActor extends RuleChainManagerActor {
                 onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;
             case CF_CACHE_INIT_MSG:
-            case CF_PROFILE_ENTITY_MSG:
+            case CF_INIT_PROFILE_ENTITY_MSG:
             case CF_INIT_MSG:
             case CF_LINK_INIT_MSG:
             case CF_STATE_RESTORE_MSG:
@@ -202,6 +202,7 @@ public class TenantActor extends RuleChainManagerActor {
             } else {
                 log.debug("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
             }
+            msg.getCallback().onSuccess();
             return;
         }
         if (priority) {

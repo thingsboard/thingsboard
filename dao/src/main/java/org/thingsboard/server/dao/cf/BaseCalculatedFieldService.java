@@ -183,12 +183,6 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
-    public List<CalculatedFieldLink> findAllCalculatedFieldLinksByTenantId(TenantId tenantId) {
-        log.trace("Executing findAllCalculatedFieldLinksByTenantId, tenantId [{}]", tenantId);
-        return calculatedFieldLinkDao.findCalculatedFieldLinksByTenantId(tenantId);
-    }
-
-    @Override
     public PageData<CalculatedFieldLink> findAllCalculatedFieldLinksByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findAllCalculatedFieldLinksByTenantId, tenantId[{}] pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);

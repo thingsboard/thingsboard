@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldProfileEntityMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldInitProfileEntityMsg;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -39,7 +39,7 @@ public class DefaultCalculatedFieldInitService implements CalculatedFieldInitSer
     private final DeviceService deviceService;
     private final ActorSystemContext actorSystemContext;
 
-    @Value("${calculated_fields.init_fetch_pack_size:50000}")
+    @Value("${queue.calculated_fields.init_fetch_pack_size:50000}")
     @Getter
     private int initFetchPackSize;
 
@@ -49,7 +49,7 @@ public class DefaultCalculatedFieldInitService implements CalculatedFieldInitSer
         for (ProfileEntityIdInfo idInfo : deviceIdInfos) {
             log.trace("Processing device record: {}", idInfo);
             try {
-                actorSystemContext.tell(new CalculatedFieldProfileEntityMsg(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId()));
+                actorSystemContext.tell(new CalculatedFieldInitProfileEntityMsg(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId()));
             } catch (Exception e) {
                 log.error("Failed to process device record: {}", idInfo, e);
             }
@@ -58,7 +58,7 @@ public class DefaultCalculatedFieldInitService implements CalculatedFieldInitSer
         for (ProfileEntityIdInfo idInfo : assetIdInfos) {
             log.trace("Processing asset record: {}", idInfo);
             try {
-                actorSystemContext.tell(new CalculatedFieldProfileEntityMsg(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId()));
+                actorSystemContext.tell(new CalculatedFieldInitProfileEntityMsg(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId()));
             } catch (Exception e) {
                 log.error("Failed to process asset record: {}", idInfo, e);
             }

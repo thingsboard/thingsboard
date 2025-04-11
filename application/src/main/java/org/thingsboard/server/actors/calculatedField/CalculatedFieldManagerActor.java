@@ -25,9 +25,9 @@ import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldInitProfileEntityMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldProfileEntityMsg;
 
 /**
  * Created by ashvayka on 15.03.18.
@@ -70,8 +70,8 @@ public class CalculatedFieldManagerActor extends AbstractCalculatedFieldActor {
             case CF_CACHE_INIT_MSG:
                 processor.onCacheInitMsg((CalculatedFieldCacheInitMsg) msg);
                 break;
-            case CF_PROFILE_ENTITY_MSG:
-                processor.onProfileEntityMsg((CalculatedFieldProfileEntityMsg) msg);
+            case CF_INIT_PROFILE_ENTITY_MSG:
+                processor.onProfileEntityMsg((CalculatedFieldInitProfileEntityMsg) msg);
                 break;
             case CF_INIT_MSG:
                 processor.onFieldInitMsg((CalculatedFieldInitMsg) msg);

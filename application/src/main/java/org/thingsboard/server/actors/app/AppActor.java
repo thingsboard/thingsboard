@@ -114,7 +114,7 @@ public class AppActor extends ContextAwareActor {
                 ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
                 break;
             case CF_CACHE_INIT_MSG:
-            case CF_PROFILE_ENTITY_MSG:
+            case CF_INIT_PROFILE_ENTITY_MSG:
             case CF_INIT_MSG:
             case CF_LINK_INIT_MSG:
             case CF_STATE_RESTORE_MSG:

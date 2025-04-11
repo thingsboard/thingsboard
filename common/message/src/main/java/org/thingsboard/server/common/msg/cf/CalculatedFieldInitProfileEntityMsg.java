@@ -22,7 +22,7 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
 @Data
-public class CalculatedFieldProfileEntityMsg implements ToCalculatedFieldSystemMsg {
+public class CalculatedFieldInitProfileEntityMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
     private final EntityId profileEntityId;
@@ -30,7 +30,7 @@ public class CalculatedFieldProfileEntityMsg implements ToCalculatedFieldSystemM
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.CF_PROFILE_ENTITY_MSG;
+        return MsgType.CF_INIT_PROFILE_ENTITY_MSG;
     }
 
 }

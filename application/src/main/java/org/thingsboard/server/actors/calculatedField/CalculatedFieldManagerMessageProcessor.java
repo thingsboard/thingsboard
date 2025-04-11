@@ -38,9 +38,9 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldInitProfileEntityMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldProfileEntityMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -86,7 +86,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     protected TbActorCtx ctx;
 
-    @Value("${calculated_fields.init_fetch_pack_size:50000}")
+    @Value("${queue.calculated_fields.init_tenant_fetch_pack_size:1000}")
     @Getter
     private int initFetchPackSize;
 
@@ -123,7 +123,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         msg.getCallback().onSuccess();
     }
 
-    public void onProfileEntityMsg(CalculatedFieldProfileEntityMsg msg) {
+    public void onProfileEntityMsg(CalculatedFieldInitProfileEntityMsg msg) {
         log.debug("[{}] Processing profile entity message.", msg.getTenantId().getId());
         entityProfileCache.add(msg.getProfileEntityId(), msg.getEntityId());
         msg.getCallback().onSuccess();
@@ -538,7 +538,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         return switch (entityId.getEntityType()) {
             case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId).getId();
             case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
-            default -> null;
+            default ->
+                    throw new IllegalArgumentException("'" + entityId.getEntityType() + "' is not profile entity." + entityId);
         };
     }
 
@@ -567,10 +568,11 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     public void initCalculatedFields() {
         PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(pageLink -> cfDaoService.findCalculatedFieldsByTenantId(tenantId, pageLink), initFetchPackSize);
         cfs.forEach(cf -> {
+            log.trace("Processing calculated field record: {}", cf);
             try {
                 onFieldInitMsg(new CalculatedFieldInitMsg(cf.getTenantId(), cf));
             } catch (CalculatedFieldException e) {
-                throw new RuntimeException(e);
+                log.error("Failed to process calculated field record: {}", cf, e);
             }
         });
         calculatedFields.values().forEach(cf -> {

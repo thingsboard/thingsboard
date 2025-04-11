@@ -131,6 +131,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                     stateService.restore(queueKey, partitions);
                 }
             });
+            // eventConsumer's partitions will be updated by stateService
 
             // Cleanup old entities after corresponding consumers are stopped.
             // Any periodic tasks need to check that the entity is still managed by the current server before processing.
@@ -174,9 +175,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                 packSubmitFuture.cancel(true);
                 log.info("Timeout to process message: {}", pendingMsgHolder.getMsg());
             }
-            if (log.isDebugEnabled()) {
-                ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
-            }
+            ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
             ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
         }
         consumer.commit();

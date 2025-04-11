@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -51,6 +52,8 @@ public class DefaultTbCoreConsumerServiceTest {
     private TbCoreConsumerStats statsMock;
     @Mock
     private RuleEngineCallService ruleEngineCallServiceMock;
+    @Mock
+    private Logger logMock;
 
     @Mock
     private TbCallback tbCallbackMock;
@@ -69,6 +72,7 @@ public class DefaultTbCoreConsumerServiceTest {
         executor = MoreExecutors.newDirectExecutorService();
         ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stateService", stateServiceMock);
         ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "deviceActivityEventsExecutor", executor);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "log", logMock);
     }
 
     @AfterEach
