@@ -106,6 +106,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.settings.TbQueueCalculatedFieldSettings;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
@@ -458,6 +459,11 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private DebugModeRateLimitsConfig debugModeRateLimitsConfig;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private TbQueueCalculatedFieldSettings calculatedFieldSettings;
 
     /**
      * The following Service will be null if we operate in tb-core mode
