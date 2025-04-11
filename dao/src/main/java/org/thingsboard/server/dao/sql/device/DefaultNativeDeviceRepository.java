@@ -63,7 +63,7 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
 
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable) {
-        String PROFILE_DEVICE_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = %s ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
+        String PROFILE_DEVICE_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
         return find(COUNT_QUERY, PROFILE_DEVICE_ID_INFO_QUERY, pageable, row -> {
             DeviceId id = new DeviceId((UUID) row.get("id"));
             DeviceProfileId profileId = new DeviceProfileId((UUID) row.get("profileId"));

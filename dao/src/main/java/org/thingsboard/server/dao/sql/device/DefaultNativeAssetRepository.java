@@ -51,7 +51,7 @@ public class DefaultNativeAssetRepository extends AbstractNativeRepository imple
 
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable) {
-        String PROFILE_ASSET_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = %s ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
+        String PROFILE_ASSET_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
         return find(COUNT_QUERY, PROFILE_ASSET_ID_INFO_QUERY, pageable, row -> {
             AssetId id = new AssetId((UUID) row.get("id"));
             AssetProfileId profileId = new AssetProfileId((UUID) row.get("profileId"));
