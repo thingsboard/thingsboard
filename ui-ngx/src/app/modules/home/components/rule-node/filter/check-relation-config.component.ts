@@ -19,6 +19,8 @@ import { isDefinedAndNotNull } from '@core/public-api';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EntitySearchDirection, entitySearchDirectionTranslations } from '@app/shared/models/relation.models';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
+import { BaseData } from '@shared/models/base-data';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-filter-node-check-relation-config',
@@ -31,6 +33,7 @@ export class CheckRelationConfigComponent extends RuleNodeConfigurationComponent
 
   entitySearchDirection: Array<EntitySearchDirection> = Object.values(EntitySearchDirection);
   entitySearchDirectionTranslationsMap = entitySearchDirectionTranslations;
+  currentEntity: BaseData<EntityId> = null;
 
   constructor(private fb: UntypedFormBuilder) {
     super();
@@ -68,7 +71,11 @@ export class CheckRelationConfigComponent extends RuleNodeConfigurationComponent
 
   protected updateValidators(emitEvent: boolean, trigger: string): void {
     if (trigger === 'entityType') {
-      this.checkRelationConfigForm.get('entityId').reset(null, {emitEvent});
+      const isEntityTypeUpdated = !!this.currentEntity?.id?.entityType
+        && this.currentEntity.id.entityType !== this.checkRelationConfigForm.get('entityType').value;
+      if (isEntityTypeUpdated) {
+        this.checkRelationConfigForm.get('entityId').reset(null, {emitEvent});
+      }
     } else {
       const checkForSingleEntity: boolean = this.checkRelationConfigForm.get('checkForSingleEntity').value;
       this.checkRelationConfigForm.get('entityType').setValidators(checkForSingleEntity ? [Validators.required] : []);
