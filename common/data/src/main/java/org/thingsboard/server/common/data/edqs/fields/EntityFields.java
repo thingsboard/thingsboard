@@ -147,7 +147,7 @@ public interface EntityFields {
 
     default String getAsString(String key) {
         return switch (key) {
-            case "createdTime", "created_time" -> Long.toString(getCreatedTime());
+            case "createdTime" -> Long.toString(getCreatedTime());
             case "title" -> getName();
             case "type" -> getType();
             case "label" -> getLabel();
