@@ -175,7 +175,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                 packSubmitFuture.cancel(true);
                 log.info("Timeout to process message: {}", pendingMsgHolder.getMsg());
             }
-            ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
+            ctx.getAckMap().forEach((id, msg) -> log.warn("[{}] Timeout to process message: {}", id, msg.getValue()));
             ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
         }
         consumer.commit();

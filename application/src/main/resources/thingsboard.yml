@@ -1848,9 +1848,9 @@ queue:
     pool_size: "${TB_QUEUE_CF_POOL_SIZE:8}"
     # RocksDB path for storing CF states
     rocks_db_path: "${TB_QUEUE_CF_ROCKS_DB_PATH:${user.home}/.rocksdb/cf_states}"
-    # The fetch size specifies how many rows will be returned
+    # The fetch size specifies how many rows will be fetched from the database per request for initial fetching
     init_fetch_pack_size: "${TB_QUEUE_CF_FETCH_PACK_SIZE:50000}"
-    # The fetch size specifies how many rows will be returned
+    # The fetch size specifies how many rows will be fetched from the database per request for per-tenant fetching
     init_tenant_fetch_pack_size: "${TB_QUEUE_CF_TENANT_FETCH_PACK_SIZE:1000}"
   transport:
     # For high-priority notifications that require minimum latency and processing time
