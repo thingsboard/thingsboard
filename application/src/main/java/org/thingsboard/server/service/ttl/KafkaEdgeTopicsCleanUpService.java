@@ -113,7 +113,7 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
                             .ifPresentOrElse(lastConnectTime -> {
                                 String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
                                 if (kafkaAdmin.isTopicEmpty(topic)) {
-                                    kafkaAdmin.deleteTopic(topic);
+                                    deleteTopicAndConsumerGroup(topic);
                                     log.info("[{}] Removed outdated topic {} for edge {} older than {}",
                                             tenantId, topic, edgeId, Date.from(Instant.ofEpochMilli(currentTimeMillis - ttlMillis)));
                                 }
@@ -121,7 +121,7 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
                                 Edge edge = edgeService.findEdgeById(tenantId, edgeId);
                                 if (edge == null) {
                                     String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
-                                    kafkaAdmin.deleteTopic(topic);
+                                    deleteTopicAndConsumerGroup(topic);
                                     log.info("[{}] Removed topic {} for deleted edge {}", tenantId, topic, edgeId);
                                 }
                             });
@@ -132,10 +132,15 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
         } else {
             for (EdgeId edgeId : edgeIds) {
                 String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
-                kafkaAdmin.deleteTopic(topic);
+                deleteTopicAndConsumerGroup(topic);
             }
             log.info("[{}] Removed topics for not existing tenant and edges {}", tenantId, edgeIds);
         }
+    }
+
+    private void deleteTopicAndConsumerGroup(String topic) {
+        kafkaAdmin.deleteTopic(topic);
+        kafkaAdmin.deleteConsumerGroup(topic);
     }
 
     private boolean isTopicExpired(long lastConnectTime, long ttlMillis, long currentTimeMillis) {
@@ -146,7 +151,7 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
         Map<TenantId, List<EdgeId>> tenantEdgeMap = new HashMap<>();
         for (String topic : topics) {
             try {
-                String remaining = topic.substring(prefix.length());
+                String remaining = topic.substring(prefix.length() + 1);
                 String[] parts = remaining.split("\\.");
                 TenantId tenantId = TenantId.fromUUID(UUID.fromString(parts[0]));
                 EdgeId edgeId = new EdgeId(UUID.fromString(parts[1]));
