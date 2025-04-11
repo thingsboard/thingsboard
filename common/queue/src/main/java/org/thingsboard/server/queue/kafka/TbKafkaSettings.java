@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,7 +37,9 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -138,6 +141,9 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.other-inline:}")
     private String otherInline;
 
+    @Value("${queue.kafka.consumer-properties-per-topic-inline:}")
+    private String consumerPropertiesPerTopicInline;
+
     @Deprecated
     @Setter
     private List<TbProperty> other;
@@ -146,6 +152,14 @@ public class TbKafkaSettings {
     private Map<String, List<TbProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
 
     private volatile AdminClient adminClient;
+
+    @PostConstruct
+    public void initInlineTopicProperties() {
+        Map<String, List<TbProperty>> inlineProps = parseTopicPropertyList(consumerPropertiesPerTopicInline);
+        if (!inlineProps.isEmpty()) {
+            consumerPropertiesPerTopic.putAll(inlineProps);
+        }
+    }
 
     public Properties toConsumerProps(String topic) {
         Properties props = toProps();
@@ -243,6 +257,28 @@ public class TbKafkaSettings {
         props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(AdminClientConfig.RETRIES_CONFIG, retries);
         return props;
+    }
+
+    private Map<String, List<TbProperty>> parseTopicPropertyList(String inlineProperties) {
+        Map<String, List<TbProperty>> result = new HashMap<>();
+        Map<String, String> rawTopicToPropertyString = PropertyUtils.getProps(inlineProperties);
+
+        for (Map.Entry<String, String> entry : rawTopicToPropertyString.entrySet()) {
+            String topic = entry.getKey().trim();
+            String propertiesStr = entry.getValue();
+
+            List<TbProperty> tbProperties = Arrays.stream(propertiesStr.split(","))
+                    .map(kv -> kv.split("=", 2))
+                    .filter(kvArr -> kvArr.length == 2)
+                    .map(kvArr -> new TbProperty(kvArr[0].trim(), kvArr[1].trim()))
+                    .toList();
+
+            if (!tbProperties.isEmpty()) {
+                result.put(topic, tbProperties);
+            }
+        }
+
+        return result;
     }
 
     @PreDestroy
