@@ -1131,7 +1131,7 @@ public class EntityServiceTest extends AbstractControllerTest {
         String customerName = result.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
         assertThat(customerName).isEqualTo(TEST_CUSTOMER_NAME);
 
-        // find by customer user with generic permission
+        // find by customer user
         PageData<EntityData> customerResults = findByQueryAndCheck(customerId, query, 1);
 
         customerName = customerResults.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
