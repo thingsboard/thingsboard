@@ -65,7 +65,8 @@ public abstract class AbstractQueryProcessor<T extends EntityFilter> implements 
 
     protected static boolean checkCustomerId(UUID customerId, EntityData<?> ed) {
         return customerId.equals(ed.getCustomerId()) || (ed.getEntityType() == EntityType.DASHBOARD &&
-                ed.getFields().getAssignedCustomerIds().contains(customerId));
+                ed.getFields().getAssignedCustomerIds().contains(customerId)
+                || (ed.getEntityType() == EntityType.CUSTOMER && customerId.equals(ed.getId())));
     }
 
     protected boolean matches(EntityData<?> ed) {

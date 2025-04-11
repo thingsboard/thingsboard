@@ -1117,6 +1117,29 @@ public class EntityServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindCustomerBySingleEntityFilter() {
+        SingleEntityFilter singleEntityFilter = new SingleEntityFilter();
+        singleEntityFilter.setSingleEntity(customerId);
+        List<EntityKey> entityFields = List.of(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "name")
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(1000, 0, null, null);
+        EntityDataQuery query = new EntityDataQuery(singleEntityFilter, pageLink, entityFields, null, null);
+
+        //find by tenant
+        PageData<EntityData> result = findByQueryAndCheck(query, 1);
+        String customerName = result.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(customerName).isEqualTo(TEST_CUSTOMER_NAME);
+
+        // find by customer user with generic permission
+        PageData<EntityData> customerResults = findByQueryAndCheck(customerId, query, 1);
+
+        customerName = customerResults.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(customerName).isEqualTo(TEST_CUSTOMER_NAME);
+    }
+
+
+    @Test
     public void testFindEntitiesByRelationEntityTypeFilter() {
         Customer customer = new Customer();
         customer.setTenantId(tenantId);
