@@ -108,12 +108,14 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public static final String FW_RESULT_ID = "/5/0/5";
     public static final String FW_NAME_ID = "/5/0/6";
     public static final String FW_VER_ID = "/5/0/7";
-    public static final String FW_INFO_19_INSTANCE_ID = "/19/65534";
-    public static final String SW_INFO_19_INSTANCE_ID = "/19/65535";
+    public static final int FW_INSTANCE_ID = 65534;
+    public static final String FW_INFO_19_INSTANCE_ID = "/19/" + FW_INSTANCE_ID;
+    public static final int SW_INSTANCE_ID = 65535;
+    public static final String SW_INFO_19_INSTANCE_ID = "/19/" + SW_INSTANCE_ID;
     public static final String OTA_INFO_19_TITLE = "title";
     public static final String OTA_INFO_19_VERSION = "version";
-    public static final String OTA_INFO_19_FILE_CHECKSUM256 = "fileChecksumSHA256";
-    public static final String OTA_INFO_19_FILE_SIZE = "fileSize";
+    public static final String OTA_INFO_19_FILE_CHECKSUM256 = "checksum";
+    public static final String OTA_INFO_19_FILE_SIZE = "dataSize";
     public static final String OTA_INFO_19_FILE_NAME = "fileName";
 
     /**
