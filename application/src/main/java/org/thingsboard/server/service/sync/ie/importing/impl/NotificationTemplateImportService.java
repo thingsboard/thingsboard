@@ -48,7 +48,7 @@ public class NotificationTemplateImportService extends BaseEntityImportService<N
     }
 
     @Override
-    protected NotificationTemplate saveOrUpdate(EntitiesImportCtx ctx, NotificationTemplate notificationTemplate, EntityExportData<NotificationTemplate> exportData, IdProvider idProvider) {
+    protected NotificationTemplate saveOrUpdate(EntitiesImportCtx ctx, NotificationTemplate notificationTemplate, EntityExportData<NotificationTemplate> exportData, IdProvider idProvider, CompareResult compareResult) {
         ConstraintValidator.validateFields(notificationTemplate);
         return notificationTemplateService.saveNotificationTemplate(ctx.getTenantId(), notificationTemplate);
     }
