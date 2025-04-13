@@ -56,6 +56,7 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected static final String CLIENT_ENDPOINT_WITHOUT_FW_INFO = "WithoutFirmwareInfoDevice";
     protected static final String CLIENT_ENDPOINT_OTA5 = "Ota5_Device";
     protected static final String CLIENT_ENDPOINT_OTA9 = "Ota9_Device";
+    protected static final String CLIENT_ENDPOINT_OTA9_19 = "Ota9_Device_19";
     protected List<OtaPackageUpdateStatus> expectedStatuses;
 
     protected final String OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA5 =
@@ -155,6 +156,33 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
                     "    ],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
+    protected final String OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA9_19 =
+
+            "    {\n" +
+                    "    \"keyName\": {\n" +
+                    "      \"/9_1.1/0/0\": \"pkgname\",\n" +
+                    "      \"/9_1.1/0/1\": \"pkgversion\",\n" +
+                    "      \"/9_1.1/0/7\": \"updateState\",\n" +
+                    "      \"/9_1.1/0/9\": \"updateResult\",\n" +
+                    "      \"/19_1.1/0/0\": \"dataRead\"\n" +
+                    "    },\n" +
+                    "    \"observe\": [\n" +
+                    "      \"/9_1.1/0/0\",\n" +
+                    "      \"/9_1.1/0/1\",\n" +
+                    "      \"/9_1.1/0/7\",\n" +
+                    "      \"/9_1.1/0/9\",\n" +
+                    "      \"/19_1.1/0/0\"\n" +
+                    "    ],\n" +
+                    "    \"attribute\": [],\n" +
+                    "    \"telemetry\": [\n" +
+                    "      \"/9_1.1/0/0\",\n" +
+                    "      \"/9_1.1/0/1\",\n" +
+                    "      \"/9_1.1/0/7\",\n" +
+                    "      \"/9_1.1/0/9\",\n" +
+                    "      \"/19_1.1/0/0\"\n" +
+                    "    ],\n" +
+                    "    \"attributeLwm2m\": {}\n" +
+                    "  }";
 
     public AbstractOtaLwM2MIntegrationTest() {
         setResources(this.RESOURCES_OTA);
@@ -176,14 +204,14 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
         return savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, "SHA256");
     }
 
-    protected OtaPackageInfo createSoftware(DeviceProfileId deviceProfileId) throws Exception {
+    protected OtaPackageInfo createSoftware(DeviceProfileId deviceProfileId, String version) throws Exception {
         String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
 
         OtaPackageInfo swInfo = new OtaPackageInfo();
         swInfo.setDeviceProfileId(deviceProfileId);
         swInfo.setType(SOFTWARE);
         swInfo.setTitle("My sw");
-        swInfo.setVersion("v1.0");
+        swInfo.setVersion(version);
 
         OtaPackageInfo savedFirmwareInfo = doPost("/api/otaPackage", swInfo, OtaPackageInfo.class);
 

@@ -121,14 +121,13 @@ public class Ota5LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
 
     /**
-     * ObjectId = 19
+     * ObjectId = 19/65533/0
      * {
-     *   "title" : "BC68J01",
-     *   "version" : "10",
-     *   "fileChecksumSHA256" : "f2a08d4963e981c78f2a99f62d8439af4437a72ea7267a8c01d013c072c01ded",
-     *   "fileSize" : 59832,
-     *   "fileName" : "FW_BC68JAR01A10_TO_BC68JAR01A09_09.bin",
-     *   "packageType" : "FIRMWARE"
+     *   "title" : "My firmware",
+     *   "version" : "fw.v.1.5.0-update",
+     *   "checksum" : "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a",
+     *   "fileSize" : 1,
+     *   "fileName" : "filename.txt"
      * }
      * to base64
      * /5/0/5 -> Update Result (Res); 5/0/3 -> State;
