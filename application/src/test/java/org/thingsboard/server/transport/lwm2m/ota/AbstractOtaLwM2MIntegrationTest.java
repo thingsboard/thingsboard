@@ -95,8 +95,7 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
                     "      \"/5_1.2/0/6\": \"pkgname\",\n" +
                     "      \"/5_1.2/0/7\": \"pkgversion\",\n" +
                     "      \"/5_1.2/0/9\": \"firmwareUpdateDeliveryMethod\",\n" +
-                    "      \"/19_1.1/0/0\": \"dataRead\",\n" +
-                    "      \"/19_1.1/65534/0\": \"dataFotaAttr\"\n" +
+                    "      \"/19_1.1/0/0\": \"dataRead\"\n" +
                     "    },\n" +
                     "    \"observe\": [\n" +
                     "      \"/5_1.2/0/3\",\n" +
@@ -104,8 +103,7 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
                     "      \"/5_1.2/0/6\",\n" +
                     "      \"/5_1.2/0/7\",\n" +
                     "      \"/5_1.2/0/9\",\n" +
-                    "      \"/19_1.1/0/0\",\n" +
-                    "      \"/19_1.1/65534/0\"\n" +
+                    "      \"/19_1.1/0/0\"\n" +
                     "    ],\n" +
                     "    \"attribute\": [],\n" +
                     "    \"telemetry\": [\n" +
@@ -114,8 +112,7 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
                     "      \"/5_1.2/0/6\",\n" +
                     "      \"/5_1.2/0/7\",\n" +
                     "      \"/5_1.2/0/9\",\n" +
-                    "      \"/19_1.1/0/0\",\n" +
-                    "      \"/19_1.1/65534/0\"\n" +
+                    "      \"/19_1.1/0/0\"\n" +
                     "    ],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
@@ -210,13 +207,6 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
     }
 
     protected List<TsKvEntry> getFwSwStateTelemetryFromAPI(UUID deviceId, String type_state) throws Exception {
-        final List<TsKvEntry> tsKvEntries = toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?orderBy=ASC&keys=" + type_state + "&startTs=0&endTs=" + System.currentTimeMillis(), new TypeReference<>() {
-        }));
-        log.warn("Fetched telemetry by API for deviceId {}, list size {}, tsKvEntries {}", deviceId, tsKvEntries.size(), tsKvEntries);
-        return tsKvEntries;
-    }
-    protected List<TsKvEntry> getFwSwParamsObject19TelemetryFromAPI(UUID deviceId) throws Exception {
-        String type_state = "dataFotaAttr";
         final List<TsKvEntry> tsKvEntries = toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?orderBy=ASC&keys=" + type_state + "&startTs=0&endTs=" + System.currentTimeMillis(), new TypeReference<>() {
         }));
         log.warn("Fetched telemetry by API for deviceId {}, list size {}, tsKvEntries {}", deviceId, tsKvEntries.size(), tsKvEntries);
