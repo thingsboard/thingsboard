@@ -108,9 +108,9 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public static final String FW_RESULT_ID = "/5/0/5";
     public static final String FW_NAME_ID = "/5/0/6";
     public static final String FW_VER_ID = "/5/0/7";
-    public static final int FW_INSTANCE_ID = 65534;
+    public static final int FW_INSTANCE_ID = 65533;
     public static final String FW_INFO_19_INSTANCE_ID = "/19/" + FW_INSTANCE_ID;
-    public static final int SW_INSTANCE_ID = 65535;
+    public static final int SW_INSTANCE_ID = 65534;
     public static final String SW_INFO_19_INSTANCE_ID = "/19/" + SW_INSTANCE_ID;
     public static final String OTA_INFO_19_TITLE = "title";
     public static final String OTA_INFO_19_VERSION = "version";
@@ -551,6 +551,10 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())) {
             UUID otaPackageId = new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB());
             LwM2MSoftwareUpdateStrategy strategy = info.getStrategy();
+            Boolean useObject19ForOta = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings().getUseObject19ForOta();
+            if (useObject19ForOta != null && useObject19ForOta){
+                sendInfoFwToObject19ForOta(client, convertObjectIdToVersionedId(SW_INFO_19_INSTANCE_ID, client), response, otaPackageId);
+            }
             switch (strategy) {
                 case BINARY:
                     startUpdateUsingBinary(client, convertObjectIdToVersionedId(SW_PACKAGE_ID, client), otaPackageId);
