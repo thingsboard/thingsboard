@@ -16,15 +16,9 @@
 package org.thingsboard.server.transport.lwm2m.ota.sql;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.dockerjava.zerodep.shaded.org.apache.commons.codec.binary.Hex;
-import jakarta.validation.constraints.AssertTrue;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
-import org.eclipse.leshan.core.ResponseCode;
 import org.junit.Assert;
 import org.junit.Test;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
@@ -34,7 +28,6 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegrationTest;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,9 +37,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.rest.client.utils.RestJsonConverter.toTimeseries;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADING;

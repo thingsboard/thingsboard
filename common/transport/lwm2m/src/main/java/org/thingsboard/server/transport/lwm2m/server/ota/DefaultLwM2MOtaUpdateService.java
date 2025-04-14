@@ -47,7 +47,11 @@ import org.thingsboard.server.transport.lwm2m.server.attributes.LwM2MAttributesS
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
-import org.thingsboard.server.transport.lwm2m.server.downlink.*;
+import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareDeliveryMethod;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
@@ -118,10 +122,6 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public static final String OTA_INFO_19_FILE_SIZE = "dataSize";
     public static final String OTA_INFO_19_FILE_NAME = "fileName";
 
-    /**
-     * Quectel@Hi15RM1-HLB_V1.0@BC68JAR01A10,V150R100C20B300SP7,V150R100C20B300SP7@8
-     * Revision:BC68JAR01A10
-     */
     public static final String FW_3_VER_ID = "/3/0/3";
     public static final String FW_DELIVERY_METHOD = "/5/0/9";
 
@@ -665,11 +665,13 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     /**
-     * send to client: versionedId="/19/65534/0/0, value = FwOtaInfo in bas64 -> format json:
+     * send to client: versionedId="/19/65533/0/0, value = FwOtaInfo in bas64 -> format json:
+     * send to client: versionedId="/19/65534/0/0, value = SwOtaInfo in bas64 -> format json:
      * {"title":"BC68JAR01",
      *  "version":"A10",
-     *  "fileChecksumSHA256":"f2a08d4963e981c78f2a99f62d8439af4437a72ea7267a8c01d013c072c01ded",
-     *  "fileSize":59832}
+     *  "checksum":"f2a08d4963e981c78f2a99f62d8439af4437a72ea7267a8c01d013c072c01ded",
+     *  "fileSize":59832.
+     *  "fileName" : "BC68JAR01A10_TO_BC68JAR01A09_09.bin" }
      * @param client
      * @param targetIdVer
      * @param response
