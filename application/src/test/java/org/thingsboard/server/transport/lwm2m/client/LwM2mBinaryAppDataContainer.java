@@ -84,8 +84,8 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
         try {
             if (id != null) this.setId(id);
             executorService.scheduleWithFixedDelay(() -> {
-//                        fireResourceChange(0);
-//                        fireResourceChange(2);
+                        fireResourceChange(0);
+                        fireResourceChange(2);
                     }
                     , 1, 1, TimeUnit.SECONDS); // 1 sec
 //                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
