@@ -65,7 +65,7 @@ public class TbRuleEngineProducerService {
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, tbMsg.getOriginator(), tpi.getFullTopicName(), tbMsg);
         }
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
-                .setTbMsg(TbMsg.toByteString(tbMsg))
+                .setTbMsgProto(TbMsg.toProto(tbMsg))
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
         producer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);
