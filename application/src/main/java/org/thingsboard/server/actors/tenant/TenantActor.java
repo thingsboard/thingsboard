@@ -130,6 +130,7 @@ public class TenantActor extends RuleChainManagerActor {
         log.info("[{}] Stopping tenant actor.", tenantId);
         if (cfActor != null) {
             ctx.stop(cfActor.getActorId());
+            cfActor = null;
         }
     }
 
@@ -290,6 +291,7 @@ public class TenantActor extends RuleChainManagerActor {
             } else {
                 if (cfActor != null) {
                     ctx.stop(cfActor.getActorId());
+                    cfActor = null;
                 }
                 if (ruleChainsInitialized) {
                     log.info("Tenant {} is no longer managed by this service, stopping rule chains", tenantId);
