@@ -40,7 +40,8 @@ In case no data is returned, default marker image will be used.
 <ul>
 <li>
 Calculate image url depending on <code>temperature</code> telemetry value for <code>thermometer</code> device type.<br>
-Let's assume 4 images are defined in <b>Marker images</b> section. Each image corresponds to particular temperature level:
+Let's assume 4 images are defined in <b>Marker images</b> section. Each image corresponds to particular temperature level.<br/>
+Ensure that the <code>Type</code> and <code>temperature</code> keys are included in the <b>additional data keys</b> configuration:
 </li>
 </ul>
 
