@@ -52,6 +52,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteCall
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCreateRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCreateResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareDeliveryMethod;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
