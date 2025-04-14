@@ -143,12 +143,12 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
 
     protected ListenableFuture<Void> processActionForAllEdges(TenantId tenantId, EdgeEventType type,
                                                               EdgeEventActionType actionType, EntityId entityId,
-                                                              EdgeId sourceEdgeId) {
+                                                              JsonNode body, EdgeId sourceEdgeId) {
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
             PageDataIterable<TenantId> tenantIds = new PageDataIterable<>(link -> edgeCtx.getTenantService().findTenantsIds(link), 500);
             for (TenantId tenantId1 : tenantIds) {
                 try {
-                    List<ListenableFuture<Void>> sysTenantFutures = processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, null, sourceEdgeId);
+                    List<ListenableFuture<Void>> sysTenantFutures = processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, body, sourceEdgeId);
                     for (ListenableFuture<Void> future : sysTenantFutures) {
                         future.get(10, TimeUnit.SECONDS);
                     }
@@ -292,7 +292,7 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     private ListenableFuture<Void> processEntityNotificationForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId, EdgeId sourceEdgeId) {
         return switch (actionType) {
             case ADDED, UPDATED, DELETED, CREDENTIALS_UPDATED -> // used by USER entity
-                    processActionForAllEdges(tenantId, type, actionType, entityId, sourceEdgeId);
+                    processActionForAllEdges(tenantId, type, actionType, entityId, null, sourceEdgeId);
             default -> Futures.immediateFuture(null);
         };
     }
