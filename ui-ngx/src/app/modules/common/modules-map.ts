@@ -76,8 +76,6 @@ import * as TranslateCore from '@ngx-translate/core';
 import * as MatDateTimePicker from '@mat-datetimepicker/core';
 import _moment from 'moment';
 import * as tslib from 'tslib';
-import * as Echarts from 'echarts';
-import * as EchartsCore from 'echarts/core';
 
 import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';
@@ -407,8 +405,6 @@ class ModulesMap implements IModulesMap {
     '@mat-datetimepicker/core': MatDateTimePicker,
     moment: _moment,
     tslib,
-    'echarts': Echarts,
-    'echarts/core': EchartsCore,
 
     '@core/public-api': TbCore,
     '@shared/public-api': TbShared,

@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasEmail;
@@ -43,6 +42,7 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityListFilter;
+import org.thingsboard.server.common.data.query.EntityNameFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
@@ -61,6 +61,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
+import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_NAME;
 import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_TYPE;
 import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -101,7 +102,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityCountQuery(query);
 
-        TbStopWatch stopWatch = TbStopWatch.create();
+        long startNs = System.nanoTime();
         Long result;
         if (edqsApiService.isEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
@@ -112,7 +113,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         } else {
             result = entityQueryDao.countEntitiesByQuery(tenantId, customerId, query);
         }
-        edqsStatsService.reportCountQuery(tenantId, query, stopWatch.stopAndGetTotalTimeNanos());
+        edqsStatsService.reportEntityCountQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }
 
@@ -123,7 +124,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityDataQuery(query);
 
-        TbStopWatch stopWatch = TbStopWatch.create();
+        long startNs = System.nanoTime();
         PageData<EntityData> result;
         if (edqsApiService.isEnabled() && validForEdqs(query)) {
             EdqsRequest request = EdqsRequest.builder()
@@ -146,7 +147,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                 }
             }
         }
-        edqsStatsService.reportDataQuery(tenantId, query, stopWatch.stopAndGetTotalTimeNanos());
+        edqsStatsService.reportEntityDataQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }
 
@@ -250,6 +251,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             validateRelationQuery((RelationsQueryFilter) query.getEntityFilter());
         } else if (query.getEntityFilter().getType().equals(ENTITY_TYPE)) {
             validateEntityTypeQuery((EntityTypeFilter) query.getEntityFilter());
+        } else if (query.getEntityFilter().getType().equals(ENTITY_NAME)) {
+            validateEntityNameQuery((EntityNameFilter) query.getEntityFilter());
         }
     }
 
@@ -259,6 +262,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     private static void validateEntityTypeQuery(EntityTypeFilter filter) {
+        if (filter.getEntityType() == null) {
+            throw new IncorrectParameterException("Entity type is required");
+        }
+    }
+
+    private static void validateEntityNameQuery(EntityNameFilter filter) {
         if (filter.getEntityType() == null) {
             throw new IncorrectParameterException("Entity type is required");
         }
