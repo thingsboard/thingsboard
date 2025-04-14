@@ -94,65 +94,63 @@
     {{ 'device.device-public' | translate }}
   </div>
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-form-field class="mat-block">
-        <mat-label translate>device.name</mat-label>
-        <input matInput formControlName="name" required>
-        <mat-error *ngIf="entityForm.get('name').hasError('required')">
-          {{ 'device.name-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
-          {{ 'device.name-max-length' | translate }}
-        </mat-error>
-      </mat-form-field>
-      <tb-device-profile-autocomplete
-        [selectDefaultProfile]="isAdd"
-        required
-        formControlName="deviceProfileId"
-        [showDetailsPageLink]="true"
-        (deviceProfileUpdated)="onDeviceProfileUpdated()"
-        (deviceProfileChanged)="onDeviceProfileChanged($event)">
-      </tb-device-profile-autocomplete>
-      <mat-form-field class="mat-block">
-        <mat-label translate>device.label</mat-label>
-        <input matInput formControlName="label">
-        <mat-error *ngIf="entityForm.get('label').hasError('maxlength')">
-          {{ 'device.label-max-length' | translate }}
-        </mat-error>
-      </mat-form-field>
-      <tb-ota-package-autocomplete
-        [useFullEntityId]="true"
-        [showDetailsPageLink]="true"
-        [type]="otaUpdateType.FIRMWARE"
-        [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
-        formControlName="firmwareId">
-      </tb-ota-package-autocomplete>
-      <tb-ota-package-autocomplete
-        [useFullEntityId]="true"
-        [showDetailsPageLink]="true"
-        [type]="otaUpdateType.SOFTWARE"
-        [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
-        formControlName="softwareId">
-      </tb-ota-package-autocomplete>
-      <tb-device-data
-        formControlName="deviceData"
-        required>
-      </tb-device-data>
-      <div formGroupName="additionalInfo" class="flex flex-col">
-        <div class="toggle-group">
-          <mat-slide-toggle formControlName="gateway" style="min-width: 165px">
-            {{ 'device.is-gateway' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle *ngIf="entityForm.get('additionalInfo.gateway').value"
-                            formControlName="overwriteActivityTime">
-            {{ 'device.overwrite-activity-time' | translate }}
-          </mat-slide-toggle>
-        </div>
-        <mat-form-field class="mat-block">
-          <mat-label translate>device.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
+    <mat-form-field class="mat-block">
+      <mat-label translate>device.name</mat-label>
+      <input matInput formControlName="name" required>
+      <mat-error *ngIf="entityForm.get('name').hasError('required')">
+        {{ 'device.name-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
+        {{ 'device.name-max-length' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <tb-device-profile-autocomplete
+      [selectDefaultProfile]="isAdd"
+      required
+      formControlName="deviceProfileId"
+      [showDetailsPageLink]="true"
+      (deviceProfileUpdated)="onDeviceProfileUpdated()"
+      (deviceProfileChanged)="onDeviceProfileChanged($event)">
+    </tb-device-profile-autocomplete>
+    <mat-form-field class="mat-block">
+      <mat-label translate>device.label</mat-label>
+      <input matInput formControlName="label">
+      <mat-error *ngIf="entityForm.get('label').hasError('maxlength')">
+        {{ 'device.label-max-length' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <tb-ota-package-autocomplete
+      [useFullEntityId]="true"
+      [showDetailsPageLink]="true"
+      [type]="otaUpdateType.FIRMWARE"
+      [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
+      formControlName="firmwareId">
+    </tb-ota-package-autocomplete>
+    <tb-ota-package-autocomplete
+      [useFullEntityId]="true"
+      [showDetailsPageLink]="true"
+      [type]="otaUpdateType.SOFTWARE"
+      [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
+      formControlName="softwareId">
+    </tb-ota-package-autocomplete>
+    <tb-device-data
+      formControlName="deviceData"
+      required>
+    </tb-device-data>
+    <div formGroupName="additionalInfo" class="flex flex-col">
+      <div class="toggle-group">
+        <mat-slide-toggle formControlName="gateway" style="min-width: 165px">
+          {{ 'device.is-gateway' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle *ngIf="entityForm.get('additionalInfo.gateway').value"
+                          formControlName="overwriteActivityTime">
+          {{ 'device.overwrite-activity-time' | translate }}
+        </mat-slide-toggle>
       </div>
-    </fieldset>
+      <mat-form-field class="mat-block">
+        <mat-label translate>device.description</mat-label>
+        <textarea matInput formControlName="description" rows="2"></textarea>
+      </mat-form-field>
+    </div>
   </form>
 </div>

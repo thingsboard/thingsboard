@@ -61,6 +61,8 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
               protected cd: ChangeDetectorRef,
               private destroyRef: DestroyRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
+
+    this.registerDisableOnLoadFormControl(this.entityForm);
   }
 
   ngOnInit() {
