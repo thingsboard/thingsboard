@@ -65,7 +65,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -144,23 +143,17 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     protected ListenableFuture<Void> processActionForAllEdges(TenantId tenantId, EdgeEventType type,
                                                               EdgeEventActionType actionType, EntityId entityId,
                                                               JsonNode body, EdgeId sourceEdgeId) {
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            PageDataIterable<TenantId> tenantIds = new PageDataIterable<>(link -> edgeCtx.getTenantService().findTenantsIds(link), 500);
-            for (TenantId tenantId1 : tenantIds) {
-                try {
-                    List<ListenableFuture<Void>> sysTenantFutures = processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, body, sourceEdgeId);
-                    for (ListenableFuture<Void> future : sysTenantFutures) {
-                        future.get(10, TimeUnit.SECONDS);
-                    }
-                } catch (Exception e) {
-                    log.error("Failed to process action for all edges by SYS_TENANT_ID. Failed tenantId = [{}]", tenantId1, e);
-                }
+            PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeCtx.getEdgeService().findActiveEdges(link), 1024);
+            for (Edge edge : edges) {
+                futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), type, actionType, entityId, body));
             }
             return Futures.immediateFuture(null);
         } else {
-            List<ListenableFuture<Void>> tenantFutures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, null, sourceEdgeId);
-            return Futures.transform(Futures.allAsList(tenantFutures), voids -> null, dbCallbackExecutorService);
+            futures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, null, sourceEdgeId);
         }
+        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
     private List<ListenableFuture<Void>> processActionForAllEdgesByTenantId(TenantId tenantId,
