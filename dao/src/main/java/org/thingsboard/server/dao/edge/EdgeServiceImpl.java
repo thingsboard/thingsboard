@@ -193,6 +193,13 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
+    public PageData<Edge> findActiveEdges(PageLink pageLink) {
+        log.trace("Executing findActiveEdges [{}]", pageLink);
+        Validator.validatePageLink(pageLink);
+        return edgeDao.findActiveEdges(pageLink);
+    }
+
+    @Override
     public Edge saveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
         Edge oldEdge = edgeValidator.validate(edge, Edge::getTenantId);
