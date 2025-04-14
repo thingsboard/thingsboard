@@ -54,24 +54,29 @@ export class CheckRelationConfigComponent extends RuleNodeConfigurationComponent
     this.checkRelationConfigForm = this.fb.group({
       checkForSingleEntity: [configuration.checkForSingleEntity, []],
       direction: [configuration.direction, []],
-      entityType: [configuration.entityType,
-        configuration && configuration.checkForSingleEntity ? [Validators.required] : []],
-      entityId: [configuration.entityId,
-        configuration && configuration.checkForSingleEntity ? [Validators.required] : []],
+      entityType: [configuration.entityType, [Validators.required]],
+      entityId: [configuration.entityId, [Validators.required]],
       relationType: [configuration.relationType, [Validators.required]]
     });
   }
 
   protected validatorTriggers(): string[] {
-    return ['checkForSingleEntity'];
+    return ['checkForSingleEntity', 'entityType'];
   }
 
-  protected updateValidators(emitEvent: boolean) {
-    const checkForSingleEntity: boolean = this.checkRelationConfigForm.get('checkForSingleEntity').value;
-    this.checkRelationConfigForm.get('entityType').setValidators(checkForSingleEntity ? [Validators.required] : []);
-    this.checkRelationConfigForm.get('entityType').updateValueAndValidity({emitEvent});
-    this.checkRelationConfigForm.get('entityId').setValidators(checkForSingleEntity ? [Validators.required] : []);
-    this.checkRelationConfigForm.get('entityId').updateValueAndValidity({emitEvent});
+  protected updateValidators(_emitEvent: boolean, trigger: string) {
+    if (trigger === 'entityType') {
+      this.checkRelationConfigForm.get('entityId').reset(null);
+    } else {
+      const checkForSingleEntity: boolean = this.checkRelationConfigForm.get('checkForSingleEntity').value;
+      if (checkForSingleEntity) {
+        this.checkRelationConfigForm.get('entityType').enable({emitEvent: false});
+        this.checkRelationConfigForm.get('entityId').enable({emitEvent: false});
+      } else {
+        this.checkRelationConfigForm.get('entityType').disable({emitEvent: false});
+        this.checkRelationConfigForm.get('entityId').disable({emitEvent: false});
+      }
+    }
   }
 
 }
