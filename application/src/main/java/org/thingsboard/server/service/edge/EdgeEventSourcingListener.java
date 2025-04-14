@@ -168,7 +168,7 @@ public class EdgeEventSourcingListener {
     public void handleEvent(RelationActionEvent event) {
         try {
             TenantId tenantId = event.getTenantId();
-            if (!tenantId.isSysTenantId() && !tenantService.tenantExists(tenantId)) {
+            if (ActionType.RELATION_DELETED.equals(event.getActionType()) && !tenantService.tenantExists(tenantId)) {
                 log.debug("[{}] Ignoring RelationActionEvent because tenant does not exist: {}", tenantId, event);
                 return;
             }
