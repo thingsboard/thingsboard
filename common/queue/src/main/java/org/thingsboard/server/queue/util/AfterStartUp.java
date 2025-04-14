@@ -37,7 +37,6 @@ public @interface AfterStartUp {
     int STARTUP_SERVICE = 8;
     int ACTOR_SYSTEM = 9;
 
-    int CF_READ_PROFILE_ENTITIES_SERVICE = 10;
     int CF_READ_CF_SERVICE = 10;
 
     int REGULAR_SERVICE = 11;
