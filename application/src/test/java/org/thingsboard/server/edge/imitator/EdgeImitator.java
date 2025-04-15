@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.Assert;
 import org.thingsboard.edge.rpc.EdgeGrpcClient;
 import org.thingsboard.edge.rpc.EdgeRpcClient;
 import org.thingsboard.server.controller.AbstractWebTest;
@@ -386,7 +387,19 @@ public class EdgeImitator {
     }
 
     public boolean waitForMessages() throws InterruptedException {
-        return waitForMessages(AbstractWebTest.TIMEOUT);
+        boolean success = waitForMessages(AbstractWebTest.TIMEOUT);
+
+        if (!success) {
+            List<AbstractMessage> downlinkMsgs = getDownlinkMsgs();
+            for (AbstractMessage downlinkMsg : downlinkMsgs) {
+                log.error("{}\n{}", downlinkMsg.getClass(), downlinkMsg);
+            }
+
+            log.error("message count: {}", downlinkMsgs.size());
+            Assert.fail("Await for messages was not successful!");
+        }
+
+        return true;
     }
 
     public boolean waitForMessages(int timeoutInSeconds) throws InterruptedException {
