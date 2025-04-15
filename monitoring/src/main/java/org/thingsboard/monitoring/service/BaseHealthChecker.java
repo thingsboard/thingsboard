@@ -52,8 +52,6 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     private TbStopWatch stopWatch;
     @Value("${monitoring.check_timeout_ms}")
     private int resultCheckTimeoutMs;
-    @Value("${monitoring.calculated_fields.enabled:true}")
-    protected boolean checkCalculatedFields;
 
     @Getter
     private final Map<String, BaseHealthChecker<C, T>> associates = new HashMap<>();
@@ -71,7 +69,7 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     public final void check(WsClient wsClient) {
         log.debug("[{}] Checking", info);
         try {
-            int expectedUpdatesCount = checkCalculatedFields ? 2 : 1;
+            int expectedUpdatesCount = isCfMonitoringEnabled() ? 2 : 1;
             wsClient.registerWaitForUpdates(expectedUpdatesCount);
 
             String testValue = UUID.randomUUID().toString();
@@ -114,7 +112,7 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
         if (!testValue.equals(actualValue)) {
             throw new ServiceFailureException(info, "Was expecting value " + testValue + " but got " + actualValue);
         }
-        if (checkCalculatedFields) {
+        if (isCfMonitoringEnabled()) {
             String cfTestValue = testValue + "-cf";
             String actualCfValue = latest.get(TEST_CF_TELEMETRY_KEY);
             if (actualCfValue == null) {
@@ -140,5 +138,7 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     protected abstract Object getInfo();
 
     protected abstract String getKey();
+
+    protected abstract boolean isCfMonitoringEnabled();
 
 }

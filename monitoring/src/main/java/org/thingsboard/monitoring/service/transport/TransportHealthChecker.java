@@ -18,6 +18,7 @@ package org.thingsboard.monitoring.service.transport;
 import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.monitoring.client.TbClient;
 import org.thingsboard.monitoring.config.transport.DeviceConfig;
@@ -60,6 +61,9 @@ import java.util.Map;
 @Slf4j
 public abstract class TransportHealthChecker<C extends TransportMonitoringConfig> extends BaseHealthChecker<C, TransportMonitoringTarget> {
 
+    @Value("${monitoring.calculated_fields.enabled:true}")
+    private boolean calculatedFieldsMonitoringEnabled;
+
     public TransportHealthChecker(C config, TransportMonitoringTarget target) {
         super(config, target);
     }
@@ -100,7 +104,7 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
         String deviceName = String.format("%s %s (%s) - %s", target.getNamePrefix(), transportType.getName(), target.getQueue(), target.getBaseUrl()).trim();
         Device device = tbClient.getTenantDevice(deviceName).orElse(null);
         if (device != null) {
-            if (checkCalculatedFields) {
+            if (isCfMonitoringEnabled()) {
                 CalculatedField calculatedField = tbClient.getCalculatedFieldsByEntityId(device.getId(), new PageLink(1, 0, TEST_CF_TELEMETRY_KEY))
                         .getData().stream().findFirst().orElse(null);
                 if (calculatedField == null) {
@@ -196,6 +200,11 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
         calculatedField.setConfiguration(configuration);
         calculatedField.setDebugMode(true);
         tbClient.saveCalculatedField(calculatedField);
+    }
+
+    @Override
+    protected boolean isCfMonitoringEnabled() {
+        return calculatedFieldsMonitoringEnabled;
     }
 
 }
