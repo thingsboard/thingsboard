@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.geo;
+package org.thingsboard.server.queue;
 
-import lombok.Data;
+public interface TbEdgeQueueAdmin extends TbQueueAdmin {
+    void syncEdgeNotificationsOffsets(String fatGroupId, String newGroupId);
 
-@Data
-public class Coordinates {
-    private final double latitude;
-    private final double longitude;
+    void deleteConsumerGroup(String consumerGroupId);
 }

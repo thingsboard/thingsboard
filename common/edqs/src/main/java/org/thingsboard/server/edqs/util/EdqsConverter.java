@@ -17,13 +17,19 @@ package org.thingsboard.server.edqs.util;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.TbStringPool;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ObjectType;
@@ -37,6 +43,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.stats.EdqsStatsService;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.edqs.data.dp.BoolDataPoint;
 import org.thingsboard.server.edqs.data.dp.CompressedJsonDataPoint;
@@ -49,13 +56,21 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DataPointProto;
 import org.xerial.snappy.Snappy;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class EdqsConverter {
+
+    private final EdqsStatsService edqsStatsService;
+
+    @Value("${queue.edqs.string_compression_length_threshold:512}")
+    private int stringCompressionLengthThreshold;
 
     private final Map<ObjectType, Converter<? extends EdqsObject>> converters = new HashMap<>();
     private final Converter<Entity> defaultConverter = new JsonConverter<>(Entity.class);
@@ -125,7 +140,7 @@ public class EdqsConverter {
         });
     }
 
-    public static DataPointProto toDataPointProto(long ts, KvEntry kvEntry) {
+    public DataPointProto toDataPointProto(long ts, KvEntry kvEntry) {
         DataPointProto.Builder proto = DataPointProto.newBuilder();
         proto.setTs(ts);
         switch (kvEntry.getDataType()) {
@@ -134,7 +149,7 @@ public class EdqsConverter {
             case DOUBLE -> proto.setDoubleV(kvEntry.getDoubleValue().get());
             case STRING -> {
                 String strValue = kvEntry.getStrValue().get();
-                if (strValue.length() < CompressedStringDataPoint.MIN_STR_SIZE_TO_COMPRESS) {
+                if (strValue.length() < stringCompressionLengthThreshold) {
                     proto.setStringV(strValue);
                 } else {
                     proto.setCompressedStringV(ByteString.copyFrom(compress(strValue)));
@@ -142,7 +157,7 @@ public class EdqsConverter {
             }
             case JSON -> {
                 String jsonValue = kvEntry.getJsonValue().get();
-                if (jsonValue.length() < CompressedStringDataPoint.MIN_STR_SIZE_TO_COMPRESS) {
+                if (jsonValue.length() < stringCompressionLengthThreshold) {
                     proto.setJsonV(jsonValue);
                 } else {
                     proto.setCompressedJsonV(ByteString.copyFrom(compress(jsonValue)));
@@ -152,7 +167,7 @@ public class EdqsConverter {
         return proto.build();
     }
 
-    public static DataPoint fromDataPointProto(DataPointProto proto) {
+    public DataPoint fromDataPointProto(DataPointProto proto) {
         long ts = proto.getTs();
         if (proto.hasBoolV()) {
             return new BoolDataPoint(ts, proto.getBoolV());
@@ -161,24 +176,42 @@ public class EdqsConverter {
         } else if (proto.hasDoubleV()) {
             return new DoubleDataPoint(ts, proto.getDoubleV());
         } else if (proto.hasStringV()) {
-            return new StringDataPoint(ts, proto.getStringV());
+            String stringV = proto.getStringV();
+            if (stringV.length() < stringCompressionLengthThreshold) {
+                return new StringDataPoint(ts, stringV);
+            } else {
+                return new CompressedStringDataPoint(ts, compress(stringV), this::uncompress);
+            }
         } else if (proto.hasCompressedStringV()) {
-            return new CompressedStringDataPoint(ts, proto.getCompressedStringV().toByteArray());
+            return new CompressedStringDataPoint(ts, proto.getCompressedStringV().toByteArray(), this::uncompress);
         } else if (proto.hasJsonV()) {
-            return new JsonDataPoint(ts, proto.getJsonV());
+            String jsonV = proto.getJsonV();
+            if (jsonV.length() < stringCompressionLengthThreshold) {
+                return new JsonDataPoint(ts, jsonV);
+            } else {
+                return new CompressedJsonDataPoint(ts, compress(jsonV), this::uncompress);
+            }
         } else if (proto.hasCompressedJsonV()) {
-            return new CompressedJsonDataPoint(ts, proto.getCompressedJsonV().toByteArray());
+            return new CompressedJsonDataPoint(ts, proto.getCompressedJsonV().toByteArray(), this::uncompress);
         } else {
             throw new IllegalArgumentException("Unsupported data point proto: " + proto);
         }
     }
 
     @SneakyThrows
-    private static byte[] compress(String value) {
-        byte[] compressed = Snappy.compress(value);
-        // TODO: limit the size
-        log.debug("Compressed {} bytes to {} bytes", value.length(), compressed.length);
+    private byte[] compress(String value) {
+        byte[] compressed = Snappy.compress(value, StandardCharsets.UTF_8);
+        log.debug("Compressed {} chars to {} bytes", value.length(), compressed.length);
+        edqsStatsService.reportStringCompressed();
         return compressed;
+    }
+
+    @SneakyThrows
+    private String uncompress(byte[] compressed) {
+        String value = Snappy.uncompressString(compressed, StandardCharsets.UTF_8);
+        log.debug("Uncompressed {} bytes to {} chars", compressed.length, value.length());
+        edqsStatsService.reportStringUncompressed();
+        return value;
     }
 
     public static Entity toEntity(EntityType entityType, Object entity) {
@@ -186,14 +219,6 @@ public class EdqsConverter {
         edqsEntity.setType(entityType);
         edqsEntity.setFields(FieldsUtil.toFields(entity));
         return edqsEntity;
-    }
-
-    public EdqsObject check(ObjectType type, Object object) {
-        if (object instanceof EdqsObject edqsObject) {
-            return edqsObject;
-        } else {
-            return toEntity(type.toEntityType(), object);
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -220,11 +245,17 @@ public class EdqsConverter {
     @RequiredArgsConstructor
     private static class JsonConverter<T> implements Converter<T> {
 
+        private static final SimpleModule module = new SimpleModule();
         private static final ObjectMapper mapper = JsonMapper.builder()
                 .visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
                 .visibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE)
                 .visibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE)
                 .build();
+
+        static {
+            module.addDeserializer(String.class, new InterningStringDeserializer());
+            mapper.registerModule(module);
+        }
 
         private final Class<T> type;
 
@@ -247,6 +278,19 @@ public class EdqsConverter {
         byte[] serialize(ObjectType type, T value) throws Exception;
 
         T deserialize(ObjectType type, byte[] bytes) throws Exception;
+
+    }
+
+    public static class InterningStringDeserializer extends StdDeserializer<String> {
+
+        public InterningStringDeserializer() {
+            super(String.class);
+        }
+
+        @Override
+        public String deserialize(JsonParser p, DeserializationContext ctx) throws IOException {
+            return TbStringPool.intern(p.getText());
+        }
 
     }
 

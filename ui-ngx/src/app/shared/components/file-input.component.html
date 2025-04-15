@@ -51,9 +51,9 @@
     </div>
   </ng-container>
   <div class="tb-file-info-container">
-    <tb-error *ngIf="!fileName && required && requiredAsError" class="tb-file-name" error="{{ noFileText | translate }}"></tb-error>
-    <div *ngIf="!fileName && !requiredAsError" class="tb-file-name" translate>{{ noFileText }}</div>
-    <div *ngIf="fileName" class="tb-file-name" [title]="fileName">{{ fileName }}</div>
-    <div *ngIf="maxSizeByte && !disabled" class="tb-file-hint" translate [translateParams]="{ size: maxSizeByte | fileSize }">dashboard.maximum-upload-file-size</div>
+    <tb-error *ngIf="!fileName && required && requiredAsError" class="font-medium" error="{{ noFileText | translate }}"></tb-error>
+    <div *ngIf="!fileName && !requiredAsError" class="tb-file-name" tbTruncateWithTooltip translate>{{ noFileText }}</div>
+    <div *ngIf="fileName" class="tb-file-name" tbTruncateWithTooltip>{{ fileName }}</div>
+    <div *ngIf="maxSizeByte && !disabled" class="tb-file-hint" tbTruncateWithTooltip translate [translateParams]="{ size: maxSizeByte | fileSize }">dashboard.maximum-upload-file-size</div>
   </div>
 </div>

@@ -551,11 +551,15 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void processEdgeNotification(EdgeId edgeId, ToEdgeNotificationMsg toEdgeNotificationMsg) {
-        var serviceIdOpt = Optional.ofNullable(edgeIdServiceIdCache.get(edgeId));
-        serviceIdOpt.ifPresentOrElse(
-                serviceId -> pushMsgToEdgeNotification(toEdgeNotificationMsg, serviceId.get()),
-                () -> broadcastEdgeNotification(edgeId, toEdgeNotificationMsg)
-        );
+        if (edgesEnabled) {
+            var serviceIdOpt = Optional.ofNullable(edgeIdServiceIdCache.get(edgeId));
+            serviceIdOpt.ifPresentOrElse(
+                    serviceId -> pushMsgToEdgeNotification(toEdgeNotificationMsg, serviceId.get()),
+                    () -> broadcastEdgeNotification(edgeId, toEdgeNotificationMsg)
+            );
+        } else {
+            log.trace("Edges disabled. Ignoring edge notification {} for edgeId: {}", toEdgeNotificationMsg, edgeId);
+        }
     }
 
     private void pushMsgToEdgeNotification(ToEdgeNotificationMsg toEdgeNotificationMsg, String serviceId) {

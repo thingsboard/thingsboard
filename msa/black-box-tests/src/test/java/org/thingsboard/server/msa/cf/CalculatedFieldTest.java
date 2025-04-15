@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
@@ -73,7 +74,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
             "  var airDensity = pressure / (287.05 * temperatureK);\n" +
             "\n" +
             "  return {\n" +
-            "    \"airDensity\": airDensity\n" +
+            "    \"airDensity\": toFixed(airDensity, 2)\n" +
             "  };";
 
     private TenantId tenantId;
@@ -280,6 +281,34 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         testRestClient.deleteCalculatedFieldIfExists(savedCalculatedField.getId());
     }
 
+    @Test
+    public void testEntityIdIsProfileAndRefEntityIsCommon() {
+        // login tenant admin
+        testRestClient.getAndSetUserToken(tenantAdminId);
+
+        CalculatedField savedCalculatedField = createScriptCalculatedField(deviceProfileId);
+
+        await().alias("create CF -> perform initial calculation for device by profile").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode airDensity = testRestClient.getLatestTelemetry(device.getId());
+                    assertThat(airDensity).isNotNull();
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.05");
+                });
+
+        testRestClient.postTelemetryAttribute(asset.getId(), DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"altitude\":1531}"));
+
+        await().alias("create CF -> update telemetry for common entity").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode airDensity = testRestClient.getLatestTelemetry(device.getId());
+                    assertThat(airDensity).isNotNull();
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("0.99");
+                });
+
+        testRestClient.deleteCalculatedFieldIfExists(savedCalculatedField.getId());
+    }
+
     private CalculatedField createSimpleCalculatedField() {
         return createSimpleCalculatedField(device.getId());
     }
@@ -323,19 +352,21 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         calculatedField.setName("Air density" + RandomStringUtils.randomAlphabetic(5));
         calculatedField.setDebugSettings(DebugSettings.all());
 
-        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+        ScriptCalculatedFieldConfiguration config = new ScriptCalculatedFieldConfiguration();
 
         Argument argument1 = new Argument();
         argument1.setRefEntityId(asset.getId());
         ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("altitude", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE);
         argument1.setRefEntityKey(refEntityKey1);
-        config.setArguments(Map.of("altitude", argument1));
         Argument argument2 = new Argument();
         ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("temperatureInF", ArgumentType.TS_ROLLING, null);
+        argument2.setTimeWindow(30000L);
+        argument2.setLimit(5);
         argument2.setRefEntityKey(refEntityKey2);
-        config.setArguments(Map.of("temperature", argument2));
 
-        config.setExpression("return {\"airDensity\": 5};");
+        config.setArguments(Map.of("altitude", argument1, "temperature", argument2));
+
+        config.setExpression(exampleScript);
 
         Output output = new Output();
         output.setType(OutputType.TIME_SERIES);

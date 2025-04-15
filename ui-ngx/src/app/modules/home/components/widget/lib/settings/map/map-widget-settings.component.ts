@@ -47,6 +47,8 @@ export class MapWidgetSettingsComponent extends WidgetSettingsComponent {
     const params = widgetConfig.typeParameters as any;
     if (isDefinedAndNotNull(params.trip)) {
       this.trip = params.trip === true;
+    } else {
+      this.trip = false;
     }
   }
 
@@ -54,9 +56,17 @@ export class MapWidgetSettingsComponent extends WidgetSettingsComponent {
     return mergeDeepIgnoreArray<MapWidgetSettings>({} as MapWidgetSettings, mapWidgetDefaultSettings);
   }
 
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    return {
+      mapSettings: settings,
+      background: settings.background,
+      padding: settings.padding
+    };
+  }
+
   protected onSettingsSet(settings: WidgetSettings) {
     this.mapWidgetSettingsForm = this.fb.group({
-      mapSettings: [settings, []],
+      mapSettings: [settings.mapSettings, []],
       background: [settings.background, []],
       padding: [settings.padding, []]
     });
