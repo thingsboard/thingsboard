@@ -50,10 +50,10 @@ public class CustomerData extends BaseEntityData<CustomerFields> {
         entitiesById.computeIfAbsent(ed.getEntityType(), et -> new ConcurrentHashMap<>()).put(ed.getId(), ed);
     }
 
-    public boolean remove(EntityData<?> ed) {
-        var map = entitiesById.get(ed.getEntityType());
+    public boolean remove(EntityType entityType, UUID entityId) {
+        var map = entitiesById.get(entityType);
         if (map != null) {
-            return map.remove(ed.getId()) != null;
+            return map.remove(entityId) != null;
         } else {
             return false;
         }

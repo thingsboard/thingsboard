@@ -29,35 +29,39 @@ export const createTooltip = (map: TbMap<any>,
                               settings: DataLayerTooltipSettings,
                               data: FormattedData<TbMapDatasource>,
                               canOpen: () => boolean): L.Popup => {
-  const tooltip = L.popup();
-  layer.bindPopup(tooltip, {autoClose: settings.autoclose, closeOnClick: false});
-  layer.off('click');
+  const tooltip = L.popup({autoClose: settings.autoclose, closeOnClick: false});
+  (tooltip as any)._source = layer;
+  layer.on('move', (e) => {
+    tooltip.setLatLng((e as any).latlng);
+  });
+  layer.on('remove', () => {
+    tooltip.close();
+  });
   if (settings.trigger === DataLayerTooltipTrigger.click) {
-    layer.on('click', () => {
+    layer.on('click', (e) => {
+      L.DomEvent.stop(e);
       if (tooltip.isOpen()) {
-        layer.closePopup();
+        tooltip.close();
       } else if (canOpen()) {
-        layer.openPopup();
+        if ((tooltip as any)._prepareOpen((layer as any)._latlng)) {
+          tooltip.openOn(map.getMap());
+        }
       }
     });
   } else if (settings.trigger === DataLayerTooltipTrigger.hover) {
     layer.on('mouseover', () => {
       if (canOpen()) {
-        layer.openPopup();
+        if ((tooltip as any)._prepareOpen((layer as any)._latlng)) {
+          tooltip.openOn(map.getMap());
+        }
       }
     });
-    layer.on('mousemove', (e) => {
-      tooltip.setLatLng(e.latlng);
-    });
     layer.on('mouseout', () => {
-      layer.closePopup();
+      tooltip.close();
     });
   }
   layer.on('popupopen', () => {
     bindTooltipActions(map, tooltip, settings, data);
-    (layer as any)._popup._closeButton.addEventListener('click', (event: Event) => {
-      event.preventDefault();
-    });
   });
   return tooltip;
 }

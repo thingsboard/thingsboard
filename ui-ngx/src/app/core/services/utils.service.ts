@@ -208,7 +208,7 @@ export class UtilsService {
     return parseException(exception, lineOffset);
   }
 
-  public customTranslation(translationValue: string, defaultValue: string): string {
+  public customTranslation(translationValue: string, defaultValue: string = translationValue): string {
     if (translationValue && isString(translationValue)) {
       if (translationValue.includes(`{${i18nPrefix}`)) {
         const matches = translationValue.match(i18nRegExp);

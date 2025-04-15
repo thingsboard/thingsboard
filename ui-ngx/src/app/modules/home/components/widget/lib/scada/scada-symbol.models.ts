@@ -271,7 +271,7 @@ export const updateScadaSymbolMetadataInContent = (svgContent: string, metadata:
   const svgDoc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
   const parsererror = svgDoc.getElementsByTagName('parsererror');
   if (parsererror?.length) {
-    return parsererror[0].outerHTML;
+    throw Error(parsererror[0].textContent)
   }
   updateScadaSymbolMetadataInDom(svgDoc, metadata);
   return svgDoc.documentElement.outerHTML;

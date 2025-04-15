@@ -213,7 +213,6 @@
                 "showWidgetActionFunction": "return true;",
                 "type": "customPretty",
                 "customHtml": "<mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n</mat-progress-bar>\n<tb-gateway-configuration\n    class=\"gateway-config\"\n    mat-dialog-content\n    [device]=\"device\"\n    [dialogRef]=\"dialogRef\">\n</tb-gateway-configuration>",
-                "customCss": ".gateway-config {\n    width: 800px !important;\n    padding: 0 !important;\n    min-height: 75vh;\n    max-width: 100%;\n    display: grid !important;\n}\n\n@media screen and (max-width: 599px) {\n    .mat-mdc-dialog-content {\n        max-height: calc(100% - 60px) !important;\n    }\n}",
                 "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\n\nopenAddEntityDialog();\n\nfunction openAddEntityDialog() {\n    customDialog.customDialog(htmlTemplate, AddEntityDialogController).subscribe();\n}\n\nfunction AddEntityDialogController(instance) {\n    let vm = instance;\n    \n    vm.device = additionalParams.entity.id;\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n}\n",
                 "customResources": [
                   {
@@ -270,13 +269,15 @@
             "headerButton": [
               {
                 "name": "Add Gateway",
+                "buttonType": "icon",
                 "icon": "add",
+                "buttonColor": "rgba(0, 0, 0, 0.87)",
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "customPretty",
                 "customHtml": "<form #addEntityForm=\"ngForm\" [formGroup]=\"addEntityFormGroup\"\r\n      (ngSubmit)=\"save($event)\" class=\"add-entity-form\">\r\n    <mat-toolbar class=\"flex flex-row items-center\" color=\"primary\">\r\n        <h2>Add gateway</h2>\r\n        <span class=\"flex-1\"></span>\r\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\r\n            <mat-icon class=\"material-icons\">close</mat-icon>\r\n        </button>\r\n    </mat-toolbar>\r\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\r\n    </mat-progress-bar>\r\n    <div class=\"h-1\" *ngIf=\"!(isLoading$ | async)\"></div>\r\n    <div mat-dialog-content class=\"flex flex-col\">\r\n        <div class=\"flex flex-row gap-2 flex-wrap\" >\r\n            <mat-form-field class=\"w-full sm:w-auto\">\r\n                <mat-label>Name</mat-label>\r\n                <input matInput formControlName=\"entityName\" required>\r\n                <mat-error *ngIf=\"addEntityFormGroup.get('entityName').hasError('required')\">\r\n                    Gateway name is required.\r\n                </mat-error>\r\n            </mat-form-field>\r\n        </div>\r\n        <div class=\"flex flex-row gap-2 flex-wrap\">\r\n            <tb-entity-subtype-autocomplete\r\n                    class=\"w-full sm:w-auto\"\r\n                    formControlName=\"type\"\r\n                    [required]=\"true\"\r\n                    [entityType]=\"'DEVICE'\"\r\n            ></tb-entity-subtype-autocomplete>\r\n        </div>\r\n    </div>\r\n    <div mat-dialog-actions class=\"flex flex-row justify-end items-center\">\r\n        <button mat-button color=\"primary\"\r\n                type=\"button\"\r\n                [disabled]=\"(isLoading$ | async)\"\r\n                (click)=\"cancel()\" cdkFocusInitial>\r\n            Cancel\r\n        </button>\r\n        <button mat-button mat-raised-button color=\"primary\"\r\n                type=\"submit\"\r\n                [disabled]=\"(isLoading$ | async) || addEntityForm.invalid || !addEntityForm.dirty\">\r\n            Create\r\n        </button>\r\n    </div>\r\n</form>\r\n",
                 "customCss": ".add-entity-form {\r\n    min-width: 400px !important;\r\n}\r\n\r\n.add-entity-form .boolean-value-input {\r\n    padding-left: 5px;\r\n}\r\n\r\n.add-entity-form .boolean-value-input .checkbox-label {\r\n    margin-bottom: 8px;\r\n    color: rgba(0,0,0,0.54);\r\n    font-size: 12px;\r\n}\r\n\r\n.relations-list .header {\r\n    padding-right: 5px;\r\n    padding-bottom: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .header .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n    font-size: 12px;\r\n    font-weight: 700;\r\n    color: rgba(0, 0, 0, .54);\r\n    white-space: nowrap;\r\n}\r\n\r\n.relations-list .mat-form-field-infix {\r\n    width: auto !important;\r\n}\r\n\r\n.relations-list .body {\r\n    padding-right: 5px;\r\n    padding-bottom: 15px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .row {\r\n    padding-top: 5px;\r\n}\r\n\r\n.relations-list .body .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .md-button {\r\n    margin: 0;\r\n}\r\n\r\n",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet assetService = $injector.get(widgetContext.servicesMap.get('assetService'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));\r\nlet entityRelationService = $injector.get(widgetContext.servicesMap.get('entityRelationService'));\r\nlet userSettingsService = $injector.get(widgetContext.servicesMap.get('userSettingsService'));\r\n\r\nopenAddEntityDialog();\r\n\r\nfunction openAddEntityDialog() {\r\n    customDialog.customDialog(htmlTemplate, AddEntityDialogController).subscribe();\r\n}\r\n\r\nfunction AddEntityDialogController(instance) {\r\n    let vm = instance;\r\n    let userSettings;\r\n    userSettingsService.loadUserSettings().subscribe(settings=> {\r\n        userSettings = settings;\r\n        if (!userSettings.createdGatewaysCount) userSettings.createdGatewaysCount = 0;\r\n    });\r\n    \r\n\r\n    vm.addEntityFormGroup = vm.fb.group({\r\n     entityName: ['', [vm.validators.required]],\r\n     entityType: ['DEVICE'],\r\n     entityLabel: [''],\r\n     type: ['', [vm.validators.required]],\r\n    });\r\n\r\n    vm.cancel = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n    vm.save = function($event) {\r\n        vm.addEntityFormGroup.markAsPristine();\r\n        saveEntityObservable().subscribe(\r\n            function (device) {\r\n                widgetContext.updateAliases();\r\n                userSettingsService.putUserSettings({ createdGatewaysCount: ++userSettings.createdGatewaysCount }).subscribe(_=>{\r\n                });\r\n                vm.dialogRef.close(null);\r\n                openCommandDialog(device, $event);\r\n            }\r\n        );\r\n    };\r\n    \r\n    function openCommandDialog(device, $event) {\r\n        vm.device = device;\r\n        let openCommandAction = widgetContext.actionsApi.getActionDescriptors(\"actionCellButton\").find(action => action.name == \"Launch command\");\r\n        widgetContext.actionsApi.handleWidgetAction($event, openCommandAction, device.id, device.name, {newDevice: true});\r\n        goToConfigState();\r\n    }\r\n\r\n    \r\n    function goToConfigState() {\r\n        const stateParams = {};\r\n        stateParams.entityId = vm.device.id;\r\n        stateParams.entityName = vm.device.name;\r\n        const newStateParams = {\r\n            targetEntityParamName: 'default',\r\n            new_gateway: {\r\n                entityId: vm.device.id,\r\n                entityName: vm.device.name\r\n            }\r\n        }\r\n        const params = {...stateParams, ...newStateParams};\r\n        widgetContext.stateController.openState('gateway_details', params, false);\r\n    }\r\n\r\n    function saveEntityObservable() {\r\n        const formValues = vm.addEntityFormGroup.value;\r\n        let entity = {\r\n            name: formValues.entityName,\r\n            type: formValues.type,\r\n            label: formValues.entityLabel,\r\n            additionalInfo: {\r\n                gateway: true\r\n            }\r\n        };\r\n        return deviceService.saveDevice(entity);\r\n    }\r\n}\r\n",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet assetService = $injector.get(widgetContext.servicesMap.get('assetService'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));\r\nlet entityRelationService = $injector.get(widgetContext.servicesMap.get('entityRelationService'));\r\nlet userSettingsService = $injector.get(widgetContext.servicesMap.get('userSettingsService'));\r\n\r\nopenAddEntityDialog();\r\n\r\nfunction openAddEntityDialog() {\r\n    customDialog.customDialog(htmlTemplate, AddEntityDialogController).subscribe();\r\n}\r\n\r\nfunction AddEntityDialogController(instance) {\r\n    let vm = instance;\r\n    let userSettings;\r\n    userSettingsService.loadUserSettings().subscribe(settings=> {\r\n        userSettings = settings;\r\n        if (!userSettings.createdGatewaysCount) userSettings.createdGatewaysCount = 0;\r\n    });\r\n    \r\n\r\n    vm.addEntityFormGroup = vm.fb.group({\r\n     entityName: ['', [vm.validators.required]],\r\n     entityType: ['DEVICE'],\r\n     entityLabel: [''],\r\n     type: ['', [vm.validators.required]],\r\n    });\r\n\r\n    vm.cancel = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n    vm.save = function($event) {\r\n        vm.addEntityFormGroup.markAsPristine();\r\n        saveEntityObservable().subscribe(\r\n            function (device) {\r\n                widgetContext.updateAliases();\r\n                userSettingsService.putUserSettings({ createdGatewaysCount: ++userSettings.createdGatewaysCount }).subscribe(_=>{\r\n                });\r\n                vm.dialogRef.close(null);\r\n                openCommandDialog(device, $event);\r\n            }\r\n        );\r\n    };\r\n    \r\n    function openCommandDialog(device, $event) {\r\n        vm.device = device;\r\n        let openCommandAction = widgetContext.actionsApi.getActionDescriptors(\"actionCellButton\").find(action => action.name == \"Launch command\");\r\n        setTimeout(() => {\r\n            widgetContext.actionsApi.handleWidgetAction($event, openCommandAction, device.id, device.name, {newDevice: true});\r\n        });\r\n        goToConfigState();\r\n    }\r\n\r\n    \r\n    function goToConfigState() {\r\n        const stateParams = {};\r\n        stateParams.entityId = vm.device.id;\r\n        stateParams.entityName = vm.device.name;\r\n        const newStateParams = {\r\n            targetEntityParamName: 'default',\r\n            new_gateway: {\r\n                entityId: vm.device.id,\r\n                entityName: vm.device.name\r\n            }\r\n        }\r\n        const params = {...stateParams, ...newStateParams};\r\n        widgetContext.stateController.openState('gateway_details', params, false);\r\n    }\r\n\r\n    function saveEntityObservable() {\r\n        const formValues = vm.addEntityFormGroup.value;\r\n        let entity = {\r\n            name: formValues.entityName,\r\n            type: formValues.type,\r\n            label: formValues.entityLabel,\r\n            additionalInfo: {\r\n                gateway: true\r\n            }\r\n        };\r\n        return deviceService.saveDevice(entity);\r\n    }\r\n}\r\n",
                 "customResources": [],
                 "openInSeparateDialog": false,
                 "openInPopover": false,
@@ -562,6 +563,14 @@
                   "color": "#ffeb3b",
                   "settings": {},
                   "_hash": 0.2770587478725004
+                },
+                {
+                  "name": "Version",
+                  "type": "attribute",
+                  "label": "Version",
+                  "color": "#03a9f4",
+                  "settings": {},
+                  "_hash": 0.007837366355011532
                 }
               ],
               "alarmFilterConfig": {
@@ -641,7 +650,7 @@
           "settings": {
             "useMarkdownTextFunction": true,
             "markdownTextPattern": "# Markdown/HTML card \\n - **Current entity**: **${entityName}**. \\n - **Current value**: **${Random}**.",
-            "markdownTextFunction": "var blockData = '';\nvar connectorsIndex = ctx.actionsApi.getActionDescriptors('elementClick').findIndex(action => action.name == \"Connectors\");\nvar logsIndex = ctx.actionsApi.getActionDescriptors('elementClick').findIndex(action => action.name == \"Logs\");\nfunction generateMatHeader(index) {\n    if (index !== undefined && index > -1) {\n         return `<mat-card-header class='tb-home-widget-link' (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\">`\n    } else {\n       return \"<mat-card-header>\"\n    }\n}\nfunction createDataBlock(value, label, dividerStyle, mobile, index) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile ? '100%' : 'auto'}; min-height: ${mobile ? 'auto' : '57px'}\" class=\"${dividerStyle}\">\n            <div class=\"divider\"></div>\n            <mat-divider vertical style=\"height:100%\"></mat-divider>\n            ${generateMatHeader(index)}\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Status, \"Status\", data[0].Status === \"Active\" ? 'divider-green' : 'divider-red');\ncreateDataBlock(data[0].Name, \"Gateway Name\", '', ctx.isMobile);\ncreateDataBlock(data[0].Type, \"Gateway Type\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[1] ? data[1].count : 0)} </span>`\n    + \" | \" +\n    `<span style=\"color:rgb(203,37,48)\">${(data[2] ? data[2][\"count 2\"] : 0)} </span>`\n    , \"Devices <span class='tb-hint' style='padding-left: 0'>(Active | Inactive)</span>\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[0].active_connectors ? JSON.parse(data[0].active_connectors).length : 0)} </span>`\n    + \" | \" +\n    `<span style=\"color:rgb(203,37,48)\">${(data[0].inactive_connectors ? JSON.parse(data[0].inactive_connectors).length : 0)} </span>`\n    , \"Connectors <span class='tb-hint' style='padding-left: 0'>(Enabled | Disabled)</span>\", '', '', connectorsIndex);\ncreateDataBlock(data[0].ALL_ERRORS_COUNT || 0, \"Errors\", (data[0].ALL_ERRORS_COUNT || 0) === 0 ? 'divider-green' : 'divider-red', '', logsIndex);\nreturn `<div class=\"flex flex-row flex-wrap gap-2 cards-container\">${blockData}</div>`;",
+            "markdownTextFunction": "var blockData = '';\nvar connectorsIndex = ctx.actionsApi.getActionDescriptors('elementClick').findIndex(action => action.name == \"Connectors\");\nvar logsIndex = ctx.actionsApi.getActionDescriptors('elementClick').findIndex(action => action.name == \"Logs\");\nfunction generateMatHeader(index) {\n    if (index !== undefined && index > -1) {\n         return `<mat-card-header class='tb-home-widget-link' (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\">`\n    } else {\n       return \"<mat-card-header>\"\n    }\n}\nfunction createDataBlock(value, label, dividerStyle, mobile, index) {\n    blockData += `\n        <mat-card style=\"flex-grow: 1; width: ${mobile ? '100%' : 'auto'}; min-height: ${mobile ? 'auto' : '57px'}\" class=\"${dividerStyle}\">\n            <div class=\"divider\"></div>\n            <mat-divider vertical style=\"height:100%\"></mat-divider>\n            ${generateMatHeader(index)}\n                <mat-card-subtitle>${label}</mat-card-subtitle>\n            </mat-card-header>\n            <mat-card-content> ${value}</mat-card-content>\n        </mat-card>`;\n}\ncreateDataBlock(data[0].Status, \"Status\", data[0].Status === \"Active\" ? 'divider-green' : 'divider-red');\ncreateDataBlock(data[0].Name, \"Gateway Name\", '', ctx.isMobile);\nif (data[0].Version) {\n    createDataBlock(data[0].Version, \"Gateway Version\", '');\n}\ncreateDataBlock(data[0].Type, \"Gateway Type\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[1] ? data[1].count : 0)} </span>`\n    + \" | \" +\n    `<span style=\"color:rgb(203,37,48)\">${(data[2] ? data[2][\"count 2\"] : 0)} </span>`\n    , \"Devices <span class='tb-hint' style='padding-left: 0'>(Active | Inactive)</span>\", '');\ncreateDataBlock(\n    `<span style=\"color:rgb(25,128,56)\">${(data[0].active_connectors ? JSON.parse(data[0].active_connectors).length : 0)} </span>`\n    + \" | \" +\n    `<span style=\"color:rgb(203,37,48)\">${(data[0].inactive_connectors ? JSON.parse(data[0].inactive_connectors).length : 0)} </span>`\n    , \"Connectors <span class='tb-hint' style='padding-left: 0'>(Enabled | Disabled)</span>\", '', '', connectorsIndex);\ncreateDataBlock(data[0].ALL_ERRORS_COUNT || 0, \"Errors\", (data[0].ALL_ERRORS_COUNT || 0) === 0 ? 'divider-green' : 'divider-red', '', logsIndex);\nreturn `<div class=\"flex flex-row flex-wrap gap-2 cards-container\">${blockData}</div>`;",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".divider {\n    position: absolute;\n    width: 3px;\n    top: 8px;\n    border-radius: 2px;\n    bottom: 8px;\n    border: 1px solid rgba(31, 70, 144, 1);\n    background-color: rgba(31, 70, 144, 1);\n    left: 10px;\n}\n.divider-green .divider {\n    border: 1px solid rgb(25,128,56);\n    background-color: rgb(25,128,56);\n}\n\n.divider-green .mat-mdc-card-content {\n    color: rgb(25,128,56);\n}\n\n.divider-red .divider {\n    border: 1px solid rgb(203,37,48);\n    background-color: rgb(203,37,48);\n}\n\n.divider-red .mat-mdc-card-content {\n    color: rgb(203,37,48);\n}\n\n.mdc-card {\n    position: relative;\n    padding-left: 10px;\n    margin-bottom: 1px;\n}\n\n.mat-mdc-card-subtitle {\n    font-weight: 400;\n    font-size: 12px;\n}\n\n.mat-mdc-card-header {\n    padding: 8px 16px 0;\n}\n\n.mat-mdc-card-content:last-child {\n    padding-bottom: 8px;\n    font-size: 16px;\n}\n\n.cards-container {\n    height: calc(100% - 1px);\n    justify-content: stretch;\n    align-items: center;\n    margin-bottom: 1px;\n}\n\n::ng-deep.tb-home-widget-link > div {\n    flex-grow: 1;\n    cursor: pointer;\n}\n\n .tb-home-widget-link {\n     width: 100%;\n }\n\n .tb-home-widget-link:hover::after{\n     color: inherit;\n }\n \n .tb-home-widget-link::after{\n    content: 'arrow_forward';\n    display: inline-block;\n    transform: rotate(315deg);\n    font-family: 'Material Icons';\n    font-weight: normal;\n    font-style: normal;\n    font-size: 18px;\n    color: rgba(0, 0, 0, 0.12);\n    vertical-align: bottom;\n    margin-left: 6px;\n}"
           },
@@ -1066,7 +1075,7 @@
                 {
                   "name": "SERVICE_LOGS",
                   "type": "timeseries",
-                  "label": "Status",
+                  "label": "{i18n:widgets.gateway.level}",
                   "color": "#4caf50",
                   "settings": {
                     "useCellStyleFunction": false,
@@ -1084,7 +1093,7 @@
                 {
                   "name": "SERVICE_LOGS",
                   "type": "timeseries",
-                  "label": "Details",
+                  "label": "{i18n:widgets.gateway.message}",
                   "color": "#2196f3",
                   "settings": {
                     "useCellStyleFunction": false,
@@ -1104,13 +1113,11 @@
                 "statusList": [
                   "ACTIVE"
                 ]
-              }
+              },
+              "latestDataKeys": []
             }
           ],
           "timewindow": {
-            "hideInterval": false,
-            "hideLastInterval": false,
-            "hideQuickInterval": false,
             "hideAggregation": false,
             "hideAggInterval": false,
             "hideTimezone": false,
@@ -1167,7 +1174,11 @@
           "pageSize": 1024,
           "noDataDisplayMessage": "",
           "enableDataExport": false,
-          "borderRadius": "4px"
+          "borderRadius": "4px",
+          "configMode": "basic",
+          "titleFont": null,
+          "titleColor": null,
+          "titleIcon": null
         },
         "row": 0,
         "col": 0,
@@ -1730,7 +1741,8 @@
           "padding": "8px",
           "settings": {
             "useMarkdownTextFunction": true,
-            "markdownTextFunction": "let buttonsHtml = \"\" \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    let disabled = false;\n    if (index == 2) {\n        disabled = data[0] && data[0].RemoteLoggingLevel ? data[0].RemoteLoggingLevel == \"NONE\" : true;\n    } else if (index == 4) {\n        const conf = data[0].general_configuration ? JSON.parse(data[0].general_configuration) : {};\n        disabled = !conf.remoteShell;\n    }\n    buttonsHtml += `<button mat-raised-button disabled=${disabled} color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
+            "markdownTextPattern": "# Markdown/HTML card \\n - **Current entity**: **${entityName}**. \\n - **Current value**: **${Random}**.",
+            "markdownTextFunction": "let buttonsHtml = \"\" \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    let disabled = false;\n    if (index == 2) {\n        disabled = data[0] && data[0].RemoteLoggingLevel ? data[0].RemoteLoggingLevel == \"NONE\" : true;\n    } else if (index == 3) {\n        const conf = data[0].general_configuration ? JSON.parse(data[0].general_configuration) : {};\n        disabled = typeof conf.statistics?.enable === 'boolean' && !conf.statistics.enable;\n    } else if (index == 4) {\n        const conf = data[0].general_configuration ? JSON.parse(data[0].general_configuration) : {};\n        disabled = !conf.remoteShell;\n    }\n    buttonsHtml += `<button mat-raised-button disabled=${disabled} color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".action-buttons-container {\r\n    display: flex;\r\n    flex-wrap: wrap;\r\n    flex-direction: row;\r\n    height: 100%;\r\n    width: 100%;\r\n    align-content: start;\r\n}\r\n\r\nbutton {\r\n    flex-grow: 1;\r\n    margin: 10px;\r\n    min-width: 150px;\r\n    height: auto;\r\n    line-height: 36px;\n}"
           },
@@ -1862,447 +1874,14 @@
               "type": "entity",
               "name": "function",
               "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "dataKeys": [],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "bd9176e1-9e04-3e9b-d5a5-07b72bb9ae90",
               "dataKeys": [
                 {
-                  "name": "count",
-                  "type": "count",
-                  "label": "mqttCount",
-                  "color": "#4caf50",
+                  "name": "connectorType",
+                  "type": "attribute",
+                  "label": "connectorType",
+                  "color": "#9e9e9e",
                   "settings": {},
-                  "_hash": 0.9590451878027946,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "44038462-1bae-e075-7b31-283341cb2295",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "modbusCount",
-                  "color": "#ff5722",
-                  "settings": {},
-                  "_hash": 0.46402083951505624,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "884e9c34-7534-a483-99be-81b56cd91185",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "grpcCount",
-                  "color": "#f44336",
-                  "settings": {},
-                  "_hash": 0.16110429492126088,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "e91ca0e9-1653-4fbc-5f3d-3da021b1b415",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "opcuaCount",
-                  "color": "#ffc107",
-                  "settings": {},
-                  "_hash": 0.13973521146913304,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "3f74cbaa-6353-5e88-a7e8-708fc0e18039",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "bleCount",
-                  "color": "#607d8b",
-                  "settings": {},
-                  "_hash": 0.7205723252294653,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "c08eee84-64ee-73c4-8d96-c0df813a92cd",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "requestCount",
-                  "color": "#9c27b0",
-                  "settings": {},
-                  "_hash": 0.6993292961463216,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "2f0af7f5-22ea-c0d5-3aef-7f2bb1b534ec",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "canCount",
-                  "color": "#8bc34a",
-                  "settings": {},
-                  "_hash": 0.4850065031079176,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "92a7d208-c143-ea20-5162-1da584532830",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "bacnetCount",
-                  "color": "#3f51b5",
-                  "settings": {},
-                  "_hash": 0.36987531665233075,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "498f090c-b1e5-df74-35d1-3ecf89d33f1c",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "odbcCount",
-                  "color": "#e91e63",
-                  "settings": {},
-                  "_hash": 0.8279345016611896,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "9175179d-a8db-848b-0762-e78da150e768",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "restCount",
-                  "color": "#ffeb3b",
-                  "settings": {},
-                  "_hash": 0.07245826389852739,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "9175179d-a8db-848b-0762-e78da150e768",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "restCount",
-                  "color": "#03a9f4",
-                  "settings": {},
-                  "_hash": 0.4321492578560704,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "1b70460b-428b-2aed-f23a-65927d3e67bb",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "snmpCount",
-                  "color": "#ff9800",
-                  "settings": {},
-                  "_hash": 0.7395574625078822,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "ae357478-b4c2-eee8-dde6-a6942fe6202f",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "ftpCount",
-                  "color": "#673ab7",
-                  "settings": {},
-                  "_hash": 0.9999791065203374,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "6eef4979-369f-c2cc-4894-96a84b6a668a",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "socketCount",
-                  "color": "#cddc39",
-                  "settings": {},
-                  "_hash": 0.47563823619478685,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "9c8e3a63-01a1-64b5-fe44-4f58f8350340",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "xmppCount",
-                  "color": "#009688",
-                  "settings": {},
-                  "_hash": 0.5679285702280172,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "c6501413-d823-29c4-992f-9ae6e8e25549",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "ocppCount",
-                  "color": "#795548",
-                  "settings": {},
-                  "_hash": 0.38390880166484287,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            },
-            {
-              "type": "entityCount",
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "2f04d6e5-8438-857a-ca78-ae78cc8b0c03",
-              "dataKeys": [
-                {
-                  "name": "count",
-                  "type": "count",
-                  "label": "customCount",
-                  "color": "#00bcd4",
-                  "settings": {},
-                  "_hash": 0.9282529984749979,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
+                  "_hash": 0.9675646714923356
                 }
               ],
               "alarmFilterConfig": {
@@ -2348,8 +1927,9 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "0px",
           "settings": {
-            "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div style=\"width: 100%; height: 100%; padding: 0;\" class=\"flex flex-col\">\n  <mat-tab-group class=\"devices-tabs\">\n    <mat-tab label=\"All\" value=\"gateway_devices_0\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_0\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${mqttCount}\" label=\"MQTT\" value=\"gateway_devices_1\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_1\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${modbusCount}\" label=\"MODBUS\" value=\"gateway_devices_2\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_2\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${grpcCount}\" label=\"GRPC\" value=\"gateway_devices_3\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_3\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${opcuaCount}\" label=\"OPCUA\" value=\"gateway_devices_4\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_4\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${bleCount}\" label=\"BLE\" value=\"gateway_devices_6\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_6\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${requestCount}\" label=\"REQUEST\" value=\"gateway_devices_7\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_7\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${canCount}\" label=\"CAN\" value=\"gateway_devices_8\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_8\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${bacnetCount}\" label=\"BACNET\" value=\"gateway_devices_9\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_9\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${odbcCount}\" label=\"ODBC\" value=\"gateway_devices_10\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_10\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${restCount}\" label=\"REST\" value=\"gateway_devices_11\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_11\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${snmpCount}\" label=\"SNMP\" value=\"gateway_devices_12\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_12\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${ftpCount}\" label=\"FTP\" value=\"gateway_devices_13\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_13\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${socketCount}\" label=\"SOCKET\" value=\"gateway_devices_14\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_14\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${xmppCount}\" label=\"XMPP\" value=\"gateway_devices_15\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_15\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${ocppCount}\" label=\"OCPP\" value=\"gateway_devices_16\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_16\"></tb-dashboard-state>\n    </mat-tab>\n    <mat-tab *ngIf=\"${customCount}\" label=\"CUSTOM\" value=\"gateway_devices_17\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_17\"></tb-dashboard-state>\n    </mat-tab>\n  </mat-tab-group>\n</div>\n",
+            "useMarkdownTextFunction": true,
+            "markdownTextPattern": "",
+            "markdownTextFunction": "const count = {\n    mqtt: 0,\n    modbus: 0,\n    grpc: 0,\n    opcua: 0,\n    ble: 0,\n    request: 0,\n    can: 0,\n    bacnet: 0,\n    odbc: 0,\n    rest: 0,\n    snmp: 0,\n    ftp: 0,\n    socket: 0,\n    xmpp: 0,\n    ocpp: 0,\n    knx: 0,\n    custom: 0\n};\n\ndata.forEach(entity => count[entity.connectorType] = count[entity.connectorType]+1);\n\nlet result = `<div style=\"width: 100%; height: 100%; padding: 0;\" class=\"flex flex-col\">\n  <mat-tab-group class=\"devices-tabs\">\n    <mat-tab label=\"All\" value=\"gateway_devices_all\">\n      <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_all\"></tb-dashboard-state>\n    </mat-tab>`;\n\nObject.keys(count).forEach(key => {\n   if (count[key]) {\n       result = result + \n       `<mat-tab label=\"${key.toUpperCase()}\" value=\"gateway_devices_${key}\">\n            <tb-dashboard-state [ctx]=\"ctx\" class=\"flex-1\" syncParentStateParams=\"true\" stateId=\"gateway_devices_${key}\"></tb-dashboard-state>\n        </mat-tab>`\n   } \n});\n\nresult = result + '</mat-tab-group></div>';\n\nreturn result;",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".mat-mdc-form-field-subscript-wrapper {\n    display: none !important;\n}\n\n.devices-tabs {\n    height: 100%;\n}\n\n::ng-deep .mat-mdc-tab-body-wrapper {\n  height: 100%;\n}"
           },
@@ -5333,7 +4913,16 @@
               "type": "entity",
               "name": "",
               "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8",
-              "dataKeys": [],
+              "dataKeys": [
+                {
+                  "name": "general_configuration",
+                  "type": "attribute",
+                  "label": "general_configuration",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.3480165322736335
+                }
+              ],
               "alarmFilterConfig": {
                 "statusList": [
                   "ACTIVE"
@@ -5379,7 +4968,7 @@
           "settings": {
             "useMarkdownTextFunction": true,
             "markdownTextPattern": "let buttonsHtml = \"\" \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    let disabled = false;\n    if (index == 2) {\n        disabled = data[0] && data[0].RemoteLoggingLevel ? data[0].RemoteLoggingLevel == \"NONE\" : true;\n    } else if (index == 4) {\n        const conf = data[0].general_configuration ? JSON.parse(data[0].general_configuration) : {};\n        disabled = !conf.remoteShell;\n    }\n    buttonsHtml += `<button mat-raised-button disabled=${disabled} color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
-            "markdownTextFunction": "const states = ['storage_statistics', 'machine_statistics'];\nconst currentState = ctx.stateController.getStateId();\nlet buttonsHtml = \"\";\nconst buttonName = \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    buttonsHtml += `<button mat-stroked-button [class.tb-primary-fill]=\"${states[index] === currentState}\" disabled=\"false\" color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
+            "markdownTextFunction": "const states = ['storage_statistics', 'machine_statistics', 'custom_statistics'];\nconst currentState = ctx.stateController.getStateId();\nlet buttonsHtml = \"\";\nlet disabled = false;\nconst buttonName = \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    if (states[index] === 'custom_statistics') {\n        const conf = data[0].general_configuration ? JSON.parse(data[0].general_configuration) : {};\n        disabled = !conf.statistics?.enableCustom;\n    }\n    buttonsHtml += `<button mat-stroked-button [class.tb-primary-fill]=\"${states[index] === currentState}\" disabled=\"${disabled}\" color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".action-buttons-container {\r\n    display: flex;\r\n    flex-wrap: wrap;\r\n    flex-direction: row;\r\n    height: 100%;\r\n    width: 100%;\r\n    align-content: start;\r\n}\r\n\r\nbutton {\r\n    flex-grow: 1;\r\n    margin: 10px;\r\n    min-width: 150px;\r\n    height: auto;\r\n    line-height: 36px;\r\n}"
           },
@@ -5427,6 +5016,20 @@
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "b35fc758-b21a-f5d3-e968-3572f1bb9ad4"
+              },
+              {
+                "name": "Custom",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "updateDashboardState",
+                "targetDashboardStateId": "custom_statistics",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "fcff099d-8164-08fd-7ffa-e1565772f368"
               }
             ]
           },
@@ -5835,7 +5438,7 @@
                   "aggregationType": "NONE",
                   "funcBody": null,
                   "usePostProcessing": true,
-                  "postFuncBody": "return value ? (JSON.parse(value)?.storageMsgPulled ?? 0) : 0;"
+                  "postFuncBody": "return value ? (JSON.parse(value)?.msgsReceivedFromPlatform ?? 0) : 0;"
                 }
               ]
             }
@@ -8350,7 +7953,16 @@
               "type": "entity",
               "name": "",
               "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8",
-              "dataKeys": [],
+              "dataKeys": [
+                {
+                  "name": "general_configuration",
+                  "type": "attribute",
+                  "label": "general_configuration",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.5374662835906896
+                }
+              ],
               "alarmFilterConfig": {
                 "statusList": [
                   "ACTIVE"
@@ -8396,7 +8008,7 @@
           "settings": {
             "useMarkdownTextFunction": true,
             "markdownTextPattern": "let buttonsHtml = \"\" \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    let disabled = false;\n    if (index == 2) {\n        disabled = data[0] && data[0].RemoteLoggingLevel ? data[0].RemoteLoggingLevel == \"NONE\" : true;\n    } else if (index == 4) {\n        const conf = data[0].general_configuration ? JSON.parse(data[0].general_configuration) : {};\n        disabled = !conf.remoteShell;\n    }\n    buttonsHtml += `<button mat-raised-button disabled=${disabled} color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
-            "markdownTextFunction": "const states = ['storage_statistics', 'machine_statistics'];\nconst currentState = ctx.stateController.getStateId();\nlet buttonsHtml = \"\";\nconst buttonName = \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    buttonsHtml += `<button mat-stroked-button [class.tb-primary-fill]=\"${states[index] === currentState}\" disabled=\"false\" color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
+            "markdownTextFunction": "const states = ['storage_statistics', 'machine_statistics', 'custom_statistics'];\nconst currentState = ctx.stateController.getStateId();\nlet buttonsHtml = \"\";\nlet disabled = false;\nconst buttonName = \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    if (states[index] === 'custom_statistics') {\n        const conf = data[0].general_configuration ? JSON.parse(data[0].general_configuration) : {};\n        disabled = !conf.statistics?.enableCustom;\n    }\n    buttonsHtml += `<button mat-stroked-button [class.tb-primary-fill]=\"${states[index] === currentState}\" disabled=\"${disabled}\" color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".action-buttons-container {\r\n    display: flex;\r\n    flex-wrap: wrap;\r\n    flex-direction: row;\r\n    height: 100%;\r\n    width: 100%;\r\n    align-content: start;\r\n}\r\n\r\nbutton {\r\n    flex-grow: 1;\r\n    margin: 10px;\r\n    min-width: 150px;\r\n    height: auto;\r\n    line-height: 36px;\r\n}"
           },
@@ -8444,6 +8056,20 @@
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "b35fc758-b21a-f5d3-e968-3572f1bb9ad4"
+              },
+              {
+                "name": "Custom",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "updateDashboardState",
+                "targetDashboardStateId": "custom_statistics",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "10a5a4b6-71fb-f51c-2836-bb360938127f"
               }
             ]
           },
@@ -8557,6 +8183,322 @@
         "row": 0,
         "col": 0,
         "id": "38063fe5-1bd8-695b-a40b-92c1aed19831"
+      },
+      "e48e7a66-a30e-2494-b0c0-dd3249944286": {
+        "typeFullFqn": "system.gateway_widgets.gateway_status",
+        "type": "latest",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": "function",
+              "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8",
+              "dataKeys": [
+                {
+                  "name": "active",
+                  "type": "attribute",
+                  "label": "active",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.07932656697286933
+                },
+                {
+                  "name": "lastDisconnectTime",
+                  "type": "attribute",
+                  "label": "lastDisconnectTime",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.06662431625551446
+                },
+                {
+                  "name": "lastConnectTime",
+                  "type": "attribute",
+                  "label": "lastConnectTime",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.28485659401606434
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideQuickInterval": false
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1733240126084,
+                "endTimeMs": 1733326526084
+              },
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideFixedInterval": false,
+              "hideQuickInterval": false
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "",
+          "settings": {
+            "cardHtml": "<div class='card'>HTML code here</div>",
+            "cardCss": ".card {\n    font-weight: bold;\n    font-size: 32px;\n    color: #999;\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}"
+          },
+          "title": "HTML Card",
+          "dropShadow": true,
+          "useDashboardTimewindow": true,
+          "displayTimewindow": true,
+          "enableFullscreen": false,
+          "margin": "16px 16px 16px 0",
+          "borderRadius": "5px",
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
+        },
+        "row": 0,
+        "col": 0,
+        "id": "e48e7a66-a30e-2494-b0c0-dd3249944286"
+      },
+      "3a1f2fe6-7da9-15aa-777d-383e0ac01520": {
+        "typeFullFqn": "system.cards.markdown_card",
+        "type": "latest",
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": "",
+              "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8",
+              "dataKeys": [],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideQuickInterval": false
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1732109250067,
+                "endTimeMs": 1732195650067
+              },
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideFixedInterval": false,
+              "hideQuickInterval": false
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "useMarkdownTextFunction": true,
+            "markdownTextPattern": "let buttonsHtml = \"\" \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    let disabled = false;\n    if (index == 2) {\n        disabled = data[0] && data[0].RemoteLoggingLevel ? data[0].RemoteLoggingLevel == \"NONE\" : true;\n    } else if (index == 4) {\n        const conf = data[0].general_configuration ? JSON.parse(data[0].general_configuration) : {};\n        disabled = !conf.remoteShell;\n    }\n    buttonsHtml += `<button mat-raised-button disabled=${disabled} color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
+            "markdownTextFunction": "const states = ['storage_statistics', 'machine_statistics', 'custom_statistics'];\nconst currentState = ctx.stateController.getStateId();\nlet buttonsHtml = \"\";\nconst buttonName = \nctx.actionsApi.getActionDescriptors('elementClick').forEach((btn, index)=>{\n    buttonsHtml += `<button mat-stroked-button [class.tb-primary-fill]=\"${states[index] === currentState}\" disabled=\"false\" color=\"primary\" (click)=\"ctx.actionsApi.handleWidgetAction($event, ctx.actionsApi.getActionDescriptors('elementClick')[${index}], ctx.datasources[0].entity.id)\" class=\"w-full md:w-1/2\">${btn.displayName}</button>`\n});\n\nreturn `<div class=\"action-buttons-container flex flex-col md:flex-row flex-wrap gap-1\">${buttonsHtml}</div>`;",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".action-buttons-container {\r\n    display: flex;\r\n    flex-wrap: wrap;\r\n    flex-direction: row;\r\n    height: 100%;\r\n    width: 100%;\r\n    align-content: start;\r\n}\r\n\r\nbutton {\r\n    flex-grow: 1;\r\n    margin: 10px;\r\n    min-width: 150px;\r\n    height: auto;\r\n    line-height: 36px;\r\n}"
+          },
+          "title": "Markdown/HTML Card",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "displayTimewindow": true,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "Storage",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "updateDashboardState",
+                "targetDashboardStateId": "storage_statistics",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "fc4c338d-5799-f7dc-9ecb-448e65f8045d"
+              },
+              {
+                "name": "Machine",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "updateDashboardState",
+                "targetDashboardStateId": "machine_statistics",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "b35fc758-b21a-f5d3-e968-3572f1bb9ad4"
+              },
+              {
+                "name": "Custom",
+                "icon": "more_horiz",
+                "useShowWidgetActionFunction": null,
+                "showWidgetActionFunction": "return true;",
+                "type": "updateDashboardState",
+                "targetDashboardStateId": "custom_statistics",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openRightLayout": false,
+                "openInSeparateDialog": false,
+                "openInPopover": false,
+                "id": "fcff099d-8164-08fd-7ffa-e1565772f368"
+              }
+            ]
+          },
+          "borderRadius": "5px",
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "margin": "16px 16px 0 0",
+          "enableDataExport": false
+        },
+        "row": 0,
+        "col": 0,
+        "id": "3a1f2fe6-7da9-15aa-777d-383e0ac01520"
+      },
+      "7a34986a-ec7f-4c64-84f9-338cf1626722": {
+        "typeFullFqn": "system.gateway_widgets.gateway_custom_statistics",
+        "type": "timeseries",
+        "sizeX": 8,
+        "sizeY": 5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": "",
+              "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8",
+              "dataKeys": [],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "shadowSize": 4,
+            "fontColor": "#545454",
+            "fontSize": 10,
+            "xaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "yaxis": {
+              "showLabels": true,
+              "color": "#545454"
+            },
+            "grid": {
+              "color": "#545454",
+              "tickColor": "#DDDDDD",
+              "verticalLines": true,
+              "horizontalLines": true,
+              "outlineWidth": 1
+            },
+            "legend": {
+              "show": true,
+              "position": "nw",
+              "backgroundColor": "#f0f0f0",
+              "backgroundOpacity": 0.85,
+              "labelBoxBorderColor": "rgba(1, 1, 1, 0.45)"
+            },
+            "decimals": 1,
+            "stack": false,
+            "tooltipIndividual": false,
+            "showLegend": false
+          },
+          "title": "Gateway custom statistics ",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "mobileHeight": null,
+          "useDashboardTimewindow": true,
+          "displayTimewindow": true,
+          "showTitleIcon": false,
+          "titleTooltip": "",
+          "margin": "16px",
+          "borderRadius": "5px",
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "enableDataExport": false
+        },
+        "row": 0,
+        "col": 0,
+        "id": "7a34986a-ec7f-4c64-84f9-338cf1626722"
       }
     },
     "states": {
@@ -8876,482 +8818,6 @@
           }
         }
       },
-      "gateway_devices_0": {
-        "name": "Gateway devices",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "1615bd4e-c0a4-c32c-3706-3c83214cb8d7": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": true,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_1": {
-        "name": "gateway_devices_mqtt",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "aafba3d8-a381-21c0-ecbe-446da3cdc041": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": true,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_2": {
-        "name": "gateway_devices_modbus",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "7f676bb2-bde2-10e7-80d8-25dd734e8e22": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": true,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_3": {
-        "name": "gateway_devices_grpc",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "d64482d8-001a-6f33-9b56-665530098fe5": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_4": {
-        "name": "gateway_devices_opcua",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "bb27723a-989c-2327-5808-b56d490b93ab": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_6": {
-        "name": "gateway_devices_ble",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "cf2eba6b-44f6-9cc2-6089-35c735f54898": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_7": {
-        "name": "gateway_devices_request",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "3f6ed61b-f5af-13e3-7505-f69fd53f8211": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_8": {
-        "name": "gateway_devices_can",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "b06cecaa-2806-65a9-782d-4f2d8cf95a6c": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_9": {
-        "name": "gateway_devices_bacnet",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "c3d39b60-a668-7f5e-e6f4-cae27151f4aa": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_10": {
-        "name": "gateway_devices_odbc",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "f78a0d66-60cb-188f-857f-9acd4d24bd5a": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_11": {
-        "name": "gateway_devices_rest",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "b81a171c-77c0-b857-21d2-cff02a1cb733": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_12": {
-        "name": "gateway_devices_snmp",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "0e399bef-01d2-4e4e-02d2-e254ebe91e56": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_13": {
-        "name": "gateway_devices_ftp",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "819c1d39-de7c-8ac3-858e-0040d286823e": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_14": {
-        "name": "gateway_devices_socket",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "d4f73f32-f719-98bb-d427-b5c8957e8f47": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_15": {
-        "name": "gateway_devices_xmpp",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "f16a258c-3f6c-9317-fda7-48b33d8fe8b9": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_16": {
-        "name": "gateway_devices_ocpp",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "d1951ec7-ab13-87e4-bc05-ce2318dca353": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
-      "gateway_devices_17": {
-        "name": "gateway_devices_custom",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "75b6372d-4def-42b4-8774-4edf413a8b83": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70,
-              "layoutType": "default"
-            }
-          }
-        }
-      },
       "storage_statistics": {
         "name": "Storage statistics",
         "root": false,
@@ -9571,6 +9037,535 @@
               "minColumns": 21,
               "viewFormat": "grid",
               "autoFillHeight": false,
+              "rowHeight": 70,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "gateway_devices_all": {
+        "name": "Gateway devices",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "1615bd4e-c0a4-c32c-3706-3c83214cb8d7": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_bacnet": {
+        "name": "gateway_devices_bacnet",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "c3d39b60-a668-7f5e-e6f4-cae27151f4aa": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_ble": {
+        "name": "gateway_devices_ble",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "cf2eba6b-44f6-9cc2-6089-35c735f54898": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_can": {
+        "name": "gateway_devices_can",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "b06cecaa-2806-65a9-782d-4f2d8cf95a6c": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_custom": {
+        "name": "gateway_devices_custom",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "75b6372d-4def-42b4-8774-4edf413a8b83": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_ftp": {
+        "name": "gateway_devices_ftp",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "819c1d39-de7c-8ac3-858e-0040d286823e": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_grpc": {
+        "name": "gateway_devices_grpc",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "d64482d8-001a-6f33-9b56-665530098fe5": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_modbus": {
+        "name": "gateway_devices_modbus",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "7f676bb2-bde2-10e7-80d8-25dd734e8e22": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_mqtt": {
+        "name": "gateway_devices_mqtt",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "aafba3d8-a381-21c0-ecbe-446da3cdc041": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_ocpp": {
+        "name": "gateway_devices_ocpp",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "d1951ec7-ab13-87e4-bc05-ce2318dca353": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_odbc": {
+        "name": "gateway_devices_odbc",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "f78a0d66-60cb-188f-857f-9acd4d24bd5a": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_opcua": {
+        "name": "gateway_devices_opcua",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "bb27723a-989c-2327-5808-b56d490b93ab": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_request": {
+        "name": "gateway_devices_request",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "3f6ed61b-f5af-13e3-7505-f69fd53f8211": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_rest": {
+        "name": "gateway_devices_rest",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "b81a171c-77c0-b857-21d2-cff02a1cb733": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_snmp": {
+        "name": "gateway_devices_snmp",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "0e399bef-01d2-4e4e-02d2-e254ebe91e56": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_socket": {
+        "name": "gateway_devices_socket",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "d4f73f32-f719-98bb-d427-b5c8957e8f47": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "gateway_devices_xmpp": {
+        "name": "gateway_devices_xmpp",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "f16a258c-3f6c-9317-fda7-48b33d8fe8b9": {
+                "sizeX": 24,
+                "sizeY": 11,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "layoutType": "default"
+            }
+          }
+        }
+      },
+      "custom_statistics": {
+        "name": "Custom statistics",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "e48e7a66-a30e-2494-b0c0-dd3249944286": {
+                "sizeX": 4,
+                "sizeY": 2,
+                "preserveAspectRatio": false,
+                "resizable": true,
+                "row": 12,
+                "col": 20,
+                "mobileOrder": 3,
+                "mobileHeight": 2
+              },
+              "3a1f2fe6-7da9-15aa-777d-383e0ac01520": {
+                "sizeX": 4,
+                "sizeY": 12,
+                "resizable": true,
+                "row": 0,
+                "col": 20,
+                "mobileOrder": 1,
+                "mobileHeight": 3
+              },
+              "7a34986a-ec7f-4c64-84f9-338cf1626722": {
+                "sizeX": 20,
+                "sizeY": 14,
+                "mobileHeight": null,
+                "row": 0,
+                "col": 0,
+                "resizable": true,
+                "mobileOrder": 2
+              }
+            },
+            "gridSettings": {
+              "layoutType": "default",
+              "backgroundColor": "#eeeeee",
+              "columns": 24,
+              "margin": 0,
+              "outerMargin": true,
+              "backgroundSizeMode": "100%",
+              "minColumns": 24,
+              "viewFormat": "grid",
+              "autoFillHeight": true,
               "rowHeight": 70,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
@@ -10299,16 +10294,29 @@
       "hideAggregation": false,
       "hideAggInterval": false,
       "hideTimezone": false,
-      "selectedTab": 1,
+      "selectedTab": 0,
+      "realtime": {
+        "realtimeType": 0,
+        "interval": 120000,
+        "timewindowMs": 900000,
+        "quickInterval": "CURRENT_DAY",
+        "hideInterval": false,
+        "hideLastInterval": false,
+        "hideQuickInterval": false
+      },
       "history": {
         "historyType": 0,
-        "timewindowMs": 300000,
         "interval": 120000,
+        "timewindowMs": 900000,
         "fixedTimewindow": {
           "startTimeMs": 1686306375309.7058,
           "endTimeMs": 1686307998839.1177
         },
-        "quickInterval": "CURRENT_DAY"
+        "quickInterval": "CURRENT_DAY",
+        "hideInterval": false,
+        "hideLastInterval": false,
+        "hideFixedInterval": false,
+        "hideQuickInterval": false
       },
       "aggregation": {
         "type": "NONE",

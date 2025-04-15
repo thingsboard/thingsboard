@@ -26,10 +26,10 @@ import { Router } from '@angular/router';
 import {
   Resource,
   ResourceInfo,
+  ResourceInfoWithReferences,
   ResourceSubType,
   ResourceSubTypeTranslationMap,
   ResourceType,
-  ResourceInfoWithReferences,
   toResourceDeleteResult
 } from '@shared/models/resource.models';
 import { EntityType, entityTypeResources } from '@shared/models/entity-type.models';
@@ -57,7 +57,6 @@ import {
   ResourcesInUseDialogData
 } from "@shared/components/resource/resources-in-use-dialog.component";
 import { ResourcesDatasource } from "@home/pages/admin/resource/resources-datasource";
-import { AuthUser } from '@shared/models/user.model';
 
 @Injectable()
 export class JsLibraryTableConfigResolver  {
@@ -97,7 +96,7 @@ export class JsLibraryTableConfigResolver  {
         entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
     );
 
-    this.config.cellActionDescriptors = this.configureCellActions(getCurrentAuthUser(this.store));
+    this.config.cellActionDescriptors = this.configureCellActions();
 
     this.config.groupActionDescriptors = [{
       name: this.translate.instant('action.delete'),
@@ -137,6 +136,7 @@ export class JsLibraryTableConfigResolver  {
       resourceSubType: ''
     };
     const authUser = getCurrentAuthUser(this.store);
+    this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.detailsReadonly = (resource) => this.detailsReadonly(resource, authUser.authority);
     return this.config;
@@ -165,6 +165,8 @@ export class JsLibraryTableConfigResolver  {
       case 'downloadResource':
         this.downloadResource(action.event, action.entity);
         return true;
+      case 'deleteLibrary':
+        this.deleteResource(action.event, action.entity);
     }
     return false;
   }
@@ -199,7 +201,11 @@ export class JsLibraryTableConfigResolver  {
         ).subscribe(
           (deleteResult) => {
             if (deleteResult.success) {
-              this.config.updateData();
+              if (this.config.getEntityDetailsPage()) {
+                this.config.getEntityDetailsPage().goBack();
+              } else {
+                this.config.updateData(true);
+              }
             } else if (deleteResult.resourceIsReferencedError) {
               const resources: ResourceInfoWithReferences[] = [{...resource, ...{references: deleteResult.references}}];
               const data = {
@@ -220,11 +226,13 @@ export class JsLibraryTableConfigResolver  {
                   data
               }).afterClosed().subscribe((resources) => {
                 if (resources) {
-                  this.resourceService.deleteResource(resource.id.id, true).subscribe(
-                    () => {
-                      this.config.updateData();
+                  this.resourceService.deleteResource(resource.id.id, true).subscribe(() => {
+                    if (this.config.getEntityDetailsPage()) {
+                      this.config.getEntityDetailsPage().goBack();
+                    } else {
+                      this.config.updateData(true);
                     }
-                  );
+                  });
                 }
               });
             } else {
@@ -275,7 +283,7 @@ export class JsLibraryTableConfigResolver  {
                     message: this.translate.instant('javascript.javascript-resources-are-in-use-text'),
                     deleteText: 'javascript.delete-javascript-resource-in-use-text',
                     selectedText: 'javascript.selected-javascript-resources',
-                    datasource: new ResourcesDatasource(this.resourceService, resourcesWithReferences, entity => true),
+                    datasource: new ResourcesDatasource(this.resourceService, resourcesWithReferences, () => true),
                     columns: ['select', 'title', 'references']
                   }
                 };
@@ -309,7 +317,7 @@ export class JsLibraryTableConfigResolver  {
     }
   }
 
-  private configureCellActions(authUser: AuthUser): Array<CellActionDescriptor<ResourceInfo>> {
+  private configureCellActions(): Array<CellActionDescriptor<ResourceInfo>> {
     const actions: Array<CellActionDescriptor<ResourceInfo>> = [];
     actions.push(
       {
@@ -321,7 +329,7 @@ export class JsLibraryTableConfigResolver  {
       {
         name: this.translate.instant('javascript.delete'),
         icon: 'delete',
-        isEnabled: (resource) => this.isResourceEditable(resource, authUser.authority),
+        isEnabled: (resource) => this.config.deleteEnabled(resource),
         onAction: ($event, entity) => this.deleteResource($event, entity)
       },
     );

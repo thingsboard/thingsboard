@@ -1,6 +1,7 @@
 ##### Examples
 
-* Display details with corresponding telemetry data for `energy meter` or `thermometer` device types:
+* Display details with corresponding telemetry data for `energy meter` or `thermometer` device types.<br/>
+  Ensure that the <code>Type</code>, <code>energy</code> and <code>temperature</code> keys are included in the <b>additional data keys</b> configuration:
 
 ```javascript
 var deviceType = data.Type;

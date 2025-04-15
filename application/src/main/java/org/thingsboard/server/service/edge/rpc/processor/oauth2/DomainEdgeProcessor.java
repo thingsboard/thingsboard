@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.OAuth2ClientUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OAuth2DomainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -42,7 +43,7 @@ public class DomainEdgeProcessor extends BaseEdgeProcessor {
     private DomainService domainService;
 
     @Override
-    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         DomainId domainId = new DomainId(edgeEvent.getEntityId());
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {

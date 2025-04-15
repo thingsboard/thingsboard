@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" class="marker-color" fill="#307FE5">
+  <circle cx="17" cy="17" r="17" mask="url(#icon-mask)"/>
+  <circle cx="17" cy="17" r="17" mask="url(#icon-mask-2)" fill="#fff"/>
+  <mask id="icon-mask" class="icon-mask-exclude">
+    <g class="marker-icon-container" transform="translate(17,17)">
+      <rect width="100%" height="100%" fill="#fff" transform="translate(-17,-17)"></rect>
+    </g>
+  </mask>
+  <mask id="icon-mask-2" class="icon-mask-overlay">
+    <g class="marker-icon-container" transform="translate(17,17)">
+      <rect width="100%" height="100%" fill="#000" transform="translate(-17,-17)"></rect>
+    </g>
+  </mask>
+</svg>

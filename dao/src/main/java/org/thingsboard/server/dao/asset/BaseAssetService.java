@@ -294,6 +294,14 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     }
 
     @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findProfileEntityIdInfosByTenantId, tenantId[{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return assetDao.findProfileEntityIdInfosByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     public PageData<AssetId> findAssetIdsByTenantIdAndAssetProfileId(TenantId tenantId, AssetProfileId assetProfileId, PageLink pageLink) {
         log.trace("Executing findAssetIdsByTenantIdAndAssetProfileId, tenantId [{}], assetProfileId [{}]", tenantId, assetProfileId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);

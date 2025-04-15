@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs.util;
+package org.thingsboard.server.common.msg.cf;
 
-import org.springframework.util.ConcurrentReferenceHashMap;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
-import java.util.concurrent.ConcurrentMap;
+@Data
+public class CalculatedFieldInitProfileEntityMsg implements ToCalculatedFieldSystemMsg {
 
-public class TbStringPool {
+    private final TenantId tenantId;
+    private final EntityId profileEntityId;
+    private final EntityId entityId;
 
-    private static final ConcurrentMap<String, String> pool = new ConcurrentReferenceHashMap<>();
-
-    public static String intern(String data) {
-        if (data == null) {
-            return null;
-        }
-        return pool.computeIfAbsent(data, str -> str);
-    }
-
-    public static int size(){
-        return pool.size();
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.CF_INIT_PROFILE_ENTITY_MSG;
     }
 
 }

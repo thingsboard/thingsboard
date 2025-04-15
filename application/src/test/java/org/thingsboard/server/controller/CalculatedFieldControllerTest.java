@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -85,7 +84,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         assertThat(savedCalculatedField.getEntityId()).isEqualTo(calculatedField.getEntityId());
         assertThat(savedCalculatedField.getType()).isEqualTo(calculatedField.getType());
         assertThat(savedCalculatedField.getName()).isEqualTo(calculatedField.getName());
-        assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getCalculatedFieldConfig(testDevice.getId()));
+        assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getCalculatedFieldConfig());
         assertThat(savedCalculatedField.getVersion()).isEqualTo(1L);
 
         savedCalculatedField.setName("Test CF");
@@ -134,16 +133,16 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
-        calculatedField.setConfiguration(getCalculatedFieldConfig(null));
+        calculatedField.setConfiguration(getCalculatedFieldConfig());
         calculatedField.setVersion(1L);
         return calculatedField;
     }
 
-    private CalculatedFieldConfiguration getCalculatedFieldConfig(EntityId referencedEntityId) {
+    private CalculatedFieldConfiguration getCalculatedFieldConfig() {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
         Argument argument = new Argument();
-        argument.setRefEntityId(referencedEntityId);
+        argument.setRefEntityId(null);
         ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
         argument.setRefEntityKey(refEntityKey);
 

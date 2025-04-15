@@ -131,15 +131,11 @@ $previewSize: 100px !default;
   .tb-file-name {
     color: rgba(0, 0, 0, 0.54);
     font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .tb-file-hint {
     color: rgba(0, 0, 0, 0.38);
     font-weight: 400;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 

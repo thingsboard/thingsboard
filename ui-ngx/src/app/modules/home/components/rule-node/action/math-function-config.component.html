@@ -32,6 +32,12 @@
     <legend class="group-title">{{'rule-node-config.custom-expression-field-input' | translate }} *</legend>
     <mat-form-field class="mat-block no-margin-top flex-1" subscriptSizing="dynamic">
       <input matInput formControlName="customFunction" required/>
+      <div  matSuffix
+            class="pr-2"
+            [tb-help-popup]="'math/math-methods_fn'"
+            tb-help-popup-placement="left"
+            [tb-help-popup-style]="{maxWidth: '970px'}">
+      </div>
       <mat-error *ngIf="mathFunctionConfigForm.get('customFunction').hasError('required')" translate>
         rule-node-config.custom-expression-field-input-required
       </mat-error>

@@ -41,7 +41,7 @@ import L from 'leaflet';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { DataKey, FormattedData } from '@shared/models/widget.models';
+import { DataKey, DatasourceType, FormattedData } from '@shared/models/widget.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -170,7 +170,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   protected settings: S;
 
-  protected datasource: TbMapDatasource;
+  protected dataSources: TbMapDatasource[];
 
   protected mapDataId: string;
 
@@ -202,13 +202,19 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
   }
 
   public setup(): Observable<any> {
-    this.datasource = mapDataSourceSettingsToDatasource(this.settings);
-    this.datasource.dataKeys = this.settings.additionalDataKeys ? [...this.settings.additionalDataKeys] : [];
-    const colorRangeKeys = this.allColorSettings().filter(settings => settings.type === DataLayerColorType.range && settings.rangeKey)
-                                                  .map(settings => settings.rangeKey);
-    this.datasource.dataKeys.push(...colorRangeKeys);
-    this.mapDataId = this.datasource.mapDataIds[0];
-    this.datasource = this.setupDatasource(this.datasource);
+    this.dataSources = [];
+    const datasource = mapDataSourceSettingsToDatasource(this.settings);
+    this.mapDataId = datasource.mapDataIds[0];
+    this.dataSources.push(datasource);
+    if (this.settings.additionalDataSources?.length && datasource.type !== DatasourceType.function) {
+      this.dataSources.push(...this.settings.additionalDataSources.map(ds => mapDataSourceSettingsToDatasource(ds, this.mapDataId)));
+    }
+    const dataKeys = this.calculateDataKeys();
+    const latestDataKeys = this.calculateLatestDataKeys();
+    this.dataSources.forEach(ds => ds.dataKeys.push(...dataKeys));
+    if (latestDataKeys?.length) {
+      this.dataSources.forEach(ds => ds.latestDataKeys.push(...latestDataKeys));
+    }
     return forkJoin(
       [
         this.dataLayerLabelProcessor ? this.dataLayerLabelProcessor.setup() : of(null),
@@ -241,8 +247,8 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
     return this.map.type();
   }
 
-  public getDatasource(): TbMapDatasource {
-    return this.datasource;
+  public getDataSources(): TbMapDatasource[] {
+    return this.dataSources;
   }
 
   public getDataLayerContainer(): L.FeatureGroup {
@@ -289,8 +295,21 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
     return L.featureGroup([], {snapIgnore: true});
   }
 
-  protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
-    return datasource;
+  protected calculateDataKeys(): DataKey[] {
+    const dataKeys = this.settings.additionalDataKeys ? [...this.settings.additionalDataKeys] : [];
+    const colorRangeKeys = this.allColorSettings().filter(settings => settings.type === DataLayerColorType.range && settings.rangeKey)
+            .map(settings => settings.rangeKey);
+    dataKeys.push(...colorRangeKeys);
+    dataKeys.push(...this.getDataKeys());
+    return dataKeys;
+  }
+
+  protected calculateLatestDataKeys(): DataKey[] {
+    return [];
+  }
+
+  protected getDataKeys(): DataKey[] {
+    return [];
   }
 
   protected allColorSettings(): DataLayerColorSettings[] {

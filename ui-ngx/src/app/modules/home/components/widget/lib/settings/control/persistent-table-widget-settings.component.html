@@ -49,7 +49,7 @@
           {{ 'widgets.table.display-pagination' | translate }}
         </mat-slide-toggle>
         <div class="tb-form-row space-between column-xs">
-          <div class="fixed-title-width">{{ 'widgets.table.page-step-settings' | translate }}</div>
+          <div class="fixed-title-width !min-w-30">{{ 'widgets.table.page-step-settings' | translate }}</div>
           <div class="flex flex-row items-center justify-start gap-2">
             <div class="tb-small-label" translate>widgets.table.page-step-increment</div>
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
@@ -67,7 +67,7 @@
                 warning
               </mat-icon>
             </mat-form-field>
-            <mat-divider vertical></mat-divider>
+            <mat-divider vertical class="xs:hidden"></mat-divider>
             <div class="tb-small-label" translate>widgets.table.page-step-count</div>
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required

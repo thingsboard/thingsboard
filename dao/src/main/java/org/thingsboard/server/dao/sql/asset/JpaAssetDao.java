@@ -39,14 +39,12 @@ import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.device.NativeAssetRepository;
-import org.thingsboard.server.dao.sql.device.NativeDeviceRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityInfosToDto;
 
@@ -262,8 +260,14 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
 
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink) {
-        log.debug("Find profile device id infos by pageLink [{}]", pageLink);
+        log.debug("Find profile asset id infos by pageLink [{}]", pageLink);
         return nativeAssetRepository.findProfileEntityIdInfos(DaoUtil.toPageable(pageLink));
+    }
+
+    @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink) {
+        log.debug("Find profile asset id infos by pageLink [{}]", pageLink);
+        return nativeAssetRepository.findProfileEntityIdInfosByTenantId(tenantId, DaoUtil.toPageable(pageLink));
     }
 
     @Override

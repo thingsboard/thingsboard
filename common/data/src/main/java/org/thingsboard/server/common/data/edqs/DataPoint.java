@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.edqs;
 
 import org.thingsboard.server.common.data.kv.DataType;
 
-public interface DataPoint {
+public interface DataPoint extends Comparable<DataPoint> {
 
     String NOT_SUPPORTED = "Not supported!";
 

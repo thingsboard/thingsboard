@@ -64,7 +64,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
     @Schema(description = "Version of calculated field configuration.", example = "0")
     private int configurationVersion;
     @Schema(implementation = SimpleCalculatedFieldConfiguration.class)
-    private transient CalculatedFieldConfiguration configuration;
+    private CalculatedFieldConfiguration configuration;
     @Getter
     @Setter
     private Long version;
@@ -112,6 +112,18 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
         return super.getCreatedTime();
     }
 
+    // Getter is ignored for serialization
+    @JsonIgnore
+    public boolean isDebugMode() {
+        return debugMode;
+    }
+
+    // Setter is annotated for deserialization
+    @JsonSetter
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
+    }
+
     @Override
     public String toString() {
         return new StringBuilder()
@@ -126,18 +138,6 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
                 .append(", createdTime=").append(createdTime)
                 .append(", id=").append(id).append(']')
                 .toString();
-    }
-
-    // Getter is ignored for serialization
-    @JsonIgnore
-    public boolean isDebugMode() {
-        return debugMode;
-    }
-
-    // Setter is annotated for deserialization
-    @JsonSetter
-    public void setDebugMode(boolean debugMode) {
-        this.debugMode = debugMode;
     }
 
 }

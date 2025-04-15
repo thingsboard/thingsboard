@@ -263,7 +263,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         TopicPartitionInfo tpi = TopicPartitionInfo.builder()
                 .topic(requestTemplate.getDefaultTopic())
                 .partition(partition)
-                .useInternalPartition(partition != null)
                 .build();
         requestTemplate.send(tpi, request, new TbQueueCallback() {
             @Override

@@ -20,6 +20,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface TbQueueConsumerManagerTask {
 
@@ -46,7 +47,9 @@ public interface TbQueueConsumerManagerTask {
         }
     }
 
-    record AddPartitionsTask(Set<TopicPartitionInfo> partitions, Consumer<TopicPartitionInfo> onStop) implements TbQueueConsumerManagerTask {
+    record AddPartitionsTask(Set<TopicPartitionInfo> partitions,
+                             Consumer<TopicPartitionInfo> onStop,
+                             Function<String, Long> startOffsetProvider) implements TbQueueConsumerManagerTask {
         @Override
         public QueueTaskType getType() {
             return QueueTaskType.ADD_PARTITIONS;

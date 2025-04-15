@@ -15,6 +15,7 @@
 ///
 
 import { EntityDebugSettings } from '@shared/models/entity.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export interface AdditionalDebugActionConfig<Action = (...args: unknown[]) => void> {
   action: Action;
@@ -24,10 +25,9 @@ export interface AdditionalDebugActionConfig<Action = (...args: unknown[]) => vo
 export interface EntityDebugSettingPanelConfig {
   debugSettings: EntityDebugSettings;
   debugConfig: {
-    maxDebugModeDuration: number;
-    debugLimitsConfiguration: string;
-    entityLabel?: string;
+    maxDebugModeDuration?: number;
     additionalActionConfig?: AdditionalDebugActionConfig;
+    entityType: EntityType;
   }
   onSettingsAppliedFn: (settings: EntityDebugSettings) => void;
 }

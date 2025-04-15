@@ -395,6 +395,14 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findProfileEntityIdInfosByTenantId, tenantId[{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return deviceDao.findProfileEntityIdInfosByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     public PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);

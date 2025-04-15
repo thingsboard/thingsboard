@@ -315,7 +315,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
                 ScheduledFuture<?> task = delayedTasks.remove(serviceId);
                 if (task != null) {
                     if (task.cancel(false)) {
-                        log.debug("[{}] Recalculate partitions ignored. Service was restarted in time [{}].",
+                        log.info("[{}] Recalculate partitions ignored. Service was restarted in time [{}].",
                                 serviceId, serviceTypesList);
                     } else {
                         log.debug("[{}] Going to recalculate partitions. Service was not restarted in time [{}]!",

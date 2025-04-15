@@ -33,11 +33,9 @@ import {
   Validators
 } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AdditionalMapDataSourceSettings } from '@shared/models/widget/maps/map.models';
-import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
+import { MapDataSourceSettings } from '@shared/models/widget/maps/map.models';
+import { DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { genNextLabelForDataKeys } from '@core/utils';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
@@ -56,13 +54,12 @@ import { MapSettingsContext } from '@home/components/widget/lib/settings/common/
 export class MapDataSourceRowComponent implements ControlValueAccessor, OnInit {
 
   DatasourceType = DatasourceType;
-  DataKeyType = DataKeyType;
 
   EntityType = EntityType;
 
   widgetType = widgetType;
 
-  datasourceTypes: Array<DatasourceType> = [];
+  datasourceTypes: Array<DatasourceType> = [DatasourceType.device, DatasourceType.entity];
   datasourceTypesTranslations = datasourceTypeTranslationMap;
 
   @Input()
@@ -76,9 +73,7 @@ export class MapDataSourceRowComponent implements ControlValueAccessor, OnInit {
 
   dataSourceFormGroup: UntypedFormGroup;
 
-  generateAdditionalDataKey = this.generateDataKey.bind(this);
-
-  modelValue: AdditionalMapDataSourceSettings;
+  modelValue: MapDataSourceSettings;
 
   private propagateChange = (_val: any) => {};
 
@@ -88,17 +83,11 @@ export class MapDataSourceRowComponent implements ControlValueAccessor, OnInit {
   }
 
   ngOnInit() {
-    if (this.context.functionsOnly) {
-      this.datasourceTypes = [DatasourceType.function];
-    } else {
-      this.datasourceTypes = [DatasourceType.function, DatasourceType.device, DatasourceType.entity];
-    }
     this.dataSourceFormGroup = this.fb.group({
       dsType: [null, [Validators.required]],
-      dsLabel: [null, []],
       dsDeviceId: [null, [Validators.required]],
       dsEntityAliasId: [null, [Validators.required]],
-      dataKeys: [null, [Validators.required]]
+      dsFilterId: [null, []]
     });
     this.dataSourceFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -108,7 +97,7 @@ export class MapDataSourceRowComponent implements ControlValueAccessor, OnInit {
     this.dataSourceFormGroup.get('dsType').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(
-      (newDsType: DatasourceType) => this.onDsTypeChanged(newDsType)
+      () => this.updateValidators()
     );
   }
 
@@ -129,72 +118,27 @@ export class MapDataSourceRowComponent implements ControlValueAccessor, OnInit {
     }
   }
 
-  writeValue(value: AdditionalMapDataSourceSettings): void {
+  writeValue(value: MapDataSourceSettings): void {
     this.modelValue = value;
     this.dataSourceFormGroup.patchValue(
       {
         dsType: value?.dsType,
-        dsLabel: value?.dsLabel,
         dsDeviceId: value?.dsDeviceId,
         dsEntityAliasId: value?.dsEntityAliasId,
-        dataKeys: value?.dataKeys
+        dsFilterId: value?.dsFilterId
       }, {emitEvent: false}
     );
     this.updateValidators();
     this.cd.markForCheck();
   }
 
-  private generateDataKey(key: DataKey): DataKey {
-    const dataKey = this.context.callbacks.generateDataKey(key.name, key.type, null, false, null);
-    const dataKeys: DataKey[] = this.dataSourceFormGroup.get('dataKeys').value || [];
-    dataKey.label = genNextLabelForDataKeys(dataKey.label, dataKeys);
-    return dataKey;
-  }
-
-  private onDsTypeChanged(newDsType: DatasourceType) {
-    let updateModel = false;
-    const dataKeys: DataKey[] = this.dataSourceFormGroup.get('dataKeys').value;
-    if (dataKeys?.length) {
-      for (const key of dataKeys) {
-        updateModel = this.updateDataKeyToNewDsType(key, newDsType) || updateModel;
-      }
-      if (updateModel) {
-        this.dataSourceFormGroup.get('dataKeys').patchValue(dataKeys, {emitEvent: false});
-      }
-    }
-    this.updateValidators();
-    if (updateModel) {
-      this.updateModel();
-    }
-  }
-
-  private updateDataKeyToNewDsType(dataKey: DataKey, newDsType: DatasourceType): boolean {
-    if (newDsType === DatasourceType.function) {
-      if (dataKey.type !== DataKeyType.function) {
-        dataKey.type = DataKeyType.function;
-        return true;
-      }
-    } else {
-      if (dataKey.type === DataKeyType.function) {
-        dataKey.type = DataKeyType.attribute;
-        return true;
-      }
-    }
-    return false;
-  }
 
   private updateValidators() {
     const dsType: DatasourceType = this.dataSourceFormGroup.get('dsType').value;
-    if (dsType === DatasourceType.function) {
-      this.dataSourceFormGroup.get('dsLabel').enable({emitEvent: false});
-      this.dataSourceFormGroup.get('dsDeviceId').disable({emitEvent: false});
-      this.dataSourceFormGroup.get('dsEntityAliasId').disable({emitEvent: false});
-    } else if (dsType === DatasourceType.device) {
-      this.dataSourceFormGroup.get('dsLabel').disable({emitEvent: false});
+    if (dsType === DatasourceType.device) {
       this.dataSourceFormGroup.get('dsDeviceId').enable({emitEvent: false});
       this.dataSourceFormGroup.get('dsEntityAliasId').disable({emitEvent: false});
     } else {
-      this.dataSourceFormGroup.get('dsLabel').disable({emitEvent: false});
       this.dataSourceFormGroup.get('dsDeviceId').disable({emitEvent: false});
       this.dataSourceFormGroup.get('dsEntityAliasId').enable({emitEvent: false});
     }

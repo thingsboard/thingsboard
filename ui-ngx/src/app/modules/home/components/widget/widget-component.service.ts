@@ -243,7 +243,11 @@ export class WidgetComponentService {
     if (widgetInfo) {
       return widgetInfo;
     } else {
-      return {} as WidgetInfo;
+      return {
+        typeParameters: {
+          hideDataTab: true
+        }
+      } as WidgetInfo;
     }
   }
 
@@ -630,6 +634,9 @@ export class WidgetComponentService {
         }
         if (isUndefined(result.typeParameters.embedTitlePanel)) {
           result.typeParameters.embedTitlePanel = false;
+        }
+        if (isUndefined(result.typeParameters.embedActionsPanel)) {
+          result.typeParameters.embedActionsPanel = false;
         }
         if (isUndefined(result.typeParameters.overflowVisible)) {
           result.typeParameters.overflowVisible = false;

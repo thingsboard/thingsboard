@@ -43,24 +43,23 @@ public class InMemoryEdqsQueueFactory implements EdqsQueueFactory {
     private final TbQueueAdmin queueAdmin;
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgConsumer(EdqsQueue queue) {
-        if (queue == EdqsQueue.STATE) {
-            throw new UnsupportedOperationException();
-        }
-        return new InMemoryTbQueueConsumer<>(storage, queue.getTopic());
+    public TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsEventsConsumer() {
+        return new InMemoryTbQueueConsumer<>(storage, edqsConfig.getEventsTopic());
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgConsumer(EdqsQueue queue, String group) {
-        return createEdqsMsgConsumer(queue);
+    public TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsEventsToBackupConsumer() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgProducer(EdqsQueue queue) {
-        if (queue == EdqsQueue.STATE) {
-            throw new UnsupportedOperationException();
-        }
-        return new InMemoryTbQueueProducer<>(storage, queue.getTopic());
+    public TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsStateConsumer() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsStateProducer() {
+        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -35,12 +35,12 @@ public class ApiUsageStateData extends BaseEntityData<ApiUsageStateFields> {
 
     @Override
     public String getEntityName() {
-        return getEntityOwnerName();
+        return getOwnerName();
     }
 
     @Override
-    public String getEntityOwnerName() {
-        return repo.getOwnerName(fields.getEntityId());
+    public String getOwnerName() {
+        return repo.getOwnerEntityName(fields.getEntityId());
     }
 
 }

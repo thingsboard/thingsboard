@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.edqs;
+package org.thingsboard.server.common.msg.cf;
 
-import lombok.Getter;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
-@Getter
-public enum EdqsQueue {
+@Data
+public class CalculatedFieldCacheInitMsg implements ToCalculatedFieldSystemMsg {
 
-    EVENTS("edqs.events", false, false),
-    STATE("edqs.state", true, true);
+    private final TenantId tenantId;
 
-    private final String topic;
-    private final boolean readFromBeginning;
-    private final boolean stopWhenRead;
-
-    EdqsQueue(String topic, boolean readFromBeginning, boolean stopWhenRead) {
-        this.topic = topic;
-        this.readFromBeginning = readFromBeginning;
-        this.stopWhenRead = stopWhenRead;
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.CF_CACHE_INIT_MSG;
     }
 
 }

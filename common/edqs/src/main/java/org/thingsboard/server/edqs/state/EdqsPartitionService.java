@@ -29,11 +29,14 @@ public class EdqsPartitionService {
     private final HashPartitionService hashPartitionService;
     private final EdqsConfig edqsConfig;
 
-    public Integer resolvePartition(TenantId tenantId) {
+    public Integer resolvePartition(TenantId tenantId, Object key) {
         if (edqsConfig.getPartitioningStrategy() == EdqsPartitioningStrategy.TENANT) {
             return hashPartitionService.resolvePartitionIndex(tenantId.getId(), edqsConfig.getPartitions());
         } else {
-            return null;
+            if (key == null) {
+                throw new IllegalArgumentException("Partitioning key is missing but partitioning strategy is not TENANT");
+            }
+            return hashPartitionService.resolvePartitionIndex(key.toString(), edqsConfig.getPartitions());
         }
     }
 

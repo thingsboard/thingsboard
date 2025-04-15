@@ -35,6 +35,11 @@ public class UserFields extends AbstractEntityFields {
     private String phone;
     private String additionalInfo;
 
+    @Override
+    public String getName() {
+        return super.getEmail();
+    }
+
     public UserFields(UUID id, long createdTime, UUID tenantId, UUID customerId,
                       Long version, String firstName, String lastName, String email,
                       String phone, JsonNode additionalInfo) {

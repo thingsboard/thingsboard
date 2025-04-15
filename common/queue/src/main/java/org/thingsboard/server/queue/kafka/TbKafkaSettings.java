@@ -50,8 +50,6 @@ import java.util.Properties;
 @Component
 public class TbKafkaSettings {
 
-    private static final List<String> DYNAMIC_TOPICS = List.of("tb_edge_event.notifications");
-
     @Value("${queue.kafka.bootstrap.servers}")
     private String servers;
 
@@ -163,18 +161,20 @@ public class TbKafkaSettings {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
 
-        consumerPropertiesPerTopic
-                .getOrDefault(topic, Collections.emptyList())
-                .forEach(kv -> props.put(kv.getKey(), kv.getValue()));
-
         if (topic != null) {
-            DYNAMIC_TOPICS.stream()
-                    .filter(topic::startsWith)
-                    .findFirst()
-                    .ifPresent(prefix -> consumerPropertiesPerTopic.getOrDefault(prefix, Collections.emptyList())
-                            .forEach(kv -> props.put(kv.getKey(), kv.getValue())));
+            List<TbProperty> properties = consumerPropertiesPerTopic.get(topic);
+            if (properties == null) {
+                for (Map.Entry<String, List<TbProperty>> entry : consumerPropertiesPerTopic.entrySet()) {
+                    if (topic.startsWith(entry.getKey())) {
+                        properties = entry.getValue();
+                        break;
+                    }
+                }
+            }
+            if (properties != null) {
+                properties.forEach(kv -> props.put(kv.getKey(), kv.getValue()));
+            }
         }
-
         return props;
     }
 

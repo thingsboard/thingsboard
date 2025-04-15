@@ -17,7 +17,14 @@
 -->
 <div class="tb-bar-chart-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-bar-chart-overlay" [style]="overlayStyle"></div>
-  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  @if (widgetComponent.dashboardWidget.showWidgetTitlePanel) {
+    <div class="tb-widget-title-row flex justify-between">
+      <ng-container *ngTemplateOutlet="widgetComponent.widgetTitlePanel"></ng-container>
+      <ng-container *ngTemplateOutlet="widgetComponent.widgetHeaderActionsPanel"></ng-container>
+    </div>
+  } @else {
+    <ng-container class="tb-widget-actions-absolute" *ngTemplateOutlet="widgetComponent.widgetHeaderActionsPanel; context: {absolute: true}"></ng-container>
+  }
   <div class="tb-bar-chart-content" [class]="legendClass">
     <div #chartShape class="tb-bar-chart-shape">
     </div>

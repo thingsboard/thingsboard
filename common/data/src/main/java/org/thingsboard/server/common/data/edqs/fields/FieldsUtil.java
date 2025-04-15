@@ -289,7 +289,7 @@ public class FieldsUtil {
     }
 
     public static String getText(JsonNode node) {
-        return node != null ? node.toString() : "";
+        return node != null && !node.isNull() ? node.toString() : "";
     }
 
     private static UUID getCustomerId(CustomerId customerId) {

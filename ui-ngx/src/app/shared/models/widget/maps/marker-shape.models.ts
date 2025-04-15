@@ -50,6 +50,10 @@ export enum MarkerIconContainer {
   iconContainer1 = 'iconContainer1',
   iconContainer2 = 'iconContainer2',
   iconContainer3 = 'iconContainer3',
+  iconContainer4 = 'iconContainer4',
+  iconContainer5 = 'iconContainer5',
+  iconContainer6 = 'iconContainer6',
+  iconContainer7 = 'iconContainer7',
   tripIconContainer1 = 'tripIconContainer1',
   tripIconContainer2 = 'tripIconContainer2',
   tripIconContainer3 = 'tripIconContainer3'
@@ -85,6 +89,10 @@ const markerIconContainerMap = new Map<MarkerIconContainer, string>(
     [MarkerIconContainer.iconContainer1, '/assets/markers/iconContainer1.svg'],
     [MarkerIconContainer.iconContainer2, '/assets/markers/iconContainer2.svg'],
     [MarkerIconContainer.iconContainer3, '/assets/markers/iconContainer3.svg'],
+    [MarkerIconContainer.iconContainer4, '/assets/markers/iconContainer4.svg'],
+    [MarkerIconContainer.iconContainer5, '/assets/markers/iconContainer5.svg'],
+    [MarkerIconContainer.iconContainer6, '/assets/markers/iconContainer6.svg'],
+    [MarkerIconContainer.iconContainer7, '/assets/markers/iconContainer7.svg'],
     [MarkerIconContainer.tripIconContainer1, '/assets/markers/tripIconContainer1.svg'],
     [MarkerIconContainer.tripIconContainer2, '/assets/markers/tripIconContainer2.svg'],
     [MarkerIconContainer.tripIconContainer3, '/assets/markers/tripIconContainer3.svg']
@@ -106,11 +114,11 @@ const emptyIconContainerDefinition: MarkerIconContainerDefinition = {
 
 const defaultIconContainerDefinition: MarkerIconContainerDefinition = {
   iconSize: 12,
-  iconColor: (color) => tinycolor.mix(color.clone().setAlpha(1), tinycolor('rgba(0,0,0,0.38)')),
+  iconColor: (color) => color,
   iconAlpha: color => color.getAlpha()
 }
 
-const defaultTripIconContainerDefinition: MarkerIconContainerDefinition = {
+const defaultMaskIconContainerDefinition: MarkerIconContainerDefinition = {
   iconSize: 24,
   iconColor: () => tinycolor('#000'),
   iconAlpha: () => 1,
@@ -142,9 +150,13 @@ const markerIconContainerDefinitionMap = new Map<MarkerIconContainer, MarkerIcon
     [MarkerIconContainer.iconContainer1, defaultIconContainerDefinition],
     [MarkerIconContainer.iconContainer2, defaultIconContainerDefinition],
     [MarkerIconContainer.iconContainer3, defaultIconContainerDefinition],
-    [MarkerIconContainer.tripIconContainer1, defaultTripIconContainerDefinition],
-    [MarkerIconContainer.tripIconContainer2, {...defaultTripIconContainerDefinition, iconSize: 16}],
-    [MarkerIconContainer.tripIconContainer3, {...defaultTripIconContainerDefinition, iconSize: 16}]
+    [MarkerIconContainer.iconContainer4, defaultMaskIconContainerDefinition],
+    [MarkerIconContainer.iconContainer5, defaultMaskIconContainerDefinition],
+    [MarkerIconContainer.iconContainer6, {...defaultMaskIconContainerDefinition, iconSize: 28}],
+    [MarkerIconContainer.iconContainer7, {...defaultMaskIconContainerDefinition, iconSize: 28}],
+    [MarkerIconContainer.tripIconContainer1, defaultMaskIconContainerDefinition],
+    [MarkerIconContainer.tripIconContainer2, {...defaultMaskIconContainerDefinition, iconSize: 16}],
+    [MarkerIconContainer.tripIconContainer3, {...defaultMaskIconContainerDefinition, iconSize: 16}]
   ]
 );
 
@@ -177,13 +189,19 @@ export const tripMarkerShapes = [
 export const markerIconContainers = [
   MarkerIconContainer.iconContainer1,
   MarkerIconContainer.iconContainer2,
-  MarkerIconContainer.iconContainer3
+  MarkerIconContainer.iconContainer3,
+  MarkerIconContainer.iconContainer4,
+  MarkerIconContainer.iconContainer5,
+  MarkerIconContainer.iconContainer6,
+  MarkerIconContainer.iconContainer7
 ];
 
 export const tripMarkerIconContainers = [
   MarkerIconContainer.tripIconContainer1,
   MarkerIconContainer.tripIconContainer2,
-  MarkerIconContainer.tripIconContainer3
+  MarkerIconContainer.tripIconContainer3,
+  MarkerIconContainer.iconContainer4,
+  MarkerIconContainer.iconContainer5
 ];
 
 const generateElementId = () => {

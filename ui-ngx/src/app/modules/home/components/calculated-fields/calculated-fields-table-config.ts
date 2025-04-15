@@ -27,16 +27,16 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { MINUTE } from '@shared/models/time/time.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { DestroyRef, Renderer2 } from '@angular/core';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import {
+  ArgumentEntityType,
   ArgumentType,
   CalculatedField,
   CalculatedFieldEventArguments,
@@ -46,7 +46,8 @@ import {
   getCalculatedFieldArgumentsHighlights,
 } from '@shared/models/calculated-field.models';
 import {
-  CalculatedFieldDebugDialogComponent, CalculatedFieldDebugDialogData,
+  CalculatedFieldDebugDialogComponent,
+  CalculatedFieldDebugDialogData,
   CalculatedFieldDialogComponent,
   CalculatedFieldDialogData,
   CalculatedFieldScriptTestDialogComponent,
@@ -59,9 +60,6 @@ import { DatePipe } from '@angular/common';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField> {
 
-  readonly calculatedFieldsDebugPerTenantLimitsConfiguration =
-    getCurrentAuthState(this.store)['calculatedFieldsDebugPerTenantLimitsConfiguration'] || '1:1';
-  readonly maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
     title: this.translate.instant('calculated-fields.see-debug-events'),
@@ -159,7 +157,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
   private getExpressionLabel(entity: CalculatedField): string {
     if (entity.type === CalculatedFieldType.SCRIPT) {
-      return 'function calculate(' + Object.keys(entity.configuration.arguments).join(', ') + ')';
+      return 'function calculate(ctx, ' + Object.keys(entity.configuration.arguments).join(', ') + ')';
     } else {
       return entity.configuration.expression;
     }
@@ -188,9 +186,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.entityDebugSettingsService.openDebugStrategyPanel({
       debugSettings,
       debugConfig: {
-        debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
-        maxDebugModeDuration: this.maxDebugModeDuration,
-        entityLabel: this.translate.instant('debug-settings.calculated-field'),
+        entityType: EntityType.CALCULATED_FIELD,
         additionalActionConfig,
       },
       onSettingsAppliedFn: settings => this.onDebugConfigChanged(id.id, settings)
@@ -214,7 +210,6 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         value,
         buttonTitle,
         entityId: this.entityId,
-        debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
         tenantId: this.tenantId,
         entityName: this.entityName,
         additionalDebugActionConfig: this.additionalDebugActionConfig,
@@ -252,13 +247,25 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.importExportService.openCalculatedFieldImportDialog()
       .pipe(
         filter(Boolean),
-        switchMap(calculatedField => this.getCalculatedFieldDialog(calculatedField, 'action.add')),
+        switchMap(calculatedField => this.getCalculatedFieldDialog(this.updateImportedCalculatedField(calculatedField), 'action.add', true)),
         filter(Boolean),
         switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField(calculatedField)),
         filter(Boolean),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => this.updateData());
+  }
+
+  private updateImportedCalculatedField(calculatedField: CalculatedField): CalculatedField {
+    calculatedField.configuration.arguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
+      const arg = calculatedField.configuration.arguments[key];
+      acc[key] = arg.refEntityId?.entityType === ArgumentEntityType.Tenant
+        ? { ...arg, refEntityId: { id: this.tenantId, entityType: ArgumentEntityType.Tenant } }
+        : arg;
+      return acc;
+    }, {});
+
+    return calculatedField;
   }
 
   private onDebugConfigChanged(id: string, debugSettings: EntityDebugSettings): void {

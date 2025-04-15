@@ -13,27 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs.util;
+package org.thingsboard.common.util.geo;
 
-import com.google.common.hash.Hashing;
-import org.springframework.util.ConcurrentReferenceHashMap;
+public enum RangeUnit {
+    METER(1000.0), KILOMETER(1.0), FOOT(3280.84), MILE(0.62137), NAUTICAL_MILE(0.539957);
 
-import java.util.concurrent.ConcurrentMap;
+    private final double fromKm;
 
-public class TbBytePool {
-
-    private static final ConcurrentMap<String, byte[]> pool = new ConcurrentReferenceHashMap<>();
-
-    public static byte[] intern(byte[] data) {
-        if (data == null) {
-            return null;
-        }
-        var checksum = Hashing.sha512().hashBytes(data).toString();
-        return pool.computeIfAbsent(checksum, c -> data);
+    RangeUnit(double fromKm) {
+        this.fromKm = fromKm;
     }
 
-    public static int size(){
-        return pool.size();
+    public double fromKm(double v) {
+        return v * fromKm;
     }
-
 }

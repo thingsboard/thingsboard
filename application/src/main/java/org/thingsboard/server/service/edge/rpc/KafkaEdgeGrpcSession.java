@@ -141,6 +141,7 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
         String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edge.getId()).getTopic();
         TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
         kafkaAdmin.deleteTopic(topic);
+        kafkaAdmin.deleteConsumerGroup(topic);
     }
 
 }

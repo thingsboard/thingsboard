@@ -144,6 +144,7 @@ export interface RefEntityId {
 
 export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
   argumentName: string;
+  entityName?: string;
 }
 
 export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;

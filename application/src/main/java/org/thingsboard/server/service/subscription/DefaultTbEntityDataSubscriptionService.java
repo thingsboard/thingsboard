@@ -725,7 +725,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                             update = new EntityDataUpdate(ctx.getCmdId(), ctx.getData(), null, ctx.getMaxEntitiesPerDataSubscription());
                             ctx.setInitialDataSent(true);
                         } else {
-                            update = new EntityDataUpdate(ctx.getCmdId(), null, ctx.getData().getData(), ctx.getMaxEntitiesPerDataSubscription());
+                            // if ctx has timeseries subscription, timeseries values are cleared after each update and is empty in ctx data,
+                            // so to avoid sending timeseries update with empty map we set it to null
+                            List<EntityData> preparedData = ctx.getData().getData().stream()
+                                    .map(entityData -> new EntityData(entityData.getEntityId(), entityData.getLatest(), null))
+                                    .toList();
+                            update = new EntityDataUpdate(ctx.getCmdId(), null, preparedData, ctx.getMaxEntitiesPerDataSubscription());
                         }
                         ctx.sendWsMsg(update);
                     } finally {

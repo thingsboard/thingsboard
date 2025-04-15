@@ -17,20 +17,23 @@ package org.thingsboard.server.edqs.data.dp;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.thingsboard.common.util.TbBytePool;
 import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.edqs.util.TbBytePool;
-import org.xerial.snappy.Snappy;
+
+import java.util.function.Function;
 
 public class CompressedStringDataPoint extends AbstractDataPoint {
 
-    public static final int MIN_STR_SIZE_TO_COMPRESS = 512;
     @Getter
     private final byte[] compressedValue;
 
+    protected final Function<byte[], String> uncompressor;
+
     @SneakyThrows
-    public CompressedStringDataPoint(long ts, byte[] compressedValue) {
+    public CompressedStringDataPoint(long ts, byte[] compressedValue, Function<byte[], String> uncompressor) {
         super(ts);
         this.compressedValue = TbBytePool.intern(compressedValue);
+        this.uncompressor = uncompressor;
     }
 
     @Override
@@ -41,7 +44,7 @@ public class CompressedStringDataPoint extends AbstractDataPoint {
     @SneakyThrows
     @Override
     public String getStr() {
-        return Snappy.uncompressString(compressedValue);
+        return uncompressor.apply(compressedValue);
     }
 
     @Override

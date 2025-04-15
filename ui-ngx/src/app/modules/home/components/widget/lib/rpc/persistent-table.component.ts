@@ -418,7 +418,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit, O
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
     config.hasBackdrop = true;

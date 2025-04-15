@@ -119,7 +119,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     @Override
     public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         var aggParams = query.getAggParameters();
-        if (Aggregation.NONE.equals(aggParams.getAggregation())) {
+        if (Aggregation.NONE.equals(aggParams.getAggregation()) || aggParams.getInterval() < 1) {
             return Futures.immediateFuture(findAllAsyncWithLimit(entityId, query));
         } else {
             List<ListenableFuture<Optional<TsKvEntity>>> futures = new ArrayList<>();
@@ -144,7 +144,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
         }
     }
 
-    private ReadTsKvQueryResult findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
+    ReadTsKvQueryResult findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
         Integer keyId = keyDictionaryDao.getOrSaveKeyId(query.getKey());
         List<TsKvEntity> tsKvEntities = tsKvRepository.findAllWithLimit(
                 entityId.getId(),

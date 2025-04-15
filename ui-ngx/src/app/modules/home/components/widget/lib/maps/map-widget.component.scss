@@ -34,4 +34,10 @@
   div.tb-widget-title {
     padding: 0;
   }
+  .tb-widget-title-row .tb-widget-actions {
+    margin: 0;
+  }
+  .tb-widget-actions.tb-widget-actions-absolute {
+    z-index: 2;
+  }
 }

@@ -85,17 +85,20 @@ export class TimeSeriesChartAxisSettingsButtonComponent implements OnInit, Contr
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        axisSettings: this.modelValue,
-        axisType: this.axisType,
-        panelTitle: this.panelTitle,
-        advanced: this.advanced
-      };
-      const axisSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimeSeriesChartAxisSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const axisSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: TimeSeriesChartAxisSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: {
+          axisSettings: this.modelValue,
+          axisType: this.axisType,
+          panelTitle: this.panelTitle,
+          advanced: this.advanced
+        },
+        isModal: true
+      });
       axisSettingsPanelPopover.tbComponentRef.instance.popover = axisSettingsPanelPopover;
       axisSettingsPanelPopover.tbComponentRef.instance.axisSettingsApplied.subscribe((axisSettings) => {
         axisSettingsPanelPopover.hide();

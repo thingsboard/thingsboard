@@ -21,6 +21,7 @@ import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 
@@ -45,6 +46,12 @@ public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
             log.warn("[{}][{}] Unknown failure", processor.tenantId, processor.entityId, e);
             throw new TbActorException("Failed to initialize CF entity actor", e);
         }
+    }
+
+    @Override
+    public void destroy(TbActorStopReason stopReason, Throwable cause) throws TbActorException {
+        log.debug("[{}] Stopping CF entity actor.", processor.tenantId);
+        processor.stop();
     }
 
     @Override

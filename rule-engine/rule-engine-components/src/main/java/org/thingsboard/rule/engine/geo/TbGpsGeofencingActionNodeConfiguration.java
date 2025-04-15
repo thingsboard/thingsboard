@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.geo;
 
 import lombok.Data;
+import org.thingsboard.common.util.geo.PerimeterType;
 
 import java.util.concurrent.TimeUnit;
 

@@ -360,9 +360,10 @@
       }
     }
     .tb-small-label {
+      display: flex;
+      align-items: center;
       height: 40px;
       font-size: 14px;
-      line-height: 40px;
       letter-spacing: 0.2px;
       color: rgba(0, 0, 0, 0.38);
     }

@@ -15,9 +15,14 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectFilterFormGroup" class="mat-block" [appearance]="appearance" [subscriptSizing]="subscriptSizing">
-  <mat-label *ngIf="showLabel">{{ 'filter.filter' | translate }}</mat-label>
-  <input matInput type="text" placeholder="{{ !showLabel ? ('filter.filter' | translate) : ''}}"
+<mat-form-field [formGroup]="selectFilterFormGroup"
+                [class.tb-inline-field]="inlineField"
+                [class.flex]="inlineField"
+                class="mat-block"
+                [appearance]="inlineField ? 'outline' : appearance"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+  <mat-label *ngIf="showLabel && !inlineField">{{ 'filter.filter' | translate }}</mat-label>
+  <input matInput type="text" placeholder="{{  (!showLabel || inlineField) ? ('filter.filter' | translate) : ''}}"
          #filterInput
          formControlName="filter"
          (focusin)="onFocus()"
@@ -25,13 +30,23 @@
          (keydown)="filterEnter($event)"
          (keypress)="filterEnter($event)"
          [matAutocomplete]="filterAutocomplete">
-  <button *ngIf="selectFilterFormGroup.get('filter').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-  <button *ngIf="!selectFilterFormGroup.get('filter').value && !disabled"
+  <div matSuffix class="mat-mdc-form-field-icon-suffix flex flex-row">
+    <button *ngIf="selectFilterFormGroup.get('filter').value && !disabled"
+            type="button"
+            mat-icon-button aria-label="Clear"
+            (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+    <mat-icon matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'filter.filter-required' | translate"
+              *ngIf="inlineField && !modelValue && tbRequired
+                            && selectFilterFormGroup.get('filter').touched"
+              class="tb-error">
+      warning
+    </mat-icon>
+  </div>
+  <button *ngIf="!inlineField && !selectFilterFormGroup.get('filter').value && !disabled"
           style="margin-right: 8px;"
           type="button"
           matSuffix mat-button color="primary"
@@ -61,7 +76,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="!modelValue && tbRequired">
+  <mat-error *ngIf="!inlineField && !modelValue && tbRequired">
     {{ 'filter.filter-required' | translate }}
   </mat-error>
 </mat-form-field>

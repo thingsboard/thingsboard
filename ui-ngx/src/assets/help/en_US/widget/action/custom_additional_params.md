@@ -31,7 +31,14 @@ An optional key/value object holding additional entity parameters depending on w
             presenting <code>formattedTs</code> (a string value of formatted timestamp) and <br> timeseries values for each column declared in widget datasource configuration.
       </li>
     </ul>
-  </li>   
+  </li>
+  <li>Map widgets (<i>On marker/polygon/circle click</i> or <i>Tag action</i>) - <b>additionalParams</b>: <code><a href="https://github.com/thingsboard/thingsboard/blob/b881f1c2985399f9665e033e2479549e97da1f36/ui-ngx/src/app/shared/models/widget.models.ts#L513" target="_blank">FormattedData</a></code>:
+    <ul>
+      <li><b>additionalParams:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/b881f1c2985399f9665e033e2479549e97da1f36/ui-ngx/src/app/shared/models/widget.models.ts#L513" target="_blank">FormattedData</a></code> - An object associated with a data layer (markers, polygons, circles) or with a specific data point of a route (for trips data layers).<br/>
+          It contains basic entity properties (ex. <code>entityId</code>, <code>entityName</code>) and provides access to additional attributes and timeseries defined in datasource of the data layer configuration.
+      </li>
+    </ul>
+  </li>
   <li>Entities hierarchy widget (<i>On node selected</i>) - <b>additionalParams:</b> <code>{ nodeCtx: <a href="https://github.com/thingsboard/thingsboard/blob/e264f7b8ddff05bda85c4833bf497f47f447496e/ui-ngx/src/app/modules/home/components/widget/lib/entities-hierarchy-widget.models.ts#L35" target="_blank">HierarchyNodeContext</a> }</code>:
     <ul>
       <li><b>nodeCtx:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/e264f7b8ddff05bda85c4833bf497f47f447496e/ui-ngx/src/app/modules/home/components/widget/lib/entities-hierarchy-widget.models.ts#L35" target="_blank">HierarchyNodeContext</a></code> - An 

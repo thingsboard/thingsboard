@@ -29,9 +29,12 @@ services:
   tb-rule-engine2:
     env_file:
       - tb-rule-engine-edqs.env
-  tb-edqs-1:
+  tb-edqs1:
     restart: always
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
+    environment:
+      TB_SERVICE_ID: tb-edqs1
+      JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
       - tb-edqs.env
     volumes:
@@ -42,9 +45,12 @@ services:
     depends_on:
       - zookeeper
       - kafka
-  tb-edqs-2:
+  tb-edqs2:
     restart: always
     image: "${DOCKER_REPO}/${EDQS_DOCKER_NAME}:${TB_VERSION}"
+    environment:
+      TB_SERVICE_ID: tb-edqs2
+      JAVA_OPTS: "${JAVA_OPTS}"
     env_file:
       - tb-edqs.env
     volumes:

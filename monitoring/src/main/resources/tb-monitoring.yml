@@ -105,6 +105,9 @@ monitoring:
         # To add more targets, use following environment variables:
         # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
 
+  edqs:
+    enabled: "${EDQS_MONITORING_ENABLED:false}"
+
   notifications:
     message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'
     slack:

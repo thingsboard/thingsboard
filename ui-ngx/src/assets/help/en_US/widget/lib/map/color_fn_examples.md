@@ -1,6 +1,7 @@
 ##### Examples
 
-* Calculate color depending on `temperature` telemetry value for `thermostat` device type:
+* Calculate color depending on `temperature` telemetry value for `thermostat` device type.<br>
+  Ensure that the <code>Type</code> and <code>temperature</code> keys are included in the <b>additional data keys</b> configuration:
 
 ```javascript
 var type = data.Type;

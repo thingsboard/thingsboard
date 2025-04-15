@@ -16,6 +16,7 @@
 package org.thingsboard.server.queue.provider;
 
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
@@ -95,8 +96,8 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
     /**
      * Used to consume messages by TB Rule Engine Service
      *
-     * @return
      * @param configuration
+     * @return
      */
     TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration);
 
@@ -104,9 +105,9 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
      * Used to consume messages by TB Rule Engine Service
      * Intended usage for consumer per partition strategy
      *
-     * @return TbQueueConsumer
      * @param configuration
-     * @param partitionId as a suffix for consumer name
+     * @param partitionId   as a suffix for consumer name
+     * @return TbQueueConsumer
      */
     default TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration, Integer partitionId) {
         return createToRuleEngineMsgConsumer(configuration);
@@ -121,13 +122,15 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
 
     TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate();
 
-    TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer(TopicPartitionInfo tpi);
 
     TbQueueAdmin getCalculatedFieldQueueAdmin();
 
     TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldMsg>> createToCalculatedFieldMsgProducer();
 
-    TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> createToCalculatedFieldNotificationsMsgConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> createToCalculatedFieldNotificationMsgConsumer();
+
+    TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> createToCalculatedFieldNotificationMsgProducer();
 
     TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateConsumer();
 

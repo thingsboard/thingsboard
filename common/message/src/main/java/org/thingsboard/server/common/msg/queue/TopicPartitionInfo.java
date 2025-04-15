@@ -90,9 +90,7 @@ public class TopicPartitionInfo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TopicPartitionInfo that = (TopicPartitionInfo) o;
-        return topic.equals(that.topic) &&
-                Objects.equals(tenantId, that.tenantId) &&
-                Objects.equals(partition, that.partition) &&
+        return Objects.equals(partition, that.partition) &&
                 fullTopicName.equals(that.fullTopicName);
     }
 

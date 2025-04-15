@@ -69,9 +69,6 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
   ctx: WidgetContext;
 
   @Input()
-  widgetTitlePanel: TemplateRef<any>;
-
-  @Input()
   callbacks: LatestChartComponentCallbacks;
 
   @Input()
@@ -98,9 +95,9 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private latestChart: TbLatestChart<LatestChartSettings>;
 
-  constructor(private imagePipe: ImagePipe,
+  constructor(public widgetComponent: WidgetComponent,
+              private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
-              private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private translate: TranslateService,
               private cd: ChangeDetectorRef) {

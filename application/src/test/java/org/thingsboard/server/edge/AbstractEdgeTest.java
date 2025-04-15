@@ -168,6 +168,10 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
         Device savedDevice = saveDevice("Edge Device 1", THERMOSTAT_DEVICE_PROFILE_NAME);
 
+        // create public customer
+        doPost("/api/customer/public/device/" + savedDevice.getId().getId(), Device.class);
+        doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
+
         Asset savedAsset = saveAsset("Edge Asset 1");
 
         updateRootRuleChainMetadata();

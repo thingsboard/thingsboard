@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
@@ -33,7 +34,7 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 public class AdminSettingsEdgeProcessor extends BaseEdgeProcessor {
 
     @Override
-    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         AdminSettings adminSettings = JacksonUtil.convertValue(edgeEvent.getBody(), AdminSettings.class);
         if (adminSettings == null) {
             return null;

@@ -137,7 +137,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxSms: 0,
           smsEnabled: true,
           maxCreatedAlarms: 0,
-          maxDebugModeDurationMinutes: 0,
+          maxDebugModeDurationMinutes: 15,
           tenantServerRestLimitsConfiguration: '',
           customerServerRestLimitsConfiguration: '',
           maxWsSessionsPerTenant: 0,

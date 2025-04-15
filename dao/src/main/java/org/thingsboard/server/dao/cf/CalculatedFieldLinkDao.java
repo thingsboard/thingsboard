@@ -31,8 +31,12 @@ public interface CalculatedFieldLinkDao extends Dao<CalculatedFieldLink> {
 
     List<CalculatedFieldLink> findCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId);
 
+    List<CalculatedFieldLink> findCalculatedFieldLinksByTenantId(TenantId tenantId);
+
     List<CalculatedFieldLink> findAll();
 
     PageData<CalculatedFieldLink> findAll(PageLink pageLink);
+
+    PageData<CalculatedFieldLink> findAllByTenantId(TenantId tenantId, PageLink pageLink);
 
 }

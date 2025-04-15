@@ -141,7 +141,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             }
             oldSession = client.getSession();
             TbLwM2MSecurityInfo securityInfo = securityStore.getTbLwM2MSecurityInfoByEndpoint(client.getEndpoint());
-            if (securityInfo.getSecurityMode() != null) {
+            if (securityInfo != null && securityInfo.getSecurityMode() != null) {
                 if (SecurityMode.X509.equals(securityInfo.getSecurityMode())) {
                     securityStore.registerX509(registration.getEndpoint(), registration.getId());
                 }

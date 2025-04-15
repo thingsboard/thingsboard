@@ -48,7 +48,6 @@ export interface CalculatedFieldDialogData {
   value?: CalculatedField;
   buttonTitle: string;
   entityId: EntityId;
-  debugLimitsConfiguration: string;
   tenantId: string;
   entityName?: string;
   additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;

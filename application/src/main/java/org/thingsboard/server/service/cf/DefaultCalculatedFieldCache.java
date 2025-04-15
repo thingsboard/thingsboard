@@ -64,7 +64,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final ConcurrentMap<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldId, CalculatedFieldCtx> calculatedFieldsCtx = new ConcurrentHashMap<>();
 
-    @Value("${calculatedField.initFetchPackSize:50000}")
+    @Value("${queue.calculated_fields.init_fetch_pack_size:50000}")
     @Getter
     private int initFetchPackSize;
 
@@ -144,6 +144,9 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         calculatedFieldFetchLock.lock();
         try {
             CalculatedField calculatedField = calculatedFieldService.findById(tenantId, calculatedFieldId);
+            if (calculatedField == null) {
+                return;
+            }
             EntityId cfEntityId = calculatedField.getEntityId();
 
             calculatedFields.put(calculatedFieldId, calculatedField);
