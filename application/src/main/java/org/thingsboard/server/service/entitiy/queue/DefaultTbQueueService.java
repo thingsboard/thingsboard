@@ -19,7 +19,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -47,33 +50,59 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
     private final TbQueueAdmin tbQueueAdmin;
 
     @Override
-    public Queue saveQueue(Queue queue) {
-        boolean create = queue.getId() == null;
-        Queue oldQueue;
-        if (create) {
-            oldQueue = null;
-        } else {
-            oldQueue = queueService.findQueueById(queue.getTenantId(), queue.getId());
+    public Queue saveQueue(Queue queue, User user) {
+        ActionType actionType = queue.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = queue.getTenantId();
+        try {
+            boolean create = queue.getId() == null;
+            Queue oldQueue;
+            if (create) {
+                oldQueue = null;
+            } else {
+                oldQueue = queueService.findQueueById(queue.getTenantId(), queue.getId());
+            }
+
+            Queue savedQueue = queueService.saveQueue(queue);
+            createTopicsIfNeeded(savedQueue, oldQueue);
+            tbClusterService.onQueuesUpdate(List.of(savedQueue));
+            
+            logEntityActionService.logEntityAction(tenantId, savedQueue.getId(), savedQueue, null, actionType, user);
+            return savedQueue;
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.QUEUE), queue, actionType, user, e);
+            throw e;
         }
-
-        Queue savedQueue = queueService.saveQueue(queue);
-        createTopicsIfNeeded(savedQueue, oldQueue);
-        tbClusterService.onQueuesUpdate(List.of(savedQueue));
-        return savedQueue;
     }
 
     @Override
-    public void deleteQueue(TenantId tenantId, QueueId queueId) {
-        Queue queue = queueService.findQueueById(tenantId, queueId);
-        queueService.deleteQueue(tenantId, queueId);
-        tbClusterService.onQueuesDelete(List.of(queue));
+    public void deleteQueue(TenantId tenantId, QueueId queueId, User user) {
+        ActionType actionType = ActionType.DELETED;
+        try {
+            Queue queue = queueService.findQueueById(tenantId, queueId);
+            queueService.deleteQueue(tenantId, queueId);
+            tbClusterService.onQueuesDelete(List.of(queue));
+            
+            logEntityActionService.logEntityAction(tenantId, queueId, queue, null, actionType, user, queueId.toString());
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.QUEUE), actionType, user, e, queueId.toString());
+            throw e;
+        }
     }
 
     @Override
-    public void deleteQueueByQueueName(TenantId tenantId, String queueName) {
-        Queue queue = queueService.findQueueByTenantIdAndNameInternal(tenantId, queueName);
-        queueService.deleteQueue(tenantId, queue.getId());
-        tbClusterService.onQueuesDelete(List.of(queue));
+    public void deleteQueueByQueueName(TenantId tenantId, String queueName, User user) {
+        ActionType actionType = ActionType.DELETED;
+        try {
+            Queue queue = queueService.findQueueByTenantIdAndNameInternal(tenantId, queueName);
+            QueueId queueId = queue.getId();
+            queueService.deleteQueue(tenantId, queueId);
+            tbClusterService.onQueuesDelete(List.of(queue));
+            
+            logEntityActionService.logEntityAction(tenantId, queueId, queue, null, actionType, user, queueName);
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.QUEUE), actionType, user, e, queueName);
+            throw e;
+        }
     }
 
     @Override
@@ -180,5 +209,4 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
             );
         }
     }
-
 }

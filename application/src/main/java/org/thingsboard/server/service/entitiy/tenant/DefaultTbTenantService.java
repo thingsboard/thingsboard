@@ -17,8 +17,11 @@ package org.thingsboard.server.service.entitiy.tenant;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
@@ -45,30 +48,49 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
     private final EntitiesVersionControlService versionControlService;
 
     @Override
-    public Tenant save(Tenant tenant) throws Exception {
-        boolean created = tenant.getId() == null;
-        Tenant oldTenant = !created ? tenantService.findTenantById(tenant.getId()) : null;
+    public Tenant save(Tenant tenant, User user) throws Exception {
+        ActionType actionType = tenant.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        TenantId tenantId = tenant.getId() != null ? tenant.getId() : TenantId.SYS_TENANT_ID;
+        
+        try {
+            boolean created = tenant.getId() == null;
+            Tenant oldTenant = !created ? tenantService.findTenantById(tenant.getId()) : null;
 
-        Tenant savedTenant = tenantService.saveTenant(tenant, tenantId -> {
-            installScripts.createDefaultRuleChains(tenantId);
-            installScripts.createDefaultEdgeRuleChains(tenantId);
-            if (!isTestProfile()) {
-                installScripts.createDefaultTenantDashboards(tenantId, null);
-            }
-        });
-        tenantProfileCache.evict(savedTenant.getId());
+            Tenant savedTenant = tenantService.saveTenant(tenant, tenantId2 -> {
+                installScripts.createDefaultRuleChains(tenantId2);
+                installScripts.createDefaultEdgeRuleChains(tenantId2);
+                if (!isTestProfile()) {
+                    installScripts.createDefaultTenantDashboards(tenantId2, null);
+                }
+            });
+            tenantProfileCache.evict(savedTenant.getId());
 
-        TenantProfile oldTenantProfile = oldTenant != null ? tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, oldTenant.getTenantProfileId()) : null;
-        TenantProfile newTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
-        tbQueueService.updateQueuesByTenants(Collections.singletonList(savedTenant.getTenantId()), newTenantProfile, oldTenantProfile);
-        return savedTenant;
+            TenantProfile oldTenantProfile = oldTenant != null ? tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, oldTenant.getTenantProfileId()) : null;
+            TenantProfile newTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
+            tbQueueService.updateQueuesByTenants(Collections.singletonList(savedTenant.getTenantId()), newTenantProfile, oldTenantProfile);
+            
+            logEntityActionService.logEntityAction(tenantId, savedTenant.getId(), savedTenant, null, actionType, user);
+            return savedTenant;
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TENANT), tenant, actionType, user, e);
+            throw e;
+        }
     }
 
     @Override
-    public void delete(Tenant tenant) throws Exception {
+    public void delete(Tenant tenant, User user) throws Exception {
         TenantId tenantId = tenant.getId();
-        tenantService.deleteTenant(tenantId);
-        tenantProfileCache.evict(tenantId);
-        versionControlService.deleteVersionControlSettings(tenantId).get(1, TimeUnit.MINUTES);
+        ActionType actionType = ActionType.DELETED;
+        
+        try {
+            tenantService.deleteTenant(tenantId);
+            tenantProfileCache.evict(tenantId);
+            versionControlService.deleteVersionControlSettings(tenantId).get(1, TimeUnit.MINUTES);
+            
+            logEntityActionService.logEntityAction(TenantId.SYS_TENANT_ID, tenantId, tenant, null, actionType, user, tenantId.toString());
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(TenantId.SYS_TENANT_ID, emptyId(EntityType.TENANT), actionType, user, e, tenantId.toString());
+            throw e;
+        }
     }
 }
