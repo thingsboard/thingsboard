@@ -97,7 +97,7 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
     private Device getOrCreateDevice(TbClient tbClient) {
         TransportType transportType = config.getTransportType();
-        String deviceName = String.format("%s %s (%s) - %s", target.getNamePrefix(), transportType.getName(), target.getQueue(), target.getBaseUrl());
+        String deviceName = String.format("%s %s (%s) - %s", target.getNamePrefix(), transportType.getName(), target.getQueue(), target.getBaseUrl()).trim();
         Device device = tbClient.getTenantDevice(deviceName).orElse(null);
         if (device != null) {
             if (checkCalculatedFields) {
@@ -145,7 +145,7 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
     private DeviceProfile getOrCreateDeviceProfile(TbClient tbClient) {
         TransportType transportType = config.getTransportType();
-        String profileName = String.format("%s %s (%s)", target.getNamePrefix(), transportType.getName(), target.getQueue());
+        String profileName = String.format("%s %s (%s)", target.getNamePrefix(), transportType.getName(), target.getQueue()).trim();
         DeviceProfile deviceProfile = tbClient.getDeviceProfiles(new PageLink(1, 0, profileName)).getData()
                 .stream().findFirst().orElse(null);
         if (deviceProfile != null) {
@@ -189,7 +189,7 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
         configuration.setArguments(Map.of(
                 TEST_TELEMETRY_KEY, testDataArgument
         ));
-        configuration.setExpression("return { \"" + TEST_CF_TELEMETRY_KEY + "\": "+ TEST_TELEMETRY_KEY + " + \"-cf\" };");
+        configuration.setExpression("return { \"" + TEST_CF_TELEMETRY_KEY + "\": " + TEST_TELEMETRY_KEY + " + \"-cf\" };");
         Output output = new Output();
         output.setType(OutputType.TIME_SERIES);
         configuration.setOutput(output);
