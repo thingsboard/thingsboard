@@ -31,7 +31,6 @@ import org.thingsboard.monitoring.config.MonitoringTarget;
 import org.thingsboard.monitoring.data.Latencies;
 import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.data.ServiceFailureException;
-import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 import org.thingsboard.monitoring.util.TbStopWatch;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -59,6 +58,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.thingsboard.monitoring.service.BaseHealthChecker.TEST_CF_TELEMETRY_KEY;
+import static org.thingsboard.monitoring.service.BaseHealthChecker.TEST_TELEMETRY_KEY;
+
 @Slf4j
 public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T extends MonitoringTarget> {
 
@@ -79,7 +81,9 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
     protected ApplicationContext applicationContext;
 
     @Value("${monitoring.edqs.enabled:false}")
-    private boolean edqsMonitoringEnabled;
+    private boolean checkEdqs;
+    @Value("${monitoring.calculated_fields.enabled:true}")
+    protected boolean checkCalculatedFields;
 
     @PostConstruct
     private void init() {
@@ -121,7 +125,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
 
             try (WsClient wsClient = wsClientFactory.createClient(accessToken)) {
                 stopWatch.start();
-                wsClient.subscribeForTelemetry(devices, TransportHealthChecker.TEST_TELEMETRY_KEY).waitForReply();
+                wsClient.subscribeForTelemetry(devices, getTestTelemetryKeys()).waitForReply();
                 reporter.reportLatency(Latencies.WS_SUBSCRIBE, stopWatch.getTime());
 
                 for (BaseHealthChecker<C, T> healthChecker : healthCheckers) {
@@ -129,22 +133,17 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                 }
             }
 
-            if (edqsMonitoringEnabled) {
-                try {
-                    stopWatch.start();
-                    checkEdqs();
-                    reporter.reportLatency(Latencies.EDQS_QUERY, stopWatch.getTime());
-
-                    reporter.serviceIsOk(MonitoredServiceKey.EDQS);
-                } catch (ServiceFailureException e) {
-                    reporter.serviceFailure(MonitoredServiceKey.EDQS, e);
-                } catch (Exception e) {
-                    reporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
-                }
+            if (checkEdqs) {
+                stopWatch.start();
+                checkEdqs();
+                reporter.reportLatency(Latencies.EDQS_QUERY, stopWatch.getTime());
+                reporter.serviceIsOk(MonitoredServiceKey.EDQS);
             }
 
             reporter.reportLatencies(tbClient);
             log.debug("Finished {}", getName());
+        } catch (ServiceFailureException e) {
+            reporter.serviceFailure(e.getServiceKey(), e);
         } catch (Throwable error) {
             try {
                 reporter.serviceFailure(MonitoredServiceKey.GENERAL, error);
@@ -199,7 +198,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                 .collect(Collectors.toSet());
         Set<UUID> missing = Sets.difference(new HashSet<>(this.devices), devices);
         if (!missing.isEmpty()) {
-            throw new ServiceFailureException("Missing devices in the response: " + missing);
+            throw new ServiceFailureException(MonitoredServiceKey.EDQS, "Missing devices in the response: " + missing);
         }
 
         result.getData().stream()
@@ -211,7 +210,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                     Stream.of("name", "type", "testData").forEach(key -> {
                         TsValue value = values.get(key);
                         if (value == null || StringUtils.isBlank(value.getValue())) {
-                            throw new ServiceFailureException("Missing " + key + " for device " + entityData.getEntityId());
+                            throw new ServiceFailureException(MonitoredServiceKey.EDQS, "Missing " + key + " for device " + entityData.getEntityId());
                         }
                     });
                 });
@@ -230,6 +229,10 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                     }
                 })
                 .collect(Collectors.toSet());
+    }
+
+    private List<String> getTestTelemetryKeys() {
+        return checkCalculatedFields ? List.of(TEST_TELEMETRY_KEY, TEST_CF_TELEMETRY_KEY) : List.of(TEST_TELEMETRY_KEY);
     }
 
     private void stopHealthChecker(BaseHealthChecker<C, T> healthChecker) throws Exception {

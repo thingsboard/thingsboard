@@ -113,7 +113,7 @@ public class MonitoringReporter {
 
     public void serviceFailure(Object serviceKey, Throwable error) {
         if (log.isDebugEnabled()) {
-            log.error("Error occurred", error);
+            log.error("[{}] Error occurred", serviceKey, error);
         }
         int failuresCount = failuresCounters.computeIfAbsent(serviceKey, k -> new AtomicInteger()).incrementAndGet();
         ServiceFailureNotification notification = new ServiceFailureNotification(serviceKey, error, failuresCount);

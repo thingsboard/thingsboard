@@ -52,11 +52,14 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     private TbStopWatch stopWatch;
     @Value("${monitoring.check_timeout_ms}")
     private int resultCheckTimeoutMs;
+    @Value("${monitoring.calculated_fields.enabled:true}")
+    protected boolean checkCalculatedFields;
 
     @Getter
     private final Map<String, BaseHealthChecker<C, T>> associates = new HashMap<>();
 
     public static final String TEST_TELEMETRY_KEY = "testData";
+    public static final String TEST_CF_TELEMETRY_KEY = "testDataCf";
 
     @PostConstruct
     private void init() {
@@ -68,7 +71,8 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     public final void check(WsClient wsClient) {
         log.debug("[{}] Checking", info);
         try {
-            wsClient.registerWaitForUpdate();
+            int expectedUpdatesCount = checkCalculatedFields ? 2 : 1;
+            wsClient.registerWaitForUpdates(expectedUpdatesCount);
 
             String testValue = UUID.randomUUID().toString();
             String testPayload = createTestPayload(testValue);
@@ -79,16 +83,16 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
                 reporter.reportLatency(Latencies.request(getKey()), stopWatch.getTime());
                 log.trace("[{}] Sent test payload ({})", info, testPayload);
             } catch (Throwable e) {
-                throw new ServiceFailureException(e);
+                throw new ServiceFailureException(info, e);
             }
 
             log.trace("[{}] Waiting for WS update", info);
-            checkWsUpdate(wsClient, testValue);
+            checkWsUpdates(wsClient, testValue);
 
             reporter.serviceIsOk(info);
             reporter.serviceIsOk(MonitoredServiceKey.GENERAL);
-        } catch (ServiceFailureException serviceFailureException) {
-            reporter.serviceFailure(info, serviceFailureException);
+        } catch (ServiceFailureException e) {
+            reporter.serviceFailure(e.getServiceKey(), e);
         } catch (Exception e) {
             reporter.serviceFailure(MonitoredServiceKey.GENERAL, e);
         }
@@ -98,15 +102,28 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
         });
     }
 
-    private void checkWsUpdate(WsClient wsClient, String testValue) {
+    private void checkWsUpdates(WsClient wsClient, String testValue) {
         stopWatch.start();
-        wsClient.waitForUpdate(resultCheckTimeoutMs);
-        log.trace("[{}] Waited for WS update. Last WS msg: {}", info, wsClient.lastMsg);
-        Object update = wsClient.getTelemetryUpdate(target.getDeviceId(), TEST_TELEMETRY_KEY);
-        if (update == null) {
-            throw new ServiceFailureException("No WS update arrived within " + resultCheckTimeoutMs + " ms");
-        } else if (!update.toString().equals(testValue)) {
-            throw new ServiceFailureException("Was expecting value " + testValue + " but got " + update);
+        wsClient.waitForUpdates(resultCheckTimeoutMs);
+        log.trace("[{}] Waited for WS update. Last WS msgs: {}", info, wsClient.lastMsgs);
+        Map<String, String> latest = wsClient.getLatest(target.getDeviceId());
+        if (latest.isEmpty()) {
+            throw new ServiceFailureException(info, "No WS update arrived within " + resultCheckTimeoutMs + " ms");
+        }
+        String actualValue = latest.get(TEST_TELEMETRY_KEY);
+        if (!testValue.equals(actualValue)) {
+            throw new ServiceFailureException(info, "Was expecting value " + testValue + " but got " + actualValue);
+        }
+        if (checkCalculatedFields) {
+            String cfTestValue = testValue + "-cf";
+            String actualCfValue = latest.get(TEST_CF_TELEMETRY_KEY);
+            if (actualCfValue == null) {
+                throw new ServiceFailureException(MonitoredServiceKey.CF, "No CF value arrived");
+            } else if (!cfTestValue.equals(actualCfValue)) {
+                throw new ServiceFailureException(MonitoredServiceKey.CF, "Was expecting CF value " + cfTestValue + " but got " + actualCfValue);
+            } else {
+                reporter.serviceIsOk(MonitoredServiceKey.CF);
+            }
         }
         reporter.reportLatency(Latencies.wsUpdate(getKey()), stopWatch.getTime());
     }
@@ -121,6 +138,7 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
     protected abstract void destroyClient() throws Exception;
 
     protected abstract Object getInfo();
+
     protected abstract String getKey();
 
 }

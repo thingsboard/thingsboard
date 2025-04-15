@@ -32,6 +32,14 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
@@ -46,6 +54,8 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+
+import java.util.Map;
 
 @Slf4j
 public abstract class TransportHealthChecker<C extends TransportMonitoringConfig> extends BaseHealthChecker<C, TransportMonitoringTarget> {
@@ -74,7 +84,7 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
     @Override
     protected Object getInfo() {
-        return new TransportInfo(getTransportType(), target.getBaseUrl(), target.getQueue());
+        return new TransportInfo(getTransportType(), target);
     }
 
     @Override
@@ -87,9 +97,16 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
     private Device getOrCreateDevice(TbClient tbClient) {
         TransportType transportType = config.getTransportType();
-        String deviceName = String.format("%s (%s) - %s", transportType.getName(), target.getQueue(), target.getBaseUrl());
+        String deviceName = String.format("%s %s (%s) - %s", target.getNamePrefix(), transportType.getName(), target.getQueue(), target.getBaseUrl());
         Device device = tbClient.getTenantDevice(deviceName).orElse(null);
         if (device != null) {
+            if (checkCalculatedFields) {
+                CalculatedField calculatedField = tbClient.getCalculatedFieldsByEntityId(device.getId(), new PageLink(1, 0, TEST_CF_TELEMETRY_KEY))
+                        .getData().stream().findFirst().orElse(null);
+                if (calculatedField == null) {
+                    createCalculatedField(tbClient, device);
+                }
+            }
             return device;
         }
 
@@ -128,7 +145,7 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
     private DeviceProfile getOrCreateDeviceProfile(TbClient tbClient) {
         TransportType transportType = config.getTransportType();
-        String profileName = String.format("%s (%s)", transportType.getName(), target.getQueue());
+        String profileName = String.format("%s %s (%s)", target.getNamePrefix(), transportType.getName(), target.getQueue());
         DeviceProfile deviceProfile = tbClient.getDeviceProfiles(new PageLink(1, 0, profileName)).getData()
                 .stream().findFirst().orElse(null);
         if (deviceProfile != null) {
@@ -158,6 +175,27 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
         deviceProfile.setName(profileName);
         deviceProfile.setDefaultQueueName(target.getQueue());
         return tbClient.saveDeviceProfile(deviceProfile);
+    }
+
+    private void createCalculatedField(TbClient tbClient, Device device) {
+        log.info("Creating calculated field for device '{}'", device.getName());
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setName(TEST_CF_TELEMETRY_KEY);
+        calculatedField.setEntityId(device.getId());
+        calculatedField.setType(CalculatedFieldType.SCRIPT);
+        ScriptCalculatedFieldConfiguration configuration = new ScriptCalculatedFieldConfiguration();
+        Argument testDataArgument = new Argument();
+        testDataArgument.setRefEntityKey(new ReferencedEntityKey(TEST_TELEMETRY_KEY, ArgumentType.TS_LATEST, null));
+        configuration.setArguments(Map.of(
+                TEST_TELEMETRY_KEY, testDataArgument
+        ));
+        configuration.setExpression("return { \"" + TEST_CF_TELEMETRY_KEY + "\": "+ TEST_TELEMETRY_KEY + " + \"-cf\" };");
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+        configuration.setOutput(output);
+        calculatedField.setConfiguration(configuration);
+        calculatedField.setDebugMode(true);
+        tbClient.saveCalculatedField(calculatedField);
     }
 
 }
