@@ -114,15 +114,6 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public static final String FW_RESULT_ID = "/5/0/5";
     public static final String FW_NAME_ID = "/5/0/6";
     public static final String FW_VER_ID = "/5/0/7";
-    public static final int FW_INSTANCE_ID = 65533;
-    public static final String FW_INFO_19_INSTANCE_ID = "/19/" + FW_INSTANCE_ID;
-    public static final int SW_INSTANCE_ID = 65534;
-    public static final String SW_INFO_19_INSTANCE_ID = "/19/" + SW_INSTANCE_ID;
-    public static final String OTA_INFO_19_TITLE = "title";
-    public static final String OTA_INFO_19_VERSION = "version";
-    public static final String OTA_INFO_19_FILE_CHECKSUM256 = "checksum";
-    public static final String OTA_INFO_19_FILE_SIZE = "dataSize";
-    public static final String OTA_INFO_19_FILE_NAME = "fileName";
 
     public static final String FW_3_VER_ID = "/3/0/3";
     public static final String FW_DELIVERY_METHOD = "/5/0/9";
@@ -137,6 +128,16 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public static final String SW_STATE_ID = "/9/0/7";
     public static final String SW_RESULT_ID = "/9/0/9";
     public static final String SW_UN_INSTALL_ID = "/9/0/6";
+
+    public static final int FW_INSTANCE_ID = 65533;
+    public static final String FW_INFO_19_INSTANCE_ID = "/19/" + FW_INSTANCE_ID;
+    public static final int SW_INSTANCE_ID = 65534;
+    public static final String SW_INFO_19_INSTANCE_ID = "/19/" + SW_INSTANCE_ID;
+    public static final String OTA_INFO_19_TITLE = "title";
+    public static final String OTA_INFO_19_VERSION = "version";
+    public static final String OTA_INFO_19_FILE_CHECKSUM256 = "checksum";
+    public static final String OTA_INFO_19_FILE_SIZE = "dataSize";
+    public static final String OTA_INFO_19_FILE_NAME = "fileName";
 
     private final Map<String, LwM2MClientFwOtaInfo> fwStates = new ConcurrentHashMap<>();
     private final Map<String, LwM2MClientSwOtaInfo> swStates = new ConcurrentHashMap<>();
@@ -529,7 +530,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             }
             Boolean useObject19ForOta = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings().getUseObject19ForOta();
             if (useObject19ForOta != null && useObject19ForOta){
-                sendInfoFwToObject19ForOta(client, convertObjectIdToVersionedId(FW_INFO_19_INSTANCE_ID, client), response, otaPackageId);
+                sendInfoToObject19ForOta(client, FW_INFO_19_INSTANCE_ID, response, otaPackageId);
             }
             switch (strategy) {
                 case OBJ_5_BINARY:
@@ -555,7 +556,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             LwM2MSoftwareUpdateStrategy strategy = info.getStrategy();
             Boolean useObject19ForOta = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings().getUseObject19ForOta();
             if (useObject19ForOta != null && useObject19ForOta){
-                sendInfoFwToObject19ForOta(client, convertObjectIdToVersionedId(SW_INFO_19_INSTANCE_ID, client), response, otaPackageId);
+                sendInfoToObject19ForOta(client, SW_INFO_19_INSTANCE_ID, response, otaPackageId);
             }
             switch (strategy) {
                 case BINARY:
@@ -591,21 +592,24 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     private void executeFwUpdate(LwM2mClient client) {
+        log.trace("[{}] Execute SW [{}]", client.getEndpoint(), FW_EXECUTE_ID);
         String fwExecuteVerId = convertObjectIdToVersionedId(FW_EXECUTE_ID, client);
         TbLwM2MExecuteRequest request = TbLwM2MExecuteRequest.builder().versionedId(fwExecuteVerId).timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendExecuteRequest(client, request, new TbLwM2MExecuteCallback(logService, client, fwExecuteVerId));
     }
 
     private void executeSwInstall(LwM2mClient client) {
+        log.trace("[{}] Execute SW (install) [{}]", client.getEndpoint(), SW_INSTALL_ID);
         String swInstallVerId = convertObjectIdToVersionedId(SW_INSTALL_ID, client);
         TbLwM2MExecuteRequest request = TbLwM2MExecuteRequest.builder().versionedId(swInstallVerId).timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendExecuteRequest(client, request, new TbLwM2MExecuteCallback(logService, client, swInstallVerId));
     }
 
     private void executeSwUninstallForUpdate(LwM2mClient client) {
-        String swInInstallVerId = convertObjectIdToVersionedId(SW_UN_INSTALL_ID, client);
-        TbLwM2MExecuteRequest request = TbLwM2MExecuteRequest.builder().versionedId(swInInstallVerId).params("1").timeout(clientContext.getRequestTimeout(client)).build();
-        downlinkHandler.sendExecuteRequest(client, request, new TbLwM2MExecuteCallback(logService, client, swInInstallVerId));
+        log.trace("[{}] Execute SW (uninstall with params(\"1\") ) [{}]", client.getEndpoint(), SW_UN_INSTALL_ID);
+        String swUnInstallVerId = convertObjectIdToVersionedId(SW_UN_INSTALL_ID, client);
+        TbLwM2MExecuteRequest request = TbLwM2MExecuteRequest.builder().versionedId(swUnInstallVerId).params("1").timeout(clientContext.getRequestTimeout(client)).build();
+        downlinkHandler.sendExecuteRequest(client, request, new TbLwM2MExecuteCallback(logService, client, swUnInstallVerId));
     }
 
     private Optional<String> getAttributeValue(List<TransportProtos.TsKvProto> attrs, String keyName) {
@@ -675,36 +679,37 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
      *  "fileSize":59832.
      *  "fileName" : "BC68JAR01A10_TO_BC68JAR01A09_09.bin" }
      * @param client
-     * @param targetIdVer
+     * @param targetId
      * @param response
      * @param otaPackageId
      */
-    private void sendInfoFwToObject19ForOta(LwM2mClient client,  String targetIdVer, TransportProtos.GetOtaPackageResponseMsg response, UUID otaPackageId) {
-        log.trace("[{}] Current info fw toObject19ForOta", client.getEndpoint());
+    private void sendInfoToObject19ForOta(LwM2mClient client, String targetId, TransportProtos.GetOtaPackageResponseMsg response, UUID otaPackageId) {
+        log.trace("[{}] Current info ota toObject19ForOta [{}]", client.getEndpoint(), targetId);
+        String targetIdVer = convertObjectIdToVersionedId(targetId, client);
         ObjectModel objectModel = client.getObjectModel(targetIdVer, modelProvider);
         if (objectModel != null) {
             try {
                 if (client.getRegistration().getSupportedObject().get(19) != null) {
-                    ObjectNode objectNodeInfoFw = JacksonUtil.newObjectNode();
+                    ObjectNode objectNodeInfoOta = JacksonUtil.newObjectNode();
                     byte[] firmwareChunk = otaPackageDataCache.get(otaPackageId.toString(), 0, 0);
                     String fileChecksumSHA256 = Hashing.sha256().hashBytes(firmwareChunk).toString();
-                    objectNodeInfoFw.put(OTA_INFO_19_TITLE, response.getTitle());
-                    objectNodeInfoFw.put(OTA_INFO_19_VERSION, response.getVersion());
-                    objectNodeInfoFw.put(OTA_INFO_19_FILE_CHECKSUM256, fileChecksumSHA256);
-                    objectNodeInfoFw.put(OTA_INFO_19_FILE_SIZE, firmwareChunk.length);
-                    objectNodeInfoFw.put(OTA_INFO_19_FILE_NAME, response.getFileName());
-                    String objectNodeInfoFwStr = JacksonUtil.toString(objectNodeInfoFw);
-                    assert objectNodeInfoFwStr != null;
-                    String objectNodeInfoFwBase64 = Base64.getEncoder().encodeToString(objectNodeInfoFwStr.getBytes());
+                    objectNodeInfoOta.put(OTA_INFO_19_TITLE, response.getTitle());
+                    objectNodeInfoOta.put(OTA_INFO_19_VERSION, response.getVersion());
+                    objectNodeInfoOta.put(OTA_INFO_19_FILE_CHECKSUM256, fileChecksumSHA256);
+                    objectNodeInfoOta.put(OTA_INFO_19_FILE_SIZE, firmwareChunk.length);
+                    objectNodeInfoOta.put(OTA_INFO_19_FILE_NAME, response.getFileName());
+                    String objectNodeInfoOtaStr = JacksonUtil.toString(objectNodeInfoOta);
+                    assert objectNodeInfoOtaStr != null;
+                    String objectNodeInfoOtaBase64 = Base64.getEncoder().encodeToString(objectNodeInfoOtaStr.getBytes());
 
 
-                    LwM2mPath pathFwInstance = new LwM2mPath(FW_INFO_19_INSTANCE_ID);
-                    if (client.getRegistration().getAvailableInstances().contains(pathFwInstance)) {
+                    LwM2mPath pathOtaInstance = new LwM2mPath(targetId);
+                    if (client.getRegistration().getAvailableInstances().contains(pathOtaInstance)) {
                         String versionId = targetIdVer + "/0/0";
-                        TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionId).value(objectNodeInfoFwBase64).timeout(clientContext.getRequestTimeout(client)).build();
+                        TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionId).value(objectNodeInfoOtaBase64).timeout(clientContext.getRequestTimeout(client)).build();
                         downlinkHandler.sendWriteReplaceRequest(client, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionId));
                     } else {
-                        String valueResourcesStr = "{\"" + 0 + "\":{\"0\":\"" + objectNodeInfoFwBase64 + "\"}}";
+                        String valueResourcesStr = "{\"" + 0 + "\":{\"0\":\"" + objectNodeInfoOtaBase64 + "\"}}";
                         String valueStr = "{\"id\":\"" + targetIdVer + "\",\"value\":" + valueResourcesStr + "}";
                         RpcCreateRequest requestBody = JacksonUtil.fromString(valueStr, RpcCreateRequest.class);
                         assert requestBody != null;
@@ -713,8 +718,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                         downlinkHandler.sendCreateRequest(client, builder.build(), new TbLwM2MCreateResponseCallback(uplinkHandler, logService, client, targetIdVer));
                     }
                 } else {
-                    String errorMsg = "Failed to send Info Fw to object 19. The client does not have object 19.";
-                    log.trace("[{}] {}", client.getEndpoint(), errorMsg);
+                    String errorMsg = String.format("[%s], Failed to send Info Ota to objectInstance [%s]. The client does not have object 19.", client.getEndpoint(), targetId);
+                    log.trace(errorMsg);
                     logService.log(client, errorMsg);
                 }
             } catch (Exception e){
