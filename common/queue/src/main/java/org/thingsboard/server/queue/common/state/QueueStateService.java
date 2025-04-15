@@ -25,6 +25,7 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +38,7 @@ import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTop
 public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
 
     protected final PartitionedQueueConsumerManager<E> eventConsumer;
+    protected final List<PartitionedQueueConsumerManager<?>> otherConsumers;
 
     @Getter
     protected final Map<QueueKey, Set<TopicPartitionInfo>> partitions = new HashMap<>();
@@ -45,8 +47,9 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
 
     protected final ReadWriteLock partitionsLock = new ReentrantReadWriteLock();
 
-    protected QueueStateService(PartitionedQueueConsumerManager<E> eventConsumer) {
+    protected QueueStateService(PartitionedQueueConsumerManager<E> eventConsumer, List<PartitionedQueueConsumerManager<?>> otherConsumers) {
         this.eventConsumer = eventConsumer;
+        this.otherConsumers = otherConsumers;
     }
 
     public void update(QueueKey queueKey, Set<TopicPartitionInfo> newPartitions) {
@@ -78,10 +81,16 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
 
     protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
         eventConsumer.addPartitions(partitions);
+        for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
+            consumer.addPartitions(withTopic(partitions, consumer.getTopic()));
+        }
     }
 
     protected void removePartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
         eventConsumer.removePartitions(partitions);
+        for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
+            consumer.removePartitions(withTopic(partitions, consumer.getTopic()));
+        }
     }
 
     public void delete(Set<TopicPartitionInfo> partitions) {
@@ -100,6 +109,9 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
 
     protected void deletePartitions(Set<TopicPartitionInfo> partitions) {
         eventConsumer.delete(withTopic(partitions, eventConsumer.getTopic()));
+        for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
+            consumer.removePartitions(withTopic(partitions, consumer.getTopic()));
+        }
     }
 
     public Set<TopicPartitionInfo> getPartitionsInProgress() {

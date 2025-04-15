@@ -22,6 +22,8 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -37,8 +39,9 @@ public class KafkaQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> 
     @Builder
     public KafkaQueueStateService(PartitionedQueueConsumerManager<E> eventConsumer,
                                   PartitionedQueueConsumerManager<S> stateConsumer,
+                                  List<PartitionedQueueConsumerManager<?>> otherConsumers,
                                   Supplier<Map<String, Long>> eventsStartOffsetsProvider) {
-        super(eventConsumer);
+        super(eventConsumer, otherConsumers != null ? otherConsumers : Collections.emptyList());
         this.stateConsumer = stateConsumer;
         this.eventsStartOffsetsProvider = eventsStartOffsetsProvider;
     }
@@ -62,6 +65,9 @@ public class KafkaQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> 
                 TopicPartitionInfo eventPartition = statePartition.withTopic(eventConsumer.getTopic());
                 if (this.partitions.get(queueKey).contains(eventPartition)) {
                     eventConsumer.addPartitions(Set.of(eventPartition), null, eventsStartOffsets != null ? eventsStartOffsets::get : null);
+                    for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
+                        consumer.addPartitions(Set.of(statePartition.withTopic(consumer.getTopic())));
+                    }
                 }
             } finally {
                 readLock.unlock();

@@ -37,12 +37,14 @@ import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
 import org.thingsboard.server.queue.common.state.QueueStateService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.edqs.EdqsConfig;
+import org.thingsboard.server.queue.edqs.EdqsExecutors;
 import org.thingsboard.server.queue.edqs.KafkaEdqsComponent;
 import org.thingsboard.server.queue.edqs.KafkaEdqsQueueFactory;
 import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
 import org.thingsboard.server.queue.kafka.TbKafkaConsumerTemplate;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -59,6 +61,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private final EdqsConfig config;
     private final EdqsPartitionService partitionService;
     private final KafkaEdqsQueueFactory queueFactory;
+    private final EdqsExecutors edqsExecutors;
     @Autowired
     @Lazy
     private EdqsProcessor edqsProcessor;
@@ -74,7 +77,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private Boolean ready;
 
     @Override
-    public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer) {
+    public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer, List<PartitionedQueueConsumerManager<?>> otherConsumers) {
         TbKafkaAdmin queueAdmin = queueFactory.getEdqsQueueAdmin();
         stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>create()
                 .queueKey(new QueueKey(ServiceType.EDQS, config.getStateTopic()))
@@ -96,9 +99,9 @@ public class KafkaEdqsStateService implements EdqsStateService {
                 })
                 .consumerCreator((config, tpi) -> queueFactory.createEdqsStateConsumer())
                 .queueAdmin(queueAdmin)
-                .consumerExecutor(eventConsumer.getConsumerExecutor())
-                .taskExecutor(eventConsumer.getTaskExecutor())
-                .scheduler(eventConsumer.getScheduler())
+                .consumerExecutor(edqsExecutors.getConsumersExecutor())
+                .taskExecutor(edqsExecutors.getConsumerTaskExecutor())
+                .scheduler(edqsExecutors.getScheduler())
                 .uncaughtErrorHandler(edqsProcessor.getErrorHandler())
                 .build();
 
@@ -141,7 +144,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
                     consumer.commit();
                 })
                 .consumerCreator(() -> eventsToBackupKafkaConsumer)
-                .consumerExecutor(eventConsumer.getConsumerExecutor())
+                .consumerExecutor(edqsExecutors.getConsumersExecutor())
                 .threadPrefix("edqs-events-to-backup")
                 .build();
 
@@ -153,6 +156,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
         queueStateService = KafkaQueueStateService.<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<ToEdqsMsg>>builder()
                 .eventConsumer(eventConsumer)
                 .stateConsumer(stateConsumer)
+                .otherConsumers(otherConsumers)
                 .eventsStartOffsetsProvider(() -> {
                     // taking start offsets for events topics from the events-to-backup consumer group,
                     // since eventConsumer doesn't use consumer group management and thus offset tracking
