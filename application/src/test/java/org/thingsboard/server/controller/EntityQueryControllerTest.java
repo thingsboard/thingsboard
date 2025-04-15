@@ -17,8 +17,6 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.awaitility.Awaitility;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -73,7 +71,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -502,7 +499,8 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
         List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
-        List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        List<EntityKey> latestValues = List.of(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"),
+                new EntityKey(EntityKeyType.ATTRIBUTE, "non-existing-attribute"));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
         PageData<EntityData> data = findByQueryAndCheck(query, 67);
@@ -519,6 +517,14 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
                 entityData.getLatest().get(EntityKeyType.ATTRIBUTE).get("temperature").getValue()).collect(Collectors.toList());
         List<String> deviceTemperatures = temperatures.stream().map(aLong -> Long.toString(aLong)).collect(Collectors.toList());
         Assert.assertEquals(deviceTemperatures, loadedTemperatures);
+
+        // check ts value == 0, value is empty string for non-existing data points
+        List<TsValue> loadedNonExistingAttributes = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ATTRIBUTE).get("non-existing-attribute")).toList();
+        loadedNonExistingAttributes.forEach(tsValue -> {
+            assertThat(tsValue.getTs()).isEqualTo(0L);
+            assertThat(tsValue.getValue()).isEqualTo("");
+        });
 
         pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
         KeyFilter highTemperatureFilter = new KeyFilter();

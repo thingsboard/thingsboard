@@ -47,6 +47,8 @@ public interface EdgeService extends EntityDaoService {
 
     Optional<Edge> findEdgeByRoutingKey(TenantId tenantId, String routingKey);
 
+    PageData<Edge> findActiveEdges(PageLink pageLink);
+
     Edge saveEdge(Edge edge);
 
     Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, CustomerId customerId);

@@ -24,7 +24,7 @@
         <file>/var/log/tb-edqs/${TB_SERVICE_ID}/tb-edqs.log</file>
         <rollingPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>/var/log/tb-edqs/tb-edqs.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>/var/log/tb-edqs/${TB_SERVICE_ID}/tb-edqs.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>3GB</totalSizeCap>
@@ -41,7 +41,6 @@
     </appender>
 
     <logger name="org.thingsboard.server" level="INFO" />
-    <logger name="org.thingsboard.server.edqs" level="TRACE" />
     <logger name="org.apache.kafka.clients" level="WARN"/>
 
     <root level="INFO">

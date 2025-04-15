@@ -34,7 +34,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
-        <pkg.name>edqs</pkg.name>
+        <pkg.name>tb-edqs</pkg.name>
         <docker.name>tb-edqs</docker.name>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>

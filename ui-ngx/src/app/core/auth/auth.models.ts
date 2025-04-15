@@ -31,6 +31,7 @@ export interface SysParamsState {
   maxDataPointsPerRollingArg: number;
   maxArgumentsPerCF: number;
   ruleChainDebugPerTenantLimitsConfiguration?: string;
+  calculatedFieldDebugPerTenantLimitsConfiguration?: string;
 }
 
 export interface SysParams extends SysParamsState {

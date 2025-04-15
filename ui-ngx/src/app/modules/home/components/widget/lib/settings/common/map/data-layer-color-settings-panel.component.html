@@ -39,7 +39,7 @@
   <div class="tb-data-layer-color-settings-panel-body" [class.!hidden]="colorSettingsFormGroup.get('type').value !== DataLayerColorType.constant">
   </div>
   <div class="tb-data-layer-color-settings-panel-body" [class.!hidden]="colorSettingsFormGroup.get('type').value !== DataLayerColorType.range">
-    <tb-data-key-input
+    <tb-data-key-input style="padding-top: 6px;"
       inlineField="false"
       appearance="outline"
       subscriptSizing="fixed"
@@ -95,7 +95,8 @@
                 [functionArgs]="['data', 'dsData']"
                 [globalVariables]="functionScopeVariables"
                 functionTitle="{{ 'widgets.maps.data-layer.color-function' | translate }}"
-                [helpId]="helpId">
+                [helpId]="helpId"
+                [helpPopupStyle]="{width: '900px'}">
     </tb-js-func>
   </div>
 </ng-template>

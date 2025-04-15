@@ -45,7 +45,7 @@ export class AnalogueGaugeWidgetSettingsComponent extends WidgetSettingsComponen
       maxValue: 100,
       showUnitTitle: true,
       unitTitle: null,
-      majorTicksCount: null,
+      majorTicksCount: 10,
       minorTicks: 2,
       valueBox: true,
       valueInt: 3,

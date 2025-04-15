@@ -62,6 +62,12 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
     };
   }
 
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    settings.pageStepIncrement = settings.pageStepIncrement ?? settings.defaultPageSize;
+    this.pageStepSizeValues = buildPageStepSizeValues(settings.pageStepCount, settings.pageStepIncrement);
+    return settings;
+  }
+
   protected onSettingsSet(settings: WidgetSettings) {
     // For backward compatibility
     const dateFormat = settings.dateFormat;
@@ -83,15 +89,12 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],
       pageStepCount: [settings.pageStepCount ?? 3, [Validators.min(1), Validators.max(100),
         Validators.required, Validators.pattern(/^\d*$/)]],
-      pageStepIncrement: [settings.pageStepIncrement ?? settings.defaultPageSize,
-        [Validators.min(1), Validators.required, Validators.pattern(/^\d*$/)]],
+      pageStepIncrement: [settings.pageStepIncrement, [Validators.min(1), Validators.required, Validators.pattern(/^\d*$/)]],
       hideEmptyLines: [settings.hideEmptyLines, []],
       disableStickyHeader: [settings.disableStickyHeader, []],
       useRowStyleFunction: [settings.useRowStyleFunction, []],
       rowStyleFunction: [settings.rowStyleFunction, [Validators.required]]
     });
-    this.pageStepSizeValues = buildPageStepSizeValues(this.timeseriesTableWidgetSettingsForm.get('pageStepCount').value,
-      this.timeseriesTableWidgetSettingsForm.get('pageStepIncrement').value);
   }
 
   protected validatorTriggers(): string[] {
