@@ -291,17 +291,14 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
 
     private DeviceProfile doCreateDeviceProfile(TenantId tenantId, String profileName, boolean defaultProfile, boolean publishSaveEvent) {
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                .withTransportConfig(new DefaultDeviceProfileTransportConfiguration())
+                .withProvisionConfig(new DisabledDeviceProfileProvisionConfiguration(null))
+                .build();
         deviceProfile.setTenantId(tenantId);
         deviceProfile.setDefault(defaultProfile);
         deviceProfile.setName(profileName);
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-        deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         deviceProfile.setDescription("Default device profile");
-        deviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
-                new DefaultDeviceProfileTransportConfiguration(),
-                new DisabledDeviceProfileProvisionConfiguration(null));
         return saveDeviceProfile(deviceProfile, true, publishSaveEvent);
     }
 
@@ -401,7 +398,7 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         String cert = fetchLeafCertificateFromChain(formattedCertificateValue);
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
         x509Configuration.setProvisionDeviceSecret(formattedCertificateValue);
-        deviceProfile.configureData(x509Configuration);
+        DeviceProfile.ProfileBuilder.forProfile(deviceProfile).withProvisionConfig(x509Configuration).build();
         deviceProfile.setProvisionDeviceKey(sha3Hash);
     }
 

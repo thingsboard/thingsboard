@@ -154,23 +154,21 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
         tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
 
-        DeviceProfile mqttProfile = new DeviceProfile();
-        mqttProfile.setName("Mqtt device profile");
-        mqttProfile.setType(DeviceProfileType.DEFAULT);
-        mqttProfile.setTransportType(DeviceTransportType.MQTT);
         MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
         transportConfiguration.setDeviceTelemetryTopic(DEVICE_TELEMETRY_TOPIC);
-        mqttProfile.configureData(new DefaultDeviceProfileConfiguration()).configureData(transportConfiguration);
+        DeviceProfile mqttProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                .withTransportConfig(transportConfiguration)
+                .build();
+        mqttProfile.setName("Mqtt device profile");
         mqttProfile.setDefault(false);
         mqttProfile.setDefaultRuleChainId(null);
 
         mqttDeviceProfileId = doPost("/api/deviceProfile", mqttProfile, DeviceProfile.class).getId();
 
-        DeviceProfile coapProfile = new DeviceProfile();
+        DeviceProfile coapProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                .withTransportConfig(new CoapDeviceProfileTransportConfiguration())
+                .build();
         coapProfile.setName("Coap device profile");
-        coapProfile.setType(DeviceProfileType.DEFAULT);
-        coapProfile.setTransportType(DeviceTransportType.COAP);
-        coapProfile.configureData(new DefaultDeviceProfileConfiguration()).configureData(new CoapDeviceProfileTransportConfiguration());
         coapProfile.setDefault(false);
         coapProfile.setDefaultRuleChainId(null);
 

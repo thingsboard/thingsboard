@@ -166,37 +166,52 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
         }
     }
 
-    public DeviceProfile configureData() {
-        configureData(null, null, null, null);
-        return this;
-    }
+   public static class ProfileBuilder {
+        private DeviceProfile deviceProfile;
+        private DeviceProfileConfiguration config;
+        private DeviceProfileTransportConfiguration transportConfig;
+        private DeviceProfileProvisionConfiguration provisionConfig;
+        private List<DeviceProfileAlarm> alarms;
 
-    public DeviceProfile configureData(DeviceProfileConfiguration config) {
-        configureData(config, null, null, null);
-        return this;
-    }
+        public ProfileBuilder() {
+            this.deviceProfile = new DeviceProfile();
+        }
 
-    public DeviceProfile configureData(DeviceProfileTransportConfiguration transportConfig) {
-        configureData(null, transportConfig, null, null);
-        return this;
-    }
+        private ProfileBuilder(DeviceProfile deviceProfile) {
+            this.deviceProfile = deviceProfile;
+        }
 
-    public DeviceProfile configureData(DeviceProfileProvisionConfiguration provisionConfig) {
-        configureData(null, null, provisionConfig, null);
-        return this;
-    }
+        public static ProfileBuilder forProfile(DeviceProfile deviceProfile) {
+            return new ProfileBuilder(deviceProfile);
+        }
 
-    public DeviceProfile configureData(List<DeviceProfileAlarm> alarms) {
-        configureData(null, null, null, alarms);
-        return this;
-    }
+        public ProfileBuilder withConfig(DeviceProfileConfiguration config) {
+            this.config = config;
+            return this;
+        }
 
-    public DeviceProfile configureData(DeviceProfileConfiguration config, DeviceProfileTransportConfiguration transportConfig, DeviceProfileProvisionConfiguration provisionConfig) {
-        configureData(config, transportConfig, provisionConfig, null);
-        return this;
-    }
+        public ProfileBuilder withTransportConfig(DeviceProfileTransportConfiguration transportConfig) {
+            this.transportConfig = transportConfig;
+            return this;
+        }
 
-    public DeviceProfile configureData(DeviceProfileConfiguration config, DeviceProfileTransportConfiguration transportConfig, DeviceProfileProvisionConfiguration provisionConfig, List<DeviceProfileAlarm> alarms) {
+        public ProfileBuilder withProvisionConfig(DeviceProfileProvisionConfiguration provisionConfig) {
+            this.provisionConfig = provisionConfig;
+            return this;
+        }
+
+        public ProfileBuilder withAlarms(List<DeviceProfileAlarm> alarms) {
+            this.alarms = alarms;
+            return this;
+        }
+
+        public DeviceProfile build() {
+            deviceProfile.configureData(config, transportConfig, provisionConfig, alarms);
+            return deviceProfile;
+        }
+   }
+
+    private DeviceProfile configureData(DeviceProfileConfiguration config, DeviceProfileTransportConfiguration transportConfig, DeviceProfileProvisionConfiguration provisionConfig, List<DeviceProfileAlarm> alarms) {
         DeviceProfileData deviceProfileData;
 
         if (this.profileData != null) {

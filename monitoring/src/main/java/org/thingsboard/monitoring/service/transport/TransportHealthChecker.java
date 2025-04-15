@@ -136,11 +136,9 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
         log.info("Creating new device profile '{}'", profileName);
         if (transportType != TransportType.LWM2M) {
-            deviceProfile = new DeviceProfile();
-            deviceProfile.setType(DeviceProfileType.DEFAULT);
-            deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-            deviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
-                    new DefaultDeviceProfileTransportConfiguration(), null);
+            deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                    .withTransportConfig(new DefaultDeviceProfileTransportConfiguration())
+                    .build();
         } else {
             tbClient.getResources(new PageLink(1, 0, "LwM2M Monitoring")).getData()
                     .stream().findFirst()

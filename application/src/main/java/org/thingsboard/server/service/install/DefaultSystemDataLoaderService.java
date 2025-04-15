@@ -374,20 +374,16 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         createDevice(demoTenant.getId(), null, defaultDeviceProfile.getId(), "Raspberry Pi Demo Device", "RASPBERRY_PI_DEMO_TOKEN", "Demo device that is used in " +
                 "Raspberry Pi GPIO control sample application");
 
-        DeviceProfile thermostatDeviceProfile = new DeviceProfile();
+        DeviceProfile thermostatDeviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                .withTransportConfig(new DefaultDeviceProfileTransportConfiguration())
+                .withProvisionConfig(new DisabledDeviceProfileProvisionConfiguration(null))
+                .build();
         thermostatDeviceProfile.setTenantId(demoTenant.getId());
         thermostatDeviceProfile.setDefault(false);
         thermostatDeviceProfile.setName("thermostat");
-        thermostatDeviceProfile.setType(DeviceProfileType.DEFAULT);
-        thermostatDeviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-        thermostatDeviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         thermostatDeviceProfile.setDescription("Thermostat device profile");
         thermostatDeviceProfile.setDefaultRuleChainId(ruleChainService.findTenantRuleChainsByType(
                 demoTenant.getId(), RuleChainType.CORE, new PageLink(1, 0, "Thermostat")).getData().get(0).getId());
-
-        thermostatDeviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
-                new DefaultDeviceProfileTransportConfiguration(),
-                new DisabledDeviceProfileProvisionConfiguration(null));
 
         DeviceProfileAlarm highTemperature = new DeviceProfileAlarm();
         highTemperature.setId("highTemperatureAlarmID");
@@ -490,7 +486,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearHumidityRule.setAlarmDetails("Current humidity = ${humidity}");
         lowHumidity.setClearRule(clearHumidityRule);
 
-        defaultDeviceProfile.configureData(Arrays.asList(highTemperature, lowHumidity));
+        DeviceProfile.ProfileBuilder.forProfile(defaultDeviceProfile)
+                .withAlarms(Arrays.asList(highTemperature, lowHumidity))
+                .build();
 
         DeviceProfile savedThermostatDeviceProfile = deviceProfileService.saveDeviceProfile(thermostatDeviceProfile);
 

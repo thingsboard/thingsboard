@@ -89,16 +89,6 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
             return doGet("/api/deviceProfile/" + defaultDeviceProfileInfo.getId().getId(), DeviceProfile.class);
         } else {
             TransportPayloadType transportPayloadType = config.getTransportPayloadType();
-            DeviceProfile deviceProfile = new DeviceProfile();
-            deviceProfile.setName(transportPayloadType.name());
-            deviceProfile.setType(DeviceProfileType.DEFAULT);
-            DeviceProfileProvisionType provisionType = config.getProvisionType() != null ?
-                    config.getProvisionType() : DeviceProfileProvisionType.DISABLED;
-            deviceProfile.setProvisionType(provisionType);
-            deviceProfile.setProvisionDeviceKey(config.getProvisionKey());
-            deviceProfile.setDescription(transportPayloadType.name() + " Test");
-            DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-            deviceProfile.setTransportType(DeviceTransportType.COAP);
             CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = new CoapDeviceProfileTransportConfiguration();
             CoapDeviceTypeConfiguration coapDeviceTypeConfiguration;
             if (CoapDeviceType.DEFAULT.equals(coapDeviceType)) {
@@ -132,7 +122,10 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
                 coapDeviceTypeConfiguration = new EfentoCoapDeviceTypeConfiguration();
             }
             coapDeviceProfileTransportConfiguration.setCoapDeviceTypeConfiguration(coapDeviceTypeConfiguration);
+
             DeviceProfileProvisionConfiguration provisionConfiguration;
+            DeviceProfileProvisionType provisionType = config.getProvisionType() != null ?
+                    config.getProvisionType() : DeviceProfileProvisionType.DISABLED;
             switch (provisionType) {
                 case ALLOW_CREATE_NEW_DEVICES:
                     provisionConfiguration = new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(config.getProvisionSecret());
@@ -145,7 +138,14 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
                     provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(config.getProvisionSecret());
                     break;
             }
-            deviceProfile.configureData(configuration, coapDeviceProfileTransportConfiguration, provisionConfiguration);
+
+            DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                    .withTransportConfig(coapDeviceProfileTransportConfiguration)
+                    .withProvisionConfig(provisionConfiguration)
+                    .build();
+            deviceProfile.setName(transportPayloadType.name());
+            deviceProfile.setProvisionDeviceKey(config.getProvisionKey());
+            deviceProfile.setDescription(transportPayloadType.name() + " Test");
             deviceProfile.setDefault(false);
             deviceProfile.setDefaultRuleChainId(null);
             return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);

@@ -157,14 +157,12 @@ public abstract class AbstractServiceTest {
     }
 
     protected DeviceProfile createDeviceProfile(TenantId tenantId, String name) {
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                .withTransportConfig(new DefaultDeviceProfileTransportConfiguration())
+                .build();
         deviceProfile.setTenantId(tenantId);
         deviceProfile.setName(name);
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         deviceProfile.setDescription(name + " Test");
-        deviceProfile.configureData(new DefaultDeviceProfileConfiguration())
-                .configureData(new DefaultDeviceProfileTransportConfiguration());
         deviceProfile.setDefault(false);
         deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;

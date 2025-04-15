@@ -470,16 +470,14 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
     }
 
     private DeviceProfile buildDeviceProfileForUplinkMsg(String name) {
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                .withTransportConfig(new DefaultDeviceProfileTransportConfiguration())
+                .withProvisionConfig(new DisabledDeviceProfileProvisionConfiguration("Device Secret"))
+                .build();
         deviceProfile.setId(new DeviceProfileId(UUID.randomUUID()));
         deviceProfile.setTenantId(tenantId);
         deviceProfile.setName(name);
         deviceProfile.setDefault(false);
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-        deviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
-                new DefaultDeviceProfileTransportConfiguration(),
-                new DisabledDeviceProfileProvisionConfiguration("Device Secret"));
         return deviceProfile;
     }
 
