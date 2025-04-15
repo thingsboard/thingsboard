@@ -29,6 +29,7 @@ import org.eclipse.paho.mqttv5.common.packet.MqttReturnCode;
 import org.eclipse.paho.mqttv5.common.packet.MqttWireMessage;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -67,7 +68,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataTyp
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt64;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -112,31 +113,44 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         long value = bdSeq = 0;
         clientWithCorrectNodeAccessTokenWithNDEATH(ts, value);
     }
+    public void clientWithCorrectNodeAccessTokenWithNDEATH(Long alias) throws Exception {
+        long ts = calendar.getTimeInMillis();
+        long value = bdSeq = 0;
+        clientMqttV5ConnectWithNDEATH(ts, value,alias);
+    }
 
     public void clientWithCorrectNodeAccessTokenWithNDEATH(long ts, long value) throws Exception {
-        IMqttToken connectionResult = clientConnectWithNDEATH(ts, value);
+        IMqttToken connectionResult = clientMqttV5ConnectWithNDEATH(ts, value, -1L);
         MqttWireMessage response = connectionResult.getResponse();
         Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
         MqttConnAck connAckMsg = (MqttConnAck) response;
         Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
     }
 
-    public IMqttToken clientConnectWithNDEATH(long ts, long value, String... nameSpaceBad) throws Exception {
-        String key = keysBdSeq;
+    public IMqttToken clientMqttV5ConnectWithNDEATH(long ts, long value, Long alias, String... nameSpaceBad) throws Exception {
+        return clientMqttV5ConnectWithNDEATH(ts, value, null, alias, nameSpaceBad);
+    }
+    public IMqttToken clientMqttV5ConnectWithNDEATH(long ts, long value, String metricName, Long alias, String... nameSpaceBad) throws Exception {
+        String key = metricName == null ? keysBdSeq : metricName;
         MetricDataType metricDataType = Int64;
         SparkplugBProto.Payload.Builder deathPayload = SparkplugBProto.Payload.newBuilder()
                 .setTimestamp(calendar.getTimeInMillis());
-        deathPayload.addMetrics(createMetric(value, ts, key, metricDataType));
+        deathPayload.addMetrics(createMetric(value, ts, key, metricDataType, alias));
         byte[] deathBytes = deathPayload.build().toByteArray();
         this.client = new MqttV5TestClient();
         this.mqttCallback = new SparkplugMqttCallback();
         this.client.setCallback(this.mqttCallback);
         MqttConnectionOptions options = new MqttConnectionOptions();
+        // If the MQTT client is using MQTT v5.0, the Edge Node’s MQTT CONNECT packet MUST set the Clean Start flag to true and the Session Expiry Interval to 0
+        options.setCleanStart(true);
+        options.setSessionExpiryInterval(0L);
         options.setUserName(gatewayAccessToken);
-        String nameSpace = nameSpaceBad.length == 0 ? NAMESPACE : nameSpaceBad[0];
+        String nameSpace = nameSpaceBad.length == 0 ? TOPIC_ROOT_SPB_V_1_0 : nameSpaceBad[0];
         String topic = nameSpace + "/" + groupId + "/" + SparkplugMessageType.NDEATH.name() + "/" + edgeNode;
+        // The NDEATH message MUST set the MQTT Will QoS to 1 and Retained flag to false
         MqttMessage msg = new MqttMessage();
         msg.setId(0);
+        msg.setQos(1);
         msg.setPayload(deathBytes);
         options.setWill(topic, msg);
         return client.connect(options);
@@ -148,19 +162,19 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         MetricDataType metricDataType = Int32;
         String key = "Node Metric int32";
         int valueDeviceInt32 = 1024;
-        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, ts, key, metricDataType);
+        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, ts, key, metricDataType, -1L);
         SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
                 .setTimestamp(ts)
                 .setSeq(getBdSeqNum());
         payloadBirthNode.addMetrics(metric);
         payloadBirthNode.setTimestamp(ts);
         if (client.isConnected()) {
-            client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
 
         valueDeviceInt32 = 4024;
-        metric = createMetric(valueDeviceInt32, ts, metricBirthName_Int32,  metricBirthDataType_Int32);
+        metric = createMetric(valueDeviceInt32, ts, metricBirthName_Int32, metricBirthDataType_Int32, -1L);
         for (int i = 0; i < cntDevices; i++) {
             SparkplugBProto.Payload.Builder payloadBirthDevice = SparkplugBProto.Payload.newBuilder()
                     .setTimestamp(ts)
@@ -169,7 +183,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
 
             payloadBirthDevice.addMetrics(metric);
             if (client.isConnected()) {
-                client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
+                client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
                         payloadBirthDevice.build().toByteArray(), 0, false);
                 AtomicReference<Device> device = new AtomicReference<>();
                 await(alias + "find device [" + deviceName + "] after created")
@@ -184,6 +198,49 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         }
 
         Assert.assertEquals(cntDevices, devices.size());
+        return devices;
+    }
+
+    protected List<Device> connectClientWithCorrectAccessTokenWithNDEATHWithAliasCreatedDevices(long ts) throws Exception {
+        List<Device> devices = new ArrayList<>();
+        Long alias = 0L;
+        clientWithCorrectNodeAccessTokenWithNDEATH(alias++);
+        MetricDataType metricDataType = Int32;
+        String key = "Node Metric int32";
+        int valueDeviceInt32 = 1024;
+        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, ts, key, metricDataType, alias++);
+        SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(ts)
+                .setSeq(getBdSeqNum());
+        payloadBirthNode.addMetrics(metric);
+        payloadBirthNode.setTimestamp(ts);
+        if (client.isConnected()) {
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+                    payloadBirthNode.build().toByteArray(), 0, false);
+        }
+
+        valueDeviceInt32 = 4024;
+        metric = createMetric(valueDeviceInt32, ts, metricBirthName_Int32, metricBirthDataType_Int32, alias++);
+        SparkplugBProto.Payload.Builder payloadBirthDevice = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(ts)
+                .setSeq(getSeqNum());
+        String deviceName = deviceId + "_" + 1;
+
+        payloadBirthDevice.addMetrics(metric);
+        if (client.isConnected()) {
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
+                    payloadBirthDevice.build().toByteArray(), 0, false);
+            AtomicReference<Device> device = new AtomicReference<>();
+            await(alias + "find device [" + deviceName + "] after created")
+                    .atMost(200, TimeUnit.SECONDS)
+                    .until(() -> {
+                        device.set(doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class));
+                        return device.get() != null;
+                    });
+            devices.add(device.get());
+        }
+
+        Assert.assertEquals(1, devices.size());
         return devices;
     }
 
@@ -207,16 +264,20 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                 .setTimestamp(calendar.getTimeInMillis());
         long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
         long valueBdSec = getBdSeqNum();
-        payloadBirthNode.addMetrics(createMetric(valueBdSec, ts, keysBdSeq, Int64));
+        payloadBirthNode.addMetrics(createMetric(valueBdSec, ts, keysBdSeq, Int64, -1L));
         listKeys.add(SparkplugMessageType.NBIRTH.name() + " " + keysBdSeq);
-        payloadBirthNode.addMetrics(createMetric(false, ts, keyNodeRebirth, MetricDataType.Boolean));
+        payloadBirthNode.addMetrics(createMetric(false, ts, keyNodeRebirth, MetricDataType.Boolean, -1L));
         listKeys.add(keyNodeRebirth);
 
-        payloadBirthNode.addMetrics(createMetric(metricValue, ts, metricKey, metricDataType));
+        if (StringUtils.isNotBlank(metricKey)) {
+            payloadBirthNode.addMetrics(createMetric(metricValue, ts, metricKey, metricDataType, -1L));
+        } else {
+            payloadBirthNode.addMetrics(createMetric(metricValue, ts, metricKey, metricDataType, 4L));
+        }
         listKeys.add(metricKey);
 
         if (client.isConnected()) {
-            client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
         return listKeys;
@@ -297,7 +358,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     private TsKvEntry createdAddMetricTsKvLong(SparkplugBProto.Payload.Builder dataPayload, String key, Object value,
                                                long ts, MetricDataType metricDataType) throws ThingsboardException {
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(key, Long.valueOf(String.valueOf(value))));
-        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType, -1L));
         return tsKvEntry;
     }
 
@@ -305,7 +366,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                                                 long ts, MetricDataType metricDataType) throws ThingsboardException {
         Double dd = Double.parseDouble(Float.toString(value));
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new DoubleDataEntry(key, dd));
-        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType, -1L));
         return tsKvEntry;
     }
 
@@ -313,21 +374,21 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                                                  long ts, MetricDataType metricDataType) throws ThingsboardException {
         Long l = Double.valueOf(value).longValue();
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new LongDataEntry(key, l));
-        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType, -1L));
         return tsKvEntry;
     }
 
     private TsKvEntry createdAddMetricTsKvBoolean(SparkplugBProto.Payload.Builder dataPayload, String key, boolean value,
                                                   long ts, MetricDataType metricDataType) throws ThingsboardException {
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new BooleanDataEntry(key, value));
-        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType, -1L));
         return tsKvEntry;
     }
 
     private TsKvEntry createdAddMetricTsKvString(SparkplugBProto.Payload.Builder dataPayload, String key, String value,
                                                  long ts, MetricDataType metricDataType) throws ThingsboardException {
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(key, value));
-        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType));
+        dataPayload.addMetrics(createMetric(value, ts, key, metricDataType, -1L));
         return tsKvEntry;
     }
 
@@ -348,7 +409,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         if (nodeArray.size() > 0) {
             Optional<TsKvEntry> tsKvEntryOptional = Optional.of(new BasicTsKvEntry(ts, new JsonDataEntry(key, nodeArray.toString())));
             if (tsKvEntryOptional.isPresent()) {
-                dataPayload.addMetrics(createMetric(values, ts, key, metricDataType));
+                dataPayload.addMetrics(createMetric(values, ts, key, metricDataType, -1L));
                 listTsKvEntry.add(tsKvEntryOptional.get());
                 listKeys.add(key);
             }
@@ -416,7 +477,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         return java.util.UUID.randomUUID().toString();
     }
 
-    public class SparkplugMqttCallback  implements MqttCallback {
+    public class SparkplugMqttCallback implements MqttCallback {
         private final List<SparkplugBProto.Payload.Metric> messageArrivedMetrics = new ArrayList<>();
 
         @Override
