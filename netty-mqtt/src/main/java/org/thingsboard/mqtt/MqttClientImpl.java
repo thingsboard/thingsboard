@@ -194,7 +194,10 @@ final class MqttClientImpl implements MqttClient {
             if (reconnect) {
                 this.reconnect = true;
             }
-            eventLoop.schedule((Runnable) () -> connect(host, port, reconnect), reconnectStrategy.getNextReconnectDelay(), TimeUnit.SECONDS);
+
+            final long nextReconnectDelay = reconnectStrategy.getNextReconnectDelay();
+            log.info("[{}] Scheduling reconnect in [{}] sec", channel != null ? channel.id() : "UNKNOWN", nextReconnectDelay);
+            eventLoop.schedule((Runnable) () -> connect(host, port, reconnect), nextReconnectDelay, TimeUnit.SECONDS);
         }
     }
 
