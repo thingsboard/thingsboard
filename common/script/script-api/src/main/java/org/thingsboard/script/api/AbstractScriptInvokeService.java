@@ -269,7 +269,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         }
     }
 
-    private boolean scriptBodySizeExceeded(String scriptBody) {
+    public boolean scriptBodySizeExceeded(String scriptBody) {
         if (getMaxScriptBodySize() <= 0) return false;
         return scriptBody.length() > getMaxScriptBodySize();
     }
@@ -297,7 +297,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         return result != null && result.length() > getMaxResultSize();
     }
 
-    private <T> ListenableFuture<T> error(String message) {
+    public <T> ListenableFuture<T> error(String message) {
         return Futures.immediateFailedFuture(new RuntimeException(message));
     }
 
