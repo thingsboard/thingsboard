@@ -991,18 +991,15 @@
         "type-sms-sent": "SMS sent"
     },
     "debug-settings": {
-        "label": "Debug configuration",
+        "label": "Debug Configuration",
         "on-failure": "Failures only (24/7)",
         "all-messages": "All messages ({{time}})",
         "failures": "Failures",
         "entity": "entity",
-        "rule-node": "rule node",
-        "calculated-field": "calculated field",
         "hint": {
-            "main": "All node debug messages rate limited with:",
-            "main-limited": "All {{entity}} debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{time}}.",
-            "on-failure": "Save all failure debug events without time limit.",
-            "all-messages": "Save all debug events during time limit."
+            "main-limited": "No more than {{msg}} {{entity}} debug messages per {{time}} will be recorded.",
+            "on-failure": "Log error messages only.",
+            "all-messages": "Log all debug messages."
         }
     },
     "calculated-fields": {
@@ -1060,6 +1057,7 @@
         "delete-text": "Be careful, after the confirmation the calculated field and all related data will become unrecoverable.",
         "delete-multiple-title": "Are you sure you want to delete { count, plural, =1 {1 calculated field} other {# calculated fields} }?",
         "delete-multiple-text": "Be careful, after the confirmation all selected calculated fields will be removed and all related data will become unrecoverable.",
+        "test-with-this-message": "Test with this message",
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
             "arguments-empty": "Arguments should not be empty.",
@@ -1070,7 +1068,7 @@
             "argument-name-pattern": "Argument name is invalid.",
             "argument-name-duplicate": "Argument with such name already exists.",
             "argument-name-max-length": "Argument name should be less than 256 characters.",
-            "argument-name-ctx": "Argument name 'ctx' is reserved and cannot be used.",
+            "argument-name-forbidden": "Argument name is reserved and cannot be used.",
             "argument-type-required": "Argument type is required.",
             "max-args": "Maximum number of arguments reached.",
             "decimals-range": "Decimals by default should be a number between 0 and 15.",
@@ -1122,8 +1120,6 @@
         "documentation": "Documentation",
         "time-left": "{{time}} left",
         "output": "Output",
-        "test-function": "Test function",
-        "test-with-this-message": "{{test}} with this message",
         "suffix": {
             "s": "s",
             "ms": "ms"
@@ -1138,7 +1134,8 @@
             "key-required": "Key is required.",
             "key-pattern": "Key is invalid.",
             "key-max-length": "Key should be less than 256 characters."
-        }
+        },
+        "required-fields": "Missing required fields"
     },
     "content-type": {
         "json": "Json",
@@ -5261,7 +5258,7 @@
         "advanced-mode": "Advanced",
         "save-time-series": {
             "processing-settings": "Processing settings",
-            "processing-settings-hint": "Define how incoming messages are processed. In Basic mode, select a preconfigured processing strategy or enable only WebSocket updates. Advanced mode allows you to select individual processing strategies for each action.",
+            "processing-settings-hint": "Define how incoming messages are processed. Basic processing settings allow you to select preconfigured strategies, while Advanced settings allow you to select individual processing strategies for each action.",
             "advanced-settings-hint": "Be cautious when configuring processing strategies. Certain combinations can lead to unexpected behavior.",
             "strategy": "Strategy",
             "deduplication-interval": "Deduplication interval",
@@ -5280,7 +5277,7 @@
         },
         "save-attribute": {
             "processing-settings": "Processing settings",
-            "processing-settings-hint": "Define how incoming messages are processed. In Basic mode, select a preconfigured processing strategy or enable only WebSocket updates. Advanced mode allows you to select individual processing strategies for each action.",
+            "processing-settings-hint": "Define how incoming messages are processed. Basic processing settings allow you to select preconfigured strategies, while Advanced settings allow you to select individual processing strategies for each action.",
             "advanced-settings-hint": "Be cautious when configuring processing strategies. Certain combinations can lead to unexpected behavior.",
             "strategy": "Strategy",
             "deduplication-interval": "Deduplication interval",
@@ -6593,7 +6590,18 @@
             "rectangle": "Rectangle",
             "circle": "Circle"
         },
-        "place-map-item": "Place map item"
+        "place-map-item": "Place map item",
+        "map-item-tooltip": {
+            "customize-map-item-tooltips": "Customize map item tooltips",
+            "place-marker": "Place marker",
+            "start-draw-rectangle": "Start draw rectangle",
+            "finish-draw-rectangle": "Finish draw rectangle",
+            "start-draw-polygon": "Start draw polygon",
+            "continue-draw-polygon": "Continue draw polygon",
+            "finish-draw-polygon": "Finish draw polygon",
+            "start-draw-circle": "Start draw circle",
+            "finish-draw-circle": "Finish draw circle"
+        }
     },
     "widgets-bundle": {
         "current": "Current bundle",
@@ -6669,6 +6677,7 @@
         "units-short": "Units",
         "decimals-short": "Decimals",
         "decimals-suffix": "decimals",
+        "digits-suffix": "digits",
         "timewindow": "Time window",
         "use-dashboard-timewindow": "Use dashboard time window",
         "use-widget-timewindow": "Use widget time window",
@@ -7976,6 +7985,7 @@
             },
             "overlays": {
                 "overlays": "Overlays",
+                "overlays-hint": "Configure datasources, appearance, behavior, editing options, and grouping for map entities",
                 "trips": "Trips",
                 "markers": "Markers",
                 "polygons": "Polygons",
@@ -7983,8 +7993,11 @@
             },
             "data-layer": {
                 "source": "Source",
+                "filter": "Filter",
                 "additional-data-keys": "Additional data keys",
                 "additional-datasources": "Additional datasources",
+                "additional-datasources-hint": "Datasource for accessing attributes or telemetry from entities not displayed on the map, usable in map overlay functions.",
+                "more-datasources": "More datasources",
                 "data-keys": "Data keys",
                 "add-datasource": "Add datasource",
                 "no-datasources": "No datasources configured",
@@ -7993,9 +8006,8 @@
                 "on-click": "On click",
                 "on-click-hint": "Action invoked when user clicks on the map item.",
                 "groups": "Groups",
+                "groups-hint": "List of group names assigned to the overlay, used to toggle its visibility on the map.",
                 "color": "Color",
-                "fill-color": "Fill color",
-                "stroke": "Stroke",
                 "color-settings": "Color settings",
                 "color-type-constant": "Constant",
                 "color-type-range": "Range",
@@ -8010,7 +8022,7 @@
                 "pattern-type-function": "Function",
                 "label-pattern": "Label (pattern examples: '${entityName}', '${entityName}: (Text ${keyName} units.)' )",
                 "label-function": "Label function",
-                "tooltip-pattern": "Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
+                "tooltip-pattern": "Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>)",
                 "tooltip-function": "Tooltip function",
                 "tooltip-trigger": "Tooltip trigger",
                 "tooltip-trigger-click": "Show tooltip on click",
@@ -8030,6 +8042,7 @@
                 "edit-instruments": "Instruments",
                 "persist-location-attribute-scope": "Scope of the attribute to persist location",
                 "enable-snapping": "Enable snapping to other vertices for precision drawing",
+                "enable-snapping-hint": "Automatically aligns new points with existing shapes to make drawing easier and more accurate.",
                 "drag-drop-mode": "Drag-drop mode",
                 "trip": {
                     "no-trips": "No trips configured",
@@ -8108,6 +8121,28 @@
                 "points": {
                     "points": "Points",
                     "point-tooltip": "Point tooltip"
+                },
+                "shape": {
+                    "fill": "Fill",
+                    "fill-type-color": "Color",
+                    "fill-type-stripe": "Stripe",
+                    "fill-type-image": "Image",
+                    "color": "Color",
+                    "stripe": "Stripe",
+                    "image": "Image",
+                    "stroke": "Stroke",
+                    "fill-image": "Fill image",
+                    "fill-image-type-image": "Image",
+                    "fill-image-type-function": "Function",
+                    "preserve-aspect-ratio": "Preserve aspect ratio",
+                    "opacity": "Opacity",
+                    "angle": "Rotation angle",
+                    "scale": "Scale",
+                    "fill-image-function": "Shape fill image function",
+                    "fill-images": "Shape fill images",
+                    "stripe-pattern": "Stripe pattern",
+                    "first-stripe": "First stripe",
+                    "second-stripe": "Second stripe"
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",

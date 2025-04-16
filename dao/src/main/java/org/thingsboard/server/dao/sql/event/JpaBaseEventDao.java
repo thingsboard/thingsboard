@@ -200,6 +200,7 @@ public class JpaBaseEventDao implements EventDao {
                     break;
                 case DEBUG_CALCULATED_FIELD:
                     removeEventsByFilter(tenantId, entityId, (CalculatedFieldDebugEventFilter) eventFilter, startTime, endTime);
+                    break;
                 default:
                     throw new RuntimeException("Not supported event type: " + eventFilter.getEventType());
             }

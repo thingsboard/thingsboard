@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult;
@@ -24,6 +26,7 @@ import org.apache.kafka.clients.admin.TopicDescription;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.TopicExistsException;
+import org.thingsboard.server.queue.TbEdgeQueueAdmin;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
@@ -41,10 +44,11 @@ import java.util.stream.Collectors;
  * Created by ashvayka on 24.09.18.
  */
 @Slf4j
-public class TbKafkaAdmin implements TbQueueAdmin {
+public class TbKafkaAdmin implements TbQueueAdmin, TbEdgeQueueAdmin {
 
     private final TbKafkaSettings settings;
     private final Map<String, String> topicConfigs;
+    @Getter
     private final int numPartitions;
     private volatile Set<String> topics;
 
@@ -146,31 +150,50 @@ public class TbKafkaAdmin implements TbQueueAdmin {
      * */
     public void syncOffsets(String fatGroupId, String newGroupId, Integer partitionId) {
         try {
-            syncOffsetsUnsafe(fatGroupId, newGroupId, partitionId);
+            log.info("syncOffsets [{}][{}][{}]", fatGroupId, newGroupId, partitionId);
+            if (partitionId == null) {
+                return;
+            }
+            syncOffsetsUnsafe(fatGroupId, newGroupId, "." + partitionId);
         } catch (Exception e) {
             log.warn("Failed to syncOffsets from {} to {} partitionId {}", fatGroupId, newGroupId, partitionId, e);
         }
     }
 
-    void syncOffsetsUnsafe(String fatGroupId, String newGroupId, Integer partitionId) throws ExecutionException, InterruptedException, TimeoutException {
-        log.info("syncOffsets [{}][{}][{}]", fatGroupId, newGroupId, partitionId);
-        if (partitionId == null) {
-            return;
+    /**
+     * Sync edge notifications offsets from a fat group to a single group per edge
+     * */
+    public void syncEdgeNotificationsOffsets(String fatGroupId, String newGroupId) {
+        try {
+            log.info("syncEdgeNotificationsOffsets [{}][{}]", fatGroupId, newGroupId);
+            syncOffsetsUnsafe(fatGroupId, newGroupId, newGroupId);
+        } catch (Exception e) {
+            log.warn("Failed to syncEdgeNotificationsOffsets from {} to {}", fatGroupId, newGroupId, e);
         }
-        Map<TopicPartition, OffsetAndMetadata> oldOffsets =
-                settings.getAdminClient().listConsumerGroupOffsets(fatGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public void deleteConsumerGroup(String consumerGroupId) {
+        try {
+            settings.getAdminClient().deleteConsumerGroups(Collections.singletonList(consumerGroupId));
+        } catch (Exception e) {
+            log.warn("Failed to delete consumer group {}", consumerGroupId, e);
+        }
+    }
+
+    void syncOffsetsUnsafe(String fatGroupId, String newGroupId, String topicSuffix) throws ExecutionException, InterruptedException, TimeoutException {
+        Map<TopicPartition, OffsetAndMetadata> oldOffsets = getConsumerGroupOffsets(fatGroupId);
         if (oldOffsets.isEmpty()) {
             return;
         }
 
         for (var consumerOffset : oldOffsets.entrySet()) {
             var tp = consumerOffset.getKey();
-            if (!tp.topic().endsWith("." + partitionId)) {
+            if (!tp.topic().endsWith(topicSuffix)) {
                 continue;
             }
             var om = consumerOffset.getValue();
-            Map<TopicPartition, OffsetAndMetadata> newOffsets =
-                    settings.getAdminClient().listConsumerGroupOffsets(newGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
+            Map<TopicPartition, OffsetAndMetadata> newOffsets = getConsumerGroupOffsets(newGroupId);
 
             var existingOffset = newOffsets.get(tp);
             if (existingOffset == null) {
@@ -187,32 +210,52 @@ public class TbKafkaAdmin implements TbQueueAdmin {
         }
     }
 
+    @SneakyThrows
+    public Map<TopicPartition, OffsetAndMetadata> getConsumerGroupOffsets(String groupId) {
+        return settings.getAdminClient().listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
+    }
+
     public boolean isTopicEmpty(String topic) {
+        return areAllTopicsEmpty(Set.of(topic));
+    }
+
+    public boolean areAllTopicsEmpty(Set<String> topics) {
         try {
-            if (!getTopics().contains(topic)) {
+            List<String> existingTopics = getTopics().stream().filter(topics::contains).toList();
+            if (existingTopics.isEmpty()) {
                 return true;
             }
-            TopicDescription topicDescription = settings.getAdminClient().describeTopics(Collections.singletonList(topic)).topicNameValues().get(topic).get();
-            List<TopicPartition> partitions = topicDescription.partitions().stream().map(partitionInfo -> new TopicPartition(topic, partitionInfo.partition())).toList();
 
-            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> beginningOffsets = settings.getAdminClient().listOffsets(partitions.stream()
+            List<TopicPartition> allPartitions = settings.getAdminClient().describeTopics(existingTopics).topicNameValues().entrySet().stream()
+                    .flatMap(entry -> {
+                        String topic = entry.getKey();
+                        TopicDescription topicDescription;
+                        try {
+                            topicDescription = entry.getValue().get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            throw new RuntimeException(e);
+                        }
+                        return topicDescription.partitions().stream().map(partitionInfo -> new TopicPartition(topic, partitionInfo.partition()));
+                    })
+                    .toList();
+
+            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> beginningOffsets = settings.getAdminClient().listOffsets(allPartitions.stream()
                     .collect(Collectors.toMap(partition -> partition, partition -> OffsetSpec.earliest()))).all().get();
-
-            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets = settings.getAdminClient().listOffsets(partitions.stream()
+            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets = settings.getAdminClient().listOffsets(allPartitions.stream()
                     .collect(Collectors.toMap(partition -> partition, partition -> OffsetSpec.latest()))).all().get();
 
-            for (TopicPartition partition : partitions) {
+            for (TopicPartition partition : allPartitions) {
                 long beginningOffset = beginningOffsets.get(partition).offset();
                 long endOffset = endOffsets.get(partition).offset();
 
                 if (beginningOffset != endOffset) {
-                    log.debug("Partition [{}] of topic [{}] is not empty. Returning false.", partition.partition(), topic);
+                    log.debug("Partition [{}] of topic [{}] is not empty. Returning false.", partition.partition(), partition.topic());
                     return false;
                 }
             }
             return true;
         } catch (InterruptedException | ExecutionException e) {
-            log.error("Failed to check if topic [{}] is empty.", topic, e);
+            log.error("Failed to check if topics [{}] empty.", topics, e);
             return false;
         }
     }

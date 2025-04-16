@@ -71,6 +71,10 @@ export class FilterSelectComponent implements ControlValueAccessor, OnInit, Afte
   showLabel: boolean;
 
   @Input()
+  @coerceBoolean()
+  inlineField: boolean;
+
+  @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
   @Input()

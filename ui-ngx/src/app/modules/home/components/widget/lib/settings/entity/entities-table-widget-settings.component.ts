@@ -64,6 +64,12 @@ export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponen
     };
   }
 
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    settings.pageStepIncrement = settings.pageStepIncrement ?? settings.defaultPageSize;
+    this.pageStepSizeValues = buildPageStepSizeValues(settings.pageStepCount, settings.pageStepIncrement);
+    return settings;
+  }
+
   protected onSettingsSet(settings: WidgetSettings) {
     this.entitiesTableWidgetSettingsForm = this.fb.group({
       entitiesTitle: [settings.entitiesTitle, []],
@@ -82,14 +88,11 @@ export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponen
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],
       pageStepCount: [settings.pageStepCount ?? 3, [Validators.min(1), Validators.max(100),
         Validators.required, Validators.pattern(/^\d*$/)]],
-      pageStepIncrement: [settings.pageStepIncrement ?? settings.defaultPageSize,
-        [Validators.min(1), Validators.required, Validators.pattern(/^\d*$/)]],
+      pageStepIncrement: [settings.pageStepIncrement, [Validators.min(1), Validators.required, Validators.pattern(/^\d*$/)]],
       defaultSortOrder: [settings.defaultSortOrder, []],
       useRowStyleFunction: [settings.useRowStyleFunction, []],
       rowStyleFunction: [settings.rowStyleFunction, [Validators.required]]
     });
-    this.pageStepSizeValues = buildPageStepSizeValues(this.entitiesTableWidgetSettingsForm.get('pageStepCount').value,
-      this.entitiesTableWidgetSettingsForm.get('pageStepIncrement').value);
   }
 
   protected validatorTriggers(): string[] {

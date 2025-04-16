@@ -240,4 +240,6 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao<Asset>, Exportable
 
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink);
 
+    PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink);
+
 }
