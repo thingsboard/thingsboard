@@ -108,13 +108,11 @@ class DeviceProfileDataValidatorTest {
 
     @Test
     void testValidateNameInvocation() {
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder()
+                .withTransportConfig(new DefaultDeviceProfileTransportConfiguration())
+                .build();
         deviceProfile.setName("default");
         deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-        DeviceProfileData data = new DeviceProfileData();
-        data.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(data);
         deviceProfile.setTenantId(tenantId);
 
         validator.validateDataImpl(tenantId, deviceProfile);
@@ -164,13 +162,9 @@ class DeviceProfileDataValidatorTest {
     private DeviceProfile getDeviceProfile(Integer shortServerId, Integer shortServerIdBs) {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
                 getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withTransportConfig(transportConfiguration).build();
         deviceProfile.setName("default");
         deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.LWM2M);
-        DeviceProfileData data = new DeviceProfileData();
-        data.setTransportConfiguration(transportConfiguration);
-        deviceProfile.setProfileData(data);
         deviceProfile.setTenantId(tenantId);
         return deviceProfile;
     }

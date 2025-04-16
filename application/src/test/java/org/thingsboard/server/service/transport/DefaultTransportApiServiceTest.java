@@ -164,13 +164,8 @@ public class DefaultTransportApiServiceTest {
         provision.setCertificateRegExPattern("([^@]+)");
         provision.setAllowCreateNewDevicesByX509Certificate(true);
 
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setProvisionConfiguration(provision);
-
-        DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setProfileData(deviceProfileData);
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withProvisionConfig(provision).build();
         deviceProfile.setProvisionDeviceKey(EncryptionUtil.getSha3Hash(certificateValue));
-        deviceProfile.setProvisionType(DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN);
         return deviceProfile;
     }
 

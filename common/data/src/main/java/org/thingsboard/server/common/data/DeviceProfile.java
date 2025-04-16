@@ -25,7 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.*;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 
 @Schema
 @Data
@@ -163,6 +164,84 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
                 return null;
             }
         }
+    }
+
+   public static class ProfileBuilder {
+        private DeviceProfile deviceProfile;
+        private DeviceProfileConfiguration config;
+        private DeviceProfileTransportConfiguration transportConfig;
+        private DeviceProfileProvisionConfiguration provisionConfig;
+        private List<DeviceProfileAlarm> alarms;
+
+        public ProfileBuilder() {
+            this.deviceProfile = new DeviceProfile();
+        }
+
+        private ProfileBuilder(DeviceProfile deviceProfile) {
+            this.deviceProfile = deviceProfile;
+        }
+
+        public static ProfileBuilder forProfile(DeviceProfile deviceProfile) {
+            return new ProfileBuilder(deviceProfile);
+        }
+
+        public ProfileBuilder withConfig(DeviceProfileConfiguration config) {
+            this.config = config;
+            return this;
+        }
+
+        public ProfileBuilder withTransportConfig(DeviceProfileTransportConfiguration transportConfig) {
+            this.transportConfig = transportConfig;
+            return this;
+        }
+
+        public ProfileBuilder withProvisionConfig(DeviceProfileProvisionConfiguration provisionConfig) {
+            this.provisionConfig = provisionConfig;
+            return this;
+        }
+
+        public ProfileBuilder withAlarms(List<DeviceProfileAlarm> alarms) {
+            this.alarms = alarms;
+            return this;
+        }
+
+        public DeviceProfile build() {
+            deviceProfile.configureData(config, transportConfig, provisionConfig, alarms);
+            return deviceProfile;
+        }
+   }
+
+    private DeviceProfile configureData(DeviceProfileConfiguration config, DeviceProfileTransportConfiguration transportConfig, DeviceProfileProvisionConfiguration provisionConfig, List<DeviceProfileAlarm> alarms) {
+        DeviceProfileData deviceProfileData;
+
+        if (this.profileData != null) {
+            deviceProfileData = profileData;
+        } else {
+            deviceProfileData = new DeviceProfileData();
+        }
+
+        if (config != null) {
+            deviceProfileData.setConfiguration(config);
+            this.setType(config.getType());
+        }
+
+        if (transportConfig != null) {
+            deviceProfileData.setTransportConfiguration(transportConfig);
+            this.setTransportType(transportConfig.getType());
+        }
+
+        if (provisionConfig != null) {
+            deviceProfileData.setProvisionConfiguration(provisionConfig);
+            this.setProvisionType(provisionConfig.getType());
+        }
+
+        if (alarms != null) {
+            deviceProfileData.setAlarms(alarms);
+        }
+
+        this.setProfileData(deviceProfileData);
+
+        return this;
     }
 
     public void setProfileData(DeviceProfileData data) {

@@ -835,17 +835,13 @@ public class VersionControlTest extends AbstractControllerTest {
     }
 
     private DeviceProfile createDeviceProfile(RuleChainId defaultRuleChainId, DashboardId defaultDashboardId, String name) {
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                .withTransportConfig(new DefaultDeviceProfileTransportConfiguration())
+                .build();
         deviceProfile.setName(name);
         deviceProfile.setDescription("dscrptn");
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
         deviceProfile.setDefaultRuleChainId(defaultRuleChainId);
         deviceProfile.setDefaultDashboardId(defaultDashboardId);
-        DeviceProfileData profileData = new DeviceProfileData();
-        profileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        profileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(profileData);
         return doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
     }
 

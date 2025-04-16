@@ -682,14 +682,12 @@ public class TenantServiceTest extends AbstractServiceTest {
     }
 
     private DeviceProfile createAndSaveDeviceProfileWithProfileDataFor(Tenant tenant) {
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder()
+                .withTransportConfig(new MqttDeviceProfileTransportConfiguration())
+                .build();
         deviceProfile.setTenantId(tenant.getId());
-        deviceProfile.setTransportType(DeviceTransportType.MQTT);
         deviceProfile.setName("Test device profile");
         deviceProfile.setType(DeviceProfileType.DEFAULT);
-        DeviceProfileData profileData = new DeviceProfileData();
-        profileData.setTransportConfiguration(new MqttDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(profileData);
         return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 

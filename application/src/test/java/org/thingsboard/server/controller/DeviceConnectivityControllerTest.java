@@ -158,29 +158,21 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
         tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
 
-        DeviceProfile mqttProfile = new DeviceProfile();
-        mqttProfile.setName("Mqtt device profile");
-        mqttProfile.setType(DeviceProfileType.DEFAULT);
-        mqttProfile.setTransportType(DeviceTransportType.MQTT);
-        DeviceProfileData mqttProfileData = new DeviceProfileData();
-        mqttProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
         MqttDeviceProfileTransportConfiguration transportConfiguration = new MqttDeviceProfileTransportConfiguration();
         transportConfiguration.setDeviceTelemetryTopic(DEVICE_TELEMETRY_TOPIC);
-        mqttProfileData.setTransportConfiguration(transportConfiguration);
-        mqttProfile.setProfileData(mqttProfileData);
+        DeviceProfile mqttProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                .withTransportConfig(transportConfiguration)
+                .build();
+        mqttProfile.setName("Mqtt device profile");
         mqttProfile.setDefault(false);
         mqttProfile.setDefaultRuleChainId(null);
 
         mqttDeviceProfileId = doPost("/api/deviceProfile", mqttProfile, DeviceProfile.class).getId();
 
-        DeviceProfile coapProfile = new DeviceProfile();
+        DeviceProfile coapProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                .withTransportConfig(new CoapDeviceProfileTransportConfiguration())
+                .build();
         coapProfile.setName("Coap device profile");
-        coapProfile.setType(DeviceProfileType.DEFAULT);
-        coapProfile.setTransportType(DeviceTransportType.COAP);
-        DeviceProfileData coapProfileData = new DeviceProfileData();
-        coapProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        coapProfileData.setTransportConfiguration(new CoapDeviceProfileTransportConfiguration());
-        coapProfile.setProfileData(coapProfileData);
         coapProfile.setDefault(false);
         coapProfile.setDefaultRuleChainId(null);
 

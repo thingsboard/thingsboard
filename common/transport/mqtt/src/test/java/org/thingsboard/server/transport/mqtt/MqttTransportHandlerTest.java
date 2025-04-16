@@ -235,13 +235,9 @@ public class MqttTransportHandlerTest {
         MqttPublishMessage message = getDeviceMqttPublishMessage();
         when(context.getJsonMqttAdaptor()).thenReturn(new JsonMqttAdaptor());
         handler.deviceSessionCtx.setConnected(true);
-        DeviceProfile deviceProfile = new DeviceProfile();
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
         mqttDeviceProfileTransportConfiguration.setTransportPayloadTypeConfiguration(new JsonTransportPayloadConfiguration());
-        deviceProfileData.setTransportConfiguration(mqttDeviceProfileTransportConfiguration);
-        deviceProfile.setProfileData(deviceProfileData);
-        deviceProfile.setTransportType(DeviceTransportType.MQTT);
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withTransportConfig(mqttDeviceProfileTransportConfiguration).build();
         handler.deviceSessionCtx.setDeviceProfile(deviceProfile);
 
         handler.processRegularSessionMsg(ctx, message);

@@ -627,21 +627,18 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected DeviceProfile createDeviceProfile(String name, DeviceProfileTransportConfiguration deviceProfileTransportConfiguration) {
-        DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setName(name);
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setDescription(name + " Test");
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-        deviceProfileData.setConfiguration(configuration);
+        DeviceProfile deviceProfile;
         if (deviceProfileTransportConfiguration != null) {
-            deviceProfile.setTransportType(deviceProfileTransportConfiguration.getType());
-            deviceProfileData.setTransportConfiguration(deviceProfileTransportConfiguration);
+            deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                    .withTransportConfig(deviceProfileTransportConfiguration)
+                    .build();
         } else {
-            deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-            deviceProfileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
+            deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                    .withTransportConfig(new DefaultDeviceProfileTransportConfiguration())
+                    .build();
         }
-        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.setName(name);
+        deviceProfile.setDescription(name + " Test");
         deviceProfile.setDefault(false);
         deviceProfile.setDefaultRuleChainId(null);
         return deviceProfile;
