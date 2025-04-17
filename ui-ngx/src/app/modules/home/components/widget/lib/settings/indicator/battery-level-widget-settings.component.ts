@@ -21,7 +21,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue } from '@core/utils';
 import {
-  batteryLevelDefaultSettings, BatteryLevelLayout,
+  batteryLevelDefaultSettings,
+  BatteryLevelLayout,
   batteryLevelLayoutImages,
   batteryLevelLayouts,
   batteryLevelLayoutTranslations
@@ -68,7 +69,7 @@ export class BatteryLevelWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...batteryLevelDefaultSettings};
+    return batteryLevelDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
