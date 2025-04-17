@@ -30,7 +30,7 @@
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
+          (click)="onEntityAction($event, 'deleteLibrary')"
           [class.!hidden]="hideDelete() || isEdit">
     {{ 'javascript.delete' | translate }}
   </button>

@@ -1,6 +1,7 @@
 ##### Examples
 
-* Display styled label with corresponding latest telemetry data for `energy meter` or `thermometer` device types:
+* Display styled label with corresponding latest telemetry data for `energy meter` or `thermometer` device types.<br/>
+  Ensure that the <code>Type</code>, <code>energy</code> and <code>temperature</code> keys are included in the <b>additional data keys</b> configuration:
 
 ```javascript
 var deviceType = data.Type;
