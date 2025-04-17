@@ -40,9 +40,7 @@ export class RouteMapWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {
-      ...defaultMapSettings
-    };
+    return defaultMapSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
