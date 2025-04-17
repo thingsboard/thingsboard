@@ -250,5 +250,5 @@
     }
   ]
 }]]></tb:metadata>
-<path d="M200 101H131C113.879 101 100 114.879 100 132V201" stroke="#1A1A1A" stroke-width="6" tb:tag="line"/><g tb:tag="animationGroup"/>
+<path d="M200 100H132C115 100 100 115 100 132V200" stroke="#1A1A1A" stroke-width="6" tb:tag="line"/><g tb:tag="animationGroup"/>
 </svg>
