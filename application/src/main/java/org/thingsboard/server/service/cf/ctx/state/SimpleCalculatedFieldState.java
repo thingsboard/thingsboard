@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
@@ -65,19 +67,34 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         double expressionResult = expr.evaluate();
 
         Output output = ctx.getOutput();
-        Object result;
-        Integer decimals = output.getDecimalsByDefault();
-        if (decimals != null) {
-            if (decimals.equals(0)) {
-                result = TbUtils.toInt(expressionResult);
-            } else {
-                result = TbUtils.toFixed(expressionResult, decimals);
-            }
-        } else {
-            result = expressionResult;
-        }
+        Object result = formatResult(expressionResult, output.getDecimalsByDefault());
+        JsonNode outputResult = createResultJson(ctx.isPreserveLatestTs(), output.getName(), result);
 
-        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), JacksonUtil.valueToTree(Map.of(output.getName(), result))));
+        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), outputResult));
+    }
+
+    private Object formatResult(double expressionResult, Integer decimals) {
+        if (decimals == null) {
+            return expressionResult;
+        }
+        return decimals.equals(0)
+                ? TbUtils.toInt(expressionResult)
+                : TbUtils.toFixed(expressionResult, decimals);
+    }
+
+    private JsonNode createResultJson(boolean preserveLatestTs, String outputName, Object result) {
+        ObjectNode valuesNode = JacksonUtil.newObjectNode();
+        valuesNode.set(outputName, JacksonUtil.valueToTree(result));
+
+        long lastTimestamp = getLastUpdateTimestamp();
+        if (preserveLatestTs && lastTimestamp != -1) {
+            ObjectNode resultNode = JacksonUtil.newObjectNode();
+            resultNode.put("ts", lastTimestamp);
+            resultNode.set("values", valuesNode);
+            return resultNode;
+        } else {
+            return valuesNode;
+        }
     }
 
 }

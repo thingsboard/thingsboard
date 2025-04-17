@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 @EqualsAndHashCode(callSuper = true)
 public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
 
+    private boolean preserveLastUpdateTs;
+
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.SIMPLE;
