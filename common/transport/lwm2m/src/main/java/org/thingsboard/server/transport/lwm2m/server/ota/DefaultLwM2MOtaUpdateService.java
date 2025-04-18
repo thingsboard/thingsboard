@@ -701,8 +701,6 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                     String objectNodeInfoOtaStr = JacksonUtil.toString(objectNodeInfoOta);
                     assert objectNodeInfoOtaStr != null;
                     String objectNodeInfoOtaBase64 = Base64.getEncoder().encodeToString(objectNodeInfoOtaStr.getBytes());
-
-
                     LwM2mPath pathOtaInstance = new LwM2mPath(targetId);
                     if (client.getRegistration().getAvailableInstances().contains(pathOtaInstance)) {
                         String versionId = targetIdVer + "/0/0";

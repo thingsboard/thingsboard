@@ -23,9 +23,12 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 
 import java.util.List;
 import java.util.Map;
-import static org.apache.commons.codec.binary.Base64.isBase64;
+import java.util.regex.Pattern;
 
 public class JsonUtils {
+
+    private static final Pattern BASE64_PATTERN =
+            Pattern.compile("^[A-Za-z0-9+/]+={0,2}$");
 
     public static JsonObject getJsonObject(List<KeyValueProto> tsKv) {
         JsonObject json = new JsonObject();
@@ -83,5 +86,9 @@ public class JsonUtils {
         }
 
         return jsonObject;
+    }
+
+    public static boolean isBase64(String value) {
+        return value.length() % 4 == 0 && BASE64_PATTERN.matcher(value).matches();
     }
 }
