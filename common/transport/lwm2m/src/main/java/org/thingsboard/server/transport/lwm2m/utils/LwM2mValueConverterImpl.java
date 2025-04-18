@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.NONE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 
 @Slf4j
@@ -53,12 +54,13 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             return value;
         }
 
-        if (currentType == expectedType) {
-            /** expected type */
-            return value;
-        }
         if (currentType == null) {
             currentType = OPAQUE;
+        }
+
+        if (currentType == expectedType || currentType == NONE) {
+            /** expected type */
+            return value;
         }
 
         switch (expectedType) {

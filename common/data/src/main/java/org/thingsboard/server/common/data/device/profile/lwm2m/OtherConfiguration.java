@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OtherConfiguration extends PowerSavingConfiguration {
 
+    private Boolean useObject19ForOta;
     private Integer fwUpdateStrategy;
     private Integer swUpdateStrategy;
     private Integer clientOnlyObserveAfterConnect;
