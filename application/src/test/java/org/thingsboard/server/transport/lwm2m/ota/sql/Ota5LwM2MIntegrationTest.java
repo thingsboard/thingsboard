@@ -45,8 +45,9 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.INIT
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.QUEUED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.*;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_INSTANCE_ID;
 
 @Slf4j
