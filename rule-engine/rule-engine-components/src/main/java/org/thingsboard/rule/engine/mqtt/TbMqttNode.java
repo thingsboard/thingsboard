@@ -126,6 +126,12 @@ public class TbMqttNode extends TbAbstractExternalNode {
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 
+        config.setRetransmissionConfig(new MqttClientConfig.RetransmissionConfig(
+                ctx.getMqttClientRetransmissionMaxAttempts(),
+                ctx.getMqttClientRetransmissionInitialDelayMillis(),
+                ctx.getMqttClientRetransmissionJitterFactor()
+        ));
+
         prepareMqttClientConfig(config);
         MqttClient client = getMqttClient(ctx, config);
         client.setEventLoop(ctx.getSharedEventLoop());

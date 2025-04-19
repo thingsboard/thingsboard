@@ -1010,12 +1010,26 @@ public class DefaultTbContext implements TbContext {
         return mainCtx.getAuditLogService();
     }
 
+    @Override
+    public int getMqttClientRetransmissionMaxAttempts() {
+        return mainCtx.getMqttClientRetransmissionMaxAttempts();
+    }
+
+    @Override
+    public long getMqttClientRetransmissionInitialDelayMillis() {
+        return mainCtx.getMqttClientRetransmissionInitialDelayMillis();
+    }
+
+    @Override
+    public double getMqttClientRetransmissionJitterFactor() {
+        return mainCtx.getMqttClientRetransmissionJitterFactor();
+    }
+
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ruleNodeId", ruleNodeId.toString());
         return metaData;
     }
-
 
     @Override
     public void schedule(Runnable runnable, long delay, TimeUnit timeUnit) {

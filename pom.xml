@@ -1974,6 +1974,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>hivemq</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-redis</artifactId>
                 <version>${spring-data-redis.version}</version>

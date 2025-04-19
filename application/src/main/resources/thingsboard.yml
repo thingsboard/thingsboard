@@ -1952,3 +1952,27 @@ mobileApp:
   googlePlayLink: "${TB_MOBILE_APP_GOOGLE_PLAY_LINK:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}"
   # Link to App Store for Thingsboard Live mobile application
   appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"
+
+mqtt:
+  # MQTT client configuration parameters
+  client:
+    # Parameters that control the retransmission mechanism.
+    # This mechanism only applies to the handling of MQTT Publish, Subscribe, Unsubscribe and Pubrel messages.
+    # With the updated default settings:
+    #   - After sending the message, wait approximately 5000 ms (± jitter) for the 1st attempt.
+    #   - The 2nd attempt will occur after roughly 5000 * 2 = 10,000 ms (± jitter).
+    #   - The 3rd attempt will occur after roughly 5000 * 4 = 20,000 ms (± jitter).
+    #   - The 4th "attempt" will not actually perform a retransmission.
+    #     Instead, the system will detect that the maximum number of attempts has been reached and drop the pending message.
+    retransmission:
+      # Maximum number of retransmission attempts allowed.
+      # If the attempt count exceeds this value, retransmissions will stop and the pending message will be dropped.
+      max_attempts: "${TB_MQTT_CLIENT_RETRANSMISSION_MAX_ATTEMPTS:3}"
+      # Base delay (in milliseconds) before the first retransmission attempt, measured from the moment the message is sent.
+      # Subsequent delays are calculated using exponential backoff.
+      # This base delay is also used as the reference value for applying jitter.
+      initial_delay_millis: "${TB_MQTT_CLIENT_RETRANSMISSION_INITIAL_DELAY_MILLIS:5000}"
+      # Jitter factor applied to the calculated retransmission delay.
+      # The actual delay is randomized within a range defined by multiplying the base delay by a factor between (1 - jitter_factor) and (1 + jitter_factor).
+      # For example, a jitter_factor of 0.15 means the actual delay may vary by up to ±15% of the base delay.
+      jitter_factor: "${TB_MQTT_CLIENT_RETRANSMISSION_JITTER_FACTOR:0.15}"
