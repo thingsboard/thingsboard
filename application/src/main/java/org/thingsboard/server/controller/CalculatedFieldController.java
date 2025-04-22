@@ -37,6 +37,8 @@ import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfCtx;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldReprocessingService;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldReprocessingTask;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -51,6 +53,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -92,6 +95,7 @@ public class CalculatedFieldController extends BaseController {
     private final TbCalculatedFieldService tbCalculatedFieldService;
     private final EventService eventService;
     private final TbelInvokeService tbelInvokeService;
+    private final CalculatedFieldReprocessingService cfReprocessingService;
 
     public static final String CALCULATED_FIELD_ID = "calculatedFieldId";
 
@@ -265,6 +269,31 @@ public class CalculatedFieldController extends BaseController {
         result.put("output", output);
         result.put("error", errorText);
         return result;
+    }
+
+    // TODO: remove this endpoint. used for testing only
+    @ApiOperation(value = "Reprocess Calculated Field (reprocessCalculatedField)",
+            notes = "Reprocesses the calculated field." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/calculatedField/reprocess/{calculatedFieldId}", method = RequestMethod.GET, params = {"startTs", "endTs"})
+    @ResponseStatus(value = HttpStatus.OK)
+    public void reprocessCalculatedField(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId,
+                                         @RequestParam(name = "startTs") Long startTs,
+                                         @RequestParam(name = "endTs") Long endTs) throws Exception {
+        checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
+        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
+        CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
+        checkNotNull(calculatedField);
+        checkEntityId(calculatedField.getEntityId(), Operation.READ_CALCULATED_FIELD);
+        CalculatedFieldReprocessingTask task = CalculatedFieldReprocessingTask.builder()
+                .tenantId(calculatedField.getTenantId())
+                .entityId(calculatedField.getEntityId())
+                .calculatedFieldId(calculatedFieldId)
+                .startTs(startTs)
+                .endTs(endTs)
+                .callback(TbCallback.EMPTY)
+                .build();
+        cfReprocessingService.reprocess(task);
     }
 
     private <E extends HasId<I> & HasTenantId, I extends EntityId> void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig, SecurityUser user) throws ThingsboardException {

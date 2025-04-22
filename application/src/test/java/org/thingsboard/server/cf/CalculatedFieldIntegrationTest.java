@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.cf;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.thingsboard.common.util.JacksonUtil;
@@ -45,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+@Slf4j
 @DaoSqlTest
 public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTest {
 
@@ -460,6 +463,90 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(fahrenheitTemp).isNotNull();
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").isNull()).isTrue();
                 });
+    }
+
+    @Test
+    public void testReprocessCalculatedField() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        long currentTime = System.currentTimeMillis();
+
+        long a1Ts = currentTime - TimeUnit.SECONDS.toMillis(140);
+        long a2b1Ts = currentTime - TimeUnit.SECONDS.toMillis(130);
+        long b2Ts = currentTime - TimeUnit.SECONDS.toMillis(80);
+        long b3Ts = currentTime - TimeUnit.SECONDS.toMillis(70);
+        long a3Ts = currentTime - TimeUnit.SECONDS.toMillis(60);
+        long a4Ts = currentTime - TimeUnit.SECONDS.toMillis(50);
+        long b4Ts = currentTime - TimeUnit.SECONDS.toMillis(40);
+
+        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":1}}", a1Ts)));
+        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":2, \"b\":10}}", a2b1Ts)));
+        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":20}}", b2Ts)));
+        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":30}}", b3Ts)));
+        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":3}}", a3Ts)));
+        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":4}}", a4Ts)));
+        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":40}}", b4Ts)));
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("A + B");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument a = new Argument();
+        ReferencedEntityKey refEntityKeyA = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        a.setRefEntityKey(refEntityKeyA);
+        Argument b = new Argument();
+        ReferencedEntityKey refEntityKeyB = new ReferencedEntityKey("b", ArgumentType.TS_LATEST, null);
+        b.setRefEntityKey(refEntityKeyB);
+        config.setArguments(Map.of("a", a, "b", b));
+        config.setExpression("a + b");
+
+        Output output = new Output();
+        output.setName("result");
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+        doGet("/api/calculatedField/reprocess/" + savedCalculatedField.getUuidId() + "?startTs={startTs}&endTs={endTs}", startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for timewindow").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode fahrenheitTemp = getTimeSeries(testDevice.getId(), startTs, endTs, "result");
+                    assertThat(fahrenheitTemp).isNotNull();
+
+                    assertThat(fahrenheitTemp.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(a4Ts));
+                    assertThat(fahrenheitTemp.get("result").get(0).get("value").asText()).isEqualTo("34.0");
+
+                    assertThat(fahrenheitTemp.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(a3Ts));
+                    assertThat(fahrenheitTemp.get("result").get(1).get("value").asText()).isEqualTo("33.0");
+
+                    assertThat(fahrenheitTemp.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(b3Ts));
+                    assertThat(fahrenheitTemp.get("result").get(2).get("value").asText()).isEqualTo("32.0");
+
+                    assertThat(fahrenheitTemp.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(b2Ts));
+                    assertThat(fahrenheitTemp.get("result").get(3).get("value").asText()).isEqualTo("22.0");
+
+                    assertThat(fahrenheitTemp.get("result").get(4).get("ts").asText()).isEqualTo(Long.toString(startTs)); // we use reprocessing startTs instead of telemetry ts for initial calculation
+                    assertThat(fahrenheitTemp.get("result").get(4).get("value").asText()).isEqualTo("12.0");
+                });
+    }
+
+    private void pushTelemetry(EntityId entityId, JsonNode telemetry) throws Exception {
+        doPost("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/timeseries/" + DataConstants.SERVER_SCOPE, telemetry);
+    }
+
+    private ObjectNode getTimeSeries(EntityId entityId, long startTs, long endTs, String... keys) throws Exception {
+        return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}", ObjectNode.class, String.join(",", keys), startTs, endTs);
     }
 
     private ObjectNode getLatestTelemetry(EntityId entityId, String... keys) throws Exception {
