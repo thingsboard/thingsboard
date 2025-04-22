@@ -1600,13 +1600,13 @@ queue:
         # These notifications include RPC calls, lifecycle events, and new queue messages,
         # requiring minimal latency and swift processing.
         - key: max.poll.records
-          # Define the maximum number of records that can be polled from tb_edge.notifications.<SERVICE_ID> topics.
+          # Define the maximum number of records that can be polled from tb_edge.notifications.SERVICE_ID topics.
           value: "${TB_QUEUE_KAFKA_EDGE_HP_EVENTS_MAX_POLL_RECORDS:10}"
       tb_edge_event.notifications:
         # Properties for consumers targeting downlinks meant for specific edge topics.
         # Topic names are dynamically constructed using tenant and edge identifiers.
         - key: max.poll.records
-          # Define the maximum number of records that can be polled from tb_edge_event.notifications.<TENANT_ID>.<EDGE_ID> topics.
+          # Define the maximum number of records that can be polled from tb_edge_event.notifications.TENANT_ID.EDGE_ID topics.
           value: "${TB_QUEUE_KAFKA_EDGE_NOTIFICATIONS_MAX_POLL_RECORDS:10}"
       tb_housekeeper:
         # Consumer properties for Housekeeper tasks topic
@@ -1861,10 +1861,10 @@ queue:
     # Topic name to notify edge service on entity updates, assignment, etc.
     topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
     # Topic prefix for high-priority edge notifications (rpc, lifecycle, new messages in queue) that require minimum latency and processing time.
-    # Each tb-core has its own topic: <PREFIX>.<SERVICE_ID>
+    # Each tb-core has its own topic: PREFIX.SERVICE_ID
     notifications_topic: "${TB_QUEUE_EDGE_NOTIFICATIONS_TOPIC:tb_edge.notifications}"
     # Topic prefix for downlinks to be pushed to specific edge.
-    # Every edge has its own unique topic: <PREFIX>.<TENANT_ID>.<EDGE_ID>
+    # Every edge has its own unique topic: PREFIX.TENANT_ID.EDGE_ID
     event_notifications_topic: "${TB_QUEUE_EDGE_EVENT_NOTIFICATIONS_TOPIC:tb_edge_event.notifications}"
     # Amount of partitions used by Edge services
     partitions: "${TB_QUEUE_EDGE_PARTITIONS:10}"

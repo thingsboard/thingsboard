@@ -43,7 +43,7 @@ export class LabelValueCardWidgetSettingsComponent extends WidgetSettingsCompone
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...labelValueCardWidgetDefaultSettings};
+    return labelValueCardWidgetDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

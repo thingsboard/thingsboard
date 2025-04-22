@@ -25,10 +25,10 @@ import {
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue, mergeDeep } from '@core/utils';
+import { formatValue } from '@core/utils';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
-  barChartWithLabelsDefaultSettings, BarChartWithLabelsWidgetSettings
+  barChartWithLabelsDefaultSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
 
 @Component({
@@ -68,7 +68,7 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeep<BarChartWithLabelsWidgetSettings>({} as BarChartWithLabelsWidgetSettings, barChartWithLabelsDefaultSettings);
+    return barChartWithLabelsDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

@@ -181,14 +181,14 @@ export const cleanupFormProperty = (property: FormProperty): FormProperty => {
   if (property.type !== FormPropertyType.textarea) {
     delete property.rows;
   }
-  if (property.type !== FormPropertyType.fieldset) {
-    delete property.properties;
-  } else if (property.properties?.length) {
-    property.properties = cleanupFormProperties(property.properties);
-  }
   if (property.type !== FormPropertyType.array) {
     delete property.arrayItemName;
     delete property.arrayItemType;
+  }
+  if (property.type !== FormPropertyType.fieldset && property.arrayItemType !== FormPropertyType.fieldset) {
+    delete property.properties;
+  } else if (property.properties?.length) {
+    property.properties = cleanupFormProperties(property.properties);
   }
   if (property.type !== FormPropertyType.select) {
     delete property.multiple;
