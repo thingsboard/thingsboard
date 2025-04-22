@@ -40,7 +40,7 @@ export class AlarmCountWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...countDefaultSettings(true)};
+    return countDefaultSettings(true);
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
