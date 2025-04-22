@@ -60,9 +60,10 @@ class AbstractJsInvokeServiceTest {
         doReturn(false).when(service).scriptBodySizeExceeded(anyString());
         doReturn(Futures.immediateFuture(id)).when(service).doEvalScript(any(), any(), anyString(), any(), any(String[].class));
 
-        // Use real implementation of eval()
+        // Use real implementations
         doCallRealMethod().when(service).eval(any(), any(), any(), any(String[].class));
         doCallRealMethod().when(service).error(anyString());
+        doCallRealMethod().when(service).validate(any(), anyString());
     }
 
     @Test
@@ -83,9 +84,8 @@ class AbstractJsInvokeServiceTest {
         var result = service.eval(TenantId.SYS_TENANT_ID, ScriptType.RULE_NODE_SCRIPT, validScript, "x", "y");
 
         assertThat(result.get(30, TimeUnit.SECONDS)).isEqualTo(id);
-        // two times, non-optimal
-        verify(service, times(2)).isExecEnabled(any());
-        verify(service, times(2)).scriptBodySizeExceeded(any());
+        verify(service, times(1)).isExecEnabled(any());
+        verify(service, times(1)).scriptBodySizeExceeded(any());
     }
 
 }

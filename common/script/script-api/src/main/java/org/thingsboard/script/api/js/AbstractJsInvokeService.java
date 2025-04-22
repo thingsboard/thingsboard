@@ -96,18 +96,12 @@ public abstract class AbstractJsInvokeService extends AbstractScriptInvokeServic
     }
 
     @Override
-    public ListenableFuture<UUID> eval(TenantId tenantId, ScriptType scriptType, String scriptBody, String... argNames) {
-        if (!isExecEnabled(tenantId)) {
-            return error("Script Execution is disabled due to API limits!");
+    public String validate(TenantId tenantId, String scriptBody) {
+        String errorMessage = super.validate(tenantId, scriptBody);
+        if (errorMessage == null) {
+            return JsValidator.validate(scriptBody);
         }
-        if (scriptBodySizeExceeded(scriptBody)) {
-            return error(format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize()));
-        }
-        final String validationIssue = JsValidator.validate(scriptBody);
-        if (validationIssue != null ) {
-            return error(validationIssue);
-        }
-        return super.eval(tenantId, scriptType, scriptBody, argNames);
+        return errorMessage;
     }
 
     protected abstract ListenableFuture<UUID> doEval(UUID scriptId, JsScriptInfo jsInfo, String scriptBody);
