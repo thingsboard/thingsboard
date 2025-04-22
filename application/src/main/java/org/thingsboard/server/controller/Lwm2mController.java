@@ -42,7 +42,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CU
 
 @Slf4j
 @RestController
-@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && '${transport.lwm2m.enabled:false}'=='true'")
+@ConditionalOnExpression("'${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 @RequestMapping("/api")
 public class Lwm2mController extends BaseController {
 
