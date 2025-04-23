@@ -94,8 +94,6 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
 
     private ListeningExecutorService calculatedFieldCallbackExecutor;
 
-    private CalculatedFieldState state;
-
     @PostConstruct
     public void init() {
         calculatedFieldCallbackExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
@@ -113,19 +111,21 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
     public void reprocess(CalculatedFieldReprocessingTask task) throws CalculatedFieldException {
         TenantId tenantId = task.getTenantId();
         EntityId entityId = task.getEntityId();
+        log.debug("[{}] Received reprocess request for entityId [{}]", tenantId, entityId);
 
         if (!supportedReprocessingEntities.contains(entityId.getEntityType())) {
             throw new IllegalArgumentException("EntityType '" + entityId.getEntityType() + "' is not supported for reprocessing.");
         }
 
-        CalculatedFieldCtx ctx = task.getCalculatedFieldCtx();
-        Map<String, Argument> arguments = ctx.getArguments();
-
         long startTs = task.getStartTs();
         long endTs = task.getEndTs();
 
-        performInitialProcessing(tenantId, entityId, ctx, startTs);
+        CalculatedFieldCtx ctx = task.getCalculatedFieldCtx();
+        CalculatedFieldState state = getOrInitState(tenantId, entityId, ctx, startTs);
 
+        performInitialProcessing(tenantId, entityId, state, ctx, startTs);
+
+        Map<String, Argument> arguments = ctx.getArguments();
         Map<String, List<TsKvEntry>> telemetryBuffers = arguments.entrySet().stream()
                 .collect(Collectors.toMap(
                                 Entry::getKey,
@@ -164,13 +164,12 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
                 }
             }
 
-            processArgumentValuesUpdate(tenantId, entityId, ctx, updatedArgs, minTs);
+            processArgumentValuesUpdate(tenantId, entityId, state, ctx, updatedArgs, minTs);
         }
     }
 
-    private void performInitialProcessing(TenantId tenantId, EntityId entityId, CalculatedFieldCtx ctx, long startTs) throws CalculatedFieldException {
+    private void performInitialProcessing(TenantId tenantId, EntityId entityId, CalculatedFieldState state, CalculatedFieldCtx ctx, long startTs) throws CalculatedFieldException {
         try {
-            var state = getOrInitState(tenantId, entityId, ctx, startTs);
             if (state.isSizeOk()) {
                 processStateIfReady(tenantId, entityId, ctx, state, startTs);
             } else {
@@ -181,17 +180,6 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
                 throw cfe;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
-        }
-    }
-
-    private List<TsKvEntry> fetchTelemetryBatch(TenantId tenantId, EntityId entityId, Argument argument, long startTs, long endTs, int limit) {
-        EntityId sourceEntityId = argument.getRefEntityId() != null ? argument.getRefEntityId() : entityId;
-        try {
-            ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, endTs, 0, limit, Aggregation.NONE, "ASC");
-            return timeseriesService.findAll(tenantId, sourceEntityId, List.of(query)).get();
-        } catch (Exception e) {
-            log.warn("Failed to fetch telemetry for [{}:{}]", sourceEntityId, argument.getRefEntityKey().getKey(), e);
-            return Collections.emptyList();
         }
     }
 
@@ -250,7 +238,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         return new CalculatedFieldResult(result.getType(), result.getScope(), newResultJson);
     }
 
-    private void processArgumentValuesUpdate(TenantId tenantId, EntityId entityId, CalculatedFieldCtx ctx, Map<String, ArgumentEntry> newArgValues, long ts) throws CalculatedFieldException {
+    private void processArgumentValuesUpdate(TenantId tenantId, EntityId entityId, CalculatedFieldState state, CalculatedFieldCtx ctx, Map<String, ArgumentEntry> newArgValues, long ts) throws CalculatedFieldException {
         if (newArgValues.isEmpty()) {
             log.info("[{}] No argument values to process for CF.", ctx.getCfId());
         }
@@ -284,17 +272,13 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
 
     @SneakyThrows
     private CalculatedFieldState getOrInitState(TenantId tenantId, EntityId entityId, CalculatedFieldCtx ctx, long startTs) {
-        if (state != null) {
-            return state;
-        } else {
-            ListenableFuture<CalculatedFieldState> stateFuture = fetchStateFromDb(ctx, entityId, startTs);
-            // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
-            // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
-            // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
-            // but this will significantly complicate the code.
-            state = stateFuture.get(1, TimeUnit.MINUTES);
-            state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
-        }
+        ListenableFuture<CalculatedFieldState> stateFuture = fetchStateFromDb(ctx, entityId, startTs);
+        // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
+        // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
+        // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
+        // but this will significantly complicate the code.
+        CalculatedFieldState state = stateFuture.get(1, TimeUnit.MINUTES);
+        state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
         return state;
     }
 
@@ -366,6 +350,17 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
 
         return Futures.transform(tsRollingFuture, tsRolling -> tsRolling == null ? new TsRollingArgumentEntry(limit, argTimeWindow) : ArgumentEntry.createTsRollingArgument(tsRolling, limit, argTimeWindow), calculatedFieldCallbackExecutor);
+    }
+
+    private List<TsKvEntry> fetchTelemetryBatch(TenantId tenantId, EntityId entityId, Argument argument, long startTs, long endTs, int limit) {
+        EntityId sourceEntityId = argument.getRefEntityId() != null ? argument.getRefEntityId() : entityId;
+        try {
+            ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, endTs, 0, limit, Aggregation.NONE, "ASC");
+            return timeseriesService.findAll(tenantId, sourceEntityId, List.of(query)).get(1, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.debug("Failed to fetch telemetry for [{}:{}]", sourceEntityId, argument.getRefEntityKey().getKey(), e);
+            return Collections.emptyList();
+        }
     }
 
 }
