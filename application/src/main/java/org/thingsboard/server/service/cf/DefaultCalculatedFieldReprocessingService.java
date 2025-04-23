@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.calculatedField;
+package org.thingsboard.server.service.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -30,32 +30,28 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
-import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.cf.CalculatedFieldCache;
-import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
-import org.thingsboard.server.service.cf.CalculatedFieldResult;
-import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
 
 import java.util.Collections;
@@ -64,12 +60,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultKvEntry;
+import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createStateByType;
+import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformSingleValueArgument;
 
 @TbCoreComponent
 @Service
@@ -87,15 +86,15 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
     @Value("${queue.calculated_fields.telemetry_fetch_pack_size:1000}")
     private int telemetryFetchPackSize;
 
-    private final CalculatedFieldCache calculatedFieldCache;
     private final TimeseriesService timeseriesService;
+    private final AttributesService attributesService;
     private final ApiLimitService apiLimitService;
     private final CalculatedFieldProcessingService cfProcessingService;
     private final CalculatedFieldStateService cfStateService;
 
     private ListeningExecutorService calculatedFieldCallbackExecutor;
 
-    private final ConcurrentMap<CalculatedFieldEntityCtxId, CalculatedFieldState> states = new ConcurrentHashMap<>();
+    private CalculatedFieldState state;
 
     @PostConstruct
     public void init() {
@@ -119,16 +118,8 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
             throw new IllegalArgumentException("EntityType '" + entityId.getEntityType() + "' is not supported for reprocessing.");
         }
 
-        CalculatedFieldCtx ctx = getCalculatedFieldCtx(task.getCalculatedFieldId());
+        CalculatedFieldCtx ctx = task.getCalculatedFieldCtx();
         Map<String, Argument> arguments = ctx.getArguments();
-
-        boolean containsAttributes = arguments.values().stream()
-                .map(Argument::getRefEntityKey)
-                .anyMatch(key -> ArgumentType.ATTRIBUTE.equals(key.getType()));
-
-        if (containsAttributes) {
-            throw new IllegalArgumentException("Calculated Fields do not support reprocessing of `ATTRIBUTE` arguments.");
-        }
 
         long startTs = task.getStartTs();
         long endTs = task.getEndTs();
@@ -177,25 +168,11 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         }
     }
 
-    private CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId) throws CalculatedFieldException {
-        CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(calculatedFieldId);
-        if (ctx == null) {
-            log.debug("[{}] No calculated field found for id {}", calculatedFieldId);
-            throw new IllegalArgumentException("No calculated field found for id " + calculatedFieldId);
-        }
+    private void performInitialProcessing(TenantId tenantId, EntityId entityId, CalculatedFieldCtx ctx, long startTs) throws CalculatedFieldException {
         try {
-            ctx.init();
-            return ctx;
-        } catch (Exception e) {
-            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(ctx.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
-        }
-    }
-
-    private void performInitialProcessing(TenantId tenantId, EntityId entityId, CalculatedFieldCtx ctx, long cfExecutionTs) throws CalculatedFieldException {
-        try {
-            var state = getOrInitState(tenantId, entityId, ctx, cfExecutionTs);
+            var state = getOrInitState(tenantId, entityId, ctx, startTs);
             if (state.isSizeOk()) {
-                processStateIfReady(tenantId, entityId, ctx, state, cfExecutionTs);
+                processStateIfReady(tenantId, entityId, ctx, state, startTs);
             } else {
                 throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
             }
@@ -277,11 +254,8 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         if (newArgValues.isEmpty()) {
             log.info("[{}] No argument values to process for CF.", ctx.getCfId());
         }
-        CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
-        CalculatedFieldState state = states.get(ctxId);
         if (state == null) {
             state = createStateByType(ctx);
-            states.put(ctxId, state);
         }
         if (state.isSizeOk()) {
             if (state.updateState(ctx, newArgValues)) {
@@ -309,29 +283,26 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
     }
 
     @SneakyThrows
-    private CalculatedFieldState getOrInitState(TenantId tenantId, EntityId entityId, CalculatedFieldCtx ctx, long cfExecutionTS) {
-        CalculatedFieldEntityCtxId entityCtxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
-        CalculatedFieldState state = states.get(entityCtxId);
+    private CalculatedFieldState getOrInitState(TenantId tenantId, EntityId entityId, CalculatedFieldCtx ctx, long startTs) {
         if (state != null) {
             return state;
         } else {
-            ListenableFuture<CalculatedFieldState> stateFuture = fetchStateFromDb(ctx, entityId, cfExecutionTS);
+            ListenableFuture<CalculatedFieldState> stateFuture = fetchStateFromDb(ctx, entityId, startTs);
             // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
             // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
             // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
             // but this will significantly complicate the code.
             state = stateFuture.get(1, TimeUnit.MINUTES);
             state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
-            states.put(entityCtxId, state);
         }
         return state;
     }
 
-    private ListenableFuture<CalculatedFieldState> fetchStateFromDb(CalculatedFieldCtx ctx, EntityId entityId, long cfExecutionTs) {
+    private ListenableFuture<CalculatedFieldState> fetchStateFromDb(CalculatedFieldCtx ctx, EntityId entityId, long startTs) {
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
         for (var entry : ctx.getArguments().entrySet()) {
             var argEntityId = entry.getValue().getRefEntityId() != null ? entry.getValue().getRefEntityId() : entityId;
-            var argValueFuture = fetchKvEntryForReprocessing(ctx.getTenantId(), argEntityId, entry.getValue(), cfExecutionTs);
+            var argValueFuture = fetchKvEntryForReprocessing(ctx.getTenantId(), argEntityId, entry.getValue(), startTs);
             argFutures.put(entry.getKey(), argValueFuture);
         }
         return Futures.whenAllComplete(argFutures.values()).call(() -> {
@@ -352,50 +323,49 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         }, calculatedFieldCallbackExecutor);
     }
 
-    private ListenableFuture<ArgumentEntry> fetchKvEntryForReprocessing(TenantId tenantId, EntityId entityId, Argument argument, long cfExecutionTs) {
+    private ListenableFuture<ArgumentEntry> fetchKvEntryForReprocessing(TenantId tenantId, EntityId entityId, Argument argument, long startTs) {
         return switch (argument.getRefEntityKey().getType()) {
-            case TS_ROLLING -> fetchTsRollingForReprocessing(tenantId, entityId, argument, cfExecutionTs);
-            case ATTRIBUTE ->
-                    throw new RuntimeException("Reprocessing is not supported for argument type 'ATTRIBUTE'.");
-            case TS_LATEST ->
-                    fetchTsLatestForReprocessing(tenantId, entityId, argument.getRefEntityKey().getKey(), cfExecutionTs);
+            case TS_ROLLING -> fetchTsRollingForReprocessing(tenantId, entityId, argument, startTs);
+            case ATTRIBUTE -> fetchAttributeForReprocessing(tenantId, entityId, argument, startTs);
+            case TS_LATEST -> fetchTsLatestForReprocessing(tenantId, entityId, argument, startTs);
         };
     }
 
-    private ListenableFuture<ArgumentEntry> fetchTsLatestForReprocessing(TenantId tenantId, EntityId entityId, String key, long cfExecutionTs) {
-        ReadTsKvQuery query = new BaseReadTsKvQuery(key, 0, cfExecutionTs, 0, 1, Aggregation.NONE);
-        ListenableFuture<List<TsKvEntry>> tsKvListFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
+    private ListenableFuture<ArgumentEntry> fetchAttributeForReprocessing(TenantId tenantId, EntityId entityId, Argument argument, long startTs) {
+        var attributeOptFuture = attributesService.find(tenantId, entityId, argument.getRefEntityKey().getScope(), argument.getRefEntityKey().getKey());
 
-        return Futures.transform(tsKvListFuture, tsKvList -> {
-            if (tsKvList.isEmpty()) {
-                return new SingleValueArgumentEntry();
-            }
-            TsKvEntry tsKvEntry = tsKvList.get(0);
-            if (tsKvEntry == null || tsKvEntry.getValue() == null) {
-                return new SingleValueArgumentEntry();
-            }
-            return ArgumentEntry.createSingleValueArgument(tsKvEntry);
-        }, calculatedFieldCallbackExecutor);
+        ListenableFuture<Optional<? extends KvEntry>> attribute = Futures.transform(attributeOptFuture,
+                attrOpt -> attrOpt.or(() -> Optional.of(new BaseAttributeKvEntry(createDefaultKvEntry(argument), startTs, 0L))),
+                calculatedFieldCallbackExecutor);
+
+        return transformSingleValueArgument(attribute, calculatedFieldCallbackExecutor);
     }
 
-    private ListenableFuture<ArgumentEntry> fetchTsRollingForReprocessing(TenantId tenantId, EntityId entityId, Argument argument, long cfExecutionTs) {
-        long argTimeWindow = argument.getTimeWindow() == 0 ? System.currentTimeMillis() : argument.getTimeWindow();
-        long startInterval = cfExecutionTs - argTimeWindow;
+    private ListenableFuture<ArgumentEntry> fetchTsLatestForReprocessing(TenantId tenantId, EntityId entityId, Argument argument, long startTs) {
+        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), 0, startTs, 0, 1, Aggregation.NONE);
+        ListenableFuture<List<TsKvEntry>> tsKvListFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
+
+        ListenableFuture<Optional<? extends KvEntry>> tsLatest = Futures.transform(tsKvListFuture, tsKvList -> {
+            if (tsKvList.isEmpty() || tsKvList.get(0) == null || tsKvList.get(0).getValue() == null) {
+                return Optional.of(new BasicTsKvEntry(startTs, createDefaultKvEntry(argument), 0L));
+            }
+            return Optional.of(tsKvList.get(0));
+        }, calculatedFieldCallbackExecutor);
+
+        return transformSingleValueArgument(tsLatest, calculatedFieldCallbackExecutor);
+    }
+
+    private ListenableFuture<ArgumentEntry> fetchTsRollingForReprocessing(TenantId tenantId, EntityId entityId, Argument argument, long startTs) {
+        long argTimeWindow = argument.getTimeWindow() == 0 ? startTs : argument.getTimeWindow();
+        long startInterval = startTs - argTimeWindow;
         long maxDataPoints = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
         int argumentLimit = argument.getLimit();
         int limit = argumentLimit == 0 || argumentLimit > maxDataPoints ? (int) maxDataPoints : argument.getLimit();
 
-        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startInterval, cfExecutionTs, 0, limit, Aggregation.NONE);
+        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startInterval, startTs, 0, limit, Aggregation.NONE);
         ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
 
         return Futures.transform(tsRollingFuture, tsRolling -> tsRolling == null ? new TsRollingArgumentEntry(limit, argTimeWindow) : ArgumentEntry.createTsRollingArgument(tsRolling, limit, argTimeWindow), calculatedFieldCallbackExecutor);
-    }
-
-    private CalculatedFieldState createStateByType(CalculatedFieldCtx ctx) {
-        return switch (ctx.getCfType()) {
-            case SIMPLE -> new SimpleCalculatedFieldState(ctx.getArgNames());
-            case SCRIPT -> new ScriptCalculatedFieldState(ctx.getArgNames());
-        };
     }
 
 }

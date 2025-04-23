@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.calculatedField;
+package org.thingsboard.server.service.cf;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 @Data
 @Builder
@@ -28,7 +28,7 @@ public class CalculatedFieldReprocessingTask {
 
     private TenantId tenantId;
     private EntityId entityId;
-    private CalculatedFieldId calculatedFieldId;
+    private CalculatedFieldCtx calculatedFieldCtx;
     private long startTs;
     private long endTs;
     private TbCallback callback;

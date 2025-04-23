@@ -37,8 +37,6 @@ import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfCtx;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
-import org.thingsboard.server.actors.calculatedField.CalculatedFieldReprocessingService;
-import org.thingsboard.server.actors.calculatedField.CalculatedFieldReprocessingTask;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -56,7 +54,11 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.cf.CalculatedFieldReprocessingService;
+import org.thingsboard.server.service.cf.CalculatedFieldReprocessingTask;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldScriptEngine;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
@@ -126,6 +128,7 @@ public class CalculatedFieldController extends BaseController {
             "}"
             + MARKDOWN_CODE_BLOCK_END
             + "\n\n Expected result JSON contains \"output\" and \"error\".";
+    private final ApiLimitService apiLimitService;
 
     @ApiOperation(value = "Create Or Update Calculated Field (saveCalculatedField)",
             notes = "Creates or Updates the Calculated Field. When creating calculated field, platform generates Calculated Field Id as " + UUID_WIKI_LINK +
@@ -285,10 +288,12 @@ public class CalculatedFieldController extends BaseController {
         CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
         checkNotNull(calculatedField);
         checkEntityId(calculatedField.getEntityId(), Operation.READ_CALCULATED_FIELD);
+        CalculatedFieldCtx calculatedFieldCtx = new CalculatedFieldCtx(calculatedField, tbelInvokeService, apiLimitService);
+        calculatedFieldCtx.init();
         CalculatedFieldReprocessingTask task = CalculatedFieldReprocessingTask.builder()
                 .tenantId(calculatedField.getTenantId())
                 .entityId(calculatedField.getEntityId())
-                .calculatedFieldId(calculatedFieldId)
+                .calculatedFieldCtx(calculatedFieldCtx)
                 .startTs(startTs)
                 .endTs(endTs)
                 .callback(TbCallback.EMPTY)
