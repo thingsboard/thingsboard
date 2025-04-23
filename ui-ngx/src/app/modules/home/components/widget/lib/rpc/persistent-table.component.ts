@@ -36,6 +36,8 @@ import { BehaviorSubject, merge, Observable, of, ReplaySubject, Subject, throwEr
 import { catchError, map, tap } from 'rxjs/operators';
 import {
   constructTableCssString,
+  isValidPageStepCount,
+  isValidPageStepIncrement,
   noDataMessage,
   TableCellButtonActionDescriptor,
   TableWidgetSettings
@@ -43,7 +45,7 @@ import {
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { hashCode, isDefined, isDefinedAndNotNull, isNumber, parseHttpErrorMessage } from '@core/utils';
+import { hashCode, isDefined, isDefinedAndNotNull, parseHttpErrorMessage } from '@core/utils';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import {
@@ -207,10 +209,8 @@ export class PersistentTableComponent extends PageComponent implements OnInit, O
     this.displayedColumns = [...this.displayTableColumns];
 
     const pageSize = this.settings.defaultPageSize;
-    let pageStepIncrement = Number.isInteger(this.settings.pageStepIncrement) && this.settings.pageStepIncrement > 0 ?
-      this.settings.pageStepIncrement : null;
-    let pageStepCount = Number.isInteger(this.settings.pageStepCount) && this.settings.pageStepCount > 0
-    && this.settings.pageStepCount <= 100 ? this.settings.pageStepCount : null;
+    let pageStepIncrement = isValidPageStepIncrement(this.settings.pageStepIncrement) ? this.settings.pageStepIncrement : null;
+    let pageStepCount = isValidPageStepCount(this.settings.pageStepCount) ? this.settings.pageStepCount : null;
 
     if (Number.isInteger(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
