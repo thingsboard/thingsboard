@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf;
+package org.thingsboard.server.dao.task;
 
-import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
+import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.TaskResult;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.job.Job;
 
-import org.thingsboard.server.common.data.job.CfReprocessingTask;
-import org.thingsboard.server.common.msg.queue.TbCallback;
+import java.util.List;
 
-public interface CalculatedFieldReprocessingService {
+public interface JobService {
 
-    void reprocess(CfReprocessingTask task, TbCallback callback) throws CalculatedFieldException;
+    Job createJob(TenantId tenantId, Job job);
+
+    void reportTaskResults(JobId jobId, List<TaskResult> results);
+
+    PageData<Job> findJobsByTenantId(TenantId tenantId, PageLink pageLink);
 
 }

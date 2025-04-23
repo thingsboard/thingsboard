@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf;
+package org.thingsboard.server.common.data.job;
 
-import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import org.thingsboard.server.common.data.job.CfReprocessingTask;
-import org.thingsboard.server.common.msg.queue.TbCallback;
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({
+        @Type(name = "CF_REPROCESSING", value = CfReprocessingJobConfiguration.class),
+})
+public interface JobConfiguration {
 
-public interface CalculatedFieldReprocessingService {
-
-    void reprocess(CfReprocessingTask task, TbCallback callback) throws CalculatedFieldException;
+    JobType getType();
 
 }

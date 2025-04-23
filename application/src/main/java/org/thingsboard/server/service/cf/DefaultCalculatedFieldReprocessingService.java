@@ -30,11 +30,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.CfReprocessingTask;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
@@ -88,6 +91,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
 
     private final TimeseriesService timeseriesService;
     private final AttributesService attributesService;
+    private final TbelInvokeService tbelInvokeService;
     private final ApiLimitService apiLimitService;
     private final CalculatedFieldProcessingService cfProcessingService;
     private final CalculatedFieldStateService cfStateService;
@@ -108,7 +112,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
     }
 
     @Override
-    public void reprocess(CalculatedFieldReprocessingTask task) throws CalculatedFieldException {
+    public void reprocess(CfReprocessingTask task, TbCallback callback) throws CalculatedFieldException {
         TenantId tenantId = task.getTenantId();
         EntityId entityId = task.getEntityId();
         log.debug("[{}] Received reprocess request for entityId [{}]", tenantId, entityId);
@@ -120,7 +124,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         long startTs = task.getStartTs();
         long endTs = task.getEndTs();
 
-        CalculatedFieldCtx ctx = task.getCalculatedFieldCtx();
+        CalculatedFieldCtx ctx = getCFCtx(task.getCalculatedField());
         CalculatedFieldState state = getOrInitState(tenantId, entityId, ctx, startTs);
 
         performInitialProcessing(tenantId, entityId, state, ctx, startTs);
@@ -140,7 +144,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
                     .min().orElse(Long.MAX_VALUE);
 
             if (minTs == Long.MAX_VALUE) {
-                task.getCallback().onSuccess();
+                callback.onSuccess();
                 break;
             }
 
@@ -360,6 +364,16 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         } catch (Exception e) {
             log.debug("Failed to fetch telemetry for [{}:{}]", sourceEntityId, argument.getRefEntityKey().getKey(), e);
             return Collections.emptyList();
+        }
+    }
+
+    private CalculatedFieldCtx getCFCtx(CalculatedField calculatedField) {
+        try {
+            CalculatedFieldCtx ctx = new CalculatedFieldCtx(calculatedField, tbelInvokeService, apiLimitService);
+            ctx.init();
+            return ctx;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
