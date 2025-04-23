@@ -37,8 +37,6 @@ import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfCtx;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
-import org.thingsboard.server.actors.calculatedField.CalculatedFieldReprocessingService;
-import org.thingsboard.server.actors.calculatedField.CalculatedFieldReprocessingTask;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -51,15 +49,18 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.CfReprocessingJobConfiguration;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldScriptEngine;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
+import org.thingsboard.server.service.job.JobManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -95,7 +96,7 @@ public class CalculatedFieldController extends BaseController {
     private final TbCalculatedFieldService tbCalculatedFieldService;
     private final EventService eventService;
     private final TbelInvokeService tbelInvokeService;
-    private final CalculatedFieldReprocessingService cfReprocessingService;
+    private final JobManager jobManager;
 
     public static final String CALCULATED_FIELD_ID = "calculatedFieldId";
 
@@ -285,15 +286,18 @@ public class CalculatedFieldController extends BaseController {
         CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
         checkNotNull(calculatedField);
         checkEntityId(calculatedField.getEntityId(), Operation.READ_CALCULATED_FIELD);
-        CalculatedFieldReprocessingTask task = CalculatedFieldReprocessingTask.builder()
+
+        jobManager.submitJob(Job.builder()
                 .tenantId(calculatedField.getTenantId())
-                .entityId(calculatedField.getEntityId())
-                .calculatedFieldId(calculatedFieldId)
-                .startTs(startTs)
-                .endTs(endTs)
-                .callback(TbCallback.EMPTY)
-                .build();
-        cfReprocessingService.reprocess(task);
+                .type(JobType.CF_REPROCESSING)
+                .key(calculatedField.getName()) // fixme
+                .configuration(CfReprocessingJobConfiguration.builder()
+                        .calculatedField(calculatedField)
+                        .startTs(startTs)
+                        .endTs(endTs)
+                        .build())
+                .build());
+
     }
 
     private <E extends HasId<I> & HasTenantId, I extends EntityId> void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig, SecurityUser user) throws ThingsboardException {
@@ -302,8 +306,7 @@ public class CalculatedFieldController extends BaseController {
             EntityType entityType = referencedEntityId.getEntityType();
             switch (entityType) {
                 case TENANT, CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
-                default ->
-                        throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
+                default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
             }
         }
 

@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.calculatedField;
+package org.thingsboard.server.service.job;
 
-import org.thingsboard.server.common.data.job.CfReprocessingTask;
-import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.data.job.Task;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobType;
 
-public interface CalculatedFieldReprocessingService {
+import java.util.function.Consumer;
 
-    void reprocess(CfReprocessingTask task, TbCallback callback) throws CalculatedFieldException;
+public abstract class JobProcessor {
+
+    public abstract void process(Job job, Consumer<Task> taskConsumer);
+
+    public abstract JobType getType();
 
 }

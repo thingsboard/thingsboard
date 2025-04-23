@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.CfReprocessingTask;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -111,7 +112,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
     }
 
     @Override
-    public void reprocess(CalculatedFieldReprocessingTask task) throws CalculatedFieldException {
+    public void reprocess(CfReprocessingTask task, TbCallback callback) throws CalculatedFieldException {
         TenantId tenantId = task.getTenantId();
         EntityId entityId = task.getEntityId();
 
@@ -119,7 +120,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
             throw new IllegalArgumentException("EntityType '" + entityId.getEntityType() + "' is not supported for reprocessing.");
         }
 
-        CalculatedFieldCtx ctx = getCalculatedFieldCtx(task.getCalculatedFieldId());
+        CalculatedFieldCtx ctx = getCalculatedFieldCtx(task.getCalculatedField().getId());// fixme: use calculated field from the task
         Map<String, Argument> arguments = ctx.getArguments();
 
         boolean containsAttributes = arguments.values().stream()
@@ -149,7 +150,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
                     .min().orElse(Long.MAX_VALUE);
 
             if (minTs == Long.MAX_VALUE) {
-                task.getCallback().onSuccess();
+                callback.onSuccess();
                 break;
             }
 
@@ -180,7 +181,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
     private CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId) throws CalculatedFieldException {
         CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(calculatedFieldId);
         if (ctx == null) {
-            log.debug("[{}] No calculated field found for id {}", calculatedFieldId);
+            log.debug("No calculated field found for id {}", calculatedFieldId);
             throw new IllegalArgumentException("No calculated field found for id " + calculatedFieldId);
         }
         try {

@@ -1846,3 +1846,11 @@ message EdqsRequestMsg {
 message EdqsResponseMsg {
   string value = 1;
 }
+
+message TaskProto {
+  string value = 1; // fixme: TMP, make more efficient
+}
+
+message TaskResultProto {
+  string value = 1; // fixme: TMP, make more efficient
+}

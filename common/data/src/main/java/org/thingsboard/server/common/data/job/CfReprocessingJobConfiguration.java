@@ -13,13 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.calculatedField;
+package org.thingsboard.server.common.data.job;
 
-import org.thingsboard.server.common.data.job.CfReprocessingTask;
-import org.thingsboard.server.common.msg.queue.TbCallback;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 
-public interface CalculatedFieldReprocessingService {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class CfReprocessingJobConfiguration implements JobConfiguration {
 
-    void reprocess(CfReprocessingTask task, TbCallback callback) throws CalculatedFieldException;
+    private CalculatedField calculatedField;
+    private long startTs;
+    private long endTs;
+
+    @Override
+    public JobType getType() {
+        return JobType.CF_REPROCESSING;
+    }
 
 }
