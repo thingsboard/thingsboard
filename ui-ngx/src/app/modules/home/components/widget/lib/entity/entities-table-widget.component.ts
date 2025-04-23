@@ -311,10 +311,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'entity, ctx');
 
     const pageSize = this.settings.defaultPageSize;
-    let pageStepIncrement = this.settings.pageStepIncrement;
-    let pageStepCount = this.settings.pageStepCount;
+    let pageStepIncrement = Number.isInteger(this.settings.pageStepIncrement) && this.settings.pageStepIncrement > 0 ?
+      this.settings.pageStepIncrement : null;
+    let pageStepCount = Number.isInteger(this.settings.pageStepCount) && this.settings.pageStepCount > 0
+      && this.settings.pageStepCount <= 100 ? this.settings.pageStepCount : null;
 
-    if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
+    if (Number.isInteger(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
 
