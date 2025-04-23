@@ -72,31 +72,44 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer) {
-        log.trace("[{}][{}] starting processing edge events", tenantId, sessionId);
-        if (isConnected() && !isSyncInProgress() && !isHighPriorityProcessing) {
-            List<EdgeEvent> edgeEvents = new ArrayList<>();
-            for (TbProtoQueueMsg<ToEdgeEventNotificationMsg> msg : msgs) {
-                EdgeEvent edgeEvent = ProtoUtils.fromProto(msg.getValue().getEdgeEventMsg());
-                edgeEvents.add(edgeEvent);
-            }
-            List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(edgeEvents);
-            try {
-                boolean isInterrupted = sendDownlinkMsgsPack(downlinkMsgsPack).get();
-                if (isInterrupted) {
-                    log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
-                } else {
-                    consumer.commit();
+        log.trace("[{}][{}][{}] starting processing edge events", tenantId, sessionId, edge.getId());
+        if (!isConnected()) {
+            log.info("[{}][{}][{}] edge is not connected. Stopping consumer", tenantId, sessionId, edge.getId());
+            consumerExecutor.submit(() -> {
+                try {
+                    this.consumer.stop();
+                    this.consumer = null;
+                } catch (Exception e) {
+                    log.error("[{}][{}] Failed to stop consumer", tenantId, edge.getId(), e);
                 }
-            } catch (Exception e) {
-                log.error("[{}] Failed to process all downlink messages", sessionId, e);
+            });
+            return;
+        }
+        if (isSyncInProgress() || isHighPriorityProcessing) {
+            log.trace("[{}][{}][{}] edge sync is not completed or high priority processing in progress, sync in progress = {}, high priority in progress = {}. Skipping iteration",
+                    tenantId, sessionId, edge.getId(), isSyncInProgress(), isHighPriorityProcessing);
+            return;
+        }
+        List<EdgeEvent> edgeEvents = new ArrayList<>();
+        for (TbProtoQueueMsg<ToEdgeEventNotificationMsg> msg : msgs) {
+            EdgeEvent edgeEvent = ProtoUtils.fromProto(msg.getValue().getEdgeEventMsg());
+            edgeEvents.add(edgeEvent);
+        }
+        List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(edgeEvents);
+        try {
+            boolean isInterrupted = sendDownlinkMsgsPack(downlinkMsgsPack).get();
+            if (isInterrupted) {
+                log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
+            } else {
+                consumer.commit();
             }
-        } else {
-            try {
-                Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
-            } catch (InterruptedException interruptedException) {
-                log.trace("Failed to wait until the server has capacity to handle new requests", interruptedException);
-            }
-            log.trace("[{}][{}] edge is not connected or sync is not completed. Skipping iteration", tenantId, sessionId);
+        } catch (Exception e) {
+            log.error("[{}][{}] Failed to process all downlink messages", sessionId, edge.getId(), e);
+        }
+        try {
+            Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
+        } catch (InterruptedException interruptedException) {
+            log.trace("[{}][{}][{}] Failed to wait until the server has capacity to handle new requests", tenantId, sessionId, edge.getId(), interruptedException);
         }
     }
 
@@ -108,17 +121,22 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
     @Override
     public ListenableFuture<Boolean> processEdgeEvents() {
         if (consumer == null) {
-            this.consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event-consumer"));
-            this.consumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdgeEventNotificationMsg>>builder()
-                    .name("TB Edge events")
-                    .msgPackProcessor(this::processMsgs)
-                    .pollInterval(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval())
-                    .consumerCreator(() -> tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edge.getId()))
-                    .consumerExecutor(consumerExecutor)
-                    .threadPrefix("edge-events")
-                    .build();
-            consumer.subscribe();
-            consumer.launch();
+            try {
+                this.consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event-consumer"));
+                this.consumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdgeEventNotificationMsg>>builder()
+                        .name("TB Edge events [" + edge.getId() + "]")
+                        .msgPackProcessor(this::processMsgs)
+                        .pollInterval(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval())
+                        .consumerCreator(() -> tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edge.getId()))
+                        .consumerExecutor(consumerExecutor)
+                        .threadPrefix("edge-events-" + edge.getId())
+                        .build();
+                consumer.subscribe();
+                consumer.launch();
+            } catch (Exception e) {
+                consumer = null;
+                log.warn("[{}][{}] Failed to start edge event consumer", sessionId, edge.getId(), e);
+            }
         }
         return Futures.immediateFuture(Boolean.FALSE);
     }
@@ -133,6 +151,7 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
     @Override
     public void destroy() {
         consumer.stop();
+        consumer = null;
         consumerExecutor.shutdown();
     }
 
