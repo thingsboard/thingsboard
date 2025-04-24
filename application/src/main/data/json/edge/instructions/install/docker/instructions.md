@@ -4,9 +4,26 @@ Here is the list of commands, that can be used to quickly install ThingsBoard Ed
 
 Install <a href="https://docs.docker.com/engine/install/" target="_blank"> Docker CE</a> and <a href="https://docs.docker.com/compose/install/" target="_blank"> Docker Compose</a>.
 
-#### Running ThingsBoard Edge as docker service
+#### Step 1. Running ThingsBoard Edge
 
-Create docker compose file for ThingsBoard Edge service:
+Here you can find ThingsBoard Edge docker image:
+
+<a href="https://hub.docker.com/r/thingsboard/tb-edge" target="_blank"> thingsboard/tb-edge</a>
+
+#### Step 2. Choose Queue and/or Database Services
+
+ThingsBoard Edge is able to use different messaging systems/brokers for storing the messages and communication between ThingsBoard services. 
+How to choose the right queue implementation?
+
+In Memory queue implementation is built-in and default. It is useful for development(PoC) environments and is not suitable for production deployments or any sort of cluster deployments.
+
+Kafka is recommended for production deployments. This queue is used on the most of ThingsBoard production environments now.
+
+Hybrid implementation combines PostgreSQL and Cassandra databases with Kafka queue service. It is recommended if you plan to manage 1M+ devices in production or handle high data ingestion rate (more than 5000 msg/sec).
+
+Create a docker compose file for the ThingsBoard Edge service:
+
+##### In Memory
 
 ```bash
 nano docker-compose.yml
@@ -20,25 +37,22 @@ version: '3.8'
 services:
   mytbedge:
     restart: always
-    image: "thingsboard/tb-edge:${TB_EDGE_VERSION}"
+    image: "thingsboard/tb-edge:3.9.1EDGE"
     ports:
       - "8080:8080"
       - "1883:1883"
       - "5683-5688:5683-5688/udp"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
-      CLOUD_ROUTING_KEY: ${CLOUD_ROUTING_KEY}
-      CLOUD_ROUTING_SECRET: ${CLOUD_ROUTING_SECRET}
-      CLOUD_RPC_HOST: ${BASE_URL}
-      CLOUD_RPC_PORT: ${CLOUD_RPC_PORT}
-      CLOUD_RPC_SSL_ENABLED: ${CLOUD_RPC_SSL_ENABLED}
+      CLOUD_ROUTING_KEY: PUT_YOUR_EDGE_KEY_HERE # e.g. 19ea7ee8-5e6d-e642-4f32-05440a529015
+      CLOUD_ROUTING_SECRET: PUT_YOUR_EDGE_SECRET_HERE # e.g. bztvkvfqsye7omv9uxlp
+      CLOUD_RPC_HOST: PUT_YOUR_CLOUD_IP # e.g. 192.168.1.1 or demo.thingsboard.io
     volumes:
       - tb-edge-data:/data
       - tb-edge-logs:/var/log/tb-edge
-    ${EXTRA_HOSTS}
   postgres:
     restart: always
-    image: "postgres:16"
+    image: "postgres:15"
     ports:
       - "5432"
     environment:
@@ -58,24 +72,20 @@ volumes:
 ```
 
 ##### [Optional] Update bind ports 
-If ThingsBoard Edge is going to be running on the same machine where ThingsBoard server (cloud) is running, you'll need to update docker compose port mapping to avoid port collision between ThingsBoard server and ThingsBoard Edge.
+If ThingsBoard Edge is set to run on the same machine where the ThingsBoard server is operating, you need to update port configuration to prevent port collision between the ThingsBoard server and ThingsBoard Edge.
 
-Please update next lines of `docker-compose.yml` file:
+Ensure that the ports 18080, 11883, 15683-15688 are not used by any other application.
 
-```text
-ports:
-  - "18080:8080"
-  - "11883:1883"
-  - "15683-15688:5683-5688/udp"
+Then, update the port configuration in the docker-compose.yml file:
+```bash
+sed -i ‘s/8080:8080/18080:8080/; s/1883:1883/11883:1883/; s/5683-5688:5683-5688\/udp/15683-15688:5683-5688\/udp/’ docker-compose.yml
+{:copy-code}
 ```
-Make sure that ports above (18080, 11883, 15683-15688) are not used by any other application.
-
 #### Start ThingsBoard Edge
-Set the terminal in the directory which contains the `docker-compose.yml` file and execute the following commands to up this docker compose directly:
+Set the terminal in the directory which contains the docker-compose.yml file and execute the following commands to up this docker compose directly:
 
 ```bash
-docker compose up -d
-docker compose logs -f mytbedge
+docker compose up -d && docker compose logs -f mytbedge
 {:copy-code}
 ```
 
@@ -90,11 +100,12 @@ docker-compose up -d
 docker-compose logs -f mytbedge
 ```
 
-#### Open ThingsBoard Edge UI
+#### Step 3. Open ThingsBoard Edge UI
 
-Once started, you will be able to open **ThingsBoard Edge UI** using the following link http://localhost:8080.
+Once the Edge service is started, open the Edge UI at http://localhost:8080.
 
 ###### NOTE: Edge HTTP bind port update 
 
-Use next **ThingsBoard Edge UI** link **http://localhost:18080** if you updated HTTP 8080 bind port to **18080**.
+If the Edge HTTP bind port was changed to 18080 during Edge installation, access the ThingsBoard Edge instance at http://localhost:18080.
 
+Please use your tenant credentials from local Server instance or ThingsBoard Live Demo to log in to the ThingsBoard Edge.
