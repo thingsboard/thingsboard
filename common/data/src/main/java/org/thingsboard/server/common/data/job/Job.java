@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.job;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -29,22 +31,30 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 public class Job extends BaseData<JobId> implements HasTenantId {
 
+    @NotNull
     private TenantId tenantId;
+    @NotNull
     private JobType type;
+    @NotBlank
     private String key;
+    @NotBlank
+    private String description;
     private JobStatus status;
+    @NotNull
     private JobConfiguration configuration;
     private JobResult result;
 
     @Builder
-    public Job(TenantId tenantId, JobType type, String key, JobConfiguration configuration) {
+    public Job(TenantId tenantId, JobType type, String key, String description, JobConfiguration configuration) {
         this.tenantId = tenantId;
         this.type = type;
         this.key = key;
+        this.description = description;
         this.configuration = configuration;
         this.status = JobStatus.PENDING;
         this.result = switch (type) {
             case CF_REPROCESSING -> new CfReprocessingJobResult();
+            case DUMMY -> new DummyJobResult();
         };
     }
 

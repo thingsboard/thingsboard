@@ -285,19 +285,23 @@ public class CalculatedFieldController extends BaseController {
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
         CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
         checkNotNull(calculatedField);
-        checkEntityId(calculatedField.getEntityId(), Operation.READ_CALCULATED_FIELD);
+        EntityId entityId = calculatedField.getEntityId();
+        checkEntityId(entityId, Operation.READ_CALCULATED_FIELD);
 
         jobManager.submitJob(Job.builder()
                 .tenantId(calculatedField.getTenantId())
                 .type(JobType.CF_REPROCESSING)
-                .key(calculatedField.getName()) // fixme
+                .key(calculatedField.getId().toString())
+                .description("Reprocessing of calculated field '" + calculatedField.getName() +
+                             "' for " + entityId.getEntityType().getNormalName().toLowerCase() +
+                             " " + entityId.getId() +
+                             " from " + startTs + " to " + endTs)
                 .configuration(CfReprocessingJobConfiguration.builder()
                         .calculatedField(calculatedField)
                         .startTs(startTs)
                         .endTs(endTs)
                         .build())
                 .build());
-
     }
 
     private <E extends HasId<I> & HasTenantId, I extends EntityId> void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig, SecurityUser user) throws ThingsboardException {

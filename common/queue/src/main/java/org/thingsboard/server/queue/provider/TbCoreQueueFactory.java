@@ -19,8 +19,8 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TaskResultProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -47,7 +47,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
  * Responsible for initialization of various Producers and Consumers used by TB Core Node.
  * Implementation Depends on the queue queue.type from yml or TB_QUEUE_TYPE environment variable
  */
-public interface TbCoreQueueFactory extends TbUsageStatsClientQueueFactory, HousekeeperClientQueueFactory, EdqsClientQueueFactory {
+public interface TbCoreQueueFactory extends TbUsageStatsClientQueueFactory, HousekeeperClientQueueFactory, EdqsClientQueueFactory, TaskProcessorQueueFactory {
 
     /**
      * Used to push messages to instances of TB Transport Service
@@ -170,6 +170,6 @@ public interface TbCoreQueueFactory extends TbUsageStatsClientQueueFactory, Hous
 
     TbQueueProducer<TbProtoQueueMsg<TaskProto>> createTaskProducer(JobType jobType);
 
-    TbQueueConsumer<TbProtoQueueMsg<TaskResultProto>> createTaskResultConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsConsumer();
 
 }

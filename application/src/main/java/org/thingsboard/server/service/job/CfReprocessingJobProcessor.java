@@ -17,9 +17,11 @@ package org.thingsboard.server.service.job;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.job.CfReprocessingJobConfiguration;
 import org.thingsboard.server.common.data.job.CfReprocessingTask;
@@ -39,28 +41,34 @@ public class CfReprocessingJobProcessor extends JobProcessor {
     private final DeviceService deviceService;
     private final AssetService assetService;
 
+    // fixme: multiple jobs with single type
+    @Transactional
     @Override
-    public void process(Job job, Consumer<Task> taskConsumer) {
+    public int process(Job job, Consumer<Task> taskConsumer) {
         CfReprocessingJobConfiguration configuration = job.getConfiguration();
 
         CalculatedField calculatedField = configuration.getCalculatedField();
-        EntityId entityId = calculatedField.getEntityId();
+        EntityId cfEntityId = calculatedField.getEntityId();
 
-        if (entityId.getEntityType().isOneOf(EntityType.DEVICE, EntityType.ASSET)) {
-            taskConsumer.accept(createTask(job, configuration, entityId));
+        int tasksCount = 0;
+        if (cfEntityId.getEntityType().isOneOf(EntityType.DEVICE, EntityType.ASSET)) {
+            taskConsumer.accept(createTask(job, configuration, cfEntityId));
+            tasksCount++;
         } else {
-            PageDataIterable<ProfileEntityIdInfo> entities;
-            if (entityId.getEntityType() == EntityType.DEVICE_PROFILE) {
-                entities = new PageDataIterable<>(pageLink -> deviceService.findProfileEntityIdInfosByTenantId(job.getTenantId(), pageLink), 512);
-            } else if (entityId.getEntityType() == EntityType.ASSET_PROFILE) {
-                entities = new PageDataIterable<>(pageLink -> assetService.findProfileEntityIdInfosByTenantId(job.getTenantId(), pageLink), 512);
+            PageDataIterable<? extends EntityId> entities;
+            if (cfEntityId.getEntityType() == EntityType.DEVICE_PROFILE) {
+                entities = new PageDataIterable<>(pageLink -> deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(job.getTenantId(), (DeviceProfileId) cfEntityId, pageLink), 512);
+            } else if (cfEntityId.getEntityType() == EntityType.ASSET_PROFILE) {
+                entities = new PageDataIterable<>(pageLink -> assetService.findAssetIdsByTenantIdAndAssetProfileId(job.getTenantId(), (AssetProfileId) cfEntityId, pageLink), 512);
             } else {
-                throw new IllegalArgumentException("Unsupported CF entity type " + entityId.getEntityType());
+                throw new IllegalArgumentException("Unsupported CF entity type " + cfEntityId.getEntityType());
             }
-            entities.forEach(device -> {
-                taskConsumer.accept(createTask(job, configuration, device.getEntityId()));
-            });
+            for (EntityId entityId : entities) {
+                taskConsumer.accept(createTask(job, configuration, entityId));
+                tasksCount++;
+            }
         }
+        return tasksCount;
     }
 
     private Task createTask(Job job, CfReprocessingJobConfiguration configuration, EntityId entityId) {
@@ -68,6 +76,7 @@ public class CfReprocessingJobProcessor extends JobProcessor {
                 .tenantId(job.getTenantId())
                 .jobId(job.getId())
                 .key(entityId.getEntityType().getNormalName() + " " + entityId.getId())
+                .retries(2) // 3 attempts in total
                 .calculatedField(configuration.getCalculatedField())
                 .entityId(entityId)
                 .startTs(configuration.getStartTs())

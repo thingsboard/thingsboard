@@ -16,8 +16,8 @@
 package org.thingsboard.server.queue.provider;
 
 import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TaskResultProto;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -26,6 +26,6 @@ public interface TaskProcessorQueueFactory {
 
     TbQueueConsumer<TbProtoQueueMsg<TaskProto>> createTaskConsumer(JobType jobType);
 
-    TbQueueProducer<TbProtoQueueMsg<TaskResultProto>> createTaskResultProducer();
+    TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer();
 
 }

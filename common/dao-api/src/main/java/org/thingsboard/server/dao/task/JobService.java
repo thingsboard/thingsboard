@@ -17,18 +17,18 @@ package org.thingsboard.server.dao.task;
 
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.job.TaskResult;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.job.Job;
-
-import java.util.List;
 
 public interface JobService {
 
     Job createJob(TenantId tenantId, Job job);
 
-    void reportTaskResults(JobId jobId, List<TaskResult> results);
+    Job findJobById(TenantId tenantId, JobId jobId);
+
+    void processStats(JobId jobId, JobStats jobStats);
 
     PageData<Job> findJobsByTenantId(TenantId tenantId, PageLink pageLink);
 

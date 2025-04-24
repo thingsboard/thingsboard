@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.job;
+package org.thingsboard.server.common.data.job;
 
-import org.thingsboard.server.common.data.job.Task;
-import org.thingsboard.server.common.data.job.Job;
-import org.thingsboard.server.common.data.job.JobType;
+public class DummyJobResult extends JobResult {
 
-import java.util.function.Consumer;
-
-public abstract class JobProcessor {
-
-    public abstract int process(Job job, Consumer<Task> taskConsumer);
-
-    public abstract JobType getType();
+    @Override
+    public JobType getJobType() {
+        return JobType.DUMMY;
+    }
 
 }

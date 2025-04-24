@@ -25,8 +25,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
@@ -536,13 +536,36 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.TaskResultProto>> createTaskResultConsumer() {
-        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<TransportProtos.TaskResultProto>>builder()
+    public TbQueueConsumer<TbProtoQueueMsg<TaskProto>> createTaskConsumer(JobType jobType) {
+        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<TaskProto>>builder()
                 .settings(kafkaSettings)
-                .topic(topicService.buildTopicName("tasks.results"))
-                .clientId("task-result-consumer-" + serviceInfoProvider.getServiceId())
-                .groupId(topicService.buildTopicName("task-result-consumer-group"))
-                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.TaskResultProto.parseFrom(msg.getData()), msg.getHeaders()))
+                .topic(topicService.buildTopicName(jobType.getTasksTopic()))
+                .clientId(jobType.name().toLowerCase() + "-task-consumer-" + serviceInfoProvider.getServiceId())
+                .groupId(topicService.buildTopicName(jobType.name().toLowerCase() + "-task-consumer-group"))
+                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TaskProto.parseFrom(msg.getData()), msg.getHeaders()))
+                .admin(tasksAdmin)
+                .statsService(consumerStatsService)
+                .build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer() {
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<JobStatsMsg>>builder()
+                .clientId("job-stats-producer-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName("jobs.stats"))
+                .settings(kafkaSettings)
+                .admin(tasksAdmin)
+                .build();
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsConsumer() {
+        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<JobStatsMsg>>builder()
+                .settings(kafkaSettings)
+                .topic(topicService.buildTopicName("jobs.stats"))
+                .clientId("job-stats-consumer-" + serviceInfoProvider.getServiceId())
+                .groupId(topicService.buildTopicName("job-stats-consumer-group"))
+                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), JobStatsMsg.parseFrom(msg.getData()), msg.getHeaders()))
                 .admin(tasksAdmin)
                 .statsService(consumerStatsService)
                 .build();

@@ -22,13 +22,14 @@ import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobResult;
+import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.data.job.TaskResult.TaskFailure;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-
-import java.util.List;
+import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.service.DataValidator;
 
 @Service
 @RequiredArgsConstructor
@@ -36,14 +37,21 @@ import java.util.List;
 public class DefaultJobService implements JobService {
 
     private final JobDao jobDao;
+    private final JobValidator validator = new JobValidator();
 
     @Override
     public Job createJob(TenantId tenantId, Job job) {
+        validator.validate(job, Job::getTenantId);
         return jobDao.save(tenantId, job);
     }
 
     @Override
-    public void reportTaskResults(JobId jobId, List<TaskResult> results) {
+    public Job findJobById(TenantId tenantId, JobId jobId) {
+        return jobDao.findById(tenantId, jobId.getId());
+    }
+
+    @Override
+    public void processStats(JobId jobId, JobStats jobStats) {
         Job job = jobDao.findById(TenantId.SYS_TENANT_ID, jobId.getId());
         switch (job.getStatus()) {
             case PENDING -> {
@@ -56,7 +64,11 @@ public class DefaultJobService implements JobService {
         }
 
         JobResult jobResult = job.getResult();
-        for (TaskResult taskResult : results) {
+        if (jobStats.getTotalTasksCount() != null) {
+            jobResult.setTotalCount(jobStats.getTotalTasksCount());
+        }
+
+        for (TaskResult taskResult : jobStats.getTaskResults()) {
             if (taskResult.isSuccess()) {
                 jobResult.setSuccessfulCount(jobResult.getSuccessfulCount() + 1);
             } else {
@@ -67,7 +79,7 @@ public class DefaultJobService implements JobService {
             }
         }
 
-        if (jobResult.getSuccessfulCount() + jobResult.getFailedCount() >= jobResult.getTotalCount()) {
+        if (jobResult.getTotalCount() != null && jobResult.getSuccessfulCount() + jobResult.getFailedCount() >= jobResult.getTotalCount()) {
             if (jobResult.getFailures().isEmpty()) {
                 job.setStatus(JobStatus.COMPLETED);
             } else {
@@ -81,6 +93,24 @@ public class DefaultJobService implements JobService {
     @Override
     public PageData<Job> findJobsByTenantId(TenantId tenantId, PageLink pageLink) {
         return jobDao.findByTenantId(tenantId, pageLink);
+    }
+
+    // todo: cancellation, reprocessing
+
+    public class JobValidator extends DataValidator<Job> {
+
+        @Override
+        protected void validateCreate(TenantId tenantId, Job job) {
+            if (jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, job.getType(), JobStatus.PENDING, JobStatus.RUNNING)) {
+                throw new DataValidationException("Job of this type is already running");
+            }
+        }
+
+        @Override
+        protected Job validateUpdate(TenantId tenantId, Job job) {
+            throw new IllegalArgumentException("Job can't be updated externally");
+        }
+
     }
 
 }

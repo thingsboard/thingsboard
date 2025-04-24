@@ -1851,6 +1851,13 @@ message TaskProto {
   string value = 1; // fixme: TMP, make more efficient
 }
 
+message JobStatsMsg {
+  int64 jobIdMSB = 1;
+  int64 jobIdLSB = 2;
+  optional TaskResultProto taskResult = 3;
+  optional int32 totalTasksCount = 4;
+}
+
 message TaskResultProto {
   string value = 1; // fixme: TMP, make more efficient
 }

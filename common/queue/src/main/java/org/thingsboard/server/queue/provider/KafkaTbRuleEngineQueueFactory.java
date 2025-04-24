@@ -27,9 +27,9 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
@@ -433,10 +433,10 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.TaskResultProto>> createTaskResultProducer() {
-        return TbKafkaProducerTemplate.<TbProtoQueueMsg<TransportProtos.TaskResultProto>>builder()
-                .clientId("task-result-producer-" + serviceInfoProvider.getServiceId())
-                .defaultTopic(topicService.buildTopicName("tasks.results"))
+    public TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer() {
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<JobStatsMsg>>builder()
+                .clientId("job-stats-producer-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName("jobs.stats"))
                 .settings(kafkaSettings)
                 .admin(tasksAdmin)
                 .build();

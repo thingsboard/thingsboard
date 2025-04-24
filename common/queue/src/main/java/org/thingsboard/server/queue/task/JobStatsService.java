@@ -1,0 +1,63 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.queue.task;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.job.TaskResult;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TaskResultProto;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+
+@Lazy
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class JobStatsService {
+
+    private final TbQueueProducerProvider producerProvider;
+
+    public void reportTaskResult(JobId jobId, TaskResult result) {
+        report(jobId, JobStatsMsg.newBuilder()
+                .setTaskResult(TaskResultProto.newBuilder()
+                        .setValue(JacksonUtil.toString(result))
+                        .build()));
+    }
+
+    public void reportAllTasksSubmitted(JobId jobId, int tasksCount) {
+        report(jobId, JobStatsMsg.newBuilder()
+                .setTotalTasksCount(tasksCount));
+    }
+
+    private void report(JobId jobId, JobStatsMsg.Builder statsMsg) {
+        log.info("[{}] Reporting: {}", jobId, statsMsg);
+        statsMsg.setJobIdMSB(jobId.getId().getMostSignificantBits())
+                .setJobIdLSB(jobId.getId().getLeastSignificantBits());
+
+        TbProtoQueueMsg<JobStatsMsg> msg = new TbProtoQueueMsg<>(jobId.getId(), statsMsg.build());
+        TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> producer = producerProvider.getJobStatsProducer();
+        producer.send(TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build(), msg, TbQueueCallback.EMPTY);
+    }
+
+}

@@ -745,6 +745,7 @@ public class ModelConstants {
     public static final String JOB_TABLE_NAME = "job";
     public static final String JOB_TYPE_PROPERTY = "type";
     public static final String JOB_KEY_PROPERTY = "key";
+    public static final String JOB_DESCRIPTION_PROPERTY = "description";
     public static final String JOB_STATUS_PROPERTY = "status";
     public static final String JOB_CONFIGURATION_PROPERTY = "configuration";
     public static final String JOB_RESULT_PROPERTY = "result";

@@ -13,18 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.job;
+package org.thingsboard.server.common.data.job;
 
-import org.thingsboard.server.common.data.job.Task;
-import org.thingsboard.server.common.data.job.Job;
-import org.thingsboard.server.common.data.job.JobType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.function.Consumer;
+import java.util.List;
 
-public abstract class JobProcessor {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class DummyJobConfiguration implements JobConfiguration {
 
-    public abstract int process(Job job, Consumer<Task> taskConsumer);
+    private long taskProcessingTimeMs;
+    private int successfulTasksCount;
+    private int failedTasksCount;
+    private List<String> errors;
+    private int retries;
 
-    public abstract JobType getType();
+    @Override
+    public JobType getType() {
+        return JobType.DUMMY;
+    }
 
 }

@@ -56,6 +56,9 @@ public class JobEntity extends BaseSqlEntity<Job> {
     @Column(name = ModelConstants.JOB_KEY_PROPERTY, nullable = false)
     private String key;
 
+    @Column(name = ModelConstants.JOB_DESCRIPTION_PROPERTY, nullable = false)
+    private String description;
+
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.JOB_STATUS_PROPERTY, nullable = false)
     private JobStatus status;
@@ -74,6 +77,7 @@ public class JobEntity extends BaseSqlEntity<Job> {
         this.tenantId = getTenantUuid(job.getTenantId());
         this.type = job.getType();
         this.key = job.getKey();
+        this.description = job.getDescription();
         this.status = job.getStatus();
         this.configuration = toJson(job.getConfiguration());
         this.result = toJson(job.getResult());
@@ -87,6 +91,7 @@ public class JobEntity extends BaseSqlEntity<Job> {
         job.setTenantId(getTenantId(tenantId));
         job.setType(type);
         job.setKey(key);
+        job.setDescription(description);
         job.setStatus(status);
         job.setConfiguration(fromJson(configuration, JobConfiguration.class));
         job.setResult(fromJson(result, JobResult.class));
