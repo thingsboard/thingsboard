@@ -13,18 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.job;
+package org.thingsboard.server.common.data.job;
 
-import org.thingsboard.server.common.data.job.Task;
-import org.thingsboard.server.common.data.job.Job;
-import org.thingsboard.server.common.data.job.JobType;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import java.util.function.Consumer;
+import java.util.List;
 
-public abstract class JobProcessor {
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
+public class DummyTask extends Task {
 
-    public abstract int process(Job job, Consumer<Task> taskConsumer);
+    private int number;
+    private long processingTimeMs;
+    private List<String> errors; // errors for each attempt
 
-    public abstract JobType getType();
+    @Override
+    public JobType getJobType() {
+        return JobType.DUMMY;
+    }
 
 }

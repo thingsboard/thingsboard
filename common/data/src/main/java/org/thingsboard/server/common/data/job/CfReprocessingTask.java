@@ -15,35 +15,23 @@
  */
 package org.thingsboard.server.common.data.job;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.JobId;
-import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 public class CfReprocessingTask extends Task {
 
     private CalculatedField calculatedField;
     private EntityId entityId;
     private long startTs;
     private long endTs;
-
-    @Builder
-    public CfReprocessingTask(TenantId tenantId, JobId jobId, String key, CalculatedField calculatedField, EntityId entityId, long startTs, long endTs) {
-        super(tenantId, jobId, key);
-        this.calculatedField = calculatedField;
-        this.entityId = entityId;
-        this.startTs = startTs;
-        this.endTs = endTs;
-    }
 
     @Override
     public JobType getJobType() {

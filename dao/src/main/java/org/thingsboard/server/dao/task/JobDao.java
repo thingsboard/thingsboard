@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.task;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
@@ -29,5 +31,9 @@ public interface JobDao extends Dao<Job> {
     boolean reportTaskSuccess(JobId jobId, int tasksCount);
 
     boolean reportTaskFailure(JobId jobId, String taskKey, String error);
+
+    boolean existsByKeyAndStatusOneOf(String key, JobStatus... statuses);
+
+    boolean existsByTenantIdAndTypeAndStatusOneOf(TenantId tenantId, JobType type, JobStatus... statuses);
 
 }

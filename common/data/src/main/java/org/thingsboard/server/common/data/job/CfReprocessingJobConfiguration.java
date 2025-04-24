@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.job;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 @Builder
 public class CfReprocessingJobConfiguration implements JobConfiguration {
 
+    @NotNull
     private CalculatedField calculatedField;
     private long startTs;
     private long endTs;

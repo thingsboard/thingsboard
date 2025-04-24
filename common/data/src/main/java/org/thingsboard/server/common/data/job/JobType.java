@@ -17,7 +17,8 @@ package org.thingsboard.server.common.data.job;
 
 public enum JobType {
 
-    CF_REPROCESSING;
+    CF_REPROCESSING,
+    DUMMY;
 
     public String getTasksTopic() {
         return "tasks." + name().toLowerCase();

@@ -1883,6 +1883,10 @@ queue:
       enabled: "${TB_QUEUE_EDGE_STATS_ENABLED:true}"
       # Statistics printing interval for Edge services
       print-interval-ms: "${TB_QUEUE_EDGE_STATS_PRINT_INTERVAL_MS:60000}"
+  tasks:
+    stats:
+      # Interval in milliseconds to process job stats
+      processing_interval_ms: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:5000}"
 
 # Event configuration parameters
 event:

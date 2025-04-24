@@ -23,14 +23,22 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.dao.model.sql.JobEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface JobRepository extends JpaRepository<JobEntity, UUID> {
 
-    Page<JobEntity> findByTenantId(UUID tenantId, Pageable pageable);
+    @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId " +
+            "AND (:searchText IS NULL OR ilike(j.key, concat('%', :searchText, '%')) = true " +
+           "OR ilike(j.description, concat('%', :searchText, '%')) = true)")
+    Page<JobEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
+                                                @Param("searchText") String searchText,
+                                                Pageable pageable);
 
     @Modifying
     @Transactional
@@ -45,7 +53,8 @@ public interface JobRepository extends JpaRepository<JobEntity, UUID> {
             RETURNING ((result->>'successfulCount')::int + :count)
                      + (result->>'failedCount')::int = (result->>'totalCount')::int
             """, nativeQuery = true)
-    boolean reportTaskSuccess(@Param("jobId") UUID jobId, @Param("count") int count);
+    boolean reportTaskSuccess(@Param("jobId") UUID jobId,
+                              @Param("count") int count);
 
     @Modifying
     @Transactional
@@ -64,6 +73,12 @@ public interface JobRepository extends JpaRepository<JobEntity, UUID> {
             RETURNING ((result->>'failedCount')::int + 1) + (result->>'successfulCount')::int
             = (result->>'totalCount')::int
             """, nativeQuery = true)
-    boolean reportTaskFailure(@Param("jobId") UUID jobId, @Param("taskKey") String taskKey, @Param("error") String error);
+    boolean reportTaskFailure(@Param("jobId") UUID jobId,
+                              @Param("taskKey") String taskKey,
+                              @Param("error") String error);
+
+    boolean existsByKeyAndStatusIn(String key, List<JobStatus> statuses);
+
+    boolean existsByTenantIdAndTypeAndStatusIn(UUID tenantId, JobType type, List<JobStatus> statuses);
 
 }

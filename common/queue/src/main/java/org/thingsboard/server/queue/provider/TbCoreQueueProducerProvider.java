@@ -18,6 +18,7 @@ package org.thingsboard.server.queue.provider;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -53,6 +54,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeper;
     private TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldMsg>> toCalculatedFields;
     private TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> toCalculatedFieldNotifications;
+    private TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> jobStatsProducer;
 
     public TbCoreQueueProducerProvider(TbCoreQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -73,6 +75,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
         this.toEdgeEvents = tbQueueProvider.createEdgeEventMsgProducer();
         this.toCalculatedFields = tbQueueProvider.createToCalculatedFieldMsgProducer();
         this.toCalculatedFieldNotifications = tbQueueProvider.createToCalculatedFieldNotificationMsgProducer();
+        this.jobStatsProducer = tbQueueProvider.createJobStatsProducer();
     }
 
     @Override
@@ -138,6 +141,11 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> getCalculatedFieldsNotificationsMsgProducer() {
         return toCalculatedFieldNotifications;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> getJobStatsProducer() {
+        return jobStatsProducer;
     }
 
 }

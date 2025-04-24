@@ -19,8 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.JobId;
-import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
 @AllArgsConstructor
@@ -28,8 +26,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 @Builder
 public class TaskResult {
 
-    private TenantId tenantId;
-    private JobId jobId;
     private boolean success;
     private TaskFailure failure;
 

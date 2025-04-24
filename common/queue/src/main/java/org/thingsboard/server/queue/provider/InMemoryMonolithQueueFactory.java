@@ -28,6 +28,7 @@ import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -270,13 +271,13 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.TaskResultProto>> createTaskResultProducer() {
-        return new InMemoryTbQueueProducer<>(storage, "tasks.results");
+    public TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer() {
+        return new InMemoryTbQueueProducer<>(storage, "jobs.stats");
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.TaskResultProto>> createTaskResultConsumer() {
-        return new InMemoryTbQueueConsumer<>(storage, "tasks.results");
+    public TbQueueConsumer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsConsumer() {
+        return new InMemoryTbQueueConsumer<>(storage, "jobs.stats");
     }
 
     @Scheduled(fixedRateString = "${queue.in_memory.stats.print-interval-ms:60000}")

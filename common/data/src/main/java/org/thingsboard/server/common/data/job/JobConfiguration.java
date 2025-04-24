@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
         @Type(name = "CF_REPROCESSING", value = CfReprocessingJobConfiguration.class),
+        @Type(name = "DUMMY", value = DummyJobConfiguration.class),
 })
 public interface JobConfiguration {
 
