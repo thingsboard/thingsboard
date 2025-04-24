@@ -37,9 +37,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -149,7 +148,7 @@ public class TbKafkaSettings {
     private List<TbProperty> other;
 
     @Setter
-    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
+    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = new HashMap<>();
 
     private volatile AdminClient adminClient;
 
@@ -260,23 +259,22 @@ public class TbKafkaSettings {
     }
 
     private Map<String, List<TbProperty>> parseTopicPropertyList(String inlineProperties) {
+        Map<String, List<String>> grouped = PropertyUtils.getGroupedProps(inlineProperties);
         Map<String, List<TbProperty>> result = new HashMap<>();
-        Map<String, String> rawTopicToPropertyString = PropertyUtils.getProps(inlineProperties);
 
-        for (Map.Entry<String, String> entry : rawTopicToPropertyString.entrySet()) {
-            String topic = entry.getKey().trim();
-            String propertiesStr = entry.getValue();
-
-            List<TbProperty> tbProperties = Arrays.stream(propertiesStr.split(","))
-                    .map(kv -> kv.split("=", 2))
-                    .filter(kvArr -> kvArr.length == 2)
-                    .map(kvArr -> new TbProperty(kvArr[0].trim(), kvArr[1].trim()))
-                    .toList();
-
-            if (!tbProperties.isEmpty()) {
-                result.put(topic, tbProperties);
+        grouped.forEach((topic, entries) -> {
+            Map<String, String> merged = new LinkedHashMap<>();
+            for (String entry : entries) {
+                String[] kv = entry.split("=", 2);
+                if (kv.length == 2) {
+                    merged.put(kv[0].trim(), kv[1].trim());
+                }
             }
-        }
+            List<TbProperty> props = merged.entrySet().stream()
+                    .map(e -> new TbProperty(e.getKey(), e.getValue()))
+                    .toList();
+            result.put(topic, props);
+        });
 
         return result;
     }
