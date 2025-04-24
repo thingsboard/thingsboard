@@ -158,6 +158,13 @@ public class TestRestClient {
                 .as(CalculatedField.class);
     }
 
+    public void reprocessCalculatedField(CalculatedField calculatedField, long startTs, long endTs) {
+        given().spec(requestSpec)
+                .get("/api/calculatedField/reprocess/" + calculatedField.getUuidId() + "?startTs={startTs}&endTs={endTs}", startTs, endTs)
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
     public Device getDeviceByName(String deviceName) {
         return given().spec(requestSpec).pathParam("deviceName", deviceName)
                 .get("/api/tenant/devices?deviceName={deviceName}")
@@ -271,6 +278,15 @@ public class TestRestClient {
                 .statusCode(HTTP_OK)
                 .extract()
                 .as(JsonNode.class);
+    }
+
+    public ObjectNode getTimeSeries(EntityId entityId, long startTs, long endTs, String... keys) {
+        return given().spec(requestSpec)
+                .get("/api/plugins/telemetry/" + entityId.getEntityType().name() + "/" + entityId.getId() + "/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}", String.join(",", keys), startTs, endTs)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(ObjectNode.class);
     }
 
     public JsonPath postProvisionRequest(String provisionRequest) {

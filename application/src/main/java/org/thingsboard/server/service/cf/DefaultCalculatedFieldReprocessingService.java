@@ -32,9 +32,12 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.CfReprocessingTask;
@@ -45,12 +48,17 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
-import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
@@ -69,11 +77,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultKvEntry;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createStateByType;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformSingleValueArgument;
 
-@TbCoreComponent
+@TbRuleEngineComponent
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -93,8 +102,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
     private final AttributesService attributesService;
     private final TbelInvokeService tbelInvokeService;
     private final ApiLimitService apiLimitService;
-    private final CalculatedFieldProcessingService cfProcessingService;
-    private final CalculatedFieldStateService cfStateService;
+    private final TbClusterService tbClusterService;
 
     private ListeningExecutorService calculatedFieldCallbackExecutor;
 
@@ -125,6 +133,9 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         long endTs = task.getEndTs();
 
         CalculatedFieldCtx ctx = getCFCtx(task.getCalculatedField());
+        if (OutputType.ATTRIBUTES.equals(ctx.getOutput().getType())) {
+            throw new IllegalArgumentException("'ATTRIBUTES' output type is not supported for reprocessing");
+        }
         CalculatedFieldState state = getOrInitState(tenantId, entityId, ctx, startTs);
 
         performInitialProcessing(tenantId, entityId, state, ctx, startTs);
@@ -197,21 +208,18 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
                 stateSizeChecked = true;
                 if (state.isSizeOk()) {
                     if (!calculationResult.isEmpty()) {
-                        cfProcessingService.pushMsgToRuleEngine(tenantId, entityId, checkAndSetTs(calculationResult, ts), Collections.emptyList(), TbCallback.EMPTY);
+                        pushMsgToRuleEngine(tenantId, entityId, checkAndSetTs(calculationResult, ts), Collections.emptyList(), TbCallback.EMPTY);
                     }
                 }
             }
-        } catch (Exception e) {
-            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(null).msgType(null).arguments(state.getArguments()).cause(e).build();
-        } finally {
             if (!stateSizeChecked) {
                 state.checkStateSize(ctxId, ctx.getMaxStateSize());
             }
-            if (state.isSizeOk()) {
-                cfStateService.persistState(ctxId, state, TbCallback.EMPTY);
-            } else {
-                removeStateAndRaiseSizeException(ctxId, CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build(), TbCallback.EMPTY);
+            if (!state.isSizeOk()) {
+                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
             }
+        } catch (Exception e) {
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(null).msgType(null).arguments(state.getArguments()).cause(e).build();
         }
     }
 
@@ -256,22 +264,6 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         } else {
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
         }
-    }
-
-    private void removeStateAndRaiseSizeException(CalculatedFieldEntityCtxId ctxId, CalculatedFieldException ex, TbCallback callback) throws CalculatedFieldException {
-        // We remove the state, but remember that it is over-sized in a local map.
-        cfStateService.removeState(ctxId, new TbCallback() {
-            @Override
-            public void onSuccess() {
-                callback.onFailure(ex);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(ex);
-            }
-        });
-        throw ex;
     }
 
     @SneakyThrows
@@ -374,6 +366,30 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
             return ctx;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult calculatedFieldResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
+        try {
+            OutputType type = calculatedFieldResult.getType();
+            TbMsgType msgType = OutputType.ATTRIBUTES.equals(type) ? TbMsgType.POST_ATTRIBUTES_REQUEST : TbMsgType.POST_TELEMETRY_REQUEST;
+            TbMsgMetaData md = OutputType.ATTRIBUTES.equals(type) ? new TbMsgMetaData(Map.of(SCOPE, calculatedFieldResult.getScope().name())) : TbMsgMetaData.EMPTY;
+            TbMsg msg = TbMsg.newMsg().type(msgType).originator(entityId).previousCalculatedFieldIds(cfIds).metaData(md).data(JacksonUtil.writeValueAsString(calculatedFieldResult.getResult())).build();
+            tbClusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
+                @Override
+                public void onSuccess(TbQueueMsgMetadata metadata) {
+                    callback.onSuccess();
+                    log.trace("[{}][{}] Pushed message to rule engine: {} ", tenantId, entityId, msg);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    callback.onFailure(t);
+                }
+            });
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to push message to rule engine. CalculatedFieldResult: {}", tenantId, entityId, calculatedFieldResult, e);
+            callback.onFailure(e);
         }
     }
 

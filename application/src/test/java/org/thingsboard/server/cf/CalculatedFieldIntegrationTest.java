@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
@@ -58,6 +60,20 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
     public static final int TIMEOUT = 60;
     public static final int POLL_INTERVAL = 1;
+
+
+    private final String exampleScript = "var avgTemperature = temperature.mean(); // Get average temperature\n" +
+            "  var temperatureK = (avgTemperature - 32) * (5 / 9) + 273.15; // Convert Fahrenheit to Kelvin\n" +
+            "\n" +
+            "  // Estimate air pressure based on altitude\n" +
+            "  var pressure = 101325 * Math.pow((1 - 2.25577e-5 * altitude), 5.25588);\n" +
+            "\n" +
+            "  // Air density formula\n" +
+            "  var airDensity = pressure / (287.05 * temperatureK);\n" +
+            "\n" +
+            "  return {\n" +
+            "    \"airDensity\": toFixed(airDensity, 2)\n" +
+            "  };";
 
     @BeforeEach
     void setUp() throws Exception {
@@ -517,23 +533,23 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         await().alias("reprocess -> perform calculation for time window").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode fahrenheitTemp = getTimeSeries(testDevice.getId(), startTs, endTs, "result");
-                    assertThat(fahrenheitTemp).isNotNull();
+                    ObjectNode result = getTimeSeries(testDevice.getId(), startTs, endTs, "result");
+                    assertThat(result).isNotNull();
 
-                    assertThat(fahrenheitTemp.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(a4Ts));
-                    assertThat(fahrenheitTemp.get("result").get(0).get("value").asText()).isEqualTo("34.0");
+                    assertThat(result.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(a4Ts));
+                    assertThat(result.get("result").get(0).get("value").asText()).isEqualTo("34.0");
 
-                    assertThat(fahrenheitTemp.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(a3Ts));
-                    assertThat(fahrenheitTemp.get("result").get(1).get("value").asText()).isEqualTo("33.0");
+                    assertThat(result.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(a3Ts));
+                    assertThat(result.get("result").get(1).get("value").asText()).isEqualTo("33.0");
 
-                    assertThat(fahrenheitTemp.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(b3Ts));
-                    assertThat(fahrenheitTemp.get("result").get(2).get("value").asText()).isEqualTo("32.0");
+                    assertThat(result.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(b3Ts));
+                    assertThat(result.get("result").get(2).get("value").asText()).isEqualTo("32.0");
 
-                    assertThat(fahrenheitTemp.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(b2Ts));
-                    assertThat(fahrenheitTemp.get("result").get(3).get("value").asText()).isEqualTo("22.0");
+                    assertThat(result.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(b2Ts));
+                    assertThat(result.get("result").get(3).get("value").asText()).isEqualTo("22.0");
 
-                    assertThat(fahrenheitTemp.get("result").get(4).get("ts").asText()).isEqualTo(Long.toString(startTs)); // we use reprocessing startTs instead of telemetry ts for initial calculation
-                    assertThat(fahrenheitTemp.get("result").get(4).get("value").asText()).isEqualTo("12.0");
+                    assertThat(result.get("result").get(4).get("ts").asText()).isEqualTo(Long.toString(startTs)); // we use reprocessing startTs instead of telemetry ts for initial calculation
+                    assertThat(result.get("result").get(4).get("value").asText()).isEqualTo("12.0");
                 });
     }
 
@@ -622,6 +638,124 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(ab_2.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
                     assertThat(ab_2.get("result").get(3).get("value").asText()).isEqualTo("101.0");
                 });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenEntityIsProfileAndTsRollingArgUsed() throws Exception {
+
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(1200);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(300);
+
+
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
+
+        doPost("/api/plugins/telemetry/ASSET/" + testAsset.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"altitude\":1531}"));
+
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Test Device Profile"), DeviceProfile.class);
+
+        Device testDevice1 = createDevice("Test device 1", "1234567890111", deviceProfile.getId());
+        long d1Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(1000);
+        long d1Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d1Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(500);
+
+        pushTelemetry(testDevice1.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":66.12}}", d1Ts_1)));
+        pushTelemetry(testDevice1.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":45.31}}", d1Ts_2)));
+        pushTelemetry(testDevice1.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":70.36}}", d1Ts_3)));
+
+
+        Device testDevice2 = createDevice("Test device 2", "1234567890222", deviceProfile.getId());
+        long d2Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(900);
+        long d2Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d2Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(400);
+
+        pushTelemetry(testDevice2.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":55.16}}", d2Ts_1)));
+        pushTelemetry(testDevice2.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":56.57}}", d2Ts_2)));
+        pushTelemetry(testDevice2.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":59.40}}", d2Ts_3)));
+
+
+        /*      telemetry flow:
+                     startTs                                      endTs
+                       |____________________________________________|
+               |  ts   |  -1000    -900     -550     -500     -400  |
+               |device1|  66.12 ->       -> 45.31 -> 70.36 ->       |
+               |device2|        -> 55.16 -> 56.57 ->       -> 59.40 |
+               |asset  |        ->       ->       ->       ->       | -> 1531
+                       |____________________________________________|
+                                         |--- reprocessing time window
+               the airDensity for device 1 should be: 1.0 -> 1.05 -> 1.02
+               the airDensity for device 2 should be: 1.03 -> 1.02 -> 1.02
+        */
+
+        CalculatedField savedCalculatedField = createScriptCalculatedField(deviceProfile.getId(), testAsset.getId());
+
+        doGet("/api/calculatedField/reprocess/" + savedCalculatedField.getUuidId() + "?startTs={startTs}&endTs={endTs}", startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for device 1").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = getTimeSeries(testDevice1.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d1Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d1Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.05");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d1Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.0");
+                });
+
+        await().alias("reprocess -> perform calculation for device 2").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = getTimeSeries(testDevice2.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d2Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d2Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.03");
+                });
+    }
+
+    private CalculatedField createScriptCalculatedField(EntityId entityId, EntityId refEntityId) {
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(entityId);
+        calculatedField.setType(CalculatedFieldType.SCRIPT);
+        calculatedField.setName("Air density" + RandomStringUtils.randomAlphabetic(5));
+        calculatedField.setDebugSettings(DebugSettings.all());
+
+        ScriptCalculatedFieldConfiguration config = new ScriptCalculatedFieldConfiguration();
+
+        Argument argument1 = new Argument();
+        argument1.setRefEntityId(refEntityId);
+        ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("altitude", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE);
+        argument1.setRefEntityKey(refEntityKey1);
+        Argument argument2 = new Argument();
+        ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("temperatureInF", ArgumentType.TS_ROLLING, null);
+        argument2.setTimeWindow(300000L);
+        argument2.setLimit(5);
+        argument2.setRefEntityKey(refEntityKey2);
+
+        config.setArguments(Map.of("altitude", argument1, "temperature", argument2));
+
+        config.setExpression(exampleScript);
+
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
     }
 
     private CalculatedField createCalculatedField(EntityId entityId, EntityId refEntityId) {
