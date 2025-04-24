@@ -383,6 +383,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         transportConfiguration.setBootstrap(bootstrapServerCredentials);
         return transportConfiguration;
     }
+
     protected Lwm2mDeviceProfileTransportConfiguration getTransportConfiguration19(String observeAttr, List<LwM2MBootstrapServerCredential> bootstrapServerCredentials) {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
         TelemetryMappingConfiguration observeAttrConfiguration = JacksonUtil.fromString(observeAttr, TelemetryMappingConfiguration.class);
