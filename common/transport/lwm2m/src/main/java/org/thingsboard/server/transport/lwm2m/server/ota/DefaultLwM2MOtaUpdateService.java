@@ -528,8 +528,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             } else {
                 strategy = info.getDeliveryMethod() == FirmwareDeliveryMethod.PULL.code ? LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL : LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
             }
-            Boolean useObject19ForOta = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings().getUseObject19ForOta();
-            if (useObject19ForOta != null && useObject19ForOta){
+            Boolean useObject19ForOtaInfo = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings().getUseObject19ForOtaInfo();
+            if (useObject19ForOtaInfo != null && useObject19ForOtaInfo){
                 sendInfoToObject19ForOta(client, FW_INFO_19_INSTANCE_ID, response, otaPackageId);
             }
             switch (strategy) {
@@ -554,8 +554,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())) {
             UUID otaPackageId = new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB());
             LwM2MSoftwareUpdateStrategy strategy = info.getStrategy();
-            Boolean useObject19ForOta = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings().getUseObject19ForOta();
-            if (useObject19ForOta != null && useObject19ForOta){
+            Boolean useObject19ForOtaInfo = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings().getUseObject19ForOtaInfo();
+            if (useObject19ForOtaInfo != null && useObject19ForOtaInfo){
                 sendInfoToObject19ForOta(client, SW_INFO_19_INSTANCE_ID, response, otaPackageId);
             }
             switch (strategy) {
