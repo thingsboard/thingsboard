@@ -409,7 +409,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 this.onDeviceProfileUpdate(clients, oldProfile, deviceProfile);
             }
         } catch (Exception e) {
-            log.warn("[{}] failed to update profile: {}", deviceProfile.getId(), deviceProfile);
+            log.warn("[{}] failed to update profile: {} [{}]", deviceProfile.getId(), e.getMessage(), deviceProfile);
         }
     }
 
@@ -424,7 +424,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 this.onDeviceUpdate(client, device, newDeviceProfileOpt);
             }
         } catch (Exception e) {
-            log.warn("[{}] failed to update device: {}", device.getId(), device);
+            log.warn("[{}] failed to update device: {} [{}]", device.getId(), e.getMessage(), device);
         }
     }
 
