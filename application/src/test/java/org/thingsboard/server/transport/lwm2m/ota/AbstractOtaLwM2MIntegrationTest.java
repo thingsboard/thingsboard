@@ -120,7 +120,7 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     public static final String CLIENT_LWM2M_SETTINGS_19 =
             "     {\n" +
-                    "    \"useObject19ForOta\": true,\n" +
+                    "    \"useObject19ForOtaInfo\": true,\n" +
                     "    \"edrxCycle\": null,\n" +
                     "    \"powerMode\": \"DRX\",\n" +
                     "    \"fwUpdateResource\": null,\n" +
