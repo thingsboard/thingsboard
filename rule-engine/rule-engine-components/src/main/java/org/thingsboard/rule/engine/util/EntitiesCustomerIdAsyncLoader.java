@@ -23,24 +23,24 @@ import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.UserId;
 
 public class EntitiesCustomerIdAsyncLoader {
 
-    public static ListenableFuture<CustomerId> findEntityIdAsync(TbContext ctx, EntityId originator) {
-        switch (originator.getEntityType()) {
-            case CUSTOMER:
-                return Futures.immediateFuture((CustomerId) originator);
-            case USER:
-                return toCustomerIdAsync(ctx, ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), (UserId) originator));
-            case ASSET:
-                return toCustomerIdAsync(ctx, ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), (AssetId) originator));
-            case DEVICE:
-                return toCustomerIdAsync(ctx, Futures.immediateFuture(ctx.getDeviceService().findDeviceById(ctx.getTenantId(), (DeviceId) originator)));
-            default:
-                return Futures.immediateFailedFuture(new TbNodeException("Unexpected originator EntityType: " + originator.getEntityType()));
-        }
+    public static ListenableFuture<CustomerId> findEntityCustomerIdAsync(TbContext ctx, EntityId originator) {
+        var tenantId = ctx.getTenantId();
+        return switch (originator.getEntityType()) {
+            case CUSTOMER -> Futures.immediateFuture((CustomerId) originator);
+            case USER -> toCustomerIdAsync(ctx, ctx.getUserService().findUserByIdAsync(tenantId, (UserId) originator));
+            case ASSET -> toCustomerIdAsync(ctx, ctx.getAssetService().findAssetByIdAsync(tenantId, (AssetId) originator));
+            case DEVICE -> toCustomerIdAsync(ctx, Futures.immediateFuture(ctx.getDeviceService().findDeviceById(tenantId, (DeviceId) originator)));
+            case ENTITY_VIEW -> toCustomerIdAsync(ctx, ctx.getEntityViewService().findEntityViewByIdAsync(tenantId, (EntityViewId) originator));
+            case EDGE -> toCustomerIdAsync(ctx, ctx.getEdgeService().findEdgeByIdAsync(tenantId, (EdgeId) originator));
+            default -> Futures.immediateFailedFuture(new TbNodeException("Unexpected originator EntityType: " + originator.getEntityType()));
+        };
     }
 
     private static <T extends HasCustomerId> ListenableFuture<CustomerId> toCustomerIdAsync(TbContext ctx, ListenableFuture<T> future) {

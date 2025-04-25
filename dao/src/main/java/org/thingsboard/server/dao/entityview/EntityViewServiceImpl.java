@@ -176,6 +176,17 @@ public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityVi
     public EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId, boolean putInCache) {
         log.trace("Executing findEntityViewById [{}]", entityViewId);
         validateId(entityViewId, id -> INCORRECT_ENTITY_VIEW_ID + id);
+        return findEntityViewByIdInternal(tenantId, entityViewId, putInCache);
+    }
+
+    @Override
+    public ListenableFuture<EntityView> findEntityViewByIdAsync(TenantId tenantId, EntityViewId entityViewId) {
+        log.trace("Executing findEntityViewByIdAsync [{}]", entityViewId);
+        validateId(entityViewId, id -> INCORRECT_ENTITY_VIEW_ID + id);
+        return service.submit(() -> findEntityViewByIdInternal(tenantId, entityViewId, true));
+    }
+
+    private EntityView findEntityViewByIdInternal(TenantId tenantId, EntityViewId entityViewId, boolean putInCache) {
         EntityViewCacheValue value = cache.get(EntityViewCacheKey.byId(entityViewId), () -> {
             EntityView entityView = entityViewDao.findById(tenantId, entityViewId.getId());
             return new EntityViewCacheValue(entityView, null);
@@ -190,7 +201,6 @@ public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityVi
         return cache.getAndPutInTransaction(EntityViewCacheKey.byName(tenantId, name),
                 () -> entityViewDao.findEntityViewByTenantIdAndName(tenantId.getId(), name).orElse(null)
                 , EntityViewCacheValue::getEntityView, v -> new EntityViewCacheValue(v, null), true);
-
     }
 
     @Override
@@ -305,13 +315,6 @@ public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityVi
         }, MoreExecutors.directExecutor());
 
         return entityViews;
-    }
-
-    @Override
-    public ListenableFuture<EntityView> findEntityViewByIdAsync(TenantId tenantId, EntityViewId entityViewId) {
-        log.trace("Executing findEntityViewByIdAsync [{}]", entityViewId);
-        validateId(entityViewId, id -> INCORRECT_ENTITY_VIEW_ID + id);
-        return entityViewDao.findByIdAsync(tenantId, entityViewId.getId());
     }
 
     @Override
