@@ -144,13 +144,15 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
 
         performInitialProcessing(tenantId, entityId, state, ctx, startTs);
 
-        Map<String, Argument> arguments = ctx.getArguments();
-        Map<String, List<TsKvEntry>> telemetryBuffers = arguments.entrySet().stream()
-                .collect(Collectors.toMap(
-                                Entry::getKey,
-                                entry -> fetchTelemetryBatch(tenantId, entityId, entry.getValue(), startTs, endTs, telemetryFetchPackSize)
-                        )
-                );
+        Map<String, List<TsKvEntry>> telemetryBuffers = new HashMap<>();
+        Map<String, Long> cursors = new HashMap<>();
+        ctx.getArguments().forEach((argName, arg) -> {
+            List<TsKvEntry> batch = fetchTelemetryBatch(tenantId, entityId, arg, startTs, endTs, telemetryFetchPackSize);
+            if (!batch.isEmpty()) {
+                telemetryBuffers.put(argName, batch);
+                cursors.put(argName, batch.get(batch.size() - 1).getTs());
+            }
+        });
 
         while (true) {
             long minTs = telemetryBuffers.values().stream()
@@ -175,9 +177,13 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
 
                     if (buffer.isEmpty()) {
                         Argument arg = ctx.getArguments().get(argName);
-                        List<TsKvEntry> nextBatch = fetchTelemetryBatch(tenantId, entityId, arg, tsEntry.getTs() + 1, endTs, telemetryFetchPackSize);
+                        Long cursorTs = cursors.getOrDefault(argName, startTs);
+                        List<TsKvEntry> nextBatch = fetchTelemetryBatch(tenantId, entityId, arg, cursorTs, endTs, telemetryFetchPackSize).stream()
+                                .filter(tsKvEntry -> tsKvEntry.getTs() > cursorTs)
+                                .toList();
                         if (!nextBatch.isEmpty()) {
                             telemetryBuffers.put(argName, nextBatch);
+                            cursors.put(argName, nextBatch.get(nextBatch.size() - 1).getTs());
                         }
                     }
                 }
