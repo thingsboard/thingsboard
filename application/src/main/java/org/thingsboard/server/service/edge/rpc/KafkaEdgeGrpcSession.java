@@ -74,19 +74,11 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer) {
         log.trace("[{}][{}][{}] starting processing edge events", tenantId, sessionId, edge.getId());
         if (!isConnected()) {
-            log.info("[{}][{}][{}] edge is not connected. Stopping consumer", tenantId, sessionId, edge.getId());
-            consumerExecutor.submit(() -> {
-                try {
-                    this.consumer.stop();
-                    this.consumer = null;
-                } catch (Exception e) {
-                    log.error("[{}][{}] Failed to stop consumer", tenantId, edge.getId(), e);
-                }
-            });
+            log.debug("[{}][{}][{}] edge is not connected. Skipping iteration", tenantId, sessionId, edge.getId());
             return;
         }
         if (isSyncInProgress() || isHighPriorityProcessing) {
-            log.trace("[{}][{}][{}] edge sync is not completed or high priority processing in progress, sync in progress = {}, high priority in progress = {}. Skipping iteration",
+            log.debug("[{}][{}][{}] edge sync is not completed or high priority processing in progress, sync in progress = {}, high priority in progress = {}. Skipping iteration",
                     tenantId, sessionId, edge.getId(), isSyncInProgress(), isHighPriorityProcessing);
             return;
         }
@@ -134,7 +126,7 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
                 consumer.subscribe();
                 consumer.launch();
             } catch (Exception e) {
-                consumer = null;
+                destroy();
                 log.warn("[{}][{}] Failed to start edge event consumer", sessionId, edge.getId(), e);
             }
         }
@@ -150,9 +142,16 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
 
     @Override
     public void destroy() {
-        consumer.stop();
-        consumer = null;
-        consumerExecutor.shutdown();
+        try {
+            if (consumer != null) {
+                consumer.stop();
+            }
+        } finally {
+            consumer = null;
+        }
+        if (consumerExecutor != null) {
+            consumerExecutor.shutdown();
+        }
     }
 
     @Override
