@@ -111,13 +111,11 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     private void updateLastUpdateTimestamp(ArgumentEntry entry) {
         if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-            long ts = singleValueArgumentEntry.getTs();
-            this.lastUpdateTimestamp = Math.max(this.lastUpdateTimestamp, ts);
+            this.lastUpdateTimestamp = singleValueArgumentEntry.getTs();
         } else if (entry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
             Map.Entry<Long, Double> lastEntry = tsRollingArgumentEntry.getTsRecords().pollLastEntry();
             if (lastEntry != null) {
-                long ts = lastEntry.getKey();
-                this.lastUpdateTimestamp = Math.max(this.lastUpdateTimestamp, ts);
+                this.lastUpdateTimestamp = lastEntry.getKey();
             }
         }
     }
