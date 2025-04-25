@@ -104,7 +104,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       bootstrap: [[]],
       clientLwM2mSettings: this.fb.group({
         clientOnlyObserveAfterConnect: [1, []],
-        useObject19ForOta: [false],
+        useObject19ForOtaInfo: [false],
         fwUpdateStrategy: [1, []],
         swUpdateStrategy: [1, []],
         fwUpdateResource: [{value: '', disabled: true}, []],
@@ -263,7 +263,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         bootstrapServerUpdateEnable: this.configurationValue.bootstrapServerUpdateEnable || false,
         clientLwM2mSettings: {
           clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
-          useObject19ForOta: this.configurationValue.clientLwM2mSettings.useObject19ForOta ?? false,
+          useObject19ForOtaInfo: this.configurationValue.clientLwM2mSettings.useObject19ForOtaInfo ?? false,
           fwUpdateStrategy: this.configurationValue.clientLwM2mSettings.fwUpdateStrategy || 1,
           swUpdateStrategy: this.configurationValue.clientLwM2mSettings.swUpdateStrategy || 1,
           fwUpdateResource: this.configurationValue.clientLwM2mSettings.fwUpdateResource || '',

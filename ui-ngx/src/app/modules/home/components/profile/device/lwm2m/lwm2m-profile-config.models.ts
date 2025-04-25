@@ -169,7 +169,7 @@ export interface Lwm2mProfileConfigModels {
 
 export interface ClientLwM2mSettings {
   clientOnlyObserveAfterConnect: number;
-  useObject19ForOta?: boolean;
+  useObject19ForOtaInfo?: boolean;
   fwUpdateStrategy: number;
   swUpdateStrategy: number;
   fwUpdateResource?: string;
