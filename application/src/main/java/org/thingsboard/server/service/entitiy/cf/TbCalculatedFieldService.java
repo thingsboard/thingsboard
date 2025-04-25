@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.service.validator.CalculatedFieldReprocessingValidator.CFReprocessingValidationResponse;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbCalculatedFieldService {
@@ -32,5 +33,7 @@ public interface TbCalculatedFieldService {
     PageData<CalculatedField> findAllByTenantIdAndEntityId(EntityId entityId, SecurityUser user, PageLink pageLink);
 
     void delete(CalculatedField calculatedField, SecurityUser user);
+
+    CFReprocessingValidationResponse validate(CalculatedField calculatedField);
 
 }

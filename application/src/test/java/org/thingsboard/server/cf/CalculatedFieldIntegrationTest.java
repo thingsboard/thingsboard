@@ -61,7 +61,6 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     public static final int TIMEOUT = 60;
     public static final int POLL_INTERVAL = 1;
 
-
     private final String exampleScript = "var avgTemperature = temperature.mean(); // Get average temperature\n" +
             "  var temperatureK = (avgTemperature - 32) * (5 / 9) + 273.15; // Convert Fahrenheit to Kelvin\n" +
             "\n" +

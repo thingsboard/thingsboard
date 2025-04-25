@@ -16,11 +16,15 @@
 package org.thingsboard.server.service.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -30,54 +34,54 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest.Strategy;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
-import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.CfReprocessingTask;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
-import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultKvEntry;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createStateByType;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformSingleValueArgument;
@@ -102,7 +106,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
     private final AttributesService attributesService;
     private final TbelInvokeService tbelInvokeService;
     private final ApiLimitService apiLimitService;
-    private final TbClusterService tbClusterService;
+    private final TelemetrySubscriptionService telemetrySubscriptionService;
 
     private ListeningExecutorService calculatedFieldCallbackExecutor;
 
@@ -208,7 +212,7 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
                 stateSizeChecked = true;
                 if (state.isSizeOk()) {
                     if (!calculationResult.isEmpty()) {
-                        pushMsgToRuleEngine(tenantId, entityId, checkAndSetTs(calculationResult, ts), Collections.emptyList(), TbCallback.EMPTY);
+                        saveResult(tenantId, entityId, checkAndSetTs(calculationResult, ts), ts, TbCallback.EMPTY);
                     }
                 }
             }
@@ -226,28 +230,31 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
     private CalculatedFieldResult checkAndSetTs(CalculatedFieldResult result, long ts) {
         JsonNode resultJson = result.getResult();
         JsonNode newResultJson = resultJson.deepCopy();
-        if (newResultJson.isObject() && !newResultJson.has("ts")) {
-            if (!newResultJson.has("values")) {
-                ObjectNode newResult = JacksonUtil.newObjectNode();
-                newResult.put("ts", ts);
-                newResult.set("values", newResultJson);
-                newResultJson = newResult;
-            }
+        if (newResultJson.isObject()) {
+            newResultJson = withTs(newResultJson, ts);
         }
         if (newResultJson.isArray()) {
+            ArrayNode newArray = JacksonUtil.newArrayNode();
             for (JsonNode entry : newResultJson) {
-                if (!entry.has("ts") && entry.isObject()) {
-                    if (!entry.has("values")) {
-                        ObjectNode newEntry = JacksonUtil.newObjectNode();
-                        newEntry.put("ts", ts);
-                        newEntry.set("values", entry);
-                        entry = newEntry;
-                    }
-                    ((ObjectNode) entry).put("ts", ts);
-                }
+                newArray.add(withTs(entry, ts));
             }
+            newResultJson = newArray;
         }
         return new CalculatedFieldResult(result.getType(), result.getScope(), newResultJson);
+    }
+
+    private JsonNode withTs(JsonNode node, long ts) {
+        if (node.isObject() && !node.has("ts")) {
+            if (!node.has("values")) {
+                ObjectNode wrapped = JacksonUtil.newObjectNode();
+                wrapped.put("ts", ts);
+                wrapped.set("values", node);
+                return wrapped;
+            } else {
+                ((ObjectNode) node).put("ts", ts);
+            }
+        }
+        return node;
     }
 
     private void processArgumentValuesUpdate(TenantId tenantId, EntityId entityId, CalculatedFieldState state, CalculatedFieldCtx ctx, Map<String, ArgumentEntry> newArgValues, long ts) throws CalculatedFieldException {
@@ -369,28 +376,67 @@ public class DefaultCalculatedFieldReprocessingService implements CalculatedFiel
         }
     }
 
-    public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult calculatedFieldResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    private void saveResult(TenantId tenantId, EntityId entityId, CalculatedFieldResult calculatedFieldResult, long ts, TbCallback callback) {
         try {
             OutputType type = calculatedFieldResult.getType();
-            TbMsgType msgType = OutputType.ATTRIBUTES.equals(type) ? TbMsgType.POST_ATTRIBUTES_REQUEST : TbMsgType.POST_TELEMETRY_REQUEST;
-            TbMsgMetaData md = OutputType.ATTRIBUTES.equals(type) ? new TbMsgMetaData(Map.of(SCOPE, calculatedFieldResult.getScope().name())) : TbMsgMetaData.EMPTY;
-            TbMsg msg = TbMsg.newMsg().type(msgType).originator(entityId).previousCalculatedFieldIds(cfIds).metaData(md).data(JacksonUtil.writeValueAsString(calculatedFieldResult.getResult())).build();
-            tbClusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
-                @Override
-                public void onSuccess(TbQueueMsgMetadata metadata) {
-                    callback.onSuccess();
-                    log.trace("[{}][{}] Pushed message to rule engine: {} ", tenantId, entityId, msg);
-                }
+            JsonElement result = JsonParser.parseString(Objects.requireNonNull(JacksonUtil.toString(calculatedFieldResult.getResult())));
+            FutureCallback<Void> wrappedCallback = wrapCallback(callback);
 
-                @Override
-                public void onFailure(Throwable t) {
-                    callback.onFailure(t);
+            switch (type) {
+                case TIME_SERIES -> {
+                    Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(result, ts);
+                    List<TsKvEntry> tsKvEntryList = new ArrayList<>();
+                    for (Entry<Long, List<KvEntry>> tsKvEntry : tsKvMap.entrySet()) {
+                        for (KvEntry kvEntry : tsKvEntry.getValue()) {
+                            tsKvEntryList.add(new BasicTsKvEntry(tsKvEntry.getKey(), kvEntry));
+                        }
+                    }
+
+                    telemetrySubscriptionService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
+                            .tenantId(tenantId)
+                            .entityId(entityId)
+                            .entries(tsKvEntryList)
+                            .strategy(new Strategy(true, false, false, false))
+                            .callback(wrappedCallback)
+                            .build()
+                    );
                 }
-            });
+                case ATTRIBUTES -> {
+                    List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(result, ts));
+
+                    telemetrySubscriptionService.saveAttributes(AttributesSaveRequest.builder()
+                            .tenantId(tenantId)
+                            .entityId(entityId)
+                            .scope(calculatedFieldResult.getScope())
+                            .entries(attributes)
+                            .strategy(new AttributesSaveRequest.Strategy(true, false, false))
+                            .callback(wrappedCallback)
+                            .build()
+                    );
+                }
+                default -> {
+                    log.warn("[{}][{}] Unsupported OutputType: {}", tenantId, entityId, type);
+                    callback.onFailure(new IllegalArgumentException("Unsupported output type: " + type));
+                }
+            }
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push message to rule engine. CalculatedFieldResult: {}", tenantId, entityId, calculatedFieldResult, e);
+            log.warn("[{}][{}] Failed to persist result. CalculatedFieldResult: {}", tenantId, entityId, calculatedFieldResult, e);
             callback.onFailure(e);
         }
+    }
+
+    private FutureCallback<Void> wrapCallback(TbCallback callback) {
+        return new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void result) {
+                callback.onSuccess();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+            }
+        };
     }
 
 }
