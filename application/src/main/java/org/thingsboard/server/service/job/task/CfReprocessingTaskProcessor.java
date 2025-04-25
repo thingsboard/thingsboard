@@ -33,7 +33,7 @@ public class CfReprocessingTaskProcessor extends TaskProcessor<CfReprocessingTas
     private final CalculatedFieldReprocessingService cfReprocessingService;
 
     @Override
-    protected void process(CfReprocessingTask task) throws Exception {
+    public void process(CfReprocessingTask task) throws Exception {
         SettableFuture<Void> future = SettableFuture.create();
         cfReprocessingService.reprocess(task, new TbCallback() {
             @Override

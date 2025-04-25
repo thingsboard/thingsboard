@@ -16,13 +16,16 @@
 package org.thingsboard.server.service.job;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.DummyJobConfiguration;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobResult;
@@ -32,6 +35,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.task.JobService;
+import org.thingsboard.server.queue.task.JobStatsService;
 import org.thingsboard.server.service.job.task.DummyTaskProcessor;
 
 import java.util.List;
@@ -42,6 +47,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -52,8 +59,14 @@ public class JobManagerTest extends AbstractControllerTest {
     @Autowired
     private JobManager jobManager;
 
+    @Autowired
+    private JobService jobService;
+
     @SpyBean
     private DummyTaskProcessor taskProcessor;
+
+    @SpyBean
+    private JobStatsService jobStatsService;
 
     @Before
     public void setUp() throws Exception {
@@ -183,6 +196,32 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
             assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
         });
+    }
+
+    @Test
+    public void whenTenantIsDeleted_thenCancelAllTheJobs() throws Exception {
+        loginSysAdmin();
+        createDifferentTenant();
+
+        TenantId tenantId = this.differentTenantId;
+        jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key("test-job")
+                .description("test job")
+                .configuration(DummyJobConfiguration.builder()
+                        .successfulTasksCount(1000)
+                        .taskProcessingTimeMs(500)
+                        .build())
+                .build());
+
+        Thread.sleep(2000);
+        deleteDifferentTenant();
+        Mockito.reset(jobStatsService);
+
+        Thread.sleep(3000);
+        verify(jobStatsService, never()).reportTaskResult(any(), any(), any());
+        Assertions.assertThat(jobService.findJobsByTenantId(tenantId, new PageLink(100, 0)).getData()).isEmpty();
     }
 
     private Job findJobById(JobId jobId) throws Exception {

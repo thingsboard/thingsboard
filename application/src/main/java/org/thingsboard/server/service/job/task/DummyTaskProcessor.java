@@ -26,7 +26,7 @@ import org.thingsboard.server.queue.task.TaskProcessor;
 public class DummyTaskProcessor extends TaskProcessor<DummyTask> {
 
     @Override
-    protected void process(DummyTask task) throws Exception {
+    public void process(DummyTask task) throws Exception {
         if (task.getProcessingTimeMs() > 0) {
             Thread.sleep(task.getProcessingTimeMs());
         }
