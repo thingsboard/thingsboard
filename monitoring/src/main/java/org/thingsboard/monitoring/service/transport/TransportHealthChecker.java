@@ -42,7 +42,6 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
@@ -137,13 +136,9 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
 
         log.info("Creating new device profile '{}'", profileName);
         if (transportType != TransportType.LWM2M) {
-            deviceProfile = new DeviceProfile();
-            deviceProfile.setType(DeviceProfileType.DEFAULT);
-            deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
-            DeviceProfileData profileData = new DeviceProfileData();
-            profileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-            profileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
-            deviceProfile.setProfileData(profileData);
+            deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                    .withTransportConfig(new DefaultDeviceProfileTransportConfiguration())
+                    .build();
         } else {
             tbClient.getResources(new PageLink(1, 0, "LwM2M Monitoring")).getData()
                     .stream().findFirst()

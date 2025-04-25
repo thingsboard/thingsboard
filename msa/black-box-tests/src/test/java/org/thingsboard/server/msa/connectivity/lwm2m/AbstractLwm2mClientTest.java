@@ -311,11 +311,8 @@ public class AbstractLwm2mClientTest extends AbstractContainerTest {
         deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
         deviceProfile.setDescription(deviceProfile.getName());
 
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
-        deviceProfileData.setTransportConfiguration(getTransportConfiguration());
-        deviceProfile.setProfileData(deviceProfileData);
+        deviceProfile.configureData(new DefaultDeviceProfileConfiguration(),
+                new DisabledDeviceProfileProvisionConfiguration(null), getTransportConfiguration());
         return deviceProfile;
     }
 

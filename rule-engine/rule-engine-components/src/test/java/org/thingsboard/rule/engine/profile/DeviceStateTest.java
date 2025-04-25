@@ -180,10 +180,7 @@ public class DeviceStateTest {
 
 
     private DeviceState createDeviceState(DeviceId deviceId, DeviceProfileAlarm... alarmConfigs) {
-        DeviceProfile deviceProfile = new DeviceProfile();
-        DeviceProfileData profileData = new DeviceProfileData();
-        profileData.setAlarms(List.of(alarmConfigs));
-        deviceProfile.setProfileData(profileData);
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withAlarms(List.of(alarmConfigs)).build();
 
         ProfileState profileState = new ProfileState(deviceProfile);
         return new DeviceState(ctx, new TbDeviceProfileNodeConfiguration(),

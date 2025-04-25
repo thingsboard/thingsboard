@@ -197,14 +197,9 @@ public class DeviceProvisionServiceTest {
         provision.setCertificateRegExPattern("([^@]+)");
         provision.setAllowCreateNewDevicesByX509Certificate(isAllowToCreateNewDevices);
 
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setProvisionConfiguration(provision);
-
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = new DeviceProfile.ProfileBuilder().withProvisionConfig(provision).build();
         deviceProfile.setId(new DeviceProfileId(UUID.randomUUID()));
-        deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setProvisionDeviceKey(EncryptionUtil.getSha3Hash(certificateValue));
-        deviceProfile.setProvisionType(DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN);
         deviceProfile.setTenantId(tenantId);
         return deviceProfile;
     }

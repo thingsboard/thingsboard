@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
@@ -248,25 +247,17 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
             try {
                 deviceProfile = deviceProfileService.findDeviceProfileByName(tenantId, device.getType());
                 if (deviceProfile == null) {
-                    deviceProfile = new DeviceProfile();
-                    deviceProfile.setTenantId(tenantId);
-                    deviceProfile.setType(DeviceProfileType.DEFAULT);
-                    deviceProfile.setName(device.getType());
-                    deviceProfile.setTransportType(DeviceTransportType.LWM2M);
-                    deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
-
                     Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
                     transportConfiguration.setBootstrap(Collections.emptyList());
                     transportConfiguration.setClientLwM2mSettings(new OtherConfiguration(false,1, 1, 1, PowerMode.DRX, null, null, null, null, null, V1_0.toString()));
                     transportConfiguration.setObserveAttr(new TelemetryMappingConfiguration(Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 
-                    DeviceProfileData deviceProfileData = new DeviceProfileData();
-                    DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-                    DisabledDeviceProfileProvisionConfiguration provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
-                    deviceProfileData.setConfiguration(configuration);
-                    deviceProfileData.setTransportConfiguration(transportConfiguration);
-                    deviceProfileData.setProvisionConfiguration(provisionConfiguration);
-                    deviceProfile.setProfileData(deviceProfileData);
+                    deviceProfile = new DeviceProfile.ProfileBuilder().withConfig(new DefaultDeviceProfileConfiguration())
+                            .withTransportConfig(transportConfiguration)
+                            .withProvisionConfig(new DisabledDeviceProfileProvisionConfiguration(null))
+                            .build();
+                    deviceProfile.setTenantId(tenantId);
+                    deviceProfile.setName(device.getType());
 
                     deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
                 }
