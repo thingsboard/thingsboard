@@ -62,7 +62,7 @@ public class CalculatedFieldCtx {
     private final List<String> argNames;
     private Output output;
     private String expression;
-    private boolean preserveLatestTs;
+    private boolean preserveMsgTs;
     private TbelInvokeService tbelInvokeService;
     private CalculatedFieldScriptEngine calculatedFieldScriptEngine;
     private ThreadLocal<Expression> customExpression;
@@ -96,7 +96,7 @@ public class CalculatedFieldCtx {
         this.argNames = new ArrayList<>(arguments.keySet());
         this.output = configuration.getOutput();
         this.expression = configuration.getExpression();
-        this.preserveLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) configuration).isPreserveLastUpdateTs();
+        this.preserveMsgTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) configuration).isPreserveMsgTs();
         this.tbelInvokeService = tbelInvokeService;
 
         this.maxDataPointsPerRollingArg = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);

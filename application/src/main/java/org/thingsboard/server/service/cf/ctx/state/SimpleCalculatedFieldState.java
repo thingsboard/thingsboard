@@ -68,7 +68,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
         Output output = ctx.getOutput();
         Object result = formatResult(expressionResult, output.getDecimalsByDefault());
-        JsonNode outputResult = createResultJson(ctx.isPreserveLatestTs(), output.getName(), result);
+        JsonNode outputResult = createResultJson(ctx.isPreserveMsgTs(), output.getName(), result);
 
         return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), outputResult));
     }
@@ -82,12 +82,12 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
                 : TbUtils.toFixed(expressionResult, decimals);
     }
 
-    private JsonNode createResultJson(boolean preserveLatestTs, String outputName, Object result) {
+    private JsonNode createResultJson(boolean preserveMsgTs, String outputName, Object result) {
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
         valuesNode.set(outputName, JacksonUtil.valueToTree(result));
 
         long lastTimestamp = getLastUpdateTimestamp();
-        if (preserveLatestTs && lastTimestamp != -1) {
+        if (preserveMsgTs && lastTimestamp != -1) {
             ObjectNode resultNode = JacksonUtil.newObjectNode();
             resultNode.put("ts", lastTimestamp);
             resultNode.set("values", valuesNode);
