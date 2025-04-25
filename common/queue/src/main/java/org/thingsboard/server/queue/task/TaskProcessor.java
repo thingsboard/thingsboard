@@ -17,14 +17,20 @@ package org.thingsboard.server.queue.task;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.Task;
 import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.data.job.TaskResult.TaskFailure;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -33,11 +39,15 @@ import org.thingsboard.server.queue.provider.TaskProcessorQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Slf4j
 public abstract class TaskProcessor<T extends Task> {
+
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private TaskProcessorQueueFactory queueFactory;
@@ -47,12 +57,14 @@ public abstract class TaskProcessor<T extends Task> {
     private QueueConsumerManager<TbProtoQueueMsg<TaskProto>> taskConsumer;
     private ExecutorService consumerExecutor;
 
+    private final Set<UUID> cancelledJobs = ConcurrentHashMap.newKeySet(); // fixme use caffeine
+
     @PostConstruct
     public void init() {
         consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(getJobType().name().toLowerCase() + "-task-consumer"));
         taskConsumer = QueueConsumerManager.<TbProtoQueueMsg<TaskProto>>builder() // fixme: should be consumer per partition
                 .name(getJobType().name().toLowerCase() + "-tasks")
-                .msgPackProcessor(this::processMsgs)
+                .msgPackProcessor(this::processMsgs) // todo: max.poll.records = 1
                 .pollInterval(125)
                 .consumerCreator(() -> queueFactory.createTaskConsumer(getJobType()))
                 .consumerExecutor(consumerExecutor)
@@ -65,16 +77,27 @@ public abstract class TaskProcessor<T extends Task> {
         taskConsumer.launch();
     }
 
-    @PreDestroy
-    public void destroy() {
-        taskConsumer.stop();
-        consumerExecutor.shutdownNow();
+    @EventListener
+    public void onJobCancelled(ComponentLifecycleMsg event) {
+        if (event.getEntityId().getEntityType() != EntityType.JOB) {
+            return;
+        }
+        JobId jobId = (JobId) event.getEntityId();
+        if (event.getEvent() == ComponentLifecycleEvent.STOPPED) {
+            log.info("Adding job {} to cancelled", jobId);
+            addToCancelledJobs(jobId);
+        }
     }
 
     private void processMsgs(List<TbProtoQueueMsg<TaskProto>> msgs, TbQueueConsumer<TbProtoQueueMsg<TaskProto>> consumer) {
         for (TbProtoQueueMsg<TaskProto> msg : msgs) {
             TaskProto taskProto = msg.getValue();
             Task task = JacksonUtil.fromString(taskProto.getValue(), Task.class);
+            if (cancelledJobs.contains(task.getJobId().getId())) {
+                log.info("Skipping task '{}' for cancelled job {}", task.getKey(), task.getJobId());
+                reportCancelled(task);
+                continue;
+            }
             processTask((T) task);
         }
         consumer.commit();
@@ -96,11 +119,13 @@ public abstract class TaskProcessor<T extends Task> {
         }
     }
 
+    protected abstract void process(T task) throws Exception;
+
     private void reportSuccess(Task task) {
         TaskResult result = TaskResult.builder()
                 .success(true)
                 .build();
-        statsService.reportTaskResult(task.getJobId(), result);
+        statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
     }
 
     private void reportFailure(Task task, Throwable error) {
@@ -110,10 +135,26 @@ public abstract class TaskProcessor<T extends Task> {
                         .task(task)
                         .build())
                 .build();
-        statsService.reportTaskResult(task.getJobId(), result);
+        statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
     }
 
-    protected abstract void process(T task) throws Exception;
+    private void reportCancelled(Task task) {
+        TaskResult result = TaskResult.builder()
+                .cancelled(true)
+                .build();
+        statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
+    }
+
+    public void addToCancelledJobs(JobId jobId) {
+        cancelledJobs.add(jobId.getId());
+    }
+
+    @PreDestroy
+    public void destroy() {
+        taskConsumer.stop();
+        consumerExecutor.shutdownNow();
+    }
+
 
     public abstract JobType getJobType();
 

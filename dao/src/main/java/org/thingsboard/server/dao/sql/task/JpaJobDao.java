@@ -49,13 +49,8 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
     }
 
     @Override
-    public boolean reportTaskSuccess(JobId jobId, int tasksCount) {
-        return jobRepository.reportTaskSuccess(jobId.getId(), tasksCount);
-    }
-
-    @Override
-    public boolean reportTaskFailure(JobId jobId, String taskKey, String error) {
-        return jobRepository.reportTaskFailure(jobId.getId(), taskKey, error);
+    public Job findByIdForUpdate(TenantId tenantId, JobId jobId) {
+        return DaoUtil.getData(jobRepository.findByIdForUpdate(jobId.getId()));
     }
 
     @Override

@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.dao.sql.task;
 
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -39,6 +41,10 @@ public interface JobRepository extends JpaRepository<JobEntity, UUID> {
     Page<JobEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                 @Param("searchText") String searchText,
                                                 Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE) // SELECT FOR UPDATE
+    @Query("SELECT j FROM JobEntity j WHERE j.id = :id")
+    JobEntity findByIdForUpdate(UUID id);
 
     @Modifying
     @Transactional

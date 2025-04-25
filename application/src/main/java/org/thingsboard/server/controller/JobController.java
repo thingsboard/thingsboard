@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.task.JobService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.job.JobManager;
 
 import java.util.UUID;
 
@@ -47,10 +49,12 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERT
 public class JobController extends BaseController {
 
     private final JobService jobService;
+    private final JobManager jobManager;
 
     @GetMapping("/job/{id}")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public Job getJobById(@PathVariable UUID id) throws ThingsboardException {
+        // todo check permissions
         return jobService.findJobById(getTenantId(), new JobId(id));
     }
 
@@ -66,8 +70,16 @@ public class JobController extends BaseController {
                                  @RequestParam(required = false) String sortProperty,
                                  @Parameter(description = SORT_ORDER_DESCRIPTION)
                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        // todo check permissions
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return jobService.findJobsByTenantId(getTenantId(), pageLink);
+    }
+
+    @PostMapping("/job/{id}/cancel")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public void cancelJob(@PathVariable UUID id) throws ThingsboardException {
+        // todo check permissions
+        jobManager.cancelJob(getTenantId(), new JobId(id));
     }
 
 }

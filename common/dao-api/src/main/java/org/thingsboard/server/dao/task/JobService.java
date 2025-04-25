@@ -28,7 +28,9 @@ public interface JobService {
 
     Job findJobById(TenantId tenantId, JobId jobId);
 
-    void processStats(JobId jobId, JobStats jobStats);
+    void cancelJob(TenantId tenantId, JobId jobId);
+
+    void processStats(TenantId tenantId, JobId jobId, JobStats jobStats);
 
     PageData<Job> findJobsByTenantId(TenantId tenantId, PageLink pageLink);
 

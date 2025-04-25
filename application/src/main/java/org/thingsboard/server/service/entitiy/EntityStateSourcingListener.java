@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -134,6 +135,9 @@ public class EntityStateSourcingListener {
             case CALCULATED_FIELD -> {
                 onCalculatedFieldUpdate(event.getEntity(), event.getOldEntity());
             }
+            case JOB -> {
+                onJobUpdate((Job) event.getEntity());
+            }
             default -> {
             }
         }
@@ -212,8 +216,8 @@ public class EntityStateSourcingListener {
     public void handleEvent(ActionEntityEvent<?> event) {
         log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
         if (ActionType.CREDENTIALS_UPDATED.equals(event.getActionType()) &&
-                EntityType.DEVICE.equals(event.getEntityId().getEntityType())
-                && event.getEntity() instanceof DeviceCredentials) {
+            EntityType.DEVICE.equals(event.getEntityId().getEntityType())
+            && event.getEntity() instanceof DeviceCredentials) {
             tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(event.getTenantId(),
                     (DeviceId) event.getEntityId(), (DeviceCredentials) event.getEntity()), null);
         } else if (ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType()) && event.getEntity() instanceof Device device) {
@@ -293,6 +297,12 @@ public class EntityStateSourcingListener {
             oldCalculatedField = (CalculatedField) oldEntity;
         }
         tbClusterService.onCalculatedFieldUpdated(calculatedField, oldCalculatedField, TbQueueCallback.EMPTY);
+    }
+
+    private void onJobUpdate(Job job) {
+        if (job.getResult().getCancellationTs() > 0) {
+            tbClusterService.broadcastEntityStateChangeEvent(job.getTenantId(), job.getId(), ComponentLifecycleEvent.STOPPED);
+        }
     }
 
     private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {

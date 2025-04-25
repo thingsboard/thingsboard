@@ -594,6 +594,7 @@ public class DefaultTbClusterService implements TbClusterService {
                 || entityType.equals(EntityType.ENTITY_VIEW)
                 || entityType.equals(EntityType.NOTIFICATION_RULE)
                 || entityType.equals(EntityType.CALCULATED_FIELD)
+                || entityType.equals(EntityType.JOB)
         ) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
