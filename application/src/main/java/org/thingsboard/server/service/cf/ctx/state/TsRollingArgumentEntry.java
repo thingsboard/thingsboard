@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 @Data
@@ -140,7 +141,10 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
         if (tsRecords.size() > limit) {
             tsRecords.pollFirstEntry();
         }
-        tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - timeWindow);
+        long timeWindowEndTs = Optional.ofNullable(tsRecords.lastEntry())
+                .map(Map.Entry::getKey)
+                .orElse(System.currentTimeMillis());
+        tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < timeWindowEndTs - timeWindow);
     }
 
 }
