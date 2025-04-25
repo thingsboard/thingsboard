@@ -18,10 +18,10 @@ package org.thingsboard.server.dao.task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
@@ -73,6 +73,10 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     @Override
     public void processStats(TenantId tenantId, JobId jobId, JobStats jobStats) {
         Job job = findForUpdate(tenantId, jobId);
+        if (job == null) {
+            log.info("Got stale stats for job {}: {}", jobId, jobStats);
+            return;
+        }
         switch (job.getStatus()) {
             case PENDING -> {
                 job.setStatus(JobStatus.RUNNING);
@@ -165,7 +169,12 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(findJobById(tenantId, new JobId(entityId.getId())));
+        return Optional.ofNullable(findJobById(tenantId, (JobId) entityId));
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        jobDao.removeById(tenantId, id.getId());
     }
 
     @Override

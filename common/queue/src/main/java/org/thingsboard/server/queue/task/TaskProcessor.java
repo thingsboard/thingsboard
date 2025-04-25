@@ -23,8 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.Task;
 import org.thingsboard.server.common.data.job.TaskResult;
@@ -57,6 +56,7 @@ public abstract class TaskProcessor<T extends Task> {
     private QueueConsumerManager<TbProtoQueueMsg<TaskProto>> taskConsumer;
     private ExecutorService consumerExecutor;
 
+    private final Set<UUID> deletedTenants = ConcurrentHashMap.newKeySet();
     private final Set<UUID> cancelledJobs = ConcurrentHashMap.newKeySet(); // fixme use caffeine
 
     @PostConstruct
@@ -78,37 +78,54 @@ public abstract class TaskProcessor<T extends Task> {
     }
 
     @EventListener
-    public void onJobCancelled(ComponentLifecycleMsg event) {
-        if (event.getEntityId().getEntityType() != EntityType.JOB) {
-            return;
-        }
-        JobId jobId = (JobId) event.getEntityId();
-        if (event.getEvent() == ComponentLifecycleEvent.STOPPED) {
-            log.info("Adding job {} to cancelled", jobId);
-            addToCancelledJobs(jobId);
+    public void onComponentLifecycle(ComponentLifecycleMsg event) {
+        EntityId entityId = event.getEntityId();
+        switch (entityId.getEntityType()) {
+            case JOB -> {
+                if (event.getEvent() == ComponentLifecycleEvent.STOPPED) {
+                    log.info("Adding job {} to cancelledJobs", entityId);
+                    addToCancelledJobs(entityId.getId());
+                }
+            }
+            case TENANT -> {
+                if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
+                    deletedTenants.add(entityId.getId());
+                    log.info("Adding tenant {} to deletedTenants", entityId);
+                }
+            }
         }
     }
 
-    private void processMsgs(List<TbProtoQueueMsg<TaskProto>> msgs, TbQueueConsumer<TbProtoQueueMsg<TaskProto>> consumer) {
+    private void processMsgs(List<TbProtoQueueMsg<TaskProto>> msgs, TbQueueConsumer<TbProtoQueueMsg<TaskProto>> consumer) throws Exception {
         for (TbProtoQueueMsg<TaskProto> msg : msgs) {
-            TaskProto taskProto = msg.getValue();
-            Task task = JacksonUtil.fromString(taskProto.getValue(), Task.class);
-            if (cancelledJobs.contains(task.getJobId().getId())) {
-                log.info("Skipping task '{}' for cancelled job {}", task.getKey(), task.getJobId());
-                reportCancelled(task);
-                continue;
+            try {
+                Task task = JacksonUtil.fromString(msg.getValue().getValue(), Task.class);
+                if (cancelledJobs.contains(task.getJobId().getId())) {
+                    log.info("Skipping task '{}' for cancelled job {}", task.getKey(), task.getJobId());
+                    reportCancelled(task);
+                    continue;
+                } else if (deletedTenants.contains(task.getTenantId().getId())) {
+                    log.info("Skipping task '{}' for deleted tenant {}", task.getKey(), task.getTenantId());
+                    continue;
+                }
+                processTask((T) task);
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("Failed to process msg: {}", msg, e);
             }
-            processTask((T) task);
         }
         consumer.commit();
     }
 
-    private void processTask(T task) {
+    private void processTask(T task) throws Exception { // todo: timeout and task interruption
         task.setAttempt(task.getAttempt() + 1);
         log.info("Processing task: {}", task);
         try {
             process(task);
             reportSuccess(task);
+        } catch (InterruptedException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to process task (attempt {}): {}", task.getAttempt(), task, e);
             if (task.getAttempt() <= task.getRetries()) {
@@ -119,7 +136,7 @@ public abstract class TaskProcessor<T extends Task> {
         }
     }
 
-    protected abstract void process(T task) throws Exception;
+    public abstract void process(T task) throws Exception;
 
     private void reportSuccess(Task task) {
         TaskResult result = TaskResult.builder()
@@ -145,8 +162,8 @@ public abstract class TaskProcessor<T extends Task> {
         statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
     }
 
-    public void addToCancelledJobs(JobId jobId) {
-        cancelledJobs.add(jobId.getId());
+    public void addToCancelledJobs(UUID jobId) {
+        cancelledJobs.add(jobId);
     }
 
     @PreDestroy
