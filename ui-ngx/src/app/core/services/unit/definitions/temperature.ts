@@ -1,0 +1,77 @@
+///
+/// Copyright © 2016-2025 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+import { TbMeasure, Unit, UnitSystem } from '@shared/models/unit.models';
+
+export type TemperatureMetricUnits = '°C' | 'K';
+export type TemperatureImperialUnits = '°F' | '°R';
+
+export type TemperatureUnits =
+  | TemperatureMetricUnits
+  | TemperatureImperialUnits;
+
+const METRIC: Record<TemperatureMetricUnits, Unit> = {
+  '°C': {
+    name: 'unit.celsius',
+    tags: ['temperature','heat','cold','warmth','degrees','celsius','shipment condition','°C'],
+    to_anchor: 1,
+  },
+  K: {
+    name: 'unit.kelvin',
+    tags: ['temperature','heat','cold','warmth','degrees','kelvin','K','color quality','white balance','color temperature'],
+    to_anchor: 1,
+    anchor_shift: 273.15,
+  },
+};
+
+const IMPERIAL: Record<TemperatureImperialUnits, Unit> = {
+  '°F': {
+    name: 'unit.fahrenheit',
+    tags: ['temperature','heat','cold','warmth','degrees','fahrenheit','°F'],
+    to_anchor: 1,
+  },
+  '°R': {
+    name: 'unit.rankine',
+    tags: ['temperature','heat','cold','warmth','Rankine','°R'],
+    to_anchor: 1,
+    anchor_shift: 459.67,
+  },
+};
+
+const measure: TbMeasure<UnitSystem, TemperatureUnits> = {
+  systems: {
+    METRIC,
+    IMPERIAL,
+  },
+  anchors: {
+    METRIC: {
+      IMPERIAL: {
+        transform: function (C: number): number {
+          return C / (5 / 9) + 32;
+        },
+      },
+    },
+    IMPERIAL: {
+      METRIC: {
+        transform: function (F: number): number {
+          return (F - 32) * (5 / 9);
+        },
+      },
+    },
+  },
+};
+
+export default measure;

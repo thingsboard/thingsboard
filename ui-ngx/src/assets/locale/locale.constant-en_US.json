@@ -5847,6 +5847,13 @@
         "background-blur": "Background blur"
     },
     "unit": {
+        "unit-system": "Unit system",
+        "unit-system-type": {
+            "AUTO": "Auto",
+            "METRIC": "Metric",
+            "IMPERIAL": "Imperial",
+            "HYBRID": "Hybrid"
+        },
         "millimeter": "Millimeter",
         "centimeter": "Centimeter",
         "angstrom": "Angstrom",

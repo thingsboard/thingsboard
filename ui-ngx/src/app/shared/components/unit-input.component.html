@@ -15,11 +15,18 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="outline" class="tb-inline-field tb-suffix-show-on-hover flex-1" subscriptSizing="dynamic" style="width: 100%;">
+<mat-form-field appearance="outline" class="tb-inline-field tb-suffix-show-on-hover w-full flex-1" subscriptSizing="dynamic">
   <input matInput #unitInput [formControl]="unitsFormControl"
          placeholder="{{ 'widget-config.set' | translate }}"
          (focusin)="onFocus()"
          [matAutocomplete]="unitsAutocomplete">
+  <button type="button"
+          *ngIf="!disabled && allowConverted"
+          class="tb-icon-24"
+          [class.mr-2]="!unitsFormControl.value || disabled || unitsFormControl.invalid"
+          matSuffix mat-icon-button (click)="openConvertSettingsPopup($event)">
+    <tb-icon>mdi:tape-measure</tb-icon>
+  </button>
   <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid"
           type="button"
           class="tb-icon-24 mr-2"
@@ -38,10 +45,12 @@
     #unitsAutocomplete="matAutocomplete"
     class="tb-autocomplete tb-unit-input-autocomplete"
     panelWidth="fit-content"
-    [displayWith]="displayUnitFn">
-    <mat-option *ngFor="let unit of filteredUnits | async" [value]="unit">
-      <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
-      <span class="tb-unit-symbol" [innerHTML]="unit.symbol | highlight:searchText:true:'ig'"></span>
-    </mat-option>
+    [displayWith]="displayUnitFn.bind(this)">
+    @for(unit of filteredUnits | async; track unit.abbr) {
+      <mat-option [value]="unit">
+        <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
+        <span class="tb-unit-symbol" [innerHTML]="unit.abbr | highlight:searchText:true:'ig'"></span>
+      </mat-option>
+    }
   </mat-autocomplete>
 </mat-form-field>

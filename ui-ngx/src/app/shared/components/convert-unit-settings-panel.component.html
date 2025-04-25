@@ -1,0 +1,71 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-convert-settings-panel">
+  <div class="tb-convert-settings-title">Unit convertion settings</div>
+  <div class="tb-convert-settings-panel-content" [formGroup]="convertUnitForm">
+    <div class="tb-form-row">
+      <div class="min-w-25">From</div>
+      <tb-unit-input class="flex-1" [required]="required" formControlName="from"></tb-unit-input>
+    </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="convertUnit">
+        Convert units
+      </mat-slide-toggle>
+    </div>
+    @if(convertUnitForm.get('convertUnit').value) {
+      <div class="tb-form-row">
+        <div class="min-w-25">Metrical</div>
+        <tb-unit-input class="flex-1"
+                       formControlName="METRIC"
+                       [unitSystem]="UnitSystem.METRIC"
+                       [measure]="measure">
+        </tb-unit-input>
+      </div>
+      <div class="tb-form-row">
+        <div class="min-w-25">Imperial</div>
+        <tb-unit-input class="flex-1"
+                       formControlName="IMPERIAL"
+                       [unitSystem]="UnitSystem.IMPERIAL"
+                       [measure]="measure">
+        </tb-unit-input>
+      </div>
+      <div class="tb-form-row">
+        <div class="min-w-25">Hybrid</div>
+        <tb-unit-input class="flex-1"
+                       formControlName="HYBRID"
+                       [measure]="measure">
+        </tb-unit-input>
+      </div>
+    }
+  </div>
+  <div class="tb-convert-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyUnitSettings()"
+            [disabled]="convertUnitForm.invalid || convertUnitForm.pristine">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

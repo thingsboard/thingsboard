@@ -14,34 +14,165 @@
 /// limitations under the License.
 ///
 
-import { ResourcesService } from '@core/services/resources.service';
-import { Observable } from 'rxjs';
-
-export interface Unit {
-  name: string;
-  symbol: string;
-  tags: string[];
-}
+import { AllMeasures } from '@core/services/unit/definitions/all';
+import { Injector } from '@angular/core';
+import { isDefinedAndNotNull, isNotEmptyStr, isNumeric } from '@core/utils';
+import { UnitService } from '@core/services/unit/unit.service';
 
 export enum UnitsType {
   capacity = 'capacity'
 }
 
-export enum Units {
-  percent = '%',
-  liters = 'L'
+export type TbUnitConvertor = (value: number) => number;
+
+export interface UnitDescription {
+  abbr: string;
+  measure: AllMeasures;
+  system: UnitSystem;
+  name: string;
+  tags: string[];
 }
 
-export const unitBySymbol = (_units: Array<Unit>, symbol: string): Unit => _units.find(u => u.symbol === symbol);
+export enum UnitSystem {
+  METRIC = 'METRIC',
+  IMPERIAL = 'IMPERIAL',
+  HYBRID = 'HYBRID'
+}
 
-const searchUnitTags = (unit: Unit, searchText: string): boolean =>
+export const UnitSystems = Object.values(UnitSystem);
+
+export interface Unit {
+  name: string;
+  tags: string[];
+  to_anchor: number;
+  anchor_shift?: number;
+}
+
+export type TbUnit = string | TbUnitMapping;
+
+export interface TbUnitMapping {
+  from: string;
+  METRIC: string;
+  IMPERIAL: string;
+  HYBRID: string;
+}
+
+export interface TbAnchor {
+  ratio?: number;
+  transform?: (value: number) => number;
+}
+
+export interface TbMeasure<TSystems extends UnitSystem, TUnits extends string> {
+  systems: Partial<Record<TSystems, Partial<Record<TUnits, Unit>>>>;
+  anchors?: Partial<Record<TSystems, Partial<Record<TSystems, TbAnchor>>>>;
+}
+
+const searchUnitTags = (unit: UnitDescription, searchText: string): boolean =>
   !!unit.tags.find(t => t.toUpperCase().includes(searchText.toUpperCase()));
 
-export const searchUnits = (_units: Array<Unit>, searchText: string): Array<Unit> => _units.filter(
-    u => u.symbol.toUpperCase().includes(searchText.toUpperCase()) ||
+export const searchUnits = (_units: Array<UnitDescription>, searchText: string): Array<UnitDescription> => _units.filter(
+    u => u.abbr.toUpperCase().includes(searchText.toUpperCase()) ||
       u.name.toUpperCase().includes(searchText.toUpperCase()) ||
       searchUnitTags(u, searchText)
 );
 
-export const getUnits = (resourcesService: ResourcesService): Observable<Array<Unit>> =>
-  resourcesService.loadJsonResource('/assets/metadata/units.json');
+export interface FormatValueSettingProcessor {
+  dec?: number;
+  units?: TbUnit;
+  showZeroDecimals?: boolean;
+}
+
+export abstract class FormatValueProcessor {
+
+  static fromSettings($injector: Injector, settings: FormatValueSettingProcessor): FormatValueProcessor {
+    if (typeof settings.units !== 'string' && isDefinedAndNotNull(settings.units?.from)) {
+      return new ConvertUnitProcessor($injector, settings)
+    } else {
+      return new SimpleUnitProcessor($injector, settings);
+    }
+  }
+
+  protected constructor(protected $injector: Injector,
+                        protected settings: FormatValueSettingProcessor) {
+  }
+
+  abstract format(value: any): string;
+}
+
+export class SimpleUnitProcessor extends FormatValueProcessor {
+
+  private readonly isDefinedUnit: boolean;
+  private readonly isDefinedDec: boolean;
+  private readonly showZeroDecimals: boolean;
+
+  constructor(protected $injector: Injector,
+              protected settings: FormatValueSettingProcessor) {
+    super($injector, settings);
+    this.isDefinedUnit = isNotEmptyStr(settings.units);
+    this.isDefinedDec = isDefinedAndNotNull(settings.dec);
+    this.showZeroDecimals = !!settings.showZeroDecimals;
+  }
+
+  format(value: any): string {
+    if (isDefinedAndNotNull(value) && isNumeric(value) && (this.isDefinedDec || this.isDefinedUnit || Number(value).toString() === value)) {
+      let formatted = value;
+      if (this.isDefinedDec) {
+        formatted = Number(formatted).toFixed(this.settings.dec);
+      }
+      if (!this.showZeroDecimals) {
+        formatted = Number(formatted)
+      }
+      formatted = formatted.toString();
+      if (this.isDefinedUnit) {
+        formatted += ` ${this.settings.units}`;
+      }
+      return formatted;
+    }
+    return value ?? '';
+  }
+}
+
+export class ConvertUnitProcessor extends FormatValueProcessor {
+
+  private readonly isDefinedDec: boolean;
+  private readonly showZeroDecimals: boolean;
+  private readonly unitConvertor: TbUnitConvertor;
+  private readonly unitAbbr: string;
+
+  constructor(protected $injector: Injector,
+              protected settings: FormatValueSettingProcessor) {
+    super($injector, settings);
+    const unitService = this.$injector.get(UnitService);
+    const userUnitSystem = unitService.getUnitSystem();
+    const unit = settings.units as TbUnitMapping;
+    const fromUnit = unit.from;
+    this.unitAbbr = isNotEmptyStr(unit[userUnitSystem]) ? unit[userUnitSystem] : fromUnit;
+    try {
+      this.unitConvertor = unitService.geUnitConvertor(fromUnit, this.unitAbbr);
+    } catch (e) {/**/}
+
+    this.isDefinedDec = isDefinedAndNotNull(settings.dec);
+    this.showZeroDecimals = !!settings.showZeroDecimals;
+  }
+
+  format(value: any): string {
+    if (isDefinedAndNotNull(value) && isNumeric(value)) {
+      let formatted: number | string = Number(value);
+      if (this.unitConvertor) {
+        formatted = this.unitConvertor(value);
+      }
+      if (this.isDefinedDec) {
+        formatted = Number(formatted).toFixed(this.settings.dec);
+      }
+      if (!this.showZeroDecimals) {
+        formatted = Number(formatted)
+      }
+      formatted = formatted.toString();
+      if (this.unitAbbr) {
+        formatted += ` ${this.unitAbbr}`;
+      }
+      return formatted;
+    }
+    return value ?? '';
+  }
+}

@@ -15,28 +15,28 @@
 ///
 
 import {
+  booleanAttribute,
   Component,
   ElementRef,
   forwardRef,
   HostBinding,
   Input,
+  OnChanges,
   OnInit,
+  Renderer2,
+  SimpleChanges,
   ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  NG_VALUE_ACCESSOR,
-  Validators
-} from '@angular/forms';
-import { Observable, of, shareReplay, switchMap } from 'rxjs';
-import { getUnits, searchUnits, Unit, unitBySymbol, UnitsType } from '@shared/models/unit.models';
-import { map, mergeMap, tap } from 'rxjs/operators';
-import { TranslateService } from '@ngx-translate/core';
-import { ResourcesService } from '@core/services/resources.service';
-import { coerceBoolean } from '@shared/decorators/coercion';
+import { ControlValueAccessor, FormBuilder, FormControl, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Observable, of, shareReplay } from 'rxjs';
+import { searchUnits, TbUnit, UnitDescription, UnitsType, UnitSystem } from '@shared/models/unit.models';
+import { map, mergeMap } from 'rxjs/operators';
+import { AllMeasures } from '@core/services/unit/definitions/all';
+import { UnitService } from '@core/services/unit/unit.service';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { ConvertUnitSettingsPanelComponent } from '@shared/components/convert-unit-settings-panel.component';
 
 @Component({
   selector: 'tb-unit-input',
@@ -51,64 +51,84 @@ import { coerceBoolean } from '@shared/decorators/coercion';
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class UnitInputComponent implements ControlValueAccessor, OnInit {
+export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChanges {
 
-  @HostBinding('style.display') get hostDisplay() {return 'flex';};
+  @HostBinding('style.display') readonly hostDisplay = 'flex';
+  @ViewChild('unitInput', {static: true}) unitInput: ElementRef;
 
-  unitsFormControl: FormControl;
-
-  modelValue: string | null;
+  unitsFormControl: FormControl<TbUnit | UnitDescription>;
 
   @Input()
   disabled: boolean;
 
-  @Input()
-  @coerceBoolean()
+  @Input({transform: booleanAttribute})
   required = false;
 
   @Input()
   tagFilter: UnitsType;
 
-  @ViewChild('unitInput', {static: true}) unitInput: ElementRef;
+  @Input()
+  measure: AllMeasures;
 
-  filteredUnits: Observable<Array<Unit | string>>;
+  @Input()
+  unitSystem: UnitSystem;
+
+  @Input({transform: booleanAttribute})
+  allowConverted = false;
+
+  filteredUnits: Observable<Array<UnitDescription>>;
 
   searchText = '';
 
   private dirty = false;
 
-  private fetchUnits$: Observable<Array<Unit>> = null;
+  private modelValue: TbUnit | null;
+
+  private fetchUnits$: Observable<Array<UnitDescription>> = null;
 
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: FormBuilder,
-              private resourcesService: ResourcesService,
-              private translate: TranslateService) {
+              private unitService: UnitService,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef,
+              private elementRef: ElementRef) {
   }
 
   ngOnInit() {
-    this.unitsFormControl = this.fb.control('', this.required ? [Validators.required] : []);
+    this.unitsFormControl = this.fb.control<TbUnit | UnitDescription>('', this.required ? [Validators.required] : []);
     this.filteredUnits = this.unitsFormControl.valueChanges
       .pipe(
-        tap(value => {
+        map(value => {
           this.updateView(value);
+          return this.getUnitSymbol(value);
         }),
-        map(value => (value as Unit)?.symbol ? (value as Unit).symbol : (value ? value as string : '')),
         mergeMap(symbol => this.fetchUnits(symbol))
       );
   }
 
-  writeValue(symbol?: string): void {
+  ngOnChanges(changes: SimpleChanges) {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'measure' || propName === 'unitSystem') {
+          this.fetchUnits$ = null;
+          this.dirty = true;
+        }
+      }
+    }
+  }
+
+  writeValue(symbol?: TbUnit): void {
     this.searchText = '';
     this.modelValue = symbol;
-    of(symbol).pipe(
-      switchMap(value => value
-        ? this.unitsConstant().pipe(map(units => unitBySymbol(units, value) ?? value))
-        : of(null))
-    ).subscribe(result => {
-      this.unitsFormControl.patchValue(result, {emitEvent: false});
-      this.dirty = true;
-    });
+    if (typeof symbol === 'string') {
+      this.unitsFormControl.patchValue(this.unitService.getUnitDescription(symbol) ?? symbol, {emitEvent: false});
+    } else {
+      this.unitsFormControl.patchValue(symbol, {emitEvent: false});
+    }
+    this.dirty = true;
   }
 
   onFocus() {
@@ -118,37 +138,18 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
     }
   }
 
-  updateView(value: Unit | string | null) {
-    const res: string = (value as Unit)?.symbol ? (value as Unit)?.symbol : (value as string);
-    if (this.modelValue !== res) {
-      this.modelValue = res;
-      this.propagateChange(this.modelValue);
-    }
-  }
-
-  displayUnitFn(unit?: Unit | string): string | undefined {
+  displayUnitFn(unit?: TbUnit | UnitDescription): string | undefined {
     if (unit) {
-      if ((unit as Unit).symbol) {
-        return (unit as Unit).symbol;
-      } else {
-        return unit as string;
-      }
+      return this.getUnitSymbol(unit);
     }
     return undefined;
-  }
-
-  fetchUnits(searchText?: string): Observable<Array<Unit | string>> {
-    this.searchText = searchText;
-    return this.unitsConstant().pipe(
-      map(unit => searchUnits(unit, searchText))
-    );
   }
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -168,22 +169,87 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
     }, 0);
   }
 
-  private unitsConstant(): Observable<Array<Unit>> {
+  openConvertSettingsPopup($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = this.elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const convertUnitSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: ConvertUnitSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['left', 'bottom', 'top'],
+        context: {
+          unit: this.getTbUnit(this.unitsFormControl.value),
+          required: this.required
+        },
+        isModal: true
+      });
+      convertUnitSettingsPanelPopover.tbComponentRef.instance.unitSettingsApplied.subscribe((unitSetting) => {
+        convertUnitSettingsPanelPopover.hide();
+        this.unitsFormControl.patchValue(unitSetting, {emitEvent: false});
+        this.updateView(unitSetting);
+      });
+    }
+  }
+
+  private updateView(value: UnitDescription | TbUnit ) {
+    const res = this.getTbUnit(value);
+    if (this.modelValue !== res) {
+      this.modelValue = res;
+      this.propagateChange(this.modelValue);
+    }
+  }
+
+  private fetchUnits(searchText?: string): Observable<Array<UnitDescription>> {
+    this.searchText = searchText;
+    return this.unitsConstant().pipe(
+      map(unit => searchUnits(unit, searchText))
+    );
+  }
+
+  private unitsConstant(): Observable<Array<UnitDescription>> {
     if (this.fetchUnits$ === null) {
-      this.fetchUnits$ = getUnits(this.resourcesService).pipe(
+      this.fetchUnits$ = of(this.unitService.getUnits(this.measure, this.unitSystem)).pipe(
         map((units) => {
           if (this.tagFilter) {
             units = units.filter(u => u.tags.includes(this.tagFilter));
           }
-          return units.map(u => ({
-            symbol: u.symbol,
-            name: this.translate.instant(u.name),
-            tags: u.tags
-          }));
+          return units;
         }),
         shareReplay(1)
       );
     }
     return this.fetchUnits$;
+  }
+
+  private getUnitSymbol(value: TbUnit | UnitDescription | null): string {
+    if (value === null) {
+      return '';
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    if ('abbr' in value) {
+      return value.abbr;
+    }
+    return value.from;
+  }
+
+  private getTbUnit(value: TbUnit | UnitDescription | null): TbUnit {
+    if (value === null) {
+      return null;
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    if ('abbr' in value) {
+      return value.abbr;
+    }
+    return value;
   }
 }
