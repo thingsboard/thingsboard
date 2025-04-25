@@ -20,22 +20,28 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.job.DummyJobConfiguration;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.job.task.DummyTaskProcessor;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -45,6 +51,9 @@ public class JobManagerTest extends AbstractControllerTest {
 
     @Autowired
     private JobManager jobManager;
+
+    @SpyBean
+    private DummyTaskProcessor taskProcessor;
 
     @Before
     public void setUp() throws Exception {
@@ -80,6 +89,7 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getStatus()).isEqualTo(JobStatus.COMPLETED);
             assertThat(job.getResult().getSuccessfulCount()).isEqualTo(tasksCount);
             assertThat(job.getResult().getFailures()).isEmpty();
+            assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
         });
     }
 
@@ -104,15 +114,76 @@ public class JobManagerTest extends AbstractControllerTest {
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             Job job = findJobById(jobId);
             assertThat(job.getStatus()).isEqualTo(JobStatus.FAILED);
-            assertThat(job.getResult().getSuccessfulCount()).isEqualTo(successfulTasks);
-            assertThat(job.getResult().getFailedCount()).isEqualTo(failedTasks);
-            assertThat(job.getResult().getTotalCount()).isEqualTo(successfulTasks + failedTasks);
-            assertThat(job.getResult().getFailures().get("Task 1")).isEqualTo("error3"); // last error
-            assertThat(job.getResult().getFailures().get("Task 2")).isEqualTo("error3"); // last error
+            JobResult jobResult = job.getResult();
+            assertThat(jobResult.getSuccessfulCount()).isEqualTo(successfulTasks);
+            assertThat(jobResult.getFailedCount()).isEqualTo(failedTasks);
+            assertThat(jobResult.getTotalCount()).isEqualTo(successfulTasks + failedTasks);
+            assertThat(jobResult.getFailures().get("Task 1")).isEqualTo("error3"); // last error
+            assertThat(jobResult.getFailures().get("Task 2")).isEqualTo("error3"); // last error
+            assertThat(jobResult.getCompletedCount()).isEqualTo(jobResult.getTotalCount());
         });
     }
 
+    @Test
+    public void testCancelJob_whileRunning() throws Exception {
+        int tasksCount = 100;
+        JobId jobId = jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key("test-job")
+                .description("test job")
+                .configuration(DummyJobConfiguration.builder()
+                        .successfulTasksCount(tasksCount)
+                        .taskProcessingTimeMs(100)
+                        .build())
+                .build()).getId();
 
+        Thread.sleep(500);
+        jobManager.cancelJob(tenantId, jobId);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.CANCELLED);
+            assertThat(job.getResult().getSuccessfulCount()).isBetween(1, tasksCount - 1);
+            assertThat(job.getResult().getCancelledCount()).isBetween(1, tasksCount - 1);
+            assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
+            assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
+        });
+    }
+
+    @Test
+    public void testCancelJob_simulateTaskProcessorRestart() {
+        int tasksCount = 10;
+        JobId jobId = jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key("test-job")
+                .description("test job")
+                .configuration(DummyJobConfiguration.builder()
+                        .successfulTasksCount(tasksCount)
+                        .taskProcessingTimeMs(100)
+                        .build())
+                .build()).getId();
+
+        // simulate cancelled jobs are forgotten
+        AtomicInteger cancellationRenotifyAttempt = new AtomicInteger(0);
+        doAnswer(inv -> {
+            if (cancellationRenotifyAttempt.incrementAndGet() >= 5) {
+                inv.callRealMethod();
+            }
+            return null;
+        }).when(taskProcessor).addToCancelledJobs(any()); // ignoring cancellation event,
+        jobManager.cancelJob(tenantId, jobId);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            System.err.println(job);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.CANCELLED);
+            assertThat(job.getResult().getSuccessfulCount()).isBetween(1, tasksCount - 1);
+            assertThat(job.getResult().getCancelledCount()).isBetween(1, tasksCount - 1);
+            assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
+            assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
+        });
+    }
 
     private Job findJobById(JobId jobId) throws Exception {
         return doGet("/api/job/" + jobId, Job.class);

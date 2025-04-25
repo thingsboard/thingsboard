@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.job;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,12 +35,20 @@ import java.util.Map;
 })
 @Data
 @NoArgsConstructor
-public abstract class JobResult {
+public abstract class JobResult implements Serializable {
 
     private int successfulCount;
     private int failedCount;
+    private int cancelledCount;
     private Integer totalCount = null; // set when all tasks are submitted
     private Map<String, String> failures = new HashMap<>();
+
+    private long cancellationTs;
+
+    @JsonIgnore
+    public int getCompletedCount() {
+        return successfulCount + failedCount + cancelledCount;
+    }
 
     public abstract JobType getJobType();
 

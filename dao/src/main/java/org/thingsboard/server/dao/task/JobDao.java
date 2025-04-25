@@ -28,9 +28,7 @@ public interface JobDao extends Dao<Job> {
 
     PageData<Job> findByTenantId(TenantId tenantId, PageLink pageLink);
 
-    boolean reportTaskSuccess(JobId jobId, int tasksCount);
-
-    boolean reportTaskFailure(JobId jobId, String taskKey, String error);
+    Job findByIdForUpdate(TenantId tenantId, JobId jobId);
 
     boolean existsByKeyAndStatusOneOf(String key, JobStatus... statuses);
 

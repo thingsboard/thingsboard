@@ -20,13 +20,15 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.io.Serializable;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
         @Type(name = "CF_REPROCESSING", value = CfReprocessingJobConfiguration.class),
         @Type(name = "DUMMY", value = DummyJobConfiguration.class),
 })
-public interface JobConfiguration {
+public interface JobConfiguration extends Serializable {
 
     JobType getType();
 

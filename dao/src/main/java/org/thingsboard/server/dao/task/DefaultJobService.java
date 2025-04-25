@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
@@ -31,6 +32,8 @@ import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.data.job.TaskResult.TaskFailure;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
@@ -39,7 +42,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DefaultJobService implements JobService {
+public class DefaultJobService extends AbstractEntityService implements JobService {
 
     private final JobDao jobDao;
     private final JobValidator validator = new JobValidator();
@@ -47,7 +50,7 @@ public class DefaultJobService implements JobService {
     @Override
     public Job createJob(TenantId tenantId, Job job) {
         validator.validate(job, Job::getTenantId);
-        return jobDao.save(tenantId, job);
+        return saveJob(tenantId, job, false);
     }
 
     @Override
@@ -55,9 +58,21 @@ public class DefaultJobService implements JobService {
         return jobDao.findById(tenantId, jobId.getId());
     }
 
+    @Transactional
     @Override
-    public void processStats(JobId jobId, JobStats jobStats) {
-        Job job = jobDao.findById(TenantId.SYS_TENANT_ID, jobId.getId());
+    public void cancelJob(TenantId tenantId, JobId jobId) {
+        Job job = findForUpdate(tenantId, jobId);
+        if (job.getStatus() != JobStatus.PENDING && job.getStatus() != JobStatus.RUNNING) {
+            throw new IllegalArgumentException("Job already " + job.getStatus().name().toLowerCase());
+        }
+        job.getResult().setCancellationTs(System.currentTimeMillis());
+        saveJob(tenantId, job, true);
+    }
+
+    @Transactional
+    @Override
+    public void processStats(TenantId tenantId, JobId jobId, JobStats jobStats) {
+        Job job = findForUpdate(tenantId, jobId);
         switch (job.getStatus()) {
             case PENDING -> {
                 job.setStatus(JobStatus.RUNNING);
@@ -73,31 +88,61 @@ public class DefaultJobService implements JobService {
             jobResult.setTotalCount(jobStats.getTotalTasksCount());
         }
 
+        boolean publishEvent = false;
         for (TaskResult taskResult : jobStats.getTaskResults()) {
             if (taskResult.isSuccess()) {
                 jobResult.setSuccessfulCount(jobResult.getSuccessfulCount() + 1);
+            } else if (taskResult.isCancelled()) {
+                jobResult.setCancelledCount(jobResult.getCancelledCount() + 1);
             } else {
                 TaskFailure failure = taskResult.getFailure();
                 String key = failure.getTask().getKey();
                 jobResult.setFailedCount(jobResult.getFailedCount() + 1);
                 jobResult.getFailures().put(key, failure.getError());
             }
+
+            if (jobResult.getCancellationTs() > 0) {
+                if (!taskResult.isCancelled() && System.currentTimeMillis() > jobResult.getCancellationTs()) {
+                    log.info("Got task result for cancelled job {}: {}, re-notifying processors about cancellation", jobId, taskResult);
+                    // task processor forgot the task is cancelled
+                    publishEvent = true;
+                }
+            }
         }
 
-        if (jobResult.getTotalCount() != null && jobResult.getSuccessfulCount() + jobResult.getFailedCount() >= jobResult.getTotalCount()) {
-            if (jobResult.getFailures().isEmpty()) {
-                job.setStatus(JobStatus.COMPLETED);
-            } else {
+        if (jobResult.getTotalCount() != null && jobResult.getCompletedCount() >= jobResult.getTotalCount()) {
+            if (jobResult.getCancellationTs() > 0) {
+                job.setStatus(JobStatus.CANCELLED);
+            } else if (jobResult.getFailedCount() > 0) {
                 job.setStatus(JobStatus.FAILED);
+            } else {
+                job.setStatus(JobStatus.COMPLETED);
             }
         }
         log.info("Saving job {}", job);
-        jobDao.save(TenantId.SYS_TENANT_ID, job);
+        saveJob(tenantId, job, publishEvent);
+    }
+
+    private Job saveJob(TenantId tenantId, Job job, boolean publishEvent) {
+        job = jobDao.save(tenantId, job);
+        if (publishEvent) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder()
+                    .tenantId(tenantId)
+                    .entityId(job.getId())
+                    .entity(job)
+                    .created(false)
+                    .build());
+        }
+        return job;
     }
 
     @Override
     public PageData<Job> findJobsByTenantId(TenantId tenantId, PageLink pageLink) {
         return jobDao.findByTenantId(tenantId, pageLink);
+    }
+
+    private Job findForUpdate(TenantId tenantId, JobId jobId) {
+        return jobDao.findByIdForUpdate(tenantId, jobId);
     }
 
     // todo: cancellation, reprocessing

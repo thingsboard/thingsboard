@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
@@ -38,21 +39,23 @@ public class JobStatsService {
 
     private final TbQueueProducerProvider producerProvider;
 
-    public void reportTaskResult(JobId jobId, TaskResult result) {
-        report(jobId, JobStatsMsg.newBuilder()
+    public void reportTaskResult(TenantId tenantId, JobId jobId, TaskResult result) {
+        report(tenantId, jobId, JobStatsMsg.newBuilder()
                 .setTaskResult(TaskResultProto.newBuilder()
                         .setValue(JacksonUtil.toString(result))
                         .build()));
     }
 
-    public void reportAllTasksSubmitted(JobId jobId, int tasksCount) {
-        report(jobId, JobStatsMsg.newBuilder()
+    public void reportAllTasksSubmitted(TenantId tenantId, JobId jobId, int tasksCount) {
+        report(tenantId, jobId, JobStatsMsg.newBuilder()
                 .setTotalTasksCount(tasksCount));
     }
 
-    private void report(JobId jobId, JobStatsMsg.Builder statsMsg) {
+    private void report(TenantId tenantId, JobId jobId, JobStatsMsg.Builder statsMsg) {
         log.info("[{}] Reporting: {}", jobId, statsMsg);
-        statsMsg.setJobIdMSB(jobId.getId().getMostSignificantBits())
+        statsMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setJobIdMSB(jobId.getId().getMostSignificantBits())
                 .setJobIdLSB(jobId.getId().getLeastSignificantBits());
 
         TbProtoQueueMsg<JobStatsMsg> msg = new TbProtoQueueMsg<>(jobId.getId(), statsMsg.build());

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobType;
@@ -62,7 +63,7 @@ public class DefaultJobManager implements JobManager {
     private final JobStatsService jobStatsService;
     private final Map<JobType, JobProcessor> jobProcessors;
     private final Map<JobType, TbQueueProducer<TbProtoQueueMsg<TaskProto>>> taskProducers;
-    private final QueueConsumerManager<TbProtoQueueMsg<JobStatsMsg>> taskResultConsumer;
+    private final QueueConsumerManager<TbProtoQueueMsg<JobStatsMsg>> jobStatsConsumer;
     private final ExecutorService consumerExecutor;
 
     @Value("${queue.tasks.stats.processing_interval_ms:5000}")
@@ -73,8 +74,8 @@ public class DefaultJobManager implements JobManager {
         this.jobStatsService = jobStatsService;
         this.jobProcessors = jobProcessors.stream().collect(Collectors.toMap(JobProcessor::getType, Function.identity()));
         this.taskProducers = Arrays.stream(JobType.values()).collect(Collectors.toMap(Function.identity(), queueFactory::createTaskProducer));
-        this.consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("task-result-consumer"));
-        this.taskResultConsumer = QueueConsumerManager.<TbProtoQueueMsg<JobStatsMsg>>builder()
+        this.consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("job-stats-consumer"));
+        this.jobStatsConsumer = QueueConsumerManager.<TbProtoQueueMsg<JobStatsMsg>>builder()
                 .name("job-stats")
                 .msgPackProcessor(this::processStats)
                 .pollInterval(125)
@@ -85,8 +86,8 @@ public class DefaultJobManager implements JobManager {
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void afterStartUp() {
-        taskResultConsumer.subscribe();
-        taskResultConsumer.launch();
+        jobStatsConsumer.subscribe();
+        jobStatsConsumer.launch();
     }
 
     @Override
@@ -95,8 +96,14 @@ public class DefaultJobManager implements JobManager {
         log.info("Submitting job: {}", job);
 
         int tasksCount = jobProcessors.get(job.getType()).process(job, this::submitTask);
-        jobStatsService.reportAllTasksSubmitted(job.getId(), tasksCount);
+        jobStatsService.reportAllTasksSubmitted(job.getTenantId(), job.getId(), tasksCount);
         return job;
+    }
+
+    @Override
+    public void cancelJob(TenantId tenantId, JobId jobId) {
+        log.info("Cancelling job: {}", jobId);
+        jobService.cancelJob(tenantId, jobId);
     }
 
     private void submitTask(Task task) {
@@ -126,8 +133,9 @@ public class DefaultJobManager implements JobManager {
 
         for (TbProtoQueueMsg<JobStatsMsg> msg : msgs) {
             JobStatsMsg statsMsg = msg.getValue();
+            TenantId tenantId = TenantId.fromUUID(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
             JobId jobId = new JobId(new UUID(statsMsg.getJobIdMSB(), statsMsg.getJobIdLSB()));
-            JobStats jobStats = stats.computeIfAbsent(jobId, JobStats::new);
+            JobStats jobStats = stats.computeIfAbsent(jobId, __ -> new JobStats(tenantId, jobId));
 
             if (statsMsg.hasTaskResult()) {
                 TaskResult taskResult = JacksonUtil.fromString(statsMsg.getTaskResult().getValue(), TaskResult.class);
@@ -140,8 +148,9 @@ public class DefaultJobManager implements JobManager {
 
         stats.forEach((jobId, jobStats) -> {
             try {
-                log.info("[{}] Processing job stats: {}", jobId, stats);
-                jobService.processStats(jobId, jobStats);
+                TenantId tenantId = jobStats.getTenantId();
+                log.info("[{}][{}] Processing job stats: {}", tenantId, jobId, stats);
+                jobService.processStats(tenantId, jobId, jobStats);
             } catch (Exception e) {
                 log.warn("Failed to process job stats for {}: {}", jobId, jobStats, e);
             }
@@ -153,7 +162,7 @@ public class DefaultJobManager implements JobManager {
 
     @PreDestroy
     private void destroy() {
-        taskResultConsumer.stop();
+        jobStatsConsumer.stop();
         consumerExecutor.shutdownNow();
     }
 

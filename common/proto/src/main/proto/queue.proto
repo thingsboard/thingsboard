@@ -61,6 +61,7 @@ enum EntityTypeProto {
   MOBILE_APP_BUNDLE     = 38;
   CALCULATED_FIELD      = 39;
   CALCULATED_FIELD_LINK = 40;
+  JOB                   = 41;
 }
 
 enum ApiUsageRecordKeyProto {
@@ -531,6 +532,10 @@ message ImageCacheKeyProto {
 }
 
 message ToEdqsCoreServiceMsg {
+  bytes value = 1;
+}
+
+message ToJobManagerMsg {
   bytes value = 1;
 }
 
@@ -1852,10 +1857,12 @@ message TaskProto {
 }
 
 message JobStatsMsg {
-  int64 jobIdMSB = 1;
-  int64 jobIdLSB = 2;
-  optional TaskResultProto taskResult = 3;
-  optional int32 totalTasksCount = 4;
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 jobIdMSB = 3;
+  int64 jobIdLSB = 4;
+  optional TaskResultProto taskResult = 5;
+  optional int32 totalTasksCount = 6;
 }
 
 message TaskResultProto {

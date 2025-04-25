@@ -15,10 +15,14 @@
  */
 package org.thingsboard.server.service.job;
 
+import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
 
 public interface JobManager {
 
     Job submitJob(Job job);
+
+    void cancelJob(TenantId tenantId, JobId jobId);
 
 }

@@ -17,12 +17,14 @@ package org.thingsboard.server.common.data.job;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 public class JobStats {
+    private final TenantId tenantId;
     private final JobId jobId;
     private final List<TaskResult> taskResults = new ArrayList<>();
     private Integer totalTasksCount;
