@@ -21,10 +21,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -34,9 +36,14 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.controller.CalculatedFieldControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -53,6 +60,19 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
     public static final int TIMEOUT = 60;
     public static final int POLL_INTERVAL = 1;
+
+    private final String exampleScript = "var avgTemperature = temperature.mean(); // Get average temperature\n" +
+            "  var temperatureK = (avgTemperature - 32) * (5 / 9) + 273.15; // Convert Fahrenheit to Kelvin\n" +
+            "\n" +
+            "  // Estimate air pressure based on altitude\n" +
+            "  var pressure = 101325 * Math.pow((1 - 2.25577e-5 * altitude), 5.25588);\n" +
+            "\n" +
+            "  // Air density formula\n" +
+            "  var airDensity = pressure / (287.05 * temperatureK);\n" +
+            "\n" +
+            "  return {\n" +
+            "    \"airDensity\": toFixed(airDensity, 2)\n" +
+            "  };";
 
     @BeforeEach
     void setUp() throws Exception {
@@ -468,27 +488,278 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     @Test
     public void testReprocessCalculatedField() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
 
         long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
 
-        long a1Ts = currentTime - TimeUnit.SECONDS.toMillis(140);
-        long a2b1Ts = currentTime - TimeUnit.SECONDS.toMillis(130);
-        long b2Ts = currentTime - TimeUnit.SECONDS.toMillis(80);
-        long b3Ts = currentTime - TimeUnit.SECONDS.toMillis(70);
-        long a3Ts = currentTime - TimeUnit.SECONDS.toMillis(60);
-        long a4Ts = currentTime - TimeUnit.SECONDS.toMillis(50);
-        long b4Ts = currentTime - TimeUnit.SECONDS.toMillis(40);
+        long a1Ts = currentTime - TimeUnit.SECONDS.toMillis(140); // outside the TW
+        long a2b1Ts = currentTime - TimeUnit.SECONDS.toMillis(130); // outside the TW (but telemetry will be used for initial processing)
+        long b2Ts = currentTime - TimeUnit.SECONDS.toMillis(80); // inside the TW
+        long b3Ts = currentTime - TimeUnit.SECONDS.toMillis(70); // inside the TW
+        long a3Ts = currentTime - TimeUnit.SECONDS.toMillis(60); // inside the TW
+        long a4Ts = currentTime - TimeUnit.SECONDS.toMillis(50); // inside the TW
+        long b4Ts = currentTime - TimeUnit.SECONDS.toMillis(40); // outside the TW
 
         pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":1}}", a1Ts)));
-        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":2, \"b\":10}}", a2b1Ts)));
-        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":20}}", b2Ts)));
-        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":30}}", b3Ts)));
+        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":2}}", a2b1Ts)));
         pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":3}}", a3Ts)));
         pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":4}}", a4Ts)));
-        pushTelemetry(testDevice.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":40}}", b4Ts)));
 
+        pushTelemetry(testAsset.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":10}}", a2b1Ts)));
+        pushTelemetry(testAsset.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":20}}", b2Ts)));
+        pushTelemetry(testAsset.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":30}}", b3Ts)));
+        pushTelemetry(testAsset.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":40}}", b4Ts)));
+
+        /*      telemetry flow:
+                             startTs                endTs
+                               |______________________|
+               |  ts  | 1    2 |   3     4     5    6 |   7
+               |device| 1 -> 2 |->    ->    -> 3 -> 4 |
+               |asset |      10|-> 20 -> 30 ->   ->   |-> 40
+                               |______________________|
+                                          |--- reprocessing time window
+               the result should be: 12 -> 22 -> 32 -> 33 -> 34
+        */
+
+        CalculatedField savedCalculatedField = createCalculatedField(testDevice.getId(), testAsset.getId());
+
+        doGet("/api/calculatedField/reprocess/" + savedCalculatedField.getUuidId() + "?startTs={startTs}&endTs={endTs}", startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for time window").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getTimeSeries(testDevice.getId(), startTs, endTs, "result");
+                    assertThat(result).isNotNull();
+
+                    assertThat(result.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(a4Ts));
+                    assertThat(result.get("result").get(0).get("value").asText()).isEqualTo("34.0");
+
+                    assertThat(result.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(a3Ts));
+                    assertThat(result.get("result").get(1).get("value").asText()).isEqualTo("33.0");
+
+                    assertThat(result.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(b3Ts));
+                    assertThat(result.get("result").get(2).get("value").asText()).isEqualTo("32.0");
+
+                    assertThat(result.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(b2Ts));
+                    assertThat(result.get("result").get(3).get("value").asText()).isEqualTo("22.0");
+
+                    assertThat(result.get("result").get(4).get("ts").asText()).isEqualTo(Long.toString(startTs)); // we use reprocessing startTs instead of telemetry ts for initial calculation
+                    assertThat(result.get("result").get(4).get("value").asText()).isEqualTo("12.0");
+                });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenEntityIsProfile() throws Exception {
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
+        long aTs_1 = currentTime - TimeUnit.SECONDS.toMillis(100);
+        long aTs_2 = currentTime - TimeUnit.SECONDS.toMillis(85);
+        long aTs_3 = currentTime - TimeUnit.SECONDS.toMillis(60);
+        pushTelemetry(testAsset.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":100}}", aTs_1)));
+        pushTelemetry(testAsset.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":200}}", aTs_2)));
+        pushTelemetry(testAsset.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"b\":300}}", aTs_3)));
+
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Test Device Profile"), DeviceProfile.class);
+
+        Device testDevice1 = createDevice("Test device 1", "1234567890111", deviceProfile.getId());
+        long d1Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(100);
+        long d1Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(90);
+        pushTelemetry(testDevice1.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":10}}", d1Ts_1)));
+        pushTelemetry(testDevice1.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":20}}", d1Ts_2)));
+
+
+        Device testDevice2 = createDevice("Test device 2", "1234567890222", deviceProfile.getId());
+        long d2Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(90);
+        long d2Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(55);
+        pushTelemetry(testDevice2.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":1}}", d2Ts_1)));
+        pushTelemetry(testDevice2.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"a\":2}}", d2Ts_2)));
+
+        /*      telemetry flow:
+                     startTs                         endTs
+                       |_______________________________|
+               |  ts   |   1      2     3      4     5 |
+               |device1|  10  -> 20 ->     ->     ->   |
+               |device2|      ->  1 ->     ->     -> 2 |
+               |asset  |  100 ->    -> 200 -> 300 ->   |
+                       |_______________________________|
+                                         |--- reprocessing time window
+               the result for device 1 should be: 110 -> 120 -> 220 -> 320
+               the result for device 2 should be: 101 -> 201 -> 301 -> 302
+        */
+
+        CalculatedField savedCalculatedField = createCalculatedField(deviceProfile.getId(), testAsset.getId());
+
+        doGet("/api/calculatedField/reprocess/" + savedCalculatedField.getUuidId() + "?startTs={startTs}&endTs={endTs}", startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for device 1").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode ab_1 = getTimeSeries(testDevice1.getId(), startTs, endTs, "result");
+                    assertThat(ab_1).isNotNull();
+
+                    assertThat(ab_1.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(aTs_3));
+                    assertThat(ab_1.get("result").get(0).get("value").asText()).isEqualTo("320.0");
+
+                    assertThat(ab_1.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(aTs_2));
+                    assertThat(ab_1.get("result").get(1).get("value").asText()).isEqualTo("220.0");
+
+                    assertThat(ab_1.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(d1Ts_2));
+                    assertThat(ab_1.get("result").get(2).get("value").asText()).isEqualTo("120.0");
+
+                    assertThat(ab_1.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(aTs_1));
+                    assertThat(ab_1.get("result").get(3).get("value").asText()).isEqualTo("110.0");
+                });
+
+        await().alias("reprocess -> perform calculation for device 2").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode ab_2 = getTimeSeries(testDevice2.getId(), startTs, endTs, "result");
+                    assertThat(ab_2).isNotNull();
+
+                    assertThat(ab_2.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(d2Ts_2));
+                    assertThat(ab_2.get("result").get(0).get("value").asText()).isEqualTo("302.0");
+
+                    assertThat(ab_2.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(aTs_3));
+                    assertThat(ab_2.get("result").get(1).get("value").asText()).isEqualTo("301.0");
+
+                    assertThat(ab_2.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(aTs_2));
+                    assertThat(ab_2.get("result").get(2).get("value").asText()).isEqualTo("201.0");
+
+                    assertThat(ab_2.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
+                    assertThat(ab_2.get("result").get(3).get("value").asText()).isEqualTo("101.0");
+                });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenEntityIsProfileAndTsRollingArgUsed() throws Exception {
+
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(1200);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(300);
+
+
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
+
+        doPost("/api/plugins/telemetry/ASSET/" + testAsset.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"altitude\":1531}"));
+
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Test Device Profile"), DeviceProfile.class);
+
+        Device testDevice1 = createDevice("Test device 1", "1234567890111", deviceProfile.getId());
+        long d1Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(1000);
+        long d1Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d1Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(500);
+
+        pushTelemetry(testDevice1.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":66.12}}", d1Ts_1)));
+        pushTelemetry(testDevice1.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":45.31}}", d1Ts_2)));
+        pushTelemetry(testDevice1.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":70.36}}", d1Ts_3)));
+
+
+        Device testDevice2 = createDevice("Test device 2", "1234567890222", deviceProfile.getId());
+        long d2Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(900);
+        long d2Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d2Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(400);
+
+        pushTelemetry(testDevice2.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":55.16}}", d2Ts_1)));
+        pushTelemetry(testDevice2.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":56.57}}", d2Ts_2)));
+        pushTelemetry(testDevice2.getId(), JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":59.40}}", d2Ts_3)));
+
+
+        /*      telemetry flow:
+                     startTs                                      endTs
+                       |____________________________________________|
+               |  ts   |  -1000    -900     -550     -500     -400  |
+               |device1|  66.12 ->       -> 45.31 -> 70.36 ->       |
+               |device2|        -> 55.16 -> 56.57 ->       -> 59.40 |
+               |asset  |        ->       ->       ->       ->       | -> 1531
+                       |____________________________________________|
+                                         |--- reprocessing time window
+               the airDensity for device 1 should be: 1.0 -> 1.05 -> 1.02
+               the airDensity for device 2 should be: 1.03 -> 1.02 -> 1.02
+        */
+
+        CalculatedField savedCalculatedField = createScriptCalculatedField(deviceProfile.getId(), testAsset.getId());
+
+        doGet("/api/calculatedField/reprocess/" + savedCalculatedField.getUuidId() + "?startTs={startTs}&endTs={endTs}", startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for device 1").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = getTimeSeries(testDevice1.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d1Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d1Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.05");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d1Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.0");
+                });
+
+        await().alias("reprocess -> perform calculation for device 2").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = getTimeSeries(testDevice2.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d2Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d2Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.03");
+                });
+    }
+
+    private CalculatedField createScriptCalculatedField(EntityId entityId, EntityId refEntityId) {
         CalculatedField calculatedField = new CalculatedField();
-        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setEntityId(entityId);
+        calculatedField.setType(CalculatedFieldType.SCRIPT);
+        calculatedField.setName("Air density" + RandomStringUtils.randomAlphabetic(5));
+        calculatedField.setDebugSettings(DebugSettings.all());
+
+        ScriptCalculatedFieldConfiguration config = new ScriptCalculatedFieldConfiguration();
+
+        Argument argument1 = new Argument();
+        argument1.setRefEntityId(refEntityId);
+        ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("altitude", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE);
+        argument1.setRefEntityKey(refEntityKey1);
+        Argument argument2 = new Argument();
+        ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("temperatureInF", ArgumentType.TS_ROLLING, null);
+        argument2.setTimeWindow(300000L);
+        argument2.setLimit(5);
+        argument2.setRefEntityKey(refEntityKey2);
+
+        config.setArguments(Map.of("altitude", argument1, "temperature", argument2));
+
+        config.setExpression(exampleScript);
+
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+    }
+
+    private CalculatedField createCalculatedField(EntityId entityId, EntityId refEntityId) {
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(entityId);
         calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setName("A + B");
         calculatedField.setDebugSettings(DebugSettings.all());
@@ -500,6 +771,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         ReferencedEntityKey refEntityKeyA = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
         a.setRefEntityKey(refEntityKeyA);
         Argument b = new Argument();
+        b.setRefEntityId(refEntityId);
         ReferencedEntityKey refEntityKeyB = new ReferencedEntityKey("b", ArgumentType.TS_LATEST, null);
         b.setRefEntityKey(refEntityKeyB);
         config.setArguments(Map.of("a", a, "b", b));
@@ -512,33 +784,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         calculatedField.setConfiguration(config);
 
-        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
-
-        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
-        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
-        doGet("/api/calculatedField/reprocess/" + savedCalculatedField.getUuidId() + "?startTs={startTs}&endTs={endTs}", startTs, endTs);
-
-        await().alias("reprocess -> perform calculation for timewindow").atMost(TIMEOUT, TimeUnit.SECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode fahrenheitTemp = getTimeSeries(testDevice.getId(), startTs, endTs, "result");
-                    assertThat(fahrenheitTemp).isNotNull();
-
-                    assertThat(fahrenheitTemp.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(a4Ts));
-                    assertThat(fahrenheitTemp.get("result").get(0).get("value").asText()).isEqualTo("34.0");
-
-                    assertThat(fahrenheitTemp.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(a3Ts));
-                    assertThat(fahrenheitTemp.get("result").get(1).get("value").asText()).isEqualTo("33.0");
-
-                    assertThat(fahrenheitTemp.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(b3Ts));
-                    assertThat(fahrenheitTemp.get("result").get(2).get("value").asText()).isEqualTo("32.0");
-
-                    assertThat(fahrenheitTemp.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(b2Ts));
-                    assertThat(fahrenheitTemp.get("result").get(3).get("value").asText()).isEqualTo("22.0");
-
-                    assertThat(fahrenheitTemp.get("result").get(4).get("ts").asText()).isEqualTo(Long.toString(startTs)); // we use reprocessing startTs instead of telemetry ts for initial calculation
-                    assertThat(fahrenheitTemp.get("result").get(4).get("value").asText()).isEqualTo("12.0");
-                });
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
     }
 
     private void pushTelemetry(EntityId entityId, JsonNode telemetry) throws Exception {
@@ -562,6 +808,18 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         asset.setName(name);
         asset.setAssetProfileId(assetProfileId);
         return doPost("/api/asset", asset, Asset.class);
+    }
+
+    private Device createDevice(String name, String accessToken, DeviceProfileId deviceProfileId) {
+        Device device = new Device();
+        device.setName(name);
+        device.setType("default");
+        device.setDeviceProfileId(deviceProfileId);
+        DeviceData deviceData = new DeviceData();
+        deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+        deviceData.setConfiguration(new DefaultDeviceConfiguration());
+        device.setDeviceData(deviceData);
+        return doPost("/api/device?accessToken=" + accessToken, device, Device.class);
     }
 
 }

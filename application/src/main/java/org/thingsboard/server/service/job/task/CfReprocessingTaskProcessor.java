@@ -18,14 +18,16 @@ package org.thingsboard.server.service.job.task;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.actors.calculatedField.CalculatedFieldReprocessingService;
 import org.thingsboard.server.common.data.job.CfReprocessingTask;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.task.TaskProcessor;
+import org.thingsboard.server.queue.util.TbRuleEngineComponent;
+import org.thingsboard.server.service.cf.CalculatedFieldReprocessingService;
 
 import java.util.concurrent.TimeUnit;
 
+@TbRuleEngineComponent
 @Component
 @RequiredArgsConstructor
 public class CfReprocessingTaskProcessor extends TaskProcessor<CfReprocessingTask> {

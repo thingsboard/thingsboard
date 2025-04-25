@@ -16,6 +16,8 @@
 package org.thingsboard.server.msa.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -57,12 +59,14 @@ import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultAssetP
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultTenantAdmin;
 
+@Slf4j
 public class CalculatedFieldTest extends AbstractContainerTest {
 
     public final int TIMEOUT = 60;
     public final int POLL_INTERVAL = 1;
 
     private final String deviceToken = "zmzURIVRsq3lvnTP2XBE";
+    private final String deviceToken2 = "smsURIVRsq5cvnTP2MMM";
 
     private final String exampleScript = "var avgTemperature = temperature.mean(); // Get average temperature\n" +
             "  var temperatureK = (avgTemperature - 32) * (5 / 9) + 273.15; // Convert Fahrenheit to Kelvin\n" +
@@ -84,10 +88,18 @@ public class CalculatedFieldTest extends AbstractContainerTest {
     private Device device;
     private Asset asset;
 
+    private TenantId tenantId2;
+    private UserId tenantAdminId2;
+    private DeviceProfileId deviceProfileId2;
+    private AssetProfileId assetProfileId2;
+    private Device device2;
+    private Asset asset2;
+
     @BeforeClass
     public void beforeClass() {
         testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
 
+        // tenant 1
         tenantId = testRestClient.postTenant(EntityPrototypes.defaultTenantPrototype("Tenant")).getId();
         tenantAdminId = testRestClient.createUserAndLogin(defaultTenantAdmin(tenantId, "tenantAdmin@thingsboard.org"), "tenant");
 
@@ -105,6 +117,18 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperatureInF\":73.58}"));
 
         testRestClient.postTelemetryAttribute(asset.getId(), DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"altitude\":1035}"));
+
+        testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
+
+        // tenant 2
+        tenantId2 = testRestClient.postTenant(EntityPrototypes.defaultTenantPrototype("Tenant 2")).getId();
+        tenantAdminId2 = testRestClient.createUserAndLogin(defaultTenantAdmin(tenantId2, "tenantAdmin2@thingsboard.org"), "tenant");
+
+        deviceProfileId2 = testRestClient.postDeviceProfile(defaultDeviceProfile("Device Profile 1")).getId();
+        device2 = testRestClient.postDevice(deviceToken2, createDevice("Device 1", deviceProfileId2));
+
+        assetProfileId2 = testRestClient.postAssetProfile(defaultAssetProfile("Asset Profile 1")).getId();
+        asset2 = testRestClient.postAsset(createAsset("Asset 1", assetProfileId2));
     }
 
     @BeforeMethod
@@ -286,7 +310,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         // login tenant admin
         testRestClient.getAndSetUserToken(tenantAdminId);
 
-        CalculatedField savedCalculatedField = createScriptCalculatedField(deviceProfileId);
+        CalculatedField savedCalculatedField = createScriptCalculatedField(deviceProfileId, asset.getId());
 
         await().alias("create CF -> perform initial calculation for device by profile").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -307,6 +331,132 @@ public class CalculatedFieldTest extends AbstractContainerTest {
                 });
 
         testRestClient.deleteCalculatedFieldIfExists(savedCalculatedField.getId());
+    }
+
+    @Test
+    public void testReprocessCalculatedField() {
+        // login tenant admin
+        testRestClient.getAndSetUserToken(tenantAdminId);
+
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        long ts1 = currentTime - TimeUnit.SECONDS.toMillis(140); // outside the TW
+        long ts2 = currentTime - TimeUnit.SECONDS.toMillis(130); // outside the TW (but telemetry will be used for initial processing)
+        long ts3 = currentTime - TimeUnit.SECONDS.toMillis(80); // inside the TW
+        long ts4 = currentTime - TimeUnit.SECONDS.toMillis(40); // outside the TW
+
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperature\":19.5}}", ts1)));
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperature\":23.6}}", ts2)));
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperature\":24.7}}", ts3)));
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperature\":22.9}}", ts4)));
+
+        /*      telemetry flow:
+                                  startTs   endTs
+                                     |________|
+               |  ts  |   1      2   |    3   |    4
+               |device| 19.5 -> 23.6 |-> 23.7 |-> 22.9
+                                     |________|
+                                          |--- reprocessing time window
+               the result should be: 74.48 -> 76.46
+        */
+
+        CalculatedField savedCalculatedField = createSimpleCalculatedField(device.getId());
+
+        testRestClient.reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for time window").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode fahrenheitTemp = testRestClient.getTimeSeries(device.getId(), startTs, endTs, "fahrenheitTemp");
+                    assertThat(fahrenheitTemp).isNotNull();
+
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("ts").asText()).isEqualTo(Long.toString(ts3));
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("76.46");
+
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(1).get("ts").asText()).isEqualTo(Long.toString(startTs)); // we use reprocessing startTs instead of telemetry ts for initial calculation
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(1).get("value").asText()).isEqualTo("74.48");
+                });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenEntityIsProfile() {
+        // login tenant admin
+        testRestClient.getAndSetUserToken(tenantAdminId2);
+
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(1200);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(300);
+
+        testRestClient.postTelemetryAttribute(asset2.getId(), DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"altitude\":1531}"));
+
+        long d1Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(1000);
+        long d1Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d1Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(500);
+        testRestClient.postTelemetry(deviceToken2, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":66.12}}", d1Ts_1)));
+        testRestClient.postTelemetry(deviceToken2, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":45.31}}", d1Ts_2)));
+        testRestClient.postTelemetry(deviceToken2, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":70.36}}", d1Ts_3)));
+
+        String newDeviceToken = "mmmXRIVRsq4lbnTP2XBE";
+        Device newDevice = testRestClient.postDevice(newDeviceToken, createDevice("Device 2", deviceProfileId2));
+        long d2Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(900);
+        long d2Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d2Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(400);
+        testRestClient.postTelemetry(newDeviceToken, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":55.16}}", d2Ts_1)));
+        testRestClient.postTelemetry(newDeviceToken, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":56.57}}", d2Ts_2)));
+        testRestClient.postTelemetry(newDeviceToken, JacksonUtil.toJsonNode(String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":59.40}}", d2Ts_3)));
+
+        /*      telemetry flow:
+                     startTs                                      endTs
+                       |____________________________________________|
+               |  ts   |  -1000    -900     -550     -500     -400  |
+               |device1|  66.12 ->       -> 45.31 -> 70.36 ->       |
+               |device2|        -> 55.16 -> 56.57 ->       -> 59.40 |
+               |asset  |        ->       ->       ->       ->       | -> 1531
+                       |____________________________________________|
+                                         |--- reprocessing time window
+               the airDensity for device 1 should be: 1.0 -> 1.05 -> 1.02
+               the airDensity for device 2 should be: 1.03 -> 1.02 -> 1.02
+        */
+
+        CalculatedField savedCalculatedField = createScriptCalculatedField(deviceProfileId2, asset2.getId());
+
+        testRestClient.reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for device 1").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = testRestClient.getTimeSeries(device2.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d1Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d1Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.05");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d1Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.0");
+                });
+
+        await().alias("reprocess -> perform calculation for device 2").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = testRestClient.getTimeSeries(newDevice.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d2Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d2Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.03");
+                });
     }
 
     private CalculatedField createSimpleCalculatedField() {
@@ -342,10 +492,10 @@ public class CalculatedFieldTest extends AbstractContainerTest {
     }
 
     private CalculatedField createScriptCalculatedField() {
-        return createScriptCalculatedField(device.getId());
+        return createScriptCalculatedField(device.getId(), asset.getId());
     }
 
-    private CalculatedField createScriptCalculatedField(EntityId entityId) {
+    private CalculatedField createScriptCalculatedField(EntityId entityId, EntityId refEntityId) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(entityId);
         calculatedField.setType(CalculatedFieldType.SCRIPT);
@@ -355,12 +505,12 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         ScriptCalculatedFieldConfiguration config = new ScriptCalculatedFieldConfiguration();
 
         Argument argument1 = new Argument();
-        argument1.setRefEntityId(asset.getId());
+        argument1.setRefEntityId(refEntityId);
         ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("altitude", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE);
         argument1.setRefEntityKey(refEntityKey1);
         Argument argument2 = new Argument();
         ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("temperatureInF", ArgumentType.TS_ROLLING, null);
-        argument2.setTimeWindow(30000L);
+        argument2.setTimeWindow(300000L);
         argument2.setLimit(5);
         argument2.setRefEntityKey(refEntityKey2);
 

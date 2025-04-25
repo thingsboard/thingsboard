@@ -957,6 +957,6 @@ CREATE TABLE IF NOT EXISTS job (
     key varchar NOT NULL,
     description varchar NOT NULL,
     status varchar NOT NULL,
-    configuration varchar(1000) NOT NULL,
+    configuration varchar(1000000) NOT NULL,
     result jsonb
 );
