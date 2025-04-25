@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.job;
+package org.thingsboard.server.common.data.job;
 
-import org.thingsboard.server.common.data.job.Task;
-import org.thingsboard.server.common.data.job.Job;
-import org.thingsboard.server.common.data.job.JobType;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.JobId;
 
-import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.List;
 
-public abstract class JobProcessor {
-
-    public abstract int process(Job job, Consumer<Task> taskConsumer);
-
-    public abstract JobType getType();
-
+@Data
+public class JobStats {
+    private final JobId jobId;
+    private final List<TaskResult> taskResults = new ArrayList<>();
+    private Integer totalTasksCount;
 }

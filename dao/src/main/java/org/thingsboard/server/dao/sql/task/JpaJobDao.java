@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.task;
 
+import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -30,6 +33,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.task.JobDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 @Component
@@ -41,7 +45,7 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
 
     @Override
     public PageData<Job> findByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(jobRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(jobRepository.findByTenantIdAndSearchText(tenantId.getId(), Strings.emptyToNull(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
@@ -52,6 +56,16 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
     @Override
     public boolean reportTaskFailure(JobId jobId, String taskKey, String error) {
         return jobRepository.reportTaskFailure(jobId.getId(), taskKey, error);
+    }
+
+    @Override
+    public boolean existsByKeyAndStatusOneOf(String key, JobStatus... statuses) {
+        return jobRepository.existsByKeyAndStatusIn(key, Arrays.stream(statuses).toList());
+    }
+
+    @Override
+    public boolean existsByTenantIdAndTypeAndStatusOneOf(TenantId tenantId, JobType type, JobStatus... statuses) {
+        return jobRepository.existsByTenantIdAndTypeAndStatusIn(tenantId.getId(), type, Arrays.stream(statuses).toList());
     }
 
     @Override

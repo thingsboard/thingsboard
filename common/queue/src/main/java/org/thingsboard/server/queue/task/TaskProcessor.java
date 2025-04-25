@@ -25,12 +25,8 @@ import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.Task;
 import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.data.job.TaskResult.TaskFailure;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TaskResultProto;
-import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.provider.TaskProcessorQueueFactory;
@@ -45,22 +41,22 @@ public abstract class TaskProcessor<T extends Task> {
 
     @Autowired
     private TaskProcessorQueueFactory queueFactory;
+    @Autowired
+    private JobStatsService statsService;
 
     private QueueConsumerManager<TbProtoQueueMsg<TaskProto>> taskConsumer;
-    private TbQueueProducer<TbProtoQueueMsg<TaskResultProto>> taskResultProducer;
     private ExecutorService consumerExecutor;
 
     @PostConstruct
     public void init() {
         consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(getJobType().name().toLowerCase() + "-task-consumer"));
         taskConsumer = QueueConsumerManager.<TbProtoQueueMsg<TaskProto>>builder() // fixme: should be consumer per partition
-                .name(getJobType().name() + "-tasks")
+                .name(getJobType().name().toLowerCase() + "-tasks")
                 .msgPackProcessor(this::processMsgs)
                 .pollInterval(125)
                 .consumerCreator(() -> queueFactory.createTaskConsumer(getJobType()))
                 .consumerExecutor(consumerExecutor)
                 .build();
-        taskResultProducer = queueFactory.createTaskResultProducer();
     }
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
@@ -92,7 +88,7 @@ public abstract class TaskProcessor<T extends Task> {
             reportSuccess(task);
         } catch (Exception e) {
             log.error("Failed to process task (attempt {}): {}", task.getAttempt(), task, e);
-            if (task.getAttempt() < 3) {
+            if (task.getAttempt() <= task.getRetries()) {
                 processTask(task);
             } else {
                 reportFailure(task, e);
@@ -102,34 +98,19 @@ public abstract class TaskProcessor<T extends Task> {
 
     private void reportSuccess(Task task) {
         TaskResult result = TaskResult.builder()
-                .tenantId(task.getTenantId())
-                .jobId(task.getJobId())
                 .success(true)
                 .build();
-        reportResult(result);
+        statsService.reportTaskResult(task.getJobId(), result);
     }
 
     private void reportFailure(Task task, Throwable error) {
         TaskResult result = TaskResult.builder()
-                .tenantId(task.getTenantId())
-                .jobId(task.getJobId())
                 .failure(TaskFailure.builder()
                         .error(error.getMessage())
                         .task(task)
                         .build())
                 .build();
-        reportResult(result);
-    }
-
-    private void reportResult(TaskResult result) {
-        log.info("Reporting result: {}", result);
-        TaskResultProto resultProto = TaskResultProto.newBuilder()
-                .setValue(JacksonUtil.toString(result))
-                .build();
-        TbProtoQueueMsg<TaskResultProto> msg = new TbProtoQueueMsg<>(result.getJobId().getId(), resultProto);
-        taskResultProducer.send(TopicPartitionInfo.builder()
-                .topic(taskResultProducer.getDefaultTopic())
-                .build(), msg, TbQueueCallback.EMPTY);
+        statsService.reportTaskResult(task.getJobId(), result);
     }
 
     protected abstract void process(T task) throws Exception;

@@ -17,8 +17,10 @@ package org.thingsboard.server.common.data.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,14 +28,16 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
 @JsonSubTypes({
-        @JsonSubTypes.Type(name = "CF_REPROCESSING", value = CfReprocessingJobResult.class),
+        @Type(name = "CF_REPROCESSING", value = CfReprocessingJobResult.class),
+        @Type(name = "DUMMY", value = DummyJobResult.class)
 })
 @Data
+@NoArgsConstructor
 public abstract class JobResult {
 
     private int successfulCount;
     private int failedCount;
-    private int totalCount;
+    private Integer totalCount = null; // set when all tasks are submitted
     private Map<String, String> failures = new HashMap<>();
 
     public abstract JobType getJobType();

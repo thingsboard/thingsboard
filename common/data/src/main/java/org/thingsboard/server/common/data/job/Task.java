@@ -17,8 +17,11 @@ package org.thingsboard.server.common.data.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.experimental.SuperBuilder;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -26,19 +29,17 @@ import org.thingsboard.server.common.data.id.TenantId;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
 @JsonSubTypes({
-        @JsonSubTypes.Type(name = "CF_REPROCESSING", value = CfReprocessingTask.class),
+        @Type(name = "CF_REPROCESSING", value = CfReprocessingTask.class),
+        @Type(name = "DUMMY", value = DummyTask.class)
 })
+@SuperBuilder
+@AllArgsConstructor
 public abstract class Task {
 
     private TenantId tenantId;
     private JobId jobId;
     private String key;
-
-    public Task(TenantId tenantId, JobId jobId, String key) {
-        this.tenantId = tenantId;
-        this.jobId = jobId;
-        this.key = key;
-    }
+    private int retries;
 
     public Task() {
     }

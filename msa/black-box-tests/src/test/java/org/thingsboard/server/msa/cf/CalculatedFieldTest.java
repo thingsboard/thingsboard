@@ -405,7 +405,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         testRestClient.reprocessCalculatedField(savedCalculatedField, startTs, endTs);
 
-        await().alias("reprocess -> perform calculation for device 1").atMost(5 * TIMEOUT, TimeUnit.SECONDS)
+        await().alias("reprocess -> perform calculation for device 1").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode airDensity = testRestClient.getTimeSeries(device.getId(), startTs, endTs, "airDensity");
@@ -421,7 +421,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
                     assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.0");
                 });
 
-        await().alias("reprocess -> perform calculation for device 2").atMost(5 * TIMEOUT, TimeUnit.SECONDS)
+        await().alias("reprocess -> perform calculation for device 2").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode airDensity = testRestClient.getTimeSeries(device2.getId(), startTs, endTs, "airDensity");

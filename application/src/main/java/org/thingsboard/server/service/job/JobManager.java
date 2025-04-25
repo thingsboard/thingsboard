@@ -19,6 +19,6 @@ import org.thingsboard.server.common.data.job.Job;
 
 public interface JobManager {
 
-    void submitJob(Job job);
+    Job submitJob(Job job);
 
 }
