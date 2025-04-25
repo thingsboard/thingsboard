@@ -21,8 +21,9 @@ import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface JobService {
+public interface JobService extends EntityDaoService {
 
     Job createJob(TenantId tenantId, Job job);
 
