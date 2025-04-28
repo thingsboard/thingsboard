@@ -37,6 +37,7 @@ import { AllMeasures } from '@core/services/unit/definitions/all';
 import { UnitService } from '@core/services/unit/unit.service';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ConvertUnitSettingsPanelComponent } from '@shared/components/convert-unit-settings-panel.component';
+import { isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-unit-input',
@@ -76,15 +77,17 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   @Input({transform: booleanAttribute})
   allowConverted = false;
 
-  filteredUnits: Observable<Array<UnitDescription>>;
+  filteredUnits: Observable<Array<[AllMeasures, Array<UnitDescription>]>>;
 
   searchText = '';
+
+  isGroupOption = false;
 
   private dirty = false;
 
   private modelValue: TbUnit | null;
 
-  private fetchUnits$: Observable<Array<UnitDescription>> = null;
+  fetchUnits$: Observable<Array<[AllMeasures, Array<UnitDescription>]>> = null;
 
   private propagateChange = (_val: any) => {};
 
@@ -106,6 +109,9 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
         }),
         mergeMap(symbol => this.fetchUnits(symbol))
       );
+    if (!!this.measure || !!this.tagFilter) {
+      this.isGroupOption = true;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -115,6 +121,11 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
         if (propName === 'measure' || propName === 'unitSystem') {
           this.fetchUnits$ = null;
           this.dirty = true;
+          if (!!this.measure || !!this.tagFilter) {
+            this.isGroupOption = true;
+          } else {
+            this.isGroupOption = false;
+          }
         }
       }
     }
@@ -205,26 +216,40 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     }
   }
 
-  private fetchUnits(searchText?: string): Observable<Array<UnitDescription>> {
+  private fetchUnits(searchText?: string): Observable<Array<[AllMeasures, Array<UnitDescription>]>> {
     this.searchText = searchText;
     return this.unitsConstant().pipe(
-      map(unit => searchUnits(unit, searchText))
+      map(unit => this.searchUnit(unit, searchText))
     );
   }
 
-  private unitsConstant(): Observable<Array<UnitDescription>> {
+  private unitsConstant(): Observable<Array<[AllMeasures, Array<UnitDescription>]>> {
     if (this.fetchUnits$ === null) {
-      this.fetchUnits$ = of(this.unitService.getUnits(this.measure, this.unitSystem)).pipe(
-        map((units) => {
+      this.fetchUnits$ = of(this.unitService.getUnitsGroupByMeasure(this.measure, this.unitSystem)).pipe(
+        map(data => {
+          let objectData = Object.entries(data) as Array<[AllMeasures, UnitDescription[]]>;
+
           if (this.tagFilter) {
-            units = units.filter(u => u.tags.includes(this.tagFilter));
+            objectData = objectData
+              .map((measure) => [measure[0], measure[1].filter(u => u.tags.includes(this.tagFilter))] as [AllMeasures, UnitDescription[]])
+              .filter((measure) => measure[1].length > 0);
           }
-          return units;
+          return objectData;
         }),
         shareReplay(1)
       );
     }
     return this.fetchUnits$;
+  }
+
+  private searchUnit(units: Array<[AllMeasures, Array<UnitDescription>]>, searchText?: string): Array<[AllMeasures, Array<UnitDescription>]> {
+    if (isNotEmptyStr(searchText)) {
+      const filterValue = searchText.trim().toUpperCase()
+      return units
+        .map(measure => [measure[0], searchUnits(measure[1], filterValue)] as [AllMeasures, UnitDescription[]])
+        .filter((measure) => measure[1].length > 0);
+    }
+    return units;
   }
 
   private getUnitSymbol(value: TbUnit | UnitDescription | null): string {

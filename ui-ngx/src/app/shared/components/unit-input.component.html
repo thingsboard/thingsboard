@@ -46,11 +46,24 @@
     class="tb-autocomplete tb-unit-input-autocomplete"
     panelWidth="fit-content"
     [displayWith]="displayUnitFn.bind(this)">
-    @for(unit of filteredUnits | async; track unit.abbr) {
-      <mat-option [value]="unit">
-        <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
-        <span class="tb-unit-symbol" [innerHTML]="unit.abbr | highlight:searchText:true:'ig'"></span>
-      </mat-option>
+    @for (group of filteredUnits | async; track group[0]) {
+      @if ((fetchUnits$ | async).length > 1) {
+        <mat-optgroup [label]="'unit.measures.' + group[0] | translate">
+          @for(unit of group[1]; track unit.abbr) {
+            <mat-option [value]="unit">
+              <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
+              <span class="tb-unit-symbol" [innerHTML]="unit.abbr | highlight:searchText:true:'ig'"></span>
+            </mat-option>
+          }
+        </mat-optgroup>
+      } @else {
+        @for(unit of group[1]; track unit.abbr) {
+          <mat-option [value]="unit">
+            <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
+            <span class="tb-unit-symbol" [innerHTML]="unit.abbr | highlight:searchText:true:'ig'"></span>
+          </mat-option>
+        }
+      }
     }
   </mat-autocomplete>
 </mat-form-field>

@@ -14,7 +14,14 @@
 /// limitations under the License.
 ///
 
-import { TbMeasure, TbUnitConvertor, Unit, UnitDescription, UnitSystem } from '@shared/models/unit.models';
+import {
+  TbMeasure,
+  TbUnitConvertor,
+  Unit,
+  UnitDescription,
+  UnitDescriptionGroupByMeasure,
+  UnitSystem
+} from '@shared/models/unit.models';
 import { AllMeasures } from '@core/services/unit/definitions/all';
 import { TranslateService } from '@ngx-translate/core';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
@@ -324,6 +331,117 @@ export class Converter<
               units.units as Partial<Record<TUnits, Unit>>
             )) {
               list.push(
+                this.describeUnit({
+                  abbr: abbr as TUnits,
+                  measure: name as TMeasures,
+                  system: systemName,
+                  unit: unit as Unit,
+                })
+              );
+            }
+          }
+        }
+      }
+    }
+
+    return list;
+  }
+
+  listGroupByMeasure(measureName?: TMeasures | (string & {}), unitSystem?: UnitSystem): UnitDescriptionGroupByMeasure<TMeasures> | never {
+    const list: UnitDescriptionGroupByMeasure<TMeasures> = {};
+
+    if (isDefinedAndNotNull(measureName)) {
+      if (!this.isMeasure(measureName)) {
+        console.log(`Measure "${measureName}" not found.`);
+        return list;
+      }
+      const measure = this.measureData[measureName];
+      if (isDefinedAndNotNull(unitSystem)) {
+        let currentUnitSystem = unitSystem;
+        let units = measure[currentUnitSystem];
+        if (isUndefinedOrNull(units)) {
+          if (currentUnitSystem === UnitSystem.IMPERIAL) {
+            currentUnitSystem = UnitSystem.METRIC;
+            units = measure[currentUnitSystem];
+          }
+          if (!units) {
+            console.log(`Measure "${measureName}" in ${currentUnitSystem} system is not found.`);
+            return list;
+          }
+        }
+        list[measureName] = [];
+        const unitsDescription = list[measureName];
+        for (const [abbr, unit] of Object.entries(
+          units.units
+        )) {
+          unitsDescription.push(
+            this.describeUnit({
+              abbr: abbr as TUnits,
+              measure: measureName as TMeasures,
+              system: currentUnitSystem,
+              unit: unit as Unit,
+            })
+          );
+        }
+      } else {
+        for (const [systemName, units] of Object.entries(
+          measure
+        ) as Entries<TbMeasure<TUnits>, UnitSystem>[]) {
+          list[measureName] = [];
+          const unitsDescription = list[measureName];
+          for (const [abbr, unit] of Object.entries(
+            units.units as Partial<Record<TUnits, Unit>>
+          )) {
+            unitsDescription.push(
+              this.describeUnit({
+                abbr: abbr as TUnits,
+                measure: measureName as TMeasures,
+                system: systemName,
+                unit: unit as Unit,
+              })
+            );
+          }
+        }
+      }
+    } else {
+      for (const [name, measure] of Object.entries(this.measureData)) {
+        if (isDefinedAndNotNull(unitSystem)) {
+          let currentUnitSystem = unitSystem;
+          let units = (measure as TbMeasure<TUnits>)[currentUnitSystem]?.units;
+          if (isUndefinedOrNull(units)) {
+            if (currentUnitSystem === UnitSystem.IMPERIAL) {
+              currentUnitSystem = UnitSystem.METRIC;
+              units = (measure as TbMeasure<TUnits>)[currentUnitSystem]?.units;
+            }
+            if (!units) {
+              console.log(`Measure "${name}" in ${currentUnitSystem} system is not found.`);
+              continue;
+            }
+          }
+          list[name] = [];
+          const unitsDescription = list[name];
+          for (const [abbr, unit] of Object.entries(
+            units as Partial<Record<TUnits, Unit>>
+          )) {
+            unitsDescription.push(
+              this.describeUnit({
+                abbr: abbr as TUnits,
+                measure: name as TMeasures,
+                system: currentUnitSystem,
+                unit: unit as Unit,
+              })
+            );
+          }
+        } else {
+          list[name] = [];
+          const unitsDescription = list[name];
+          for (const [systemName, units] of Object.entries(
+            measure
+          ) as Entries<TbMeasure<TUnits>, UnitSystem>[]) {
+            for (const [abbr, unit] of Object.entries(
+              units.units as Partial<Record<TUnits, Unit>>
+            )) {
+              unitsDescription.push(
                 this.describeUnit({
                   abbr: abbr as TUnits,
                   measure: name as TMeasures,

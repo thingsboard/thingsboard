@@ -5849,10 +5849,18 @@
     "unit": {
         "unit-system": "Unit system",
         "unit-system-type": {
-            "AUTO": "Auto",
-            "METRIC": "Metric",
-            "IMPERIAL": "Imperial",
-            "HYBRID": "Hybrid"
+          "AUTO": "Auto",
+          "METRIC": "Metric",
+          "IMPERIAL": "Imperial",
+          "HYBRID": "Hybrid"
+        },
+        "measures": {
+          "acceleration": "Acceleration",
+          "angle": "Angle",
+          "angular-acceleration": "Angular acceleration",
+          "area": "Area",
+          "temperature": "Temperature",
+          "time": "Time"
         },
         "millimeter": "Millimeter",
         "centimeter": "Centimeter",

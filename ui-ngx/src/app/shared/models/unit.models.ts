@@ -24,6 +24,7 @@ export enum UnitsType {
 }
 
 export type TbUnitConvertor = (value: number) => number;
+export type UnitDescriptionGroupByMeasure<TMeasure extends string> = Partial<Record<TMeasure, UnitDescription[]>>;
 
 export interface UnitDescription {
   abbr: string;
@@ -66,11 +67,11 @@ export interface TbMeasureUnits<TUnits extends string> {
 }
 
 const searchUnitTags = (unit: UnitDescription, searchText: string): boolean =>
-  !!unit.tags.find(t => t.toUpperCase().includes(searchText.toUpperCase()));
+  !!unit.tags.find(t => t.toUpperCase().includes(searchText));
 
 export const searchUnits = (_units: Array<UnitDescription>, searchText: string): Array<UnitDescription> => _units.filter(
-    u => u.abbr.toUpperCase().includes(searchText.toUpperCase()) ||
-      u.name.toUpperCase().includes(searchText.toUpperCase()) ||
+    u => u.abbr.toUpperCase().includes(searchText) ||
+      u.name.toUpperCase().includes(searchText) ||
       searchUnitTags(u, searchText)
 );
 

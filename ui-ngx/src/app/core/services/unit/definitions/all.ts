@@ -33,7 +33,7 @@ export type AllMeasuresUnits =
 export type AllMeasures =
   | 'acceleration'
   | 'angle'
-  | 'angularAcceleration'
+  | 'angular-acceleration'
   | 'area'
   | 'temperature'
   | 'time';
@@ -44,7 +44,7 @@ const allMeasures: Record<
 > = {
   acceleration,
   angle,
-  angularAcceleration,
+  'angular-acceleration': angularAcceleration,
   area,
   temperature,
   time,

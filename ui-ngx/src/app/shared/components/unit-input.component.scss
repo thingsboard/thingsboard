@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 .tb-autocomplete.tb-unit-input-autocomplete {
+  .mat-mdc-optgroup-label {
+    .mdc-list-item__primary-text {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      letter-spacing: 0.2px;
+    }
+  }
   .mat-mdc-option {
     border-bottom: none;
     .mdc-list-item__primary-text {

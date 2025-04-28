@@ -16,7 +16,12 @@
 
 import { Injectable } from '@angular/core';
 import moment from 'moment-timezone';
-import { TbUnitConvertor, UnitDescription, UnitSystem } from '@shared/models/unit.models';
+import {
+  TbUnitConvertor,
+  UnitDescription,
+  UnitDescriptionGroupByMeasure,
+  UnitSystem
+} from '@shared/models/unit.models';
 import { isNotEmptyStr } from '@core/utils';
 import { configureMeasurements, Converter } from '@core/services/unit/converter-unit';
 import allMeasures, { AllMeasures, AllMeasuresUnits } from '@core/services/unit/definitions/all';
@@ -60,7 +65,11 @@ export class UnitService {
   }
 
   getUnits(measure?: AllMeasures, unitSystem?: UnitSystem): UnitDescription[] {
-    return this.converter?.list(measure, unitSystem) ?? [];
+    return this.converter?.list(measure, unitSystem);
+  }
+
+  getUnitsGroupByMeasure(measure?: AllMeasures, unitSystem?: UnitSystem): UnitDescriptionGroupByMeasure<AllMeasures> {
+    return this.converter?.listGroupByMeasure(measure, unitSystem);
   }
 
   getUnitDescription(abbr: AllMeasuresUnits | string): UnitDescription {
