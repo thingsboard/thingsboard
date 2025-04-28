@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.job;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
@@ -31,9 +30,7 @@ import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -330,13 +327,5 @@ public class JobManagerTest extends AbstractControllerTest {
     }
 
     // todo: job with zero tasks, reprocessing
-
-    private Job findJobById(JobId jobId) throws Exception {
-        return doGet("/api/job/" + jobId, Job.class);
-    }
-
-    private List<Job> findJobs() throws Exception {
-        return doGetTypedWithPageLink("/api/jobs?", new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
-    }
 
 }

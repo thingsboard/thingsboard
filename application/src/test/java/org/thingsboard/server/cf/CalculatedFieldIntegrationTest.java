@@ -45,6 +45,10 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.controller.CalculatedFieldControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -61,7 +65,8 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     public static final int TIMEOUT = 60;
     public static final int POLL_INTERVAL = 1;
 
-    private final String exampleScript = "var avgTemperature = temperature.mean(); // Get average temperature\n" +
+    private final String exampleScript =
+            "var avgTemperature = temperature.mean(); // Get average temperature\n" +
             "  var temperatureK = (avgTemperature - 32) * (5 / 9) + 273.15; // Convert Fahrenheit to Kelvin\n" +
             "\n" +
             "  // Estimate air pressure based on altitude\n" +
@@ -550,6 +555,15 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(result.get("result").get(4).get("ts").asText()).isEqualTo(Long.toString(startTs)); // we use reprocessing startTs instead of telemetry ts for initial calculation
                     assertThat(result.get("result").get(4).get("value").asText()).isEqualTo("12.0");
                 });
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs().stream()
+                    .filter(job -> job.getType() == JobType.CF_REPROCESSING)
+                    .findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(1);
+        });
     }
 
     @Test
@@ -637,11 +651,19 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(ab_2.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
                     assertThat(ab_2.get("result").get(3).get("value").asText()).isEqualTo("101.0");
                 });
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs().stream()
+                    .filter(job -> job.getType() == JobType.CF_REPROCESSING)
+                    .findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(2);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(2);
+        });
     }
 
     @Test
     public void testReprocessCalculatedFieldWhenEntityIsProfileAndTsRollingArgUsed() throws Exception {
-
         long currentTime = System.currentTimeMillis();
         // reprocessing time window(TW)
         long startTs = currentTime - TimeUnit.SECONDS.toMillis(1200);
@@ -723,6 +745,15 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
                     assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.03");
                 });
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs().stream()
+                    .filter(job -> job.getType() == JobType.CF_REPROCESSING)
+                    .findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(2);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(2);
+        });
     }
 
     private CalculatedField createScriptCalculatedField(EntityId entityId, EntityId refEntityId) {
