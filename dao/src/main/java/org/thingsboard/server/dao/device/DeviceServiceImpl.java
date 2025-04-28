@@ -21,9 +21,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.device.DeviceCacheEvictEvent;
@@ -115,6 +117,9 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     private final EntityCountService countService;
     private final JpaExecutorService executor;
 
+    @Autowired
+    private AsyncDeviceEventPublisher asyncDeviceEventPublisher;
+
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceInfoById [{}]", deviceId);
@@ -197,6 +202,15 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return savedDevice;
     }
 
+    @Override
+    protected void publishEvictEvent(DeviceCacheEvictEvent event) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            asyncDeviceEventPublisher.publishCacheEvictEventAsync(event);
+        } else {
+            handleEvictEvent(event);
+        }
+    }
+
     private Device doSaveDevice(Device device, String accessToken, boolean doValidate) {
         Device savedDevice = this.saveDeviceWithoutCredentials(device, doValidate);
         if (device.getId() == null) {
@@ -244,7 +258,8 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
             if (device.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedDevice.getTenantId(), EntityType.DEVICE);
             }
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDevice.getTenantId()).entityId(savedDevice.getId())
+
+            asyncDeviceEventPublisher.publishSaveEventAsync(SaveEntityEvent.builder().tenantId(savedDevice.getTenantId()).entityId(savedDevice.getId())
                     .entity(savedDevice).oldEntity(oldDevice).created(device.getId() == null).build());
             return savedDevice;
         } catch (Exception t) {
