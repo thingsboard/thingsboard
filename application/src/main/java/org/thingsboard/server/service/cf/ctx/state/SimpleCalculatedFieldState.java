@@ -77,9 +77,10 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         if (decimals == null) {
             return expressionResult;
         }
-        return decimals.equals(0)
-                ? TbUtils.toInt(expressionResult)
-                : TbUtils.toFixed(expressionResult, decimals);
+        if (decimals.equals(0)) {
+            return TbUtils.toInt(expressionResult);
+        }
+        return TbUtils.toFixed(expressionResult, decimals);
     }
 
     private JsonNode createResultJson(boolean preserveMsgTs, String outputName, Object result) {
