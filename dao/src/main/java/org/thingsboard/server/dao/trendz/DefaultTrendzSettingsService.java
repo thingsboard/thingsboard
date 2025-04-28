@@ -60,4 +60,10 @@ public class DefaultTrendzSettingsService implements TrendzSettingsService {
                 .orElseGet(TrendzSettings::new);
     }
 
+    @CacheEvict(cacheNames = CacheConstants.TRENDZ_SETTINGS_CACHE, key = "#tenantId")
+    @Override
+    public void deleteTrendzSettings(TenantId tenantId) {
+        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(tenantId, SETTINGS_KEY);
+    }
+
 }
