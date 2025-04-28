@@ -60,22 +60,10 @@ These contain time series data within a defined time window. Example format:
       "endTs": 1740644662896
     },
     "values": [
-      {
-        "ts": 1740644350000,
-        "value": 72.32
-      },
-      {
-        "ts": 1740644360000,
-        "value": 72.86
-      },
-      {
-        "ts": 1740644370000,
-        "value": 73.58
-      },
-      {
-        "ts": 1740644380000,
-        "value": "NaN"
-      }
+      { "ts": 1740644350000, "value": 72.32 },
+      { "ts": 1740644360000, "value": 72.86 },
+      { "ts": 1740644370000, "value": 73.58 },
+      { "ts": 1740644380000, "value": "NaN" }
     ]
   }
 }
@@ -93,12 +81,8 @@ var firstItemTs = firstItem.ts;
 var firstItemValue = firstItem.value;
 var sum = 0.0;
 // iterate through all values and calculate the sum using foreach:
-foreach(t
-:
-temperature
-)
-{
-  if (!isNaN(t.value)) { // check that the value is a valid number;
+foreach(t: temperature) {
+  if(!isNaN(t.value)) { // check that the value is a valid number;
     sum += t.value;
   }
 }
@@ -183,11 +167,7 @@ function calculate(ctx, temperature, defrost) {
   var merged = temperature.merge(defrost);
   var result = [];
 
-  foreach(item
-:
-  merged
-)
-  {
+  foreach(item: merged) {
     if (item.v1 > -5.0 && item.v2 == 0) {
       result.add({
         ts: item.ts,
@@ -268,14 +248,8 @@ Without timestamp:
   "hvacState": "IDLE",
   "configuration": {
     "someNumber": 42,
-    "someArray": [
-      1,
-      2,
-      3
-    ],
-    "someNestedObject": {
-      "key": "value"
-    }
+    "someArray": [1,2,3],
+    "someNestedObject": {"key": "value"}
   }
 }
 ```
@@ -292,14 +266,8 @@ With timestamp:
     "hvacState": "IDLE",
     "configuration": {
       "someNumber": 42,
-      "someArray": [
-        1,
-        2,
-        3
-      ],
-      "someNestedObject": {
-        "key": "value"
-      }
+      "someArray": [1,2,3],
+      "someNestedObject": {"key": "value"}
     }
   }
 }
@@ -337,14 +305,8 @@ Example below return 5 data points: airDensity (double), humidity (integer), hva
   "hvacState": "IDLE",
   "configuration": {
     "someNumber": 42,
-    "someArray": [
-      1,
-      2,
-      3
-    ],
-    "someNestedObject": {
-      "key": "value"
-    }
+    "someArray": [1,2,3],
+    "someNestedObject": {"key": "value"}
   }
 }
 ```
