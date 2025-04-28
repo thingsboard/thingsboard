@@ -36,7 +36,8 @@ import org.thingsboard.server.service.security.permission.Resource;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
@@ -47,33 +48,32 @@ public class TrendzController extends BaseController {
     private final TrendzSettingsService trendzSettingsService;
 
     @ApiOperation(value = "Save Trendz settings (saveTrendzSettings)",
-            notes = "Saves Trendz settings for this tenant or sysadmin.\n" + NEW_LINE +
+            notes = "Saves Trendz settings for this tenant.\n" + NEW_LINE +
                     "Here is an example of the Trendz settings:\n" +
                     MARKDOWN_CODE_BLOCK_START +
                     "{\n" +
                     "  \"enabled\": true,\n" +
-                    "  \"trendzUrl\": \"https://some.domain.com:18888/also_necessary_prefix\"\n" +
+                    "  \"baseUrl\": \"https://some.domain.com:18888/also_necessary_prefix\"\n" +
                     "}" +
                     MARKDOWN_CODE_BLOCK_END +
-                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+                    TENANT_AUTHORITY_PARAGRAPH)
     @PostMapping("/trendz/settings")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public TrendzSettings saveTrendzSettings(@RequestBody TrendzSettings trendzSettings,
                                              @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.TRENDZ_SETTINGS, Operation.WRITE);
-        TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
+        accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.WRITE);
+        TenantId tenantId = user.getTenantId();
         trendzSettingsService.saveTrendzSettings(tenantId, trendzSettings);
         return trendzSettings;
     }
 
     @ApiOperation(value = "Get Trendz Settings (getTrendzSettings)",
-            notes = "Retrieves trendz settings for this tenant or sysadmin." +
-                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+            notes = "Retrieves Trendz settings for this tenant." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @GetMapping("/trendz/settings")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public TrendzSettings getTrendzSettings(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.TRENDZ_SETTINGS, Operation.READ);
-        TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    public TrendzSettings getTrendzSettings(@AuthenticationPrincipal SecurityUser user) {
+        TenantId tenantId = user.getTenantId();
         return trendzSettingsService.findTrendzSettings(tenantId);
     }
 

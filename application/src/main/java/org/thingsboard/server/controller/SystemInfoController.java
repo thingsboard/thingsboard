@@ -162,11 +162,11 @@ public class SystemInfoController extends BaseController {
             }
             systemParams.setMaxArgumentsPerCF(tenantProfileConfiguration.getMaxArgumentsPerCF());
             systemParams.setMaxDataPointsPerRollingArg(tenantProfileConfiguration.getMaxDataPointsPerRollingArg());
+            systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
         }
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
                 .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
                 .orElse(false));
-        systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
         return systemParams;
     }
 

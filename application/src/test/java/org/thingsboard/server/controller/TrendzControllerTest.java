@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.trendz.TrendzSettings;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -27,6 +28,17 @@ public class TrendzControllerTest extends AbstractControllerTest {
 
     private final String trendzUrl = "https://some.domain.com:18888/also_necessary_prefix";
 
+    @Before
+    public void setUp() throws Exception {
+        loginTenantAdmin();
+
+        TrendzSettings trendzSettings = new TrendzSettings();
+        trendzSettings.setEnabled(true);
+        trendzSettings.setBaseUrl(trendzUrl);
+
+        doPost("/api/trendz/settings", trendzSettings).andExpect(status().isOk());
+    }
+
     @Test
     public void testTrendzSettingsWhenTenant() throws Exception {
         loginTenantAdmin();
@@ -34,11 +46,11 @@ public class TrendzControllerTest extends AbstractControllerTest {
         TrendzSettings trendzSettings = doGet("/api/trendz/settings", TrendzSettings.class);
 
         assertThat(trendzSettings).isNotNull();
-        assertThat(trendzSettings.isEnabled()).isFalse();
-        assertThat(trendzSettings.getTrendzUrl()).isNull();
+        assertThat(trendzSettings.isEnabled()).isTrue();
+        assertThat(trendzSettings.getBaseUrl()).isEqualTo(trendzUrl);
 
-        trendzSettings.setEnabled(true);
-        trendzSettings.setTrendzUrl(trendzUrl);
+        String updatedUrl = "https://some.domain.com:18888/tenant_trendz";
+        trendzSettings.setBaseUrl(updatedUrl);
 
         doPost("/api/trendz/settings", trendzSettings).andExpect(status().isOk());
 
@@ -50,14 +62,16 @@ public class TrendzControllerTest extends AbstractControllerTest {
     public void testTrendzSettingsWhenCustomer() throws Exception {
         loginCustomerUser();
 
-        TrendzSettings trendzSettings = new TrendzSettings();
-        trendzSettings.setEnabled(true);
-        trendzSettings.setTrendzUrl("https://some.domain.com:18888/customer_trendz");
+        TrendzSettings newTrendzSettings = new TrendzSettings();
+        newTrendzSettings.setEnabled(true);
+        newTrendzSettings.setBaseUrl("https://some.domain.com:18888/customer_trendz");
 
-        doPost("/api/trendz/settings", trendzSettings).andExpect(status().isForbidden());
+        doPost("/api/trendz/settings", newTrendzSettings).andExpect(status().isForbidden());
 
         TrendzSettings fetchedTrendzSettings = doGet("/api/trendz/settings", TrendzSettings.class);
         assertThat(fetchedTrendzSettings).isNotNull();
+        assertThat(fetchedTrendzSettings.isEnabled()).isTrue();
+        assertThat(fetchedTrendzSettings.getBaseUrl()).isEqualTo(trendzUrl);
     }
 
 }

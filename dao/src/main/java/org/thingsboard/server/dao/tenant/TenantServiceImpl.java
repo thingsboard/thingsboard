@@ -166,10 +166,10 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
 
         userService.deleteAllByTenantId(tenantId);
-        adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
-        qrCodeSettingService.deleteByTenantId(tenantId);
         notificationSettingsService.deleteNotificationSettings(tenantId);
         trendzSettingsService.deleteTrendzSettings(tenantId);
+        adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
+        qrCodeSettingService.deleteByTenantId(tenantId);
 
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));

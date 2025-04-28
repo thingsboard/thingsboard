@@ -21,6 +21,6 @@ import lombok.Data;
 public class TrendzSettings {
 
     private boolean enabled;
-    private String trendzUrl;
+    private String baseUrl;
 
 }
