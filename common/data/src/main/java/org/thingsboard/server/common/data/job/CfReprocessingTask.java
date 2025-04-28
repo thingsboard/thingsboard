@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.job;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@ToString(callSuper = true)
 public class CfReprocessingTask extends Task {
 
     private CalculatedField calculatedField;

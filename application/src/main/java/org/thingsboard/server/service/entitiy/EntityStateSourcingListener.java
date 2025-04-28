@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -59,6 +60,7 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.service.job.JobManager;
 
 import java.util.Set;
 
@@ -70,6 +72,7 @@ public class EntityStateSourcingListener {
     private final TenantService tenantService;
     private final TbClusterService tbClusterService;
     private final EdgeSynchronizationManager edgeSynchronizationManager;
+    private final JobManager jobManager;
 
     @PostConstruct
     public void init() {
@@ -300,7 +303,9 @@ public class EntityStateSourcingListener {
     }
 
     private void onJobUpdate(Job job) {
-        if (job.getResult().getCancellationTs() > 0) {
+        jobManager.onJobUpdate(job);
+        if (job.getResult().getCancellationTs() > 0 || job.getStatus().isOneOf(JobStatus.FAILED)) {
+            // task processors will add this job to the list of discarded
             tbClusterService.broadcastEntityStateChangeEvent(job.getTenantId(), job.getId(), ComponentLifecycleEvent.STOPPED);
         }
     }

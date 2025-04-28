@@ -13,26 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.task;
+package org.thingsboard.server.dao.job;
 
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
-import org.thingsboard.server.common.data.job.JobStats;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.Dao;
 
-public interface JobService extends EntityDaoService {
+public interface JobDao extends Dao<Job> {
 
-    Job createJob(TenantId tenantId, Job job);
+    PageData<Job> findByTenantId(TenantId tenantId, PageLink pageLink);
 
-    Job findJobById(TenantId tenantId, JobId jobId);
+    Job findByIdForUpdate(TenantId tenantId, JobId jobId);
 
-    void cancelJob(TenantId tenantId, JobId jobId);
+    boolean existsByKeyAndStatusOneOf(String key, JobStatus... statuses);
 
-    void processStats(TenantId tenantId, JobId jobId, JobStats jobStats);
+    boolean existsByTenantIdAndTypeAndStatusOneOf(TenantId tenantId, JobType type, JobStatus... statuses);
 
-    PageData<Job> findJobsByTenantId(TenantId tenantId, PageLink pageLink);
+    Job findOldestByTenantIdAndTypeAndStatusForUpdate(TenantId tenantId, JobType type, JobStatus status);
 
 }

@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 public class TaskResult {
 
     private boolean success;
-    private boolean cancelled;
+    private boolean discarded;
     private TaskFailure failure;
 
     @Data

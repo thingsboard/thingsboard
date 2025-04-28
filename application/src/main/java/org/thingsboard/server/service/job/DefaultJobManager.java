@@ -18,19 +18,22 @@ package org.thingsboard.server.service.job;
 import jakarta.annotation.PreDestroy;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobStats;
+import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.Task;
 import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.dao.task.JobService;
+import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -64,6 +67,7 @@ public class DefaultJobManager implements JobManager {
     private final Map<JobType, JobProcessor> jobProcessors;
     private final Map<JobType, TbQueueProducer<TbProtoQueueMsg<TaskProto>>> taskProducers;
     private final QueueConsumerManager<TbProtoQueueMsg<JobStatsMsg>> jobStatsConsumer;
+    private final ExecutorService executor;
     private final ExecutorService consumerExecutor;
 
     @Value("${queue.tasks.stats.processing_interval_ms:5000}")
@@ -74,6 +78,7 @@ public class DefaultJobManager implements JobManager {
         this.jobStatsService = jobStatsService;
         this.jobProcessors = jobProcessors.stream().collect(Collectors.toMap(JobProcessor::getType, Function.identity()));
         this.taskProducers = Arrays.stream(JobType.values()).collect(Collectors.toMap(Function.identity(), queueFactory::createTaskProducer));
+        this.executor = ThingsBoardExecutors.newWorkStealingPool(Math.max(4, Runtime.getRuntime().availableProcessors()), getClass());
         this.consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("job-stats-consumer"));
         this.jobStatsConsumer = QueueConsumerManager.<TbProtoQueueMsg<JobStatsMsg>>builder()
                 .name("job-stats")
@@ -92,22 +97,40 @@ public class DefaultJobManager implements JobManager {
 
     @Override
     public Job submitJob(Job job) {
-        job = jobService.createJob(job.getTenantId(), job);
-        log.info("Submitting job: {}", job);
+        log.debug("Submitting job: {}", job);
+        return jobService.createJob(job.getTenantId(), job);
+    }
 
-        int tasksCount = jobProcessors.get(job.getType()).process(job, this::submitTask);
-        jobStatsService.reportAllTasksSubmitted(job.getTenantId(), job.getId(), tasksCount);
-        return job;
+    @Override
+    public void onJobUpdate(Job job) {
+        if (job.getStatus() == JobStatus.PENDING) {
+            executor.execute(() -> {
+                TenantId tenantId = job.getTenantId();
+                JobId jobId = job.getId();
+                try {
+                    int tasksCount = jobProcessors.get(job.getType()).process(job, this::submitTask); // todo: think about stopping tb - while tasks are being submitted
+                    log.info("[{}][{}][{}] Submitted {} tasks", tenantId, jobId, job.getType(), tasksCount);
+                    jobStatsService.reportAllTasksSubmitted(tenantId, jobId, tasksCount);
+                } catch (Throwable e) {
+                    log.error("[{}][{}][{}] Failed to submit tasks", tenantId, jobId, job.getType(), e);
+                    try {
+                        jobService.markAsFailed(tenantId, jobId, ExceptionUtils.getStackTrace(e));
+                    } catch (Throwable e2) {
+                        log.error("[{}][{}] Failed to mark job as failed", tenantId, jobId, e2);
+                    }
+                }
+            });
+        }
     }
 
     @Override
     public void cancelJob(TenantId tenantId, JobId jobId) {
-        log.info("Cancelling job: {}", jobId);
+        log.info("[{}][{}] Cancelling job", tenantId, jobId);
         jobService.cancelJob(tenantId, jobId);
     }
 
     private void submitTask(Task task) {
-        log.info("Submitting task: {}", task);
+        log.info("[{}][{}] Submitting task: {}", task.getTenantId(), task.getJobId(), task);
         TaskProto taskProto = TaskProto.newBuilder()
                 .setValue(JacksonUtil.toString(task))
                 .build();
@@ -147,22 +170,23 @@ public class DefaultJobManager implements JobManager {
         }
 
         stats.forEach((jobId, jobStats) -> {
+            TenantId tenantId = jobStats.getTenantId();
             try {
-                TenantId tenantId = jobStats.getTenantId();
-                log.info("[{}][{}] Processing job stats: {}", tenantId, jobId, stats);
+                log.debug("[{}][{}] Processing job stats: {}", tenantId, jobId, stats);
                 jobService.processStats(tenantId, jobId, jobStats);
             } catch (Exception e) {
-                log.warn("Failed to process job stats for {}: {}", jobId, jobStats, e);
+                log.error("[{}][{}] Failed to process job stats: {}", tenantId, jobId, jobStats, e);
             }
         });
         consumer.commit();
 
-        Thread.sleep(statsProcessingInterval);
+        Thread.sleep(statsProcessingInterval); // todo: test with bigger interval
     }
 
     @PreDestroy
     private void destroy() {
         jobStatsConsumer.stop();
+        executor.shutdownNow();
         consumerExecutor.shutdownNow();
     }
 

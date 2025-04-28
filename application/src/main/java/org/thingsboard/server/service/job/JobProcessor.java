@@ -15,16 +15,16 @@
  */
 package org.thingsboard.server.service.job;
 
-import org.thingsboard.server.common.data.job.Task;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.common.data.job.Task;
 
 import java.util.function.Consumer;
 
-public abstract class JobProcessor {
+public interface JobProcessor {
 
-    public abstract int process(Job job, Consumer<Task> taskConsumer);
+    int process(Job job, Consumer<Task> taskConsumer) throws Exception;
 
-    public abstract JobType getType();
+    JobType getType();
 
 }

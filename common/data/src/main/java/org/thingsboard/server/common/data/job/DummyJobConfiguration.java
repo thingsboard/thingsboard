@@ -34,6 +34,9 @@ public class DummyJobConfiguration implements JobConfiguration {
     private List<String> errors;
     private int retries;
 
+    private String generalError;
+    private int submittedTasksBeforeGeneralError;
+
     @Override
     public JobType getType() {
         return JobType.DUMMY;

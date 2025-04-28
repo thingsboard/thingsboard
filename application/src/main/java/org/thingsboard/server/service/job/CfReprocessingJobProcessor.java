@@ -17,7 +17,6 @@ package org.thingsboard.server.service.job;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -36,15 +35,13 @@ import java.util.function.Consumer;
 
 @Component
 @RequiredArgsConstructor
-public class CfReprocessingJobProcessor extends JobProcessor {
+public class CfReprocessingJobProcessor implements JobProcessor {
 
     private final DeviceService deviceService;
     private final AssetService assetService;
 
-    // fixme: multiple jobs with single type
-    @Transactional
     @Override
-    public int process(Job job, Consumer<Task> taskConsumer) {
+    public int process(Job job, Consumer<Task> taskConsumer) throws Exception {
         CfReprocessingJobConfiguration configuration = job.getConfiguration();
 
         CalculatedField calculatedField = configuration.getCalculatedField();

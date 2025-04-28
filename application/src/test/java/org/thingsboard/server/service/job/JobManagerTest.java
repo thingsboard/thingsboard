@@ -33,12 +33,14 @@ import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.task.JobService;
 import org.thingsboard.server.queue.task.JobStatsService;
 import org.thingsboard.server.service.job.task.DummyTaskProcessor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -157,7 +159,7 @@ public class JobManagerTest extends AbstractControllerTest {
             Job job = findJobById(jobId);
             assertThat(job.getStatus()).isEqualTo(JobStatus.CANCELLED);
             assertThat(job.getResult().getSuccessfulCount()).isBetween(1, tasksCount - 1);
-            assertThat(job.getResult().getCancelledCount()).isBetween(1, tasksCount - 1);
+            assertThat(job.getResult().getDiscardedCount()).isBetween(1, tasksCount - 1);
             assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
             assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
         });
@@ -184,15 +186,14 @@ public class JobManagerTest extends AbstractControllerTest {
                 inv.callRealMethod();
             }
             return null;
-        }).when(taskProcessor).addToCancelledJobs(any()); // ignoring cancellation event,
+        }).when(taskProcessor).addToDiscardedJobs(any()); // ignoring cancellation event,
         jobManager.cancelJob(tenantId, jobId);
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             Job job = findJobById(jobId);
-            System.err.println(job);
             assertThat(job.getStatus()).isEqualTo(JobStatus.CANCELLED);
             assertThat(job.getResult().getSuccessfulCount()).isBetween(1, tasksCount - 1);
-            assertThat(job.getResult().getCancelledCount()).isBetween(1, tasksCount - 1);
+            assertThat(job.getResult().getDiscardedCount()).isBetween(1, tasksCount - 1);
             assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
             assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
         });
@@ -224,12 +225,118 @@ public class JobManagerTest extends AbstractControllerTest {
         Assertions.assertThat(jobService.findJobsByTenantId(tenantId, new PageLink(100, 0)).getData()).isEmpty();
     }
 
+    @Test
+    public void testSubmitMultipleJobs() {
+        int tasksCount = 3;
+        int jobsCount = 3;
+        for (int i = 1; i <= jobsCount; i++) {
+            Job job = Job.builder()
+                    .tenantId(tenantId)
+                    .type(JobType.DUMMY)
+                    .key("test-job-" + i)
+                    .description("test job")
+                    .configuration(DummyJobConfiguration.builder()
+                            .successfulTasksCount(tasksCount)
+                            .taskProcessingTimeMs(1000)
+                            .build())
+                    .build();
+            jobManager.submitJob(job);
+        }
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<Job> jobs = findJobs();
+            assertThat(jobs).hasSize(jobsCount);
+            Job firstJob = jobs.get(2); // ordered by createdTime descending
+            assertThat(firstJob.getStatus()).isEqualTo(JobStatus.RUNNING);
+            Job secondJob = jobs.get(1);
+            assertThat(secondJob.getStatus()).isEqualTo(JobStatus.QUEUED);
+            Job thirdJob = jobs.get(0);
+            assertThat(thirdJob.getStatus()).isEqualTo(JobStatus.QUEUED);
+        });
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<Job> jobs = findJobs();
+            for (Job job : jobs) {
+                assertThat(job.getStatus()).isEqualTo(JobStatus.COMPLETED);
+                assertThat(job.getResult().getSuccessfulCount()).isEqualTo(tasksCount);
+                assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
+            }
+        });
+    }
+
+    @Test
+    public void testCancelQueuedJob() {
+        int tasksCount = 3;
+        int jobsCount = 3;
+        List<JobId> jobIds = new ArrayList<>();
+        for (int i = 1; i <= jobsCount; i++) {
+            Job job = Job.builder()
+                    .tenantId(tenantId)
+                    .type(JobType.DUMMY)
+                    .key("test-job-" + i)
+                    .description("test job")
+                    .configuration(DummyJobConfiguration.builder()
+                            .successfulTasksCount(tasksCount)
+                            .taskProcessingTimeMs(1000)
+                            .build())
+                    .build();
+            jobIds.add(jobManager.submitJob(job).getId());
+        }
+
+        for (int i = 1; i < jobIds.size(); i++) {
+            jobManager.cancelJob(tenantId, jobIds.get(i));
+        }
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<Job> jobs = findJobs();
+
+            Job firstJob = jobs.get(2);
+            assertThat(firstJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(firstJob.getResult().getSuccessfulCount()).isEqualTo(tasksCount);
+            assertThat(firstJob.getResult().getTotalCount()).isEqualTo(tasksCount);
+
+            Job secondJob = jobs.get(1);
+            assertThat(secondJob.getStatus()).isEqualTo(JobStatus.CANCELLED);
+            assertThat(secondJob.getResult().getCompletedCount()).isZero();
+
+            Job thirdJob = jobs.get(0);
+            assertThat(thirdJob.getStatus()).isEqualTo(JobStatus.CANCELLED);
+            assertThat(thirdJob.getResult().getCompletedCount()).isZero();
+        });
+    }
+
+    @Test
+    public void testGeneralJobError() {
+        int submittedTasks = 100;
+        JobId jobId = jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key("test-job")
+                .description("test job")
+                .configuration(DummyJobConfiguration.builder()
+                        .generalError("Some error while submitting tasks")
+                        .submittedTasksBeforeGeneralError(submittedTasks)
+                        .taskProcessingTimeMs(10)
+                        .build())
+                .build()).getId();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.FAILED);
+            assertThat(job.getResult().getSuccessfulCount()).isBetween(1, submittedTasks);
+            assertThat(job.getResult().getDiscardedCount()).isBetween(1, submittedTasks);
+            assertThat(job.getResult().getTotalCount()).isNull();
+        });
+    }
+
+    // todo: job with zero tasks, reprocessing
+
     private Job findJobById(JobId jobId) throws Exception {
         return doGet("/api/job/" + jobId, Job.class);
     }
 
     private List<Job> findJobs() throws Exception {
-        return doGetTypedWithPageLink("/api/jobs?", new TypeReference<PageData<Job>>() {}, new PageLink(100, 0)).getData();
+        return doGetTypedWithPageLink("/api/jobs?", new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
     }
 
 }

@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.JobId;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
 @NoArgsConstructor
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class Job extends BaseData<JobId> implements HasTenantId {
 
@@ -51,7 +53,6 @@ public class Job extends BaseData<JobId> implements HasTenantId {
         this.key = key;
         this.description = description;
         this.configuration = configuration;
-        this.status = JobStatus.PENDING;
         this.result = switch (type) {
             case CF_REPROCESSING -> new CfReprocessingJobResult();
             case DUMMY -> new DummyJobResult();

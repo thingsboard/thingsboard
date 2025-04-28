@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.task;
+package org.thingsboard.server.dao.job;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,16 +28,23 @@ import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.data.job.TaskResult.TaskFailure;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.Optional;
+
+import static org.thingsboard.server.common.data.job.JobStatus.CANCELLED;
+import static org.thingsboard.server.common.data.job.JobStatus.COMPLETED;
+import static org.thingsboard.server.common.data.job.JobStatus.FAILED;
+import static org.thingsboard.server.common.data.job.JobStatus.PENDING;
+import static org.thingsboard.server.common.data.job.JobStatus.QUEUED;
+import static org.thingsboard.server.common.data.job.JobStatus.RUNNING;
 
 @Service
 @RequiredArgsConstructor
@@ -47,10 +54,16 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     private final JobDao jobDao;
     private final JobValidator validator = new JobValidator();
 
+    @Transactional
     @Override
     public Job createJob(TenantId tenantId, Job job) {
         validator.validate(job, Job::getTenantId);
-        return saveJob(tenantId, job, false);
+        if (jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, job.getType(), PENDING, RUNNING)) {
+            job.setStatus(QUEUED);
+        } else {
+            job.setStatus(PENDING);
+        }
+        return saveJob(tenantId, job, true, null);
     }
 
     @Override
@@ -62,11 +75,27 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     @Override
     public void cancelJob(TenantId tenantId, JobId jobId) {
         Job job = findForUpdate(tenantId, jobId);
-        if (job.getStatus() != JobStatus.PENDING && job.getStatus() != JobStatus.RUNNING) {
+        if (!job.getStatus().isOneOf(QUEUED, PENDING, RUNNING)) {
             throw new IllegalArgumentException("Job already " + job.getStatus().name().toLowerCase());
         }
         job.getResult().setCancellationTs(System.currentTimeMillis());
-        saveJob(tenantId, job, true);
+        JobStatus prevStatus = job.getStatus();
+        if (job.getStatus() == QUEUED) {
+            job.setStatus(CANCELLED); // setting cancelled status right away, because we don't expect stats for cancelled tasks
+        } else if (job.getStatus() == PENDING) {
+            job.setStatus(RUNNING);
+        }
+        saveJob(tenantId, job, true, prevStatus);
+    }
+
+    @Transactional
+    @Override
+    public void markAsFailed(TenantId tenantId, JobId jobId, String error) {
+        Job job = findForUpdate(tenantId, jobId);
+        job.getResult().setGeneralError(error);
+        JobStatus prevStatus = job.getStatus();
+        job.setStatus(FAILED);
+        saveJob(tenantId, job, true, prevStatus);
     }
 
     @Transactional
@@ -74,39 +103,36 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     public void processStats(TenantId tenantId, JobId jobId, JobStats jobStats) {
         Job job = findForUpdate(tenantId, jobId);
         if (job == null) {
-            log.info("Got stale stats for job {}: {}", jobId, jobStats);
+            log.debug("[{}][{}] Got stale stats: {}", tenantId, jobId, jobStats);
             return;
         }
-        switch (job.getStatus()) {
-            case PENDING -> {
-                job.setStatus(JobStatus.RUNNING);
-            }
-            case CANCELLED, COMPLETED, FAILED -> {
-                // got some stale stats
-                return;
-            }
+        JobStatus prevStatus = job.getStatus();
+        if (job.getStatus() == PENDING) {
+            job.setStatus(RUNNING);
         }
 
-        JobResult jobResult = job.getResult();
+        JobResult result = job.getResult();
         if (jobStats.getTotalTasksCount() != null) {
-            jobResult.setTotalCount(jobStats.getTotalTasksCount());
+            result.setTotalCount(jobStats.getTotalTasksCount());
         }
 
         boolean publishEvent = false;
         for (TaskResult taskResult : jobStats.getTaskResults()) {
             if (taskResult.isSuccess()) {
-                jobResult.setSuccessfulCount(jobResult.getSuccessfulCount() + 1);
-            } else if (taskResult.isCancelled()) {
-                jobResult.setCancelledCount(jobResult.getCancelledCount() + 1);
+                result.setSuccessfulCount(result.getSuccessfulCount() + 1);
+            } else if (taskResult.isDiscarded()) {
+                result.setDiscardedCount(result.getDiscardedCount() + 1);
             } else {
                 TaskFailure failure = taskResult.getFailure();
                 String key = failure.getTask().getKey();
-                jobResult.setFailedCount(jobResult.getFailedCount() + 1);
-                jobResult.getFailures().put(key, failure.getError());
+                result.setFailedCount(result.getFailedCount() + 1);
+                if (result.getFailures().size() < 1000) { // preserving only first 1000 errors, not reprocessing if there are more failures
+                    result.getFailures().put(key, failure.getError());
+                }
             }
 
-            if (jobResult.getCancellationTs() > 0) {
-                if (!taskResult.isCancelled() && System.currentTimeMillis() > jobResult.getCancellationTs()) {
+            if (result.getCancellationTs() > 0) {
+                if (!taskResult.isDiscarded() && System.currentTimeMillis() > result.getCancellationTs()) {
                     log.info("Got task result for cancelled job {}: {}, re-notifying processors about cancellation", jobId, taskResult);
                     // task processor forgot the task is cancelled
                     publishEvent = true;
@@ -114,30 +140,47 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
             }
         }
 
-        if (jobResult.getTotalCount() != null && jobResult.getCompletedCount() >= jobResult.getTotalCount()) {
-            if (jobResult.getCancellationTs() > 0) {
-                job.setStatus(JobStatus.CANCELLED);
-            } else if (jobResult.getFailedCount() > 0) {
-                job.setStatus(JobStatus.FAILED);
-            } else {
-                job.setStatus(JobStatus.COMPLETED);
+        if (job.getStatus() == RUNNING) {
+            if (result.getTotalCount() != null && result.getCompletedCount() >= result.getTotalCount()) {
+                if (result.getCancellationTs() > 0) {
+                    job.setStatus(CANCELLED);
+                } else if (result.getFailedCount() > 0) {
+                    job.setStatus(FAILED);
+                } else {
+                    job.setStatus(COMPLETED);
+                }
             }
         }
-        log.info("Saving job {}", job);
-        saveJob(tenantId, job, publishEvent);
+
+        saveJob(tenantId, job, publishEvent, prevStatus);
     }
 
-    private Job saveJob(TenantId tenantId, Job job, boolean publishEvent) {
+    private Job saveJob(TenantId tenantId, Job job, boolean publishEvent, JobStatus prevStatus) {
         job = jobDao.save(tenantId, job);
         if (publishEvent) {
             eventPublisher.publishEvent(SaveEntityEvent.builder()
                     .tenantId(tenantId)
                     .entityId(job.getId())
                     .entity(job)
-                    .created(false)
                     .build());
         }
+        log.info("[{}] Saved job: {}", tenantId, job);
+        if (prevStatus != null && job.getStatus() != prevStatus) {
+            log.info("[{}][{}][{}] New job status: {} -> {}", tenantId, job.getId(), job.getType(), prevStatus, job.getStatus());
+            if (job.getStatus().isOneOf(CANCELLED, COMPLETED, FAILED) && prevStatus != QUEUED) { // if prev status is QUEUED - means there are already running jobs with this type, no need to check for waiting job
+                checkWaitingJobs(tenantId, job.getType());
+            }
+        }
         return job;
+    }
+
+    private void checkWaitingJobs(TenantId tenantId, JobType jobType) {
+        Job queuedJob = jobDao.findOldestByTenantIdAndTypeAndStatusForUpdate(tenantId, jobType, QUEUED);
+        if (queuedJob == null) {
+            return;
+        }
+        queuedJob.setStatus(PENDING);
+        saveJob(tenantId, queuedJob, true, QUEUED);
     }
 
     @Override
@@ -149,15 +192,15 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
         return jobDao.findByIdForUpdate(tenantId, jobId);
     }
 
-    // todo: cancellation, reprocessing
+// todo:  reprocessing
 
     public class JobValidator extends DataValidator<Job> {
 
         @Override
         protected void validateCreate(TenantId tenantId, Job job) {
-            if (jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, job.getType(), JobStatus.PENDING, JobStatus.RUNNING)) {
-                throw new DataValidationException("Job of this type is already running");
-            }
+//            if (jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, job.getType(), PENDING, RUNNING)) {
+//                throw new DataValidationException("Job of this type is already running");
+//            }
         }
 
         @Override

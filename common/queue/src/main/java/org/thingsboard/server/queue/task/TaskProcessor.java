@@ -57,7 +57,7 @@ public abstract class TaskProcessor<T extends Task> {
     private ExecutorService consumerExecutor;
 
     private final Set<UUID> deletedTenants = ConcurrentHashMap.newKeySet();
-    private final Set<UUID> cancelledJobs = ConcurrentHashMap.newKeySet(); // fixme use caffeine
+    private final Set<UUID> discardedJobs = ConcurrentHashMap.newKeySet(); // fixme use caffeine
 
     @PostConstruct
     public void init() {
@@ -83,14 +83,14 @@ public abstract class TaskProcessor<T extends Task> {
         switch (entityId.getEntityType()) {
             case JOB -> {
                 if (event.getEvent() == ComponentLifecycleEvent.STOPPED) {
-                    log.info("Adding job {} to cancelledJobs", entityId);
-                    addToCancelledJobs(entityId.getId());
+                    log.debug("Adding job {} to discarded", entityId);
+                    addToDiscardedJobs(entityId.getId());
                 }
             }
             case TENANT -> {
                 if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                     deletedTenants.add(entityId.getId());
-                    log.info("Adding tenant {} to deletedTenants", entityId);
+                    log.debug("Adding tenant {} to deleted", entityId);
                 }
             }
         }
@@ -100,7 +100,7 @@ public abstract class TaskProcessor<T extends Task> {
         for (TbProtoQueueMsg<TaskProto> msg : msgs) {
             try {
                 Task task = JacksonUtil.fromString(msg.getValue().getValue(), Task.class);
-                if (cancelledJobs.contains(task.getJobId().getId())) {
+                if (discardedJobs.contains(task.getJobId().getId())) {
                     log.info("Skipping task '{}' for cancelled job {}", task.getKey(), task.getJobId());
                     reportCancelled(task);
                     continue;
@@ -157,13 +157,13 @@ public abstract class TaskProcessor<T extends Task> {
 
     private void reportCancelled(Task task) {
         TaskResult result = TaskResult.builder()
-                .cancelled(true)
+                .discarded(true)
                 .build();
         statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
     }
 
-    public void addToCancelledJobs(UUID jobId) {
-        cancelledJobs.add(jobId);
+    public void addToDiscardedJobs(UUID jobId) {
+        discardedJobs.add(jobId);
     }
 
     @PreDestroy

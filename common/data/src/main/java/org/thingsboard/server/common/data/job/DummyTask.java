@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.job;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
+@ToString(callSuper = true)
 public class DummyTask extends Task {
 
     private int number;
