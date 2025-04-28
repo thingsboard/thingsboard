@@ -14,11 +14,14 @@
 /// limitations under the License.
 ///
 
-import { TbMeasure, Unit, UnitSystem } from '@shared/models/unit.models';
+import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type TimeUnits = TimeSIUnits;
 
 export type TimeSIUnits =
+  | 'ns'
+  | 'μs'
+  | 'ms'
   | 's'
   | 'min'
   | 'h'
@@ -29,48 +32,63 @@ export type TimeSIUnits =
 
 const daysInYear = 365.25;
 
-const METRIC: Record<TimeSIUnits, Unit> = {
-  s: {
-    name: 'unit.second',
-    tags: ["time","duration","interval","angle","second","arcsecond","sec"],
-    to_anchor: 1,
-  },
-  min: {
-    name: 'unit.minute',
-    tags: ["time","duration","interval","angle","minute","arcminute","min"],
-    to_anchor: 60,
-  },
-  h: {
-    name: 'unit.hour',
-    tags: ["time","duration","interval","h"],
-    to_anchor: 60 * 60,
-  },
-  d: {
-    name: 'unit.day',
-    tags: ["time","duration","interval","d"],
-    to_anchor: 60 * 60 * 24,
-  },
-  wk: {
-    name: 'unit.week',
-    tags: ["time","duration","interval","wk"],
-    to_anchor: 60 * 60 * 24 * 7,
-  },
-  mo: {
-    name: 'unit.month',
-    tags: ["time","duration","interval","mo"],
-    to_anchor: (60 * 60 * 24 * daysInYear) / 12,
-  },
-  yr: {
-    name: 'unit.year',
-    tags: ["time","duration","interval","yr"],
-    to_anchor: 60 * 60 * 24 * daysInYear,
-  },
+const METRIC: TbMeasureUnits<TimeSIUnits> = {
+  units: {
+    ns: {
+      name: 'unit.nanosecond',
+      tags: ['time', 'duration', 'interval', 'ns'],
+      to_anchor: 1 / 1000000000
+    },
+    'μs': {
+      name: 'unit.microsecond',
+      tags: ['time', 'duration', 'interval', 'h'],
+      to_anchor: 1 / 1000000
+    },
+    ms: {
+      name: 'unit.millisecond',
+      tags: ['time', 'duration', 'interval', 'ms'],
+      to_anchor: 1 / 1000
+    },
+    s: {
+      name: 'unit.second',
+      tags: ['time', 'duration', 'interval', 'second',  'sec'],
+      to_anchor: 1,
+    },
+    min: {
+      name: 'unit.minute',
+      tags: ['time', 'duration', 'interval', 'minute', 'min'],
+      to_anchor: 60,
+    },
+    h: {
+      name: 'unit.hour',
+      tags: ['time', 'duration', 'interval', 'h'],
+      to_anchor: 60 * 60,
+    },
+    d: {
+      name: 'unit.day',
+      tags: ['time', 'duration', 'interval', 'd'],
+      to_anchor: 60 * 60 * 24,
+    },
+    wk: {
+      name: 'unit.week',
+      tags: ['time', 'duration', 'interval', 'wk'],
+      to_anchor: 60 * 60 * 24 * 7,
+    },
+    mo: {
+      name: 'unit.month',
+      tags: ['time', 'duration', 'interval', 'mo'],
+      to_anchor: (60 * 60 * 24 * daysInYear) / 12,
+    },
+    yr: {
+      name: 'unit.year',
+      tags: ['time', 'duration', 'interval', 'yr'],
+      to_anchor: 60 * 60 * 24 * daysInYear,
+    },
+  }
 };
 
-const measure: TbMeasure<UnitSystem, TimeUnits> = {
-  systems: {
-    METRIC,
-  },
+const measure: TbMeasure<TimeUnits> = {
+  METRIC,
 };
 
 export default measure;

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { TbMeasure, Unit, UnitSystem } from '@shared/models/unit.models';
+import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type TemperatureMetricUnits = '°C' | 'K';
 export type TemperatureImperialUnits = '°F' | '°R';
@@ -23,55 +23,43 @@ export type TemperatureUnits =
   | TemperatureMetricUnits
   | TemperatureImperialUnits;
 
-const METRIC: Record<TemperatureMetricUnits, Unit> = {
-  '°C': {
-    name: 'unit.celsius',
-    tags: ['temperature','heat','cold','warmth','degrees','celsius','shipment condition','°C'],
-    to_anchor: 1,
-  },
-  K: {
-    name: 'unit.kelvin',
-    tags: ['temperature','heat','cold','warmth','degrees','kelvin','K','color quality','white balance','color temperature'],
-    to_anchor: 1,
-    anchor_shift: 273.15,
-  },
+const METRIC: TbMeasureUnits<TemperatureMetricUnits> = {
+  transform: (C) => C / (5 / 9) + 32,
+  units: {
+    '°C': {
+      name: 'unit.celsius',
+      tags: ['temperature', 'heat', 'cold', 'warmth', 'degrees', 'celsius', 'shipment condition', '°C'],
+      to_anchor: 1,
+    },
+    K: {
+      name: 'unit.kelvin',
+      tags: ['temperature', 'heat', 'cold', 'warmth', 'degrees', 'kelvin', 'K', 'color quality', 'white balance', 'color temperature'],
+      to_anchor: 1,
+      anchor_shift: 273.15,
+    },
+  }
 };
 
-const IMPERIAL: Record<TemperatureImperialUnits, Unit> = {
-  '°F': {
-    name: 'unit.fahrenheit',
-    tags: ['temperature','heat','cold','warmth','degrees','fahrenheit','°F'],
-    to_anchor: 1,
-  },
-  '°R': {
-    name: 'unit.rankine',
-    tags: ['temperature','heat','cold','warmth','Rankine','°R'],
-    to_anchor: 1,
-    anchor_shift: 459.67,
-  },
+const IMPERIAL: TbMeasureUnits<TemperatureImperialUnits> = {
+  transform: (F) => (F - 32) * (5 / 9),
+  units: {
+    '°F': {
+      name: 'unit.fahrenheit',
+      tags: ['temperature', 'heat', 'cold', 'warmth', 'degrees', 'fahrenheit', '°F'],
+      to_anchor: 1,
+    },
+    '°R': {
+      name: 'unit.rankine',
+      tags: ['temperature', 'heat', 'cold', 'warmth', 'Rankine', '°R'],
+      to_anchor: 1,
+      anchor_shift: 459.67,
+    },
+  }
 };
 
-const measure: TbMeasure<UnitSystem, TemperatureUnits> = {
-  systems: {
-    METRIC,
-    IMPERIAL,
-  },
-  anchors: {
-    METRIC: {
-      IMPERIAL: {
-        transform: function (C: number): number {
-          return C / (5 / 9) + 32;
-        },
-      },
-    },
-    IMPERIAL: {
-      METRIC: {
-        transform: function (F: number): number {
-          return (F - 32) * (5 / 9);
-        },
-      },
-    },
-  },
+const measure: TbMeasure<TemperatureUnits> = {
+  METRIC,
+  IMPERIAL
 };
 
 export default measure;

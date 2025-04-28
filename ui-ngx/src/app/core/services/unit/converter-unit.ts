@@ -21,12 +21,11 @@ import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 
 export interface Conversion<
   TMeasures extends string,
-  TSystems extends string,
   TUnits extends string,
 > {
   abbr: TUnits;
   measure: TMeasures;
-  system: TSystems;
+  system: UnitSystem;
   unit: Unit;
 }
 
@@ -39,10 +38,10 @@ export interface Conversion<
 
 type Entries<T, S extends keyof T> = [S, T[keyof T]];
 
-export type UnitCache<TMeasures, TSystems, TUnits> = Map<
+export type UnitCache<TMeasures, TUnits> = Map<
   string,
   {
-    system: TSystems;
+    system: UnitSystem;
     measure: TMeasures;
     unit: Unit;
     abbr: TUnits;
@@ -51,14 +50,13 @@ export type UnitCache<TMeasures, TSystems, TUnits> = Map<
 
 export class Converter<
   TMeasures extends AllMeasures,
-  TSystems extends UnitSystem,
   TUnits extends string,
 > {
-  private measureData: Record<TMeasures, TbMeasure<TSystems, TUnits>>;
+  private readonly measureData: Record<TMeasures, TbMeasure<TUnits>>;
   private unitCache: Map<
     string,
     {
-      system: TSystems;
+      system: UnitSystem;
       measure: TMeasures;
       unit: Unit;
       abbr: TUnits;
@@ -66,8 +64,8 @@ export class Converter<
   >;
 
   constructor(
-    measures: Record<TMeasures, TbMeasure<TSystems, TUnits>>,
-    unitCache: UnitCache<TMeasures, TSystems, TUnits>
+    measures: Record<TMeasures, TbMeasure<TUnits>>,
+    unitCache: UnitCache<TMeasures, TUnits>
   ) {
     this.measureData = measures;
     this.unitCache = unitCache;
@@ -96,18 +94,8 @@ export class Converter<
 
       if (origin.system !== destination.system) {
         const measure = this.measureData[origin.measure];
-        const anchors = measure.anchors;
-        if (!anchors) {
-          throw Error(`Unable to convert units. Anchors are missing for "${origin.measure}" and "${destination.measure}" measures.`);
-        }
-
-        const anchor = anchors[origin.system];
-        if (!anchor) {
-          throw Error(`Unable to convert units. Anchors are missing for "${origin.measure}" and "${destination.measure}" measures.`);
-        }
-
-        const transform = anchor[destination.system]?.transform;
-        const ratio = anchor[destination.system]?.ratio;
+        const transform = measure[origin.system]?.transform;
+        const ratio = measure[origin.system]?.ratio;
 
         if (typeof transform === 'function') {
           result = transform(result);
@@ -146,16 +134,8 @@ export class Converter<
     }
     if (origin.system !== destination.system) {
       const measure = this.measureData[origin.measure];
-      const anchors = measure.anchors;
-      if (!anchors) {
-        throw Error(`Unable to convert units. Anchors are missing for "${origin.measure}" and "${destination.measure}" measures.`);
-      }
-      const anchor = anchors[origin.system];
-      if (!anchor) {
-        throw Error(`Unable to convert units. Anchors are missing for "${origin.measure}" and "${destination.measure}" measures.`);
-      }
-      const transform = anchor[destination.system]?.transform;
-      const ratio = anchor[destination.system]?.ratio;
+      const transform = measure[origin.system]?.transform;
+      const ratio = measure[origin.system]?.ratio;
       if (typeof transform === 'function') {
         result = transform(result);
       } else if (typeof ratio === 'number') {
@@ -234,7 +214,7 @@ export class Converter<
   //   return best;
   // }
 
-  getUnit(abbr: TUnits | (string & {})): Conversion<TMeasures, TSystems, TUnits> | null {
+  getUnit(abbr: TUnits | (string & {})): Conversion<TMeasures, TUnits> | null {
     return this.unitCache.get(abbr) ?? null;
   }
 
@@ -247,7 +227,7 @@ export class Converter<
     return null;
   }
 
-  private describeUnit(unit: Conversion<TMeasures, TSystems, TUnits>): UnitDescription {
+  private describeUnit(unit: Conversion<TMeasures, TUnits>): UnitDescription {
     return {
       abbr: unit.abbr,
       measure: unit.measure,
@@ -268,11 +248,11 @@ export class Converter<
       const measure = this.measureData[measureName];
       if (isDefinedAndNotNull(unitSystem)) {
         let currentUnitSystem = unitSystem;
-        let units = measure.systems[currentUnitSystem];
+        let units = measure[currentUnitSystem];
         if (isUndefinedOrNull(units)) {
           if (currentUnitSystem === UnitSystem.IMPERIAL) {
             currentUnitSystem = UnitSystem.METRIC;
-            units = measure.systems[currentUnitSystem];
+            units = measure[currentUnitSystem];
           }
           if (!units) {
             console.log(`Measure "${measureName}" in ${currentUnitSystem} system is not found.`);
@@ -280,29 +260,29 @@ export class Converter<
           }
         }
         for (const [abbr, unit] of Object.entries(
-          units
+          units.units
         )) {
           list.push(
             this.describeUnit({
               abbr: abbr as TUnits,
               measure: measureName as TMeasures,
-              system: currentUnitSystem as TSystems,
+              system: currentUnitSystem,
               unit: unit as Unit,
             })
           );
         }
       } else {
         for (const [systemName, units] of Object.entries(
-          (measure as TbMeasure<TSystems, TUnits>).systems
-        )) {
+          measure
+        ) as Entries<TbMeasure<TUnits>, UnitSystem>[]) {
           for (const [abbr, unit] of Object.entries(
-            units as Partial<Record<TUnits, Unit>>
+            units.units as Partial<Record<TUnits, Unit>>
           )) {
             list.push(
               this.describeUnit({
                 abbr: abbr as TUnits,
                 measure: measureName as TMeasures,
-                system: systemName as TSystems,
+                system: systemName,
                 unit: unit as Unit,
               })
             );
@@ -313,11 +293,11 @@ export class Converter<
       for (const [name, measure] of Object.entries(this.measureData)) {
         if (isDefinedAndNotNull(unitSystem)) {
           let currentUnitSystem = unitSystem;
-          let units = (measure as TbMeasure<TSystems, TUnits>).systems[currentUnitSystem];
+          let units = (measure as TbMeasure<TUnits>)[currentUnitSystem]?.units;
           if (isUndefinedOrNull(units)) {
             if (currentUnitSystem === UnitSystem.IMPERIAL) {
               currentUnitSystem = UnitSystem.METRIC;
-              units = (measure as TbMeasure<TSystems, TUnits>).systems[currentUnitSystem];
+              units = (measure as TbMeasure<TUnits>)[currentUnitSystem]?.units;
             }
             if (!units) {
               console.log(`Measure "${measureName}" in ${currentUnitSystem} system is not found.`);
@@ -331,23 +311,23 @@ export class Converter<
               this.describeUnit({
                 abbr: abbr as TUnits,
                 measure: name as TMeasures,
-                system: currentUnitSystem as TSystems,
+                system: currentUnitSystem,
                 unit: unit as Unit,
               })
             );
           }
         } else {
           for (const [systemName, units] of Object.entries(
-            (measure as TbMeasure<TSystems, TUnits>).systems
-          )) {
+            measure
+          ) as Entries<TbMeasure<TUnits>, UnitSystem>[]) {
             for (const [abbr, unit] of Object.entries(
-              units as Partial<Record<TUnits, Unit>>
+              units.units as Partial<Record<TUnits, Unit>>
             )) {
               list.push(
                 this.describeUnit({
                   abbr: abbr as TUnits,
                   measure: name as TMeasures,
-                  system: systemName as TSystems,
+                  system: systemName,
                   unit: unit as Unit,
                 })
               );
@@ -397,21 +377,20 @@ export class Converter<
 
 export function buildUnitCache<
   TMeasures extends string,
-  TSystems extends UnitSystem,
   TUnits extends string,
->(measures: Record<TMeasures, TbMeasure<TSystems, TUnits>>,
+>(measures: Record<TMeasures, TbMeasure<TUnits>>,
   translate: TranslateService
 ) {
-  const unitCache: UnitCache<TMeasures, TSystems, TUnits> = new Map();
+  const unitCache: UnitCache<TMeasures, TUnits> = new Map();
   for (const [measureName, measure] of Object.entries(measures) as Entries<
     typeof measures,
     TMeasures
   >[]) {
     for (const [systemName, system] of Object.entries(
-      measure.systems
-    ) as Entries<Record<TSystems, Record<TUnits, Unit>>, TSystems>[]) {
-      for (const [testAbbr, unit] of Object.entries(system) as Entries<
-        typeof system,
+      measure
+    ) as Entries<TbMeasure<TUnits>, UnitSystem>[]) {
+      for (const [testAbbr, unit] of Object.entries(system.units) as Entries<
+        Record<TUnits, Unit>,
         TUnits
       >[]) {
         unit.name = translate.instant(unit.name);
@@ -429,16 +408,15 @@ export function buildUnitCache<
 
 export function configureMeasurements<
   TMeasures extends AllMeasures,
-  TSystems extends UnitSystem,
   TUnits extends string,
 >(
-  measures: Record<TMeasures, TbMeasure<TSystems, TUnits>>,
+  measures: Record<TMeasures, TbMeasure<TUnits>>,
   translate: TranslateService
-): Converter<TMeasures, TSystems, TUnits> {
+): Converter<TMeasures, TUnits> {
   if (typeof measures !== 'object') {
     throw new TypeError('The measures argument needs to be an object');
   }
 
   const unitCache = buildUnitCache(measures, translate);
-  return new Converter<TMeasures, TSystems, TUnits>(measures, unitCache);
+  return new Converter<TMeasures, TUnits>(measures, unitCache);
 }

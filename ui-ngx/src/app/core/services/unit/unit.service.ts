@@ -31,14 +31,14 @@ import { AppState } from '@core/core.state';
 export class UnitService {
 
   private currentUnitSystem: UnitSystem = UnitSystem.METRIC;
-  private converter: Converter<AllMeasures, UnitSystem, AllMeasuresUnits>;
+  private converter: Converter<AllMeasures, AllMeasuresUnits>;
 
   constructor(private store: Store<AppState>,
               private translate: TranslateService) {
     this.translate.onLangChange.pipe(
       takeUntilDestroyed()
     ).subscribe(() => {
-      this.converter = configureMeasurements<AllMeasures, UnitSystem, AllMeasuresUnits>(allMeasures, this.translate);
+      this.converter = configureMeasurements<AllMeasures, AllMeasuresUnits>(allMeasures, this.translate);
       console.warn(this.converter?.list());
       console.warn(this.converter?.list('temperature'));
       console.warn(this.converter?.list('temperature', UnitSystem.METRIC));

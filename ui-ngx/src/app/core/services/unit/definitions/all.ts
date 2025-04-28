@@ -14,24 +14,38 @@
 /// limitations under the License.
 ///
 
-import temperature, {
-  TemperatureUnits,
-} from './temperature';
+import { TbMeasure } from '@shared/models/unit.models';
+import acceleration, { AccelerationUnits } from '@core/services/unit/definitions/acceleration';
+import angle, { AngleUnits } from '@core/services/unit/definitions/angle';
+import angularAcceleration, { AngularAccelerationUnits } from '@core/services/unit/definitions/angular-acceleration';
+import area, { AreaUnits } from '@core/services/unit/definitions/area';
+import temperature, { TemperatureUnits } from './temperature';
 import time, { TimeUnits } from './time';
-import { TbMeasure, UnitSystem } from '@shared/models/unit.models';
 
 export type AllMeasuresUnits =
+  | AccelerationUnits
+  | AngleUnits
+  | AngularAccelerationUnits
+  | AreaUnits
   | TemperatureUnits
   | TimeUnits;
 
 export type AllMeasures =
+  | 'acceleration'
+  | 'angle'
+  | 'angularAcceleration'
+  | 'area'
   | 'temperature'
   | 'time';
 
 const allMeasures: Record<
   AllMeasures,
-  TbMeasure<UnitSystem, AllMeasuresUnits>
+  TbMeasure<AllMeasuresUnits>
 > = {
+  acceleration,
+  angle,
+  angularAcceleration,
+  area,
   temperature,
   time,
 };

@@ -57,14 +57,12 @@ export interface TbUnitMapping {
   HYBRID: string;
 }
 
-export interface TbAnchor {
+export type TbMeasure<TUnits extends string> = Partial<Record<UnitSystem, TbMeasureUnits<TUnits>>>;
+
+export interface TbMeasureUnits<TUnits extends string> {
   ratio?: number;
   transform?: (value: number) => number;
-}
-
-export interface TbMeasure<TSystems extends UnitSystem, TUnits extends string> {
-  systems: Partial<Record<TSystems, Partial<Record<TUnits, Unit>>>>;
-  anchors?: Partial<Record<TSystems, Partial<Record<TSystems, TbAnchor>>>>;
+  units?: Partial<Record<TUnits, Unit>>;
 }
 
 const searchUnitTags = (unit: UnitDescription, searchText: string): boolean =>
