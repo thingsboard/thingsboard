@@ -39,15 +39,16 @@ public abstract class JobResult implements Serializable {
 
     private int successfulCount;
     private int failedCount;
-    private int cancelledCount;
+    private int discardedCount;
     private Integer totalCount = null; // set when all tasks are submitted
     private Map<String, String> failures = new HashMap<>();
+    private String generalError;
 
     private long cancellationTs;
 
     @JsonIgnore
     public int getCompletedCount() {
-        return successfulCount + failedCount + cancelledCount;
+        return successfulCount + failedCount + discardedCount;
     }
 
     public abstract JobType getJobType();

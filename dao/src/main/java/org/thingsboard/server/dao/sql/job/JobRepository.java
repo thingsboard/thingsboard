@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.task;
+package org.thingsboard.server.dao.sql.job;
 
 import jakarta.persistence.LockModeType;
-import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -36,7 +35,7 @@ import java.util.UUID;
 public interface JobRepository extends JpaRepository<JobEntity, UUID> {
 
     @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId " +
-            "AND (:searchText IS NULL OR ilike(j.key, concat('%', :searchText, '%')) = true " +
+           "AND (:searchText IS NULL OR ilike(j.key, concat('%', :searchText, '%')) = true " +
            "OR ilike(j.description, concat('%', :searchText, '%')) = true)")
     Page<JobEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                 @Param("searchText") String searchText,
@@ -46,45 +45,13 @@ public interface JobRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j FROM JobEntity j WHERE j.id = :id")
     JobEntity findByIdForUpdate(UUID id);
 
-    @Modifying
-    @Transactional
-    @Query(value = """
-            UPDATE job
-            SET result = jsonb_set(
-                result,
-                '{successfulCount}',
-                to_jsonb((result->>'successfulCount')::int + :count)
-            )
-            WHERE id = :jobId
-            RETURNING ((result->>'successfulCount')::int + :count)
-                     + (result->>'failedCount')::int = (result->>'totalCount')::int
-            """, nativeQuery = true)
-    boolean reportTaskSuccess(@Param("jobId") UUID jobId,
-                              @Param("count") int count);
-
-    @Modifying
-    @Transactional
-    @Query(value = """
-            UPDATE job
-            SET result = jsonb_set(
-                jsonb_set(
-                    result,
-                    '{failedCount}',
-                    to_jsonb((result->>'failedCount')::int + 1)
-                ),
-                ARRAY['failures', :taskKey],
-                to_jsonb(:error)
-            )
-            WHERE id = :jobId
-            RETURNING ((result->>'failedCount')::int + 1) + (result->>'successfulCount')::int
-            = (result->>'totalCount')::int
-            """, nativeQuery = true)
-    boolean reportTaskFailure(@Param("jobId") UUID jobId,
-                              @Param("taskKey") String taskKey,
-                              @Param("error") String error);
-
     boolean existsByKeyAndStatusIn(String key, List<JobStatus> statuses);
 
     boolean existsByTenantIdAndTypeAndStatusIn(UUID tenantId, JobType type, List<JobStatus> statuses);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE) // SELECT FOR UPDATE
+    @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId AND j.type = :type " +
+           "AND j.status = :status ORDER BY j.createdTime ASC, j.id ASC")
+    JobEntity findOldestByTenantIdAndTypeAndStatusForUpdate(UUID tenantId, JobType type, JobStatus status, Limit limit);
 
 }

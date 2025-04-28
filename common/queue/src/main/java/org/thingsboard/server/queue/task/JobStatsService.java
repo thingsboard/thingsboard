@@ -52,7 +52,7 @@ public class JobStatsService {
     }
 
     private void report(TenantId tenantId, JobId jobId, JobStatsMsg.Builder statsMsg) {
-        log.info("[{}] Reporting: {}", jobId, statsMsg);
+        log.debug("[{}] Reporting: {}", jobId, statsMsg);
         statsMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setJobIdMSB(jobId.getId().getMostSignificantBits())

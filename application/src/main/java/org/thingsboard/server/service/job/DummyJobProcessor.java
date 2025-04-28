@@ -28,11 +28,18 @@ import java.util.function.Consumer;
 
 @Component
 @RequiredArgsConstructor
-public class DummyJobProcessor extends JobProcessor {
+public class DummyJobProcessor implements JobProcessor {
 
     @Override
-    public int process(Job job, Consumer<Task> taskConsumer) {
+    public int process(Job job, Consumer<Task> taskConsumer) throws Exception {
         DummyJobConfiguration configuration = job.getConfiguration();
+        if (configuration.getGeneralError() != null) {
+            for (int number = 1; number <= configuration.getSubmittedTasksBeforeGeneralError(); number++) {
+                taskConsumer.accept(createTask(job, configuration, number, null));
+            }
+            Thread.sleep(configuration.getTaskProcessingTimeMs() * (configuration.getSubmittedTasksBeforeGeneralError() / 2)); // sleeping so that some tasks are processed
+            throw new RuntimeException(configuration.getGeneralError());
+        }
         for (int number = 1; number <= configuration.getSuccessfulTasksCount(); number++) {
             taskConsumer.accept(createTask(job, configuration, number, null));
         }
