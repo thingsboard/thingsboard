@@ -26,6 +26,8 @@ import energy, { EnergyUnits } from '@core/services/unit/definitions/energy';
 import force, { ForceUnits } from '@core/services/unit/definitions/force';
 import frequency, { FrequencyUnits } from '@core/services/unit/definitions/frequency';
 import illuminance,{ IlluminanceUnits } from '@core/services/unit/definitions/illuminance';
+import length, { LengthUnits } from '@core/services/unit/definitions/length';
+import mass, { MassUnits } from '@core/services/unit/definitions/mass';
 import temperature, { TemperatureUnits } from './temperature';
 import time, { TimeUnits } from './time';
 
@@ -41,6 +43,8 @@ export type AllMeasuresUnits =
   | ForceUnits
   | FrequencyUnits
   | IlluminanceUnits
+  | LengthUnits
+  | MassUnits
   | TemperatureUnits
   | TimeUnits;
 
@@ -56,6 +60,8 @@ export type AllMeasures =
   | 'force'
   | 'frequency'
   | 'illuminance'
+  | 'length'
+  | 'mass'
   | 'temperature'
   | 'time';
 
@@ -74,6 +80,8 @@ const allMeasures: Record<
   force,
   frequency,
   illuminance,
+  length,
+  mass,
   temperature,
   time,
 };

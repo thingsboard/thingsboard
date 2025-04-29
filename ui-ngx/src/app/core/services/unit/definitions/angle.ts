@@ -18,7 +18,7 @@ import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type AngleUnits = AngleMetricUnits;
 
-export type AngleMetricUnits = 'rad' | 'deg' | 'grad' | 'arcmin' | 'arcsec' | 'mil' | 'rev';
+export type AngleMetricUnits = 'rad' | 'deg' | 'grad' | 'arcmin' | 'arcsec' | 'mrad' | 'rev';
 
 const METRIC: TbMeasureUnits<AngleMetricUnits> = {
   units: {
@@ -47,8 +47,8 @@ const METRIC: TbMeasureUnits<AngleMetricUnits> = {
       tags: ['angle', 'arcsecond', 'arcseconds', 'arcsec'],
       to_anchor: 1 / 3600
     },
-    mil: {
-      name: 'unit.mil',
+    mrad: {
+      name: 'unit.milliradian',
       tags: ['angle', 'military angle', 'angular mil', 'mil'],
       to_anchor: 9 / (50 * Math.PI),
     },
