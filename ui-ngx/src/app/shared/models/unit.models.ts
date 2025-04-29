@@ -63,6 +63,23 @@ export interface TbMeasureUnits<TUnits extends string> {
   units?: Partial<Record<TUnits, Unit>>;
 }
 
+export interface Conversion<TMeasures extends string, TUnits extends string> {
+  abbr: TUnits;
+  measure: TMeasures;
+  system: UnitSystem;
+  unit: Unit;
+}
+
+export type UnitCache<TMeasures, TUnits> = Map<
+  string,
+  {
+    system: UnitSystem;
+    measure: TMeasures;
+    unit: Unit;
+    abbr: TUnits;
+  }
+>;
+
 const searchUnitTags = (unit: UnitDescription, searchText: string): boolean =>
   !!unit.tags.find(t => t.toUpperCase().includes(searchText));
 
