@@ -16,53 +16,54 @@
 
 -->
 <div class="tb-convert-settings-panel">
-  <div class="tb-convert-settings-title">Unit convertion settings</div>
+  <div class="tb-convert-settings-title" translate>unit.convert.units-conversion-settings</div>
   <div class="tb-convert-settings-panel-content" [formGroup]="convertUnitForm">
     <div class="tb-form-row">
-      <div class="min-w-25">From</div>
-      <tb-unit-input class="flex-1" [required]="required" formControlName="from"></tb-unit-input>
+      <div class="min-w-25" [class.tb-disabled-label]="convertUnitForm.get('from').disabled" translate>unit.convert.convert-from</div>
+      <tb-unit-input #unitFrom class="flex-1" [required]="required" formControlName="from"></tb-unit-input>
     </div>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="convertUnit">
-        Convert units
+        <div tb-hint-tooltip-icon="{{ 'unit.convert.convert-unit-hint' | translate }}">
+          {{ 'unit.convert.convert-unit' | translate }}
+        </div>
       </mat-slide-toggle>
     </div>
-    @if(convertUnitForm.get('convertUnit').value) {
-      <div class="tb-form-row">
-        <div class="min-w-25">Metrical</div>
-        <tb-unit-input class="flex-1"
-                       formControlName="METRIC"
-                       [unitSystem]="UnitSystem.METRIC"
-                       [measure]="measure">
-        </tb-unit-input>
-      </div>
-      <div class="tb-form-row">
-        <div class="min-w-25">Imperial</div>
-        <tb-unit-input class="flex-1"
-                       formControlName="IMPERIAL"
-                       [unitSystem]="UnitSystem.IMPERIAL"
-                       [measure]="measure">
-        </tb-unit-input>
-      </div>
-      <div class="tb-form-row">
-        <div class="min-w-25">Hybrid</div>
-        <tb-unit-input class="flex-1"
-                       formControlName="HYBRID"
-                       [measure]="measure">
-        </tb-unit-input>
-      </div>
-    }
+    <div class="tb-form-row">
+      <div class="min-w-25" [class.tb-disabled-label]="convertUnitForm.get('METRIC').disabled" translate>unit.convert.to-metric</div>
+      <tb-unit-input class="flex-1"
+                     formControlName="METRIC"
+                     [unitSystem]="UnitSystem.METRIC"
+                     [measure]="measure">
+      </tb-unit-input>
+    </div>
+    <div class="tb-form-row">
+      <div class="min-w-25" [class.tb-disabled-label]="convertUnitForm.get('IMPERIAL').disabled" translate>unit.convert.to-imperial</div>
+      <tb-unit-input class="flex-1"
+                     formControlName="IMPERIAL"
+                     [unitSystem]="UnitSystem.IMPERIAL"
+                     [measure]="measure">
+      </tb-unit-input>
+    </div>
+    <div class="tb-form-row">
+      <div class="min-w-25" [class.tb-disabled-label]="convertUnitForm.get('HYBRID').disabled" translate>unit.convert.to-imperial</div>
+      <tb-unit-input class="flex-1"
+                     formControlName="HYBRID"
+                     [measure]="measure">
+      </tb-unit-input>
+    </div>
   </div>
   <div class="tb-convert-settings-panel-buttons">
     <button mat-button
             color="primary"
             type="button"
             (click)="cancel()">
-      {{ 'action.cancel' | translate }}
+      {{ (disabled ? 'action.close': 'action.cancel') | translate }}
     </button>
     <button mat-raised-button
             color="primary"
             type="button"
+            *ngIf="!disabled"
             (click)="applyUnitSettings()"
             [disabled]="convertUnitForm.invalid || convertUnitForm.pristine">
       {{ 'action.apply' | translate }}

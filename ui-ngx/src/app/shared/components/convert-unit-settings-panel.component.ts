@@ -14,14 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { TbUnit, UnitDescription, UnitSystem } from '@shared/models/unit.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UnitService } from '@core/services/unit/unit.service';
 import { AllMeasures } from '@core/services/unit/definitions/all';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, first } from 'rxjs/operators';
+import { isEmptyStr } from '@core/utils';
+import type { UnitInputComponent } from '@shared/components/unit-input.component';
 
 @Component({
   selector: 'tb-covert-unit-settings-panel',
@@ -32,11 +34,16 @@ import { debounceTime } from 'rxjs/operators';
 })
 export class ConvertUnitSettingsPanelComponent implements OnInit {
 
+  @ViewChild('unitFrom', {static: true}) unitFrom: UnitInputComponent;
+
   @Input()
   unit: TbUnit;
 
   @Input()
   required: boolean;
+
+  @Input()
+  disabled: boolean;
 
   @Output()
   unitSettingsApplied = new EventEmitter<TbUnit>();
@@ -67,15 +74,22 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
         this.convertUnitForm.get('convertUnit').enable({emitEvent: true});
         this.measure = unitDescription.measure;
         if (unitDescription.system === UnitSystem.IMPERIAL) {
+          this.convertUnitForm.get('METRIC').setValue(this.unitService.getDefaultUnit(this.measure, UnitSystem.METRIC), {emitEvent: false});
           this.convertUnitForm.get('IMPERIAL').setValue(unit, {emitEvent: false});
           this.convertUnitForm.get('HYBRID').setValue(unit, {emitEvent: false});
         } else {
           this.convertUnitForm.get('METRIC').setValue(unit, {emitEvent: false});
+          this.convertUnitForm.get('IMPERIAL').setValue(this.unitService.getDefaultUnit(this.measure, UnitSystem.IMPERIAL), {emitEvent: false});
           this.convertUnitForm.get('HYBRID').setValue(unit, {emitEvent: false});
         }
       } else {
         this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
         this.convertUnitForm.get('convertUnit').disable({emitEvent: false});
+        this.convertUnitForm.patchValue({
+          METRIC: '',
+          IMPERIAL: '',
+          HYBRID: ''
+        }, {emitEvent: false});
       }
     })
 
@@ -91,9 +105,6 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
         this.convertUnitForm.get('IMPERIAL').disable({emitEvent: false});
         this.convertUnitForm.get('HYBRID').disable({emitEvent: false});
       }
-      setTimeout(() => {
-        this.popover.updatePosition();
-      }, 0);
     });
   }
 
@@ -119,6 +130,13 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
       this.measure = unitDescription.measure;
     } else {
       this.convertUnitForm.get('convertUnit').disable({emitEvent: false});
+    }
+    if (this.disabled) {
+      this.convertUnitForm.disable({emitEvent: false});
+    } else if (this.unit === null || isEmptyStr(this.unit)) {
+      this.popover.tbAnimationDone.pipe(first()).subscribe(() => {
+        this.unitFrom.unitInput.nativeElement.focus();
+      });
     }
   }
 

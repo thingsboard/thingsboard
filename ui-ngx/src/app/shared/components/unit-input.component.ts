@@ -37,7 +37,7 @@ import { AllMeasures } from '@core/services/unit/definitions/all';
 import { UnitService } from '@core/services/unit/unit.service';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ConvertUnitSettingsPanelComponent } from '@shared/components/convert-unit-settings-panel.component';
-import { isNotEmptyStr } from '@core/utils';
+import { isNotEmptyStr, isObject } from '@core/utils';
 
 @Component({
   selector: 'tb-unit-input',
@@ -59,7 +59,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
 
   unitsFormControl: FormControl<TbUnit | UnitDescription>;
 
-  @Input()
+  @Input({transform: booleanAttribute})
   disabled: boolean;
 
   @Input({transform: booleanAttribute})
@@ -81,13 +81,13 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
 
   searchText = '';
 
-  isGroupOption = false;
+  isUnitMapping = false;
 
   private dirty = false;
 
   private modelValue: TbUnit | null;
 
-  fetchUnits$: Observable<Array<[AllMeasures, Array<UnitDescription>]>> = null;
+  private fetchUnits$: Observable<Array<[AllMeasures, Array<UnitDescription>]>> = null;
 
   private propagateChange = (_val: any) => {};
 
@@ -109,9 +109,6 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
         }),
         mergeMap(symbol => this.fetchUnits(symbol))
       );
-    if (!!this.measure || !!this.tagFilter) {
-      this.isGroupOption = true;
-    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -121,11 +118,6 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
         if (propName === 'measure' || propName === 'unitSystem') {
           this.fetchUnits$ = null;
           this.dirty = true;
-          if (!!this.measure || !!this.tagFilter) {
-            this.isGroupOption = true;
-          } else {
-            this.isGroupOption = false;
-          }
         }
       }
     }
@@ -136,8 +128,10 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     this.modelValue = symbol;
     if (typeof symbol === 'string') {
       this.unitsFormControl.patchValue(this.unitService.getUnitDescription(symbol) ?? symbol, {emitEvent: false});
+      this.isUnitMapping = false;
     } else {
       this.unitsFormControl.patchValue(symbol, {emitEvent: false});
+      this.isUnitMapping = symbol !== null;
     }
     this.dirty = true;
   }
@@ -172,18 +166,25 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     }
   }
 
-  clear() {
+  clear($event: Event) {
+    $event.stopPropagation();
     this.unitsFormControl.patchValue(null, {emitEvent: true});
-    setTimeout(() => {
-      this.unitInput.nativeElement.blur();
-      this.unitInput.nativeElement.focus();
-    }, 0);
+    if (!this.allowConverted) {
+      setTimeout(() => {
+        this.unitInput.nativeElement.blur();
+        this.unitInput.nativeElement.focus();
+      }, 0);
+    }
   }
 
   openConvertSettingsPopup($event: Event) {
+    if (!this.allowConverted) {
+      return;
+    }
     if ($event) {
       $event.stopPropagation();
     }
+    this.unitInput.nativeElement.blur();
     const trigger = this.elementRef.nativeElement;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
@@ -196,7 +197,8 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
         preferredPlacement: ['left', 'bottom', 'top'],
         context: {
           unit: this.getTbUnit(this.unitsFormControl.value),
-          required: this.required
+          required: this.required,
+          disabled: this.disabled,
         },
         isModal: true
       });
@@ -212,6 +214,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     const res = this.getTbUnit(value);
     if (this.modelValue !== res) {
       this.modelValue = res;
+      this.isUnitMapping = (res !== null && isObject(res));
       this.propagateChange(this.modelValue);
     }
   }

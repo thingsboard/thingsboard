@@ -5847,6 +5847,16 @@
         "background-blur": "Background blur"
     },
     "unit": {
+        "convert": {
+            "set-units-conversion-settings": "Set units conversion settings",
+            "units-conversion-settings": "Units conversion settings",
+            "convert-from": "Convert from",
+            "to-metric": "To metric",
+            "to-imperial": "To imperial",
+            "to-hybrid": "To hybrid",
+            "convert-unit": "Convert unit",
+            "convert-unit-hint": "Work only with the default unit"
+        },
         "unit-system": "Unit system",
         "unit-system-type": {
           "AUTO": "Auto",

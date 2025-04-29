@@ -158,68 +158,31 @@ export class Converter<
     return result / destination.unit.to_anchor;
   }
 
-  // toBest(options?: {
-  //   exclude?: (TUnits | (string & {}))[];
-  //   cutOffNumber?: number;
-  //   system?: TSystems | (string & {});
-  // }): BestResult<TUnits> | null {
-  //   if (this.origin == null)
-  //     throw new OperationOrderError('.toBest must be called after .from');
-  //
-  //   const isNegative = this.val < 0;
-  //
-  //   let exclude: (TUnits | (string & {}))[] = [];
-  //   let cutOffNumber = isNegative ? -1 : 1;
-  //   let system: TSystems | (string & {}) = this.origin.system;
-  //
-  //   if (typeof options === 'object') {
-  //     exclude = options.exclude ?? [];
-  //     cutOffNumber = options.cutOffNumber ?? cutOffNumber;
-  //     system = options.system ?? this.origin.system;
-  //   }
-  //
-  //   let best: BestResult<TUnits> | null = null;
-  //   /**
-  //    Looks through every possibility for the 'best' available unit.
-  //    i.e. Where the value has the fewest numbers before the decimal point,
-  //    but is still higher than 1.
-  //    */
-  //   for (const possibility of this.possibilities()) {
-  //     const unit = this.describe(possibility);
-  //     const isIncluded = exclude.indexOf(possibility) === -1;
-  //
-  //     if (isIncluded && unit.system === system) {
-  //       const result = this.to(possibility);
-  //       if (isNegative ? result > cutOffNumber : result < cutOffNumber) {
-  //         continue;
-  //       }
-  //       if (
-  //         best === null ||
-  //         (isNegative
-  //           ? result <= cutOffNumber && result > best.val
-  //           : result >= cutOffNumber && result < best.val)
-  //       ) {
-  //         best = {
-  //           val: result,
-  //           unit: possibility,
-  //           name: unit.name,
-  //           tags: unit.tags
-  //         };
-  //       }
-  //     }
-  //   }
-  //
-  //   if (best == null) {
-  //     return {
-  //       val: this.val,
-  //       unit: this.origin.abbr,
-  //       name: this.origin.unit.name,
-  //       tags: this.origin.unit.tags
-  //     };
-  //   }
-  //
-  //   return best;
-  // }
+  getDefaultUnit(measureName: TMeasures | (string & {}), unitSystem: UnitSystem): TUnits {
+    if (!this.isMeasure(measureName)) {
+      return null;
+    }
+    const measure = this.measureData[measureName];
+    let currentUnitSystem = unitSystem;
+    let units = measure[currentUnitSystem].units;
+    if (isUndefinedOrNull(units)) {
+      if (currentUnitSystem === UnitSystem.IMPERIAL) {
+        currentUnitSystem = UnitSystem.METRIC;
+        units = measure[currentUnitSystem].units;
+      }
+      if (!units) {
+        console.log(`Measure "${measureName}" in ${currentUnitSystem} system is not found.`);
+        return null;
+      }
+    }
+    for (const [abbr, unit] of Object.entries(
+      units as Partial<Record<TUnits, Unit>>
+    ) as [TUnits, Unit][]) {
+      if (unit.to_anchor === 1 && (isUndefinedOrNull(unit.anchor_shift) || unit.anchor_shift === 0)) {
+        return abbr;
+      }
+    }
+  }
 
   getUnit(abbr: TUnits | (string & {})): Conversion<TMeasures, TUnits> | null {
     return this.unitCache.get(abbr) ?? null;

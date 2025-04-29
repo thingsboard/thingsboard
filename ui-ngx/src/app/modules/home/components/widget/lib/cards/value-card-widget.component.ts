@@ -33,6 +33,7 @@ import {
   ColorProcessor,
   ComponentStyle,
   DateFormatProcessor,
+  FormatValueProcessor,
   getDataKey,
   getLabel,
   getSingleTsValue,
@@ -46,7 +47,6 @@ import { WidgetComponent } from '@home/components/widget/widget.component';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { FormatValueProcessor } from '@shared/models/unit.models';
 
 const squareLayoutSize = 160;
 const horizontalLayoutHeight = 80;

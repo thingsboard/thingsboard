@@ -15,23 +15,20 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="outline" class="tb-inline-field tb-suffix-show-on-hover w-full flex-1" subscriptSizing="dynamic">
+<mat-form-field appearance="outline" class="tb-inline-field tb-suffix-show-on-hover w-full flex-1" subscriptSizing="dynamic"
+                (click)="openConvertSettingsPopup($event)">
   <input matInput #unitInput [formControl]="unitsFormControl"
          placeholder="{{ 'widget-config.set' | translate }}"
+         [class.!pointer-events-none]="disabled"
          (focusin)="onFocus()"
-         [matAutocomplete]="unitsAutocomplete">
-  <button type="button"
-          *ngIf="!disabled && allowConverted"
-          class="tb-icon-24"
-          [class.mr-2]="!unitsFormControl.value || disabled || unitsFormControl.invalid"
-          matSuffix mat-icon-button (click)="openConvertSettingsPopup($event)">
-    <tb-icon>mdi:tape-measure</tb-icon>
-  </button>
+         [matAutocomplete]="unitsAutocomplete"
+         [matAutocompleteDisabled]="allowConverted">
   <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid"
           type="button"
           class="tb-icon-24 mr-2"
+          [class.mr-2]="!allowConverted || !isUnitMapping"
           matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
+          (click)="clear($event)">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
   <mat-icon matSuffix
@@ -41,29 +38,27 @@
             *ngIf="unitsFormControl.hasError('required')" class="material-icons tb-suffix-show-always tb-error">
     warning
   </mat-icon>
+  <tb-icon matSuffix
+           [color]="disabled ? null : 'primary'"
+           matTooltipPosition="above"
+           [matTooltip]="'unit.convert.set-units-conversion-settings' | translate"
+           *ngIf="allowConverted && isUnitMapping" class="material-icons tb-icon-24 tb-suffix-show-always">
+    mdi:swap-vertical-circle-outline
+  </tb-icon>
   <mat-autocomplete
     #unitsAutocomplete="matAutocomplete"
     class="tb-autocomplete tb-unit-input-autocomplete"
     panelWidth="fit-content"
     [displayWith]="displayUnitFn.bind(this)">
     @for (group of filteredUnits | async; track group[0]) {
-      @if ((fetchUnits$ | async).length > 1) {
-        <mat-optgroup [label]="'unit.measures.' + group[0] | translate">
-          @for(unit of group[1]; track unit.abbr) {
-            <mat-option [value]="unit">
-              <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
-              <span class="tb-unit-symbol" [innerHTML]="unit.abbr | highlight:searchText:true:'ig'"></span>
-            </mat-option>
-          }
-        </mat-optgroup>
-      } @else {
+      <mat-optgroup [label]="'unit.measures.' + group[0] | translate">
         @for(unit of group[1]; track unit.abbr) {
           <mat-option [value]="unit">
             <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
             <span class="tb-unit-symbol" [innerHTML]="unit.abbr | highlight:searchText:true:'ig'"></span>
           </mat-option>
         }
-      }
-    }
+      </mat-optgroup>
+  }
   </mat-autocomplete>
 </mat-form-field>

@@ -76,6 +76,10 @@ export class UnitService {
     return this.converter.describe(abbr);
   }
 
+  getDefaultUnit(measure: AllMeasures, unitSystem: UnitSystem): AllMeasuresUnits {
+    return this.converter.getDefaultUnit(measure, unitSystem);
+  }
+
   geUnitConvertor(from: string, to: string): TbUnitConvertor {
     return this.converter.convertor(from, to);
   }

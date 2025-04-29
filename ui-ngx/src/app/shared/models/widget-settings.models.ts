@@ -14,7 +14,15 @@
 /// limitations under the License.
 ///
 
-import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, mergeDeep, parseFunction } from '@core/utils';
+import {
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isNumber,
+  isNumeric,
+  isUndefinedOrNull,
+  mergeDeep,
+  parseFunction
+} from '@core/utils';
 import {
   DataEntry,
   DataKey,
@@ -45,6 +53,8 @@ import {
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
+import { UnitService } from '@core/services/unit/unit.service';
+import { TbUnit, TbUnitConvertor, TbUnitMapping } from '@shared/models/unit.models';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -849,6 +859,107 @@ export class AutoDateFormatProcessor extends DateFormatProcessor {
       this.formatted = '&nbsp;';
     }
     return this.formatted;
+  }
+}
+
+export interface FormatValueSettingProcessor {
+  dec?: number;
+  units?: TbUnit;
+  showZeroDecimals?: boolean;
+}
+
+export abstract class FormatValueProcessor {
+
+  static fromSettings($injector: Injector, settings: FormatValueSettingProcessor): FormatValueProcessor {
+    if (typeof settings.units !== 'string' && isDefinedAndNotNull(settings.units?.from)) {
+      return new ConvertUnitProcessor($injector, settings)
+    } else {
+      return new SimpleUnitProcessor($injector, settings);
+    }
+  }
+
+  protected constructor(protected $injector: Injector,
+                        protected settings: FormatValueSettingProcessor) {
+  }
+
+  abstract format(value: any): string;
+}
+
+export class SimpleUnitProcessor extends FormatValueProcessor {
+
+  private readonly isDefinedUnit: boolean;
+  private readonly isDefinedDec: boolean;
+  private readonly showZeroDecimals: boolean;
+
+  constructor(protected $injector: Injector,
+              protected settings: FormatValueSettingProcessor) {
+    super($injector, settings);
+    this.isDefinedUnit = isNotEmptyStr(settings.units);
+    this.isDefinedDec = isDefinedAndNotNull(settings.dec);
+    this.showZeroDecimals = !!settings.showZeroDecimals;
+  }
+
+  format(value: any): string {
+    if (isDefinedAndNotNull(value) && isNumeric(value) && (this.isDefinedDec || this.isDefinedUnit || Number(value).toString() === value)) {
+      let formatted = value;
+      if (this.isDefinedDec) {
+        formatted = Number(formatted).toFixed(this.settings.dec);
+      }
+      if (!this.showZeroDecimals) {
+        formatted = Number(formatted)
+      }
+      formatted = formatted.toString();
+      if (this.isDefinedUnit) {
+        formatted += ` ${this.settings.units}`;
+      }
+      return formatted;
+    }
+    return value ?? '';
+  }
+}
+
+export class ConvertUnitProcessor extends FormatValueProcessor {
+
+  private readonly isDefinedDec: boolean;
+  private readonly showZeroDecimals: boolean;
+  private readonly unitConvertor: TbUnitConvertor;
+  private readonly unitAbbr: string;
+
+  constructor(protected $injector: Injector,
+              protected settings: FormatValueSettingProcessor) {
+    super($injector, settings);
+    const unitService = this.$injector.get(UnitService);
+    const userUnitSystem = unitService.getUnitSystem();
+    const unit = settings.units as TbUnitMapping;
+    const fromUnit = unit.from;
+    this.unitAbbr = isNotEmptyStr(unit[userUnitSystem]) ? unit[userUnitSystem] : fromUnit;
+    try {
+      this.unitConvertor = unitService.geUnitConvertor(fromUnit, this.unitAbbr);
+    } catch (e) {/**/}
+
+    this.isDefinedDec = isDefinedAndNotNull(settings.dec);
+    this.showZeroDecimals = !!settings.showZeroDecimals;
+  }
+
+  format(value: any): string {
+    if (isDefinedAndNotNull(value) && isNumeric(value)) {
+      let formatted: number | string = Number(value);
+      if (this.unitConvertor) {
+        formatted = this.unitConvertor(value);
+      }
+      if (this.isDefinedDec) {
+        formatted = Number(formatted).toFixed(this.settings.dec);
+      }
+      if (!this.showZeroDecimals) {
+        formatted = Number(formatted)
+      }
+      formatted = formatted.toString();
+      if (this.unitAbbr) {
+        formatted += ` ${this.unitAbbr}`;
+      }
+      return formatted;
+    }
+    return value ?? '';
   }
 }
 
