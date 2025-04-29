@@ -16,9 +16,9 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type TimeUnits = TimeSIUnits;
+export type TimeUnits = TimeMetricUnits;
 
-export type TimeSIUnits =
+export type TimeMetricUnits =
   | 'ns'
   | 'μs'
   | 'ms'
@@ -32,7 +32,7 @@ export type TimeSIUnits =
 
 const daysInYear = 365.25;
 
-const METRIC: TbMeasureUnits<TimeSIUnits> = {
+const METRIC: TbMeasureUnits<TimeMetricUnits> = {
   units: {
     ns: {
       name: 'unit.nanosecond',

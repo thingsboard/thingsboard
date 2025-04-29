@@ -19,6 +19,9 @@ import acceleration, { AccelerationUnits } from '@core/services/unit/definitions
 import angle, { AngleUnits } from '@core/services/unit/definitions/angle';
 import angularAcceleration, { AngularAccelerationUnits } from '@core/services/unit/definitions/angular-acceleration';
 import area, { AreaUnits } from '@core/services/unit/definitions/area';
+import charge, { ChargeUnits } from '@core/services/unit/definitions/charge';
+import digital, { DigitalUnits } from '@core/services/unit/definitions/digital';
+import electricCurrent, { ElectricCurrentUnits } from '@core/services/unit/definitions/electric-current';
 import temperature, { TemperatureUnits } from './temperature';
 import time, { TimeUnits } from './time';
 
@@ -27,6 +30,9 @@ export type AllMeasuresUnits =
   | AngleUnits
   | AngularAccelerationUnits
   | AreaUnits
+  | ChargeUnits
+  | DigitalUnits
+  | ElectricCurrentUnits
   | TemperatureUnits
   | TimeUnits;
 
@@ -35,6 +41,9 @@ export type AllMeasures =
   | 'angle'
   | 'angular-acceleration'
   | 'area'
+  | 'charge'
+  | 'digital'
+  | 'electric-current'
   | 'temperature'
   | 'time';
 
@@ -46,6 +55,9 @@ const allMeasures: Record<
   angle,
   'angular-acceleration': angularAcceleration,
   area,
+  charge,
+  digital,
+  'electric-current': electricCurrent,
   temperature,
   time,
 };

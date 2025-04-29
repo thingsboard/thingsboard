@@ -16,11 +16,11 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type AngleUnits = AngleSIUnits;
+export type AngleUnits = AngleMetricUnits;
 
-export type AngleSIUnits = 'rad' | 'deg' | 'grad' | 'arcmin' | 'arcsec' | 'mil' | 'rev';
+export type AngleMetricUnits = 'rad' | 'deg' | 'grad' | 'arcmin' | 'arcsec' | 'mil' | 'rev';
 
-const METRIC: TbMeasureUnits<AngleSIUnits> = {
+const METRIC: TbMeasureUnits<AngleMetricUnits> = {
   units: {
     rad: {
       name: 'unit.rad',
