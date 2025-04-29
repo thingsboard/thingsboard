@@ -35,7 +35,7 @@ public class TransportConfigurationTest extends AbstractSecurityLwM2MIntegration
 
     @Test
     public void testTransportConfigurationObserveStrategyBeforeParseNotNullAfterParseNotNull_STRATEGY_COMPOSITE_ALL() throws Exception {
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_STRATEGY_COMPOSITE_ALL, getBootstrapServerCredentialsNoSec(NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_COMPOSITE_OBSERVE, getBootstrapServerCredentialsNoSec(NONE));
         Assert.assertNotNull(transportConfiguration.getObserveAttr().getObserveStrategy());
         Assert.assertEquals(COMPOSITE_ALL, transportConfiguration.getObserveAttr().getObserveStrategy());
     }

@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.script.api.tbel.TbDate;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -196,6 +197,28 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                        "    \"attributeLwm2m\": {}\n" +
                        "  }";
 
+    public static  String TELEMETRY_WITH_COMPOSITE_OBSERVE =
+               "    {\n" +
+                       "    \"keyName\": {\n" +
+                       "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
+                       "      \"/19_1.1/0/2\": \"dataCreationTime\"\n" +
+                       "    },\n" +
+                       "    \"observe\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
+                       "    ],\n" +
+                       "    \"attribute\": [],\n" +
+                       "    \"telemetry\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
+                       "    ],\n" +
+                       "    \"attributeLwm2m\": {},\n" +
+                       "    \"observeStrategy\": 1\n" +
+                       "  }";
+
     public static final String CLIENT_LWM2M_SETTINGS =
             "     {\n" +
                     "    \"edrxCycle\": null,\n" +
@@ -208,20 +231,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    \"pagingTransmissionWindow\": null,\n" +
                     "    \"clientOnlyObserveAfterConnect\": 1\n" +
                     "  }";
-    public static  String TELEMETRY_WITH_STRATEGY_COMPOSITE_ALL =
-            "    {\n" +
-                    "    \"keyName\": {\n" +
-                    "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
-                    "    },\n" +
-                    "    \"observe\": [],\n" +
-                    "    \"attribute\": [\n" +
-                    "    ],\n" +
-                    "    \"telemetry\": [\n" +
-                    "      \"/3_1.2/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attributeLwm2m\": {},\n" +
-                    "    \"observeStrategy\": 1\n" +
-                    "  }";
+
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccessUpdate = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS, ON_UPDATE_STARTED, ON_UPDATE_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
@@ -261,10 +271,10 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         }
     }
 
-    public void basicTestConnectionObserveTelemetry(Security security,
-                                                    LwM2MDeviceCredentials deviceCredentials,
-                                                    String endpoint,
-                                                    boolean queueMode) throws Exception {
+    public void basicTestConnectionObserveSingleTelemetry(Security security,
+                                                          LwM2MDeviceCredentials deviceCredentials,
+                                                          String endpoint,
+                                                          boolean queueMode) throws Exception {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITHOUT_OBSERVE, getBootstrapServerCredentialsNoSec(NONE));
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
         Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
@@ -298,8 +308,56 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         int expectedMin = 5;
         Assert.assertTrue(expectedMax >= Long.parseLong(tsValue.getValue()));
         Assert.assertTrue(expectedMin <= Long.parseLong(tsValue.getValue()));
+    }
 
+    public void basicTestConnectionObserveCompositeTelemetry(Security security,
+                                                    LwM2MDeviceCredentials deviceCredentials,
+                                                    String endpoint,
+                                                    Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
+                                                    int cntObserve) throws Exception {
 
+        DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
+        Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
+
+        SingleEntityFilter sef = new SingleEntityFilter();
+        sef.setSingleEntity(device.getId());
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        String key1 = "batteryLevel";
+        String key2 = "dataCreationTime";
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, key1)));
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, key2)));
+        EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        EntityDataCmd cmd = new EntityDataCmd(2, edq, null, latestCmd, null);
+        getWsClient().send(cmd);
+        getWsClient().waitForReply();
+
+        getWsClient().registerWaitForUpdate();
+        this.createNewClient(security, null, false, endpoint, null, true, device.getId().getId().toString());
+        awaitObserveReadAll(cntObserve, lwM2MTestClient.getDeviceIdStr());
+        String msg = getWsClient().waitForUpdate();
+
+        EntityDataUpdate update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
+        Assert.assertEquals(2, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        var tsValue1 = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get(key1);
+        var tsValue2 = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get(key2);
+        if (tsValue1 != null) {
+            Assert.assertThat(Long.parseLong(tsValue1.getValue()), instanceOf(Long.class));
+            int expectedMax = 50;
+            int expectedMin = 5;
+            Assert.assertTrue(expectedMax >= Long.parseLong(tsValue1.getValue()));
+            Assert.assertTrue(expectedMin <= Long.parseLong(tsValue1.getValue()));
+        } else {
+            String pattern = "MMM dd, yyyy HH:mm a";
+            TbDate d = new TbDate(tsValue2.getValue(), pattern, "en-US");
+            Assert.assertNotNull(d);
+        }
     }
 
     protected DeviceProfile createLwm2mDeviceProfile(String name, Lwm2mDeviceProfileTransportConfiguration transportConfiguration) throws Exception {

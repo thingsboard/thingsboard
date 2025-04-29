@@ -17,8 +17,10 @@ package org.thingsboard.server.transport.lwm2m.security.sql;
 
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
+import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.COMPOSITE_BY_OBJECT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOOTSTRAP_ONLY;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
@@ -32,13 +34,31 @@ public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationT
     public void testWithNoSecConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
         String clientEndpoint = CLIENT_ENDPOINT_NO_SEC;
         LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-        super.basicTestConnectionObserveTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, false);
+        super.basicTestConnectionObserveSingleTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, false);
     }
+
     @Test
-    public void testWithNoSecQueueModeConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
+    public void testWithNoSecQueueModeConnectLwm2mSuccessAndObserveSingleTelemetry() throws Exception {
         String clientEndpoint = CLIENT_ENDPOINT_NO_SEC + "_QueueMode";
         LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-        super.basicTestConnectionObserveTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, true);
+        super.basicTestConnectionObserveSingleTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, true);
+    }
+
+    @Test
+    public void testWithNoSecQueueModeConnectLwm2mSuccessAndObserveCompositeAllTelemetry() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC + "_QueueMode";
+        LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = super.getTransportConfiguration(TELEMETRY_WITH_COMPOSITE_OBSERVE, getBootstrapServerCredentialsNoSec(NONE));
+        super.basicTestConnectionObserveCompositeTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, transportConfiguration, 1);
+    }
+
+    @Test
+    public void testWithNoSecQueueModeConnectLwm2mSuccessAndObserveCompositeByObjectTelemetry() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC + "_QueueMode";
+        LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = super.getTransportConfiguration(TELEMETRY_WITH_COMPOSITE_OBSERVE, getBootstrapServerCredentialsNoSec(NONE));
+        transportConfiguration.getObserveAttr().setObserveStrategy(COMPOSITE_BY_OBJECT);
+        super.basicTestConnectionObserveCompositeTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, transportConfiguration, 2);
     }
 
     // Bootstrap + Lwm2m
