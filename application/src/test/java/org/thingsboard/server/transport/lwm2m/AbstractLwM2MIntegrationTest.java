@@ -208,6 +208,20 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    \"pagingTransmissionWindow\": null,\n" +
                     "    \"clientOnlyObserveAfterConnect\": 1\n" +
                     "  }";
+    public static  String TELEMETRY_WITH_STRATEGY_COMPOSITE_ALL =
+            "    {\n" +
+                    "    \"keyName\": {\n" +
+                    "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
+                    "    },\n" +
+                    "    \"observe\": [],\n" +
+                    "    \"attribute\": [\n" +
+                    "    ],\n" +
+                    "    \"telemetry\": [\n" +
+                    "      \"/3_1.2/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"attributeLwm2m\": {},\n" +
+                    "    \"observeStrategy\": 1\n" +
+                    "  }";
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccessUpdate = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS, ON_UPDATE_STARTED, ON_UPDATE_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
