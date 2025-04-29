@@ -44,15 +44,10 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "WHERE d.id = :edgeId")
     EdgeInfoEntity findEdgeInfoById(@Param("edgeId") UUID edgeId);
 
-    @Query(value = "SELECT ee.id, ee.created_time, ee.additional_info, ee.customer_id, " +
-            "ee.root_rule_chain_id, ee.type, ee.name, ee.label, ee.routing_key, " +
-            "ee.secret, ee.tenant_id, ee.version " +
-            "FROM edge ee " +
-            "JOIN attribute_kv ON ee.id = attribute_kv.entity_id " +
-            "JOIN key_dictionary ON attribute_kv.attribute_key = key_dictionary.key_id " +
-            "WHERE attribute_kv.bool_v = true AND key_dictionary.key = 'active' " +
-            "AND (:textSearch IS NULL OR ee.name ILIKE CONCAT('%', :textSearch, '%')) " +
-            "ORDER BY ee.id", nativeQuery = true)
+    @Query(value = "SELECT * " +
+            "FROM edge_active_attribute_view edge_active " +
+            "WHERE (:textSearch IS NULL OR edge_active.name ILIKE CONCAT('%', :textSearch, '%')) " +
+            "ORDER BY edge_active.id", nativeQuery = true)
     Page<EdgeEntity> findActiveEdges(@Param("textSearch") String textSearch,
                                  Pageable pageable);
 
