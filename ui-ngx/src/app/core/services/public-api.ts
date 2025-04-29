@@ -15,6 +15,7 @@
 ///
 
 export * from './script/node-script-test.service';
+export * from './unit/unit.service';
 export * from './broadcast.models';
 export * from './broadcast.service';
 export * from './dashboard-utils.service';

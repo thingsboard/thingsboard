@@ -22,6 +22,10 @@ import area, { AreaUnits } from '@core/services/unit/definitions/area';
 import charge, { ChargeUnits } from '@core/services/unit/definitions/charge';
 import digital, { DigitalUnits } from '@core/services/unit/definitions/digital';
 import electricCurrent, { ElectricCurrentUnits } from '@core/services/unit/definitions/electric-current';
+import energy, { EnergyUnits } from '@core/services/unit/definitions/energy';
+import force, { ForceUnits } from '@core/services/unit/definitions/force';
+import frequency, { FrequencyUnits } from '@core/services/unit/definitions/frequency';
+import illuminance,{ IlluminanceUnits } from '@core/services/unit/definitions/illuminance';
 import temperature, { TemperatureUnits } from './temperature';
 import time, { TimeUnits } from './time';
 
@@ -33,6 +37,10 @@ export type AllMeasuresUnits =
   | ChargeUnits
   | DigitalUnits
   | ElectricCurrentUnits
+  | EnergyUnits
+  | ForceUnits
+  | FrequencyUnits
+  | IlluminanceUnits
   | TemperatureUnits
   | TimeUnits;
 
@@ -44,6 +52,10 @@ export type AllMeasures =
   | 'charge'
   | 'digital'
   | 'electric-current'
+  | 'energy'
+  | 'force'
+  | 'frequency'
+  | 'illuminance'
   | 'temperature'
   | 'time';
 
@@ -58,6 +70,10 @@ const allMeasures: Record<
   charge,
   digital,
   'electric-current': electricCurrent,
+  energy,
+  force,
+  frequency,
+  illuminance,
   temperature,
   time,
 };
