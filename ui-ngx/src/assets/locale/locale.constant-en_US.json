@@ -2209,6 +2209,15 @@
                 "v1-0": "1.0",
                 "v1-1": "1.1",
                 "v1-2": "1.2"
+            },
+            "observe-strategy": {
+                "observe-strategy": "Observe strategy",
+                "single": "Single",
+                "single-description": "One resource equals one single observe request",
+                "composite-all": "Composite all",
+                "composite-all-description": "All resources in one composite observe request",
+                "composite-by-object": "Composite by objects",
+                "composite-by-object-description": "Grouped composite observe requests by object"
             }
         },
         "snmp": {
