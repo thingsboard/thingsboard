@@ -28,7 +28,7 @@
               </mat-select-trigger>
               <mat-option *ngFor="let strategy of observeStrategyList" [value]="strategy">
                 {{ observeStrategyMap.get(strategy).name | translate  }}
-                <small style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <small style="display: block;">
                   {{ observeStrategyMap.get(strategy).description | translate }}
                 </small>
               </mat-option>
