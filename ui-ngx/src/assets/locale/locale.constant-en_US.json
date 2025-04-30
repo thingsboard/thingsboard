@@ -2209,6 +2209,15 @@
                 "v1-0": "1.0",
                 "v1-1": "1.1",
                 "v1-2": "1.2"
+            },
+            "observe-strategy": {
+                "observe-strategy": "Observe strategy",
+                "single": "Single",
+                "single-description": "One Observe request per resource (higher precision, more network traffic)",
+                "composite-all": "Composite all",
+                "composite-all-description": "All resources are observed with a single Composite Observe request (more efficient, less flexible)",
+                "composite-by-object": "Composite by objects",
+                "composite-by-object-description": "Resources are grouped by object type and observed using separate Composite Observe requests (balanced approach)"
             }
         },
         "snmp": {
