@@ -30,13 +30,4 @@ public class TaskResult {
     private boolean discarded;
     private TaskFailure failure;
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class TaskFailure {
-        private String error;
-        private Task task;
-    }
-
 }

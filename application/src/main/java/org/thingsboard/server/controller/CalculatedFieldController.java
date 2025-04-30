@@ -300,7 +300,7 @@ public class CalculatedFieldController extends BaseController {
                         " " + entityId.getId() +
                         " from " + startTs + " to " + endTs)
                 .configuration(CfReprocessingJobConfiguration.builder()
-                        .calculatedField(calculatedField)
+                        .calculatedFieldId(calculatedField.getId())
                         .startTs(startTs)
                         .endTs(endTs)
                         .build())

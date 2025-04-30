@@ -33,10 +33,42 @@ public class DummyTask extends Task {
     private int number;
     private long processingTimeMs;
     private List<String> errors; // errors for each attempt
+    private boolean failAlways;
+
+    @Override
+    public Object getKey() {
+        return number;
+    }
+
+    @Override
+    public TaskFailure toFailure(Throwable error) {
+        return new DummyTaskFailure(number, failAlways, error.getMessage());
+    }
 
     @Override
     public JobType getJobType() {
         return JobType.DUMMY;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @NoArgsConstructor
+    public static class DummyTaskFailure extends TaskFailure {
+
+        private int number;
+        private boolean failAlways;
+
+        public DummyTaskFailure(int number, boolean failAlways, String error) {
+            super(error);
+            this.number = number;
+            this.failAlways = failAlways;
+        }
+
+        @Override
+        public JobType getJobType() {
+            return JobType.DUMMY;
+        }
+
     }
 
 }

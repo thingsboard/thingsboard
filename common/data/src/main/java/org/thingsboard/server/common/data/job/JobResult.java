@@ -24,8 +24,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
@@ -41,7 +41,7 @@ public abstract class JobResult implements Serializable {
     private int failedCount;
     private int discardedCount;
     private Integer totalCount = null; // set when all tasks are submitted
-    private Map<String, String> failures = new HashMap<>();
+    private List<TaskFailure> failures = new ArrayList<>();
     private String generalError;
 
     private long cancellationTs;

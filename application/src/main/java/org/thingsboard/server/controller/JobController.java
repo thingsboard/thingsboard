@@ -82,4 +82,11 @@ public class JobController extends BaseController {
         jobManager.cancelJob(getTenantId(), new JobId(id));
     }
 
+    @PostMapping("/job/{id}/reprocess")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    public void reprocessJob(@PathVariable UUID id) throws ThingsboardException {
+        // todo check permissions
+        jobManager.reprocessJob(getTenantId(), new JobId(id));
+    }
+
 }

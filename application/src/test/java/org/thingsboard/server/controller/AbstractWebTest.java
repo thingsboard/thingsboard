@@ -1264,4 +1264,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return doGetTypedWithPageLink("/api/jobs?", new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
     }
 
+    protected void cancelJob(JobId jobId) throws Exception {
+        doPost("/api/job/" + jobId + "/cancel").andExpect(status().isOk());
+    }
+
+    protected void reprocessJob(JobId jobId) throws Exception {
+        doPost("/api/job/" + jobId + "/reprocess").andExpect(status().isOk());
+    }
+
 }

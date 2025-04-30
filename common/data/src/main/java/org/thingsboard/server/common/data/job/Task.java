@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.job;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -38,13 +39,17 @@ public abstract class Task {
 
     private TenantId tenantId;
     private JobId jobId;
-    private String key;
     private int retries;
 
     public Task() {
     }
 
     private int attempt = 0;
+
+    @JsonIgnore
+    public abstract Object getKey();
+
+    public abstract TaskFailure toFailure(Throwable error);
 
     public abstract JobType getJobType();
 

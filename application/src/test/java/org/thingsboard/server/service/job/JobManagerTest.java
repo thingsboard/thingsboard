@@ -26,6 +26,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.DummyJobConfiguration;
+import org.thingsboard.server.common.data.job.DummyTask.DummyTaskFailure;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStatus;
@@ -130,8 +131,8 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(jobResult.getSuccessfulCount()).isEqualTo(successfulTasks);
             assertThat(jobResult.getFailedCount()).isEqualTo(failedTasks);
             assertThat(jobResult.getTotalCount()).isEqualTo(successfulTasks + failedTasks);
-            assertThat(jobResult.getFailures().get("Task 1")).isEqualTo("error3"); // last error
-            assertThat(jobResult.getFailures().get("Task 2")).isEqualTo("error3"); // last error
+            assertThat(jobResult.getFailures().get(0).getError()).isEqualTo("error3"); // last error
+            assertThat(jobResult.getFailures().get(1).getError()).isEqualTo("error3"); // last error
             assertThat(jobResult.getCompletedCount()).isEqualTo(jobResult.getTotalCount());
         });
     }
@@ -151,7 +152,7 @@ public class JobManagerTest extends AbstractControllerTest {
                 .build()).getId();
 
         Thread.sleep(500);
-        jobManager.cancelJob(tenantId, jobId);
+        cancelJob(jobId);
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             Job job = findJobById(jobId);
             assertThat(job.getStatus()).isEqualTo(JobStatus.CANCELLED);
@@ -163,7 +164,7 @@ public class JobManagerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testCancelJob_simulateTaskProcessorRestart() {
+    public void testCancelJob_simulateTaskProcessorRestart() throws Exception {
         int tasksCount = 10;
         JobId jobId = jobManager.submitJob(Job.builder()
                 .tenantId(tenantId)
@@ -184,7 +185,7 @@ public class JobManagerTest extends AbstractControllerTest {
             }
             return null;
         }).when(taskProcessor).addToDiscardedJobs(any()); // ignoring cancellation event,
-        jobManager.cancelJob(tenantId, jobId);
+        cancelJob(jobId);
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             Job job = findJobById(jobId);
@@ -262,7 +263,7 @@ public class JobManagerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testCancelQueuedJob() {
+    public void testCancelQueuedJob() throws Exception {
         int tasksCount = 3;
         int jobsCount = 3;
         List<JobId> jobIds = new ArrayList<>();
@@ -281,7 +282,7 @@ public class JobManagerTest extends AbstractControllerTest {
         }
 
         for (int i = 1; i < jobIds.size(); i++) {
-            jobManager.cancelJob(tenantId, jobIds.get(i));
+            cancelJob(jobIds.get(i));
         }
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -326,6 +327,104 @@ public class JobManagerTest extends AbstractControllerTest {
         });
     }
 
-    // todo: job with zero tasks, reprocessing
+    @Test
+    public void testJobReprocessing() throws Exception {
+        int successfulTasks = 3;
+        int failedTasks = 2;
+        int totalTasksCount = successfulTasks + failedTasks;
+        JobId jobId = jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key("test-job")
+                .description("test job")
+                .configuration(DummyJobConfiguration.builder()
+                        .successfulTasksCount(successfulTasks)
+                        .failedTasksCount(failedTasks)
+                        .errors(List.of("error"))
+                        .taskProcessingTimeMs(100)
+                        .build())
+                .build()).getId();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.FAILED);
+            JobResult jobResult = job.getResult();
+            assertThat(jobResult.getSuccessfulCount()).isEqualTo(successfulTasks);
+            assertThat(jobResult.getFailedCount()).isEqualTo(failedTasks);
+
+            for (int i = 0, taskNumber = successfulTasks + 1; taskNumber <= totalTasksCount; i++, taskNumber++) {
+                DummyTaskFailure failure = (DummyTaskFailure) jobResult.getFailures().get(i);
+                assertThat(failure.getNumber()).isEqualTo(taskNumber);
+                assertThat(failure.getError()).isEqualTo("error");
+            }
+        });
+
+        reprocessJob(jobId);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(job.getResult().getSuccessfulCount()).isEqualTo(totalTasksCount);
+            assertThat(job.getResult().getFailedCount()).isZero();
+            assertThat(job.getResult().getTotalCount()).isEqualTo(totalTasksCount);
+            assertThat(job.getResult().getFailures()).isEmpty();
+        });
+    }
+
+    @Test
+    public void testJobReprocessing_somePermanentlyFailed() throws Exception {
+        int successfulTasks = 3;
+        int failedTasks = 2;
+        int permanentlyFailedTasks = 1;
+        int totalTasksCount = successfulTasks + failedTasks + permanentlyFailedTasks;
+        JobId jobId = jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key("test-job")
+                .description("test job")
+                .configuration(DummyJobConfiguration.builder()
+                        .successfulTasksCount(successfulTasks)
+                        .failedTasksCount(failedTasks)
+                        .permanentlyFailedTasksCount(permanentlyFailedTasks)
+                        .errors(List.of("error"))
+                        .taskProcessingTimeMs(100)
+                        .build())
+                .build()).getId();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.FAILED);
+            JobResult jobResult = job.getResult();
+            assertThat(jobResult.getSuccessfulCount()).isEqualTo(successfulTasks);
+            assertThat(jobResult.getFailedCount()).isEqualTo(failedTasks + permanentlyFailedTasks);
+            assertThat(jobResult.getTotalCount()).isEqualTo(totalTasksCount);
+
+            for (int i = 0, taskNumber = successfulTasks + 1; taskNumber <= totalTasksCount; i++, taskNumber++) {
+                DummyTaskFailure failure = (DummyTaskFailure) jobResult.getFailures().get(i);
+                assertThat(failure.getNumber()).isEqualTo(taskNumber);
+                assertThat(failure.getError()).isEqualTo("error");
+            }
+        });
+
+        reprocessJob(jobId);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.FAILED);
+            JobResult jobResult = job.getResult();
+            assertThat(jobResult.getSuccessfulCount()).isEqualTo(successfulTasks + failedTasks);
+            assertThat(jobResult.getFailedCount()).isEqualTo(permanentlyFailedTasks);
+            assertThat(jobResult.getTotalCount()).isEqualTo(totalTasksCount);
+
+            for (int i = 0, taskNumber = successfulTasks + failedTasks + 1; taskNumber <= totalTasksCount; i++, taskNumber++) {
+                DummyTaskFailure failure = (DummyTaskFailure) jobResult.getFailures().get(i);
+                assertThat(failure.getNumber()).isEqualTo(taskNumber);
+                assertThat(failure.getError()).isEqualTo("error");
+                assertThat(failure.isFailAlways()).isTrue();
+            }
+        });
+    }
+
+    // todo: job with zero tasks
 
 }
