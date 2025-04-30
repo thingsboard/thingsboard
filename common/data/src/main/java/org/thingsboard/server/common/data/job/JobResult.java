@@ -30,7 +30,6 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
 @JsonSubTypes({
-        @Type(name = "CF_REPROCESSING", value = CfReprocessingJobResult.class),
         @Type(name = "DUMMY", value = DummyJobResult.class)
 })
 @Data

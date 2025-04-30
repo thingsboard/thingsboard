@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
 @JsonSubTypes({
-        @Type(name = "CF_REPROCESSING", value = CfReprocessingTask.class),
         @Type(name = "DUMMY", value = DummyTask.class)
 })
 @SuperBuilder
