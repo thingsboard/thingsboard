@@ -439,7 +439,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     const telemetryArray: Array<string> = [];
     const attributes: any = {};
     const keyNameNew = {};
-    const observeStrategyValue = val.length ? this.lwm2mDeviceProfileFormGroup.get('observeStrategy')?.value : ObserveStrategy.SINGLE;
+    const observeStrategyValue = this.lwm2mDeviceProfileFormGroup.get('observeStrategy').value;
     const observeJson: ObjectLwM2M[] = JSON.parse(JSON.stringify(val));
     observeJson.forEach(obj => {
       if (isDefinedAndNotNull(obj.attributes) && !isEmpty(obj.attributes)) {
