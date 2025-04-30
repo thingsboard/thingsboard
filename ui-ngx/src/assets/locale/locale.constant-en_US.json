@@ -2213,11 +2213,11 @@
             "observe-strategy": {
                 "observe-strategy": "Observe strategy",
                 "single": "Single",
-                "single-description": "One resource equals one single observe request",
+                "single-description": "One Observe request per resource (higher precision, more network traffic)",
                 "composite-all": "Composite all",
-                "composite-all-description": "All resources in one composite observe request",
+                "composite-all-description": "All resources are observed with a single Composite Observe request (more efficient, less flexible)",
                 "composite-by-object": "Composite by objects",
-                "composite-by-object-description": "Grouped composite observe requests by object"
+                "composite-by-object-description": "Resources are grouped by object type and observed using separate Composite Observe requests (balanced approach)"
             }
         },
         "snmp": {
