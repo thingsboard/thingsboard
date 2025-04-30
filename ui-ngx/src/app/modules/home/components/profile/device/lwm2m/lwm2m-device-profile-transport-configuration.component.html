@@ -20,6 +20,11 @@
     <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
       <ng-template matTabContent>
         <section [formGroup]="lwm2mDeviceProfileFormGroup">
+          <tb-profile-lwm2m-object-list
+            (addList)="addObjectsList($event)"
+            (removeList)="removeObjectsList($event)"
+            formControlName="objectIds">
+          </tb-profile-lwm2m-object-list>
           <mat-form-field class="mat-block">
             <mat-label translate>device-profile.lwm2m.observe-strategy.observe-strategy</mat-label>
             <mat-select formControlName="observeStrategy">
@@ -34,11 +39,6 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <tb-profile-lwm2m-object-list
-            (addList)="addObjectsList($event)"
-            (removeList)="removeObjectsList($event)"
-            formControlName="objectIds">
-          </tb-profile-lwm2m-object-list>
           <tb-profile-lwm2m-observe-attr-telemetry
             formControlName="observeAttrTelemetry">
           </tb-profile-lwm2m-observe-attr-telemetry>
