@@ -102,6 +102,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
+import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegrationTest.CLIENT_LWM2M_SETTINGS_19;
 
 @TestPropertySource(properties = {
         "transport.lwm2m.enabled=true",
@@ -376,6 +377,17 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
         TelemetryMappingConfiguration observeAttrConfiguration = JacksonUtil.fromString(observeAttr, TelemetryMappingConfiguration.class);
         OtherConfiguration clientLwM2mSettings = JacksonUtil.fromString(CLIENT_LWM2M_SETTINGS, OtherConfiguration.class);
+        transportConfiguration.setBootstrapServerUpdateEnable(true);
+        transportConfiguration.setObserveAttr(observeAttrConfiguration);
+        transportConfiguration.setClientLwM2mSettings(clientLwM2mSettings);
+        transportConfiguration.setBootstrap(bootstrapServerCredentials);
+        return transportConfiguration;
+    }
+
+    protected Lwm2mDeviceProfileTransportConfiguration getTransportConfiguration19(String observeAttr, List<LwM2MBootstrapServerCredential> bootstrapServerCredentials) {
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
+        TelemetryMappingConfiguration observeAttrConfiguration = JacksonUtil.fromString(observeAttr, TelemetryMappingConfiguration.class);
+        OtherConfiguration clientLwM2mSettings = JacksonUtil.fromString(CLIENT_LWM2M_SETTINGS_19, OtherConfiguration.class);
         transportConfiguration.setBootstrapServerUpdateEnable(true);
         transportConfiguration.setObserveAttr(observeAttrConfiguration);
         transportConfiguration.setClientLwM2mSettings(clientLwM2mSettings);

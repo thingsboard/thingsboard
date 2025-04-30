@@ -2174,6 +2174,9 @@
             "add-lwm2m-server-config": "Add LwM2M server",
             "no-config-servers": "No servers configured",
             "others-tab": "Other settings",
+            "ota-update": "OTA update",
+            "use-object-19-for-ota-update": "Use Object 19 for OTA file metadata (checksum, size, version, name)",
+            "use-object-19-for-ota-update-hint": "Use Resource ObjectId = 19 for OTA updates: FirmWare → InstanceId = 65534, SoftWare → InstanceId = 65535. The data format is JSON wrapped in Base64. This JSON contains OTA file metadata (file info): \"Checksum\" (SHA256). Additional fields: \"Title\" (OTA name), \"Version\" (OTA version), \"File Name\" (file name for storing OTA on the client), \"File Size\" (OTA size in bytes).",
             "client-strategy": "Client strategy when connecting",
             "client-strategy-label": "Strategy",
             "client-strategy-only-observe": "Only Observe Request to the client after the initial connection",
@@ -2204,7 +2207,8 @@
             "default-object-id": "Default Object Version (Attribute)",
             "default-object-id-ver": {
                 "v1-0": "1.0",
-                "v1-1": "1.1"
+                "v1-1": "1.1",
+                "v1-2": "1.2"
             }
         },
         "snmp": {
