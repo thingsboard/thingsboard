@@ -101,7 +101,7 @@ const IMPERIAL: TbMeasureUnits<MassImperialUnits> = {
       to_anchor: 28,
     },
     cwt: {
-      name: 'unit.hundredweight-countt',
+      name: 'unit.hundredweight-count',
       tags: ['mass', 'weight', 'heaviness', 'load', 'hundredweight count', 'cwt'],
       to_anchor: 100,
     },

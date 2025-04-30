@@ -125,7 +125,7 @@ const IMPERIAL: TbMeasureUnits<EnergyImperialUnits> = {
       to_anchor: 1000,
     },
     BTU: {
-      name: 'british-thermal-unit',
+      name: 'unit.british-thermal-unit',
       tags: ['energy', 'heat', 'work done', 'british thermal unit', 'british thermal units', 'BTU'],
       to_anchor: 252.164401,
     },

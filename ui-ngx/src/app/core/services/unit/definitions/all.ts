@@ -28,8 +28,16 @@ import frequency, { FrequencyUnits } from '@core/services/unit/definitions/frequ
 import illuminance,{ IlluminanceUnits } from '@core/services/unit/definitions/illuminance';
 import length, { LengthUnits } from '@core/services/unit/definitions/length';
 import mass, { MassUnits } from '@core/services/unit/definitions/mass';
+import partsPer, { PartsPerUnits } from '@core/services/unit/definitions/parts-per';
+import power, { PowerUnits } from '@core/services/unit/definitions/power';
+import pressure, { PressureUnits } from '@core/services/unit/definitions/pressure';
+import speed, { SpeedUnits } from '@core/services/unit/definitions/speed';
 import temperature, { TemperatureUnits } from './temperature';
 import time, { TimeUnits } from './time';
+import torque, { TorqueUnits } from '@core/services/unit/definitions/torque';
+import voltage, { VoltageUnits } from '@core/services/unit/definitions/voltage';
+import volume, { VolumeUnits } from '@core/services/unit/definitions/volume';
+import volumeFlowRate, { VolumeFlowRateUnits } from '@core/services/unit/definitions/volume-flow-rate';
 
 export type AllMeasuresUnits =
   | AccelerationUnits
@@ -45,8 +53,16 @@ export type AllMeasuresUnits =
   | IlluminanceUnits
   | LengthUnits
   | MassUnits
+  | PartsPerUnits
+  | PowerUnits
+  | PressureUnits
+  | SpeedUnits
   | TemperatureUnits
-  | TimeUnits;
+  | TimeUnits
+  | TorqueUnits
+  | VoltageUnits
+  | VolumeUnits
+  | VolumeFlowRateUnits;
 
 export type AllMeasures =
   | 'acceleration'
@@ -62,8 +78,16 @@ export type AllMeasures =
   | 'illuminance'
   | 'length'
   | 'mass'
+  | 'parts-per'
+  | 'power'
+  | 'pressure'
+  | 'speed'
   | 'temperature'
-  | 'time';
+  | 'time'
+  | 'torque'
+  | 'voltage'
+  | 'volume'
+  | 'volume-flow-rate';
 
 const allMeasures: Record<
   AllMeasures,
@@ -82,8 +106,16 @@ const allMeasures: Record<
   illuminance,
   length,
   mass,
+  'parts-per': partsPer,
+  power,
+  pressure,
+  speed,
   temperature,
   time,
+  torque,
+  voltage,
+  volume,
+  'volume-flow-rate': volumeFlowRate,
 };
 
 export default allMeasures;

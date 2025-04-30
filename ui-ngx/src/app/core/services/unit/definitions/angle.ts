@@ -53,7 +53,7 @@ const METRIC: TbMeasureUnits<AngleMetricUnits> = {
       to_anchor: 9 / (50 * Math.PI),
     },
     rev: {
-      name: 'revolution',
+      name: 'unit.revolution',
       tags: ['angle', 'revolution', 'full circle', 'complete turn', 'rev'],
       to_anchor: 360,
     },
