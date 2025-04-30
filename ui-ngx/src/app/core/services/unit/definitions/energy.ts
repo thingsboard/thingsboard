@@ -33,7 +33,7 @@ export type EnergyMetricUnits =
   | 'GJ'
   | 'eV';
 
-export type EnergyImperialUnits = 'kcal' | 'cal' | 'Cal' | 'BTU' | 'ft·lb';
+export type EnergyImperialUnits = 'kcal' | 'cal' | 'Cal' | 'BTU' | 'ft·lb' | 'thm';
 
 const METRIC: TbMeasureUnits<EnergyMetricUnits> = {
   ratio: 1 / 4.184,
@@ -133,6 +133,11 @@ const IMPERIAL: TbMeasureUnits<EnergyImperialUnits> = {
       name: 'unit.foot-pound',
       tags: ['energy', 'foot-pound', 'foot-pounds', 'ft·lb', 'ft⋅lbf'],
       to_anchor: 0.32404875717017,
+    },
+    thm: {
+      name: 'unit.therm',
+      tags: ['energy', 'natural gas consumption', 'BTU', 'therm', 'thm'],
+      to_anchor: 25219021.687207,
     },
   },
 };

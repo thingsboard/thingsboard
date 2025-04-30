@@ -18,7 +18,7 @@ import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type ElectricCurrentUnits = ElectricCurrentMetricalUnits;
 
-export type ElectricCurrentMetricalUnits = 'A' | 'nA' | 'μA' | 'mA' | 'kA' | 'MA' | 'GA';
+export type ElectricCurrentMetricalUnits = 'A' | 'pA' | 'nA' | 'μA' | 'mA' | 'kA' | 'MA' | 'GA';
 
 const METRIC: TbMeasureUnits<ElectricCurrentMetricalUnits> = {
   units: {
@@ -27,9 +27,14 @@ const METRIC: TbMeasureUnits<ElectricCurrentMetricalUnits> = {
       tags: ['electric current', 'current flow', 'flow of electricity', 'electrical flow', 'ampere', 'amperes', 'amperage', 'A'],
       to_anchor: 1,
     },
+    pA: {
+      name: 'unit.picoampere',
+      tags: ['current', 'amperes', 'picoampere', 'pA'],
+      to_anchor: 1e-12,
+    },
     nA: {
       name: 'unit.nanoampere',
-      tags: ['electric current', 'nanoampere', 'nanoamperes', 'nA'],
+      tags: ['electric current', 'amperes', 'nanoampere', 'nA'],
       to_anchor: 1e-9,
     },
     μA: {

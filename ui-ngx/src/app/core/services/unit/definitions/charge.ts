@@ -18,7 +18,7 @@ import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type ChargeUnits = ChargeMetricUnits;
 
-export type ChargeMetricUnits = 'c' | 'mC' | 'μC' | 'nC' | 'pC';
+export type ChargeMetricUnits = 'c' | 'mC' | 'μC' | 'nC' | 'pC' | 'mAh' | 'Ah' | 'kAh';
 
 const METRIC: TbMeasureUnits<ChargeMetricUnits> = {
   units: {
@@ -46,6 +46,21 @@ const METRIC: TbMeasureUnits<ChargeMetricUnits> = {
       name: 'unit.picocoulomb',
       tags: ['charge', 'electricity', 'electrostatics', 'picocoulomb', 'pC'],
       to_anchor: 1e-12,
+    },
+    mAh: {
+      name: 'unit.milliampere-hour',
+      tags: ['electric current', 'current flow', 'electric charge', 'current capacity', 'flow of electricity', 'electrical flow', 'milliampere-hour', 'milliampere-hours', 'mAh'],
+      to_anchor: 3.6,
+    },
+    Ah: {
+      name: 'unit.ampere-hours',
+      tags: ['electric current', 'current flow', 'electric charge', 'current capacity', 'flow of electricity', 'electrical flow', 'ampere', 'ampere-hours', 'Ah'],
+      to_anchor: 3600,
+    },
+    kAh: {
+      name: 'unit.kiloampere-hours',
+      tags: ['electric current', 'current flow', 'electric charge', 'current capacity', 'flow of electricity', 'electrical flow', 'kiloampere-hours', 'kiloampere-hour', 'kAh'],
+      to_anchor: 3600000,
     },
   }
 };

@@ -18,7 +18,7 @@ import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type MassUnits = MassMetricUnits | MassImperialUnits;
 
-export type MassMetricUnits = 'ng' | 'mcg' | 'mg' | 'g' | 'kg' | 't' | 'Da';
+export type MassMetricUnits = 'ng' | 'mcg' | 'mg' | 'g' | 'kg' | 't' | 'Da' | 'ct';
 export type MassImperialUnits = 'oz' | 'lb' | 'st' | 'short tons' | 'gr' | 'dr' | 'qr' | 'cwt' | 'slug';
 
 const METRIC: TbMeasureUnits<MassMetricUnits> = {
@@ -47,7 +47,7 @@ const METRIC: TbMeasureUnits<MassMetricUnits> = {
     kg: {
       name: 'unit.kilogram',
       tags: ['mass', 'weight', 'heaviness', 'load', 'kilogram', 'kilograms', 'kg'],
-      to_anchor: 1000, // 1 kg = 1000 g
+      to_anchor: 1000,
     },
     t: {
       name: 'unit.tonne',
@@ -58,6 +58,11 @@ const METRIC: TbMeasureUnits<MassMetricUnits> = {
       name: 'unit.dalton',
       tags: ['atomic mass unit', 'AMU', 'unified atomic mass unit', 'dalton', 'Da'],
       to_anchor: 1.66053906660e-24,
+    },
+    ct: {
+      name: 'unit.carat',
+      tags: ['gemstone', 'pearl', 'jewelry', 'carat', 'ct'],
+      to_anchor: 0.2,
     },
   },
 };
