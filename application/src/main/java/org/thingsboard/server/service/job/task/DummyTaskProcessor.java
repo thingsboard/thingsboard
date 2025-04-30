@@ -30,6 +30,9 @@ public class DummyTaskProcessor extends TaskProcessor<DummyTask> {
         if (task.getProcessingTimeMs() > 0) {
             Thread.sleep(task.getProcessingTimeMs());
         }
+        if (task.isFailAlways()) {
+            throw new RuntimeException(task.getErrors().get(0));
+        }
         if (task.getErrors() != null && task.getAttempt() <= task.getErrors().size()) {
             String error = task.getErrors().get(task.getAttempt() - 1);
             throw new RuntimeException(error);

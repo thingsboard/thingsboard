@@ -25,6 +25,8 @@ public interface JobManager {
 
     void cancelJob(TenantId tenantId, JobId jobId);
 
+    void reprocessJob(TenantId tenantId, JobId jobId);
+
     void onJobUpdate(Job job);
 
 }

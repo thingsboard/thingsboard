@@ -19,17 +19,19 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CfReprocessingJobConfiguration implements JobConfiguration {
+public class CfReprocessingJobConfiguration extends JobConfiguration {
 
     @NotNull
-    private CalculatedField calculatedField;
+    private CalculatedFieldId calculatedFieldId;
     private long startTs;
     private long endTs;
 

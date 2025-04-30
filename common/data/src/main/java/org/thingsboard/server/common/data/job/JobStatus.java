@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.job;
 
 public enum JobStatus {
+
     QUEUED,
     PENDING,
     RUNNING,

@@ -19,10 +19,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.job.DummyJobConfiguration;
 import org.thingsboard.server.common.data.job.DummyTask;
+import org.thingsboard.server.common.data.job.DummyTask.DummyTaskFailure;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.Task;
+import org.thingsboard.server.common.data.job.TaskFailure;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -35,31 +38,48 @@ public class DummyJobProcessor implements JobProcessor {
         DummyJobConfiguration configuration = job.getConfiguration();
         if (configuration.getGeneralError() != null) {
             for (int number = 1; number <= configuration.getSubmittedTasksBeforeGeneralError(); number++) {
-                taskConsumer.accept(createTask(job, configuration, number, null));
+                taskConsumer.accept(createTask(job, configuration, number, null, false));
             }
             Thread.sleep(configuration.getTaskProcessingTimeMs() * (configuration.getSubmittedTasksBeforeGeneralError() / 2)); // sleeping so that some tasks are processed
             throw new RuntimeException(configuration.getGeneralError());
         }
-        for (int number = 1; number <= configuration.getSuccessfulTasksCount(); number++) {
-            taskConsumer.accept(createTask(job, configuration, number, null));
+
+        int taskNumber = 1;
+        for (int i = 0; i < configuration.getSuccessfulTasksCount(); i++) {
+            taskConsumer.accept(createTask(job, configuration, taskNumber, null, false));
+            taskNumber++;
         }
         if (configuration.getErrors() != null) {
-            for (int number = 1; number <= configuration.getFailedTasksCount(); number++) {
-                taskConsumer.accept(createTask(job, configuration, number, configuration.getErrors()));
+            for (int i = 0; i < configuration.getFailedTasksCount(); i++) {
+                taskConsumer.accept(createTask(job, configuration, taskNumber, configuration.getErrors(), false));
+                taskNumber++;
+            }
+            for (int i = 0; i < configuration.getPermanentlyFailedTasksCount(); i++) {
+                taskConsumer.accept(createTask(job, configuration, taskNumber, configuration.getErrors(), true));
+                taskNumber++;
             }
         }
-        return configuration.getSuccessfulTasksCount() + configuration.getFailedTasksCount();
+        return configuration.getSuccessfulTasksCount() + configuration.getFailedTasksCount() + configuration.getPermanentlyFailedTasksCount();
     }
 
-    private Task createTask(Job job, DummyJobConfiguration configuration, int number, List<String> errors) {
+    @Override
+    public void reprocess(Job job, List<TaskFailure> failures, Consumer<Task> taskConsumer) throws Exception {
+        for (TaskFailure failure : failures) {
+            DummyTaskFailure taskFailure = (DummyTaskFailure) failure;
+            taskConsumer.accept(createTask(job, job.getConfiguration(), taskFailure.getNumber(), taskFailure.isFailAlways() ?
+                    List.of(taskFailure.getError()) : Collections.emptyList(), taskFailure.isFailAlways()));
+        }
+    }
+
+    private Task createTask(Job job, DummyJobConfiguration configuration, int number, List<String> errors, boolean failAlways) {
         return DummyTask.builder()
                 .tenantId(job.getTenantId())
                 .jobId(job.getId())
-                .key("Task " + number)
                 .retries(configuration.getRetries())
                 .number(number)
                 .processingTimeMs(configuration.getTaskProcessingTimeMs())
                 .errors(errors)
+                .failAlways(failAlways)
                 .build();
     }
 

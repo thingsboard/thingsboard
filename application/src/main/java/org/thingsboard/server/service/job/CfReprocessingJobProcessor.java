@@ -24,19 +24,24 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.job.CfReprocessingJobConfiguration;
 import org.thingsboard.server.common.data.job.CfReprocessingTask;
+import org.thingsboard.server.common.data.job.CfReprocessingTask.CfReprocessingTaskFailure;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.Task;
+import org.thingsboard.server.common.data.job.TaskFailure;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 @Component
 @RequiredArgsConstructor
 public class CfReprocessingJobProcessor implements JobProcessor {
 
+    private final CalculatedFieldService calculatedFieldService;
     private final DeviceService deviceService;
     private final AssetService assetService;
 
@@ -44,12 +49,12 @@ public class CfReprocessingJobProcessor implements JobProcessor {
     public int process(Job job, Consumer<Task> taskConsumer) throws Exception {
         CfReprocessingJobConfiguration configuration = job.getConfiguration();
 
-        CalculatedField calculatedField = configuration.getCalculatedField();
+        CalculatedField calculatedField = calculatedFieldService.findById(job.getTenantId(), configuration.getCalculatedFieldId());
         EntityId cfEntityId = calculatedField.getEntityId();
 
         int tasksCount = 0;
         if (cfEntityId.getEntityType().isOneOf(EntityType.DEVICE, EntityType.ASSET)) {
-            taskConsumer.accept(createTask(job, configuration, cfEntityId));
+            taskConsumer.accept(createTask(job, configuration, calculatedField, cfEntityId));
             tasksCount++;
         } else {
             PageDataIterable<? extends EntityId> entities;
@@ -61,20 +66,31 @@ public class CfReprocessingJobProcessor implements JobProcessor {
                 throw new IllegalArgumentException("Unsupported CF entity type " + cfEntityId.getEntityType());
             }
             for (EntityId entityId : entities) {
-                taskConsumer.accept(createTask(job, configuration, entityId));
+                taskConsumer.accept(createTask(job, configuration, calculatedField, entityId));
                 tasksCount++;
             }
         }
         return tasksCount;
     }
 
-    private Task createTask(Job job, CfReprocessingJobConfiguration configuration, EntityId entityId) {
+    @Override
+    public void reprocess(Job job, List<TaskFailure> failures, Consumer<Task> taskConsumer) throws Exception {
+        CfReprocessingJobConfiguration configuration = job.getConfiguration();
+        CalculatedField calculatedField = calculatedFieldService.findById(job.getTenantId(), configuration.getCalculatedFieldId());
+
+        for (TaskFailure failure : failures) {
+            CfReprocessingTaskFailure taskFailure = (CfReprocessingTaskFailure) failure;
+            EntityId entityId = taskFailure.getEntityId();
+            taskConsumer.accept(createTask(job, job.getConfiguration(), calculatedField, entityId));
+        }
+    }
+
+    private Task createTask(Job job, CfReprocessingJobConfiguration configuration, CalculatedField calculatedField, EntityId entityId) {
         return CfReprocessingTask.builder()
                 .tenantId(job.getTenantId())
                 .jobId(job.getId())
-                .key(entityId.getEntityType().getNormalName() + " " + entityId.getId())
                 .retries(2) // 3 attempts in total
-                .calculatedField(configuration.getCalculatedField())
+                .calculatedField(calculatedField)
                 .entityId(entityId)
                 .startTs(configuration.getStartTs())
                 .endTs(configuration.getEndTs())

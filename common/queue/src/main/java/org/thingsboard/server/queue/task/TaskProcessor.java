@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.Task;
 import org.thingsboard.server.common.data.job.TaskResult;
-import org.thingsboard.server.common.data.job.TaskResult.TaskFailure;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
@@ -147,10 +146,7 @@ public abstract class TaskProcessor<T extends Task> {
 
     private void reportFailure(Task task, Throwable error) {
         TaskResult result = TaskResult.builder()
-                .failure(TaskFailure.builder()
-                        .error(error.getMessage())
-                        .task(task)
-                        .build())
+                .failure(task.toFailure(error))
                 .build();
         statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
     }

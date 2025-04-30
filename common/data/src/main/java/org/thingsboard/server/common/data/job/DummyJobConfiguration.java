@@ -18,19 +18,22 @@ package org.thingsboard.server.common.data.job;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class DummyJobConfiguration implements JobConfiguration {
+public class DummyJobConfiguration extends JobConfiguration {
 
     private long taskProcessingTimeMs;
     private int successfulTasksCount;
     private int failedTasksCount;
+    private int permanentlyFailedTasksCount;
     private List<String> errors;
     private int retries;
 

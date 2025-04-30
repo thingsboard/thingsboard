@@ -30,12 +30,11 @@ import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.TaskResult;
-import org.thingsboard.server.common.data.job.TaskResult.TaskFailure;
+import org.thingsboard.server.common.data.job.TaskFailure;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.Optional;
 
@@ -52,12 +51,13 @@ import static org.thingsboard.server.common.data.job.JobStatus.RUNNING;
 public class DefaultJobService extends AbstractEntityService implements JobService {
 
     private final JobDao jobDao;
-    private final JobValidator validator = new JobValidator();
 
     @Transactional
     @Override
-    public Job createJob(TenantId tenantId, Job job) {
-        validator.validate(job, Job::getTenantId);
+    public Job submitJob(TenantId tenantId, Job job) {
+        if (jobDao.existsByKeyAndStatusOneOf(job.getKey(), QUEUED, PENDING, RUNNING)) {
+            throw new IllegalArgumentException("The same job is already queued or running");
+        }
         if (jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, job.getType(), PENDING, RUNNING)) {
             job.setStatus(QUEUED);
         } else {
@@ -124,10 +124,9 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
                 result.setDiscardedCount(result.getDiscardedCount() + 1);
             } else {
                 TaskFailure failure = taskResult.getFailure();
-                String key = failure.getTask().getKey();
                 result.setFailedCount(result.getFailedCount() + 1);
                 if (result.getFailures().size() < 1000) { // preserving only first 1000 errors, not reprocessing if there are more failures
-                    result.getFailures().put(key, failure.getError());
+                    result.getFailures().add(failure);
                 }
             }
 
@@ -190,24 +189,6 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
     private Job findForUpdate(TenantId tenantId, JobId jobId) {
         return jobDao.findByIdForUpdate(tenantId, jobId);
-    }
-
-// todo:  reprocessing
-
-    public class JobValidator extends DataValidator<Job> {
-
-        @Override
-        protected void validateCreate(TenantId tenantId, Job job) {
-//            if (jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, job.getType(), PENDING, RUNNING)) {
-//                throw new DataValidationException("Job of this type is already running");
-//            }
-        }
-
-        @Override
-        protected Job validateUpdate(TenantId tenantId, Job job) {
-            throw new IllegalArgumentException("Job can't be updated externally");
-        }
-
     }
 
     @Override

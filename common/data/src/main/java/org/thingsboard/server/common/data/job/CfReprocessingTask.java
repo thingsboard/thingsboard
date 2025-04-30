@@ -36,8 +36,37 @@ public class CfReprocessingTask extends Task {
     private long endTs;
 
     @Override
+    public Object getKey() {
+        return entityId;
+    }
+
+    @Override
+    public TaskFailure toFailure(Throwable error) {
+        return new CfReprocessingTaskFailure(entityId, error.getMessage());
+    }
+
+    @Override
     public JobType getJobType() {
         return JobType.CF_REPROCESSING;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @NoArgsConstructor
+    public static class CfReprocessingTaskFailure extends TaskFailure {
+
+        private EntityId entityId;
+
+        public CfReprocessingTaskFailure(EntityId entityId, String error) {
+            super(error);
+            this.entityId = entityId;
+        }
+
+        @Override
+        public JobType getJobType() {
+            return JobType.CF_REPROCESSING;
+        }
+
     }
 
 }

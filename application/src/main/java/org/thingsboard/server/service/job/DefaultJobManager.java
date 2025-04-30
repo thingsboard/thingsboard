@@ -27,10 +27,12 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.Task;
+import org.thingsboard.server.common.data.job.TaskFailure;
 import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.job.JobService;
@@ -48,6 +50,7 @@ import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,28 +101,39 @@ public class DefaultJobManager implements JobManager {
     @Override
     public Job submitJob(Job job) {
         log.debug("Submitting job: {}", job);
-        return jobService.createJob(job.getTenantId(), job);
+        return jobService.submitJob(job.getTenantId(), job);
     }
 
     @Override
     public void onJobUpdate(Job job) {
         if (job.getStatus() == JobStatus.PENDING) {
             executor.execute(() -> {
-                TenantId tenantId = job.getTenantId();
-                JobId jobId = job.getId();
-                try {
-                    int tasksCount = jobProcessors.get(job.getType()).process(job, this::submitTask); // todo: think about stopping tb - while tasks are being submitted
-                    log.info("[{}][{}][{}] Submitted {} tasks", tenantId, jobId, job.getType(), tasksCount);
-                    jobStatsService.reportAllTasksSubmitted(tenantId, jobId, tasksCount);
-                } catch (Throwable e) {
-                    log.error("[{}][{}][{}] Failed to submit tasks", tenantId, jobId, job.getType(), e);
-                    try {
-                        jobService.markAsFailed(tenantId, jobId, ExceptionUtils.getStackTrace(e));
-                    } catch (Throwable e2) {
-                        log.error("[{}][{}] Failed to mark job as failed", tenantId, jobId, e2);
-                    }
-                }
+                processJob(job);
             });
+        }
+    }
+
+    private void processJob(Job job) {
+        TenantId tenantId = job.getTenantId();
+        JobId jobId = job.getId();
+        try {
+            JobProcessor processor = jobProcessors.get(job.getType());
+            List<TaskFailure> toReprocess = job.getConfiguration().getToReprocess();
+            if (toReprocess == null) {
+                int tasksCount = processor.process(job, this::submitTask); // todo: think about stopping tb - while tasks are being submitted
+                log.info("[{}][{}][{}] Submitted {} tasks", tenantId, jobId, job.getType(), tasksCount);
+                jobStatsService.reportAllTasksSubmitted(tenantId, jobId, tasksCount);
+            } else {
+                processor.reprocess(job, toReprocess, this::submitTask);
+                log.info("[{}][{}][{}] Submitted {} tasks for reprocessing", tenantId, jobId, job.getType(), toReprocess.size());
+            }
+        } catch (Throwable e) {
+            log.error("[{}][{}][{}] Failed to submit tasks", tenantId, jobId, job.getType(), e);
+            try {
+                jobService.markAsFailed(tenantId, jobId, ExceptionUtils.getStackTrace(e));
+            } catch (Throwable e2) {
+                log.error("[{}][{}] Failed to mark job as failed", tenantId, jobId, e2);
+            }
         }
     }
 
@@ -127,6 +141,31 @@ public class DefaultJobManager implements JobManager {
     public void cancelJob(TenantId tenantId, JobId jobId) {
         log.info("[{}][{}] Cancelling job", tenantId, jobId);
         jobService.cancelJob(tenantId, jobId);
+    }
+
+    @Override
+    public void reprocessJob(TenantId tenantId, JobId jobId) {
+        log.info("[{}][{}] Reprocessing job", tenantId, jobId);
+        Job job = jobService.findJobById(tenantId, jobId);
+        if (job.getStatus() != JobStatus.FAILED) {
+            throw new IllegalArgumentException("Job is not failed");
+        }
+
+        JobResult result = job.getResult();
+        if (result.getGeneralError() != null) {
+            throw new IllegalArgumentException("Reprocessing not allowed since job has general error");
+        }
+        List<TaskFailure> failures = result.getFailures();
+        if (result.getFailedCount() > failures.size()) {
+            throw new IllegalArgumentException("Reprocessing not allowed since there are too many failures (more than " + failures.size() + ")");
+        }
+
+        result.setFailedCount(0);
+        result.setFailures(Collections.emptyList());
+
+        job.getConfiguration().setToReprocess(failures);
+
+        jobService.submitJob(tenantId, job);
     }
 
     private void submitTask(Task task) {

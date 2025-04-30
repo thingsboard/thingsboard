@@ -19,22 +19,25 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.job.CfReprocessingTask.CfReprocessingTaskFailure;
+import org.thingsboard.server.common.data.job.DummyTask.DummyTaskFailure;
 
-import java.io.Serializable;
-import java.util.List;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({
-        @Type(name = "CF_REPROCESSING", value = CfReprocessingJobConfiguration.class),
-        @Type(name = "DUMMY", value = DummyJobConfiguration.class),
-})
 @Data
-public abstract class JobConfiguration implements Serializable {
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
+@JsonSubTypes({
+        @Type(name = "CF_REPROCESSING", value = CfReprocessingTaskFailure.class),
+        @Type(name = "DUMMY", value = DummyTaskFailure.class)
+})
+public abstract class TaskFailure {
 
-    private List<TaskFailure> toReprocess;
+    private String error;
 
-    public abstract JobType getType();
+    public abstract JobType getJobType();
 
 }
