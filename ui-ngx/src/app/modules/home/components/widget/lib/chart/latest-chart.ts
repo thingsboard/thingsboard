@@ -261,6 +261,12 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
     }
   }
 
+  private latestChartTooltipFormatter(params: CallbackDataParams): null | HTMLElement {
+    if (params.seriesType == 'pie' && this.dataItems.length != this.latestChartOption.series[0].data.length)
+      params.percent = undefined;
+    return latestChartTooltipFormatter(this.renderer, this.settings, params, this.units, this.total, this.dataItems);
+  }
+
   private drawChart() {
     echartsModule.init();
     this.renderer.setStyle(this.chartElement, 'letterSpacing', 'normal');
@@ -275,7 +281,7 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
         confine: true,
         formatter: (params: CallbackDataParams) =>
           this.settings.showTooltip
-            ? latestChartTooltipFormatter(this.renderer, this.settings, params, this.units, this.total, this.dataItems)
+            ? this.latestChartTooltipFormatter(params)
             : undefined,
         padding: [4, 8],
         backgroundColor: this.settings.tooltipBackgroundColor,
