@@ -15,29 +15,29 @@
  */
 package org.thingsboard.server.common.data.job;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.job.CfReprocessingTask.CfReprocessingTaskFailure;
-import org.thingsboard.server.common.data.job.DummyTask.DummyTaskFailure;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
-@JsonSubTypes({
-        @Type(name = "CF_REPROCESSING", value = CfReprocessingTaskFailure.class),
-        @Type(name = "DUMMY", value = DummyTaskFailure.class)
-})
-public abstract class TaskFailure {
+@Builder
+public class CfReprocessingJobConfiguration extends JobConfiguration {
 
-    private String error;
+    @NotNull
+    private CalculatedFieldId calculatedFieldId;
+    private long startTs;
+    private long endTs;
 
-    public abstract JobType getJobType();
+    @Override
+    public JobType getType() {
+        return JobType.CF_REPROCESSING;
+    }
 
 }

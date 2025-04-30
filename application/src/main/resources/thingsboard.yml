@@ -1854,6 +1854,8 @@ queue:
     init_fetch_pack_size: "${TB_QUEUE_CF_FETCH_PACK_SIZE:50000}"
     # The fetch size specifies how many rows will be fetched from the database per request for per-tenant fetching
     init_tenant_fetch_pack_size: "${TB_QUEUE_CF_TENANT_FETCH_PACK_SIZE:1000}"
+    # The fetch size specifies how many rows will be fetched from the database per request for telemetry fetching
+    telemetry_fetch_pack_size: "${TB_QUEUE_CF_TELEMETRY_FETCH_PACK_SIZE:1000}"
   transport:
     # For high-priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"

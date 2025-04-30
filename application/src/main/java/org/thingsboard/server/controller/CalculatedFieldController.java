@@ -49,14 +49,20 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.CfReprocessingJobConfiguration;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.service.validator.CalculatedFieldReprocessingValidator.CFReprocessingValidationResponse;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldScriptEngine;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
+import org.thingsboard.server.service.job.JobManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -92,6 +98,7 @@ public class CalculatedFieldController extends BaseController {
     private final TbCalculatedFieldService tbCalculatedFieldService;
     private final EventService eventService;
     private final TbelInvokeService tbelInvokeService;
+    private final JobManager jobManager;
 
     public static final String CALCULATED_FIELD_ID = "calculatedFieldId";
 
@@ -123,6 +130,7 @@ public class CalculatedFieldController extends BaseController {
             "}"
             + MARKDOWN_CODE_BLOCK_END
             + "\n\n Expected result JSON contains \"output\" and \"error\".";
+    private final ApiLimitService apiLimitService;
 
     @ApiOperation(value = "Create Or Update Calculated Field (saveCalculatedField)",
             notes = "Creates or Updates the Calculated Field. When creating calculated field, platform generates Calculated Field Id as " + UUID_WIKI_LINK +
@@ -266,6 +274,52 @@ public class CalculatedFieldController extends BaseController {
         result.put("output", output);
         result.put("error", errorText);
         return result;
+    }
+
+    // TODO: remove this endpoint. used for testing only
+    @ApiOperation(value = "Reprocess Calculated Field (reprocessCalculatedField)",
+            notes = "Reprocesses the calculated field." + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/calculatedField/reprocess/{calculatedFieldId}", method = RequestMethod.GET, params = {"startTs", "endTs"})
+    @ResponseStatus(value = HttpStatus.OK)
+    public void reprocessCalculatedField(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId,
+                                         @RequestParam(name = "startTs") Long startTs,
+                                         @RequestParam(name = "endTs") Long endTs) throws Exception {
+        checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
+        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
+        CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
+        checkNotNull(calculatedField);
+        EntityId entityId = calculatedField.getEntityId();
+        checkEntityId(entityId, Operation.READ_CALCULATED_FIELD);
+        jobManager.submitJob(Job.builder()
+                .tenantId(calculatedField.getTenantId())
+                .type(JobType.CF_REPROCESSING)
+                .key(calculatedField.getId().toString())
+                .description("Reprocessing of calculated field '" + calculatedField.getName() +
+                        "' for " + entityId.getEntityType().getNormalName().toLowerCase() +
+                        " " + entityId.getId() +
+                        " from " + startTs + " to " + endTs)
+                .configuration(CfReprocessingJobConfiguration.builder()
+                        .calculatedFieldId(calculatedField.getId())
+                        .startTs(startTs)
+                        .endTs(endTs)
+                        .build())
+                .build());
+    }
+
+    @ApiOperation(value = "Validate reprocessing capability of a calculated field (validateCalculatedFieldReprocessing)",
+            notes = "Checks whether the specified calculated field can be reprocessed. Returns a validation result indicating if reprocessing is allowed and, if not, provides a reason. " + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/calculatedField/reprocess/{calculatedFieldId}/validate", method = RequestMethod.GET)
+    @ResponseStatus(value = HttpStatus.OK)
+    public CFReprocessingValidationResponse validateCalculatedFieldReprocessing(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws ThingsboardException {
+        checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
+        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
+        CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
+        checkNotNull(calculatedField);
+        EntityId entityId = calculatedField.getEntityId();
+        checkEntityId(entityId, Operation.READ_CALCULATED_FIELD);
+        return tbCalculatedFieldService.validate(calculatedField);
     }
 
     private <E extends HasId<I> & HasTenantId, I extends EntityId> void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig, SecurityUser user) throws ThingsboardException {

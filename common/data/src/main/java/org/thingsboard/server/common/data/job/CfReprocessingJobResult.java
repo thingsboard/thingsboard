@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.common.data.job;
 
-public enum JobType {
+public class CfReprocessingJobResult extends JobResult {
 
-    CF_REPROCESSING,
-    DUMMY;
-
-    public String getTasksTopic() {
-        return "tasks." + name().toLowerCase();
+    @Override
+    public JobType getJobType() {
+        return JobType.CF_REPROCESSING;
     }
 
 }
