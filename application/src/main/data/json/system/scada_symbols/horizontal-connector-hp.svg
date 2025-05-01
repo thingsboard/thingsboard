@@ -12,7 +12,7 @@
     },
     {
       "tag": "line",
-      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nelement.attr({'stroke-width': ctx.properties.lineSize});",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nelement.attr({'stroke-width': ctx.properties.mainLineSize});",
       "actions": null
     }
   ],
@@ -167,7 +167,7 @@
   ],
   "properties": [
     {
-      "id": "lineSize",
+      "id": "mainLineSize",
       "name": "{i18n:scada.symbol.line}",
       "type": "number",
       "default": 6,

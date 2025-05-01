@@ -7,7 +7,7 @@
   "tags": [
     {
       "tag": "line",
-      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nelement.attr({'stroke-width': ctx.properties.lineSize});",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nelement.attr({'stroke-width': ctx.properties.mainLineSize});",
       "actions": null
     },
     {
