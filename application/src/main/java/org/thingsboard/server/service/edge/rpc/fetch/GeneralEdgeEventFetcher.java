@@ -26,9 +26,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 
+import java.util.concurrent.TimeUnit;
+
 @AllArgsConstructor
 @Slf4j
 public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
+    // Subtract from queueStartTs to ensure no data is lost due to potential misordering of edge events by created_time.
+    private static final long MISORDERING_COMPENSATION_MILLIS = TimeUnit.SECONDS.toMillis(60);
 
     private final Long queueStartTs;
     private Long seqIdStart;
@@ -44,7 +48,7 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
                 0,
                 null,
                 null,
-                queueStartTs,
+                queueStartTs > 0 ? queueStartTs - MISORDERING_COMPENSATION_MILLIS : queueStartTs,
                 System.currentTimeMillis());
     }
 
