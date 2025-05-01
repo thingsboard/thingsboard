@@ -55,7 +55,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     @Transactional
     @Override
     public Job submitJob(TenantId tenantId, Job job) {
-        if (jobDao.existsByKeyAndStatusOneOf(job.getKey(), QUEUED, PENDING, RUNNING)) {
+        if (jobDao.existsByTenantAndKeyAndStatusOneOf(tenantId, job.getKey(), QUEUED, PENDING, RUNNING)) {
             throw new IllegalArgumentException("The same job is already queued or running");
         }
         if (jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, job.getType(), PENDING, RUNNING)) {
@@ -188,8 +188,8 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     }
 
     @Override
-    public Job findJobByKey(TenantId tenantId, String key) {
-        return jobDao.findByKey(tenantId, key);
+    public Job findLatestJobByKey(TenantId tenantId, String key) {
+        return jobDao.findLatestByKey(tenantId, key);
     }
 
     private Job findForUpdate(TenantId tenantId, JobId jobId) {

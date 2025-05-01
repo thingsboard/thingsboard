@@ -45,15 +45,15 @@ public interface JobRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j FROM JobEntity j WHERE j.id = :id")
     JobEntity findByIdForUpdate(UUID id);
 
-    JobEntity findByTenantIdAndKey(@Param("tenantId") UUID tenantId, @Param("key") String key);
+    JobEntity findLatestByTenantIdAndKey(UUID tenantId, String key);
 
-    boolean existsByKeyAndStatusIn(String key, List<JobStatus> statuses);
+    boolean existsByTenantIdAndKeyAndStatusIn(UUID tenantId, String key, List<JobStatus> statuses);
 
     boolean existsByTenantIdAndTypeAndStatusIn(UUID tenantId, JobType type, List<JobStatus> statuses);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE) // SELECT FOR UPDATE
     @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId AND j.type = :type " +
-           "AND j.status = :status ORDER BY j.createdTime ASC, j.id ASC")
+            "AND j.status = :status ORDER BY j.createdTime ASC, j.id ASC")
     JobEntity findOldestByTenantIdAndTypeAndStatusForUpdate(UUID tenantId, JobType type, JobStatus status, Limit limit);
 
 }

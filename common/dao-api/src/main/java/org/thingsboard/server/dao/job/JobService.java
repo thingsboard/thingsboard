@@ -37,6 +37,6 @@ public interface JobService extends EntityDaoService {
 
     PageData<Job> findJobsByTenantId(TenantId tenantId, PageLink pageLink);
 
-    Job findJobByKey(TenantId tenantId, String key);
+    Job findLatestJobByKey(TenantId tenantId, String key);
 
 }
