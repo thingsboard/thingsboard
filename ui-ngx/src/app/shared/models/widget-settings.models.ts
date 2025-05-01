@@ -53,8 +53,8 @@ import {
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
-import { UnitService } from '@core/services/unit/unit.service';
-import { TbUnit, TbUnitConvertor, TbUnitMapping } from '@shared/models/unit.models';
+import { UnitService } from '@core/services/unit.service';
+import { TbUnit, TbUnitConverter, TbUnitMapping } from '@shared/models/unit.models';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -862,50 +862,50 @@ export class AutoDateFormatProcessor extends DateFormatProcessor {
   }
 }
 
-export interface FormatValueSettingProcessor {
+export interface ValueFormatSettingProcessor {
   dec?: number;
   units?: TbUnit;
   showZeroDecimals?: boolean;
 }
 
-export abstract class FormatValueProcessor {
+export abstract class ValueFormatProcessor {
 
-  static fromSettings($injector: Injector, settings: FormatValueSettingProcessor): FormatValueProcessor {
-    if (typeof settings.units !== 'string' && isDefinedAndNotNull(settings.units?.from)) {
-      return new ConvertUnitProcessor($injector, settings)
+  static fromSettings($injector: Injector, settings: ValueFormatSettingProcessor): ValueFormatProcessor {
+    if (settings.units !== null && typeof settings.units === 'object') {
+      return new ConverterValueFormatProcessor($injector, settings)
     } else {
-      return new SimpleUnitProcessor($injector, settings);
+      return new SimpleValueFormatProcessor($injector, settings);
     }
   }
 
   protected constructor(protected $injector: Injector,
-                        protected settings: FormatValueSettingProcessor) {
+                        protected settings: ValueFormatSettingProcessor) {
   }
 
-  abstract format(value: any): string;
+  abstract update(value: any): string;
 }
 
-export class SimpleUnitProcessor extends FormatValueProcessor {
+export class SimpleValueFormatProcessor extends ValueFormatProcessor {
 
   private readonly isDefinedUnit: boolean;
   private readonly isDefinedDec: boolean;
-  private readonly showZeroDecimals: boolean;
+  private readonly hideZeroDecimals: boolean;
 
   constructor(protected $injector: Injector,
-              protected settings: FormatValueSettingProcessor) {
+              protected settings: ValueFormatSettingProcessor) {
     super($injector, settings);
     this.isDefinedUnit = isNotEmptyStr(settings.units);
     this.isDefinedDec = isDefinedAndNotNull(settings.dec);
-    this.showZeroDecimals = !!settings.showZeroDecimals;
+    this.hideZeroDecimals = !settings.showZeroDecimals;
   }
 
-  format(value: any): string {
+  update(value: any): string {
     if (isDefinedAndNotNull(value) && isNumeric(value) && (this.isDefinedDec || this.isDefinedUnit || Number(value).toString() === value)) {
       let formatted = value;
       if (this.isDefinedDec) {
         formatted = Number(formatted).toFixed(this.settings.dec);
       }
-      if (!this.showZeroDecimals) {
+      if (this.hideZeroDecimals) {
         formatted = Number(formatted)
       }
       formatted = formatted.toString();
@@ -918,39 +918,37 @@ export class SimpleUnitProcessor extends FormatValueProcessor {
   }
 }
 
-export class ConvertUnitProcessor extends FormatValueProcessor {
+export class ConverterValueFormatProcessor extends ValueFormatProcessor {
 
   private readonly isDefinedDec: boolean;
-  private readonly showZeroDecimals: boolean;
-  private readonly unitConvertor: TbUnitConvertor;
+  private readonly hideZeroDecimals: boolean;
+  private readonly unitConverter: TbUnitConverter;
   private readonly unitAbbr: string;
 
   constructor(protected $injector: Injector,
-              protected settings: FormatValueSettingProcessor) {
+              protected settings: ValueFormatSettingProcessor) {
     super($injector, settings);
     const unitService = this.$injector.get(UnitService);
-    const userUnitSystem = unitService.getUnitSystem();
     const unit = settings.units as TbUnitMapping;
-    const fromUnit = unit.from;
-    this.unitAbbr = isNotEmptyStr(unit[userUnitSystem]) ? unit[userUnitSystem] : fromUnit;
+    this.unitAbbr = unitService.getTargetUnitSymbol(unit);
     try {
-      this.unitConvertor = unitService.geUnitConvertor(fromUnit, this.unitAbbr);
+      this.unitConverter = unitService.geUnitConverter(unit);
     } catch (e) {/**/}
 
     this.isDefinedDec = isDefinedAndNotNull(settings.dec);
-    this.showZeroDecimals = !!settings.showZeroDecimals;
+    this.hideZeroDecimals = !settings.showZeroDecimals;
   }
 
-  format(value: any): string {
+  update(value: any): string {
     if (isDefinedAndNotNull(value) && isNumeric(value)) {
       let formatted: number | string = Number(value);
-      if (this.unitConvertor) {
-        formatted = this.unitConvertor(value);
+      if (this.unitConverter) {
+        formatted = this.unitConverter(value);
       }
       if (this.isDefinedDec) {
         formatted = Number(formatted).toFixed(this.settings.dec);
       }
-      if (!this.showZeroDecimals) {
+      if (this.hideZeroDecimals) {
         formatted = Number(formatted)
       }
       formatted = formatted.toString();

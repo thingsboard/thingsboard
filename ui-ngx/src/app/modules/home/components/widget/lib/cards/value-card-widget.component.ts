@@ -33,14 +33,14 @@ import {
   ColorProcessor,
   ComponentStyle,
   DateFormatProcessor,
-  FormatValueProcessor,
   getDataKey,
   getLabel,
   getSingleTsValue,
   iconStyle,
   overlayStyle,
   resolveCssSize,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
 import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } from './value-card-widget.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
@@ -101,7 +101,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   private panelResize$: ResizeObserver;
 
   private horizontal = false;
-  private formatValue: FormatValueProcessor;
+  private valueFormat: ValueFormatProcessor;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
@@ -125,7 +125,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     if (dataKey?.units) {
       units = dataKey.units;
     }
-    this.formatValue = FormatValueProcessor.fromSettings(this.ctx.$injector, {units: units, dec: decimals});
+    this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units: units, dec: decimals});
 
     this.layout = this.settings.layout;
 
@@ -188,7 +188,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && tsValue[0] !== 0) {
       ts = tsValue[0];
       value = tsValue[1];
-      this.valueText = this.formatValue.format(value); // formatValue(value, this.decimals, this.units, false);
+      this.valueText = this.valueFormat.update(value); // formatValue(value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
     }

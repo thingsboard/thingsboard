@@ -15,7 +15,6 @@
 ///
 
 export * from './script/node-script-test.service';
-export * from './unit/unit.service';
 export * from './broadcast.models';
 export * from './broadcast.service';
 export * from './dashboard-utils.service';
@@ -29,5 +28,6 @@ export * from './raf.service';
 export * from './resources.service';
 export * from './time.service';
 export * from './title.service';
+export * from './unit.service';
 export * from './utils.service';
 export * from './window.service';

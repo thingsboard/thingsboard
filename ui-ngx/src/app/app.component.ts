@@ -33,7 +33,7 @@ import { svgIcons, svgIconsUrl } from '@shared/models/icon.models';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
 import { SETTINGS_KEY } from '@core/settings/settings.effects';
 import { initCustomJQueryEvents } from '@shared/models/jquery-event.models';
-import { UnitService } from '@core/services/unit/unit.service';
+import { UnitService } from '@core/services/unit.service';
 
 @Component({
   selector: 'tb-root',

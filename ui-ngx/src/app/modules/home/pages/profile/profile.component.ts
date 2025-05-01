@@ -32,7 +32,7 @@ import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { AuthService } from '@core/auth/auth.service';
 import { UnitSystem, UnitSystems } from '@shared/models/unit.models';
-import { UnitService } from '@core/services/unit/unit.service';
+import { UnitService } from '@core/services/unit.service';
 
 @Component({
   selector: 'tb-profile',

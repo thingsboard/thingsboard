@@ -31,10 +31,9 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of, shareReplay } from 'rxjs';
-import { searchUnits, TbUnit, UnitDescription, UnitsType, UnitSystem } from '@shared/models/unit.models';
+import { AllMeasures, searchUnits, TbUnit, UnitInfo, UnitsType, UnitSystem } from '@shared/models/unit.models';
 import { map, mergeMap } from 'rxjs/operators';
-import { AllMeasures } from '@core/services/unit/definitions/all';
-import { UnitService } from '@core/services/unit/unit.service';
+import { UnitService } from '@core/services/unit.service';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ConvertUnitSettingsPanelComponent } from '@shared/components/convert-unit-settings-panel.component';
 import { isNotEmptyStr, isObject } from '@core/utils';
@@ -57,7 +56,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   @HostBinding('style.display') readonly hostDisplay = 'flex';
   @ViewChild('unitInput', {static: true}) unitInput: ElementRef;
 
-  unitsFormControl: FormControl<TbUnit | UnitDescription>;
+  unitsFormControl: FormControl<TbUnit | UnitInfo>;
 
   @Input({transform: booleanAttribute})
   disabled: boolean;
@@ -77,7 +76,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   @Input({transform: booleanAttribute})
   allowConverted = false;
 
-  filteredUnits: Observable<Array<[AllMeasures, Array<UnitDescription>]>>;
+  filteredUnits: Observable<Array<[AllMeasures, Array<UnitInfo>]>>;
 
   searchText = '';
 
@@ -87,7 +86,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
 
   private modelValue: TbUnit | null;
 
-  private fetchUnits$: Observable<Array<[AllMeasures, Array<UnitDescription>]>> = null;
+  private fetchUnits$: Observable<Array<[AllMeasures, Array<UnitInfo>]>> = null;
 
   private propagateChange = (_val: any) => {};
 
@@ -100,7 +99,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   }
 
   ngOnInit() {
-    this.unitsFormControl = this.fb.control<TbUnit | UnitDescription>('', this.required ? [Validators.required] : []);
+    this.unitsFormControl = this.fb.control<TbUnit | UnitInfo>('', this.required ? [Validators.required] : []);
     this.filteredUnits = this.unitsFormControl.valueChanges
       .pipe(
         map(value => {
@@ -127,7 +126,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     this.searchText = '';
     this.modelValue = symbol;
     if (typeof symbol === 'string') {
-      this.unitsFormControl.patchValue(this.unitService.getUnitDescription(symbol) ?? symbol, {emitEvent: false});
+      this.unitsFormControl.patchValue(this.unitService.getUnitInfo(symbol) ?? symbol, {emitEvent: false});
       this.isUnitMapping = false;
     } else {
       this.unitsFormControl.patchValue(symbol, {emitEvent: false});
@@ -143,7 +142,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     }
   }
 
-  displayUnitFn(unit?: TbUnit | UnitDescription): string | undefined {
+  displayUnitFn(unit?: TbUnit | UnitInfo): string | undefined {
     if (unit) {
       return this.getUnitSymbol(unit);
     }
@@ -210,7 +209,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     }
   }
 
-  private updateView(value: UnitDescription | TbUnit ) {
+  private updateView(value: UnitInfo | TbUnit ) {
     const res = this.getTbUnit(value);
     if (this.modelValue !== res) {
       this.modelValue = res;
@@ -219,22 +218,22 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     }
   }
 
-  private fetchUnits(searchText?: string): Observable<Array<[AllMeasures, Array<UnitDescription>]>> {
+  private fetchUnits(searchText?: string): Observable<Array<[AllMeasures, Array<UnitInfo>]>> {
     this.searchText = searchText;
     return this.unitsConstant().pipe(
       map(unit => this.searchUnit(unit, searchText))
     );
   }
 
-  private unitsConstant(): Observable<Array<[AllMeasures, Array<UnitDescription>]>> {
+  private unitsConstant(): Observable<Array<[AllMeasures, Array<UnitInfo>]>> {
     if (this.fetchUnits$ === null) {
-      this.fetchUnits$ = of(this.unitService.getUnitsGroupByMeasure(this.measure, this.unitSystem)).pipe(
+      this.fetchUnits$ = of(this.unitService.getUnitsGroupedByMeasure(this.measure, this.unitSystem)).pipe(
         map(data => {
-          let objectData = Object.entries(data) as Array<[AllMeasures, UnitDescription[]]>;
+          let objectData = Object.entries(data) as Array<[AllMeasures, UnitInfo[]]>;
 
           if (this.tagFilter) {
             objectData = objectData
-              .map((measure) => [measure[0], measure[1].filter(u => u.tags.includes(this.tagFilter))] as [AllMeasures, UnitDescription[]])
+              .map((measure) => [measure[0], measure[1].filter(u => u.tags.includes(this.tagFilter))] as [AllMeasures, UnitInfo[]])
               .filter((measure) => measure[1].length > 0);
           }
           return objectData;
@@ -245,17 +244,17 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     return this.fetchUnits$;
   }
 
-  private searchUnit(units: Array<[AllMeasures, Array<UnitDescription>]>, searchText?: string): Array<[AllMeasures, Array<UnitDescription>]> {
+  private searchUnit(units: Array<[AllMeasures, Array<UnitInfo>]>, searchText?: string): Array<[AllMeasures, Array<UnitInfo>]> {
     if (isNotEmptyStr(searchText)) {
       const filterValue = searchText.trim().toUpperCase()
       return units
-        .map(measure => [measure[0], searchUnits(measure[1], filterValue)] as [AllMeasures, UnitDescription[]])
+        .map(measure => [measure[0], searchUnits(measure[1], filterValue)] as [AllMeasures, UnitInfo[]])
         .filter((measure) => measure[1].length > 0);
     }
     return units;
   }
 
-  private getUnitSymbol(value: TbUnit | UnitDescription | null): string {
+  private getUnitSymbol(value: TbUnit | UnitInfo | null): string {
     if (value === null) {
       return '';
     }
@@ -268,7 +267,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     return value.from;
   }
 
-  private getTbUnit(value: TbUnit | UnitDescription | null): TbUnit {
+  private getTbUnit(value: TbUnit | UnitInfo | null): TbUnit {
     if (value === null) {
       return null;
     }

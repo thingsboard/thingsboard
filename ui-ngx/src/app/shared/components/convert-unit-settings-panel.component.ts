@@ -15,12 +15,11 @@
 ///
 
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { TbUnit, UnitDescription, UnitSystem } from '@shared/models/unit.models';
+import { AllMeasures, TbUnit, UnitInfo, UnitSystem } from '@shared/models/unit.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { UnitService } from '@core/services/unit/unit.service';
-import { AllMeasures } from '@core/services/unit/definitions/all';
+import { UnitService } from '@core/services/unit.service';
 import { debounceTime, first } from 'rxjs/operators';
 import { isEmptyStr } from '@core/utils';
 import type { UnitInputComponent } from '@shared/components/unit-input.component';
@@ -69,7 +68,7 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
       debounceTime(200),
       takeUntilDestroyed()
     ).subscribe(unit => {
-      const unitDescription = this.unitService.getUnitDescription(unit);
+      const unitDescription = this.unitService.getUnitInfo(unit);
       if (unitDescription) {
         this.convertUnitForm.get('convertUnit').enable({emitEvent: true});
         this.measure = unitDescription.measure;
@@ -109,7 +108,7 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
   }
 
   ngOnInit() {
-    let unitDescription: UnitDescription;
+    let unitDescription: UnitInfo;
     if (this.required) {
       this.convertUnitForm.get('from').setValidators(Validators.required);
       this.convertUnitForm.get('from').updateValueAndValidity({emitEvent: false});
@@ -117,13 +116,13 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
     if (typeof this.unit === 'string') {
       this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
       this.convertUnitForm.get('from').setValue(this.unit, {emitEvent: true});
-      unitDescription = this.unitService.getUnitDescription(this.unit);
+      unitDescription = this.unitService.getUnitInfo(this.unit);
     } else if (this.unit === null) {
       this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
       this.convertUnitForm.get('from').setValue(null, {emitEvent: true});
     } else {
       this.convertUnitForm.patchValue(this.unit, {emitEvent: false});
-      unitDescription = this.unitService.getUnitDescription(this.unit.from);
+      unitDescription = this.unitService.getUnitInfo(this.unit.from);
     }
 
     if (unitDescription?.measure) {
