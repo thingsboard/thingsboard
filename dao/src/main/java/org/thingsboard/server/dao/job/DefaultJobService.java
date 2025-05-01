@@ -29,8 +29,8 @@ import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
-import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.data.job.TaskFailure;
+import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -55,7 +55,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     @Transactional
     @Override
     public Job submitJob(TenantId tenantId, Job job) {
-        if (jobDao.existsByKeyAndStatusOneOf(job.getKey(), QUEUED, PENDING, RUNNING)) {
+        if (jobDao.existsByTenantAndKeyAndStatusOneOf(tenantId, job.getKey(), QUEUED, PENDING, RUNNING)) {
             throw new IllegalArgumentException("The same job is already queued or running");
         }
         if (jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, job.getType(), PENDING, RUNNING)) {
@@ -187,6 +187,11 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
         return jobDao.findByTenantId(tenantId, pageLink);
     }
 
+    @Override
+    public Job findLatestJobByKey(TenantId tenantId, String key) {
+        return jobDao.findLatestByKey(tenantId, key);
+    }
+
     private Job findForUpdate(TenantId tenantId, JobId jobId) {
         return jobDao.findByIdForUpdate(tenantId, jobId);
     }
@@ -199,6 +204,11 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     @Override
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         jobDao.removeById(tenantId, id.getId());
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        jobDao.deleteByTenantId(tenantId);
     }
 
     @Override

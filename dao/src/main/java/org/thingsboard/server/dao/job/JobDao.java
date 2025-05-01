@@ -30,10 +30,14 @@ public interface JobDao extends Dao<Job> {
 
     Job findByIdForUpdate(TenantId tenantId, JobId jobId);
 
-    boolean existsByKeyAndStatusOneOf(String key, JobStatus... statuses);
+    Job findLatestByKey(TenantId tenantId, String key);
+
+    boolean existsByTenantAndKeyAndStatusOneOf(TenantId tenantId, String key, JobStatus... statuses);
 
     boolean existsByTenantIdAndTypeAndStatusOneOf(TenantId tenantId, JobType type, JobStatus... statuses);
 
     Job findOldestByTenantIdAndTypeAndStatusForUpdate(TenantId tenantId, JobType type, JobStatus status);
+
+    void deleteByTenantId(TenantId tenantId);
 
 }

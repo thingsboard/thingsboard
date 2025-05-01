@@ -29,9 +29,9 @@ import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.job.JobDao;
 import org.thingsboard.server.dao.model.sql.JobEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.job.JobDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
@@ -55,8 +55,13 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
     }
 
     @Override
-    public boolean existsByKeyAndStatusOneOf(String key, JobStatus... statuses) {
-        return jobRepository.existsByKeyAndStatusIn(key, Arrays.stream(statuses).toList());
+    public Job findLatestByKey(TenantId tenantId, String key) {
+        return DaoUtil.getData(jobRepository.findLatestByTenantIdAndKey(tenantId.getId(), key));
+    }
+
+    @Override
+    public boolean existsByTenantAndKeyAndStatusOneOf(TenantId tenantId, String key, JobStatus... statuses) {
+        return jobRepository.existsByTenantIdAndKeyAndStatusIn(tenantId.getId(), key, Arrays.stream(statuses).toList());
     }
 
     @Override
@@ -67,6 +72,11 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
     @Override
     public Job findOldestByTenantIdAndTypeAndStatusForUpdate(TenantId tenantId, JobType type, JobStatus status) {
         return DaoUtil.getData(jobRepository.findOldestByTenantIdAndTypeAndStatusForUpdate(tenantId.getId(), type, status, Limit.of(1)));
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        jobRepository.deleteByTenantId(tenantId.getId());
     }
 
     @Override
