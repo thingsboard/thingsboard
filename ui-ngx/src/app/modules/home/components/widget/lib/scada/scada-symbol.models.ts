@@ -190,7 +190,7 @@ const tbNamespaceRegex = /<svg.*(xmlns:tb="https:\/\/thingsboard.io\/svg").*>/gm
 
 const tbTagRegex = /tb:tag="([^"]*)"/gms;
 
-let syncTime = Date.now();
+const syncTime = Date.now();
 
 const generateElementId = () => {
   const id = guid();
@@ -1279,9 +1279,6 @@ class FlowConnectorAnimation implements ConnectorScadaSymbolAnimation {
     if (!this.element.node.childElementCount) {
       this.element.add(this._animation);
     }
-    if (!syncTime) {
-      syncTime = Date.now();
-    }
     const animateElement = this.element.node.getElementsByTagName('animate')[0];
     const offset = ((Date.now() - syncTime) % 1000) * -1;
     (animateElement as SVGAnimationElement).beginElementAt(offset);
@@ -1310,7 +1307,7 @@ class FlowConnectorAnimation implements ConnectorScadaSymbolAnimation {
     this._strokeLineCap = linecap;
     this._dashWidth = dashWidth - offset;
     this._dashGap = dashGap - offset;
-    const dashArray = `${this._dashWidth}${this._dashGap ? ` ${this._dashGap}` : ''}`;
+    const dashArray = `${this._dashWidth} ${this._dashGap}`;
     const values = `${this._dashWidth + (this._dashGap || this._dashWidth)};0`;
     this._animation.stroke({width, color, linecap, dasharray: dashArray});
     this._animation.findOne('animate').attr('values', values);

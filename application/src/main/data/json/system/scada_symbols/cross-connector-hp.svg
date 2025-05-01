@@ -7,7 +7,7 @@
   "tags": [
     {
       "tag": "line",
-      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nif (ctx.properties.mainLine) {\n    element.attr({'stroke-width': ctx.properties.mainLineSize});\n} else {\n    element.attr({'stroke-width': ctx.properties.secondaryLineSize});\n}",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nelement.attr({'stroke-width': ctx.properties.lineSize});",
       "actions": null
     },
     {
@@ -58,8 +58,8 @@
     },
     {
       "id": "leftFlowDirection",
-      "name": "{i18n:scada.symbol.animation-direction}",
-      "hint": "{i18n:scada.symbol.animation-direction-hint}",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
       "group": "{i18n:scada.symbol.left-connector}",
       "type": "value",
       "valueType": "BOOLEAN",
@@ -174,8 +174,8 @@
     },
     {
       "id": "topFlowDirection",
-      "name": "{i18n:scada.symbol.animation-direction}",
-      "hint": "{i18n:scada.symbol.animation-direction-hint}",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
       "group": "{i18n:scada.symbol.top-connector}",
       "type": "value",
       "valueType": "BOOLEAN",
@@ -290,8 +290,8 @@
     },
     {
       "id": "rightFlowDirection",
-      "name": "{i18n:scada.symbol.flow-direction}",
-      "hint": "{i18n:scada.symbol.flow-direction-hint}",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
       "group": "{i18n:scada.symbol.right-connector}",
       "type": "value",
       "valueType": "BOOLEAN",
@@ -406,8 +406,8 @@
     },
     {
       "id": "bottomFlowDirection",
-      "name": "{i18n:scada.symbol.animation-direction}",
-      "hint": "{i18n:scada.symbol.animation-direction-hint}",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
       "group": "{i18n:scada.symbol.bottom-connector}",
       "type": "value",
       "valueType": "BOOLEAN",
@@ -484,16 +484,8 @@
   ],
   "properties": [
     {
-      "id": "mainLine",
-      "name": "{i18n:scada.symbol.main-line}",
-      "type": "switch",
-      "default": true,
-      "disabled": false,
-      "visible": true
-    },
-    {
       "id": "mainLineSize",
-      "name": "{i18n:scada.symbol.main-line}",
+      "name": "{i18n:scada.symbol.line}",
       "type": "number",
       "default": 6,
       "required": true,
@@ -504,28 +496,11 @@
       "min": 0,
       "max": 99,
       "step": 1,
-      "disabled": false,
-      "visible": true
-    },
-    {
-      "id": "secondaryLineSize",
-      "name": "{i18n:scada.symbol.main-line}",
-      "type": "number",
-      "default": 2,
-      "required": true,
-      "subLabel": "Secondary",
-      "divider": true,
-      "fieldSuffix": "px",
-      "condition": "return !model.mainLine;",
-      "min": 0,
-      "max": 99,
-      "step": 1,
-      "disabled": false,
-      "visible": false
+      "disabled": false
     },
     {
       "id": "lineColor",
-      "name": "{i18n:scada.symbol.main-line}",
+      "name": "{i18n:scada.symbol.line}",
       "type": "color",
       "default": "#1A1A1A",
       "disabled": false,
@@ -533,12 +508,11 @@
     },
     {
       "id": "flowAnimationWidth",
-      "name": "{i18n:scada.symbol.flow}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "number",
       "default": 4,
-      "subLabel": "Width",
-      "divider": true,
+      "divider": false,
       "fieldSuffix": "px",
       "min": 1,
       "step": 1,
@@ -547,8 +521,8 @@
     },
     {
       "id": "flowAnimationColor",
-      "name": "{i18n:scada.symbol.flow}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "color",
       "default": "#C8DFF7",
       "disabled": false,
@@ -556,14 +530,14 @@
     },
     {
       "id": "flowStyleDash",
-      "name": "{i18n:scada.symbol.flow-style}",
+      "name": "{i18n:scada.symbol.flow-line-style}",
       "hint": "{i18n:scada.symbol.flow-style-hint}",
-      "group": "{i18n:scada.symbol.animation}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "number",
       "default": 10,
       "required": true,
       "subLabel": "{i18n:scada.symbol.dash}",
-      "divider": true,
+      "divider": false,
       "fieldSuffix": "px",
       "min": 0,
       "step": 1,
@@ -572,14 +546,14 @@
     },
     {
       "id": "flowStyleGap",
-      "name": "{i18n:scada.symbol.flow-style}",
+      "name": "{i18n:scada.symbol.flow-line-style}",
       "hint": "{i18n:scada.symbol.flow-style-hint}",
-      "group": "{i18n:scada.symbol.animation}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "number",
       "default": 10,
       "subLabel": "{i18n:scada.symbol.gap}",
       "fieldSuffix": "px",
-      "min": 1,
+      "min": 0,
       "step": 1,
       "disabled": false,
       "visible": true
@@ -587,7 +561,7 @@
     {
       "id": "flowDashCap",
       "name": "{i18n:scada.symbol.flow-dash-cap}",
-      "group": "{i18n:scada.symbol.animation}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "select",
       "default": "butt",
       "items": [
