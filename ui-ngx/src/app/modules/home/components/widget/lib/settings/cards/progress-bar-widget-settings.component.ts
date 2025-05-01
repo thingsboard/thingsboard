@@ -57,7 +57,7 @@ export class ProgressBarWidgetSettingsComponent extends WidgetSettingsComponent 
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...progressBarDefaultSettings};
+    return progressBarDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

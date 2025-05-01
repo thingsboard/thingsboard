@@ -42,6 +42,7 @@ import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { MarkerIconContainer, MarkerShape } from '@shared/models/widget/maps/marker-shape.models';
 import { ColorRange, DateFormatSettings, simpleDateFormat } from '@shared/models/widget-settings.models';
+import _ from 'lodash';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -60,7 +61,7 @@ export interface TbMapDatasource extends Datasource {
   mapDataIds: string[];
 }
 
-export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSettings): TbMapDatasource => {
+export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSettings, id = guid()): TbMapDatasource => {
   return {
     type: settings.dsType,
     name: settings.dsLabel,
@@ -68,7 +69,8 @@ export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSetting
     entityAliasId: settings.dsEntityAliasId,
     filterId: settings.dsFilterId,
     dataKeys: [],
-    mapDataIds: [guid()]
+    latestDataKeys: [],
+    mapDataIds: [id]
   };
 };
 
@@ -132,6 +134,7 @@ export interface DataLayerEditSettings {
 }
 
 export interface MapDataLayerSettings extends MapDataSourceSettings {
+  additionalDataSources?: MapDataSourceSettings[];
   additionalDataKeys?: DataKey[];
   label: DataLayerPatternSettings;
   tooltip: DataLayerTooltipSettings;
@@ -484,8 +487,41 @@ export const defaultBaseTripsDataLayerSettings = (mapType: MapType): Partial<Tri
     },
   } as TripsDataLayerSettings);
 
+export enum ShapeFillType {
+  color = 'color',
+  image = 'image',
+  stripe = 'stripe'
+}
+
+export enum ShapeFillImageType {
+  image = 'image',
+  function = 'function'
+}
+
+export interface ShapeFillImageSettings {
+  type: ShapeFillImageType;
+  image?: string;
+  preserveAspectRatio?: boolean;
+  opacity?: number; // (0-1)
+  angle?: number; // (0-360)
+  scale?: number; // (0-...)
+  imageFunction?: TbFunction;
+  images?: string[];
+}
+
+export interface ShapeFillStripeSettings {
+  weight: number;
+  color: DataLayerColorSettings;
+  spaceWeight: number;
+  spaceColor: DataLayerColorSettings;
+  angle: number; // (0-180)
+}
+
 export interface ShapeDataLayerSettings extends MapDataLayerSettings {
-  fillColor: DataLayerColorSettings;
+  fillType: ShapeFillType;
+  fillColor?: DataLayerColorSettings;
+  fillImage?: ShapeFillImageSettings;
+  fillStripe?: ShapeFillStripeSettings;
   strokeColor: DataLayerColorSettings;
   strokeWeight: number;
 }
@@ -507,9 +543,31 @@ export const defaultPolygonsDataLayerSettings = (mapType: MapType, functionsOnly
 } as PolygonsDataLayerSettings, defaultBasePolygonsDataLayerSettings(mapType) as PolygonsDataLayerSettings);
 
 export const defaultBasePolygonsDataLayerSettings = (mapType: MapType): Partial<PolygonsDataLayerSettings> => mergeDeep({
+    fillType: ShapeFillType.color,
     fillColor: {
       type: DataLayerColorType.constant,
       color: 'rgba(51,136,255,0.2)',
+    },
+    fillImage: {
+      type: ShapeFillImageType.image,
+      image: '/assets/widget-preview-empty.svg',
+      preserveAspectRatio: true,
+      opacity: 1,
+      angle: 0,
+      scale: 1
+    },
+    fillStripe: {
+      weight: 3,
+      color: {
+        type: DataLayerColorType.constant,
+        color: '#8f8f8f'
+      },
+      spaceWeight: 9,
+      spaceColor: {
+        type: DataLayerColorType.constant,
+        color: 'rgba(143,143,143,0)',
+      },
+      angle: 45
     },
     strokeColor: {
       type: DataLayerColorType.constant,
@@ -536,9 +594,31 @@ export const defaultCirclesDataLayerSettings = (mapType: MapType, functionsOnly 
 } as CirclesDataLayerSettings, defaultBaseCirclesDataLayerSettings(mapType) as CirclesDataLayerSettings);
 
 export const defaultBaseCirclesDataLayerSettings = (mapType: MapType): Partial<CirclesDataLayerSettings> => mergeDeep({
+    fillType: ShapeFillType.color,
     fillColor: {
       type: DataLayerColorType.constant,
       color: 'rgba(51,136,255,0.2)',
+    },
+    fillImage: {
+      type: ShapeFillImageType.image,
+      image: '/assets/widget-preview-empty.svg',
+      preserveAspectRatio: true,
+      opacity: 1,
+      angle: 0,
+      scale: 1
+    },
+    fillStripe: {
+      weight: 3,
+      color: {
+        type: DataLayerColorType.constant,
+        color: '#8f8f8f'
+      },
+      spaceWeight: 9,
+      spaceColor: {
+        type: DataLayerColorType.constant,
+        color: 'rgba(143,143,143,0)',
+      },
+      angle: 45
     },
     strokeColor: {
       type: DataLayerColorType.constant,
@@ -584,6 +664,32 @@ export const additionalMapDataSourcesToDatasources = (additionalMapDataSources: 
     res.dataKeys = addDs.dataKeys;
     return res;
   });
+};
+
+export const mapDataSourceValid = (dataSource: MapDataSourceSettings): boolean => {
+  if (!dataSource.dsType || ![DatasourceType.device, DatasourceType.entity].includes(dataSource.dsType)) {
+    return false;
+  }
+  if (dataSource.dsType === DatasourceType.device && !dataSource.dsDeviceId) {
+    return false;
+  }
+  return !(dataSource.dsType === DatasourceType.entity && !dataSource.dsEntityAliasId);
+
+};
+
+export const mapDataSourceValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const dataSource: MapDataSourceSettings = control.value;
+  if (!mapDataSourceValid(dataSource)) {
+    return {
+      dataSource: true
+    };
+  }
+  return null;
+};
+
+export const defaultMapDataSourceSettings = {
+  dsType: DatasourceType.entity,
+  dsLabel: ''
 };
 
 export const additionalMapDataSourceValid = (dataSource: AdditionalMapDataSourceSettings): boolean => {
@@ -1081,6 +1187,14 @@ export interface MarkerIconInfo {
   size: [number, number];
 }
 
+export interface ShapeFillImageInfo {
+  url: string;
+  preserveAspectRatio?: boolean;
+  opacity?: number;
+  angle?: number;
+  scale?: number;
+}
+
 export type MapStringFunction = (data: FormattedData<TbMapDatasource>,
                                  dsData: FormattedData<TbMapDatasource>[]) => string;
 
@@ -1094,6 +1208,9 @@ export type ClusterMarkerColorFunction = (data: FormattedData<TbMapDatasource>[]
 
 export type MarkerPositionFunction = (origXPos: number, origYPos: number, data: FormattedData<TbMapDatasource>,
                                       dsData: FormattedData<TbMapDatasource>[], aspect: number) => { x: number, y: number };
+
+export type ShapeFillImageFunction = (data: FormattedData<TbMapDatasource>, images: string[],
+                                      dsData: FormattedData<TbMapDatasource>[]) => ShapeFillImageInfo;
 
 export type TbPolygonRawCoordinate = L.LatLngTuple | L.LatLngTuple[] | L.LatLngTuple[][];
 export type TbPolygonRawCoordinates = TbPolygonRawCoordinate[];
@@ -1151,6 +1268,21 @@ export const parseCenterPosition = (position: string | [number, number]): [numbe
   return [0, 0];
 }
 
+export const updateDataKeyToNewDsType = (dataKey: DataKey | null, newDsType: DatasourceType, timeSeries = false): boolean => {
+  if (newDsType === DatasourceType.function) {
+    if (dataKey && dataKey.type !== DataKeyType.function) {
+      dataKey.type = DataKeyType.function;
+      return true;
+    }
+  } else {
+    if (dataKey?.type === DataKeyType.function) {
+      dataKey.type = timeSeries ? DataKeyType.timeseries : DataKeyType.attribute;
+      return true;
+    }
+  }
+  return false;
+}
+
 export const mergeMapDatasources = (target: TbMapDatasource[], source: TbMapDatasource[]): TbMapDatasource[] => {
   const appendDatasources: TbMapDatasource[] = [];
   for (const sourceDs of source) {
@@ -1191,7 +1323,7 @@ const mapDatasourceIsSame = (ds1: TbMapDatasource, ds2: TbMapDatasource): boolea
 }
 
 const mergeMapDatasource = (target: TbMapDatasource, source: TbMapDatasource): TbMapDatasource => {
-  target.mapDataIds.push(...source.mapDataIds);
+  target.mapDataIds = _.union(target.mapDataIds, source.mapDataIds);
   const appendKeys: DataKey[] = [];
   for (const sourceKey of source.dataKeys) {
     const found =
@@ -1225,11 +1357,13 @@ const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Obse
   image.src = imageUrl;
 });
 
-const loadImageAspect = (imageUrl: string): Observable<number> =>
-  imageLoader(imageUrl).pipe(map(image => image.width / image.height));
+const loadImageSize = (imageUrl: string): Observable<[number, number]> =>
+  imageLoader(imageUrl).pipe(map(image => [image.width, image.height]));
 
 export interface ImageWithAspect {
   url: string;
+  width: number;
+  height: number;
   aspect: number;
 }
 
@@ -1243,9 +1377,14 @@ export const loadImageWithAspect = (imagePipe: ImagePipe, imageUrl: string): Obs
       return imagePipe.transform(imageUrl, {asString: true, ignoreLoadingImage: true}).pipe(
         switchMap((res) => {
           const url = res as string;
-          return loadImageAspect(url).pipe(
-            map((aspect) => {
-              imageWithAspect = {url, aspect};
+          return loadImageSize(url).pipe(
+            map((size) => {
+              imageWithAspect = {
+                url,
+                width: size[0],
+                height: size[1],
+                aspect: size[0]/size[1]
+              };
               imageAspectMap[hash] = imageWithAspect;
               return imageWithAspect;
             })

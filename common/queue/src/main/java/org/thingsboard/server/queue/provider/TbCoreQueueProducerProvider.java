@@ -115,7 +115,6 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
         return toHousekeeper;
     }
 
-
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> getTbEdgeMsgProducer() {
         return toEdge;

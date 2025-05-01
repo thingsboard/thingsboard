@@ -101,7 +101,7 @@ export class DataLayerColorSettingsPanelComponent extends PageComponent implemen
   }
 
   applyColorSettings() {
-    const colorSettings: DataLayerColorSettings = this.colorSettingsFormGroup.value;
+    const colorSettings: DataLayerColorSettings = this.colorSettingsFormGroup.getRawValue();
     this.colorSettingsApplied.emit(colorSettings);
   }
 
@@ -122,8 +122,15 @@ export class DataLayerColorSettingsPanelComponent extends PageComponent implemen
     const type: DataLayerColorType = this.colorSettingsFormGroup.get('type').value;
     if (type === DataLayerColorType.range) {
       this.colorSettingsFormGroup.get('rangeKey').enable({emitEvent: false});
+      this.colorSettingsFormGroup.get('range').enable({emitEvent: false});
     } else {
       this.colorSettingsFormGroup.get('rangeKey').disable({emitEvent: false});
+      this.colorSettingsFormGroup.get('range').disable({emitEvent: false});
+    }
+    if (type === DataLayerColorType.function) {
+      this.colorSettingsFormGroup.get('colorFunction').enable({emitEvent: false});
+    } else {
+      this.colorSettingsFormGroup.get('colorFunction').disable({emitEvent: false});
     }
   }
 }

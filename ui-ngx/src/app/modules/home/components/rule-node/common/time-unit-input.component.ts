@@ -177,7 +177,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   }
 
   private updatedModel(value: Partial<TimeUnitInputModel>, forceUpdated = false) {
-    const time = value.time * this.timeIntervalsInSec.get(value.timeUnit);
+    const time = isDefinedAndNotNull(value.time) ? value.time * this.timeIntervalsInSec.get(value.timeUnit) : null;
     if (this.modelValue !== time || forceUpdated) {
       this.modelValue = time;
       this.propagateChange(time);

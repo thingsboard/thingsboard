@@ -336,7 +336,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   }
 
   private updatedScriptLanguage() {
-    this.jsEditor.session.setMode(`ace/mode/${ScriptLanguage.TBEL === this.scriptLanguage ? 'tbel' : 'javascript'}`);
+    this.jsEditor?.session?.setMode(`ace/mode/${ScriptLanguage.TBEL === this.scriptLanguage ? 'tbel' : 'javascript'}`);
   }
 
   validateOnSubmit(): Observable<void> {
@@ -518,14 +518,17 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        modules: deepClone(this.modules)
-      };
-      const modulesPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, JsFuncModulesComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const modulesPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: JsFuncModulesComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'leftTop',
+        context: {
+          modules: deepClone(this.modules)
+        },
+        isModal: true
+      });
       modulesPanelPopover.tbComponentRef.instance.popover = modulesPanelPopover;
       modulesPanelPopover.tbComponentRef.instance.modulesApplied.subscribe((modules) => {
         modulesPanelPopover.hide();
@@ -582,7 +585,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
 
   private updateHighlightRules(): void {
     // @ts-ignore
-    if (!!this.jsEditor.session.$mode) {
+    if (!!this.jsEditor?.session?.$mode) {
       // @ts-ignore
       const newMode = new this.jsEditor.session.$mode.constructor();
       newMode.$highlightRules = new newMode.HighlightRules();
@@ -598,7 +601,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
       if (this.scriptLanguage === ScriptLanguage.TBEL) {
         newMode.$highlightRules.$rules.start = [...tbelUtilsFuncHighlightRules, ...newMode.$highlightRules.$rules.start];
       }
-      const identifierRule = newMode.$highlightRules.$rules.no_regex.find(rule => rule.token?.includes('identifier'));
+      const identifierRule = newMode.$highlightRules.$rules.no_regex.find(rule => Array.isArray(rule.token) && rule.token.includes('identifier'));
       if (identifierRule && identifierRule.next === 'no_regex') {
         identifierRule.next = 'start';
       }
@@ -609,7 +612,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
 
   private updateJsWorkerGlobals() {
     // @ts-ignore
-    if (!!this.jsEditor.session.$worker) {
+    if (!!this.jsEditor?.session?.$worker) {
       const jsWorkerOptions = {
         undef: !this.disableUndefinedCheck,
         unused: true,
@@ -638,6 +641,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
   }
 
   updateCompleters() {
+    if (!this.jsEditor) {
+      return;
+    }
     let modulesCompleterObservable: Observable<TbEditorCompleter>;
     if (this.withModules) {
       modulesCompleterObservable = loadModulesCompleter(this.http, this.modules);

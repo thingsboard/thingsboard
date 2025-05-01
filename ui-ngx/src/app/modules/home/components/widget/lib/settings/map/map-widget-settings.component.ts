@@ -19,8 +19,8 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
-import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
+import { isDefinedAndNotNull } from '@core/utils';
+import { mapWidgetDefaultSettings } from '@home/components/widget/lib/maps/map-widget.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
 @Component({
@@ -47,16 +47,26 @@ export class MapWidgetSettingsComponent extends WidgetSettingsComponent {
     const params = widgetConfig.typeParameters as any;
     if (isDefinedAndNotNull(params.trip)) {
       this.trip = params.trip === true;
+    } else {
+      this.trip = false;
     }
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeepIgnoreArray<MapWidgetSettings>({} as MapWidgetSettings, mapWidgetDefaultSettings);
+    return mapWidgetDefaultSettings;
+  }
+
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    return {
+      mapSettings: settings,
+      background: settings.background,
+      padding: settings.padding
+    };
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.mapWidgetSettingsForm = this.fb.group({
-      mapSettings: [settings, []],
+      mapSettings: [settings.mapSettings, []],
       background: [settings.background, []],
       padding: [settings.padding, []]
     });

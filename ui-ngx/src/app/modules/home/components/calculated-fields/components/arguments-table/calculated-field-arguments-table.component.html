@@ -58,7 +58,7 @@
         </mat-header-cell>
         <mat-cell *matCellDef="let argument" class="w-1/4 xs:hidden">
           <div tbTruncateWithTooltip>
-            @if (argument.refEntityId?.id) {
+            @if (argument.refEntityId?.id && argument.refEntityId?.entityType !== ArgumentEntityType.Tenant) {
               <a aria-label="Open entity details page"
                  [routerLink]="getEntityDetailsPageURL(argument.refEntityId.id, argument.refEntityId.entityType)">
                 {{ entityNameMap.get(argument.refEntityId.id) ?? '' }}
@@ -87,17 +87,17 @@
       </ng-container>
       <ng-container matColumnDef="actions" stickyEnd>
         <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
-        <mat-cell *matCellDef="let argument; let $index = index">
+        <mat-cell *matCellDef="let argument;">
           <div class="tb-form-table-row-cell-buttons flex w-20 min-w-20">
             <button type="button"
                     mat-icon-button
                     #button
-                    (click)="manageArgument($event, button, argument, $index)"
+                    (click)="manageArgument($event, button, argument)"
                     [matTooltip]="'action.edit' | translate"
                     matTooltipPosition="above">
               <mat-icon
                 [matBadgeHidden]="!(argument.refEntityKey.type === ArgumentType.Rolling
-                          && calculatedFieldType === CalculatedFieldType.SIMPLE) && !entityNameErrorSet.has(argument.refEntityId?.id)"
+                          && calculatedFieldType === CalculatedFieldType.SIMPLE) && argument.refEntityId?.id !== NULL_UUID"
                 matBadgeColor="warn"
                 matBadgeSize="small"
                 matBadge="*"

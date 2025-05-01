@@ -76,8 +76,9 @@ public class DefaultEdqsApiService implements EdqsApiService {
             requestMsg.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
         }
 
-        Integer partition = edqsPartitionService.resolvePartition(tenantId);
-        ListenableFuture<TbProtoQueueMsg<FromEdqsMsg>> resultFuture = requestTemplate.send(new TbProtoQueueMsg<>(UUID.randomUUID(), requestMsg.build()), partition);
+        UUID key = UUID.randomUUID();
+        Integer partition = edqsPartitionService.resolvePartition(tenantId, key);
+        ListenableFuture<TbProtoQueueMsg<FromEdqsMsg>> resultFuture = requestTemplate.send(new TbProtoQueueMsg<>(key, requestMsg.build()), partition);
         return Futures.transform(resultFuture, msg -> {
             TransportProtos.EdqsResponseMsg responseMsg = msg.getValue().getResponseMsg();
             return JacksonUtil.fromString(responseMsg.getValue(), EdqsResponse.class);

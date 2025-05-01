@@ -57,9 +57,7 @@ export class TripAnimationWidgetSettingsComponent extends WidgetSettingsComponen
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {
-      ...defaultTripAnimationSettings
-    };
+    return defaultTripAnimationSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

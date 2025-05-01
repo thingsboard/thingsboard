@@ -15,7 +15,7 @@
 ///
 
 import { Component } from "@angular/core";
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from "@angular/forms";
+import { UntypedFormBuilder, UntypedFormGroup } from "@angular/forms";
 import { WidgetSettings, WidgetSettingsComponent } from "@shared/models/widget.models";
 import { AppState } from '@core/core.state';
 import { Store } from "@ngrx/store";
@@ -43,7 +43,7 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...mobileAppQrCodeWidgetDefaultSettings};
+    return mobileAppQrCodeWidgetDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

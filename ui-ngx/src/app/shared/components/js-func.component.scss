@@ -85,4 +85,8 @@
       color: rgb(49, 132, 149);
     }
   }
+
+  label.tb-title.tb-required::after {
+    content: "*";
+  }
 }

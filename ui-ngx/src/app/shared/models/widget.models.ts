@@ -37,17 +37,19 @@ import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { isNotEmptyStr, mergeDeepIgnoreArray } from '@core/utils';
+import { isNotEmptyStr, mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityInfoData, HasTenantId, HasVersion } from '@shared/models/entity.models';
-import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
+import {
+  DataKeysCallbacks,
+  DataKeySettingsFunction
+} from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { TbFunction } from '@shared/models/js-function.models';
 import { FormProperty, jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Device } from '@shared/models/device.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -185,6 +187,7 @@ export interface WidgetTypeParameters {
   previewWidth?: string;
   previewHeight?: string;
   embedTitlePanel?: boolean;
+  embedActionsPanel?: boolean;
   overflowVisible?: boolean;
   hideDataTab?: boolean;
   hideDataSettings?: boolean;
@@ -205,7 +208,7 @@ export interface WidgetControllerDescriptor {
   actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
 
-export interface BaseWidgetType extends BaseData<WidgetTypeId>, HasTenantId, HasVersion {
+export interface BaseWidgetType extends BaseData<WidgetTypeId>, HasTenantId, HasVersion, ExportableEntity<WidgetTypeId> {
   tenantId: TenantId;
   fqn: string;
   name: string;
@@ -769,7 +772,30 @@ export interface WidgetAction extends CustomActionDescriptor {
   mobileAction?: WidgetMobileActionDescriptor;
   url?: string;
   mapItemType?: MapItemType;
+  mapItemTooltips?: MapItemTooltips;
 }
+
+export interface MapItemTooltips {
+  placeMarker?: string;
+  firstVertex?: string;
+  continueLine?: string;
+  finishPoly?: string;
+  startRect?: string;
+  finishRect?: string;
+  startCircle?: string;
+  finishCircle?: string;
+}
+
+export const mapItemTooltipsTranslation: Required<MapItemTooltips> = Object.freeze({
+  placeMarker: 'widgets.maps.data-layer.marker.place-marker-hint',
+  firstVertex: 'widgets.maps.data-layer.polygon.polygon-place-first-point-hint',
+  continueLine: 'widgets.maps.data-layer.polygon.continue-polygon-hint',
+  finishPoly: 'widgets.maps.data-layer.polygon.finish-polygon-hint',
+  startRect: 'widgets.maps.data-layer.polygon.rectangle-place-first-point-hint',
+  finishRect: 'widgets.maps.data-layer.polygon.finish-rectangle-hint',
+  startCircle: 'widgets.maps.data-layer.circle.place-circle-center-hint',
+  finishCircle: 'widgets.maps.data-layer.circle.finish-circle-hint'
+})
 
 export interface WidgetActionDescriptor extends WidgetAction {
   id: string;
@@ -780,7 +806,7 @@ export interface WidgetActionDescriptor extends WidgetAction {
   buttonColor?: string;
   buttonFillColor?: string;
   buttonBorderColor?: string;
-  customButtonStyle?: string;
+  customButtonStyle?: {[key: string]: string};
   displayName?: string;
   useShowWidgetActionFunction?: boolean;
   showWidgetActionFunction?: TbFunction;
@@ -976,9 +1002,9 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
 
   set settings(value: WidgetSettings) {
     if (!value) {
-      this.settingsValue = this.defaultSettings();
+      this.settingsValue = mergeDeep({}, this.defaultSettings());
     } else {
-      this.settingsValue = mergeDeepIgnoreArray(this.defaultSettings(), value);
+      this.settingsValue = mergeDeepIgnoreArray({}, this.defaultSettings(), value);
     }
     if (!this.settingsSet) {
       this.settingsSet = true;

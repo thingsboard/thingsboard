@@ -13,8 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.geo;
+package org.thingsboard.common.util;
 
-public enum PerimeterType {
-    CIRCLE, POLYGON
+import com.google.common.hash.Hashing;
+import lombok.Getter;
+import org.springframework.util.ConcurrentReferenceHashMap;
+
+import java.util.concurrent.ConcurrentMap;
+
+public class TbBytePool {
+
+    @Getter
+    private static final ConcurrentMap<String, byte[]> pool = new ConcurrentReferenceHashMap<>();
+
+    public static byte[] intern(byte[] data) {
+        if (data == null) {
+            return null;
+        }
+        var checksum = Hashing.sha512().hashBytes(data).toString();
+        return pool.computeIfAbsent(checksum, c -> data);
+    }
+
 }

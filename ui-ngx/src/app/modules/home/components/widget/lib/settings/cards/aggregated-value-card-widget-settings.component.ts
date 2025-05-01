@@ -44,7 +44,7 @@ export class AggregatedValueCardWidgetSettingsComponent extends WidgetSettingsCo
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...aggregatedValueCardDefaultSettings};
+    return aggregatedValueCardDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

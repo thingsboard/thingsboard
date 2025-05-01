@@ -715,7 +715,7 @@ public class MqttClientTest extends AbstractContainerTest {
         clientConfig.setClientId("MQTT client from test");
         clientConfig.setUsername(username);
         clientConfig.setProtocolVersion(mqttVersion);
-        clientConfig.setRetransmissionConfig(new MqttClientConfig.RetransmissionConfig(5, 5000L, 0.1d)); // same as defaults in thingsboard.yml as of time of this writing
+        clientConfig.setRetransmissionConfig(new MqttClientConfig.RetransmissionConfig(3, 5000L, 0.15d)); // same as defaults in thingsboard.yml as of time of this writing
         MqttClient mqttClient = MqttClient.create(clientConfig, listener, handlerExecutor);
         if (connect) {
             mqttClient.connect(TRANSPORT_HOST, TRANSPORT_PORT).get();
