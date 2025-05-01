@@ -21,9 +21,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.dao.model.sql.JobEntity;
@@ -58,6 +60,9 @@ public interface JobRepository extends JpaRepository<JobEntity, UUID> {
             "AND j.status = :status ORDER BY j.createdTime ASC, j.id ASC")
     JobEntity findOldestByTenantIdAndTypeAndStatusForUpdate(UUID tenantId, JobType type, JobStatus status, Limit limit);
 
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM JobEntity j WHERE j.tenantId = :tenantId")
     void deleteByTenantId(UUID tenantId);
 
 }
