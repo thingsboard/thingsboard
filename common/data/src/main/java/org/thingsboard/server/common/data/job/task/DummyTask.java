@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.job;
+package org.thingsboard.server.common.data.job.task;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.thingsboard.server.common.data.job.JobType;
 
 import java.util.List;
+import java.util.Optional;
 
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @ToString(callSuper = true)
-public class DummyTask extends Task {
+public class DummyTask extends Task<DummyTaskResult> {
 
     private int number;
     private long processingTimeMs;
@@ -41,8 +43,17 @@ public class DummyTask extends Task {
     }
 
     @Override
-    public TaskFailure toFailure(Throwable error) {
-        return new DummyTaskFailure(number, failAlways, error.getMessage());
+    public DummyTaskResult toResult(boolean discarded, Optional<Throwable> error) {
+        var result = DummyTaskResult.builder();
+        result.discarded(discarded);
+        if (error.isPresent()) {
+            result.failure(DummyTaskFailure.builder()
+                    .error(error.map(Throwable::getMessage).orElse(null))
+                    .number(number)
+                    .failAlways(failAlways)
+                    .build());
+        }
+        return result.build();
     }
 
     @Override
@@ -51,23 +62,13 @@ public class DummyTask extends Task {
     }
 
     @Data
-    @EqualsAndHashCode(callSuper = true)
     @NoArgsConstructor
-    public static class DummyTaskFailure extends TaskFailure {
+    @EqualsAndHashCode(callSuper = true)
+    @SuperBuilder
+    public static class DummyTaskFailure extends TaskFailure { // todo: do we need separate structure?
 
         private int number;
         private boolean failAlways;
-
-        public DummyTaskFailure(int number, boolean failAlways, String error) {
-            super(error);
-            this.number = number;
-            this.failAlways = failAlways;
-        }
-
-        @Override
-        public JobType getJobType() {
-            return JobType.DUMMY;
-        }
 
     }
 

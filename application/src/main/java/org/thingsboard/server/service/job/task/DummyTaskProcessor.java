@@ -17,16 +17,17 @@ package org.thingsboard.server.service.job.task;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.job.DummyTask;
+import org.thingsboard.server.common.data.job.task.DummyTask;
 import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.common.data.job.task.DummyTaskResult;
 import org.thingsboard.server.queue.task.TaskProcessor;
 
 @Component
 @RequiredArgsConstructor
-public class DummyTaskProcessor extends TaskProcessor<DummyTask, Void> {
+public class DummyTaskProcessor extends TaskProcessor<DummyTask, DummyTaskResult> {
 
     @Override
-    public Void process(DummyTask task) throws Exception {
+    public DummyTaskResult process(DummyTask task) throws Exception {
         if (task.getProcessingTimeMs() > 0) {
             Thread.sleep(task.getProcessingTimeMs());
         }
@@ -37,7 +38,7 @@ public class DummyTaskProcessor extends TaskProcessor<DummyTask, Void> {
             String error = task.getErrors().get(task.getAttempt() - 1);
             throw new RuntimeException(error);
         }
-        return null;
+        return DummyTaskResult.success();
     }
 
     @Override

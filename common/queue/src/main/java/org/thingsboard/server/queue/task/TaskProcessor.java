@@ -25,8 +25,8 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.job.JobType;
-import org.thingsboard.server.common.data.job.Task;
-import org.thingsboard.server.common.data.job.TaskResult;
+import org.thingsboard.server.common.data.job.task.Task;
+import org.thingsboard.server.common.data.job.task.TaskResult;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
@@ -37,13 +37,14 @@ import org.thingsboard.server.queue.provider.TaskProcessorQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public abstract class TaskProcessor<T extends Task, R> {
+public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -98,16 +99,17 @@ public abstract class TaskProcessor<T extends Task, R> {
     private void processMsgs(List<TbProtoQueueMsg<TaskProto>> msgs, TbQueueConsumer<TbProtoQueueMsg<TaskProto>> consumer) throws Exception {
         for (TbProtoQueueMsg<TaskProto> msg : msgs) {
             try {
-                Task task = JacksonUtil.fromString(msg.getValue().getValue(), Task.class);
+                @SuppressWarnings("unchecked")
+                T task = (T) JacksonUtil.fromString(msg.getValue().getValue(), Task.class);
                 if (discardedJobs.contains(task.getJobId().getId())) {
                     log.info("Skipping task '{}' for cancelled job {}", task.getKey(), task.getJobId());
-                    reportCancelled(task);
+                    reportTaskDiscarded(task);
                     continue;
                 } else if (deletedTenants.contains(task.getTenantId().getId())) {
                     log.info("Skipping task '{}' for deleted tenant {}", task.getKey(), task.getTenantId());
                     continue;
                 }
-                processTask((T) task);
+                processTask(task);
             } catch (InterruptedException e) {
                 throw e;
             } catch (Exception e) {
@@ -121,8 +123,8 @@ public abstract class TaskProcessor<T extends Task, R> {
         task.setAttempt(task.getAttempt() + 1);
         log.info("Processing task: {}", task);
         try {
-            process(task);
-            reportSuccess(task);
+            R result = process(task);
+            reportTaskResult(task, result);
         } catch (InterruptedException e) {
             throw e;
         } catch (Exception e) {
@@ -130,31 +132,22 @@ public abstract class TaskProcessor<T extends Task, R> {
             if (task.getAttempt() <= task.getRetries()) {
                 processTask(task);
             } else {
-                reportFailure(task, e);
+                reportTaskFailure(task, e);
             }
         }
     }
 
     public abstract R process(T task) throws Exception;
 
-    private void reportSuccess(Task task) {
-        TaskResult result = TaskResult.builder()
-                .success(true)
-                .build();
-        statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
+    private void reportTaskFailure(T task, Throwable error) {
+        reportTaskResult(task, task.toResult(false, Optional.of(error)));
     }
 
-    private void reportFailure(Task task, Throwable error) {
-        TaskResult result = TaskResult.builder()
-                .failure(task.toFailure(error))
-                .build();
-        statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
+    private void reportTaskDiscarded(T task) {
+        reportTaskResult(task, task.toResult(true, Optional.empty()));
     }
 
-    private void reportCancelled(Task task) {
-        TaskResult result = TaskResult.builder()
-                .discarded(true)
-                .build();
+    private void reportTaskResult(T task, R result) {
         statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
     }
 

@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.job;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.task.TaskResult;
 
 import java.util.ArrayList;
 import java.util.List;

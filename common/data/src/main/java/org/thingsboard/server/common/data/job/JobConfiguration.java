@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
+import org.thingsboard.server.common.data.job.task.TaskResult;
 
 import java.io.Serializable;
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.List;
 @Data
 public abstract class JobConfiguration implements Serializable {
 
-    private List<TaskFailure> toReprocess;
+    private List<TaskResult> toReprocess;
 
     public abstract JobType getType();
 

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.job.task.TaskResult;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ public abstract class JobResult implements Serializable {
     private int failedCount;
     private int discardedCount;
     private Integer totalCount = null; // set when all tasks are submitted
-    private List<TaskFailure> failures = new ArrayList<>();
+    private List<TaskResult> results = new ArrayList<>();
     private String generalError;
 
     private long cancellationTs;
@@ -48,6 +49,19 @@ public abstract class JobResult implements Serializable {
     @JsonIgnore
     public int getCompletedCount() {
         return successfulCount + failedCount + discardedCount;
+    }
+
+    public void processTaskResult(TaskResult taskResult) {
+        if (taskResult.isSuccess()) {
+            successfulCount++;
+        } else if (taskResult.isDiscarded()) {
+            discardedCount++;
+        } else {
+            failedCount++;
+            if (results.size() < 1000) { // preserving only first 1000 errors, not reprocessing if there are more failures
+                results.add(taskResult);
+            }
+        }
     }
 
     public abstract JobType getJobType();

@@ -31,9 +31,8 @@ import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
-import org.thingsboard.server.common.data.job.Task;
-import org.thingsboard.server.common.data.job.TaskFailure;
-import org.thingsboard.server.common.data.job.TaskResult;
+import org.thingsboard.server.common.data.job.task.Task;
+import org.thingsboard.server.common.data.job.task.TaskResult;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
@@ -50,7 +49,6 @@ import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +116,7 @@ public class DefaultJobManager implements JobManager {
         JobId jobId = job.getId();
         try {
             JobProcessor processor = jobProcessors.get(job.getType());
-            List<TaskFailure> toReprocess = job.getConfiguration().getToReprocess();
+            List<TaskResult> toReprocess = job.getConfiguration().getToReprocess();
             if (toReprocess == null) {
                 int tasksCount = processor.process(job, this::submitTask); // todo: think about stopping tb - while tasks are being submitted
                 log.info("[{}][{}][{}] Submitted {} tasks", tenantId, jobId, job.getType(), tasksCount);
@@ -155,20 +153,24 @@ public class DefaultJobManager implements JobManager {
         if (result.getGeneralError() != null) {
             throw new IllegalArgumentException("Reprocessing not allowed since job has general error");
         }
-        List<TaskFailure> failures = result.getFailures();
-        if (result.getFailedCount() > failures.size()) {
-            throw new IllegalArgumentException("Reprocessing not allowed since there are too many failures (more than " + failures.size() + ")");
+        List<TaskResult> taskFailures = result.getResults().stream()
+                .filter(taskResult -> !taskResult.isSuccess() && !taskResult.isDiscarded())
+                .toList();
+        if (result.getFailedCount() > taskFailures.size()) {
+            throw new IllegalArgumentException("Reprocessing not allowed since there are too many failures (more than " + taskFailures.size() + ")");
         }
 
         result.setFailedCount(0);
-        result.setFailures(Collections.emptyList());
+        result.setResults(result.getResults().stream()
+                .filter(TaskResult::isSuccess)
+                .toList());
 
-        job.getConfiguration().setToReprocess(failures);
+        job.getConfiguration().setToReprocess(taskFailures);
 
         jobService.submitJob(tenantId, job);
     }
 
-    private void submitTask(Task task) {
+    private void submitTask(Task<?> task) {
         log.info("[{}][{}] Submitting task: {}", task.getTenantId(), task.getJobId(), task);
         TaskProto taskProto = TaskProto.newBuilder()
                 .setValue(JacksonUtil.toString(task))

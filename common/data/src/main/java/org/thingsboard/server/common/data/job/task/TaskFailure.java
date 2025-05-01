@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.job;
+package org.thingsboard.server.common.data.job.task;
 
-import org.thingsboard.server.common.data.job.Job;
-import org.thingsboard.server.common.data.job.JobType;
-import org.thingsboard.server.common.data.job.task.Task;
-import org.thingsboard.server.common.data.job.task.TaskResult;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-import java.util.function.Consumer;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@SuperBuilder
+public abstract class TaskFailure {
 
-public interface JobProcessor {
-
-    int process(Job job, Consumer<Task<?>> taskConsumer) throws Exception;
-
-    void reprocess(Job job, List<TaskResult> taskFailures, Consumer<Task<?>> taskConsumer) throws Exception;
-
-    JobType getType();
+    private String error;
 
 }
