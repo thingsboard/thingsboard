@@ -87,6 +87,7 @@ export enum MenuId {
   audit_log = 'audit_log',
   alarms = 'alarms',
   dashboards = 'dashboards',
+  smart_scene = 'smart_scene',
   entities = 'entities',
   devices = 'devices',
   assets = 'assets',
@@ -104,7 +105,7 @@ export enum MenuId {
   features = 'features',
   otaUpdates = 'otaUpdates',
   version_control = 'version_control',
-  api_usage = 'api_usage'
+  api_usage = 'api_usage',
 }
 
 declare type MenuFilter = (authState: AuthState) => boolean;
@@ -503,6 +504,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.smart_scene,
+    {
+      id: MenuId.smart_scene,
+      name: 'Smart Scene',
+      type: 'link',
+      path: 'smart-scene',
+      icon: 'mdi:lightbulb'
+    }
+  ],
+  [
     MenuId.entities,
     {
       id: MenuId.entities,
@@ -857,7 +868,8 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
             ]
           }
         ]
-      }
+      },
+      {id: MenuId.smart_scene}
     ]
   ],
   [
@@ -908,6 +920,10 @@ const defaultHomeSectionMap = new Map<Authority, HomeSectionReference[]>([
   [
     Authority.TENANT_ADMIN,
     [
+      {
+        name: 'smart_scene.management',
+        places: [MenuId.smart_scene]
+      },
       {
         name: 'rulechain.management',
         places: [MenuId.rule_chains]

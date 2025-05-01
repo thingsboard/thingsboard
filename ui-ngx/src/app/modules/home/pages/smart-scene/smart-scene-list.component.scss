@@ -1,0 +1,304 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.smart-scene-container {
+  padding: 16px;
+  
+  .scene-card {
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+  
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    
+    .title-section {
+      .main-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 500;
+      }
+      
+      .subtitle {
+        color: rgba(0, 0, 0, 0.6);
+        font-size: 0.875rem;
+      }
+    }
+    
+    .actions-section {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      
+      .add-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+  
+  .filters-section {
+    padding: 16px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.02);
+    
+    .search-field {
+      flex: 1;
+      min-width: 250px;
+    }
+    
+    .filter-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      
+      mat-form-field {
+        width: 150px;
+      }
+    }
+  }
+  
+  .table-container {
+    max-height: calc(100vh - 300px);
+    overflow: auto;
+    
+    .scene-table {
+      width: 100%;
+      
+      .mat-mdc-row {
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.04);
+        }
+      }
+      
+      .selected-row {
+        background-color: rgba(33, 150, 243, 0.08);
+      }
+      
+      .mat-column-select {
+        width: 60px;
+        padding-left: 16px;
+      }
+      
+      .mat-column-status {
+        width: 100px;
+      }
+      
+      .mat-column-createdTime {
+        width: 150px;
+      }
+      
+      .mat-column-title {
+        min-width: 250px;
+      }
+      
+      .mat-column-category {
+        width: 150px;
+      }
+      
+      .mat-column-customers {
+        width: 180px;
+      }
+      
+      .mat-column-lastRun {
+        width: 150px;
+      }
+      
+      .mat-column-public {
+        width: 100px;
+        text-align: center;
+      }
+      
+      .mat-column-actions {
+        width: 80px;
+        text-align: right;
+      }
+      
+      .title-cell {
+        .scene-title {
+          font-weight: 500;
+        }
+        
+        .scene-description {
+          font-size: 0.8125rem;
+          color: rgba(0, 0, 0, 0.6);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 400px;
+        }
+      }
+      
+      .status-badge {
+        padding: 4px 8px;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: capitalize;
+        
+        &.active-badge {
+          background-color: rgba(76, 175, 80, 0.12);
+          color: #2e7d32;
+        }
+        
+        &.inactive-badge {
+          background-color: rgba(158, 158, 158, 0.12);
+          color: #616161;
+        }
+      }
+      
+      .customer-avatars {
+        display: flex;
+        flex-wrap: nowrap;
+        
+        .customer-avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background-color: #3f51b5;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.75rem;
+          font-weight: 500;
+          margin-right: -8px;
+          border: 2px solid white;
+          
+          &.more-avatar {
+            background-color: #9e9e9e;
+          }
+        }
+      }
+      
+      .never-run {
+        color: rgba(0, 0, 0, 0.38);
+        font-style: italic;
+      }
+      
+      .no-data-cell {
+        padding: 48px 0;
+        
+        .no-data-message {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+          color: rgba(0, 0, 0, 0.6);
+          
+          mat-icon {
+            font-size: 48px;
+            width: 48px;
+            height: 48px;
+            color: rgba(0, 0, 0, 0.2);
+          }
+        }
+      }
+    }
+  }
+  
+  .bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background-color: rgba(33, 150, 243, 0.08);
+    border-top: 1px solid rgba(33, 150, 243, 0.2);
+    
+    span {
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.7);
+    }
+  }
+  
+  .delete-action {
+    color: #f44336;
+  }
+  
+  mat-paginator {
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 960px) {
+  .smart-scene-container {
+    .header-section {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      
+      .actions-section {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+    
+    .filters-section {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .search-field {
+        width: 100%;
+      }
+      
+      .filter-buttons {
+        width: 100%;
+        justify-content: space-between;
+        
+        mat-form-field {
+          width: calc(50% - 8px);
+        }
+      }
+    }
+    
+    .table-container {
+      .scene-table {
+        // Hide less important columns on smaller screens
+        .mat-column-lastRun,
+        .mat-column-category {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .smart-scene-container {
+    .table-container {
+      .scene-table {
+        // Hide more columns on very small screens
+        .mat-column-createdTime,
+        .mat-column-public {
+          display: none;
+        }
+      }
+    }
+    
+    .bulk-actions {
+      flex-wrap: wrap;
+    }
+  }
+}

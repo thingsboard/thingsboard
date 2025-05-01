@@ -1,0 +1,95 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="smart-scene-container">
+  <mat-card class="scene-card">
+    <div class="header-section">
+      <div class="title-section">
+        <h2 class="main-title">Smart Scenes</h2>
+        <span class="subtitle">List smart scenes</span>
+      </div>
+      <div class="actions-section">
+        <button mat-flat-button color="primary" class="add-button" (click)="createScene()">
+          <mat-icon>add</mat-icon>
+          <span>New Scene</span>
+        </button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource" matSort class="scene-table">
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
+          <td mat-cell *matCellDef="let scene">
+            <span class="status-badge" [ngClass]="scene.status === 'active' ? 'active-badge' : 'inactive-badge'">
+              {{scene.status}}
+            </span>
+          </td>
+        </ng-container>
+        <!-- Created Time Column -->
+        <ng-container matColumnDef="createdTime">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Created </th>
+          <td mat-cell *matCellDef="let scene"> {{scene.createdTime | date:'yyyy-MM-dd HH:mm'}} </td>
+        </ng-container>
+        <!-- Title Column -->
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Title </th>
+          <td mat-cell *matCellDef="let scene">
+            <div class="scene-title">{{scene.title}}</div>
+          </td>
+        </ng-container>
+        <!-- Customers Column -->
+        <ng-container matColumnDef="customers">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Customers </th>
+          <td mat-cell *matCellDef="let scene">
+            <div class="customer-avatars">
+              <div *ngFor="let customer of scene.customersList | slice:0:3" class="customer-avatar" [matTooltip]="customer.name">
+                {{customer.name.charAt(0)}}
+              </div>
+              <div *ngIf="scene.customersList.length > 3" class="customer-avatar more-avatar" [matTooltip]="getMoreCustomersTooltip(scene)">
+                +{{scene.customersList.length - 3}}
+              </div>
+            </div>
+          </td>
+        </ng-container>
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef> Actions </th>
+          <td mat-cell *matCellDef="let scene">
+            <button mat-icon-button color="primary" (click)="viewScene(scene)" matTooltip="View Details">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deleteScene(scene)" matTooltip="Delete">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="['status', 'createdTime', 'title', 'customers', 'actions']; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['status', 'createdTime', 'title', 'customers', 'actions'];"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-data-cell" [attr.colspan]="5">
+            <div class="no-data-message">
+              <mat-icon>search_off</mat-icon>
+              <span>No scenes found</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator [pageSizeOptions]="[5, 10, 25, 50]" [pageSize]="10" showFirstLastButtons aria-label="Select page of scenes"></mat-paginator>
+  </mat-card>
+</div>

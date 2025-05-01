@@ -195,8 +195,11 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/asset", method = RequestMethod.POST)
     @ResponseBody
     public Asset saveAsset(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the asset.") @RequestBody Asset asset) throws Exception {
+        System.out.println("STEP 0");
         asset.setTenantId(getTenantId());
+        System.out.println("STEP 0.1");
         checkEntity(asset.getId(), asset, Resource.ASSET);
+        System.out.println("STEP: 1");
         return tbAssetService.save(asset, getCurrentUser());
     }
 

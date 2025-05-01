@@ -1,0 +1,75 @@
+{
+  "type": "SMART_SCENE",
+  "if": [
+    {
+      "type": "SCHEDULE",
+      "conditions": [
+        {
+          "time": "20:48",
+          "utcOffset": 7,
+          "days": [
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "type": "WEATHER",
+      "conditions": [
+        {
+          "key": "temperature",
+          "operator": ">",
+          "value": 20
+        },
+        {
+          "key": "humidity",
+          "operator": "<",
+          "value": 80
+        }
+      ]
+    },
+    {
+      "type": "DEVICE",
+      "conditions": [
+        {
+          "deviceName": "MB",
+          "conditions": [
+            {
+              "key":"soilMoisture",
+              "operator": "<",
+              "value": 30
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "CMD": "PUSH_NOTIFY",
+      "params": [
+        {
+          "title": "Test"
+        }
+      ]
+    },
+    {
+      "CMD": "SET_OUTPUT",
+      "params": [
+        {
+          "deviceId": "f7725ee0-10b8-11f0-a6a5-31643b1c7793",
+          "pin": 1,
+          "value": 1
+        },
+        {
+          "deviceId": "f7725ee0-10b8-11f0-a6a5-31643b1c7793",
+          "pin": 2,
+          "value": 1
+        }
+      ]
+    }
+  ]
+}
+
+

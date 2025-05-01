@@ -42,11 +42,15 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     public Asset save(Asset asset, User user) throws Exception {
         ActionType actionType = asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = asset.getTenantId();
+        System.out.println("STEP 2");
         try {
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
+            System.out.println("STEP 3");
             autoCommit(user, savedAsset.getId());
+            System.out.println("STEP 4");
             logEntityActionService.logEntityAction(tenantId, savedAsset.getId(), savedAsset, asset.getCustomerId(),
                     actionType, user);
+            System.out.println("STEP 5");
             return savedAsset;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ASSET), asset, actionType, user, e);

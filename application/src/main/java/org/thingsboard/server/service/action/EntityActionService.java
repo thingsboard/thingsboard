@@ -172,6 +172,13 @@ public class EntityActionService {
                 if (tenantId != null && !tenantId.isSysTenantId()) {
                     processNotificationRules(tenantId, entityId, entity, actionType, user, additionalInfo);
                 }
+                System.out.println("EntityId: " + entityId);
+                System.out.println("EntityType: " + entityId.getEntityType());
+                System.out.println("TenantId: " + tenantId);
+                System.out.println("CustomerId: " + customerId);
+                System.out.println("ActionType: " + actionType);
+                System.out.println("MetaData: " + metaData);
+                System.out.println("EntityNode: " + entityNode);
                 TbMsg tbMsg = TbMsg.newMsg()
                         .type(msgType.get())
                         .originator(entityId)

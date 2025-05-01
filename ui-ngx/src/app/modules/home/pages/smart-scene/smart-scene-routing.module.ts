@@ -16,39 +16,22 @@
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-
-import { HomeComponent } from './home.component';
-import { AuthGuard } from '@core/guards/auth.guard';
-import { StoreModule } from '@ngrx/store';
+import { SmartSceneListComponent } from './smart-scene-list.component';
+import { MenuId } from '@core/services/menu.models';
 
 const routes: Routes = [
-  { path: '',
-    component: HomeComponent,
+  {
+    path: '',
+    component: SmartSceneListComponent,
     data: {
-      title: 'home.home',
-      breadcrumb: {
-        skip: true
-      }
-    },
-    canActivate: [AuthGuard],
-    canActivateChild: [AuthGuard],
-    children: [
-      {
-        path: 'smart-scene',
-        loadChildren: () => import('./pages/smart-scene/smart-scene.module').then(m => m.SmartSceneModule)
-      },
-      {
-        path: '',
-        loadChildren: () => import('./pages/home-pages.module').then(m => m.HomePagesModule)
-      }
-    ]
+      breadcrumb: 'Smart Scene',
+      menuId: MenuId.smart_scene
+    }
   }
 ];
 
 @NgModule({
-  imports: [      
-    StoreModule,
-    RouterModule.forChild(routes)],
+  imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
-export class HomeRoutingModule { }
+export class SmartSceneRoutingModule {}

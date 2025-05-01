@@ -78,7 +78,7 @@ import { MobileModule } from '@home/pages/mobile/mobile.module';
     UserModule,
     VcModule,
     AccountModule,
-    ScadaSymbolModule
+    ScadaSymbolModule,
   ]
 })
 export class HomePagesModule { }
