@@ -207,6 +207,11 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        jobDao.deleteByTenantId(tenantId);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.JOB;
     }

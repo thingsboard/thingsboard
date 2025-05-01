@@ -38,4 +38,6 @@ public interface JobDao extends Dao<Job> {
 
     Job findOldestByTenantIdAndTypeAndStatusForUpdate(TenantId tenantId, JobType type, JobStatus status);
 
+    void deleteByTenantId(TenantId tenantId);
+
 }

@@ -75,6 +75,11 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        jobRepository.deleteByTenantId(tenantId.getId());
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.JOB;
     }

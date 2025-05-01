@@ -45,7 +45,9 @@ public interface JobRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j FROM JobEntity j WHERE j.id = :id")
     JobEntity findByIdForUpdate(UUID id);
 
-    JobEntity findLatestByTenantIdAndKey(UUID tenantId, String key);
+    @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId AND j.key = :key " +
+            "ORDER BY j.createdTime DESC")
+    JobEntity findLatestByTenantIdAndKey(@Param("tenantId") UUID tenantId, @Param("key") String key);
 
     boolean existsByTenantIdAndKeyAndStatusIn(UUID tenantId, String key, List<JobStatus> statuses);
 
@@ -55,5 +57,7 @@ public interface JobRepository extends JpaRepository<JobEntity, UUID> {
     @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId AND j.type = :type " +
             "AND j.status = :status ORDER BY j.createdTime ASC, j.id ASC")
     JobEntity findOldestByTenantIdAndTypeAndStatusForUpdate(UUID tenantId, JobType type, JobStatus status, Limit limit);
+
+    void deleteByTenantId(UUID tenantId);
 
 }
