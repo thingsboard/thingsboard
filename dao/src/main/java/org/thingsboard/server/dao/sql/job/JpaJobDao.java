@@ -29,9 +29,9 @@ import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.job.JobDao;
 import org.thingsboard.server.dao.model.sql.JobEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.job.JobDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
@@ -52,6 +52,11 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
     @Override
     public Job findByIdForUpdate(TenantId tenantId, JobId jobId) {
         return DaoUtil.getData(jobRepository.findByIdForUpdate(jobId.getId()));
+    }
+
+    @Override
+    public Job findByKey(TenantId tenantId, String key) {
+        return DaoUtil.getData(jobRepository.findByTenantIdAndKey(tenantId.getId(), key));
     }
 
     @Override

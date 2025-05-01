@@ -35,8 +35,8 @@ import java.util.UUID;
 public interface JobRepository extends JpaRepository<JobEntity, UUID> {
 
     @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId " +
-           "AND (:searchText IS NULL OR ilike(j.key, concat('%', :searchText, '%')) = true " +
-           "OR ilike(j.description, concat('%', :searchText, '%')) = true)")
+            "AND (:searchText IS NULL OR ilike(j.key, concat('%', :searchText, '%')) = true " +
+            "OR ilike(j.description, concat('%', :searchText, '%')) = true)")
     Page<JobEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                 @Param("searchText") String searchText,
                                                 Pageable pageable);
@@ -44,6 +44,8 @@ public interface JobRepository extends JpaRepository<JobEntity, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE) // SELECT FOR UPDATE
     @Query("SELECT j FROM JobEntity j WHERE j.id = :id")
     JobEntity findByIdForUpdate(UUID id);
+
+    JobEntity findByTenantIdAndKey(@Param("tenantId") UUID tenantId, @Param("key") String key);
 
     boolean existsByKeyAndStatusIn(String key, List<JobStatus> statuses);
 

@@ -29,8 +29,8 @@ import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
-import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.data.job.TaskFailure;
+import org.thingsboard.server.common.data.job.TaskResult;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -185,6 +185,11 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     @Override
     public PageData<Job> findJobsByTenantId(TenantId tenantId, PageLink pageLink) {
         return jobDao.findByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public Job findJobByKey(TenantId tenantId, String key) {
+        return jobDao.findByKey(tenantId, key);
     }
 
     private Job findForUpdate(TenantId tenantId, JobId jobId) {
