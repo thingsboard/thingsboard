@@ -20,7 +20,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.thingsboard.server.common.data.job.JobType;
-import org.thingsboard.server.common.data.job.task.DummyTask.DummyTaskFailure;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -28,21 +27,43 @@ import org.thingsboard.server.common.data.job.task.DummyTask.DummyTaskFailure;
 @SuperBuilder
 public class DummyTaskResult extends TaskResult {
 
-    private static final DummyTaskResult SUCCESS = new DummyTaskResult(true);
+    private static final DummyTaskResult SUCCESS = DummyTaskResult.builder().success(true).build();
+    private static final DummyTaskResult DISCARDED = DummyTaskResult.builder().discarded(true).build();
 
     private DummyTaskFailure failure;
-
-    public DummyTaskResult(boolean success) {
-        super(success);
-    }
 
     public static DummyTaskResult success() {
         return SUCCESS;
     }
 
+    public static DummyTaskResult failed(DummyTask task, Throwable error) {
+        DummyTaskResult result = new DummyTaskResult();
+        result.setFailure(DummyTaskFailure.builder()
+                .error(error.getMessage())
+                .number(task.getNumber())
+                .failAlways(task.isFailAlways())
+                .build());
+        return result;
+    }
+
+    public static DummyTaskResult discarded() {
+        return DISCARDED;
+    }
+
     @Override
     public JobType getJobType() {
         return JobType.DUMMY;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
+    @SuperBuilder
+    public static class DummyTaskFailure extends TaskFailure {
+
+        private int number;
+        private boolean failAlways;
+
     }
 
 }

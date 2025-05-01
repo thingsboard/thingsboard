@@ -37,7 +37,6 @@ import org.thingsboard.server.queue.provider.TaskProcessorQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -140,11 +139,13 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
     public abstract R process(T task) throws Exception;
 
     private void reportTaskFailure(T task, Throwable error) {
-        reportTaskResult(task, task.toResult(false, Optional.of(error)));
+        R taskResult = task.toFailed(error);
+        reportTaskResult(task, taskResult);
     }
 
     private void reportTaskDiscarded(T task) {
-        reportTaskResult(task, task.toResult(true, Optional.empty()));
+        R taskResult = task.toDiscarded();
+        reportTaskResult(task, taskResult);
     }
 
     private void reportTaskResult(T task, R result) {

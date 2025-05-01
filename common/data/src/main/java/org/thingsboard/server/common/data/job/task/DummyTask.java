@@ -23,7 +23,6 @@ import lombok.experimental.SuperBuilder;
 import org.thingsboard.server.common.data.job.JobType;
 
 import java.util.List;
-import java.util.Optional;
 
 @Data
 @NoArgsConstructor
@@ -43,33 +42,18 @@ public class DummyTask extends Task<DummyTaskResult> {
     }
 
     @Override
-    public DummyTaskResult toResult(boolean discarded, Optional<Throwable> error) {
-        var result = DummyTaskResult.builder();
-        result.discarded(discarded);
-        if (error.isPresent()) {
-            result.failure(DummyTaskFailure.builder()
-                    .error(error.map(Throwable::getMessage).orElse(null))
-                    .number(number)
-                    .failAlways(failAlways)
-                    .build());
-        }
-        return result.build();
+    public DummyTaskResult toFailed(Throwable error) {
+        return DummyTaskResult.failed(this, error);
+    }
+
+    @Override
+    public DummyTaskResult toDiscarded() {
+        return DummyTaskResult.discarded();
     }
 
     @Override
     public JobType getJobType() {
         return JobType.DUMMY;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = true)
-    @SuperBuilder
-    public static class DummyTaskFailure extends TaskFailure { // todo: do we need separate structure?
-
-        private int number;
-        private boolean failAlways;
-
     }
 
 }

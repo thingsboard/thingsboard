@@ -21,8 +21,8 @@ import org.thingsboard.server.common.data.job.DummyJobConfiguration;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.DummyTask;
-import org.thingsboard.server.common.data.job.task.DummyTask.DummyTaskFailure;
 import org.thingsboard.server.common.data.job.task.DummyTaskResult;
+import org.thingsboard.server.common.data.job.task.DummyTaskResult.DummyTaskFailure;
 import org.thingsboard.server.common.data.job.task.Task;
 import org.thingsboard.server.common.data.job.task.TaskResult;
 

@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.JobType;
 
-import java.util.Optional;
-
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
@@ -51,7 +49,9 @@ public abstract class Task<R extends TaskResult> {
     @JsonIgnore
     public abstract Object getKey();
 
-    public abstract R toResult(boolean discarded, Optional<Throwable> error);
+    public abstract R toFailed(Throwable error);
+
+    public abstract R toDiscarded();
 
     public abstract JobType getJobType();
 
