@@ -3,7 +3,7 @@
   "description": "Top tee connector",
   "widgetSizeX": 1,
   "widgetSizeY": 1,
-  "stateRenderFunction": "const {\n    flowAnimationWidth: lineWidth,\n    flowAnimationColor: lineColor,\n    flowStyleDash: dashWidth,\n    flowStyleGap: dashGap,\n    flowDashCap: dashCap\n} = ctx.properties;\n\nconst leftLine = \"M0 100H100\";\nconst topLine = \"M100 97L100 0\";\nconst rightLine = \"M100 100H200\";\n\nprepareFlowAnimation('left', leftLine);\nprepareFlowAnimation('top', topLine);\nprepareFlowAnimation('right', rightLine);\n\nfunction prepareFlowAnimation(prefix, line) {\n    const flowAnimation = ctx.values[prefix + 'Flow'];\n    const flowDirection = ctx.values[prefix + 'FlowDirection'];\n    const flowAnimationSpeed = ctx.values[prefix + 'FlowAnimationSpeed'];\n\n    const animation = ctx.tags[prefix + 'Line'][0];\n    const offset = Date.now() % 1000;\n    const duration = 1 / flowAnimationSpeed;\n    \n    const prevFlowAnimation = animation.remember('flowAnimation');\n    const prevFlowDirection = animation.remember('flowDirection');\n    const prevFlowDuration = animation.remember('flowDuration');\n    \n    if (flowAnimation && flowAnimation !== prevFlowAnimation) {\n        animation.remember('flowAnimation', flowAnimation);\n        animation.remember('flowDuration', duration);\n        animation.remember('flowDirection', flowDirection);\n        animateFlow(animation, offset, flowDirection, duration, line);\n    } else if (flowAnimation && flowDirection !== prevFlowDirection) {\n        animation.remember('flowDirection', flowDirection);\n        animateFlow(animation, offset, flowDirection, duration, line);\n    } else if (flowAnimation && duration !== prevFlowDuration) {\n        animation.remember('flowDuration', duration);\n        animation.findOne('animate').attr('dur', `${duration}s`) ;\n    } else if (!flowAnimation && prevFlowAnimation) {\n        animation.remember('flowAnimation', null);\n        animation.clear();\n    }\n}\n\nfunction animateFlow(group, offset, flowDirection, duration, line) {\n    group.clear();\n    const dashArray = `${dashWidth}${dashGap ? ` ${dashGap}` : ''}`;\n    const value = flowDirection ? `${dashWidth + (dashGap || dashWidth)}` : `-${dashWidth + (dashGap || dashWidth)}`;\n\n    group.add(`<path style=\"stroke-dasharray: ${dashArray}; stroke-linecap: ${dashCap}; stroke-dashoffset: 0;\" d=\"${line}\" stroke-miterlimit=\"10\" fill=\"none\" stroke=\"${lineColor}\" stroke-width=\"${lineWidth}\"><animate attributeName=\"stroke-dashoffset\" values=\"${value};0\" dur=\"${duration}s\" begin=\"-${offset}ms\" calcMode=\"linear\" repeatCount=\"indefinite\" /></path>`);\n}",
+  "stateRenderFunction": "const {\n    flowAnimationWidth: lineWidth,\n    flowAnimationColor: lineColor,\n    flowStyleDash: dashWidth,\n    flowStyleGap: dashGap,\n    flowDashCap: dashCap\n} = ctx.properties;\n\nconst leftLine = \"M0 100H100\";\nconst leftLineReversed = \"M 100,100 H 0\";\nconst topLine = \"M100 97L100 0\";\nconst topLineReversed = \"M 100,0 V 97\";\nconst rightLine = \"M100 100H200\";\nconst rightLineReversed = \"M 200,100 H 100\";\n\nprepareFlowAnimation('left', leftLine, leftLineReversed);\nprepareFlowAnimation('top', topLine, topLineReversed);\nprepareFlowAnimation('right', rightLine, rightLineReversed);\n\nfunction prepareFlowAnimation(prefix, line, reversedLine) {\n    const flowAnimation = ctx.values[prefix + 'Flow'];\n    const flowDirection = ctx.values[prefix + 'FlowDirection'];\n    const flowAnimationSpeed = ctx.values[prefix + 'FlowAnimationSpeed'];\n\n    const animation = ctx.tags[prefix + 'Line'][0];\n    const duration = 1 / flowAnimationSpeed;\n    \n    let animateFlow = ctx.api.connectorAnimation(animation);\n    \n    if (flowAnimation) {\n        if (!animateFlow) {\n            animateFlow = ctx.api.connectorAnimate(animation, line, reversedLine).flowAppearance(lineWidth, lineColor, dashCap, dashWidth, dashGap).duration(duration).direction(flowDirection).play();\n        } else {\n            animateFlow.duration(duration).direction(flowDirection).play();\n        }\n    } else {\n        if (animateFlow) {\n            animateFlow.finish();\n        }\n    }\n}",
   "tags": [
     {
       "tag": "line",
@@ -377,13 +377,14 @@
     },
     {
       "id": "mainLineSize",
-      "name": "{i18n:scada.symbol.line}",
+      "name": "{i18n:scada.symbol.main-line}",
       "type": "number",
       "default": 6,
       "required": true,
       "subLabel": "Main",
       "divider": true,
       "fieldSuffix": "px",
+      "condition": "return model.mainLine;",
       "min": 0,
       "max": 99,
       "step": 1,
@@ -392,21 +393,23 @@
     },
     {
       "id": "secondaryLineSize",
-      "name": "{i18n:scada.symbol.line}",
+      "name": "{i18n:scada.symbol.main-line}",
       "type": "number",
       "default": 2,
       "required": true,
       "subLabel": "Secondary",
+      "divider": true,
       "fieldSuffix": "px",
+      "condition": "return !model.mainLine;",
       "min": 0,
       "max": 99,
       "step": 1,
       "disabled": false,
-      "visible": true
+      "visible": false
     },
     {
       "id": "lineColor",
-      "name": "{i18n:scada.symbol.line-color}",
+      "name": "{i18n:scada.symbol.main-line}",
       "type": "color",
       "default": "#1A1A1A",
       "disabled": false,
@@ -419,6 +422,7 @@
       "type": "number",
       "default": 4,
       "subLabel": "Width",
+      "divider": true,
       "fieldSuffix": "px",
       "min": 1,
       "step": 1,
@@ -437,6 +441,7 @@
     {
       "id": "flowStyleDash",
       "name": "{i18n:scada.symbol.flow-style}",
+      "hint": "{i18n:scada.symbol.flow-style-hint}",
       "group": "{i18n:scada.symbol.animation}",
       "type": "number",
       "default": 10,
@@ -452,6 +457,7 @@
     {
       "id": "flowStyleGap",
       "name": "{i18n:scada.symbol.flow-style}",
+      "hint": "{i18n:scada.symbol.flow-style-hint}",
       "group": "{i18n:scada.symbol.animation}",
       "type": "number",
       "default": 10,

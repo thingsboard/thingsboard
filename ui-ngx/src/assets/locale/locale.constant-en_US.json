@@ -3446,6 +3446,7 @@
             "flow-animation-hint": "Indicates whether animation is present in connector.",
             "flow": "Flow",
             "flow-style": "Flow style",
+            "flow-style-hint": "Set the Dash and Gap values so that their sum is divisible by 100 without a remainder for perfect animation synchronization.",
             "flow-dash-cap": "Flow dash cap",
             "dash-cap-butt": "Butt",
             "dash-cap-round": "Round",
