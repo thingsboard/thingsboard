@@ -23,10 +23,10 @@ import org.thingsboard.server.queue.task.TaskProcessor;
 
 @Component
 @RequiredArgsConstructor
-public class DummyTaskProcessor extends TaskProcessor<DummyTask> {
+public class DummyTaskProcessor extends TaskProcessor<DummyTask, Void> {
 
     @Override
-    public void process(DummyTask task) throws Exception {
+    public Void process(DummyTask task) throws Exception {
         if (task.getProcessingTimeMs() > 0) {
             Thread.sleep(task.getProcessingTimeMs());
         }
@@ -37,6 +37,7 @@ public class DummyTaskProcessor extends TaskProcessor<DummyTask> {
             String error = task.getErrors().get(task.getAttempt() - 1);
             throw new RuntimeException(error);
         }
+        return null;
     }
 
     @Override

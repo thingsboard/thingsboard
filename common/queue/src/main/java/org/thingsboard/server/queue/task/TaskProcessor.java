@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public abstract class TaskProcessor<T extends Task> {
+public abstract class TaskProcessor<T extends Task, R> {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -135,7 +135,7 @@ public abstract class TaskProcessor<T extends Task> {
         }
     }
 
-    public abstract void process(T task) throws Exception;
+    public abstract R process(T task) throws Exception;
 
     private void reportSuccess(Task task) {
         TaskResult result = TaskResult.builder()
