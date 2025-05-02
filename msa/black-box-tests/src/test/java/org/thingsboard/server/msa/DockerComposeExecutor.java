@@ -43,7 +43,7 @@ public class DockerComposeExecutor {
     String ENV_PROJECT_NAME = "COMPOSE_PROJECT_NAME";
     String ENV_COMPOSE_FILE = "COMPOSE_FILE";
 
-    private static final String COMPOSE_EXECUTABLE = SystemUtils.IS_OS_WINDOWS ? "docker-compose.exe" : "docker-compose";
+    private static final String COMPOSE_EXECUTABLE = SystemUtils.IS_OS_WINDOWS ? "docker-compose.exe" : "docker compose";
     private static final String DOCKER_EXECUTABLE = SystemUtils.IS_OS_WINDOWS ? "docker.exe" : "docker";
 
     private final List<File> composeFiles;
@@ -68,10 +68,6 @@ public class DockerComposeExecutor {
     }
 
     public void invokeCompose() {
-        // bail out early
-        if (!CommandLine.executableExists(COMPOSE_EXECUTABLE)) {
-            throw new ContainerLaunchException("Local Docker Compose not found. Is " + COMPOSE_EXECUTABLE + " on the PATH?");
-        }
         final Map<String, String> environment = Maps.newHashMap(env);
         environment.put(ENV_PROJECT_NAME, identifier);
         final Stream<String> absoluteDockerComposeFilePaths = composeFiles.stream().map(File::getAbsolutePath).map(Objects::toString);
