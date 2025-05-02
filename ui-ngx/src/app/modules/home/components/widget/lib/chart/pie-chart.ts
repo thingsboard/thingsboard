@@ -116,6 +116,7 @@ export class TbPieChart extends TbLatestChart<PieChartSettings> {
 
   protected doUpdateSeriesData() {
     const seriesData: PieDataItemOption[] = [];
+    const enabledDataItems = this.dataItems.filter(item => item.enabled && item.hasValue);
     for (const dataItem of this.dataItems) {
       if (dataItem.enabled && dataItem.hasValue) {
         seriesData.push(
@@ -124,7 +125,7 @@ export class TbPieChart extends TbLatestChart<PieChartSettings> {
       }
     }
     if (this.settings.doughnut) {
-      this.latestChartOption.series[0].padAngle = 2;
+      this.latestChartOption.series[0].padAngle = enabledDataItems.length > 1 ? 2 : 0;
     }
     this.latestChartOption.series[0].data = seriesData;
   }
