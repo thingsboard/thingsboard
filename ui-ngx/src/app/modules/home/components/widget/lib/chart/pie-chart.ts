@@ -116,7 +116,6 @@ export class TbPieChart extends TbLatestChart<PieChartSettings> {
 
   protected doUpdateSeriesData() {
     const seriesData: PieDataItemOption[] = [];
-    const enabledDataItems = this.dataItems.filter(item => item.enabled && item.hasValue);
     for (const dataItem of this.dataItems) {
       if (dataItem.enabled && dataItem.hasValue) {
         seriesData.push(
