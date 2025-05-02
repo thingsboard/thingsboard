@@ -150,6 +150,28 @@ public class JobManagerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSubmitJob_taskTimeout() {
+        JobId jobId = jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key("test-job")
+                .description("Test job")
+                .configuration(DummyJobConfiguration.builder()
+                        .successfulTasksCount(1)
+                        .taskProcessingTimeMs(5000) // bigger than DummyTaskProcessor.getTaskProcessingTimeout()
+                        .build())
+                .build()).getId();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.FAILED);
+            JobResult jobResult = job.getResult();
+            assertThat(jobResult.getFailedCount()).isEqualTo(1);
+            assertThat(((DummyTaskResult) jobResult.getResults().get(0)).getFailure().getError()).isEqualTo("Timeout after 2000 ms"); // last error
+        });
+    }
+
+    @Test
     public void testCancelJob_whileRunning() throws Exception {
         int tasksCount = 100;
         JobId jobId = jobManager.submitJob(Job.builder()

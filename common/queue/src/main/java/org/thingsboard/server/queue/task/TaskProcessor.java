@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SetCache;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.Task;
@@ -41,7 +43,12 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
 
@@ -56,9 +63,10 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
 
     private QueueKey queueKey;
     private MainQueueConsumerManager<TbProtoQueueMsg<TaskProto>, QueueConfig> taskConsumer;
+    private final ExecutorService taskExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getJobType().name().toLowerCase() + "-task-processor"));
 
-    private final Set<UUID> deletedTenants = ConcurrentHashMap.newKeySet();
-    private final Set<UUID> discardedJobs = ConcurrentHashMap.newKeySet(); // fixme use caffeine
+    private final SetCache<UUID> discardedJobs = new SetCache<>(TimeUnit.MINUTES.toMillis(60));
+    private final SetCache<UUID> deletedTenants = new SetCache<>(TimeUnit.MINUTES.toMillis(60));
 
     @PostConstruct
     public void init() {
@@ -124,20 +132,33 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
         consumer.commit();
     }
 
-    private void processTask(T task) throws Exception { // todo: timeout and task interruption
+    private void processTask(T task) throws InterruptedException {
         task.setAttempt(task.getAttempt() + 1);
         log.info("Processing task: {}", task);
+        Future<R> future = null;
         try {
-            R result = process(task);
+            future = taskExecutor.submit(() -> process(task));
+            R result;
+            try {
+                result = future.get(getTaskProcessingTimeout(), TimeUnit.MILLISECONDS);
+            } catch (ExecutionException e) {
+                throw e.getCause();
+            } catch (TimeoutException e) {
+                throw new TimeoutException("Timeout after " + getTaskProcessingTimeout() + " ms");
+            }
             reportTaskResult(task, result);
         } catch (InterruptedException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("Failed to process task (attempt {}): {}", task.getAttempt(), task, e);
             if (task.getAttempt() <= task.getRetries()) {
                 processTask(task);
             } else {
                 reportTaskFailure(task, e);
+            }
+        } finally {
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
             }
         }
     }
@@ -166,8 +187,10 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
     public void destroy() {
         taskConsumer.stop();
         taskConsumer.awaitStop();
+        taskExecutor.shutdownNow();
     }
 
+    public abstract long getTaskProcessingTimeout();
 
     public abstract JobType getJobType();
 

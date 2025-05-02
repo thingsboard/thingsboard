@@ -40,6 +40,11 @@ public class DummyTaskProcessor extends TaskProcessor<DummyTask, DummyTaskResult
     }
 
     @Override
+    public long getTaskProcessingTimeout() {
+        return 2000;
+    }
+
+    @Override
     public JobType getJobType() {
         return JobType.DUMMY;
     }
