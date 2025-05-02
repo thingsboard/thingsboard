@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.job.task.TaskResult;
 import org.thingsboard.server.common.data.notification.info.GeneralNotificationInfo;
 import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
@@ -47,6 +48,7 @@ import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.task.JobStatsService;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -70,20 +72,22 @@ public class DefaultJobManager implements JobManager {
     private final JobService jobService;
     private final JobStatsService jobStatsService;
     private final NotificationCenter notificationCenter;
+    private final PartitionService partitionService;
     private final Map<JobType, JobProcessor> jobProcessors;
     private final Map<JobType, TbQueueProducer<TbProtoQueueMsg<TaskProto>>> taskProducers;
     private final QueueConsumerManager<TbProtoQueueMsg<JobStatsMsg>> jobStatsConsumer;
     private final ExecutorService executor;
     private final ExecutorService consumerExecutor;
 
-    @Value("${queue.tasks.stats.processing_interval_ms:5000}")
+    @Value("${queue.tasks.stats.processing_interval_ms:1000}")
     private int statsProcessingInterval;
 
     public DefaultJobManager(JobService jobService, JobStatsService jobStatsService, NotificationCenter notificationCenter,
-                             TbCoreQueueFactory queueFactory, List<JobProcessor> jobProcessors) {
+                             PartitionService partitionService, TbCoreQueueFactory queueFactory, List<JobProcessor> jobProcessors) {
         this.jobService = jobService;
         this.jobStatsService = jobStatsService;
         this.notificationCenter = notificationCenter;
+        this.partitionService = partitionService;
         this.jobProcessors = jobProcessors.stream().collect(Collectors.toMap(JobProcessor::getType, Function.identity()));
         this.taskProducers = Arrays.stream(JobType.values()).collect(Collectors.toMap(Function.identity(), queueFactory::createTaskProducer));
         this.executor = ThingsBoardExecutors.newWorkStealingPool(Math.max(4, Runtime.getRuntime().availableProcessors()), getClass());
@@ -199,8 +203,8 @@ public class DefaultJobManager implements JobManager {
                 .build();
 
         TbQueueProducer<TbProtoQueueMsg<TaskProto>> producer = taskProducers.get(task.getJobType());
-        TbProtoQueueMsg<TaskProto> msg = new TbProtoQueueMsg<>(task.getTenantId().getId(), taskProto); // one job at a time for a given tenant
-        producer.send(TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build(), msg, new TbQueueCallback() {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TASK_PROCESSOR, task.getJobType().name(), task.getTenantId(), task.getTenantId()); // one job at a time for a given tenant
+        producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), taskProto), new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
                 log.trace("Submitted task: {}", task);
@@ -249,7 +253,7 @@ public class DefaultJobManager implements JobManager {
     private void sendJobFinishedNotification(Job job) {
         NotificationTemplate template = DefaultNotifications.DefaultNotification.builder()
                 .name("Job finished")
-                .subject("${type} ${status}")
+                .subject("${type} task ${status}")
                 .text("${description} ${status}: ${result}")
                 .build().toTemplate();
         GeneralNotificationInfo info = new GeneralNotificationInfo(Map.of(
@@ -258,6 +262,7 @@ public class DefaultJobManager implements JobManager {
                 "status", job.getStatus().name().toLowerCase(),
                 "result", job.getResult().getDescription()
         ));
+        // todo: button to see details (forward to jobs page)
         notificationCenter.sendGeneralWebNotification(job.getTenantId(), new TenantAdministratorsFilter(), template, info);
     }
 

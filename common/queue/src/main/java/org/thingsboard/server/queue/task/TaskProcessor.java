@@ -22,26 +22,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.Task;
 import org.thingsboard.server.common.data.job.task.TaskResult;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
+import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
+import org.thingsboard.server.queue.discovery.QueueKey;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TaskProcessorQueueFactory;
-import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
 
@@ -51,29 +52,35 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
     private TaskProcessorQueueFactory queueFactory;
     @Autowired
     private JobStatsService statsService;
+    @Autowired
+    private TaskProcessorExecutors executors;
 
-    private QueueConsumerManager<TbProtoQueueMsg<TaskProto>> taskConsumer;
-    private ExecutorService consumerExecutor;
+    private QueueKey queueKey;
+    private MainQueueConsumerManager<TbProtoQueueMsg<TaskProto>, QueueConfig> taskConsumer;
 
     private final Set<UUID> deletedTenants = ConcurrentHashMap.newKeySet();
     private final Set<UUID> discardedJobs = ConcurrentHashMap.newKeySet(); // fixme use caffeine
 
     @PostConstruct
     public void init() {
-        consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(getJobType().name().toLowerCase() + "-task-consumer"));
-        taskConsumer = QueueConsumerManager.<TbProtoQueueMsg<TaskProto>>builder() // fixme: should be consumer per partition
-                .name(getJobType().name().toLowerCase() + "-tasks")
-                .msgPackProcessor(this::processMsgs) // todo: max.poll.records = 1
-                .pollInterval(125)
-                .consumerCreator(() -> queueFactory.createTaskConsumer(getJobType()))
-                .consumerExecutor(consumerExecutor)
+        queueKey = new QueueKey(ServiceType.TASK_PROCESSOR, getJobType().name());
+        taskConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<TaskProto>, QueueConfig>builder()
+                .queueKey(queueKey)
+                .config(QueueConfig.of(true, 500))
+                .msgPackProcessor(this::processMsgs)
+                .consumerCreator((queueConfig, tpi) -> queueFactory.createTaskConsumer(getJobType()))
+                .consumerExecutor(executors.getConsumersExecutor())
+                .scheduler(executors.getScheduler())
+                .taskExecutor(executors.getMgmtExecutor())
                 .build();
     }
 
-    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
-    public void afterStartUp() {
-        taskConsumer.subscribe();
-        taskConsumer.launch();
+    @EventListener
+    public void onPartitionChangeEvent(PartitionChangeEvent event) {
+        if (event.getServiceType() == ServiceType.TASK_PROCESSOR) {
+            Set<TopicPartitionInfo> partitions = event.getNewPartitions().get(queueKey);
+            taskConsumer.update(partitions);
+        }
     }
 
     @EventListener
@@ -95,7 +102,7 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
         }
     }
 
-    private void processMsgs(List<TbProtoQueueMsg<TaskProto>> msgs, TbQueueConsumer<TbProtoQueueMsg<TaskProto>> consumer) throws Exception {
+    private void processMsgs(List<TbProtoQueueMsg<TaskProto>> msgs, TbQueueConsumer<TbProtoQueueMsg<TaskProto>> consumer, QueueConfig queueConfig) throws Exception {
         for (TbProtoQueueMsg<TaskProto> msg : msgs) {
             try {
                 @SuppressWarnings("unchecked")
@@ -159,7 +166,7 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
     @PreDestroy
     public void destroy() {
         taskConsumer.stop();
-        consumerExecutor.shutdownNow();
+        taskConsumer.awaitStop();
     }
 
 

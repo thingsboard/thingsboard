@@ -16,13 +16,11 @@
 package org.thingsboard.server.service.job.task;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.job.task.DummyTask;
 import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.common.data.job.task.DummyTask;
 import org.thingsboard.server.common.data.job.task.DummyTaskResult;
 import org.thingsboard.server.queue.task.TaskProcessor;
 
-@Component
 @RequiredArgsConstructor
 public class DummyTaskProcessor extends TaskProcessor<DummyTask, DummyTaskResult> {
 

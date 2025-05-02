@@ -1628,6 +1628,11 @@ queue:
         - key: max.poll.records
           # Max poll records for edqs.state topic
           value: "${TB_QUEUE_KAFKA_EDQS_STATE_MAX_POLL_RECORDS:512}"
+      tasks:
+        # Key-value properties for Kafka consumer for tasks topics
+        - key: max.poll.records
+          # Max poll records for tasks topics
+          value: "${TB_QUEUE_KAFKA_TASKS_MAX_POLL_RECORDS:1}"
     other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
     other: # DEPRECATED. In this section, you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
     #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
@@ -1668,7 +1673,7 @@ queue:
       # Kafka properties for EDQS state topic (infinite retention, compaction)
       edqs-state: "${TB_QUEUE_KAFKA_EDQS_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1;cleanup.policy:compact}"
       # Kafka properties for tasks topics
-      tasks: "${TB_QUEUE_KAFKA_TASKS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
+      tasks: "${TB_QUEUE_KAFKA_TASKS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1884,9 +1889,11 @@ queue:
       # Statistics printing interval for Edge services
       print-interval-ms: "${TB_QUEUE_EDGE_STATS_PRINT_INTERVAL_MS:60000}"
   tasks:
+    # Partitions count for tasks queues
+    partitions: "${TB_QUEUE_TASKS_PARTITIONS:12}"
     stats:
       # Interval in milliseconds to process job stats
-      processing_interval_ms: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:5000}"
+      processing_interval_ms: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:1000}"
 
 # Event configuration parameters
 event:

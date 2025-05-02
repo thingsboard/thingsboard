@@ -88,6 +88,7 @@ message ServiceInfo {
   SystemInfoProto systemInfo = 10;
   repeated string assignedTenantProfiles = 11;
   string label = 12;
+  repeated string taskTypes = 13;
 }
 
 message SystemInfoProto {

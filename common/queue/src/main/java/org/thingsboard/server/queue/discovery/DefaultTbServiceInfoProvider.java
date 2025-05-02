@@ -24,11 +24,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbTransportService;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.edqs.EdqsConfig;
+import org.thingsboard.server.queue.task.TaskProcessor;
 import org.thingsboard.server.queue.util.AfterContextReady;
 
 import java.net.InetAddress;
@@ -40,7 +42,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.common.util.SystemUtil.*;
+import static org.thingsboard.common.util.SystemUtil.getCpuCount;
+import static org.thingsboard.common.util.SystemUtil.getCpuUsage;
+import static org.thingsboard.common.util.SystemUtil.getDiscSpaceUsage;
+import static org.thingsboard.common.util.SystemUtil.getMemoryUsage;
+import static org.thingsboard.common.util.SystemUtil.getTotalDiscSpace;
+import static org.thingsboard.common.util.SystemUtil.getTotalMemory;
 
 
 @Component
@@ -65,7 +72,11 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private List<TaskProcessor<?, ?>> availableTaskProcessors;
+
     private List<ServiceType> serviceTypes;
+    private List<JobType> taskTypes;
     private ServiceInfo serviceInfo;
 
     @PostConstruct
@@ -91,6 +102,9 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
                 edqsConfig.setLabel(serviceId);
             }
         }
+        taskTypes = availableTaskProcessors.stream()
+                .map(TaskProcessor::getJobType)
+                .toList();
 
         generateNewServiceInfoWithCurrentSystemInfo();
     }
@@ -128,6 +142,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
             builder.addAllAssignedTenantProfiles(assignedTenantProfiles.stream().map(UUID::toString).collect(Collectors.toList()));
         }
         builder.setLabel(edqsConfig.getLabel());
+        builder.addAllTaskTypes(taskTypes.stream().map(JobType::name).toList());
         return serviceInfo = builder.build();
     }
 

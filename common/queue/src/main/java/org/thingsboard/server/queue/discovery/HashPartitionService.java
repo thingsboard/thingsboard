@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -82,6 +83,8 @@ public class HashPartitionService implements PartitionService {
     private Integer edgePartitions;
     @Value("${queue.edqs.partitions:12}")
     private Integer edqsPartitions;
+    @Value("${queue.tasks.partitions:12}")
+    private Integer tasksPartitions;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
 
@@ -140,6 +143,12 @@ public class HashPartitionService implements PartitionService {
         QueueKey edqsKey = new QueueKey(ServiceType.EDQS);
         partitionSizesMap.put(edqsKey, edqsPartitions);
         partitionTopicsMap.put(edqsKey, "edqs"); // placeholder, not used
+
+        for (JobType jobType : JobType.values()) {
+            QueueKey queueKey = new QueueKey(ServiceType.TASK_PROCESSOR, jobType.name());
+            partitionSizesMap.put(queueKey, tasksPartitions);
+            partitionTopicsMap.put(queueKey, jobType.getTasksTopic());
+        }
     }
 
     @AfterStartUp(order = AfterStartUp.QUEUE_INFO_INITIALIZATION)
@@ -454,8 +463,8 @@ public class HashPartitionService implements PartitionService {
         if (serviceInfoProvider.isService(ServiceType.TB_RULE_ENGINE)) {
             partitionSizesMap.keySet().stream()
                     .filter(queueKey -> queueKey.getType() == ServiceType.TB_RULE_ENGINE &&
-                            !queueKey.getTenantId().isSysTenantId() &&
-                            !newPartitions.containsKey(queueKey))
+                                        !queueKey.getTenantId().isSysTenantId() &&
+                                        !newPartitions.containsKey(queueKey))
                     .forEach(removed::add);
         }
         removed.forEach(queueKey -> {
@@ -674,6 +683,10 @@ public class HashPartitionService implements PartitionService {
 
         for (String transportType : instance.getTransportsList()) {
             tbTransportServicesByType.computeIfAbsent(transportType, t -> new ArrayList<>()).add(instance);
+        }
+        for (String taskType : instance.getTaskTypesList()) {
+            QueueKey queueKey = new QueueKey(ServiceType.TASK_PROCESSOR, taskType);
+            queueServiceList.computeIfAbsent(queueKey, key -> new ArrayList<>()).add(instance);
         }
     }
 

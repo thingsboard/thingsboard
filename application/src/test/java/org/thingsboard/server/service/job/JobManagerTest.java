@@ -39,7 +39,6 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.queue.task.JobStatsService;
-import org.thingsboard.server.service.job.task.DummyTaskProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +65,7 @@ public class JobManagerTest extends AbstractControllerTest {
     private JobService jobService;
 
     @SpyBean
-    private DummyTaskProcessor taskProcessor;
+    private TestTaskProcessor taskProcessor;
 
     @SpyBean
     private JobStatsService jobStatsService;
@@ -109,7 +108,7 @@ public class JobManagerTest extends AbstractControllerTest {
         });
 
         checkJobNotification(notification -> {
-            assertThat(notification.getSubject()).isEqualTo("Dummy job completed");
+            assertThat(notification.getSubject()).isEqualTo("Dummy job task completed");
             assertThat(notification.getText()).isEqualTo("Test job completed: 5/5 successful, 0 failed");
         });
     }
@@ -145,7 +144,7 @@ public class JobManagerTest extends AbstractControllerTest {
         });
 
         checkJobNotification(notification -> {
-            assertThat(notification.getSubject()).isEqualTo("Dummy job failed");
+            assertThat(notification.getSubject()).isEqualTo("Dummy job task failed");
             assertThat(notification.getText()).isEqualTo("Test job failed: 3/5 successful, 2 failed");
         });
     }
@@ -340,7 +339,7 @@ public class JobManagerTest extends AbstractControllerTest {
         });
 
         checkJobNotification(notification -> {
-            assertThat(notification.getSubject()).isEqualTo("Dummy job failed");
+            assertThat(notification.getSubject()).isEqualTo("Dummy job task failed");
             assertThat(notification.getText()).isEqualTo("Test job failed: Some error while submitting tasks");
         });
     }
