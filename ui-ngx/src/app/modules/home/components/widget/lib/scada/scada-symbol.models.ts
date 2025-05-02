@@ -84,7 +84,7 @@ export interface ScadaSymbolApi {
   resetCssAnimation: (element: Element) => void;
   finishCssAnimation: (element: Element) => void;
   connectorAnimation:(element: Element) => ConnectorScadaSymbolAnimation | undefined;
-  connectorAnimate:(element: Element) => ConnectorScadaSymbolAnimation;
+  connectorAnimate:(element: Element, path: string, reversedPath: string) => ConnectorScadaSymbolAnimation;
   resetConnectorAnimation: (element: Element) => void;
   finishConnectorAnimation: (element: Element) => void;
   disable: (element: Element | Element[]) => void;
