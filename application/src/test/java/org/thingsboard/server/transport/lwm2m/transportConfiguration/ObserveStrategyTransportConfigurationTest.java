@@ -24,7 +24,7 @@ import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryO
 import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.SINGLE;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
-public class TransportConfigurationTest extends AbstractSecurityLwM2MIntegrationTest {
+public class ObserveStrategyTransportConfigurationTest extends AbstractSecurityLwM2MIntegrationTest {
 
     @Test
     public void testTransportConfigurationObserveStrategyBeforeParseNullAfterParseNotNull_STRATEGY_SINGLE() throws Exception {

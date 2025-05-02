@@ -354,7 +354,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
             Assert.assertTrue(expectedMax >= Long.parseLong(tsValue1.getValue()));
             Assert.assertTrue(expectedMin <= Long.parseLong(tsValue1.getValue()));
         } else {
-            String pattern = "MMM dd, yyyy HH:mm a";
+            String pattern = "MMM d, yyyy HH:mm a";
             TbDate d = new TbDate(tsValue2.getValue(), pattern, "en-US");
             Assert.assertNotNull(d);
         }
