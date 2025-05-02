@@ -48,6 +48,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.web.MockMultipartFile;
@@ -281,6 +282,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     @Autowired
     protected InMemoryStorage storage;
 
+    protected JdbcTemplate jdbcTemplate;
+
     @MockBean
     protected CfRocksDb cfRocksDb;
 
@@ -391,6 +394,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         verifyNoTenantsLeft();
 
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
+
+        jdbcTemplate.execute("TRUNCATE TABLE notification");
 
         log.info("Executed web test teardown");
     }
