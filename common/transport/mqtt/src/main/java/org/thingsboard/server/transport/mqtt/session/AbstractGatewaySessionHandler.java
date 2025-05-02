@@ -670,6 +670,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         } else {
             result.addAllSharedAttributeNames(keys);
         }
+        result.setOnlyShared(!clientScope);
         return result.build();
     }
 
