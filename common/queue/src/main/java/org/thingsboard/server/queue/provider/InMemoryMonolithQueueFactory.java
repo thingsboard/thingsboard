@@ -266,16 +266,6 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.TaskProto>> createTaskConsumer(JobType jobType) {
-        return new InMemoryTbQueueConsumer<>(storage, jobType.getTasksTopic());
-    }
-
-    @Override
-    public TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer() {
-        return new InMemoryTbQueueProducer<>(storage, "jobs.stats");
-    }
-
-    @Override
     public TbQueueConsumer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsConsumer() {
         return new InMemoryTbQueueConsumer<>(storage, "jobs.stats");
     }

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.queue.task;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -29,15 +28,17 @@ import org.thingsboard.server.gen.transport.TransportProtos.TaskResultProto;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 
 @Lazy
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class JobStatsService {
 
-    private final TbQueueProducerProvider producerProvider;
+    private final TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> producer;
+
+    public JobStatsService(TaskProcessorQueueFactory queueFactory) {
+        this.producer = queueFactory.createJobStatsProducer();
+    }
 
     public void reportTaskResult(TenantId tenantId, JobId jobId, TaskResult result) {
         report(tenantId, jobId, JobStatsMsg.newBuilder()
@@ -59,7 +60,6 @@ public class JobStatsService {
                 .setJobIdLSB(jobId.getId().getLeastSignificantBits());
 
         TbProtoQueueMsg<JobStatsMsg> msg = new TbProtoQueueMsg<>(jobId.getId(), statsMsg.build());
-        TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> producer = producerProvider.getJobStatsProducer();
         producer.send(TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build(), msg, TbQueueCallback.EMPTY);
     }
 

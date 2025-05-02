@@ -122,9 +122,4 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
         throw new RuntimeException("Not Implemented! Should not be used by Transport!");
     }
 
-    @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.JobStatsMsg>> getJobStatsProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
-    }
-
 }

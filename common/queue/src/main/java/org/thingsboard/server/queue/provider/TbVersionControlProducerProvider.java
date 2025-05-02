@@ -118,9 +118,4 @@ public class TbVersionControlProducerProvider implements TbQueueProducerProvider
         throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
     }
 
-    @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.JobStatsMsg>> getJobStatsProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
-    }
-
 }

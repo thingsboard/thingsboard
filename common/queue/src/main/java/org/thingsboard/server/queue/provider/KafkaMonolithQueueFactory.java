@@ -657,29 +657,6 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TaskProto>> createTaskConsumer(JobType jobType) {
-        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<TaskProto>>builder()
-                .settings(kafkaSettings)
-                .topic(topicService.buildTopicName(jobType.getTasksTopic()))
-                .clientId(jobType.name().toLowerCase() + "-task-consumer-" + serviceInfoProvider.getServiceId())
-                .groupId(topicService.buildTopicName(jobType.name().toLowerCase() + "-task-consumer-group"))
-                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TaskProto.parseFrom(msg.getData()), msg.getHeaders()))
-                .admin(tasksAdmin)
-                .statsService(consumerStatsService)
-                .build();
-    }
-
-    @Override
-    public TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer() {
-        return TbKafkaProducerTemplate.<TbProtoQueueMsg<JobStatsMsg>>builder()
-                .clientId("job-stats-producer-" + serviceInfoProvider.getServiceId())
-                .defaultTopic(topicService.buildTopicName("jobs.stats"))
-                .settings(kafkaSettings)
-                .admin(tasksAdmin)
-                .build();
-    }
-
-    @Override
     public TbQueueConsumer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsConsumer() {
         return TbKafkaConsumerTemplate.<TbProtoQueueMsg<JobStatsMsg>>builder()
                 .settings(kafkaSettings)

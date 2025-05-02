@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs;
+package org.thingsboard.server.queue.task;
 
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.queue.discovery.QueueRoutingInfo;
-import org.thingsboard.server.queue.discovery.QueueRoutingInfoService;
+import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
+import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-import java.util.Collections;
-import java.util.List;
+public interface TaskProcessorQueueFactory {
 
-@Service
-public class DummyQueueRoutingInfoService implements QueueRoutingInfoService {
+    TbQueueConsumer<TbProtoQueueMsg<TaskProto>> createTaskConsumer(JobType jobType);
 
-    @Override
-    public List<QueueRoutingInfo> getAllQueuesRoutingInfo() {
-        return Collections.emptyList();
-    }
+    TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer();
 
 }

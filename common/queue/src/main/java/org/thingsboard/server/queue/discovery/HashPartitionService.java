@@ -19,6 +19,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,6 +65,7 @@ import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class HashPartitionService implements PartitionService {
 
     @Value("${queue.core.topic:tb_core}")
@@ -90,8 +93,8 @@ public class HashPartitionService implements PartitionService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
-    private final TenantRoutingInfoService tenantRoutingInfoService;
-    private final QueueRoutingInfoService queueRoutingInfoService;
+    private final Optional<TenantRoutingInfoService> tenantRoutingInfoService;
+    private final Optional<QueueRoutingInfoService> queueRoutingInfoService;
     private final TopicService topicService;
 
     protected volatile ConcurrentMap<QueueKey, List<Integer>> myPartitions = new ConcurrentHashMap<>();
@@ -107,18 +110,6 @@ public class HashPartitionService implements PartitionService {
     private volatile Map<TenantProfileId, List<ServiceInfo>> responsibleServices = Collections.emptyMap();
 
     private HashFunction hashFunction;
-
-    public HashPartitionService(TbServiceInfoProvider serviceInfoProvider,
-                                TenantRoutingInfoService tenantRoutingInfoService,
-                                ApplicationEventPublisher applicationEventPublisher,
-                                QueueRoutingInfoService queueRoutingInfoService,
-                                TopicService topicService) {
-        this.serviceInfoProvider = serviceInfoProvider;
-        this.tenantRoutingInfoService = tenantRoutingInfoService;
-        this.applicationEventPublisher = applicationEventPublisher;
-        this.queueRoutingInfoService = queueRoutingInfoService;
-        this.topicService = topicService;
-    }
 
     @PostConstruct
     public void init() {
@@ -178,6 +169,10 @@ public class HashPartitionService implements PartitionService {
     }
 
     private List<QueueRoutingInfo> getQueueRoutingInfos() {
+        if (queueRoutingInfoService.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         List<QueueRoutingInfo> queueRoutingInfoList;
         String serviceType = serviceInfoProvider.getServiceType();
 
@@ -188,7 +183,7 @@ public class HashPartitionService implements PartitionService {
                 if (getQueuesRetries > 0) {
                     log.info("Try to get queue routing info.");
                     try {
-                        queueRoutingInfoList = queueRoutingInfoService.getAllQueuesRoutingInfo();
+                        queueRoutingInfoList = queueRoutingInfoService.get().getAllQueuesRoutingInfo();
                         break;
                     } catch (Exception e) {
                         log.info("Failed to get queues routing info: {}!", e.getMessage());
@@ -204,7 +199,7 @@ public class HashPartitionService implements PartitionService {
                 }
             }
         } else {
-            queueRoutingInfoList = queueRoutingInfoService.getAllQueuesRoutingInfo();
+            queueRoutingInfoList = queueRoutingInfoService.get().getAllQueuesRoutingInfo();
         }
         return queueRoutingInfoList;
     }
@@ -638,7 +633,11 @@ public class HashPartitionService implements PartitionService {
     }
 
     private TenantRoutingInfo getRoutingInfo(TenantId tenantId) {
-        return tenantRoutingInfoMap.computeIfAbsent(tenantId, tenantRoutingInfoService::getRoutingInfo);
+        if (tenantRoutingInfoService.isPresent()) {
+            return tenantRoutingInfoMap.computeIfAbsent(tenantId, __ -> tenantRoutingInfoService.get().getRoutingInfo(tenantId));
+        } else {
+            return new TenantRoutingInfo(tenantId, null, false);
+        }
     }
 
     protected TenantId getIsolatedOrSystemTenantId(ServiceType serviceType, TenantId tenantId) {
@@ -702,7 +701,7 @@ public class HashPartitionService implements PartitionService {
             if (!responsibleServices.isEmpty()) { // if there are any dedicated servers
                 TenantProfileId profileId;
                 if (tenantId != null && !tenantId.isSysTenantId()) {
-                    TenantRoutingInfo routingInfo = tenantRoutingInfoService.getRoutingInfo(tenantId);
+                    TenantRoutingInfo routingInfo = tenantRoutingInfoService.get().getRoutingInfo(tenantId);
                     profileId = routingInfo.getProfileId();
                 } else {
                     profileId = null;

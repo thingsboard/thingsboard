@@ -22,15 +22,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -99,7 +96,6 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     private final TbQueueAdmin cfAdmin;
     private final TbQueueAdmin cfStateAdmin;
     private final TbQueueAdmin edqsEventsAdmin;
-    private final TbQueueAdmin tasksAdmin;
     private final AtomicLong consumerCount = new AtomicLong();
 
     public KafkaTbRuleEngineQueueFactory(TopicService topicService, TbKafkaSettings kafkaSettings,
@@ -137,7 +133,6 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
         this.cfAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCalculatedFieldConfigs());
         this.cfStateAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCalculatedFieldStateConfigs());
         this.edqsEventsAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdqsEventsConfigs());
-        this.tasksAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getTasksConfigs());
     }
 
     @Override
@@ -417,29 +412,6 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     @Override
     public TbQueueRequestTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> createEdqsRequestTemplate() {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TaskProto>> createTaskConsumer(JobType jobType) {
-        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<TaskProto>>builder()
-                .settings(kafkaSettings)
-                .topic(topicService.buildTopicName(jobType.getTasksTopic()))
-                .clientId(jobType.name().toLowerCase() + "-task-consumer-" + serviceInfoProvider.getServiceId())
-                .groupId(topicService.buildTopicName(jobType.name().toLowerCase() + "-task-consumer-group"))
-                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TaskProto.parseFrom(msg.getData()), msg.getHeaders()))
-                .admin(tasksAdmin)
-                .statsService(consumerStatsService)
-                .build();
-    }
-
-    @Override
-    public TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer() {
-        return TbKafkaProducerTemplate.<TbProtoQueueMsg<JobStatsMsg>>builder()
-                .clientId("job-stats-producer-" + serviceInfoProvider.getServiceId())
-                .defaultTopic(topicService.buildTopicName("jobs.stats"))
-                .settings(kafkaSettings)
-                .admin(tasksAdmin)
-                .build();
     }
 
     @PreDestroy

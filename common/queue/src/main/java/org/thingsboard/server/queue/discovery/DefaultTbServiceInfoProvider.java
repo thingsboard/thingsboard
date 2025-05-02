@@ -66,13 +66,13 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Value("${service.rule_engine.assigned_tenant_profiles:}")
     private Set<UUID> assignedTenantProfiles;
 
-    @Autowired
+    @Autowired(required = false)
     private EdqsConfig edqsConfig;
 
     @Autowired
     private ApplicationContext applicationContext;
 
-    @Autowired
+    @Autowired(required = false)
     private List<TaskProcessor<?, ?>> availableTaskProcessors;
 
     private List<ServiceType> serviceTypes;
@@ -102,9 +102,13 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
                 edqsConfig.setLabel(serviceId);
             }
         }
-        taskTypes = availableTaskProcessors.stream()
-                .map(TaskProcessor::getJobType)
-                .toList();
+        if (CollectionsUtil.isNotEmpty(availableTaskProcessors)) {
+            taskTypes = availableTaskProcessors.stream()
+                    .map(TaskProcessor::getJobType)
+                    .toList();
+        } else {
+            taskTypes = Collections.emptyList();
+        }
 
         generateNewServiceInfoWithCurrentSystemInfo();
     }
@@ -141,7 +145,9 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         if (CollectionsUtil.isNotEmpty(assignedTenantProfiles)) {
             builder.addAllAssignedTenantProfiles(assignedTenantProfiles.stream().map(UUID::toString).collect(Collectors.toList()));
         }
-        builder.setLabel(edqsConfig.getLabel());
+        if (edqsConfig != null) {
+            builder.setLabel(edqsConfig.getLabel());
+        }
         builder.addAllTaskTypes(taskTypes.stream().map(JobType::name).toList());
         return serviceInfo = builder.build();
     }
