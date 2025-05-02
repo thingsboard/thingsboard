@@ -39,7 +39,6 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttHandler;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -65,7 +64,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultGatewayPrototype;
 
@@ -475,6 +473,56 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         assertThat(response.has("value")).isTrue();
         checkAttributeByKey("clientOnlyAttr", "clientVal", true);
+    }
+
+    @Test
+    public void testGatewayRequestAllClientAttributesWhenOnePresent() throws Exception {
+        JsonObject clientAttrs = new JsonObject();
+        clientAttrs.addProperty("clientAttr", "val1");
+        sendClientAttributes(clientAttrs);
+
+        JsonObject request = new JsonObject();
+        request.addProperty("id", 501);
+        request.addProperty("device", createdDevice.getName());
+        request.addProperty("client", true);
+        request.add("keys", new JsonArray());
+
+        mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(5 * timeoutMultiplier, TimeUnit.SECONDS);
+
+        mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+
+        assertThat(response.has("values")).isTrue();
+        assertThat(response.getAsJsonObject("values").entrySet()).hasSize(1);
+        assertThat(response.getAsJsonObject("values").get("clientAttr").getAsString()).isEqualTo("val1");
+    }
+
+    @Test
+    public void testGatewayRequestAllSharedAttributesWhenOnePresent() throws Exception {
+        JsonObject sharedAttrs = new JsonObject();
+        sharedAttrs.addProperty("sharedAttr", "sval1");
+        sendSharedAttributes(sharedAttrs);
+
+        JsonObject request = new JsonObject();
+        request.addProperty("id", 502);
+        request.addProperty("device", createdDevice.getName());
+        request.addProperty("client", false);
+        request.add("keys", new JsonArray());
+
+        mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(5 * timeoutMultiplier, TimeUnit.SECONDS);
+
+        mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+
+        assertThat(response.has("values")).isTrue();
+        assertThat(response.getAsJsonObject("values").entrySet()).hasSize(1);
+        assertThat(response.getAsJsonObject("values").get("sharedAttr").getAsString()).isEqualTo("sval1");
     }
 
     private void sendClientAttributes(JsonObject clientAttrs) throws Exception {

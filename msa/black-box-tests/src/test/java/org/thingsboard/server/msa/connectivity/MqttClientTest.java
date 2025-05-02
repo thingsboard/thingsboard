@@ -42,7 +42,6 @@ import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientCallback;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttHandler;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -82,7 +81,6 @@ import java.util.concurrent.TimeoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
-import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
@@ -636,6 +634,160 @@ public class MqttClientTest extends AbstractContainerTest {
         assertThat(returnCode).isIn(MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD, MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD);
     }
 
+    @Test
+    public void testRequestSingleClientAttribute() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+
+        JsonObject clientAttrs = new JsonObject();
+        clientAttrs.addProperty("clientAttr1", "val1");
+        mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttrs.toString().getBytes())).get();
+
+        TimeUnit.SECONDS.sleep(timeoutMultiplier);
+
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        JsonObject request = new JsonObject();
+        request.addProperty("clientKeys", "clientAttr1");
+        mqttClient.publish("v1/devices/me/attributes/request/10", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        AttributesResponse response = mapper.readValue(event.getMessage(), AttributesResponse.class);
+
+        assertThat(response.getClient()).containsEntry("clientAttr1", "val1");
+        assertThat(response.getShared()).isNullOrEmpty();
+    }
+
+    @Test
+    public void testRequestMultipleClientAttributes() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+
+        JsonObject clientAttrs = new JsonObject();
+        clientAttrs.addProperty("clientAttr1", "val1");
+        clientAttrs.addProperty("clientAttr2", "val2");
+        mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttrs.toString().getBytes())).get();
+
+        TimeUnit.SECONDS.sleep(timeoutMultiplier);
+
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        JsonObject request = new JsonObject();
+        request.addProperty("clientKeys", "clientAttr1,clientAttr2");
+        mqttClient.publish("v1/devices/me/attributes/request/11", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        AttributesResponse response = mapper.readValue(event.getMessage(), AttributesResponse.class);
+
+        assertThat(response.getClient()).containsEntry("clientAttr1", "val1");
+        assertThat(response.getClient()).containsEntry("clientAttr2", "val2");
+        assertThat(response.getShared()).isNullOrEmpty();
+    }
+
+    @Test
+    public void testRequestSingleSharedAttribute() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+
+        JsonObject sharedAttrs = new JsonObject();
+        sharedAttrs.addProperty("sharedAttr1", "sval1");
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, mapper.readTree(sharedAttrs.toString()));
+
+        TimeUnit.SECONDS.sleep(timeoutMultiplier);
+
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        JsonObject request = new JsonObject();
+        request.addProperty("sharedKeys", "sharedAttr1");
+        mqttClient.publish("v1/devices/me/attributes/request/12", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        AttributesResponse response = mapper.readValue(event.getMessage(), AttributesResponse.class);
+
+        assertThat(response.getShared()).containsEntry("sharedAttr1", "sval1");
+        assertThat(response.getClient()).isNullOrEmpty();
+    }
+
+    @Test
+    public void testRequestMultipleSharedAttributes() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+
+        JsonObject sharedAttrs = new JsonObject();
+        sharedAttrs.addProperty("sharedAttr1", "sval1");
+        sharedAttrs.addProperty("sharedAttr2", "sval2");
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, mapper.readTree(sharedAttrs.toString()));
+
+        TimeUnit.SECONDS.sleep(timeoutMultiplier);
+
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        JsonObject request = new JsonObject();
+        request.addProperty("sharedKeys", "sharedAttr1,sharedAttr2");
+        mqttClient.publish("v1/devices/me/attributes/request/13", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        AttributesResponse response = mapper.readValue(event.getMessage(), AttributesResponse.class);
+
+        assertThat(response.getShared()).containsEntry("sharedAttr1", "sval1");
+        assertThat(response.getShared()).containsEntry("sharedAttr2", "sval2");
+        assertThat(response.getClient()).isNullOrEmpty();
+    }
+
+    @Test
+    public void testRequestAllClientAttributesWhenOnePresent() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+
+        JsonObject clientAttrs = new JsonObject();
+        clientAttrs.addProperty("clientAttr", "val1");
+        mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttrs.toString().getBytes())).get();
+
+        TimeUnit.SECONDS.sleep(timeoutMultiplier);
+
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        JsonObject request = new JsonObject();
+        request.addProperty("clientKeys", "");
+        mqttClient.publish("v1/devices/me/attributes/request/14", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        AttributesResponse response = mapper.readValue(event.getMessage(), AttributesResponse.class);
+
+        assertThat(response.getClient()).containsEntry("clientAttr", "val1");
+        assertThat(response.getShared()).isNullOrEmpty();
+    }
+
+    @Test
+    public void testRequestAllSharedAttributesWhenOnePresent() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+
+        JsonObject sharedAttrs = new JsonObject();
+        sharedAttrs.addProperty("sharedAttr", "sval1");
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, mapper.readTree(sharedAttrs.toString()));
+
+        TimeUnit.SECONDS.sleep(timeoutMultiplier);
+
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        JsonObject request = new JsonObject();
+        request.addProperty("sharedKeys", "");
+        mqttClient.publish("v1/devices/me/attributes/request/15", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        AttributesResponse response = mapper.readValue(event.getMessage(), AttributesResponse.class);
+
+        assertThat(response.getShared()).containsEntry("sharedAttr", "sval1");
+        assertThat(response.getClient()).isNullOrEmpty();
+    }
+
     private RuleChainId createRootRuleChainForRpcResponse() throws Exception {
         RuleChain newRuleChain = new RuleChain();
         newRuleChain.setName("testRuleChain");
@@ -685,6 +837,65 @@ public class MqttClientTest extends AbstractContainerTest {
                 returnCodeByteValueWrapper.add(((MqttReasonCodeAndPropertiesVariableHeader) mqttDisconnectMessage.variableHeader()).reasonCode());
             }
         };
+    }
+
+    private void checkAttributeByKey(String key, String expectedValue, boolean client, MqttClient mqttClient, MqttMessageListener listener) throws Exception {
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        JsonObject request = new JsonObject();
+        if (client) {
+            request.addProperty("clientKeys", key);
+        } else {
+            request.addProperty("sharedKeys", key);
+        }
+        mqttClient.publish("v1/devices/me/attributes/request/123", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        AttributesResponse response = mapper.readValue(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
+
+        if (client) {
+            assertThat(response.getClient()).containsEntry(key, expectedValue);
+            assertThat(response.getShared()).isNullOrEmpty();
+        } else {
+            assertThat(response.getShared()).containsEntry(key, expectedValue);
+            assertThat(response.getClient()).isNullOrEmpty();
+        }
+    }
+
+    private void checkMultipleAttributes(List<String> keys, List<String> values, boolean client, MqttClient mqttClient, MqttMessageListener listener) throws Exception {
+        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        String keyString = String.join(",", keys);
+        JsonObject request = new JsonObject();
+        if (client) {
+            request.addProperty("clientKeys", keyString);
+        } else {
+            request.addProperty("sharedKeys", keyString);
+        }
+
+        mqttClient.publish("v1/devices/me/attributes/request/124", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        AttributesResponse response = mapper.readValue(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
+
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            String expectedValue = values.get(i);
+            if (client) {
+                assertThat(response.getClient()).containsEntry(key, expectedValue);
+                assertThat(response.getShared()).isNullOrEmpty();
+            } else {
+                assertThat(response.getShared()).containsEntry(key, expectedValue);
+                assertThat(response.getClient()).isNullOrEmpty();
+            }
+        }
+
+        // Ensure no extra attributes
+        if (client) {
+            assertThat(response.getClient()).hasSize(keys.size());
+        } else {
+            assertThat(response.getShared()).hasSize(keys.size());
+        }
     }
 
     private MqttClient getMqttClient(DeviceCredentials deviceCredentials, MqttMessageListener listener) throws InterruptedException, ExecutionException {
