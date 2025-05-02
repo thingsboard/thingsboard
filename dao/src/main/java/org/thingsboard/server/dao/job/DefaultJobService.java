@@ -117,7 +117,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
         boolean publishEvent = false;
         for (TaskResult taskResult : jobStats.getTaskResults()) {
-           result.processTaskResult(taskResult);
+            result.processTaskResult(taskResult);
 
             if (result.getCancellationTs() > 0) {
                 if (!taskResult.isDiscarded() && System.currentTimeMillis() > result.getCancellationTs()) {
@@ -134,8 +134,10 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
                     job.setStatus(CANCELLED);
                 } else if (result.getFailedCount() > 0) {
                     job.setStatus(FAILED);
+                    publishEvent = true;
                 } else {
                     job.setStatus(COMPLETED);
+                    publishEvent = true;
                 }
             }
         }

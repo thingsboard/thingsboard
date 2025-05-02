@@ -304,7 +304,7 @@ public class EntityStateSourcingListener {
 
     private void onJobUpdate(Job job) {
         jobManager.onJobUpdate(job);
-        if (job.getResult().getCancellationTs() > 0 || job.getStatus().isOneOf(JobStatus.FAILED)) {
+        if (job.getResult().getCancellationTs() > 0 || (job.getStatus().isOneOf(JobStatus.FAILED) && job.getResult().getGeneralError() != null)) {
             // task processors will add this job to the list of discarded
             tbClusterService.broadcastEntityStateChangeEvent(job.getTenantId(), job.getId(), ComponentLifecycleEvent.STOPPED);
         }
