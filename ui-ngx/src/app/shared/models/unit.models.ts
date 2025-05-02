@@ -146,6 +146,7 @@ export interface Unit {
   tags: string[];
   to_anchor: number;
   anchor_shift?: number;
+  transform?: (value: number) => number;
 }
 
 export type TbUnit = string | TbUnitMapping;
@@ -235,6 +236,9 @@ export class Converter {
     if (origin.unit.anchor_shift) {
       result -= origin.unit.anchor_shift;
     }
+    if (typeof origin.unit.transform === 'function') {
+      result = origin.unit.transform(result);
+    }
     if (origin.system !== destination.system) {
       const measureUnits = this.measureData[origin.measure][origin.system];
       const transform = measureUnits?.transform;
@@ -250,6 +254,9 @@ export class Converter {
 
     if (destination.unit.anchor_shift) {
       result += destination.unit.anchor_shift;
+    }
+    if (typeof destination.unit.transform === 'function') {
+      result = destination.unit.transform(result);
     }
     return result / destination.unit.to_anchor;
   }

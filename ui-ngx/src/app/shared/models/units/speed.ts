@@ -18,7 +18,7 @@ import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type SpeedUnits = SpeedMetricUnits | SpeedImperialUnits;
 
-export type SpeedMetricUnits = 'm/s' | 'km/h' | 'mm/min';
+export type SpeedMetricUnits = 'm/s' | 'km/h' | 'mm/min' | 'mm/s';
 export type SpeedImperialUnits = 'mph' | 'kt' | 'ft/s' | 'ft/min' | 'in/h';
 
 const METRIC: TbMeasureUnits<SpeedMetricUnits> = {
@@ -38,6 +38,11 @@ const METRIC: TbMeasureUnits<SpeedMetricUnits> = {
       name: 'unit.millimeters-per-minute',
       tags: ['feed rate', 'cutting feed rate', 'millimeters per minute', 'mm/min'],
       to_anchor: 0.06,
+    },
+    'mm/s': {
+      name: 'unit.millimeters-per-second',
+      tags: ['velocity', 'speed', 'vibration rate', 'millimeters per second', 'mm/s'],
+      to_anchor: 0.0036,
     },
   },
 };

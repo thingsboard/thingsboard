@@ -17,7 +17,7 @@
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type FrequencyUnits = FrequencyMetricUnits;
-export type FrequencyMetricUnits = 'mHz' | 'Hz' | 'kHz' | 'MHz' | 'GHz' | 'THz' | 'rpm' | 'deg/s' | 'rad/s';
+export type FrequencyMetricUnits = 'mHz' | 'Hz' | 'kHz' | 'MHz' | 'GHz' | 'THz' | 'rpm' | 'deg/s' | 'rad/s' | 'RPM' | 'λ' | 'bpm';
 
 const METRIC: TbMeasureUnits<FrequencyMetricUnits> = {
   units: {
@@ -55,6 +55,21 @@ const METRIC: TbMeasureUnits<FrequencyMetricUnits> = {
       name: 'unit.rotation-per-minute',
       tags: ['frequency', 'rotation per minute', 'rotations per minute', 'rpm', 'angular velocity'],
       to_anchor: 1 / 60,
+    },
+    RPM: {
+      name: 'unit.rpm',
+      tags: ['rotational speed', 'angular velocity', 'revolutions per minute', 'RPM'],
+      to_anchor: 1 / 60,
+    },
+    'λ': {
+      name: 'unit.lambda',
+      tags: ['wavelength', 'lambda', 'λ'],
+      to_anchor: 299792458,
+    },
+    bpm: {
+      name: 'unit.beats-per-minute',
+      tags: ['heart rate', 'pulse', 'bpm'],
+      to_anchor: 0.0167
     },
     'deg/s': {
       name: 'unit.deg-per-second',

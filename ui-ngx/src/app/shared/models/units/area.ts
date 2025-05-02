@@ -16,7 +16,7 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type AreaMetricUnits = 'mm²' | 'cm²' | 'm²' | 'a' | 'ha' | 'km²';
+export type AreaMetricUnits = 'mm²' | 'cm²' | 'm²' | 'a' | 'ha' | 'km²' | 'barn';
 export type AreaImperialUnits = 'in²' | 'yd²' | 'ft²' | 'ac' | 'ml²' | 'cin';
 
 export type AreaUnits = AreaMetricUnits | AreaImperialUnits;
@@ -53,6 +53,11 @@ const METRIC: TbMeasureUnits<AreaMetricUnits> = {
       name: 'unit.square-kilometer',
       tags: ['area','lot','zone','space','region','square kilometer','square kilometers','km²','sq-km'],
       to_anchor: 1000000,
+    },
+    barn: {
+      name: 'unit.barn',
+      tags: ['cross-sectional area', 'particle physics', 'nuclear physics', 'barn'],
+      to_anchor: 1e-28,
     },
   }
 };

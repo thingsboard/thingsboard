@@ -36,7 +36,9 @@ export type PressureMetricUnits =
   | 'N/m²'
   | 'kN/m²'
   | 'kgf/m²'
-  | 'Pa/cm²';
+  | 'Pa/cm²'
+  | 'J/m³'
+  | 'kg/m²';
 
 export type PressureImperialUnits = 'psi' | 'ksi' | 'inHg' | 'psi/in²' | 'tonf/in²';
 
@@ -46,7 +48,7 @@ const METRIC: TbMeasureUnits<PressureMetricUnits> = {
     Pa: {
       name: 'unit.pascal',
       tags: ['pressure', 'force', 'compression', 'tension', 'pascal', 'pascals', 'Pa', 'atmospheric pressure', 'air pressure', 'weather', 'altitude', 'flight'],
-      to_anchor: 0.001, // 1 Pa = 0.001 kPa
+      to_anchor: 0.001,
     },
     kPa: {
       name: 'unit.kilopascal',
@@ -133,6 +135,16 @@ const METRIC: TbMeasureUnits<PressureMetricUnits> = {
       tags: ['pressure', 'stress', 'mechanical strength', 'pascal per square centimeter', 'Pa/cm²'],
       to_anchor: 0.1,
     },
+    'J/m³': {
+      name: 'unit.joule-per-cubic-meter',
+      tags: ['energy density', 'joule per cubic meter', 'J/m³'],
+      to_anchor: 0.001,
+    },
+    'kg/m²': {
+      name: 'unit.kilogram-per-square-meter',
+      tags: ['density','surface density','areal density','mass per unit area','kg/m²'],
+      to_anchor: 0.00980665
+    }
   },
 };
 
