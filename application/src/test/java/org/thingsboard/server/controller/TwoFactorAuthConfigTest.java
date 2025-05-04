@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.Futures;
 import org.jboss.aerogear.security.otp.Totp;
 import org.jboss.aerogear.security.otp.api.Base32;
 import org.junit.After;
@@ -48,6 +49,7 @@ import org.thingsboard.server.service.security.auth.mfa.provider.impl.TotpTwoFaP
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -75,6 +78,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Before
     public void beforeEach() throws Exception {
+        willReturn(Futures.immediateVoidFuture()).given(smsService).sendSms(any(), any(), any(), any());
         doNothing().when(twoFactorAuthService).checkProvider(any(), any());
         loginSysAdmin();
     }
