@@ -16,6 +16,15 @@
 
 FROM thingsboard/openjdk17:bookworm-slim
 
+LABEL org.opencontainers.image.title="${docker.name}" \
+      org.opencontainers.image.description="${description}" \
+      org.opencontainers.image.url="https://www.thingsboard.io" \
+      org.opencontainers.image.source="https://github.com/thingsboard/thingsboard" \
+      org.opencontainers.image.version="${project.version}" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.created="${maven.build.timestamp}" \
+      org.opencontainers.image.vendor="The ThingsBoard Authors"
+
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -yq --no-install-recommends ncdu \
