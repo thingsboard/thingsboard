@@ -183,6 +183,15 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
         discardedJobs.add(jobId);
     }
 
+    protected <V> V wait(Future<V> future) throws Exception {
+        try {
+            return future.get(); // will be interrupted after task processing timeout
+        } catch (InterruptedException e) {
+            future.cancel(true); // interrupting the underlying task
+            throw e;
+        }
+    }
+
     @PreDestroy
     public void destroy() {
         taskConsumer.stop();
