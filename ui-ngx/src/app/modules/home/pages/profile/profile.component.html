@@ -66,6 +66,16 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
+          <mat-form-field class="mat-block" floatLabel="always">
+            <mat-label translate>unit.unit-system</mat-label>
+            <mat-select formControlName="unitSystem"
+                        [placeholder]="'unit.unit-system-type.AUTO' | translate">
+              <mat-option [value]="null">{{ 'unit.unit-system-type.AUTO' | translate }}</mat-option>
+              @for(unit of UnitSystems; track unit) {
+                <mat-option [value]="unit">{{ 'unit.unit-system-type.' + unit | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
           <section class="tb-home-dashboard flex flex-1 flex-col gt-sm:flex-row" *ngIf="!isSysAdmin()">
             <tb-dashboard-autocomplete
               class="flex-1"

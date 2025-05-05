@@ -28,5 +28,6 @@ export * from './raf.service';
 export * from './resources.service';
 export * from './time.service';
 export * from './title.service';
+export * from './unit.service';
 export * from './utils.service';
 export * from './window.service';

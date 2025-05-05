@@ -14,34 +14,567 @@
 /// limitations under the License.
 ///
 
-import { ResourcesService } from '@core/services/resources.service';
-import { Observable } from 'rxjs';
+import acceleration, { AccelerationUnits } from '@shared/models/units/acceleration';
+import airQualityIndex, { AirQualityIndexUnits } from '@shared/models/units/air-quality-index';
+import amountOfSubstance, { AmountOfSubstanceUnits } from '@shared/models/units/amount-of-substance';
+import angle, { AngleUnits } from '@shared/models/units/angle';
+import angularAcceleration, { AngularAccelerationUnits } from '@shared/models/units/angular-acceleration';
+import area, { AreaUnits } from '@shared/models/units/area';
+import capacitance, { CapacitanceUnits } from '@shared/models/units/capacitance';
+import catalyticActivity, { CatalyticActivityUnits } from '@shared/models/units/catalytic-activity';
+import catalyticConcentration, { CatalyticConcentrationUnits } from '@shared/models/units/catalytic-concentration';
+import charge, { ChargeUnits } from '@shared/models/units/charge';
+import currentDensity, { CurrentDensityUnits } from '@shared/models/units/current-density';
+import dataTransferRate, { DataTransferRateUnits } from '@shared/models/units/data-transfer-rate';
+import density, { DensityUnits } from '@shared/models/units/density';
+import digital, { DigitalUnits } from '@shared/models/units/digital';
+import dimensionRatio, { DimensionRatioUnits } from '@shared/models/units/dimension-ratio';
+import dynamicViscosity, { DynamicViscosityUnits } from '@shared/models/units/dynamic-viscosity';
+import earthquakeMagnitude, { EarthquakeMagnitudeUnits } from '@shared/models/units/earthquake-magnitude';
+import electricCurrent, { ElectricCurrentUnits } from '@shared/models/units/electric-current';
+import electricDipoleMoment, { ElectricDipoleMomentUnits } from '@shared/models/units/electric-dipole-moment';
+import electricFieldStrength, { ElectricFieldStrengthUnits } from '@shared/models/units/electric-field-strength';
+import electricFlux, { ElectricFluxUnits } from '@shared/models/units/electric-flux';
+import electricPermittivity, { ElectricPermittivityUnits } from '@shared/models/units/electric-permittivity';
+import electricalConductance, { ElectricalConductanceUnits } from '@shared/models/units/electrical-conductance';
+import electricalConductivity, { ElectricalConductivityUnits } from '@shared/models/units/electrical-conductivity';
+import energy, { EnergyUnits } from '@shared/models/units/energy';
+import force, { ForceUnits } from '@shared/models/units/force';
+import fuelEfficiency, { FuelEfficiencyUnits } from '@shared/models/units/fuel-efficiency';
+import frequency, { FrequencyUnits } from '@shared/models/units/frequency';
+import heatCapacity, { HeatCapacityUnits } from '@shared/models/units/heat-capacity';
+import illuminance, { IlluminanceUnits } from '@shared/models/units/illuminance';
+import inductance, { InductanceUnits } from '@shared/models/units/inductance';
+import kinematicViscosity, { KinematicViscosityUnits } from '@shared/models/units/kinematic-viscosity';
+import length, { LengthUnits } from '@shared/models/units/length';
+import lightExposure, { LightExposureUnits } from '@shared/models/units/light-exposure';
+import linerChargeDensity, { LinerChargeDensityUnits } from '@shared/models/units/liner-charge-density';
+import logarithmicRatio, { LogarithmicRatioUnits } from '@shared/models/units/logarithmic-ratio';
+import luminousEfficacy, { LuminousEfficacyUnits } from '@shared/models/units/luminous-efficacy';
+import luminousFlux, { LuminousFluxUnits } from '@shared/models/units/luminous-flux';
+import luminousIntensity, { LuminousIntensityUnits } from '@shared/models/units/luminous-intensity';
+import magneticFieldGradient, { MagneticFieldGradientUnits } from '@shared/models/units/magnetic-field-gradient';
+import magneticFlux, { MagneticFluxUnits } from '@shared/models/units/magnetic-flux';
+import magneticFluxDensity, { MagneticFluxDensityUnits } from '@shared/models/units/magnetic-flux-density';
+import magneticMoment, { MagneticMomentUnits } from '@shared/models/units/magnetic-moment';
+import magneticPermeability, { MagneticPermeabilityUnits } from '@shared/models/units/magnetic-permeability';
+import mass, { MassUnits } from '@shared/models/units/mass';
+import massFraction, { MassFractionUnits } from '@shared/models/units/mass-fraction';
+import molarConcentration, { MolarConcentrationUnits } from '@shared/models/units/molar-concentration';
+import molarEnergy, { MolarEnergyUnits } from '@shared/models/units/molar-energy';
+import molarHeatCapacity, { MolarHeatCapacityUnits } from '@shared/models/units/molar-heat-capacity';
+import molarMass, { MolarMassUnits } from '@shared/models/units/molar-mass';
+import partsPer, { PartsPerUnits } from '@shared/models/units/parts-per';
+import power, { PowerUnits } from '@shared/models/units/power';
+import pressure, { PressureUnits } from '@shared/models/units/pressure';
+import specificHumidity, { SpecificHumidityUnits } from '@shared/models/units/specific-humidity';
+import speed, { SpeedUnits } from '@shared/models/units/speed';
+import temperature, { TemperatureUnits } from '@shared/models/units/temperature';
+import time, { TimeUnits } from '@shared/models/units/time';
+import torque, { TorqueUnits } from '@shared/models/units/torque';
+import voltage, { VoltageUnits } from '@shared/models/units/voltage';
+import volume, { VolumeUnits } from '@shared/models/units/volume';
+import volumeFlowRate, { VolumeFlowRateUnits } from '@shared/models/units/volume-flow-rate';
+import { TranslateService } from '@ngx-translate/core';
 
-export interface Unit {
-  name: string;
-  symbol: string;
-  tags: string[];
-}
+export type AllMeasuresUnits =
+  | AccelerationUnits
+  | AirQualityIndexUnits
+  | AmountOfSubstanceUnits
+  | AngleUnits
+  | AngularAccelerationUnits
+  | AreaUnits
+  | CapacitanceUnits
+  | CatalyticActivityUnits
+  | CatalyticConcentrationUnits
+  | ChargeUnits
+  | CurrentDensityUnits
+  | DataTransferRateUnits
+  | DensityUnits
+  | DigitalUnits
+  | DimensionRatioUnits
+  | DynamicViscosityUnits
+  | EarthquakeMagnitudeUnits
+  | ElectricCurrentUnits
+  | ElectricDipoleMomentUnits
+  | ElectricFieldStrengthUnits
+  | ElectricFluxUnits
+  | ElectricPermittivityUnits
+  | ElectricalConductanceUnits
+  | ElectricalConductivityUnits
+  | EnergyUnits
+  | ForceUnits
+  | FrequencyUnits
+  | FuelEfficiencyUnits
+  | HeatCapacityUnits
+  | IlluminanceUnits
+  | InductanceUnits
+  | KinematicViscosityUnits
+  | LengthUnits
+  | LightExposureUnits
+  | LinerChargeDensityUnits
+  | LogarithmicRatioUnits
+  | LuminousEfficacyUnits
+  | LuminousFluxUnits
+  | LuminousIntensityUnits
+  | MagneticFieldGradientUnits
+  | MagneticFluxUnits
+  | MagneticFluxDensityUnits
+  | MagneticMomentUnits
+  | MagneticPermeabilityUnits
+  | MassUnits
+  | MassFractionUnits
+  | MolarConcentrationUnits
+  | MolarEnergyUnits
+  | MolarHeatCapacityUnits
+  | MolarMassUnits
+  | PartsPerUnits
+  | PowerUnits
+  | PressureUnits
+  | SpecificHumidityUnits
+  | SpeedUnits
+  | TemperatureUnits
+  | TimeUnits
+  | TorqueUnits
+  | VoltageUnits
+  | VolumeUnits
+  | VolumeFlowRateUnits;
+
+export type AllMeasures =
+  | 'acceleration'
+  | 'air-quality-index'
+  | 'amount-of-substance'
+  | 'angle'
+  | 'angular-acceleration'
+  | 'area'
+  | 'capacitance'
+  | 'catalytic-activity'
+  | 'catalytic-concentration'
+  | 'charge'
+  | 'current-density'
+  | 'data-transfer-rate'
+  | 'density'
+  | 'digital'
+  | 'dimension-ratio'
+  | 'dynamic-viscosity'
+  | 'earthquake-magnitude'
+  | 'electric-current'
+  | 'electric-dipole-moment'
+  | 'electric-field-strength'
+  | 'electric-flux'
+  | 'electric-permittivity'
+  | 'electrical-conductance'
+  | 'electrical-conductivity'
+  | 'energy'
+  | 'force'
+  | 'frequency'
+  | 'fuel-efficiency'
+  | 'heat-capacity'
+  | 'illuminance'
+  | 'inductance'
+  | 'kinematic-viscosity'
+  | 'length'
+  | 'light-exposure'
+  | 'linear-charge-density'
+  | 'logarithmic-ratio'
+  | 'luminous-efficacy'
+  | 'luminous-flux'
+  | 'luminous-intensity'
+  | 'magnetic-field-gradient'
+  | 'magnetic-flux'
+  | 'magnetic-flux-density'
+  | 'magnetic-moment'
+  | 'magnetic-permeability'
+  | 'mass'
+  | 'mass-fraction'
+  | 'molar-concentration'
+  | 'molar-energy'
+  | 'molar-heat-capacity'
+  | 'molar-mass'
+  | 'parts-per'
+  | 'power'
+  | 'pressure'
+  | 'specific-humidity'
+  | 'speed'
+  | 'temperature'
+  | 'time'
+  | 'torque'
+  | 'voltage'
+  | 'volume'
+  | 'volume-flow-rate';
+
+const allMeasures: Record<
+  AllMeasures,
+  TbMeasure<AllMeasuresUnits>
+> = Object.freeze({
+  acceleration,
+  'air-quality-index': airQualityIndex,
+  'amount-of-substance': amountOfSubstance,
+  angle,
+  'angular-acceleration': angularAcceleration,
+  area,
+  capacitance,
+  'catalytic-activity': catalyticActivity,
+  'catalytic-concentration': catalyticConcentration,
+  charge,
+  'current-density': currentDensity,
+  'data-transfer-rate': dataTransferRate,
+  density,
+  digital,
+  'dimension-ratio': dimensionRatio,
+  'dynamic-viscosity': dynamicViscosity,
+  'earthquake-magnitude': earthquakeMagnitude,
+  'electric-current': electricCurrent,
+  'electric-dipole-moment': electricDipoleMoment,
+  'electric-field-strength': electricFieldStrength,
+  'electric-flux': electricFlux,
+  'electric-permittivity': electricPermittivity,
+  'electrical-conductance': electricalConductance,
+  'electrical-conductivity': electricalConductivity,
+  energy,
+  force,
+  frequency,
+  'fuel-efficiency': fuelEfficiency,
+  'heat-capacity': heatCapacity,
+  illuminance,
+  inductance,
+  'kinematic-viscosity': kinematicViscosity,
+  length,
+  'light-exposure': lightExposure,
+  'linear-charge-density': linerChargeDensity,
+  'logarithmic-ratio': logarithmicRatio,
+  'luminous-efficacy': luminousEfficacy,
+  'luminous-flux': luminousFlux,
+  'luminous-intensity': luminousIntensity,
+  'magnetic-field-gradient': magneticFieldGradient,
+  'magnetic-flux': magneticFlux,
+  'magnetic-flux-density': magneticFluxDensity,
+  'magnetic-moment': magneticMoment,
+  'magnetic-permeability': magneticPermeability,
+  mass,
+  'mass-fraction': massFraction,
+  'molar-concentration': molarConcentration,
+  'molar-energy': molarEnergy,
+  'molar-heat-capacity': molarHeatCapacity,
+  'molar-mass': molarMass,
+  'parts-per': partsPer,
+  power,
+  pressure,
+  'specific-humidity': specificHumidity,
+  speed,
+  temperature,
+  time,
+  torque,
+  voltage,
+  volume,
+  'volume-flow-rate': volumeFlowRate,
+});
 
 export enum UnitsType {
   capacity = 'capacity'
 }
 
-export enum Units {
-  percent = '%',
-  liters = 'L'
+export type TbUnitConverter = (value: number) => number;
+export type UnitInfoGroupByMeasure<TMeasure extends string> = Partial<Record<TMeasure, UnitInfo[]>>;
+
+export interface UnitInfo {
+  abbr: string;
+  measure: AllMeasures;
+  system: UnitSystem;
+  name: string;
+  tags: string[];
 }
 
-export const unitBySymbol = (_units: Array<Unit>, symbol: string): Unit => _units.find(u => u.symbol === symbol);
+export enum UnitSystem {
+  METRIC = 'METRIC',
+  IMPERIAL = 'IMPERIAL',
+  HYBRID = 'HYBRID'
+}
 
-const searchUnitTags = (unit: Unit, searchText: string): boolean =>
-  !!unit.tags.find(t => t.toUpperCase().includes(searchText.toUpperCase()));
+export const UnitSystems = Object.values(UnitSystem);
 
-export const searchUnits = (_units: Array<Unit>, searchText: string): Array<Unit> => _units.filter(
-    u => u.symbol.toUpperCase().includes(searchText.toUpperCase()) ||
-      u.name.toUpperCase().includes(searchText.toUpperCase()) ||
+export interface Unit {
+  name: string;
+  tags?: string[];
+  to_anchor: number;
+  anchor_shift?: number;
+  transform?: (value: number) => number;
+}
+
+export type TbUnit = string | TbUnitMapping;
+
+export interface TbUnitMapping {
+  from: string;
+  METRIC: string;
+  IMPERIAL: string;
+  HYBRID: string;
+}
+
+export type TbMeasure<TUnits extends string> = Partial<Record<UnitSystem, TbMeasureUnits<TUnits>>>;
+
+export interface TbMeasureUnits<TUnits extends string> {
+  ratio?: number;
+  transform?: (value: number) => number;
+  units?: Partial<Record<TUnits, Unit>>;
+}
+
+export interface Conversion<TMeasures extends string, TUnits extends string> {
+  abbr: TUnits;
+  measure: TMeasures;
+  system: UnitSystem;
+  unit: Unit;
+}
+
+export type UnitCache = Map<string, {
+    system: UnitSystem;
+    measure: AllMeasures;
+    unit: Unit;
+    abbr: AllMeasuresUnits;
+  }
+>;
+
+const searchUnitTags = (unit: UnitInfo, searchText: string): boolean =>
+  !!unit.tags.find(t => t.toUpperCase().includes(searchText));
+
+export const searchUnits = (_units: Array<UnitInfo>, searchText: string): Array<UnitInfo> => _units.filter(
+    u => u.abbr.toUpperCase().includes(searchText) ||
+      u.name.toUpperCase().includes(searchText) ||
       searchUnitTags(u, searchText)
 );
 
-export const getUnits = (resourcesService: ResourcesService): Observable<Array<Unit>> =>
-  resourcesService.loadJsonResource('/assets/metadata/units.json');
+type Entries<T, S extends keyof T> = [S, T[keyof T]];
+
+export class Converter {
+  private readonly measureData: Record<AllMeasures, TbMeasure<AllMeasuresUnits>>;
+  private unitCache: Map<
+    string,
+    {
+      system: UnitSystem;
+      measure: AllMeasures;
+      unit: Unit;
+      abbr: AllMeasuresUnits;
+    }
+  >;
+
+  constructor(
+    measures: Record<AllMeasures, TbMeasure<AllMeasuresUnits>>,
+    unitCache: UnitCache
+  ) {
+    this.measureData = measures;
+    this.unitCache = unitCache;
+  }
+
+  getUnitConverter(from: AllMeasuresUnits | string, to: AllMeasuresUnits | string): TbUnitConverter {
+    return (value: number) => this.convert(value, from, to);
+  }
+
+  convert(value: number, from: AllMeasuresUnits | string, to: AllMeasuresUnits | string): number {
+    const origin = this.getUnit(from);
+    const destination = this.getUnit(to);
+
+    if (!origin) {
+      throw new Error(`Unsupported unit: ${from}`);
+    }
+    if (!destination) {
+      throw new Error(`Unsupported unit: ${to}`);
+    }
+    if (origin.abbr === destination.abbr) {
+      return value;
+    }
+    if (destination.measure !== origin.measure) {
+      throw Error(`Cannot convert incompatible measures: ${origin.measure} to ${destination.measure}`);
+    }
+    let result = value * origin.unit.to_anchor;
+    if (origin.unit.anchor_shift) {
+      result -= origin.unit.anchor_shift;
+    }
+    if (typeof origin.unit.transform === 'function') {
+      result = origin.unit.transform(result);
+    }
+    if (origin.system !== destination.system) {
+      const measureUnits = this.measureData[origin.measure][origin.system];
+      const transform = measureUnits?.transform;
+      const ratio = measureUnits?.ratio;
+      if (typeof transform === 'function') {
+        result = transform(result);
+      } else if (typeof ratio === 'number') {
+        result *= ratio;
+      } else {
+        throw Error('System anchor requires a defined ratio or transform function');
+      }
+    }
+
+    if (destination.unit.anchor_shift) {
+      result += destination.unit.anchor_shift;
+    }
+    if (typeof destination.unit.transform === 'function') {
+      result = destination.unit.transform(result);
+    }
+    return result / destination.unit.to_anchor;
+  }
+
+  getDefaultUnit(measureName: AllMeasures | (string & {}), unitSystem: UnitSystem): AllMeasuresUnits {
+    if (!this.isMeasure(measureName)) {
+      return null;
+    }
+    const units = this.getUnitsForMeasure(measureName, unitSystem);
+    if (!units) {
+      return null;
+    }
+    for (const [abbr, unit] of Object.entries(units) as [AllMeasuresUnits, Unit][]) {
+      if (unit.to_anchor === 1 && (!unit.anchor_shift || unit.anchor_shift === 0)) {
+        return abbr;
+      }
+    }
+    return null;
+  }
+
+  getUnit(abbr: AllMeasuresUnits | string): Conversion<AllMeasures, AllMeasuresUnits> | null {
+    return this.unitCache.get(abbr) ?? null;
+  }
+
+  describe(abbr: AllMeasuresUnits | string): UnitInfo {
+    const unit = this.getUnit(abbr);
+    return unit ? this.describeUnit(unit) : null;
+  }
+
+  listUnits(measureName?: AllMeasures, unitSystem?: UnitSystem): UnitInfo[] {
+    const results: UnitInfo[] = [];
+
+    const measures = measureName
+      ? { [measureName]: this.measureData[measureName] } as Record<AllMeasures, TbMeasure<AllMeasuresUnits>>
+      : this.measureData;
+
+    for (const [name, measure] of Object.entries(measures) as [AllMeasures, TbMeasure<AllMeasuresUnits>][]) {
+      if (!this.isMeasure(name)) {
+        continue;
+      }
+
+      const systems = unitSystem
+        ? [unitSystem]
+        : (Object.keys(measure) as UnitSystem[]);
+
+      for (const system of systems) {
+        const units = this.getUnitsForMeasure(name, system);
+        if (!units) {
+          continue;
+        }
+
+        for (const [abbr, unit] of Object.entries(units) as [AllMeasuresUnits, Unit][]) {
+          results.push(
+            this.describeUnit({
+              abbr,
+              measure: name as AllMeasures,
+              system,
+              unit,
+            })
+          );
+        }
+      }
+    }
+    return results;
+  }
+
+  unitsGroupByMeasure(measureName?: AllMeasures, unitSystem?: UnitSystem): UnitInfoGroupByMeasure<AllMeasures> | never {
+    const results: UnitInfoGroupByMeasure<AllMeasures> = {};
+
+    const measures = measureName
+      ? { [measureName]: this.measureData[measureName]} as Record<AllMeasures, TbMeasure<AllMeasuresUnits>>
+      : this.measureData;
+
+    for (const [name, measure] of Object.entries(measures) as [AllMeasures, TbMeasure<AllMeasuresUnits>][]) {
+      if (!this.isMeasure(name)) {
+        continue;
+      }
+
+      results[name] = [];
+
+      const systems = unitSystem
+        ? [unitSystem]
+        : (Object.keys(measure) as UnitSystem[]);
+
+      for (const system of systems) {
+        const units = this.getUnitsForMeasure(name, system);
+        if (!units) {
+          continue;
+        }
+
+        for (const [abbr, unit] of Object.entries(units) as [AllMeasuresUnits, Unit][]) {
+          results[name].push(
+            this.describeUnit({
+              abbr,
+              measure: name as AllMeasures,
+              system,
+              unit,
+            })
+          );
+        }
+      }
+    }
+    return results;
+  }
+
+  private describeUnit(unit: Conversion<AllMeasures, AllMeasuresUnits>): UnitInfo {
+    return {
+      abbr: unit.abbr,
+      measure: unit.measure,
+      system: unit.system,
+      name: unit.unit.name,
+      tags: unit.unit.tags
+    };
+  }
+
+  private isMeasure(measureName: string): boolean {
+    return measureName in this.measureData;
+  }
+
+  private getUnitsForMeasure(
+    measureName: AllMeasures | string,
+    unitSystem: UnitSystem
+  ): Partial<Record<AllMeasuresUnits, Unit>> | null {
+    const measure = this.measureData[measureName];
+    let system = unitSystem;
+    let units = measure[system]?.units;
+    if (!units && unitSystem === UnitSystem.IMPERIAL) {
+      system = UnitSystem.METRIC;
+      units = measure[system]?.units;
+    }
+    return units ?? null;
+  }
+}
+
+function buildUnitCache(measures: Record<AllMeasures, TbMeasure<AllMeasuresUnits>>,
+                        translate: TranslateService
+) {
+  const unitCache: UnitCache = new Map();
+  for (const [measureName, measure] of Object.entries(measures) as Entries<
+    typeof measures,
+    AllMeasures
+  >[]) {
+    for (const [systemName, system] of Object.entries(
+      measure
+    ) as Entries<TbMeasure<AllMeasuresUnits>, UnitSystem>[]) {
+      for (const [testAbbr, unit] of Object.entries(system.units) as Entries<
+        Record<AllMeasuresUnits, Unit>,
+        AllMeasuresUnits
+      >[]) {
+        unit.name = translate.instant(unit.name);
+        const measureNameTranslation = translate.instant('unit.measures.' + measureName);
+        unit.tags = unit.tags ?? [];
+        unit.tags.push(testAbbr, unit.name, measureNameTranslation);
+        unitCache.set(testAbbr, {
+          measure: measureName,
+          system: systemName,
+          abbr: testAbbr,
+          unit,
+        });
+      }
+    }
+  }
+  return unitCache;
+}
+
+export function getUnitConverter(translate: TranslateService): Converter {
+  const unitCache = buildUnitCache(allMeasures, translate);
+  return new Converter(allMeasures, unitCache);
+}

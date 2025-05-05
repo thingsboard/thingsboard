@@ -14,7 +14,15 @@
 /// limitations under the License.
 ///
 
-import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, mergeDeep, parseFunction } from '@core/utils';
+import {
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isNumber,
+  isNumeric,
+  isUndefinedOrNull,
+  mergeDeep,
+  parseFunction
+} from '@core/utils';
 import {
   DataEntry,
   DataKey,
@@ -45,6 +53,8 @@ import {
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
+import { UnitService } from '@core/services/unit.service';
+import { TbUnit, TbUnitConverter, TbUnitMapping } from '@shared/models/unit.models';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -849,6 +859,105 @@ export class AutoDateFormatProcessor extends DateFormatProcessor {
       this.formatted = '&nbsp;';
     }
     return this.formatted;
+  }
+}
+
+export interface ValueFormatSettingProcessor {
+  dec?: number;
+  units?: TbUnit;
+  showZeroDecimals?: boolean;
+}
+
+export abstract class ValueFormatProcessor {
+
+  static fromSettings($injector: Injector, settings: ValueFormatSettingProcessor): ValueFormatProcessor {
+    if (settings.units !== null && typeof settings.units === 'object') {
+      return new ConverterValueFormatProcessor($injector, settings)
+    } else {
+      return new SimpleValueFormatProcessor($injector, settings);
+    }
+  }
+
+  protected constructor(protected $injector: Injector,
+                        protected settings: ValueFormatSettingProcessor) {
+  }
+
+  abstract update(value: any): string;
+}
+
+export class SimpleValueFormatProcessor extends ValueFormatProcessor {
+
+  private readonly isDefinedUnit: boolean;
+  private readonly isDefinedDec: boolean;
+  private readonly hideZeroDecimals: boolean;
+
+  constructor(protected $injector: Injector,
+              protected settings: ValueFormatSettingProcessor) {
+    super($injector, settings);
+    this.isDefinedUnit = isNotEmptyStr(settings.units);
+    this.isDefinedDec = isDefinedAndNotNull(settings.dec);
+    this.hideZeroDecimals = !settings.showZeroDecimals;
+  }
+
+  update(value: any): string {
+    if (isDefinedAndNotNull(value) && isNumeric(value) && (this.isDefinedDec || this.isDefinedUnit || Number(value).toString() === value)) {
+      let formatted = value;
+      if (this.isDefinedDec) {
+        formatted = Number(formatted).toFixed(this.settings.dec);
+      }
+      if (this.hideZeroDecimals) {
+        formatted = Number(formatted)
+      }
+      formatted = formatted.toString();
+      if (this.isDefinedUnit) {
+        formatted += ` ${this.settings.units}`;
+      }
+      return formatted;
+    }
+    return value ?? '';
+  }
+}
+
+export class ConverterValueFormatProcessor extends ValueFormatProcessor {
+
+  private readonly isDefinedDec: boolean;
+  private readonly hideZeroDecimals: boolean;
+  private readonly unitConverter: TbUnitConverter;
+  private readonly unitAbbr: string;
+
+  constructor(protected $injector: Injector,
+              protected settings: ValueFormatSettingProcessor) {
+    super($injector, settings);
+    const unitService = this.$injector.get(UnitService);
+    const unit = settings.units as TbUnitMapping;
+    this.unitAbbr = unitService.getTargetUnitSymbol(unit);
+    try {
+      this.unitConverter = unitService.geUnitConverter(unit);
+    } catch (e) {/**/}
+
+    this.isDefinedDec = isDefinedAndNotNull(settings.dec);
+    this.hideZeroDecimals = !settings.showZeroDecimals;
+  }
+
+  update(value: any): string {
+    if (isDefinedAndNotNull(value) && isNumeric(value)) {
+      let formatted: number | string = Number(value);
+      if (this.unitConverter) {
+        formatted = this.unitConverter(value);
+      }
+      if (this.isDefinedDec) {
+        formatted = Number(formatted).toFixed(this.settings.dec);
+      }
+      if (this.hideZeroDecimals) {
+        formatted = Number(formatted)
+      }
+      formatted = formatted.toString();
+      if (this.unitAbbr) {
+        formatted += ` ${this.unitAbbr}`;
+      }
+      return formatted;
+    }
+    return value ?? '';
   }
 }
 
