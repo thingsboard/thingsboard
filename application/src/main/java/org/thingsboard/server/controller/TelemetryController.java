@@ -92,6 +92,7 @@ import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.AttributeData;
+import org.thingsboard.server.service.telemetry.TbTelemetryService;
 import org.thingsboard.server.service.telemetry.TsData;
 
 import java.util.ArrayList;
@@ -154,6 +155,9 @@ public class TelemetryController extends BaseController {
 
     @Autowired
     private AccessValidator accessValidator;
+
+    @Autowired
+    private TbTelemetryService tbTelemetryService;
 
     @Value("${transport.json.max_string_value_length:0}")
     private int maxStringValueLength;
@@ -323,20 +327,11 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
             @Parameter(description = STRICT_DATA_TYPES_DESCRIPTION)
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
-                (result, tenantId, entityId) -> {
-                    AggregationParams params;
-                    Aggregation agg = Aggregation.valueOf(aggStr);
-                    if (Aggregation.NONE.equals(agg)) {
-                        params = AggregationParams.none();
-                    } else if (intervalType == null || IntervalType.MILLISECONDS.equals(intervalType)) {
-                        params = interval == 0L ? AggregationParams.none() : AggregationParams.milliseconds(agg, interval);
-                    } else {
-                        params = AggregationParams.calendar(agg, intervalType, timeZone);
-                    }
-                    List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, params, limit, orderBy)).collect(Collectors.toList());
-                    Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
-                });
+        DeferredResult<ResponseEntity> response = new DeferredResult<>();
+        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), toKeysList(keys), startTs, endTs,
+                        intervalType, interval, timeZone, limit, Aggregation.valueOf(aggStr), orderBy, useStrictDataTypes, getCurrentUser()),
+                getTsKvListCallback(response, useStrictDataTypes), MoreExecutors.directExecutor());
+        return response;
     }
 
     @ApiOperation(value = "Save device attributes (saveDeviceAttributes)",
