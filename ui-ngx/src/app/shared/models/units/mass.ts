@@ -26,37 +26,37 @@ const METRIC: TbMeasureUnits<MassMetricUnits> = {
   units: {
     ng: {
       name: 'unit.nanogram',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'nanogram', 'nanograms', 'ng'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 1e-9,
     },
     mcg: {
       name: 'unit.microgram',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'μg', 'microgram'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 1e-6,
     },
     mg: {
       name: 'unit.milligram',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'milligram', 'miligrams', 'mg'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 1e-3,
     },
     g: {
       name: 'unit.gram',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'gram', 'grams', 'g'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 1,
     },
     kg: {
       name: 'unit.kilogram',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'kilogram', 'kilograms', 'kg'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 1000,
     },
     t: {
       name: 'unit.tonne',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'tonne', 'tons', 't'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 1000000,
     },
     Da: {
       name: 'unit.dalton',
-      tags: ['atomic mass unit', 'AMU', 'unified atomic mass unit', 'dalton', 'Da'],
+      tags: ['atomic mass unit', 'AMU', 'unified atomic mass unit'],
       to_anchor: 1.66053906660e-24,
     },
     ct: {
@@ -72,47 +72,47 @@ const IMPERIAL: TbMeasureUnits<MassImperialUnits> = {
   units: {
     oz: {
       name: 'unit.ounce',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'ounce', 'ounces', 'oz'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 1 / 16,
     },
     lb: {
       name: 'unit.pound',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'pound', 'pounds', 'lb'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 1,
     },
     st: {
       name: 'unit.stone',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'stone', 'stones', 'st'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 14,
     },
     'short tons': {
       name: 'unit.short-tons',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'short ton', 'short tons'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 2000,
     },
     gr: {
       name: 'unit.grain',
-      tags: ['mass', 'measurement', 'grain', 'gr'],
+      tags: ['measurement'],
       to_anchor: 1 / 7000,
     },
     dr: {
       name: 'unit.drachm',
-      tags: ['mass', 'measurement', 'drachm', 'dr'],
+      tags: ['measurement'],
       to_anchor: 1 / 256,
     },
     qr: {
       name: 'unit.quarter',
-      tags: ['mass', 'measurement', 'quarter', 'qr'],
+      tags: ['measurement'],
       to_anchor: 28,
     },
     cwt: {
       name: 'unit.hundredweight-count',
-      tags: ['mass', 'weight', 'heaviness', 'load', 'hundredweight count', 'cwt'],
+      tags: ['weight', 'heaviness', 'load'],
       to_anchor: 100,
     },
     slug: {
       name: 'unit.slug',
-      tags: ['mass', 'measurement', 'slug'],
+      tags: ['measurement'],
       to_anchor: 32.174,
     },
   },

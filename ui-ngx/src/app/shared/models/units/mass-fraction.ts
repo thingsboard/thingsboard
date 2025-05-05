@@ -16,19 +16,19 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type LuminousFluxUnits = 'lm';
+export type MassFractionUnits = '°Bx';
 
-const METRIC: TbMeasureUnits<LuminousFluxUnits> = {
+const METRIC: TbMeasureUnits<MassFractionUnits> = {
   units: {
-    'lm': {
-      name: 'unit.lumen',
-      tags: ['total light output'],
+    '°Bx': {
+      name: 'unit.degrees-brix',
+      tags: ['sugar content', 'fruit ripeness'],
       to_anchor: 1,
     },
   },
 };
 
-const measure: TbMeasure<LuminousFluxUnits> = {
+const measure: TbMeasure<MassFractionUnits> = {
   METRIC,
 };
 

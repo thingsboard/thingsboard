@@ -16,45 +16,43 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type AngleUnits = AngleMetricUnits;
+export type AngleUnits = 'rad' | 'deg' | 'grad' | 'arcmin' | 'arcsec' | 'mrad' | 'rev';
 
-export type AngleMetricUnits = 'rad' | 'deg' | 'grad' | 'arcmin' | 'arcsec' | 'mrad' | 'rev';
-
-const METRIC: TbMeasureUnits<AngleMetricUnits> = {
+const METRIC: TbMeasureUnits<AngleUnits> = {
   units: {
     rad: {
       name: 'unit.rad',
-      tags: ['angle', 'radian', 'radians', 'rad'],
+      tags: ['radians'],
       to_anchor: 180 / Math.PI,
     },
     deg: {
       name: 'unit.degree',
-      tags: ['angle', 'degree', 'degrees', 'deg'],
+      tags: ['degrees'],
       to_anchor: 1,
     },
     grad: {
       name: 'unit.gradian',
-      tags: ['angle', 'gradian', 'grades', 'grad'],
+      tags: ['grades'],
       to_anchor: 9 / 10,
     },
     arcmin: {
       name: 'unit.arcminute',
-      tags: ['angle', 'arcminute', 'arcminutes', 'arcmin'],
+      tags: ['arcminutes'],
       to_anchor: 1 / 60
     },
     arcsec: {
       name: 'unit.arcsecond',
-      tags: ['angle', 'arcsecond', 'arcseconds', 'arcsec'],
+      tags: ['arcseconds'],
       to_anchor: 1 / 3600
     },
     mrad: {
       name: 'unit.milliradian',
-      tags: ['angle', 'military angle', 'angular mil', 'mil'],
+      tags: ['military angle', 'angular mil', 'mil'],
       to_anchor: 9 / (50 * Math.PI),
     },
     rev: {
       name: 'unit.revolution',
-      tags: ['angle', 'revolution', 'full circle', 'complete turn', 'rev'],
+      tags: ['full circle', 'complete turn'],
       to_anchor: 360,
     },
   }

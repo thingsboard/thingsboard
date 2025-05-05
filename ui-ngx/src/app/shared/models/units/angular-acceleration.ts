@@ -26,7 +26,7 @@ const METRIC: TbMeasureUnits<AngularAccelerationMetricUnits> = {
   units: {
     'rad/s²': {
       name: 'unit.radian-per-second-squared',
-      tags: ['angular acceleration', 'rotation rate of change', 'rad/s²'],
+      tags: ['rotation rate of change'],
       to_anchor: 1,
     }
   }
@@ -37,7 +37,7 @@ const IMPERIAL: TbMeasureUnits<AngularAccelerationImperialUnits> = {
   units: {
     'rpm/s': {
       name: 'unit.revolutions-per-minute-per-second',
-      tags: ['angular acceleration', 'rotation rate of change', 'rpm/s'],
+      tags: ['rotation rate of change'],
       to_anchor: 1
     }
   }

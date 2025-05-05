@@ -16,60 +16,58 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type DigitalUnits = DigitalMetricUnits;
+export type DigitalUnits = 'bit' | 'B' | 'KB' | 'MB' | 'GB' | 'TB' | 'PB' | 'EB' | 'ZB' | 'YB';
 
-export type DigitalMetricUnits = 'bit' | 'B' | 'KB' | 'MB' | 'GB' | 'TB' | 'PB' | 'EB' | 'ZB' | 'YB';
-
-const METRIC: TbMeasureUnits<DigitalMetricUnits> = {
+const METRIC: TbMeasureUnits<DigitalUnits> = {
   units: {
     bit: {
       name: 'unit.bit',
-      tags: ['data', 'binary digit', 'information', 'bit'],
+      tags: ['data', 'binary digit', 'information'],
       to_anchor: 1.25e-1,
     },
     B: {
       name: 'unit.byte',
-      tags: ['data', 'byte', 'information', 'storage', 'memory', 'B'],
+      tags: ['data', 'information', 'storage', 'memory'],
       to_anchor: 1
     },
     KB: {
       name: 'unit.kilobyte',
-      tags: ['data', 'kilobyte', 'KB'],
+      tags: ['data'],
       to_anchor: 1024,
     },
     MB: {
       name: 'unit.megabyte',
-      tags: ['data', 'megabyte', 'MB'],
+      tags: ['data'],
       to_anchor: 1024 ** 2,
     },
     GB: {
       name: 'unit.gigabyte',
-      tags: ['data', 'gigabyte', 'GB'],
+      tags: ['data'],
       to_anchor: 1024 ** 3,
     },
     TB: {
       name: 'unit.terabyte',
-      tags: ['data', 'terabyte', 'TB'],
+      tags: ['data'],
       to_anchor: 1024 ** 4,
     },
     PB: {
       name: 'unit.petabyte',
-      tags: ['data', 'petabyte', 'PB'],
+      tags: ['data'],
       to_anchor: 1024 ** 5,
     },
     EB: {
       name: 'unit.exabyte',
-      tags: ['data', 'exabyte', 'EB'],
+      tags: ['data'],
       to_anchor: 1024 ** 6,
     },
     ZB: {
       name: 'unit.zettabyte',
-      tags: ['data', 'zettabyte', 'EB'],
+      tags: ['data'],
       to_anchor: 1024 ** 7,
     },
     YB: {
       name: 'unit.yottabyte',
-      tags: ['data', 'yottabyte', 'EB'],
+      tags: ['data'],
       to_anchor: 1024 ** 8,
     },
   }

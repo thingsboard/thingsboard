@@ -1,23 +1,38 @@
+///
+/// Copyright © 2016-2025 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type ElectricalConductivityMetricUnits = 'µS/cm' | 'mS/m' | 'S/m';
-export type ElectricalConductivityUnits = ElectricalConductivityMetricUnits;
+export type ElectricalConductivityUnits = 'µS/cm' | 'mS/m' | 'S/m';
 
-const METRIC: TbMeasureUnits<ElectricalConductivityMetricUnits> = {
+const METRIC: TbMeasureUnits<ElectricalConductivityUnits> = {
   units: {
     'S/m': {
       name: 'unit.siemens-per-meter',
-      tags: ['Electrical conductivity', 'water quality', 'soil quality', 'siemens per meter', 'S/m'],
+      tags: [ 'water quality', 'soil quality'],
       to_anchor: 1,
     },
     'µS/cm': {
       name: 'unit.microsiemens-per-centimeter',
-      tags: ['Electrical conductivity', 'water quality', 'soil quality', 'microsiemens per centimeter', 'µS/cm'],
+      tags: ['water quality', 'soil quality'],
       to_anchor: 0.0001,
     },
     'mS/m': {
       name: 'unit.millisiemens-per-meter',
-      tags: ['Electrical conductivity', 'water quality', 'soil quality', 'millisiemens per meter', 'mS/m'],
+      tags: ['water quality', 'soil quality'],
       to_anchor: 0.001,
     },
   },

@@ -26,37 +26,37 @@ const METRIC: TbMeasureUnits<AreaMetricUnits> = {
   units: {
     'mm²': {
       name: 'unit.square-millimeter',
-      tags: ['area','lot','zone','space','region','square millimeter','square millimeters','mm²','sq-mm'],
+      tags: ['lot', 'zone', 'space', 'region', 'square millimeters', 'sq-mm'],
       to_anchor: 1 / 1000000,
     },
     'cm²': {
       name: 'unit.square-centimeter',
-      tags: ['area','lot','zone','space','region','square centimeter','square centimeters','cm²','sq-cm'],
+      tags: ['lot', 'zone', 'space', 'region', 'square centimeters', 'sq-cm'],
       to_anchor: 1 / 10000,
     },
     'm²': {
       name: 'unit.square-meter',
-      tags: ['area','lot','zone','space','region','square meter','square meters','m²','sq-m'],
+      tags: ['lot', 'zone', 'space', 'region', 'square meters', 'sq-m'],
       to_anchor: 1,
     },
     a: {
       name: 'unit.are',
-      tags: ['area','land measurement','are'],
+      tags: ['land measurement'],
       to_anchor: 100,
     },
     ha: {
       name: 'unit.hectare',
-      tags: ['area','lot','zone','space','region','hectare','hectares','ha'],
+      tags: ['lot', 'zone', 'space', 'region', 'hectares'],
       to_anchor: 10000,
     },
     'km²': {
       name: 'unit.square-kilometer',
-      tags: ['area','lot','zone','space','region','square kilometer','square kilometers','km²','sq-km'],
+      tags: ['lot', 'zone', 'space', 'region', 'square kilometers', 'sq-km'],
       to_anchor: 1000000,
     },
     barn: {
       name: 'unit.barn',
-      tags: ['cross-sectional area', 'particle physics', 'nuclear physics', 'barn'],
+      tags: ['cross-sectional area', 'particle physics', 'nuclear physics'],
       to_anchor: 1e-28,
     },
   }
@@ -67,32 +67,32 @@ const IMPERIAL: TbMeasureUnits<AreaImperialUnits> = {
   units: {
     'in²': {
       name: 'unit.square-inch',
-      tags: ['area','lot','zone','space','region','square inch','square inches','in²','sq-in'],
+      tags: ['lot', 'zone', 'space', 'region', 'square inches', 'sq-in'],
       to_anchor: 1 / 144,
     },
     'yd²': {
       name: 'unit.square-yard',
-      tags: ['area','lot','zone','space','region','square yard','square yards','yd²','sq-yd'],
+      tags: ['lot', 'zone', 'space', 'region', 'square yards', 'sq-yd'],
       to_anchor: 9,
     },
     'ft²': {
       name: 'unit.square-foot',
-      tags: ['area','lot','zone','space','region','square foot','square feet','ft²','sq-ft'],
+      tags: ['lot', 'zone', 'space', 'region', 'square feet', 'sq-ft'],
       to_anchor: 1,
     },
     ac: {
       name: 'unit.acre',
-      tags: ['area','lot','zone','space','region','acre','acres','a'],
+      tags: ['lot', 'zone', 'space', 'region', 'acres', 'a'],
       to_anchor: 43560,
     },
     'ml²': {
       name: 'unit.square-mile',
-      tags: ['area','lot','zone','space','region','square mile','square miles','ml²','sq-mi'],
+      tags: ['lot', 'zone', 'space', 'region', 'square mile', 'sq-mi'],
       to_anchor: 27878400,
     },
     cin: {
       name: 'unit.circular-inch',
-      tags: ['area','circular measurement','circular inch','circin'],
+      tags: ['circular measurement', 'circin'],
       to_anchor: Math.PI / 576
     }
   }

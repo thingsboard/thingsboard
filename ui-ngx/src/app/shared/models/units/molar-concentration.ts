@@ -16,19 +16,19 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type LuminousFluxUnits = 'lm';
+export type MolarConcentrationUnits = 'mol/m³';
 
-const METRIC: TbMeasureUnits<LuminousFluxUnits> = {
+const METRIC: TbMeasureUnits<MolarConcentrationUnits> = {
   units: {
-    'lm': {
-      name: 'unit.lumen',
-      tags: ['total light output'],
+    'mol/m³': {
+      name: 'unit.mole-per-cubic-meter',
+      tags: ['amount of substance per unit volume'],
       to_anchor: 1,
-    },
+    }
   },
 };
 
-const measure: TbMeasure<LuminousFluxUnits> = {
+const measure: TbMeasure<MolarConcentrationUnits> = {
   METRIC,
 };
 

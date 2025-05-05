@@ -16,19 +16,24 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type LuminousFluxUnits = 'lm';
+export type MagneticPermeabilityUnits = 'H/m' | 'G/Oe';
 
-const METRIC: TbMeasureUnits<LuminousFluxUnits> = {
+const METRIC: TbMeasureUnits<MagneticPermeabilityUnits> = {
   units: {
-    'lm': {
-      name: 'unit.lumen',
-      tags: ['total light output'],
+    'H/m': {
+      name: 'unit.henry-per-meter',
       to_anchor: 1,
+    },
+    'G/Oe': {
+      name: 'unit.gauss-per-oersted',
+      tags: ['magnetic field'],
+      to_anchor: 1/ 795774.715,
     },
   },
 };
 
-const measure: TbMeasure<LuminousFluxUnits> = {
+
+const measure: TbMeasure<MagneticPermeabilityUnits> = {
   METRIC,
 };
 

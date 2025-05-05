@@ -16,19 +16,29 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type LuminousFluxUnits = 'lm';
+export type LogarithmicRatioUnits = 'dB' | 'B' | 'Np';
 
-const METRIC: TbMeasureUnits<LuminousFluxUnits> = {
+const METRIC: TbMeasureUnits<LogarithmicRatioUnits> = {
   units: {
-    'lm': {
-      name: 'unit.lumen',
-      tags: ['total light output'],
+    'dB': {
+      name: 'unit.decibel',
+      tags: ['noise level', 'sound level', 'volume', 'acoustics'],
       to_anchor: 1,
+    },
+    'B': {
+      name: 'unit.bel',
+      tags: ['power ratio', 'intensity ratio'],
+      to_anchor: 10,
+    },
+    'Np': {
+      name: 'unit.neper',
+      tags: ['gain', 'loss', 'attenuation'],
+      to_anchor: 8.685889638,
     },
   },
 };
 
-const measure: TbMeasure<LuminousFluxUnits> = {
+const measure: TbMeasure<LogarithmicRatioUnits> = {
   METRIC,
 };
 

@@ -16,50 +16,48 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type ElectricCurrentUnits = ElectricCurrentMetricalUnits;
+export type ElectricCurrentUnits = 'A' | 'pA' | 'nA' | 'μA' | 'mA' | 'kA' | 'MA' | 'GA';
 
-export type ElectricCurrentMetricalUnits = 'A' | 'pA' | 'nA' | 'μA' | 'mA' | 'kA' | 'MA' | 'GA';
-
-const METRIC: TbMeasureUnits<ElectricCurrentMetricalUnits> = {
+const METRIC: TbMeasureUnits<ElectricCurrentUnits> = {
   units: {
     A: {
       name: 'unit.ampere',
-      tags: ['electric current', 'current flow', 'flow of electricity', 'electrical flow', 'ampere', 'amperes', 'amperage', 'A'],
+      tags: ['current flow', 'flow of electricity', 'electrical flow', 'amperes', 'amperage'],
       to_anchor: 1,
     },
     pA: {
       name: 'unit.picoampere',
-      tags: ['current', 'amperes', 'picoampere', 'pA'],
+      tags: ['picoamperes'],
       to_anchor: 1e-12,
     },
     nA: {
       name: 'unit.nanoampere',
-      tags: ['electric current', 'amperes', 'nanoampere', 'nA'],
+      tags: ['nanoamperes'],
       to_anchor: 1e-9,
     },
     μA: {
       name: 'unit.microampere',
-      tags: ['electric current', 'microampere', 'microamperes', 'μA'],
+      tags: ['microamperes'],
       to_anchor: 1e-6,
     },
     mA: {
       name: 'unit.milliampere',
-      tags: ['electric current', 'milliampere', 'milliamperes', 'mA'],
+      tags: ['milliamperes'],
       to_anchor: 0.001,
     },
     kA: {
       name: 'unit.kiloampere',
-      tags: ['electric current', 'kiloampere', 'kiloamperes', 'kA'],
+      tags: ['kiloamperes'],
       to_anchor: 1000,
     },
     MA: {
       name: 'unit.megaampere',
-      tags: ['electric current', 'megaampere', 'megaamperes', 'MA'],
+      tags: ['megaamperes'],
       to_anchor: 1e6,
     },
     GA: {
       name: 'unit.gigaampere',
-      tags: ['electric current', 'gigaampere', 'gigaamperes', 'GA'],
+      tags: ['gigaamperes'],
       to_anchor: 1e9,
     },
   }

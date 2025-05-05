@@ -15,21 +15,59 @@
 ///
 
 import acceleration, { AccelerationUnits } from '@shared/models/units/acceleration';
+import airQualityIndex, { AirQualityIndexUnits } from '@shared/models/units/air-quality-index';
+import amountOfSubstance, { AmountOfSubstanceUnits } from '@shared/models/units/amount-of-substance';
 import angle, { AngleUnits } from '@shared/models/units/angle';
 import angularAcceleration, { AngularAccelerationUnits } from '@shared/models/units/angular-acceleration';
 import area, { AreaUnits } from '@shared/models/units/area';
+import capacitance, { CapacitanceUnits } from '@shared/models/units/capacitance';
+import catalyticActivity, { CatalyticActivityUnits } from '@shared/models/units/catalytic-activity';
+import catalyticConcentration, { CatalyticConcentrationUnits } from '@shared/models/units/catalytic-concentration';
 import charge, { ChargeUnits } from '@shared/models/units/charge';
+import currentDensity, { CurrentDensityUnits } from '@shared/models/units/current-density';
+import dataTransferRate, { DataTransferRateUnits } from '@shared/models/units/data-transfer-rate';
+import density, { DensityUnits } from '@shared/models/units/density';
 import digital, { DigitalUnits } from '@shared/models/units/digital';
+import dimensionRatio, { DimensionRatioUnits } from '@shared/models/units/dimension-ratio';
+import dynamicViscosity, { DynamicViscosityUnits } from '@shared/models/units/dynamic-viscosity';
+import earthquakeMagnitude, { EarthquakeMagnitudeUnits } from '@shared/models/units/earthquake-magnitude';
 import electricCurrent, { ElectricCurrentUnits } from '@shared/models/units/electric-current';
+import electricDipoleMoment, { ElectricDipoleMomentUnits } from '@shared/models/units/electric-dipole-moment';
+import electricFieldStrength, { ElectricFieldStrengthUnits } from '@shared/models/units/electric-field-strength';
+import electricFlux, { ElectricFluxUnits } from '@shared/models/units/electric-flux';
+import electricPermittivity, { ElectricPermittivityUnits } from '@shared/models/units/electric-permittivity';
+import electricalConductance, { ElectricalConductanceUnits } from '@shared/models/units/electrical-conductance';
+import electricalConductivity, { ElectricalConductivityUnits } from '@shared/models/units/electrical-conductivity';
 import energy, { EnergyUnits } from '@shared/models/units/energy';
 import force, { ForceUnits } from '@shared/models/units/force';
+import fuelEfficiency, { FuelEfficiencyUnits } from '@shared/models/units/fuel-efficiency';
 import frequency, { FrequencyUnits } from '@shared/models/units/frequency';
+import heatCapacity, { HeatCapacityUnits } from '@shared/models/units/heat-capacity';
 import illuminance, { IlluminanceUnits } from '@shared/models/units/illuminance';
+import inductance, { InductanceUnits } from '@shared/models/units/inductance';
+import kinematicViscosity, { KinematicViscosityUnits } from '@shared/models/units/kinematic-viscosity';
 import length, { LengthUnits } from '@shared/models/units/length';
+import lightExposure, { LightExposureUnits } from '@shared/models/units/light-exposure';
+import linerChargeDensity, { LinerChargeDensityUnits } from '@shared/models/units/liner-charge-density';
+import logarithmicRatio, { LogarithmicRatioUnits } from '@shared/models/units/logarithmic-ratio';
+import luminousEfficacy, { LuminousEfficacyUnits } from '@shared/models/units/luminous-efficacy';
+import luminousFlux, { LuminousFluxUnits } from '@shared/models/units/luminous-flux';
+import luminousIntensity, { LuminousIntensityUnits } from '@shared/models/units/luminous-intensity';
+import magneticFieldGradient, { MagneticFieldGradientUnits } from '@shared/models/units/magnetic-field-gradient';
+import magneticFlux, { MagneticFluxUnits } from '@shared/models/units/magnetic-flux';
+import magneticFluxDensity, { MagneticFluxDensityUnits } from '@shared/models/units/magnetic-flux-density';
+import magneticMoment, { MagneticMomentUnits } from '@shared/models/units/magnetic-moment';
+import magneticPermeability, { MagneticPermeabilityUnits } from '@shared/models/units/magnetic-permeability';
 import mass, { MassUnits } from '@shared/models/units/mass';
+import massFraction, { MassFractionUnits } from '@shared/models/units/mass-fraction';
+import molarConcentration, { MolarConcentrationUnits } from '@shared/models/units/molar-concentration';
+import molarEnergy, { MolarEnergyUnits } from '@shared/models/units/molar-energy';
+import molarHeatCapacity, { MolarHeatCapacityUnits } from '@shared/models/units/molar-heat-capacity';
+import molarMass, { MolarMassUnits } from '@shared/models/units/molar-mass';
 import partsPer, { PartsPerUnits } from '@shared/models/units/parts-per';
 import power, { PowerUnits } from '@shared/models/units/power';
 import pressure, { PressureUnits } from '@shared/models/units/pressure';
+import specificHumidity, { SpecificHumidityUnits } from '@shared/models/units/specific-humidity';
 import speed, { SpeedUnits } from '@shared/models/units/speed';
 import temperature, { TemperatureUnits } from '@shared/models/units/temperature';
 import time, { TimeUnits } from '@shared/models/units/time';
@@ -41,21 +79,59 @@ import { TranslateService } from '@ngx-translate/core';
 
 export type AllMeasuresUnits =
   | AccelerationUnits
+  | AirQualityIndexUnits
+  | AmountOfSubstanceUnits
   | AngleUnits
   | AngularAccelerationUnits
   | AreaUnits
+  | CapacitanceUnits
+  | CatalyticActivityUnits
+  | CatalyticConcentrationUnits
   | ChargeUnits
+  | CurrentDensityUnits
+  | DataTransferRateUnits
+  | DensityUnits
   | DigitalUnits
+  | DimensionRatioUnits
+  | DynamicViscosityUnits
+  | EarthquakeMagnitudeUnits
   | ElectricCurrentUnits
+  | ElectricDipoleMomentUnits
+  | ElectricFieldStrengthUnits
+  | ElectricFluxUnits
+  | ElectricPermittivityUnits
+  | ElectricalConductanceUnits
+  | ElectricalConductivityUnits
   | EnergyUnits
   | ForceUnits
   | FrequencyUnits
+  | FuelEfficiencyUnits
+  | HeatCapacityUnits
   | IlluminanceUnits
+  | InductanceUnits
+  | KinematicViscosityUnits
   | LengthUnits
+  | LightExposureUnits
+  | LinerChargeDensityUnits
+  | LogarithmicRatioUnits
+  | LuminousEfficacyUnits
+  | LuminousFluxUnits
+  | LuminousIntensityUnits
+  | MagneticFieldGradientUnits
+  | MagneticFluxUnits
+  | MagneticFluxDensityUnits
+  | MagneticMomentUnits
+  | MagneticPermeabilityUnits
   | MassUnits
+  | MassFractionUnits
+  | MolarConcentrationUnits
+  | MolarEnergyUnits
+  | MolarHeatCapacityUnits
+  | MolarMassUnits
   | PartsPerUnits
   | PowerUnits
   | PressureUnits
+  | SpecificHumidityUnits
   | SpeedUnits
   | TemperatureUnits
   | TimeUnits
@@ -66,21 +142,59 @@ export type AllMeasuresUnits =
 
 export type AllMeasures =
   | 'acceleration'
+  | 'air-quality-index'
+  | 'amount-of-substance'
   | 'angle'
   | 'angular-acceleration'
   | 'area'
+  | 'capacitance'
+  | 'catalytic-activity'
+  | 'catalytic-concentration'
   | 'charge'
+  | 'current-density'
+  | 'data-transfer-rate'
+  | 'density'
   | 'digital'
+  | 'dimension-ratio'
+  | 'dynamic-viscosity'
+  | 'earthquake-magnitude'
   | 'electric-current'
+  | 'electric-dipole-moment'
+  | 'electric-field-strength'
+  | 'electric-flux'
+  | 'electric-permittivity'
+  | 'electrical-conductance'
+  | 'electrical-conductivity'
   | 'energy'
   | 'force'
   | 'frequency'
+  | 'fuel-efficiency'
+  | 'heat-capacity'
   | 'illuminance'
+  | 'inductance'
+  | 'kinematic-viscosity'
   | 'length'
+  | 'light-exposure'
+  | 'linear-charge-density'
+  | 'logarithmic-ratio'
+  | 'luminous-efficacy'
+  | 'luminous-flux'
+  | 'luminous-intensity'
+  | 'magnetic-field-gradient'
+  | 'magnetic-flux'
+  | 'magnetic-flux-density'
+  | 'magnetic-moment'
+  | 'magnetic-permeability'
   | 'mass'
+  | 'mass-fraction'
+  | 'molar-concentration'
+  | 'molar-energy'
+  | 'molar-heat-capacity'
+  | 'molar-mass'
   | 'parts-per'
   | 'power'
   | 'pressure'
+  | 'specific-humidity'
   | 'speed'
   | 'temperature'
   | 'time'
@@ -94,21 +208,59 @@ const allMeasures: Record<
   TbMeasure<AllMeasuresUnits>
 > = Object.freeze({
   acceleration,
+  'air-quality-index': airQualityIndex,
+  'amount-of-substance': amountOfSubstance,
   angle,
   'angular-acceleration': angularAcceleration,
   area,
+  capacitance,
+  'catalytic-activity': catalyticActivity,
+  'catalytic-concentration': catalyticConcentration,
   charge,
+  'current-density': currentDensity,
+  'data-transfer-rate': dataTransferRate,
+  density,
   digital,
+  'dimension-ratio': dimensionRatio,
+  'dynamic-viscosity': dynamicViscosity,
+  'earthquake-magnitude': earthquakeMagnitude,
   'electric-current': electricCurrent,
+  'electric-dipole-moment': electricDipoleMoment,
+  'electric-field-strength': electricFieldStrength,
+  'electric-flux': electricFlux,
+  'electric-permittivity': electricPermittivity,
+  'electrical-conductance': electricalConductance,
+  'electrical-conductivity': electricalConductivity,
   energy,
   force,
   frequency,
+  'fuel-efficiency': fuelEfficiency,
+  'heat-capacity': heatCapacity,
   illuminance,
+  inductance,
+  'kinematic-viscosity': kinematicViscosity,
   length,
+  'light-exposure': lightExposure,
+  'linear-charge-density': linerChargeDensity,
+  'logarithmic-ratio': logarithmicRatio,
+  'luminous-efficacy': luminousEfficacy,
+  'luminous-flux': luminousFlux,
+  'luminous-intensity': luminousIntensity,
+  'magnetic-field-gradient': magneticFieldGradient,
+  'magnetic-flux': magneticFlux,
+  'magnetic-flux-density': magneticFluxDensity,
+  'magnetic-moment': magneticMoment,
+  'magnetic-permeability': magneticPermeability,
   mass,
+  'mass-fraction': massFraction,
+  'molar-concentration': molarConcentration,
+  'molar-energy': molarEnergy,
+  'molar-heat-capacity': molarHeatCapacity,
+  'molar-mass': molarMass,
   'parts-per': partsPer,
   power,
   pressure,
+  'specific-humidity': specificHumidity,
   speed,
   temperature,
   time,
@@ -143,7 +295,7 @@ export const UnitSystems = Object.values(UnitSystem);
 
 export interface Unit {
   name: string;
-  tags: string[];
+  tags?: string[];
   to_anchor: number;
   anchor_shift?: number;
   transform?: (value: number) => number;
@@ -407,6 +559,9 @@ function buildUnitCache(measures: Record<AllMeasures, TbMeasure<AllMeasuresUnits
         AllMeasuresUnits
       >[]) {
         unit.name = translate.instant(unit.name);
+        const measureNameTranslation = translate.instant('unit.measures.' + measureName);
+        unit.tags = unit.tags ?? [];
+        unit.tags.push(testAbbr, unit.name, measureNameTranslation);
         unitCache.set(testAbbr, {
           measure: measureName,
           system: systemName,

@@ -26,22 +26,22 @@ const METRIC: TbMeasureUnits<AccelerationMetricUnits> = {
   units: {
     'G': {
       name: 'unit.g-force',
-      tags: ['acceleration', 'gravity', 'g-force', 'load', 'G'],
+      tags: ['gravity', 'g-force', 'load'],
       to_anchor: 9.80665,
     },
     'm/s²': {
       name: 'unit.meters-per-second-squared',
-      tags: ['peak', 'peak to peak', 'root mean square (RMS)', 'vibration', 'meters per second squared', 'm/s²'],
+      tags: ['peak', 'peak to peak', 'root mean square (RMS)', 'vibration', 'meters per second squared'],
       to_anchor: 1,
     },
     'Gal': {
       name: 'unit.gal',
-      tags: ['acceleration', 'gravity', 'g-force', 'Gal'],
+      tags: ['gravity', 'g-force'],
       to_anchor: 1,
     },
     'km/h²': {
       name: 'unit.kilometer-per-hour-squared',
-      tags: ['acceleration', 'rate of change of velocity', 'kilometer per hour squared', 'km/h²'],
+      tags: ['rate of change of velocity', 'kilometer per hour squared'],
       to_anchor: 1 / 12960,
     }
   }

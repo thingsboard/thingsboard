@@ -26,17 +26,15 @@ const METRIC: TbMeasureUnits<ForceMetricUnits> = {
   units: {
     N: {
       name: 'unit.newton',
-      tags: ['force', 'pressure', 'newton', 'newtons', 'N', 'push', 'pull', 'weight', 'gravity', 'N'],
+      tags: ['pressure', 'push', 'pull', 'weight'],
       to_anchor: 1,
     },
     kN: {
       name: 'unit.kilonewton',
-      tags: ['force', 'kN'],
       to_anchor: 1000,
     },
     dyn: {
       name: 'unit.dyne',
-      tags: ['force', 'dyn'],
       to_anchor: 0.00001,
     },
   },
@@ -47,27 +45,22 @@ const IMPERIAL: TbMeasureUnits<ForceImperialUnits> = {
   units: {
     lbf: {
       name: 'unit.pound-force',
-      tags: ['force', 'lbf'],
       to_anchor: 1,
     },
     kgf: {
       name: 'unit.kilogram-force',
-      tags: ['force', 'kgf'],
       to_anchor: 2.20462,
     },
     klbf: {
       name: 'unit.kilopound-force',
-      tags: ['force', 'klbf'],
       to_anchor: 1000,
     },
     pdl: {
       name: 'unit.poundal',
-      tags: ['force', 'pdl'],
       to_anchor: 0.031081,
     },
     kip: {
       name: 'unit.kip',
-      tags: ['force', 'kip'],
       to_anchor: 1000,
     },
   },

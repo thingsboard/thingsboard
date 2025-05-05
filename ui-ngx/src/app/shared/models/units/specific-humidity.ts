@@ -16,19 +16,19 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type LuminousFluxUnits = 'lm';
+export type SpecificHumidityUnits = 'g/kg';
 
-const METRIC: TbMeasureUnits<LuminousFluxUnits> = {
+const METRIC: TbMeasureUnits<SpecificHumidityUnits> = {
   units: {
-    'lm': {
-      name: 'unit.lumen',
-      tags: ['total light output'],
+    'g/kg': {
+      name: 'unit.gram-per-kilogram',
+      tags: ['humidity', 'moisture', 'specific humidity', 'g/kg'],
       to_anchor: 1,
     },
   },
 };
 
-const measure: TbMeasure<LuminousFluxUnits> = {
+const measure: TbMeasure<SpecificHumidityUnits> = {
   METRIC,
 };
 

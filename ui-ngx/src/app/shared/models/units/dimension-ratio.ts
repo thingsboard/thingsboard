@@ -16,19 +16,19 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type LuminousFluxUnits = 'lm';
+export type DimensionRatioUnits = 'm/m';
 
-const METRIC: TbMeasureUnits<LuminousFluxUnits> = {
+const METRIC: TbMeasureUnits<DimensionRatioUnits> = {
   units: {
-    'lm': {
-      name: 'unit.lumen',
-      tags: ['total light output'],
+    'm/m': {
+      name: 'unit.meter-per-meter',
+      tags: ['ratio of length to length'],
       to_anchor: 1,
     },
   },
 };
 
-const measure: TbMeasure<LuminousFluxUnits> = {
+const measure: TbMeasure<DimensionRatioUnits> = {
   METRIC,
 };
 

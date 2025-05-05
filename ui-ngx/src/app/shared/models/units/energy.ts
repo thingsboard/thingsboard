@@ -40,42 +40,36 @@ const METRIC: TbMeasureUnits<EnergyMetricUnits> = {
   units: {
     Wm: {
       name: 'unit.watt-minute',
-      tags: ['energy', 'watt-minute', 'watt-minutes', 'Wm'],
       to_anchor: 60,
     },
     Wh: {
       name: 'unit.watt-hour',
-      tags: ['energy', 'watt-hour', 'watt-hours', 'energy usage', 'power consumption', 'energy consumption', 'electricity usage'],
+      tags: ['energy usage', 'power consumption', 'energy consumption', 'electricity usage'],
       to_anchor: 3600,
     },
     mWh: {
       name: 'unit.milliwatt-hour',
-      tags: ['energy', 'milliwatt-hour', 'milliwatt-hours', 'mWh'],
       to_anchor: 3.6,
     },
     kWh: {
       name: 'unit.kilowatt-hour',
-      tags: ['energy', 'kilowatt-hour', 'kilowatt-hours', 'energy usage', 'power consumption', 'energy consumption', 'electricity usage'],
+      tags: ['energy usage', 'power consumption', 'energy consumption', 'electricity usage'],
       to_anchor: 3600000,
     },
     MWh: {
       name: 'unit.megawatt-hour',
-      tags: ['energy', 'megawatt-hour', 'megawatt-hours', 'MWh'],
       to_anchor: 3600000000,
     },
     GWh: {
       name: 'unit.gigawatt-hour',
-      tags: ['energy', 'gigawatt-hour', 'gigawatt-hours', 'GWh'],
       to_anchor: 3600000000000,
     },
     μJ: {
       name: 'unit.microjoule',
-      tags: ['energy', 'microjoule', 'microjoules', 'μJ'],
       to_anchor: 0.000001,
     },
     mJ: {
       name: 'unit.millijoule',
-      tags: ['energy', 'millijoule', 'millijoules', 'mJ'],
       to_anchor: 0.001,
     },
     J: {
@@ -85,22 +79,19 @@ const METRIC: TbMeasureUnits<EnergyMetricUnits> = {
     },
     kJ: {
       name: 'unit.kilojoule',
-      tags: ['energy', 'kilojoule', 'kilojoules', 'kJ'],
       to_anchor: 1000,
     },
     MJ: {
       name: 'unit.megajoule',
-      tags: ['energy', 'megajoule', 'megajoules', 'MJ'],
       to_anchor: 1000000,
     },
     GJ: {
       name: 'unit.gigajoule',
-      tags: ['energy', 'gigajoule', 'gigajoules', 'GJ'],
       to_anchor: 1000000000,
     },
     eV: {
       name: 'unit.electron-volts',
-      tags: ['energy', 'subatomic particles', 'radiation'],
+      tags: ['subatomic particles', 'radiation'],
       to_anchor: 1.602176634e-19,
     },
   },
@@ -111,32 +102,31 @@ const IMPERIAL: TbMeasureUnits<EnergyImperialUnits> = {
   units: {
     cal: {
       name: 'unit.small-calorie',
-      tags: ['energy', 'small calorie', 'calories', 'cal'],
       to_anchor: 1,
     },
     Cal: {
       name: 'unit.calorie',
-      tags: ['energy', 'food energy', 'Calorie', 'Calories', 'Cal'],
+      tags: ['food energy'],
       to_anchor: 1000,
     },
     kcal: {
       name: 'unit.kilocalorie',
-      tags: ['energy', 'small calorie', 'kilocalories', 'kcal'],
+      tags: ['small calorie'],
       to_anchor: 1000,
     },
     BTU: {
       name: 'unit.british-thermal-unit',
-      tags: ['energy', 'heat', 'work done', 'british thermal unit', 'british thermal units', 'BTU'],
+      tags: ['heat', 'work done'],
       to_anchor: 252.164401,
     },
     'ft·lb': {
       name: 'unit.foot-pound',
-      tags: ['energy', 'foot-pound', 'foot-pounds', 'ft·lb', 'ft⋅lbf'],
+      tags: ['ft⋅lbf'],
       to_anchor: 0.32404875717017,
     },
     thm: {
       name: 'unit.therm',
-      tags: ['energy', 'natural gas consumption', 'BTU', 'therm', 'thm'],
+      tags: ['natural gas consumption', 'BTU'],
       to_anchor: 25219021.687207,
     },
   },

@@ -24,42 +24,42 @@ const METRIC: TbMeasureUnits<ChargeMetricUnits> = {
   units: {
     c: {
       name: 'unit.coulomb',
-      tags: ['charge', 'electricity', 'electrostatics', 'Coulomb', 'C'],
+      tags: ['electricity', 'electrostatics'],
       to_anchor: 1,
     },
     mC: {
       name: 'unit.millicoulomb',
-      tags: ['charge', 'electricity', 'electrostatics', 'millicoulombs', 'mC'],
+      tags: ['electricity', 'electrostatics'],
       to_anchor: 1 / 1000,
     },
     μC: {
       name: 'unit.microcoulomb',
-      tags: ['charge', 'electricity', 'electrostatics', 'microcoulomb', 'µC'],
+      tags: [ 'electricity', 'electrostatics'],
       to_anchor: 1 / 1000000,
     },
     nC: {
       name: 'unit.nanocoulomb',
-      tags: ['charge', 'electricity', 'electrostatics', 'nanocoulomb', 'nC'],
+      tags: ['electricity', 'electrostatics',],
       to_anchor: 1e-9,
     },
     pC: {
       name: 'unit.picocoulomb',
-      tags: ['charge', 'electricity', 'electrostatics', 'picocoulomb', 'pC'],
+      tags: ['electricity', 'electrostatics'],
       to_anchor: 1e-12,
     },
     mAh: {
       name: 'unit.milliampere-hour',
-      tags: ['electric current', 'current flow', 'electric charge', 'current capacity', 'flow of electricity', 'electrical flow', 'milliampere-hour', 'milliampere-hours', 'mAh'],
+      tags: ['electric current', 'current flow', 'electric charge', 'current capacity', 'flow of electricity', 'electrical flow', 'milliampere-hours'],
       to_anchor: 3.6,
     },
     Ah: {
       name: 'unit.ampere-hours',
-      tags: ['electric current', 'current flow', 'electric charge', 'current capacity', 'flow of electricity', 'electrical flow', 'ampere', 'ampere-hours', 'Ah'],
+      tags: ['electric current', 'current flow', 'electric charge', 'current capacity', 'flow of electricity', 'electrical flow', 'ampere'],
       to_anchor: 3600,
     },
     kAh: {
       name: 'unit.kiloampere-hours',
-      tags: ['electric current', 'current flow', 'electric charge', 'current capacity', 'flow of electricity', 'electrical flow', 'kiloampere-hours', 'kiloampere-hour', 'kAh'],
+      tags: ['electric current', 'current flow', 'electric charge', 'current capacity', 'flow of electricity', 'electrical flow', 'kiloampere-hours'],
       to_anchor: 3600000,
     },
   }

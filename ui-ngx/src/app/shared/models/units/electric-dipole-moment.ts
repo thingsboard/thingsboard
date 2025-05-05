@@ -16,19 +16,23 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type LuminousFluxUnits = 'lm';
+export type ElectricDipoleMomentUnits = 'C·m' | 'D';
 
-const METRIC: TbMeasureUnits<LuminousFluxUnits> = {
+const METRIC: TbMeasureUnits<ElectricDipoleMomentUnits> = {
   units: {
-    'lm': {
-      name: 'unit.lumen',
-      tags: ['total light output'],
+    'C·m': {
+      name: 'unit.electric-dipole-moment',
       to_anchor: 1,
+    },
+    'D': {
+      name: 'unit.debye',
+      tags: ['polarization'],
+      to_anchor: 3.33564e-30
     },
   },
 };
 
-const measure: TbMeasure<LuminousFluxUnits> = {
+const measure: TbMeasure<ElectricDipoleMomentUnits> = {
   METRIC,
 };
 

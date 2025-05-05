@@ -26,17 +26,17 @@ const METRIC: TbMeasureUnits<IlluminanceMetricUnits> = {
   units: {
     lx: {
       name: 'unit.lux',
-      tags: ['illumination', 'light level on a surface', 'illuminance', 'Lux', 'lx'],
+      tags: ['light level on a surface', 'illuminance', 'Lux', 'lx'],
       to_anchor: 1,
     },
     'cd/m²': {
       name: 'unit.candela-per-square-meter',
-      tags: ['brightness', 'light level', 'Luminance', 'Candela per square meter', 'cd/m²'],
+      tags: ['brightness', 'light level', 'Luminance'],
       to_anchor: 1,
     },
     'lm/m²': {
       name: 'unit.lumen-per-square-meter',
-      tags: ['illumination', 'light level', 'lumen per square meter', 'lm/m²'],
+      tags: ['light level'],
       to_anchor: 1,
     },
   },
@@ -47,7 +47,7 @@ const IMPERIAL: TbMeasureUnits<IlluminanceImperialUnits> = {
   units: {
     'fc': {
       name: 'unit.foot-candle',
-      tags: ['illuminance', 'light level', 'foot-candle', 'fc'],
+      tags: ['illuminance', 'light level'],
       to_anchor: 1,
     },
   },

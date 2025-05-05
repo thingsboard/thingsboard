@@ -1,34 +1,48 @@
+///
+/// Copyright © 2016-2025 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type AmountOfSubstanceMetricUnits = 'mol' | 'nmol' | 'μmol' | 'mmol' | 'kmol';
+export type AmountOfSubstanceUnits = 'mol' | 'nmol' | 'μmol' | 'mmol' | 'kmol';
 
-export type AmountOfSubstanceUnits = AmountOfSubstanceMetricUnits;
-
-const METRIC: TbMeasureUnits<AmountOfSubstanceMetricUnits> = {
+const METRIC: TbMeasureUnits<AmountOfSubstanceUnits> = {
   units: {
     'mol': {
       name: 'unit.mole',
-      tags: ['amount of substance', 'chemical amount', 'mole', 'mol'],
+      tags: ['chemical amount'],
       to_anchor: 1,
     },
     'nmol': {
       name: 'unit.nanomole',
-      tags: ['amount of substance', 'nanomole', 'nmol'],
+      tags: ['chemical amount'],
       to_anchor: 0.000000001,
     },
     'μmol': {
       name: 'unit.micromole',
-      tags: ['amount of substance', 'micromole', 'μmol'],
+      tags: ['chemical amount'],
       to_anchor: 0.000001,
     },
     'mmol': {
       name: 'unit.millimole',
-      tags: ['amount of substance', 'millimole', 'mmol'],
+      tags: ['chemical amount'],
       to_anchor: 0.001,
     },
     'kmol': {
       name: 'unit.kilomole',
-      tags: ['amount of substance', 'kilomole', 'kmol'],
+      tags: ['chemical amount'],
       to_anchor: 1000,
     },
   },

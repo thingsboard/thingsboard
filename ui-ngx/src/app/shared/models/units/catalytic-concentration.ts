@@ -16,19 +16,19 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type LuminousFluxUnits = 'lm';
+export type CatalyticConcentrationUnits = 'kat/m³';
 
-const METRIC: TbMeasureUnits<LuminousFluxUnits> = {
+const METRIC: TbMeasureUnits<CatalyticConcentrationUnits> = {
   units: {
-    'lm': {
-      name: 'unit.lumen',
-      tags: ['total light output'],
+    'kat/m³': {
+      name: 'unit.katal-per-cubic-metre',
+      tags: ['enzyme concentration'],
       to_anchor: 1,
-    },
+    }
   },
 };
 
-const measure: TbMeasure<LuminousFluxUnits> = {
+const measure: TbMeasure<CatalyticConcentrationUnits> = {
   METRIC,
 };
 

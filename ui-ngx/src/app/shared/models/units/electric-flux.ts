@@ -1,39 +1,47 @@
+///
+/// Copyright © 2016-2025 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type ElectricFluxMetricUnits = 'V·m' | 'kV·m' | 'MV·m' | 'µV·m' | 'mV·m' | 'nV·m';
+export type ElectricFluxUnits = 'V·m' | 'kV·m' | 'MV·m' | 'µV·m' | 'mV·m' | 'nV·m';
 
-export type ElectricFluxUnits = ElectricFluxMetricUnits;
-
-const METRIC: TbMeasureUnits<ElectricFluxMetricUnits> = {
+const METRIC: TbMeasureUnits<ElectricFluxUnits> = {
   units: {
     'V·m': {
       name: 'unit.volt-meter',
-      tags: ['electric flux', 'volt-meter', 'V·m'],
       to_anchor: 1,
     },
     'kV·m': {
       name: 'unit.kilovolt-meter',
-      tags: ['electric flux', 'kilovolt-meter', 'kV·m'],
       to_anchor: 1000,
     },
     'MV·m': {
       name: 'unit.megavolt-meter',
-      tags: ['electric flux', 'megavolt-meter', 'MV·m'],
       to_anchor: 1000000,
     },
     'µV·m': {
       name: 'unit.microvolt-meter',
-      tags: ['electric flux', 'microvolt-meter', 'µV·m'],
       to_anchor: 0.000001,
     },
     'mV·m': {
       name: 'unit.millivolt-meter',
-      tags: ['electric flux', 'millivolt-meter', 'mV·m'],
       to_anchor: 0.001,
     },
     'nV·m': {
       name: 'unit.nanovolt-meter',
-      tags: ['electric flux', 'nanovolt-meter', 'nV·m'],
       to_anchor: 0.000000001,
     },
   },

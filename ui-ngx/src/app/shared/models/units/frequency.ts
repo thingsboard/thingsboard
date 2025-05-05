@@ -23,62 +23,61 @@ const METRIC: TbMeasureUnits<FrequencyMetricUnits> = {
   units: {
     mHz: {
       name: 'unit.millihertz',
-      tags: ['frequency', 'cycles per second', 'millihertz', 'mHz'],
+      tags: ['cycles per second'],
       to_anchor: 1 / 1000,
     },
     Hz: {
       name: 'unit.hertz',
-      tags: ['frequency', 'cycles per second', 'hertz', 'Hz'],
+      tags: ['cycles per second'],
       to_anchor: 1,
     },
     kHz: {
       name: 'unit.kilohertz',
-      tags: ['frequency', 'cycles per second', 'kilohertz', 'kHz'],
+      tags: ['cycles per second'],
       to_anchor: 1000,
     },
     MHz: {
       name: 'unit.megahertz',
-      tags: ['frequency', 'cycles per second', 'megahertz', 'MHz'],
+      tags: ['cycles per second'],
       to_anchor: 1000 * 1000,
     },
     GHz: {
       name: 'unit.gigahertz',
-      tags: ['frequency', 'cycles per second', 'gigahertz', 'GHz'],
+      tags: ['cycles per second'],
       to_anchor: 1000 * 1000 * 1000,
     },
     THz: {
       name: 'unit.terahertz',
-      tags: ['frequency', 'terahertz', 'THz'],
       to_anchor: 1000 * 1000 * 1000 * 1000,
     },
     rpm: {
       name: 'unit.rotation-per-minute',
-      tags: ['frequency', 'rotation per minute', 'rotations per minute', 'rpm', 'angular velocity'],
+      tags: ['rotations per minute', 'angular velocity'],
       to_anchor: 1 / 60,
     },
     RPM: {
       name: 'unit.rpm',
-      tags: ['rotational speed', 'angular velocity', 'revolutions per minute', 'RPM'],
+      tags: ['rotational speed', 'angular velocity'],
       to_anchor: 1 / 60,
     },
     'λ': {
       name: 'unit.lambda',
-      tags: ['wavelength', 'lambda', 'λ'],
+      tags: ['wavelength'],
       to_anchor: 299792458,
     },
     bpm: {
       name: 'unit.beats-per-minute',
-      tags: ['heart rate', 'pulse', 'bpm'],
+      tags: ['heart rate', 'pulse'],
       to_anchor: 0.0167
     },
     'deg/s': {
       name: 'unit.deg-per-second',
-      tags: ['angular velocity', 'degrees per second', 'deg/s'],
-      to_anchor: 1 / 360, // 1 deg/s = 1/360 Hz
+      tags: ['angular velocity'],
+      to_anchor: 1 / 360,
     },
     'rad/s': {
       name: 'unit.radian-per-second',
-      tags: ['angular velocity', 'rotation speed', 'rad/s'],
+      tags: ['angular velocity'],
       to_anchor: 1 / (Math.PI * 2),
     },
   },
