@@ -37,3 +37,6 @@ rebuild-docker.sh
 */.run/**
 .run/**
 .run
+/docker/postgres /postgres.yml
+/msa/web-ui/package-lock.json
+/msa/js-executor/package-lock.json
