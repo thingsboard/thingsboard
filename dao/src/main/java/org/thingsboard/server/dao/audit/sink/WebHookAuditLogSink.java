@@ -38,7 +38,7 @@ import java.util.zip.GZIPOutputStream;
  * A component that implements the {@link AuditLogSink} interface to forward audit log entries to a configured WebHook endpoint.
   * This implementation supports authentication via API key and secret, which are included in the request headers.
  * The endpoint URL and authentication details are configured through application properties.
- * As optional parameter it can compress the logs via gzip before sending
+ * As an optional parameter it can compress the logs via gzip before sending
  *
  * The component initializes an HTTP client upon startup and performs cleanup during shutdown to release resources.
  */
