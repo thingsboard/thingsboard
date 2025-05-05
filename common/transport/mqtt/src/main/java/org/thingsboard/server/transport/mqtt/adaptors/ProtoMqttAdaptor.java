@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.session.AbstractGatewayDeviceSessionContext;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
@@ -188,7 +189,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
-    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
+    public Optional<MqttMessage> convertToGatewayPublish(AbstractGatewayDeviceSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
         if (!StringUtils.isEmpty(responseMsg.getError())) {
             throw new AdaptorException(responseMsg.getError());
         } else {

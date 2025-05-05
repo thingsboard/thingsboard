@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.LinkedHashMapRemoveEldest;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -517,7 +516,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private void handleGetAttributesRequest(SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
         log.error("[{}][{}] Processing get attributes request: {}", deviceId, requestId, request);
-        Futures.addCallback(getAttributesKvEntries(request, request.getOnlyShared()), new FutureCallback<>() {
+        Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
                 boolean isMultipleAttributesRequest = (request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount()) != 1;
@@ -534,6 +533,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             @Override
             public void onFailure(Throwable t) {
                 GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
+                        .setRequestId(requestId)
                         .setError(t.getMessage())
                         .build();
                 sendToTransport(responseMsg, sessionInfo);
@@ -541,27 +541,24 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request, boolean onlyShared) {
+    private ListenableFuture<List<List<AttributeKvEntry>>> getAttributesKvEntries(GetAttributeRequestMsg request) {
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
-        if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            if (!onlyShared) {
-                clientAttributesFuture = findAllAttributesByScope(AttributeScope.CLIENT_SCOPE);
-            } else {
-                clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            }
-            sharedAttributesFuture = findAllAttributesByScope(AttributeScope.SHARED_SCOPE);
-        } else if (!CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), AttributeScope.CLIENT_SCOPE);
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), AttributeScope.SHARED_SCOPE);
-        } else if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), AttributeScope.SHARED_SCOPE);
-        } else {
-            sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), AttributeScope.CLIENT_SCOPE);
-        }
+
+        clientAttributesFuture = getAttrs(request.getClientAttributeNamesList(), request.getOnlyClient(), AttributeScope.CLIENT_SCOPE);
+        sharedAttributesFuture = getAttrs(request.getSharedAttributeNamesList(), request.getOnlyShared(), AttributeScope.SHARED_SCOPE);
+
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
+    }
+
+    private ListenableFuture<List<AttributeKvEntry>> getAttrs(List<String> names, boolean onlyFlag, AttributeScope scope) {
+        if (!names.isEmpty()) {
+            return findAttributesByScope(toSet(names), scope);
+        } else if (onlyFlag) {
+            return findAllAttributesByScope(scope);
+        } else {
+            return Futures.immediateFuture(Collections.emptyList());
+        }
     }
 
     private ListenableFuture<List<AttributeKvEntry>> findAllAttributesByScope(AttributeScope scope) {

@@ -33,6 +33,8 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.TopicType;
+import org.thingsboard.server.transport.mqtt.session.AbstractGatewayDeviceSessionContext;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.nio.charset.Charset;
@@ -119,8 +121,12 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
-    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
-        return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg);
+    public Optional<MqttMessage> convertToGatewayPublish(AbstractGatewayDeviceSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
+        if (TopicType.V2_GATEWAY == ctx.getParent().getAttrReqTopicType()) {
+            return processConvertFromGatewayAttributeResponseMsgV2(ctx, deviceName, responseMsg);
+        } else {
+            return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg);
+        }
     }
     
     @Override
@@ -185,9 +191,11 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
             if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
+                result.setOnlyClient(true);
             }
             if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
+                result.setOnlyShared(true);
             }
             return result.build();
         } catch (RuntimeException e) {
@@ -240,6 +248,16 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         } else {
             JsonObject result = JsonConverter.getJsonObjectForGateway(deviceName, responseMsg);
             return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, result));
+        }
+    }
+
+    private Optional<MqttMessage> processConvertFromGatewayAttributeResponseMsgV2(AbstractGatewayDeviceSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
+        if (!StringUtils.isEmpty(responseMsg.getError())) {
+            throw new AdaptorException(responseMsg.getError());
+        } else {
+            JsonObject result = JsonConverter.getJsonObjectForGatewayV2(deviceName, responseMsg);
+            String mqttTopic = ctx.getParent().getAttrReqTopicType().getAttributesResponseTopicBase();
+            return Optional.of(createMqttPublishMsg(ctx, mqttTopic, result));
         }
     }
 

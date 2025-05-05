@@ -264,6 +264,8 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         // Subscribe for attribute update event
         mqttClient.on("v1/gateway/attributes", listener, MqttQoS.AT_LEAST_ONCE).get();
 
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+
         testRestClient.postTelemetryAttribute(createdDevice.getId(), SHARED_SCOPE, mapper.readTree(sharedAttributes.toString()));
         MqttEvent sharedAttributeEvent = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
 
@@ -525,6 +527,232 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         assertThat(response.getAsJsonObject("values").get("sharedAttr").getAsString()).isEqualTo("sval1");
     }
 
+    @Test
+    public void v2RequestAttributesWithSpecificKeys() throws Exception {
+        JsonObject clientAttrs = new JsonObject();
+        clientAttrs.addProperty("clientKey1", "cval1");
+        clientAttrs.addProperty("clientKey2", "cval2");
+        sendClientAttributes(clientAttrs);
+
+        JsonObject sharedAttrs = new JsonObject();
+        sharedAttrs.addProperty("sharedKey1", "sval1");
+        sharedAttrs.addProperty("sharedKey2", "sval2");
+        sendSharedAttributes(sharedAttrs);
+
+        JsonObject request = new JsonObject();
+        request.addProperty("id", "101");
+        request.addProperty("device", createdDevice.getName());
+
+        JsonArray clientKeys = new JsonArray();
+        clientKeys.add("clientKey1");
+        JsonArray sharedKeys = new JsonArray();
+        sharedKeys.add("sharedKey2");
+        request.add("clientKeys", clientKeys);
+        request.add("sharedKeys", sharedKeys);
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+
+        assertThat(response.get("device").getAsString()).isEqualTo(createdDevice.getName());
+        assertThat(response.get("id").getAsString()).isEqualTo("101");
+
+        JsonObject clientValues = response.getAsJsonObject("client");
+        JsonObject sharedValues = response.getAsJsonObject("shared");
+
+        assertThat(clientValues.get("clientKey1").getAsString()).isEqualTo("cval1");
+        assertThat(sharedValues.get("sharedKey2").getAsString()).isEqualTo("sval2");
+    }
+
+    @Test
+    public void v2RequestAttributesWithoutKeysReturnsNothing() throws Exception {
+        JsonObject request = new JsonObject();
+        request.addProperty("id", "102");
+        request.addProperty("device", createdDevice.getName());
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+
+        assertThat(response.get("id").getAsString()).isEqualTo("102");
+        assertThat(response.get("device").getAsString()).isEqualTo(createdDevice.getName());
+        assertThat(response.has("client")).isFalse();
+        assertThat(response.has("shared")).isFalse();
+    }
+
+    @Test
+    public void v2RequestAllClientAttributesWhenKeysEmpty() throws Exception {
+        JsonObject clientAttrs = new JsonObject();
+        clientAttrs.addProperty("key1", "value1");
+        clientAttrs.addProperty("key2", "value2");
+        sendClientAttributes(clientAttrs);
+
+        JsonObject request = new JsonObject();
+        request.addProperty("id", "103");
+        request.addProperty("device", createdDevice.getName());
+        request.add("clientKeys", new JsonArray());
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+
+        JsonObject client = response.getAsJsonObject("client");
+        assertThat(client.entrySet()).hasSize(2);
+        assertThat(client.get("key1").getAsString()).isEqualTo("value1");
+        assertThat(client.get("key2").getAsString()).isEqualTo("value2");
+    }
+
+    @Test
+    public void v2RequestAllSharedAttributesWhenKeysEmpty() throws Exception {
+        JsonObject sharedAttrs = new JsonObject();
+        sharedAttrs.addProperty("sharedA", "valA");
+        sharedAttrs.addProperty("sharedB", "valB");
+        sendSharedAttributes(sharedAttrs);
+
+        JsonObject request = new JsonObject();
+        request.addProperty("id", "104");
+        request.addProperty("device", createdDevice.getName());
+        request.add("sharedKeys", new JsonArray());
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+
+        JsonObject shared = response.getAsJsonObject("shared");
+        assertThat(shared.entrySet()).hasSize(2);
+        assertThat(shared.get("sharedA").getAsString()).isEqualTo("valA");
+        assertThat(shared.get("sharedB").getAsString()).isEqualTo("valB");
+    }
+
+    @Test
+    public void v2RequestOnlyClientAttributes() throws Exception {
+        sendClientAttributes(createAttributes("clientKey1", "cval1"));
+        JsonObject request = baseV2Request("201");
+        request.add("clientKeys", arrayOf("clientKey1"));
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        JsonObject response = waitForV2Response("201");
+        assertThat(response.has("client")).isTrue();
+        assertThat(response.getAsJsonObject("client").get("clientKey1").getAsString()).isEqualTo("cval1");
+        assertThat(response.has("shared")).isFalse();
+    }
+
+    @Test
+    public void v2RequestOnlySharedAttributes() throws Exception {
+        sendSharedAttributes(createAttributes("sharedKey1", "sval1"));
+        JsonObject request = baseV2Request("202");
+        request.add("sharedKeys", arrayOf("sharedKey1"));
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        JsonObject response = waitForV2Response("202");
+        assertThat(response.has("client")).isFalse();
+        assertThat(response.has("shared")).isTrue();
+        assertThat(response.getAsJsonObject("shared").get("sharedKey1").getAsString()).isEqualTo("sval1");
+    }
+
+    @Test
+    public void v2RequestOneClientKeyAndAllSharedAttributes() throws Exception {
+        sendClientAttributes(createAttributes("clientKey1", "cval1"));
+        sendSharedAttributes(createAttributes("sharedKey1", "sval1", "sharedKey2", "sval2"));
+
+        JsonObject request = baseV2Request("203");
+        request.add("clientKeys", arrayOf("clientKey1"));
+        request.add("sharedKeys", new JsonArray());
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        JsonObject response = waitForV2Response("203");
+        assertThat(response.getAsJsonObject("client").get("clientKey1").getAsString()).isEqualTo("cval1");
+        assertThat(response.getAsJsonObject("shared").entrySet()).hasSize(2);
+    }
+
+    @Test
+    public void v2RequestAllClientAttributesAndOneSharedKey() throws Exception {
+        sendClientAttributes(createAttributes("clientKey1", "cval1", "clientKey2", "cval2"));
+        sendSharedAttributes(createAttributes("sharedKey1", "sval1"));
+
+        JsonObject request = baseV2Request("204");
+        request.add("clientKeys", new JsonArray());
+        request.add("sharedKeys", arrayOf("sharedKey1"));
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        JsonObject response = waitForV2Response("204");
+        assertThat(response.getAsJsonObject("client").entrySet()).hasSize(2);
+        assertThat(response.getAsJsonObject("shared").get("sharedKey1").getAsString()).isEqualTo("sval1");
+    }
+
+    @Test
+    public void v2RequestNonExistentClientAndValidSharedKey() throws Exception {
+        sendSharedAttributes(createAttributes("sharedKey1", "sval1"));
+
+        JsonObject request = baseV2Request("205");
+        request.add("clientKeys", arrayOf("notExist"));
+        request.add("sharedKeys", arrayOf("sharedKey1"));
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        JsonObject response = waitForV2Response("205");
+        assertThat(response.has("client")).isFalse();
+        assertThat(response.getAsJsonObject("shared").get("sharedKey1").getAsString()).isEqualTo("sval1");
+    }
+
+    @Test
+    public void v2RequestValidClientAndNonExistentSharedKey() throws Exception {
+        sendClientAttributes(createAttributes("clientKey1", "cval1"));
+
+        JsonObject request = baseV2Request("206");
+        request.add("clientKeys", arrayOf("clientKey1"));
+        request.add("sharedKeys", arrayOf("notExist"));
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        JsonObject response = waitForV2Response("206");
+        assertThat(response.has("shared")).isFalse();
+        assertThat(response.getAsJsonObject("client").get("clientKey1").getAsString()).isEqualTo("cval1");
+    }
+
+    @Test
+    public void v2RequestNonExistentKeysInBothScopes() throws Exception {
+        JsonObject request = baseV2Request("207");
+        request.add("clientKeys", arrayOf("ghost1"));
+        request.add("sharedKeys", arrayOf("ghost2"));
+
+        mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
+
+        JsonObject response = waitForV2Response("207");
+        assertThat(response.has("client")).isFalse();
+        assertThat(response.has("shared")).isFalse();
+    }
+
     private void sendClientAttributes(JsonObject clientAttrs) throws Exception {
         JsonObject payload = new JsonObject();
         payload.add(createdDevice.getName(), clientAttrs);
@@ -612,6 +840,37 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         assertThat(responseMessage.get("device").getAsString()).isEqualTo(createdDevice.getName());
         assertThat(responseMessage.entrySet()).hasSize(3);
         assertThat(responseMessage.get("value").getAsString()).isEqualTo(expectedValue);
+    }
+
+    private JsonObject baseV2Request(String id) {
+        JsonObject request = new JsonObject();
+        request.addProperty("id", id);
+        request.addProperty("device", createdDevice.getName());
+        return request;
+    }
+
+    private JsonObject createAttributes(String... kvPairs) {
+        JsonObject attrs = new JsonObject();
+        for (int i = 0; i < kvPairs.length; i += 2) {
+            attrs.addProperty(kvPairs[i], kvPairs[i + 1]);
+        }
+        return attrs;
+    }
+
+    private JsonArray arrayOf(String... keys) {
+        JsonArray array = new JsonArray();
+        for (String key : keys) {
+            array.add(key);
+        }
+        return array;
+    }
+
+    private JsonObject waitForV2Response(String id) throws InterruptedException {
+        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
+        assertThat(event).isNotNull();
+        JsonObject response = jsonParser.parse(event.getMessage()).getAsJsonObject();
+        assertThat(response.get("id").getAsString()).isEqualTo(id);
+        return response;
     }
 
     private Device createDeviceThroughGateway(MqttClient mqttClient, Device gatewayDevice) throws Exception {

@@ -63,6 +63,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFro
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
+import org.thingsboard.server.transport.mqtt.TopicType;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
@@ -70,6 +71,7 @@ import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -83,6 +85,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType;
 import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
@@ -125,6 +128,9 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     @Getter
     @Setter
     private boolean overwriteDevicesActivity = false;
+
+    @Getter
+    private TopicType attrReqTopicType = TopicType.V1_GATEWAY;
 
     public AbstractGatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId, boolean overwriteDevicesActivity) {
         log.debug("[{}] Gateway connect [{}] session [{}]", deviceSessionCtx.getTenantId(), deviceSessionCtx.getDeviceId(), sessionId);
@@ -175,10 +181,20 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     public void onDeviceAttributesRequest(MqttPublishMessage mqttMsg) throws AdaptorException {
+        attrReqTopicType = TopicType.V1_GATEWAY;
         if (isJsonPayloadType()) {
             onDeviceAttributesRequestJson(mqttMsg);
         } else {
             onDeviceAttributesRequestProto(mqttMsg);
+        }
+    }
+
+    public void onDeviceAttributesRequestV2(MqttPublishMessage mqttMsg) throws AdaptorException {
+        attrReqTopicType = TopicType.V2_GATEWAY;
+        if (isJsonPayloadType()) {
+            onDeviceAttributesRequestJsonV2(mqttMsg);
+        } else {
+            onDeviceAttributesRequestProtoV2(mqttMsg);
         }
     }
 
@@ -609,6 +625,42 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         }
     }
 
+    private void onDeviceAttributesRequestJsonV2(MqttPublishMessage msg) throws AdaptorException {
+        JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, msg.payload());
+        validateJsonObject(json);
+        JsonObject jsonObj = json.getAsJsonObject();
+        int requestId = jsonObj.get("id").getAsInt();
+        String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
+
+        Set<String> clientKeys = toStringSet(jsonObj, "clientKeys");
+        Set<String> sharedKeys = toStringSet(jsonObj, "sharedKeys");
+
+        TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsgV2(requestId, clientKeys, sharedKeys);
+        processGetAttributeRequestMessage(msg, deviceName, requestMsg);
+    }
+
+    private void onDeviceAttributesRequestProtoV2(MqttPublishMessage mqttMsg) throws AdaptorException {
+        try {
+            TransportApiProtos.GatewayAttributesRequestMsgV2 gatewayAttributesRequestMsg = TransportApiProtos.GatewayAttributesRequestMsgV2.parseFrom(getBytes(mqttMsg.payload()));
+            String deviceName = checkDeviceName(gatewayAttributesRequestMsg.getDeviceName());
+            int requestId = gatewayAttributesRequestMsg.getId();
+            ProtocolStringList clientKeysList = gatewayAttributesRequestMsg.getClientKeysList();
+            ProtocolStringList sharedKeysList = gatewayAttributesRequestMsg.getSharedKeysList();
+            Set<String> clientKeys = null;
+            Set<String> sharedKeys = null;
+            if (!clientKeysList.isEmpty()) {
+                clientKeys = new HashSet<>(clientKeysList);
+            }
+            if (!sharedKeysList.isEmpty()) {
+                sharedKeys = new HashSet<>(sharedKeysList);
+            }
+            TransportProtos.GetAttributeRequestMsg requestMsg = toGetAttributeRequestMsgV2(requestId, clientKeys, sharedKeys);
+            processGetAttributeRequestMessage(mqttMsg, deviceName, requestMsg);
+        } catch (RuntimeException | InvalidProtocolBufferException e) {
+            throw new AdaptorException(e);
+        }
+    }
+
     private void onDeviceRpcResponseJson(int msgId, ByteBuf payload) throws AdaptorException {
         JsonElement json = JsonMqttAdaptor.validateJsonPayload(sessionId, payload);
         validateJsonObject(json);
@@ -664,6 +716,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     private TransportProtos.GetAttributeRequestMsg toGetAttributeRequestMsg(int requestId, boolean clientScope, Set<String> keys) {
         TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
         result.setRequestId(requestId);
+        result.setOnlyClient(true);
+        result.setOnlyShared(true);
 
         if (clientScope) {
             result.addAllClientAttributeNames(keys);
@@ -674,12 +728,50 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         return result.build();
     }
 
+    private TransportProtos.GetAttributeRequestMsg toGetAttributeRequestMsgV2(int requestId, Set<String> clientKeys, Set<String> sharedKeys) {
+        TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
+        result.setRequestId(requestId);
+
+        if (clientKeys != null) {
+            result.setOnlyClient(true);
+            result.addAllClientAttributeNames(clientKeys);
+        }
+        if (sharedKeys != null) {
+            result.setOnlyShared(true);
+            result.addAllSharedAttributeNames(sharedKeys);
+        }
+        return result.build();
+    }
+
     protected String checkDeviceName(String deviceName) {
         if (StringUtils.isEmpty(deviceName)) {
             throw new RuntimeException("Device name is empty!");
         } else {
             return deviceName;
         }
+    }
+
+    private Set<String> toStringSet(JsonElement requestBody, String name) {
+        JsonElement element = requestBody.getAsJsonObject().get(name);
+        if (element == null) {
+            return null;
+        } else if (element.isJsonArray()) {
+            Set<String> result = new HashSet<>();
+            JsonArray array = element.getAsJsonArray();
+            for (int i = 0; i < array.size(); i++) {
+                String value = array.get(i).getAsString().trim();
+                if (!value.isEmpty()) {
+                    result.add(value);
+                }
+            }
+            return result;
+        } else if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
+            return Arrays.stream(element.getAsString().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
+        }
+        return null;
     }
 
     private String getDeviceName(JsonElement json) {

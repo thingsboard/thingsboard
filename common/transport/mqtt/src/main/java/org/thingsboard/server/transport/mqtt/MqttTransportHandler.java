@@ -393,7 +393,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         String topicName = mqttMsg.variableHeader().topicName();
         int msgId = mqttMsg.variableHeader().packetId();
         log.trace("[{}][{}] Processing publish msg [{}][{}]!", sessionId, deviceSessionCtx.getDeviceId(), topicName, msgId);
-        if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)) {
+        if (topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC)
+                || topicName.startsWith(MqttTopics.BASE_GATEWAY_API_TOPIC_V2)) {
             if (gatewaySessionHandler != null) {
                 handleGatewayPublishMsg(ctx, topicName, msgId, mqttMsg);
                 transportService.recordActivity(deviceSessionCtx.getSessionInfo());
@@ -421,6 +422,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     break;
                 case MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC:
                     gatewaySessionHandler.onDeviceAttributesRequest(mqttMsg);
+                    break;
+                case MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC_V2:
+                    gatewaySessionHandler.onDeviceAttributesRequestV2(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_RPC_TOPIC:
                     gatewaySessionHandler.onDeviceRpcResponse(mqttMsg);
@@ -841,6 +845,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
                         case MqttTopics.GATEWAY_RPC_TOPIC:
                         case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
+                        case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC_V2:
                         case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
                         case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:
                         case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:

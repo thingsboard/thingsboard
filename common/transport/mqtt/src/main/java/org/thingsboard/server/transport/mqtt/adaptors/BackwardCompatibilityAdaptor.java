@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.session.AbstractGatewayDeviceSessionContext;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.util.Optional;
@@ -102,7 +103,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
-    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
+    public Optional<MqttMessage> convertToGatewayPublish(AbstractGatewayDeviceSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
         return protoAdaptor.convertToGatewayPublish(ctx, deviceName, responseMsg);
     }
 
