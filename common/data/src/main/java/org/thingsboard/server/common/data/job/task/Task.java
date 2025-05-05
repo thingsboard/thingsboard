@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.job.task;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -45,9 +44,6 @@ public abstract class Task<R extends TaskResult> {
     }
 
     private int attempt = 0;
-
-    @JsonIgnore
-    public abstract Object getKey();
 
     public abstract R toFailed(Throwable error);
 

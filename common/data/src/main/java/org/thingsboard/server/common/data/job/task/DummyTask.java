@@ -37,11 +37,6 @@ public class DummyTask extends Task<DummyTaskResult> {
     private boolean failAlways;
 
     @Override
-    public Object getKey() {
-        return number;
-    }
-
-    @Override
     public DummyTaskResult toFailed(Throwable error) {
         return DummyTaskResult.failed(this, error);
     }

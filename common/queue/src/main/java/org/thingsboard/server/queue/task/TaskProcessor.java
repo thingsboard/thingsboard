@@ -115,11 +115,11 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
                 @SuppressWarnings("unchecked")
                 T task = (T) JacksonUtil.fromString(msg.getValue().getValue(), Task.class);
                 if (discardedJobs.contains(task.getJobId().getId())) {
-                    log.info("Skipping task '{}' for cancelled job {}", task.getKey(), task.getJobId());
+                    log.debug("Skipping task for cancelled job {}: {}", task.getJobId(), task);
                     reportTaskDiscarded(task);
                     continue;
                 } else if (deletedTenants.contains(task.getTenantId().getId())) {
-                    log.info("Skipping task '{}' for deleted tenant {}", task.getKey(), task.getTenantId());
+                    log.debug("Skipping task for deleted tenant {}: {}", task.getTenantId(), task);
                     continue;
                 }
                 processTask(task);
