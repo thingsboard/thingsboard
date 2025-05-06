@@ -862,10 +862,6 @@ audit-log:
   sink:
     # Type of external sink. possible options: none, elasticsearch, webhook or stdout (info-scope)
     type: "${AUDIT_LOG_SINK_TYPE:none}"
-    # Name of the index where audit logs are stored
-    # Index name could contain next placeholders (not mandatory):
-    # @{TENANT} - substituted by tenant ID
-    # @{DATE} - substituted by current date in format provided in audit_log.sink.date_format
     #URL for the Webhook Endpoint
     webhook_url: "${AUDIT_LOG_SINK_WEBHOOK_URL}"
     #Webhook API Key is transmitted via (X-API-KEY Header)
@@ -874,6 +870,10 @@ audit-log:
     webhook_api_secret: "${AUDIT_LOG_SINK_WEBHOOK_API_SECRET:}"
     #Set Header "Content-Encoding", "gzip" and compress each webhook messages with gzip
     webhook_compression: "${AUDIT_LOG_SINK_WEBHOOK_COMPRESSION:false}"
+    # Name of the index where audit logs are stored
+    # Index name could contain next placeholders (not mandatory):
+    # @{TENANT} - substituted by tenant ID
+    # @{DATE} - substituted by current date in format provided in audit_log.sink.date_format
     index_pattern: "${AUDIT_LOG_SINK_INDEX_PATTERN:@{TENANT}_AUDIT_LOG_@{DATE}}"
     # Date format. Details of the pattern can be found here:
     # https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
