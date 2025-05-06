@@ -1,39 +1,53 @@
+///
+/// Copyright © 2016-2025 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type ResistanceMetricUnits = 'Ω' | 'μΩ' | 'mΩ' | 'kΩ' | 'MΩ' | 'GΩ';
+export type ResistanceUnits = 'Ω' | 'μΩ' | 'mΩ' | 'kΩ' | 'MΩ' | 'GΩ';
 
-export type ResistanceUnits = ResistanceMetricUnits;
-
-const METRIC: TbMeasureUnits<ResistanceMetricUnits> = {
+const METRIC: TbMeasureUnits<ResistanceUnits> = {
   units: {
-    'Ω': {
+    Ω: {
       name: 'unit.ohm',
-      tags: ['electrical resistance', 'resistance', 'impedance', 'ohm'],
+      tags: ['electrical resistance', 'impedance'],
       to_anchor: 1,
     },
-    'μΩ': {
+    μΩ: {
       name: 'unit.microohm',
-      tags: ['electrical resistance', 'resistance', 'microohm', 'μΩ'],
+      tags: ['electrical resistance'],
       to_anchor: 0.000001,
     },
-    'mΩ': {
+    mΩ: {
       name: 'unit.milliohm',
-      tags: ['electrical resistance', 'resistance', 'milliohm', 'mΩ'],
+      tags: ['electrical resistance'],
       to_anchor: 0.001,
     },
-    'kΩ': {
+    kΩ: {
       name: 'unit.kilohm',
-      tags: ['electrical resistance', 'resistance', 'kilohm', 'kΩ'],
+      tags: ['electrical resistance'],
       to_anchor: 1000,
     },
-    'MΩ': {
+    MΩ: {
       name: 'unit.megohm',
-      tags: ['electrical resistance', 'resistance', 'megohm', 'MΩ'],
+      tags: ['electrical resistance'],
       to_anchor: 1000000,
     },
-    'GΩ': {
+    GΩ: {
       name: 'unit.gigohm',
-      tags: ['electrical resistance', 'resistance', 'gigohm', 'GΩ'],
+      tags: ['electrical resistance'],
       to_anchor: 1000000000,
     },
   },

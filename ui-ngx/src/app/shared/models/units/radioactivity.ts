@@ -1,33 +1,44 @@
+///
+/// Copyright © 2016-2025 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type RadioactivityMetricUnits = 'Bq' | 'Ci' | 'Rd' | 'dps' | 'cps';
+export type RadioactivityMetricUnits = 'Bq' | 'Ci' | 'Rd' | 'dps';
 export type RadioactivityUnits = RadioactivityMetricUnits;
 
 const METRIC: TbMeasureUnits<RadioactivityMetricUnits> = {
   units: {
-    'Bq': {
+    Bq: {
       name: 'unit.becquerel',
-      tags: ['radioactivity', 'decay rate', 'becquerel', 'Bq'],
+      tags: ['radioactivity', 'decay rate'],
       to_anchor: 1,
     },
-    'Ci': {
+    Ci: {
       name: 'unit.curie',
-      tags: ['radioactivity', 'radiation', 'curie', 'Ci'],
+      tags: ['radiation'],
       to_anchor: 3.7e10,
     },
-    'Rd': {
+    Rd: {
       name: 'unit.rutherford',
-      tags: ['radioactive decay', 'radioactivity', 'rutherford', 'Rd'],
-      to_anchor: 1e6,
+      tags: ['radioactive decay'],
+      to_anchor: 3.7e4,
     },
-    'dps': {
+    dps: {
       name: 'unit.dps',
-      tags: ['radioactive decay', 'radioactivity', 'disintegrations per second', 'dps'],
-      to_anchor: 1,
-    },
-    cps: {
-      name: 'unit.cps',
-      tags: ['radiation detection', 'counts per second', 'cps'],
+      tags: ['radioactive decay'],
       to_anchor: 1,
     },
   },

@@ -16,25 +16,18 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type PartsPerUnits = PartsPerMetricUnits;
-export type PartsPerMetricUnits = 'ppm' | 'ppb';
+export type ElectricChargeDensityUnits = 'C/m³';
 
-const METRIC: TbMeasureUnits<PartsPerMetricUnits> = {
+const METRIC: TbMeasureUnits<ElectricChargeDensityUnits> = {
   units: {
-    ppm: {
-      name: 'unit.ppm',
-      tags: ['carbon dioxide', 'co²', 'carbon monoxide', 'co', 'aqi', 'air quality', 'total volatile organic compounds', 'tvoc', 'ppm'],
+    'C/m³': {
+      name: 'unit.coulomb-per-cubic-meter',
       to_anchor: 1,
     },
-    ppb: {
-      name: 'unit.ppb',
-      tags: ['ozone', 'o³', 'nitrogen dioxide', 'no²', 'sulfur dioxide', 'so²', 'aqi', 'air quality', 'tvoc', 'ppb'],
-      to_anchor: 0.001,
-    }
   },
 };
 
-const measure: TbMeasure<PartsPerUnits> = {
+const measure: TbMeasure<ElectricChargeDensityUnits> = {
   METRIC,
 };
 

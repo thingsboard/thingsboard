@@ -16,41 +16,30 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type TorqueUnits = TorqueMetricUnits | TorqueImperialUnits;
+export type SignalLevelUnits = 'dBmV' | 'dBm' | 'rssi';
 
-export type TorqueMetricUnits = 'Nm';
-export type TorqueImperialUnits = 'lbf-ft' | 'in·lbf';
-
-const METRIC: TbMeasureUnits<TorqueMetricUnits> = {
-  ratio: 1 / 1.355818,
+const METRIC: TbMeasureUnits<SignalLevelUnits> = {
   units: {
-    Nm: {
-      name: 'unit.newton-meter',
-      tags: ['rotational force', 'newton meter', 'Nm'],
+    dBmV: {
+      name: 'unit.dbmV',
+      tags: ['decibels millivolt', 'voltage level'],
+      to_anchor: 1,
+    },
+    dBm: {
+      name: 'unit.dbm',
+      tags: ['decibel milliwatts', 'output power'],
+      to_anchor: 1,
+    },
+    rssi: {
+      name: 'unit.rssi',
+      tags: ['signal strength', 'received signal strength indicator'],
       to_anchor: 1,
     },
   },
 };
 
-const IMPERIAL: TbMeasureUnits<TorqueImperialUnits> = {
-  ratio: 1.355818,
-  units: {
-    'lbf-ft': {
-      name: 'unit.foot-pounds',
-      tags: ['rotational force'],
-      to_anchor: 1,
-    },
-    'in·lbf': {
-      name: 'unit.inch-pounds',
-      tags: ['rotational force'],
-      to_anchor: 1 / 12,
-    },
-  },
-};
-
-const measure: TbMeasure<TorqueUnits> = {
+const measure: TbMeasure<SignalLevelUnits> = {
   METRIC,
-  IMPERIAL,
 };
 
 export default measure;

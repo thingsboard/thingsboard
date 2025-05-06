@@ -36,52 +36,52 @@ const METRIC: TbMeasureUnits<TimeMetricUnits> = {
   units: {
     ns: {
       name: 'unit.nanosecond',
-      tags: ['time', 'duration', 'interval', 'ns'],
+      tags: ['duration', 'interval'],
       to_anchor: 1 / 1000000000
     },
-    'μs': {
+    μs: {
       name: 'unit.microsecond',
-      tags: ['time', 'duration', 'interval', 'h'],
+      tags: ['duration', 'interval'],
       to_anchor: 1 / 1000000
     },
     ms: {
       name: 'unit.millisecond',
-      tags: ['time', 'duration', 'interval', 'ms'],
+      tags: ['duration', 'interval'],
       to_anchor: 1 / 1000
     },
     s: {
       name: 'unit.second',
-      tags: ['time', 'duration', 'interval', 'second',  'sec'],
+      tags: ['duration', 'interval'],
       to_anchor: 1,
     },
     min: {
       name: 'unit.minute',
-      tags: ['time', 'duration', 'interval', 'minute', 'min'],
+      tags: ['duration', 'interval'],
       to_anchor: 60,
     },
     h: {
       name: 'unit.hour',
-      tags: ['time', 'duration', 'interval', 'h'],
+      tags: ['duration', 'interval'],
       to_anchor: 60 * 60,
     },
     d: {
       name: 'unit.day',
-      tags: ['time', 'duration', 'interval', 'd'],
+      tags: ['duration', 'interval'],
       to_anchor: 60 * 60 * 24,
     },
     wk: {
       name: 'unit.week',
-      tags: ['time', 'duration', 'interval', 'wk'],
+      tags: ['duration', 'interval'],
       to_anchor: 60 * 60 * 24 * 7,
     },
     mo: {
       name: 'unit.month',
-      tags: ['time', 'duration', 'interval', 'mo'],
+      tags: ['duration', 'interval'],
       to_anchor: (60 * 60 * 24 * daysInYear) / 12,
     },
     yr: {
       name: 'unit.year',
-      tags: ['time', 'duration', 'interval', 'yr'],
+      tags: ['duration', 'interval'],
       to_anchor: 60 * 60 * 24 * daysInYear,
     },
   }

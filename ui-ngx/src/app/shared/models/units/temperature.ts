@@ -28,12 +28,12 @@ const METRIC: TbMeasureUnits<TemperatureMetricUnits> = {
   units: {
     '°C': {
       name: 'unit.celsius',
-      tags: ['temperature', 'heat', 'cold', 'warmth', 'degrees', 'celsius', 'shipment condition', '°C'],
+      tags: ['heat', 'cold', 'warmth', 'degrees', 'shipment condition'],
       to_anchor: 1,
     },
     K: {
       name: 'unit.kelvin',
-      tags: ['temperature', 'heat', 'cold', 'warmth', 'degrees', 'kelvin', 'K', 'color quality', 'white balance', 'color temperature'],
+      tags: ['heat', 'cold', 'warmth', 'degrees', 'color quality', 'white balance', 'color temperature'],
       to_anchor: 1,
       anchor_shift: 273.15,
     },
@@ -45,12 +45,12 @@ const IMPERIAL: TbMeasureUnits<TemperatureImperialUnits> = {
   units: {
     '°F': {
       name: 'unit.fahrenheit',
-      tags: ['temperature', 'heat', 'cold', 'warmth', 'degrees', 'fahrenheit', '°F'],
+      tags: ['heat', 'cold', 'warmth', 'degrees'],
       to_anchor: 1,
     },
     '°R': {
       name: 'unit.rankine',
-      tags: ['temperature', 'heat', 'cold', 'warmth', 'Rankine', '°R'],
+      tags: ['heat', 'cold', 'warmth'],
       to_anchor: 1,
       anchor_shift: 459.67,
     },

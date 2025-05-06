@@ -26,37 +26,37 @@ const METRIC: TbMeasureUnits<PowerMetricUnits> = {
   units: {
     W: {
       name: 'unit.watt',
-      tags: ['power', 'horsepower', 'performance', 'watt', 'watts', 'electricity', 'W'],
+      tags: ['horsepower', 'performance', 'electricity'],
       to_anchor: 1,
     },
     μW: {
       name: 'unit.microwatt',
-      tags: ['power', 'horsepower', 'performance', 'microwatt', 'microwatts', 'electricity', 'μW'],
+      tags: ['horsepower', 'performance', 'electricity'],
       to_anchor: 0.000001,
     },
     mW: {
       name: 'unit.milliwatt',
-      tags: ['power', 'horsepower', 'performance', 'milliwatt', 'milliwatts', 'electricity', 'mW'],
+      tags: ['horsepower', 'performance', 'electricity'],
       to_anchor: 0.001,
     },
     kW: {
       name: 'unit.kilowatt',
-      tags: ['power', 'horsepower', 'performance', 'kilowatt', 'kilowatts', 'electricity', 'kW'],
+      tags: ['horsepower', 'performance', 'electricity'],
       to_anchor: 1000,
     },
     MW: {
       name: 'unit.megawatt',
-      tags: ['power', 'horsepower', 'performance', 'megawatt', 'megawatts', 'electricity', 'MW'],
+      tags: [ 'horsepower', 'performance', 'electricity'],
       to_anchor: 1000000,
     },
     GW: {
       name: 'unit.gigawatt',
-      tags: ['power', 'horsepower', 'performance', 'gigawatt', 'gigawatts', 'electricity', 'GW'],
+      tags: ['horsepower', 'performance', 'electricity'],
       to_anchor: 1000000000,
     },
     PS: {
       name: 'unit.metric-horsepower',
-      tags: ['power', 'performance', 'metric horsepower', 'PS'],
+      tags: ['performance'],
       to_anchor: 735.49875,
     },
   },
@@ -67,22 +67,22 @@ const IMPERIAL: TbMeasureUnits<PowerImperialUnits> = {
   units: {
     'BTU/s': {
       name: 'unit.btu-per-second',
-      tags: ['power', 'heat transfer', 'thermal energy', 'british thermal unit per second', 'Btu/s'],
+      tags: ['heat transfer', 'thermal energy'],
       to_anchor: 778.16937,
     },
     'ft-lb/s': {
       name: 'unit.foot-pound-per-second',
-      tags: ['power', 'foot-pound per second', 'foot-pounds per second', 'ft-lb/s', 'mechanical power'],
+      tags: ['mechanical power'],
       to_anchor: 1,
     },
     hp: {
       name: 'unit.horsepower',
-      tags: ['power', 'horsepower', 'performance', 'electricity', 'horsepowers', 'hp'],
+      tags: ['performance', 'electricity'],
       to_anchor: 550,
     },
     'BTU/h': {
       name: 'unit.btu-per-hour',
-      tags: ['power', 'heat transfer', 'thermal energy', 'HVAC', 'BTU/h'],
+      tags: ['heat transfer', 'thermal energy', 'HVAC'],
       to_anchor: 0.216158,
     },
   },

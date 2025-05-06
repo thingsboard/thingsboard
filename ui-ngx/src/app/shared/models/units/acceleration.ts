@@ -24,24 +24,24 @@ export type AccelerationUnits = AccelerationMetricUnits | AccelerationImperialUn
 const METRIC: TbMeasureUnits<AccelerationMetricUnits> = {
   ratio: 3.28084,
   units: {
-    'G': {
+    G: {
       name: 'unit.g-force',
-      tags: ['gravity', 'g-force', 'load'],
+      tags: ['gravity', 'load'],
       to_anchor: 9.80665,
     },
     'm/s²': {
       name: 'unit.meters-per-second-squared',
-      tags: ['peak', 'peak to peak', 'root mean square (RMS)', 'vibration', 'meters per second squared'],
+      tags: ['peak to peak', 'root mean square (RMS)', 'vibration'],
       to_anchor: 1,
     },
-    'Gal': {
+    Gal: {
       name: 'unit.gal',
       tags: ['gravity', 'g-force'],
       to_anchor: 1,
     },
     'km/h²': {
       name: 'unit.kilometer-per-hour-squared',
-      tags: ['rate of change of velocity', 'kilometer per hour squared'],
+      tags: ['rate of change of velocity'],
       to_anchor: 1 / 12960,
     }
   }
@@ -52,7 +52,7 @@ const IMPERIAL: TbMeasureUnits<AccelerationImperialUnits> = {
   units: {
     'ft/s²': {
       name: 'unit.foot-per-second-squared',
-      tags: ['acceleration', 'rate of change of velocity', 'foot per second squared', 'ft/s²'],
+      tags: ['rate of change of velocity'],
       to_anchor: 1
     }
   }

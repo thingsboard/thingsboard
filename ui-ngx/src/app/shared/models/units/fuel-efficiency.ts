@@ -39,7 +39,7 @@ const METRIC: TbMeasureUnits<FuelEfficiencyMetricUnits> = {
 const IMPERIAL: TbMeasureUnits<FuelEfficiencyImperialUnits> = {
   ratio: 0.425144,
   units: {
-    'mpg': {
+    mpg: {
       name: 'unit.miles-per-gallon',
       to_anchor: 0.425144,
     },

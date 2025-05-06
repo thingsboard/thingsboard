@@ -29,12 +29,12 @@ const METRIC: TbMeasureUnits<DynamicViscosityMetricUnits> = {
       tags: ['fluid mechanics'],
       to_anchor: 1,
     },
-    'cP': {
+    cP: {
       name: 'unit.centipoise',
       tags: ['fluid mechanics'],
       to_anchor: 0.001,
     },
-    'P': {
+    P: {
       name: 'unit.poise',
       tags: ['fluid mechanics'],
       to_anchor: 0.1,

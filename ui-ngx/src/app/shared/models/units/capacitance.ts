@@ -20,48 +20,48 @@ export type CapacitanceUnits = 'F' | 'mF' | 'μF' | 'nF' | 'pF' | 'kF' | 'MF' | 
 
 const METRIC: TbMeasureUnits<CapacitanceUnits> = {
   units: {
-    'F': {
+    F: {
       name: 'unit.farad',
       tags: ['electric capacitance'],
       to_anchor: 1,
     },
-    'mF': {
+    mF: {
       name: 'unit.millifarad',
       tags: ['electric capacitance'],
       to_anchor: 1e-3,
     },
-    'μF': {
+    μF: {
       name: 'unit.microfarad',
       tags: ['electric capacitance'],
       to_anchor: 1e-6,
     },
-    'nF': {
+    nF: {
       name: 'unit.nanofarad',
       tags: ['electric capacitance'],
       to_anchor: 1e-9,
     },
-    'pF': {
+    pF: {
       name: 'unit.picofarad',
       tags: ['electric capacitance'],
       to_anchor: 1e-12,
     },
-    'kF': {
+    kF: {
       name: 'unit.kilofarad',
       tags: ['electric capacitance'],
       to_anchor: 1e3,
     },
-    'MF': {
+    MF: {
       name: 'unit.megafarad',
       tags: ['electric capacitance'],
       to_anchor: 1e6,
     },
-    'GF': {
+    GF: {
       name: 'unit.gigafarad',
       tags: ['electric capacitance'],
       to_anchor: 1e9,
     },
-    'TF': {
-      name: 'unit.terafarad',
+    TF: {
+      name: 'unit.terfarad',
       tags: ['electric capacitance'],
       to_anchor: 1e12,
     },

@@ -36,9 +36,7 @@ export type PressureMetricUnits =
   | 'N/m²'
   | 'kN/m²'
   | 'kgf/m²'
-  | 'Pa/cm²'
-  | 'J/m³'
-  | 'kg/m²';
+  | 'Pa/cm²';
 
 export type PressureImperialUnits = 'psi' | 'ksi' | 'inHg' | 'psi/in²' | 'tonf/in²';
 
@@ -47,104 +45,94 @@ const METRIC: TbMeasureUnits<PressureMetricUnits> = {
   units: {
     Pa: {
       name: 'unit.pascal',
-      tags: ['pressure', 'force', 'compression', 'tension', 'pascal', 'pascals', 'Pa', 'atmospheric pressure', 'air pressure', 'weather', 'altitude', 'flight'],
+      tags: ['force', 'compression', 'tension', 'atmospheric pressure', 'air pressure', 'weather', 'altitude', 'flight'],
       to_anchor: 0.001,
     },
     kPa: {
       name: 'unit.kilopascal',
-      tags: ['pressure', 'force', 'compression', 'tension', 'kilopascal', 'kilopascals', 'kPa'],
+      tags: ['force', 'compression', 'tension'],
       to_anchor: 1,
     },
     MPa: {
       name: 'unit.megapascal',
-      tags: ['pressure', 'force', 'compression', 'tension', 'megapascal', 'megapascals', 'MPa'],
+      tags: ['force', 'compression', 'tension'],
       to_anchor: 1000,
     },
     GPa: {
       name: 'unit.gigapascal',
-      tags: ['pressure', 'force', 'compression', 'tension', 'gigapascal', 'gigapascals', 'GPa'],
+      tags: ['force', 'compression', 'tension'],
       to_anchor: 1000000,
     },
     hPa: {
       name: 'unit.hectopascal',
-      tags: ['pressure', 'force', 'compression', 'tension', 'hectopascal', 'hectopascals', 'hPa', 'atmospheric pressure'],
+      tags: ['force', 'compression', 'tension', 'atmospheric pressure'],
       to_anchor: 0.1,
     },
     mbar: {
       name: 'unit.millibar',
-      tags: ['pressure', 'force', 'compression', 'tension', 'millibar', 'millibars', 'mbar'],
+      tags: ['force', 'compression', 'tension'],
       to_anchor: 0.1,
     },
     mb: {
       name: 'unit.millibar',
-      tags: ['atmospheric pressure', 'air pressure', 'weather', 'altitude', 'flight', 'mb'],
+      tags: ['atmospheric pressure', 'air pressure', 'weather', 'altitude', 'flight'],
       to_anchor: 0.1,
     },
     bar: {
       name: 'unit.bar',
-      tags: ['pressure', 'force', 'compression', 'tension', 'bar', 'bars'],
+      tags: ['force', 'compression', 'tension'],
       to_anchor: 100,
     },
     kbar: {
       name: 'unit.kilobar',
-      tags: ['pressure', 'force', 'compression', 'tension', 'kilobar', 'kilobars', 'kbar'],
+      tags: ['force', 'compression', 'tension'],
       to_anchor: 100000,
     },
     Torr: {
       name: 'unit.torr',
-      tags: ['pressure', 'force', 'compression', 'tension', 'vacuum pressure', 'torr'],
+      tags: ['force', 'compression', 'tension', 'vacuum pressure'],
       to_anchor: 101325 / 760000,
     },
     mmHg: {
       name: 'unit.millimeters-of-mercury',
-      tags: ['pressure', 'force', 'compression', 'tension', 'millimeter of mercury', 'millimeters of mercury', 'mmHg', 'vacuum pressure'],
+      tags: ['force', 'compression', 'tension', 'vacuum pressure'],
       to_anchor: 0.133322,
     },
     atm: {
       name: 'unit.atmospheres',
-      tags: ['pressure', 'force', 'compression', 'tension', 'atmosphere', 'atmospheres', 'atmospheric pressure', 'atm'],
+      tags: ['force', 'compression', 'tension', 'atmospheric pressure'],
       to_anchor: 101.325,
     },
     'Pa/m²': {
       name: 'unit.pascal-per-square-meter',
-      tags: ['pressure', 'stress', 'mechanical strength', 'pascal per square meter', 'Pa/m²'],
+      tags: ['stress', 'mechanical strength'],
       to_anchor: 0.001,
     },
     'N/mm²': {
       name: 'unit.newton-per-square-millimeter',
-      tags: ['pressure', 'stress', 'mechanical strength', 'newton per square millimeter', 'N/mm²'],
+      tags: ['stress', 'mechanical strength'],
       to_anchor: 1000,
     },
     'N/m²': {
       name: 'unit.newton-per-square-meter',
-      tags: ['pressure', 'stress', 'mechanical strength', 'newton per square meter', 'N/m²'],
+      tags: ['stress', 'mechanical strength'],
       to_anchor: 0.001,
     },
     'kN/m²': {
       name: 'unit.kilonewton-per-square-meter',
-      tags: ['pressure', 'stress', 'mechanical strength', 'kilonewton per square meter', 'kN/m²'],
+      tags: ['stress', 'mechanical strength'],
       to_anchor: 1,
     },
     'kgf/m²': {
       name: 'unit.kilogram-force-per-square-meter',
-      tags: ['pressure', 'stress', 'mechanical strength', 'kilogram-force per square meter', 'kgf/m²'],
+      tags: ['stress', 'mechanical strength'],
       to_anchor: 0.00980665,
     },
     'Pa/cm²': {
       name: 'unit.pascal-per-square-centimeter',
-      tags: ['pressure', 'stress', 'mechanical strength', 'pascal per square centimeter', 'Pa/cm²'],
+      tags: ['stress', 'mechanical strength'],
       to_anchor: 0.1,
     },
-    'J/m³': {
-      name: 'unit.joule-per-cubic-meter',
-      tags: ['energy density', 'joule per cubic meter', 'J/m³'],
-      to_anchor: 0.001,
-    },
-    'kg/m²': {
-      name: 'unit.kilogram-per-square-meter',
-      tags: ['density','surface density','areal density','mass per unit area','kg/m²'],
-      to_anchor: 0.00980665
-    }
   },
 };
 
@@ -153,27 +141,27 @@ const IMPERIAL: TbMeasureUnits<PressureImperialUnits> = {
   units: {
     psi: {
       name: 'unit.pounds-per-square-inch',
-      tags: ['pressure', 'force', 'compression', 'tension', 'pounds per square inch', 'psi'],
+      tags: ['force', 'compression', 'tension'],
       to_anchor: 0.001,
     },
     ksi: {
       name: 'unit.kilopound-per-square-inch',
-      tags: ['pressure', 'force', 'compression', 'tension', 'kilopound per square inch', 'kilopounds per square inch', 'ksi'],
+      tags: ['force', 'compression', 'tension'],
       to_anchor: 1,
     },
     inHg: {
       name: 'unit.inch-of-mercury',
-      tags: ['pressure', 'force', 'compression', 'tension', 'vacuum pressure', 'inHg', 'atmospheric pressure', 'barometric pressure'],
+      tags: ['force', 'compression', 'tension', 'vacuum pressure','atmospheric pressure', 'barometric pressure'],
       to_anchor: 0.000491154,
     },
     'psi/in²': {
       name: 'unit.pound-per-square-inch',
-      tags: ['pressure', 'stress', 'mechanical strength', 'pound per square inch', 'psi/in²'],
+      tags: ['stress', 'mechanical strength'],
       to_anchor: 0.001,
     },
     'tonf/in²': {
       name: 'unit.ton-force-per-square-inch',
-      tags: ['pressure', 'stress', 'mechanical strength', 'ton-force per square inch', 'tonf/in²'],
+      tags: ['stress', 'mechanical strength'],
       to_anchor: 2,
     },
   },

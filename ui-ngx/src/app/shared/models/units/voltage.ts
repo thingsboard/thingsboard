@@ -23,37 +23,37 @@ const METRIC: TbMeasureUnits<VoltageMetricUnits> = {
   units: {
     pV: {
       name: 'unit.picovolt',
-      tags: ['voltage', 'volts', 'picovolt', 'pV'],
+      tags: ['volts'],
       to_anchor: 1e-12,
     },
     nV: {
       name: 'unit.nanovolt',
-      tags: ['voltage', 'volts', 'nanovolt', 'nV'],
+      tags: ['volts'],
       to_anchor: 1e-9,
     },
     μV: {
       name: 'unit.microvolt',
-      tags: ['electric potential', 'electric tension', 'voltage', 'microvolt', 'microvolts', 'μV'],
+      tags: ['electric potential', 'electric tension'],
       to_anchor: 1e-6,
     },
     mV: {
       name: 'unit.millivolt',
-      tags: ['electric potential', 'electric tension', 'voltage', 'millivolt', 'millivolts', 'mV'],
-      to_anchor: 0.001, // 1 mV = 1e-3 V
+      tags: ['electric potential', 'electric tension'],
+      to_anchor: 0.001,
     },
     V: {
       name: 'unit.volt',
-      tags: ['electric potential', 'electric tension', 'voltage', 'volt', 'volts', 'V', 'power source', 'battery', 'battery level'],
+      tags: ['electric potential', 'electric tension', 'power source', 'battery', 'battery level'],
       to_anchor: 1,
     },
     kV: {
       name: 'unit.kilovolt',
-      tags: ['electric potential', 'electric tension', 'voltage', 'kilovolt', 'kilovolts', 'kV'],
+      tags: ['electric potential', 'electric tension'],
       to_anchor: 1000,
     },
     MV: {
       name: 'unit.megavolt',
-      tags: ['electric potential', 'electric tension', 'voltage', 'megavolt', 'megavolts', 'MV'],
+      tags: ['electric potential', 'electric tension'],
       to_anchor: 1e6,
     },
   },

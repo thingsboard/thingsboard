@@ -32,11 +32,11 @@ const METRIC: TbMeasureUnits<KinematicViscosityMetricUnits> = {
       name: 'unit.square-centimeter-per-second',
       to_anchor: 1e-4,
     },
-    'St': {
+    St: {
       name: 'unit.stoke',
       to_anchor: 1e-4,
     },
-    'cSt': {
+    cSt: {
       name: 'unit.centistokes',
       to_anchor: 1e-6,
     },

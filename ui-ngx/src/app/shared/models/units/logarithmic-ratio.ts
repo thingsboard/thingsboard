@@ -20,17 +20,17 @@ export type LogarithmicRatioUnits = 'dB' | 'B' | 'Np';
 
 const METRIC: TbMeasureUnits<LogarithmicRatioUnits> = {
   units: {
-    'dB': {
+    dB: {
       name: 'unit.decibel',
       tags: ['noise level', 'sound level', 'volume', 'acoustics'],
       to_anchor: 1,
     },
-    'B': {
+    B: {
       name: 'unit.bel',
       tags: ['power ratio', 'intensity ratio'],
       to_anchor: 10,
     },
-    'Np': {
+    Np: {
       name: 'unit.neper',
       tags: ['gain', 'loss', 'attenuation'],
       to_anchor: 8.685889638,

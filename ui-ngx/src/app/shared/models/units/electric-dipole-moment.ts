@@ -24,7 +24,7 @@ const METRIC: TbMeasureUnits<ElectricDipoleMomentUnits> = {
       name: 'unit.electric-dipole-moment',
       to_anchor: 1,
     },
-    'D': {
+    D: {
       name: 'unit.debye',
       tags: ['polarization'],
       to_anchor: 3.33564e-30

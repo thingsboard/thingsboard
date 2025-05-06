@@ -1,43 +1,58 @@
+///
+/// Copyright © 2016-2025 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type RadiationDoseMetricUnits = 'Gy' | 'Sv' | 'Rad' | 'Rem' | 'R' | 'C/kg' | 'Gy/s';
-export type RadiationDoseUnits = RadiationDoseMetricUnits;
+export type RadiationDoseUnits = 'Gy' | 'Sv' | 'Rad' | 'Rem' | 'R' | 'C/kg' | 'cps';
 
-const METRIC: TbMeasureUnits<RadiationDoseMetricUnits> = {
+const METRIC: TbMeasureUnits<RadiationDoseUnits> = {
   units: {
-    'Sv': {
+    Sv: {
       name: 'unit.sievert',
-      tags: ['radiation dose', 'sievert', 'radiation dose equivalent', 'Sv'],
+      tags: ['sievert', 'radiation dose equivalent', 'Sv'],
       to_anchor: 1,
     },
-    'Gy': {
+    Gy: {
       name: 'unit.gray',
-      tags: ['radiation dose', 'absorbed dose', 'gray', 'Gy'],
+      tags: ['absorbed dose', 'gray', 'Gy'],
       to_anchor: 1,
     },
-    'Rad': {
+    Rad: {
       name: 'unit.rad',
-      tags: ['radiation dose', 'rad'],
+      tags: ['rad'],
       to_anchor: 0.01,
     },
-    'Rem': {
+    Rem: {
       name: 'unit.rem',
-      tags: ['radiation dose equivalent', 'rem'],
+      tags: ['radiation dose equivalent'],
       to_anchor: 0.01,
     },
-    'R': {
+    R: {
       name: 'unit.roentgen',
-      tags: ['radiation exposure', 'roentgen', 'R'],
+      tags: ['radiation exposure'],
       to_anchor: 0.0093,
     },
     'C/kg': {
       name: 'unit.coulombs-per-kilogram',
-      tags: ['radiation exposure', 'dose', 'coulombs per kilogram', 'electric charge-to-mass ratio', 'C/kg'],
+      tags: ['radiation exposure', 'electric charge-to-mass ratio'],
       to_anchor: 34,
     },
-    'Gy/s': {
-      name: 'unit.gy-per-second',
-      tags: ['absorbed dose rate', 'radiation dose rate', 'gray per second', 'Gy/s'],
+    cps: {
+      name: 'unit.cps',
+      tags: ['radiation detection'],
       to_anchor: 1,
     },
   },

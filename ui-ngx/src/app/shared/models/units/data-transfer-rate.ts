@@ -20,23 +20,23 @@ export type DataTransferRateUnits = 'bps' | 'kbps' | 'Mbps' | 'Gbps' | 'Tbps' | 
 
 const METRIC: TbMeasureUnits<DataTransferRateUnits> = {
   units: {
-    'bps': {
+    bps: {
       name: 'unit.bit-per-second',
       to_anchor: 1,
     },
-    'kbps': {
+    kbps: {
       name: 'unit.kilobit-per-second',
       to_anchor: 1e3,
     },
-    'Mbps': {
+    Mbps: {
       name: 'unit.megabit-per-second',
       to_anchor: 1e6,
     },
-    'Gbps': {
+    Gbps: {
       name: 'unit.gigabit-per-second',
       to_anchor: 1e9,
     },
-    'Tbps': {
+    Tbps: {
       name: 'unit.terabit-per-second',
       to_anchor: 1e12,
     },

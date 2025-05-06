@@ -45,7 +45,7 @@ const METRIC: TbMeasureUnits<IlluminanceMetricUnits> = {
 const IMPERIAL: TbMeasureUnits<IlluminanceImperialUnits> = {
   ratio: 10.76391,
   units: {
-    'fc': {
+    fc: {
       name: 'unit.foot-candle',
       tags: ['illuminance', 'light level'],
       to_anchor: 1,

@@ -20,7 +20,7 @@ export type LuminousIntensityUnits = 'cd';
 
 const METRIC: TbMeasureUnits<LuminousIntensityUnits> = {
   units: {
-    'cd': {
+    cd: {
       name: 'unit.candela',
       tags: ['light intensity'],
       to_anchor: 1,

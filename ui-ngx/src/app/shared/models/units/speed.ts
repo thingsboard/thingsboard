@@ -26,22 +26,22 @@ const METRIC: TbMeasureUnits<SpeedMetricUnits> = {
   units: {
     'm/s': {
       name: 'unit.meter-per-second',
-      tags: ['speed', 'velocity', 'pace', 'meter per second', 'm/s', 'peak', 'peak to peak', 'root mean square (RMS)', 'vibration', 'wind speed', 'weather'],
+      tags: ['velocity', 'pace', 'peak', 'peak to peak', 'root mean square (RMS)', 'vibration', 'wind speed', 'weather'],
       to_anchor: 3.6,
     },
     'km/h': {
       name: 'unit.kilometer-per-hour',
-      tags: ['speed', 'velocity', 'pace', 'kilometer per hour', 'km/h'],
+      tags: ['velocity', 'pace'],
       to_anchor: 1,
     },
     'mm/min': {
       name: 'unit.millimeters-per-minute',
-      tags: ['feed rate', 'cutting feed rate', 'millimeters per minute', 'mm/min'],
+      tags: ['feed rate', 'cutting feed rate'],
       to_anchor: 0.06,
     },
     'mm/s': {
       name: 'unit.millimeters-per-second',
-      tags: ['velocity', 'speed', 'vibration rate', 'millimeters per second', 'mm/s'],
+      tags: ['velocity', 'vibration rate'],
       to_anchor: 0.0036,
     },
   },
@@ -52,27 +52,27 @@ const IMPERIAL: TbMeasureUnits<SpeedImperialUnits> = {
   units: {
     mph: {
       name: 'unit.mile-per-hour',
-      tags: ['speed', 'velocity', 'pace', 'mile per hour', 'mph'],
+      tags: ['velocity', 'pace'],
       to_anchor: 1,
     },
     kt: {
       name: 'unit.knot',
-      tags: ['speed', 'velocity', 'pace', 'knot', 'knots', 'kt'],
+      tags: ['velocity', 'pace'],
       to_anchor: 1.150779,
     },
     'ft/s': {
       name: 'unit.foot-per-second',
-      tags: ['speed', 'velocity', 'pace', 'foot per second', 'ft/s'],
-      to_anchor: 0.681818, // 1 ft/s ≈ 0.681818 mph
+      tags: ['velocity', 'pace'],
+      to_anchor: 0.681818,
     },
     'ft/min': {
       name: 'unit.foot-per-minute',
-      tags: ['speed', 'velocity', 'pace', 'foot per minute', 'ft/min'],
+      tags: ['velocity', 'pace'],
       to_anchor: 0.0113636,
     },
     'in/h': {
       name: 'unit.inch-per-hour',
-      tags: ['speed', 'velocity', 'pace', 'inch per hour', 'in/h'],
+      tags: ['velocity', 'pace'],
       to_anchor: 0.00001578,
     },
   },

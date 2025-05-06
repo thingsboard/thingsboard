@@ -16,41 +16,23 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type TorqueUnits = TorqueMetricUnits | TorqueImperialUnits;
+export type RadioactiveDecayUnits = 'Bq/s' | 'Ci/s';
 
-export type TorqueMetricUnits = 'Nm';
-export type TorqueImperialUnits = 'lbf-ft' | 'in·lbf';
-
-const METRIC: TbMeasureUnits<TorqueMetricUnits> = {
-  ratio: 1 / 1.355818,
+const METRIC: TbMeasureUnits<RadioactiveDecayUnits> = {
   units: {
-    Nm: {
-      name: 'unit.newton-meter',
-      tags: ['rotational force', 'newton meter', 'Nm'],
+    'Bq/s': {
+      name: 'unit.becquerels-per-second',
       to_anchor: 1,
     },
-  },
+    'Ci/s': {
+      name: 'unit.curies-per-second',
+      to_anchor: 3.7e10,
+    },
+  }
 };
 
-const IMPERIAL: TbMeasureUnits<TorqueImperialUnits> = {
-  ratio: 1.355818,
-  units: {
-    'lbf-ft': {
-      name: 'unit.foot-pounds',
-      tags: ['rotational force'],
-      to_anchor: 1,
-    },
-    'in·lbf': {
-      name: 'unit.inch-pounds',
-      tags: ['rotational force'],
-      to_anchor: 1 / 12,
-    },
-  },
-};
-
-const measure: TbMeasure<TorqueUnits> = {
+const measure: TbMeasure<RadioactiveDecayUnits> = {
   METRIC,
-  IMPERIAL,
 };
 
 export default measure;

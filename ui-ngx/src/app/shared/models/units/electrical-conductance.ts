@@ -20,27 +20,27 @@ export type ElectricalConductanceUnits = 'S' | 'mS' | 'μS' | 'kS' | 'MS' | 'GS'
 
 const METRIC: TbMeasureUnits<ElectricalConductanceUnits> = {
   units: {
-    'S': {
+    S: {
       name: 'unit.siemens',
       to_anchor: 1,
     },
-    'mS': {
+    mS: {
       name: 'unit.millisiemens',
       to_anchor: 1e-3,
     },
-    'μS': {
+    μS: {
       name: 'unit.microsiemens',
       to_anchor: 1e-6,
     },
-    'kS': {
+    kS: {
       name: 'unit.kilosiemens',
       to_anchor: 1e3,
     },
-    'MS': {
+    MS: {
       name: 'unit.megasiemens',
       to_anchor: 1e6,
     },
-    'GS': {
+    GS: {
       name: 'unit.gigasiemens',
       to_anchor: 1e9,
     },

@@ -20,27 +20,27 @@ export type AmountOfSubstanceUnits = 'mol' | 'nmol' | 'μmol' | 'mmol' | 'kmol';
 
 const METRIC: TbMeasureUnits<AmountOfSubstanceUnits> = {
   units: {
-    'mol': {
+    mol: {
       name: 'unit.mole',
       tags: ['chemical amount'],
       to_anchor: 1,
     },
-    'nmol': {
+    nmol: {
       name: 'unit.nanomole',
       tags: ['chemical amount'],
       to_anchor: 0.000000001,
     },
-    'μmol': {
+    μmol: {
       name: 'unit.micromole',
       tags: ['chemical amount'],
       to_anchor: 0.000001,
     },
-    'mmol': {
+    mmol: {
       name: 'unit.millimole',
       tags: ['chemical amount'],
       to_anchor: 0.001,
     },
-    'kmol': {
+    kmol: {
       name: 'unit.kilomole',
       tags: ['chemical amount'],
       to_anchor: 1000,

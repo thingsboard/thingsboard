@@ -20,7 +20,7 @@ export type LuminousFluxUnits = 'lm';
 
 const METRIC: TbMeasureUnits<LuminousFluxUnits> = {
   units: {
-    'lm': {
+    lm: {
       name: 'unit.lumen',
       tags: ['total light output'],
       to_anchor: 1,

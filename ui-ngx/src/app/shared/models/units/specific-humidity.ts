@@ -22,7 +22,7 @@ const METRIC: TbMeasureUnits<SpecificHumidityUnits> = {
   units: {
     'g/kg': {
       name: 'unit.gram-per-kilogram',
-      tags: ['humidity', 'moisture', 'specific humidity', 'g/kg'],
+      tags: ['humidity', 'moisture'],
       to_anchor: 1,
     },
   },
