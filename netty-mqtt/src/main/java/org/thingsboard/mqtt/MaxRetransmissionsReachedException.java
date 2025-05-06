@@ -15,10 +15,10 @@
  */
 package org.thingsboard.mqtt;
 
-public interface PendingOperation {
+public class MaxRetransmissionsReachedException extends RuntimeException {
 
-    boolean isCancelled();
-
-    void onMaxRetransmissionAttemptsReached();
+    public MaxRetransmissionsReachedException(String message) {
+        super(message);
+    }
 
 }

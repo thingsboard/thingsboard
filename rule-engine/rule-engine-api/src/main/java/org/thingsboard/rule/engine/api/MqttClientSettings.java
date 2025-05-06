@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.mqtt;
+package org.thingsboard.rule.engine.api;
 
-public interface PendingOperation {
+public interface MqttClientSettings {
 
-    boolean isCancelled();
+    int getRetransmissionMaxAttempts();
 
-    void onMaxRetransmissionAttemptsReached();
+    long getRetransmissionInitialDelayMillis();
+
+    double getRetransmissionJitterFactor();
 
 }
