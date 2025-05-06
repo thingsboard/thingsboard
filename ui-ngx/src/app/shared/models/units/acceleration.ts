@@ -16,7 +16,7 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type AccelerationMetricUnits = 'G' | 'm/s²' | 'km/h²' | 'Gal';
+export type AccelerationMetricUnits = 'g₀' | 'm/s²' | 'km/h²' | 'Gal';
 export type AccelerationImperialUnits = 'ft/s²';
 
 export type AccelerationUnits = AccelerationMetricUnits | AccelerationImperialUnits;
@@ -24,7 +24,7 @@ export type AccelerationUnits = AccelerationMetricUnits | AccelerationImperialUn
 const METRIC: TbMeasureUnits<AccelerationMetricUnits> = {
   ratio: 3.28084,
   units: {
-    G: {
+    'g₀': {
       name: 'unit.g-force',
       tags: ['gravity', 'load'],
       to_anchor: 9.80665,

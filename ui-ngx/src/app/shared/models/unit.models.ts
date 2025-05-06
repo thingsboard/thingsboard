@@ -83,6 +83,7 @@ import radioactivity, { RadioactivityUnits } from '@shared/models/units/radioact
 import radioactivityConcentration, {
   RadioactivityConcentrationUnits
 } from '@shared/models/units/radioactivity-concentration';
+import reciprocalLength, { ReciprocalLengthUnits } from '@shared/models/units/reciprocal-length';
 import resistance, { ResistanceUnits } from '@shared/models/units/resistance';
 import reynoldsNumber, { ReynoldsNumberUnits } from '@shared/models/units/reynolds-number';
 import signalLevel, { SignalLevelUnits } from '@shared/models/units/signal-level';
@@ -103,7 +104,6 @@ import voltage, { VoltageUnits } from '@shared/models/units/voltage';
 import volume, { VolumeUnits } from '@shared/models/units/volume';
 import volumeFlow, { VolumeFlowUnits } from '@shared/models/units/volume-flow';
 import { TranslateService } from '@ngx-translate/core';
-import reciprocalLength, { ReciprocalLengthUnits } from '@shared/models/units/reciprocal-length';
 
 export type AllMeasuresUnits =
   | AbsorbedDoseRateUnits
@@ -388,6 +388,7 @@ export interface UnitInfo {
   system: UnitSystem;
   name: string;
   tags: string[];
+  searchText: string;
 }
 
 export enum UnitSystem {
@@ -423,43 +424,21 @@ export interface TbMeasureUnits<TUnits extends string> {
   units?: Partial<Record<TUnits, Unit>>;
 }
 
-export interface Conversion<TMeasures extends string, TUnits extends string> {
-  abbr: TUnits;
-  measure: TMeasures;
+export interface UnitCacheInfo {
   system: UnitSystem;
+  measure: AllMeasures;
   unit: Unit;
+  abbr: AllMeasuresUnits;
+  searchText: string;
 }
 
-export type UnitCache = Map<string, {
-    system: UnitSystem;
-    measure: AllMeasures;
-    unit: Unit;
-    abbr: AllMeasuresUnits;
-  }
->;
-
-const searchUnitTags = (unit: UnitInfo, searchText: string): boolean =>
-  !!unit.tags.find(t => t.toUpperCase().includes(searchText));
-
-export const searchUnits = (_units: Array<UnitInfo>, searchText: string): Array<UnitInfo> => _units.filter(
-    u => u.abbr.toUpperCase().includes(searchText) ||
-      u.name.toUpperCase().includes(searchText) ||
-      searchUnitTags(u, searchText)
-);
+export type UnitCache = Map<AllMeasuresUnits | string, UnitCacheInfo>;
 
 type Entries<T, S extends keyof T> = [S, T[keyof T]];
 
 export class Converter {
   private readonly measureData: Record<AllMeasures, TbMeasure<AllMeasuresUnits>>;
-  private unitCache: Map<
-    string,
-    {
-      system: UnitSystem;
-      measure: AllMeasures;
-      unit: Unit;
-      abbr: AllMeasuresUnits;
-    }
-  >;
+  private unitCache: UnitCache;
 
   constructor(
     measures: Record<AllMeasures, TbMeasure<AllMeasuresUnits>>,
@@ -534,7 +513,7 @@ export class Converter {
     return null;
   }
 
-  getUnit(abbr: AllMeasuresUnits | string): Conversion<AllMeasures, AllMeasuresUnits> | null {
+  getUnit(abbr: AllMeasuresUnits | string): UnitCacheInfo | null {
     return this.unitCache.get(abbr) ?? null;
   }
 
@@ -565,22 +544,15 @@ export class Converter {
           continue;
         }
 
-        for (const [abbr, unit] of Object.entries(units) as [AllMeasuresUnits, Unit][]) {
-          results.push(
-            this.describeUnit({
-              abbr,
-              measure: name as AllMeasures,
-              system,
-              unit,
-            })
-          );
+        for (const abbr of Object.keys(units) as AllMeasuresUnits[]) {
+          results.push(this.describe(abbr));
         }
       }
     }
     return results;
   }
 
-  unitsGroupByMeasure(measureName?: AllMeasures, unitSystem?: UnitSystem): UnitInfoGroupByMeasure<AllMeasures> | never {
+  unitsGroupByMeasure(measureName?: AllMeasures, unitSystem?: UnitSystem): UnitInfoGroupByMeasure<AllMeasures> {
     const results: UnitInfoGroupByMeasure<AllMeasures> = {};
 
     const measures = measureName
@@ -604,28 +576,22 @@ export class Converter {
           continue;
         }
 
-        for (const [abbr, unit] of Object.entries(units) as [AllMeasuresUnits, Unit][]) {
-          results[name].push(
-            this.describeUnit({
-              abbr,
-              measure: name as AllMeasures,
-              system,
-              unit,
-            })
-          );
+        for (const abbr of Object.keys(units) as AllMeasuresUnits[]) {
+          results[name].push(this.describe(abbr));
         }
       }
     }
     return results;
   }
 
-  private describeUnit(unit: Conversion<AllMeasures, AllMeasuresUnits>): UnitInfo {
+  private describeUnit(unit: UnitCacheInfo): UnitInfo {
     return {
       abbr: unit.abbr,
       measure: unit.measure,
       system: unit.system,
       name: unit.unit.name,
-      tags: unit.unit.tags
+      tags: unit.unit.tags,
+      searchText: unit.searchText
     };
   }
 
@@ -671,6 +637,7 @@ function buildUnitCache(measures: Record<AllMeasures, TbMeasure<AllMeasuresUnits
           measure: measureName,
           system: systemName,
           abbr: testAbbr,
+          searchText: unit.tags.join(';').toUpperCase(),
           unit,
         });
       }

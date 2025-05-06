@@ -6376,7 +6376,8 @@
         "rotation-per-minute": "Rotation per minute",
         "degrees-brix": "Degrees Brix",
         "katal": "Katal",
-        "katal-per-cubic-metre": "Katal per Cubic Metre"
+        "katal-per-cubic-metre": "Katal per Cubic Metre",
+        "paris-inch": "Paris inch"
     },
     "user": {
         "user": "User",

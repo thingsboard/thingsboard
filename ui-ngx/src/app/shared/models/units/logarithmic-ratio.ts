@@ -16,7 +16,7 @@
 
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
-export type LogarithmicRatioUnits = 'dB' | 'B' | 'Np';
+export type LogarithmicRatioUnits = 'dB' | 'bel' | 'Np';
 
 const METRIC: TbMeasureUnits<LogarithmicRatioUnits> = {
   units: {
@@ -25,7 +25,7 @@ const METRIC: TbMeasureUnits<LogarithmicRatioUnits> = {
       tags: ['noise level', 'sound level', 'volume', 'acoustics'],
       to_anchor: 1,
     },
-    B: {
+    bel: {
       name: 'unit.bel',
       tags: ['power ratio', 'intensity ratio'],
       to_anchor: 10,

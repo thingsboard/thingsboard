@@ -44,10 +44,8 @@ export class UnitService {
       takeUntilDestroyed()
     ).subscribe(() => {
       this.converter = getUnitConverter(this.translate);
-      console.warn(this.converter?.listUnits());
-      console.warn(this.converter?.listUnits('temperature'));
-      console.warn(this.converter?.listUnits('temperature', UnitSystem.METRIC));
-      console.warn(this.converter?.listUnits(null, UnitSystem.IMPERIAL));
+      console.warn(this.converter.listUnits());
+      console.warn(this.converter.listUnits(null, UnitSystem.IMPERIAL));
     });
   }
 

@@ -27,6 +27,7 @@ export type LengthImperialUnits =
   | 'fathom'
   | 'mi'
   | 'nmi'
+  | 'pouce'
   | 'thou'
   | 'barleycorn'
   | 'hand'
@@ -121,6 +122,11 @@ const IMPERIAL: TbMeasureUnits<LengthImperialUnits> = {
       name: 'unit.nautical-mile',
       tags: ['level', 'height', 'distance', 'width', 'gap', 'depth', 'nautical mile'],
       to_anchor: 6076.12,
+    },
+    pouce: {
+      name: 'unit.paris-inch',
+      tags: ['level', 'height', 'distance', 'width', 'gap', 'depth', 'nautical mile'],
+      to_anchor: 1.0657,
     },
     thou: {
       name: 'unit.thou',

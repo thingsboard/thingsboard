@@ -31,7 +31,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of, shareReplay } from 'rxjs';
-import { AllMeasures, searchUnits, TbUnit, UnitInfo, UnitsType, UnitSystem } from '@shared/models/unit.models';
+import { AllMeasures, TbUnit, UnitInfo, UnitsType, UnitSystem } from '@shared/models/unit.models';
 import { map, mergeMap } from 'rxjs/operators';
 import { UnitService } from '@core/services/unit.service';
 import { TbPopoverService } from '@shared/components/popover.service';
@@ -247,9 +247,13 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   private searchUnit(units: Array<[AllMeasures, Array<UnitInfo>]>, searchText?: string): Array<[AllMeasures, Array<UnitInfo>]> {
     if (isNotEmptyStr(searchText)) {
       const filterValue = searchText.trim().toUpperCase()
-      return units
-        .map(measure => [measure[0], searchUnits(measure[1], filterValue)] as [AllMeasures, UnitInfo[]])
-        .filter((measure) => measure[1].length > 0);
+      return units.reduce((result: Array<[AllMeasures, Array<UnitInfo>]>, [measure, unitInfos]) => {
+        const filteredUnits = unitInfos.filter(unit => unit.searchText.toUpperCase().includes(filterValue));
+        if (filteredUnits.length > 0) {
+          result.push([measure, filteredUnits]);
+        }
+        return result;
+      }, []);
     }
     return units;
   }
