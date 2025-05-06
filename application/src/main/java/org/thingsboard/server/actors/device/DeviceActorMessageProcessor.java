@@ -519,7 +519,10 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
-                boolean isMultipleAttributesRequest = (request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount()) != 1;
+                boolean isMultipleAttributesRequest = ((request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount()) != 1) ||
+                        request.getSharedAttributeNamesCount() == 0 && request.getOnlyShared() ||
+                        request.getClientAttributeNamesCount() == 0 && request.getOnlyClient();
+
                 GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                         .setRequestId(requestId)
                         .setSharedStateMsg(request.getOnlyShared())
