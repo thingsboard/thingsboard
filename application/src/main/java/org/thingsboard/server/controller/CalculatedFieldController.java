@@ -59,7 +59,6 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngi
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -136,7 +135,6 @@ public class CalculatedFieldController extends BaseController {
     public CalculatedField saveCalculatedField(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the calculated field.")
                                                @RequestBody CalculatedField calculatedField) throws Exception {
         calculatedField.setTenantId(getTenantId());
-        checkEntity(calculatedField.getId(), calculatedField, Resource.CALCULATED_FIELD);
         checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
         checkReferencedEntities(calculatedField.getConfiguration(), getCurrentUser());
         return tbCalculatedFieldService.save(calculatedField, getCurrentUser());
@@ -186,7 +184,7 @@ public class CalculatedFieldController extends BaseController {
     public void deleteCalculatedField(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws Exception {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
-        CalculatedField calculatedField = checkCalculatedFieldId(calculatedFieldId, Operation.DELETE);
+        CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
         checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
         tbCalculatedFieldService.delete(calculatedField, getCurrentUser());
     }
@@ -200,7 +198,7 @@ public class CalculatedFieldController extends BaseController {
     public JsonNode getLatestCalculatedFieldDebugEvent(@Parameter @PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws ThingsboardException {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
-        CalculatedField calculatedField = checkCalculatedFieldId(calculatedFieldId, Operation.READ);
+        CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
         checkEntityId(calculatedField.getEntityId(), Operation.READ_CALCULATED_FIELD);
         TenantId tenantId = getCurrentUser().getTenantId();
         return Optional.ofNullable(eventService.findLatestEvents(tenantId, calculatedFieldId, EventType.DEBUG_CALCULATED_FIELD, 1))

@@ -964,8 +964,12 @@ public abstract class BaseController {
         }
     }
 
-    protected CalculatedField checkCalculatedFieldId(CalculatedFieldId calculatedFieldId, Operation operation) throws ThingsboardException {
-        return checkEntityId(calculatedFieldId, calculatedFieldService::findById, operation);
+    private void checkCalculatedFieldId(CalculatedFieldId calculatedFieldId, Operation operation) throws ThingsboardException {
+        validateId(calculatedFieldId, "Invalid entity id");
+        SecurityUser user = getCurrentUser();
+        CalculatedField cf = calculatedFieldService.findById(user.getTenantId(), calculatedFieldId);
+        checkNotNull(cf, calculatedFieldId.getEntityType().getNormalName() + " with id [" + calculatedFieldId + "] is not found");
+        checkEntityId(cf.getEntityId(), operation);
     }
 
     protected HomeDashboardInfo getHomeDashboardInfo(SecurityUser securityUser, JsonNode additionalInfo) {
