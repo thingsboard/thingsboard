@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
+import org.thingsboard.server.common.msg.gen.MsgProtos.TbMsgProto;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.io.Serializable;
@@ -151,8 +152,8 @@ public final class TbMsg implements Serializable {
         this.callback = Objects.requireNonNullElse(callback, TbMsgCallback.EMPTY);
     }
 
-    public static MsgProtos.TbMsgProto toProto(TbMsg msg) {
-        MsgProtos.TbMsgProto.Builder builder = MsgProtos.TbMsgProto.newBuilder();
+    public static TbMsgProto toProto(TbMsg msg) {
+        TbMsgProto.Builder builder = TbMsgProto.newBuilder();
         builder.setId(msg.getId().toString());
         builder.setTs(msg.getTs());
         builder.setType(msg.getType());
@@ -204,12 +205,11 @@ public final class TbMsg implements Serializable {
         return builder.build();
     }
 
-    //TODO: added for processing old messages from queue, should be removed after release
-    @Deprecated(forRemoval = true)
-    public static TbMsg fromProto(String queueName, MsgProtos.TbMsgProto proto, ByteString data, TbMsgCallback callback) {
+    @Deprecated(forRemoval = true, since = "4.1") // to be removed in 4.2
+    public static TbMsg fromProto(String queueName, TbMsgProto proto, ByteString data, TbMsgCallback callback) {
         try {
             if (!data.isEmpty()) {
-                proto = MsgProtos.TbMsgProto.parseFrom(data);
+                proto = TbMsgProto.parseFrom(data);
             }
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
@@ -217,7 +217,7 @@ public final class TbMsg implements Serializable {
         return fromProto(queueName, proto, callback);
     }
 
-    public static TbMsg fromProto(String queueName, MsgProtos.TbMsgProto proto, TbMsgCallback callback) {
+    public static TbMsg fromProto(String queueName, TbMsgProto proto, TbMsgCallback callback) {
         TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
         CustomerId customerId = null;
@@ -225,7 +225,8 @@ public final class TbMsg implements Serializable {
         RuleNodeId ruleNodeId = null;
         UUID correlationId = null;
         Integer partition = null;
-        List<CalculatedFieldId> calculatedFieldIds = new CopyOnWriteArrayList<>();if (proto.getCustomerIdMSB() != 0L && proto.getCustomerIdLSB() != 0L) {
+        List<CalculatedFieldId> calculatedFieldIds = new CopyOnWriteArrayList<>();
+        if (proto.getCustomerIdMSB() != 0L && proto.getCustomerIdLSB() != 0L) {
             customerId = new CustomerId(new UUID(proto.getCustomerIdMSB(), proto.getCustomerIdLSB()));
         }
         if (proto.getRuleChainIdMSB() != 0L && proto.getRuleChainIdLSB() != 0L) {
@@ -240,19 +241,13 @@ public final class TbMsg implements Serializable {
         }
 
         for (MsgProtos.CalculatedFieldIdProto cfIdProto : proto.getCalculatedFieldsList()) {
-                CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(
-                        cfIdProto.getCalculatedFieldIdMSB(),
-                        cfIdProto.getCalculatedFieldIdLSB()
-                ));
-                calculatedFieldIds.add(calculatedFieldId);
-            }TbMsgProcessingCtx ctx;
-        if (proto.hasCtx()) {
-            ctx = TbMsgProcessingCtx.fromProto(proto.getCtx());
-        } else {
-            // Backward compatibility with unprocessed messages fetched from queue after update.
-            ctx = new TbMsgProcessingCtx(proto.getRuleNodeExecCounter());
+            CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(
+                    cfIdProto.getCalculatedFieldIdMSB(),
+                    cfIdProto.getCalculatedFieldIdLSB()
+            ));
+            calculatedFieldIds.add(calculatedFieldId);
         }
-
+        TbMsgProcessingCtx ctx = TbMsgProcessingCtx.fromProto(proto.getCtx());
         TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
         return new TbMsg(queueName, UUID.fromString(proto.getId()), proto.getTs(), null, proto.getType(), entityId, customerId,
                 metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, correlationId, partition, calculatedFieldIds, ctx, callback);
@@ -505,11 +500,11 @@ public final class TbMsg implements Serializable {
 
         public String toString() {
             return "TbMsg.TbMsgBuilder(queueName=" + this.queueName + ", id=" + this.id + ", ts=" + this.ts +
-                    ", type=" + this.type + ", internalType=" + this.internalType + ", originator=" + this.originator +
-                    ", customerId=" + this.customerId + ", metaData=" + this.metaData + ", dataType=" + this.dataType +
-                    ", data=" + this.data + ", ruleChainId=" + this.ruleChainId + ", ruleNodeId=" + this.ruleNodeId +
-                    ", correlationId=" + this.correlationId + ", partition=" + this.partition + ", previousCalculatedFields=" + this.previousCalculatedFieldIds +
-                    ", ctx=" + this.ctx + ", callback=" + this.callback + ")";
+                   ", type=" + this.type + ", internalType=" + this.internalType + ", originator=" + this.originator +
+                   ", customerId=" + this.customerId + ", metaData=" + this.metaData + ", dataType=" + this.dataType +
+                   ", data=" + this.data + ", ruleChainId=" + this.ruleChainId + ", ruleNodeId=" + this.ruleNodeId +
+                   ", correlationId=" + this.correlationId + ", partition=" + this.partition + ", previousCalculatedFields=" + this.previousCalculatedFieldIds +
+                   ", ctx=" + this.ctx + ", callback=" + this.callback + ")";
         }
 
     }
