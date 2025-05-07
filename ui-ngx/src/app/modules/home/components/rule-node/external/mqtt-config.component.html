@@ -72,6 +72,16 @@
     {{ 'rule-node-config.parse-to-plain-text' | translate }}
   </mat-checkbox>
   <div class="tb-hint">{{ "rule-node-config.parse-to-plain-text-hint" | translate }}</div>
+  <mat-form-field class="flex flex-1" subscriptSizing="dynamic">
+    <mat-label translate>device-profile.mqtt-protocol-version</mat-label>
+    <mat-select formControlName="protocolVersion">
+      @for (version of mqttVersions; track version) {
+        <mat-option [value]="version">
+          {{ mqttVersionTranslation.get(version) }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
   <mat-checkbox formControlName="cleanSession">
     {{ 'rule-node-config.clean-session' | translate }}
   </mat-checkbox>
