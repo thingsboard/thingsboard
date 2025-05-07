@@ -520,8 +520,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             @Override
             public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
                 boolean isMultipleAttributesRequest = ((request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount()) != 1) ||
-                        request.getSharedAttributeNamesCount() == 0 && request.getOnlyShared() ||
-                        request.getClientAttributeNamesCount() == 0 && request.getOnlyClient();
+                        request.getSharedAttributeNamesCount() == 0 && request.getAddShared() ||
+                        request.getClientAttributeNamesCount() == 0 && request.getAddClient();
 
                 GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                         .setRequestId(requestId)
@@ -548,8 +548,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
 
-        clientAttributesFuture = getAttrs(request.getClientAttributeNamesList(), request.getOnlyClient(), AttributeScope.CLIENT_SCOPE);
-        sharedAttributesFuture = getAttrs(request.getSharedAttributeNamesList(), request.getOnlyShared(), AttributeScope.SHARED_SCOPE);
+        clientAttributesFuture = getAttrs(request.getClientAttributeNamesList(), request.getAddClient(), AttributeScope.CLIENT_SCOPE);
+        sharedAttributesFuture = getAttrs(request.getSharedAttributeNamesList(), request.getAddShared(), AttributeScope.SHARED_SCOPE);
 
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
     }

@@ -411,7 +411,8 @@ message GetAttributeRequestMsg {
   repeated string clientAttributeNames = 2;
   repeated string sharedAttributeNames = 3;
   bool onlyShared = 4;
-  bool onlyClient = 5;
+  bool addClient = 5;
+  bool addShared = 6;
 }
 
 message GetAttributeResponseMsg {

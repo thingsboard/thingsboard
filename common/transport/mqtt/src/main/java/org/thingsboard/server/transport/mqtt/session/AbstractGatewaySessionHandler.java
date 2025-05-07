@@ -716,8 +716,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     private TransportProtos.GetAttributeRequestMsg toGetAttributeRequestMsg(int requestId, boolean clientScope, Set<String> keys) {
         TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
         result.setRequestId(requestId);
-        result.setOnlyClient(clientScope);
-        result.setOnlyShared(!clientScope);
+        result.setAddClient(clientScope);
+        result.setAddShared(!clientScope);
 
         if (clientScope) {
             result.addAllClientAttributeNames(keys);
@@ -732,11 +732,11 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         result.setRequestId(requestId);
 
         if (clientKeys != null) {
-            result.setOnlyClient(true);
+            result.setAddClient(true);
             result.addAllClientAttributeNames(clientKeys);
         }
         if (sharedKeys != null) {
-            result.setOnlyShared(true);
+            result.setAddShared(true);
             result.addAllSharedAttributeNames(sharedKeys);
         }
         return result.build();
