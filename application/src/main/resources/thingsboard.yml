@@ -668,7 +668,7 @@ cache:
 # Spring data parameters
 spring.data.redis.repositories.enabled: false # Disable this because it is not required.
 
-# Redis configuration parameters
+# Redis/Valkey configuration parameters
 redis:
   # standalone or cluster or sentinel
   connection:
