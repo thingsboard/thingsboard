@@ -419,4 +419,9 @@ public interface TbContext {
     EventService getEventService();
 
     AuditLogService getAuditLogService();
+
+    // Configuration parameters for the MQTT client that is used in the MQTT node and Azure IoT hub node
+
+    MqttClientSettings getMqttClientSettings();
+
 }

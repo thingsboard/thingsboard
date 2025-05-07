@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.notification.SlackService;
@@ -644,6 +645,10 @@ public class ActorSystemContext {
     @Value("${actors.calculated_fields.calculation_timeout:5}")
     @Getter
     private long cfCalculationResultTimeout;
+
+    @Autowired
+    @Getter
+    private MqttClientSettings mqttClientSettings;
 
     @Getter
     @Setter
