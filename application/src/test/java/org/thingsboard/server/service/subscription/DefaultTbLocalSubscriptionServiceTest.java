@@ -49,8 +49,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -163,9 +165,13 @@ public class DefaultTbLocalSubscriptionServiceTest {
         TsKvEntry kv = new BasicTsKvEntry(ts, new StringDataEntry(key, "42"));
         subscriptionService.onTimeSeriesUpdate(deviceId, List.of(kv), mock(TbCallback.class));
 
-        TelemetrySubscriptionUpdate update = capturedUpdate.get();
-        assertNotNull(update);
-        assertTrue(update.getLatestValues().containsKey(key));
+        await().atMost(5, TimeUnit.SECONDS)
+                .pollInterval(5, TimeUnit.MILLISECONDS)
+                .untilAsserted(() -> {
+                    TelemetrySubscriptionUpdate update = capturedUpdate.get();
+                    assertNotNull(update);
+                    assertTrue(update.getLatestValues().containsKey(key));
+                });
     }
 
 }
