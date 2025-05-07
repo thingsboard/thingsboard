@@ -26,6 +26,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttConnectResult;
+import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -125,6 +126,13 @@ public class TbMqttNode extends TbAbstractExternalNode {
             config.setClientId(getClientId(ctx));
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
+
+        MqttClientSettings mqttClientSettings = ctx.getMqttClientSettings();
+        config.setRetransmissionConfig(new MqttClientConfig.RetransmissionConfig(
+                mqttClientSettings.getRetransmissionMaxAttempts(),
+                mqttClientSettings.getRetransmissionInitialDelayMillis(),
+                mqttClientSettings.getRetransmissionJitterFactor()
+        ));
 
         prepareMqttClientConfig(config);
         MqttClient client = getMqttClient(ctx, config);

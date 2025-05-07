@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.mobile.QrCodeSettingService;
+import org.thingsboard.server.dao.trendz.TrendzSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -86,6 +87,9 @@ public class SystemInfoController extends BaseController {
 
     @Autowired
     private DebugModeRateLimitsConfig debugModeRateLimitsConfig;
+
+    @Autowired
+    private TrendzSettingsService trendzSettingsService;
 
     @PostConstruct
     public void init() {
@@ -158,6 +162,7 @@ public class SystemInfoController extends BaseController {
             }
             systemParams.setMaxArgumentsPerCF(tenantProfileConfiguration.getMaxArgumentsPerCF());
             systemParams.setMaxDataPointsPerRollingArg(tenantProfileConfiguration.getMaxDataPointsPerRollingArg());
+            systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
         }
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
                 .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)

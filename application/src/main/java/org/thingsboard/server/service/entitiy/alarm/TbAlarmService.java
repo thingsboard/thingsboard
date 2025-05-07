@@ -43,5 +43,6 @@ public interface TbAlarmService {
 
     void unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, List<UUID> alarms, long unassignTs);
 
-    Boolean delete(Alarm alarm, User user);
+    boolean delete(Alarm alarm, User user);
+
 }

@@ -17,10 +17,8 @@ package org.thingsboard.server.service.entitiy;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -31,16 +29,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.dao.asset.AssetProfileService;
-import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
@@ -55,12 +47,6 @@ public abstract class AbstractTbEntityService {
     @Autowired
     private Environment env;
 
-    @Value("${server.log_controller_error_stack_trace}")
-    @Getter
-    private boolean logControllerErrorStackTrace;
-
-    @Autowired
-    protected DbCallbackExecutorService dbExecutor;
     @Autowired(required = false)
     protected TbLogEntityActionService logEntityActionService;
     @Autowired(required = false)
