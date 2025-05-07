@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.mqtt.sparkplug.attributes;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.Device;
@@ -33,8 +32,10 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt32;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DCMD;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DDATA;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NCMD;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NDATA;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -50,7 +51,6 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         Assert.assertTrue(listKeys.contains(keyNodeRebirth));
         String SHARED_ATTRIBUTES_PAYLOAD = "{\"" + keyNodeRebirth + "\":" + value + "}";
         Assert.assertTrue("Connection node is failed", client.isConnected());
-        client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
         awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.ATTRIBUTES, 1);
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedGateway.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         await(alias + SparkplugMessageType.NBIRTH.name())
@@ -76,7 +76,6 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         Object metricValue = nextBoolean();
         connectionWithNBirth(metricDataType, metricKey, metricValue);
         Assert.assertTrue("Connection node is failed", client.isConnected());
-        client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
         awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.ATTRIBUTES, 1);
 
         // Boolean <-> String
@@ -140,7 +139,6 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         Object metricValue = nextUInt32();
         connectionWithNBirth(metricDataType, metricKey, metricValue);
         Assert.assertTrue("Connection node is failed", client.isConnected());
-        client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
         awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.ATTRIBUTES, 1);
 
         // Long <-> String
@@ -192,7 +190,6 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         Object metricValue = nextFloat(30, 400);
         connectionWithNBirth(metricDataType, metricKey, metricValue);
         Assert.assertTrue("Connection node is failed", client.isConnected());
-        client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
         awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.ATTRIBUTES, 1);
 
         // Float <-> String
@@ -237,6 +234,67 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         Assert.assertTrue(expectedValue == mqttCallback.getMessageArrivedMetrics().get(0).getFloatValue());
     }
 
+    protected void processClientWithCorrectAccessTokenPublishMetricDataTypeFromJson_SendValueOk() throws Exception {
+        long ts = calendar.getTimeInMillis();
+        List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(1, ts);
+        awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.ATTRIBUTES, 1);
+        awaitForDeviceActorToReceiveSubscription(devices.get(0).getId(), FeatureType.ATTRIBUTES, 1);
+
+        // Node Edge
+        SparkplugMessageType messageType = NCMD;
+        String keyBirthNameNode = "Node Metric int32";
+        int valueBirthNameNode = 1024;
+        String SHARED_ATTRIBUTES_PAYLOAD = "{\"" + messageType.name() + "\": {\"" + keyBirthNameNode + "\":" + valueBirthNameNode + "}}";
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + savedGateway.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
+        await(alias + NCMD.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    return mqttCallback.getMessageArrivedMetrics().size() == 1;
+                });
+        Assert.assertEquals(keyBirthNameNode, mqttCallback.getMessageArrivedMetrics().get(0).getName());
+        Assert.assertTrue(valueBirthNameNode == mqttCallback.getMessageArrivedMetrics().get(0).getIntValue());
+        mqttCallback.deleteMessageArrivedMetrics(0);
+
+        messageType = NDATA;
+        SHARED_ATTRIBUTES_PAYLOAD = "{\"" + messageType.name() + "\": {\"" + keyBirthNameNode + "\":" + valueBirthNameNode + "}}";
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + savedGateway.getId().getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
+        await(alias + NCMD.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    return mqttCallback.getMessageArrivedMetrics().size() == 1;
+                });
+        Assert.assertEquals(keyBirthNameNode, mqttCallback.getMessageArrivedMetrics().get(0).getName());
+        Assert.assertTrue(valueBirthNameNode == mqttCallback.getMessageArrivedMetrics().get(0).getIntValue());
+        mqttCallback.deleteMessageArrivedMetrics(0);
+
+        // Device
+        messageType = DCMD;
+        String keyBirthNameDevice = metricBirthName_Int32;
+        int valueBirthNameDevice = 123456;
+        SHARED_ATTRIBUTES_PAYLOAD = "{\"" + messageType.name() + "\": {\"" + keyBirthNameDevice + "\":" + valueBirthNameDevice + "}}";
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + devices.get(0).getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
+        await(alias + DCMD.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    return mqttCallback.getMessageArrivedMetrics().size() == 1;
+                });
+        Assert.assertEquals(keyBirthNameDevice, mqttCallback.getMessageArrivedMetrics().get(0).getName());
+        Assert.assertTrue(valueBirthNameDevice == mqttCallback.getMessageArrivedMetrics().get(0).getIntValue());
+        mqttCallback.deleteMessageArrivedMetrics(0);
+
+        messageType = DDATA;
+        SHARED_ATTRIBUTES_PAYLOAD = "{\"" + messageType.name() + "\": {\"" + keyBirthNameDevice + "\":" + valueBirthNameDevice + "}}";
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + devices.get(0).getId() + "/attributes/SHARED_SCOPE", SHARED_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
+        await(alias + DCMD.name())
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    return mqttCallback.getMessageArrivedMetrics().size() == 1;
+                });
+        Assert.assertEquals(keyBirthNameDevice, mqttCallback.getMessageArrivedMetrics().get(0).getName());
+        Assert.assertTrue(valueBirthNameDevice == mqttCallback.getMessageArrivedMetrics().get(0).getIntValue());
+        mqttCallback.deleteMessageArrivedMetrics(0);
+    }
+
     protected void processClientWithCorrectAccessTokenPublishNCMD_DoubleType_IfMetricFailedTypeCheck_SendValueOk() throws Exception {
         clientWithCorrectNodeAccessTokenWithNDEATH();
         MetricDataType metricDataType = MetricDataType.Double;
@@ -244,7 +302,6 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         Object metricValue = nextDouble();
         connectionWithNBirth(metricDataType, metricKey, metricValue);
         Assert.assertTrue("Connection node is failed", client.isConnected());
-        client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
         awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.ATTRIBUTES, 1);
 
         // Double <-> String
@@ -296,7 +353,6 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
         Object metricValue = nextString();
         connectionWithNBirth(metricDataType, metricKey, metricValue);
         Assert.assertTrue("Connection node is failed", client.isConnected());
-        client.subscribeAndWait(NAMESPACE + "/" + groupId + "/" + NCMD.name() + "/" + edgeNode + "/#", MqttQoS.AT_MOST_ONCE);
         awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.ATTRIBUTES, 1);
 
         // String <-> Long
@@ -355,7 +411,6 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
                 .until(() -> {
                     return mqttCallback.getMessageArrivedMetrics().size() == 1;
                 });
-        Assert.assertEquals(metricBirthName_Int32, mqttCallback.getMessageArrivedMetrics().get(0).getName());
         Assert.assertEquals(metricBirthName_Int32, mqttCallback.getMessageArrivedMetrics().get(0).getName());
         Assert.assertEquals(expectedValueInt, mqttCallback.getMessageArrivedMetrics().get(0).getIntValue());
     }
