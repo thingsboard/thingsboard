@@ -211,9 +211,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         for (RuleNode existingNode : existingRuleNodes) {
             relationService.deleteEntityRelations(tenantId, existingNode.getId());
             if (existingNode.getType().equals(TB_RULE_CHAIN_INPUT_NODE)) {
-                if (existingNode.getConfiguration().has("ruleChainId")) {
-                    RuleChainId targetRuleChainId = extractRuleChainIdFromInputNode(existingNode);
-                    var relation = createRuleChainInputRelation(ruleChainId, targetRuleChainId);
+                EntityRelation relation = getRuleChainInputRelation(ruleChainId, existingNode);
+                if (relation != null) {
                     relationService.deleteRelation(tenantId, relation);
                 }
             }
@@ -242,9 +241,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
                 if (node.getType().equals(TB_RULE_CHAIN_INPUT_NODE)) {
-                    if (node.getConfiguration().has("ruleChainId")) {
-                        RuleChainId targetRuleChainId = extractRuleChainIdFromInputNode(node);
-                        var relation = createRuleChainInputRelation(ruleChainId, targetRuleChainId);
+                    EntityRelation relation = getRuleChainInputRelation(ruleChainId, node);
+                    if (relation != null) {
                         relations.add(relation);
                     }
                 }
@@ -262,7 +260,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 firstRuleNodeId = nodes.get(ruleChainMetaData.getFirstNodeIndex()).getId();
             }
             if ((ruleChain.getFirstRuleNodeId() != null && !ruleChain.getFirstRuleNodeId().equals(firstRuleNodeId))
-                    || (ruleChain.getFirstRuleNodeId() == null && firstRuleNodeId != null)) {
+                || (ruleChain.getFirstRuleNodeId() == null && firstRuleNodeId != null)) {
                 ruleChain.setFirstRuleNodeId(firstRuleNodeId);
             }
             if (ruleChainMetaData.getConnections() != null) {
@@ -317,19 +315,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         return RuleChainUpdateResult.successful(updatedRuleNodes);
     }
 
-    private EntityRelation createRuleChainInputRelation(RuleChainId ruleChainId, RuleChainId targetRuleChainId) {
-        EntityRelation relation = new EntityRelation();
-        relation.setFrom(ruleChainId);
-        relation.setTo(targetRuleChainId);
-        relation.setType(EntityRelation.USES_TYPE);
-        relation.setTypeGroup(RelationTypeGroup.COMMON);
-        return relation;
-    }
-
-    private RuleChainId extractRuleChainIdFromInputNode(RuleNode node) {
-        JsonNode configuration = node.getConfiguration();
-        UUID targetUuid = UUID.fromString(configuration.get("ruleChainId").asText());
-        return new RuleChainId(targetUuid);
+    private EntityRelation getRuleChainInputRelation(RuleChainId ruleChainId, RuleNode inputNode) {
+        RuleChainId targetRuleChainId = Optional.ofNullable(inputNode.getConfiguration().get("ruleChainId"))
+                .filter(JsonNode::isTextual).map(JsonNode::asText).map(id -> new RuleChainId(UUID.fromString(id)))
+                .orElse(null);
+        if (targetRuleChainId != null) {
+            EntityRelation relation = new EntityRelation();
+            relation.setFrom(ruleChainId);
+            relation.setTo(targetRuleChainId);
+            relation.setType(EntityRelation.USES_TYPE);
+            relation.setTypeGroup(RelationTypeGroup.COMMON);
+            return relation;
+        } else {
+            return null;
+        }
     }
 
     @Override

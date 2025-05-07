@@ -24,21 +24,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.service.install.DbUpgradeExecutorService;
@@ -46,6 +43,7 @@ import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -66,9 +64,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private RelationService relationService;
 
     @Autowired
-    private TenantService tenantService;
-
-    @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
 
     @Autowired
@@ -78,52 +73,36 @@ public class DefaultDataUpdateService implements DataUpdateService {
     public void updateData() throws Exception {
         log.info("Updating data ...");
         //TODO: should be cleaned after each release
-        inputNodesUpdater.updateEntities();
+        updateInputNodes();
         log.info("Data updated.");
     }
 
-    //TODO: should be removed after release
-    private final PaginatedUpdater<String, Tenant> inputNodesUpdater = new PaginatedUpdater<>() {
-        @Override
-        protected String getName() {
-            return "Input nodes updater";
-        }
-
-        @Override
-        protected PageData<Tenant> findEntities(String type, PageLink pageLink) {
-            return tenantService.findTenants(pageLink);
-        }
-
-        @Override
-        protected void updateEntity(Tenant tenant) {
-            TenantId tenantId = tenant.getId();
+    private void updateInputNodes() {
+        log.info("Creating relations for input nodes...");
+        int n = 0;
+        var inputNodes = new PageDataIterable<>(pageLink -> ruleChainService.findAllRuleNodesByType(TB_RULE_CHAIN_INPUT_NODE, pageLink), 1024);
+        for (RuleNode inputNode : inputNodes) {
             try {
-                var inputNodes = ruleChainService.findRuleNodesByTenantIdAndType(tenantId, TB_RULE_CHAIN_INPUT_NODE);
-                var resultFutures = inputNodes.stream().map(ruleNode -> {
-                    try {
-                        JsonNode id = ruleNode.getConfiguration().get("ruleChainId");
-                        if (id != null) {
-                            RuleChainId toRuleChainId = new RuleChainId(UUID.fromString(id.asText()));
-                            RuleChainId fromRuleChainId = ruleNode.getRuleChainId();
-                            EntityRelation relation = new EntityRelation();
-                            relation.setFrom(fromRuleChainId);
-                            relation.setTo(toRuleChainId);
-                            relation.setType(EntityRelation.USES_TYPE);
-                            relation.setTypeGroup(RelationTypeGroup.COMMON);
-                            return relationService.saveRelationAsync(tenantId, relation);
-                        }
-                    } catch (Exception e) {
-                        log.error("[{}] Failed to save relation for input node: [{}]", tenantId, ruleNode, e);
-                    }
-                    return Futures.immediateFuture(null);
-                }).toList();
+                RuleChainId targetRuleChainId = Optional.ofNullable(inputNode.getConfiguration().get("ruleChainId"))
+                        .filter(JsonNode::isTextual).map(JsonNode::asText).map(id -> new RuleChainId(UUID.fromString(id)))
+                        .orElse(null);
+                if (targetRuleChainId == null) {
+                    continue;
+                }
 
-                Futures.allAsList(resultFutures).get();
+                EntityRelation relation = new EntityRelation();
+                relation.setFrom(inputNode.getRuleChainId());
+                relation.setTo(targetRuleChainId);
+                relation.setType(EntityRelation.USES_TYPE);
+                relation.setTypeGroup(RelationTypeGroup.COMMON);
+                relationService.saveRelation(TenantId.SYS_TENANT_ID, relation);
+                n++;
             } catch (Exception e) {
-                log.error("[{}] Unable to update Tenant input nodes", tenantId, e);
+                log.error("Failed to save relation for input node: {}", inputNode, e);
             }
         }
-    };
+        log.info("Created {} relations for input nodes", n);
+    }
 
     @Override
     public void upgradeRuleNodes() {
