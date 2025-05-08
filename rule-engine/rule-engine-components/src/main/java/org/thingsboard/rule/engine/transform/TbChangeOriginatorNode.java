@@ -48,7 +48,7 @@ import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
         type = ComponentType.TRANSFORMATION,
         name = "change originator",
         version = 1,
-        relationTypes = {"Not Found", TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE},
+        relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, TbNodeConnectionType.NOT_FOUND},
         configClazz = TbChangeOriginatorNodeConfiguration.class,
         nodeDescription = "Change message originator to Tenant/Customer/Related Entity/Alarm Originator/Entity by name pattern.",
         nodeDetails = "Configuration: <ul><li><strong>Customer</strong> - use customer of incoming message originator as new originator. " +
@@ -86,7 +86,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
     @Override
     protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {
         if (config.isTellNotFound() && t instanceof NoSuchElementException) {
-            ctx.tellNext(msg, "Not Found");
+            ctx.tellNext(msg, TbNodeConnectionType.NOT_FOUND);
         } else {
             ctx.tellFailure(msg, t);
         }

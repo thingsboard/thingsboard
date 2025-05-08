@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -385,10 +386,15 @@ public class TbChangeOriginatorNodeTest extends AbstractRuleNodeUpgradeTest {
         given(assetServiceMock.findAssetByTenantIdAndName(any(TenantId.class), any(String.class))).willReturn(null);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
-        then(ctxMock).should().tellNext(msg, "Not Found");
+        then(ctxMock).should().tellNext(msg, TbNodeConnectionType.NOT_FOUND);
     }
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
