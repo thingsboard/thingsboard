@@ -58,6 +58,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntryAggWrapper;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -65,6 +67,7 @@ import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
+import org.thingsboard.server.common.data.query.NumericFilterPredicate.NumericOperation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -72,6 +75,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
+import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.math.BigDecimal;
@@ -81,15 +85,22 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType.ATTRIBUTE;
+import static org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType.TIME_SERIES;
+import static org.thingsboard.server.common.data.query.NumericFilterPredicate.NumericOperation.GREATER;
+import static org.thingsboard.server.common.data.query.NumericFilterPredicate.NumericOperation.LESS;
 
 @ExtendWith(MockitoExtension.class)
 public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
@@ -170,32 +181,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
-        AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setCondition(Collections.singletonList(highTempFilter));
+        AlarmCondition alarmCreateCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
         AlarmRule alarmRule = new AlarmRule();
-        alarmRule.setCondition(alarmCondition);
+        alarmRule.setCondition(alarmCreateCondition);
         DeviceProfileAlarm dpa = new DeviceProfileAlarm();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
-        AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate lowTemperaturePredicate = new NumericFilterPredicate();
-        lowTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
-        lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
-        lowTempFilter.setPredicate(lowTemperaturePredicate);
         AlarmRule clearRule = new AlarmRule();
-        AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setCondition(Collections.singletonList(lowTempFilter));
+        AlarmCondition clearCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", LESS, 10.0);
         clearRule.setCondition(clearCondition);
         dpa.setClearRule(clearRule);
 
@@ -261,25 +256,11 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
-        AlarmConditionFilter tempFilter = new AlarmConditionFilter();
-        tempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        tempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
-        temperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        temperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
-        tempFilter.setPredicate(temperaturePredicate);
-        AlarmCondition alarmTempCondition = new AlarmCondition();
-        alarmTempCondition.setCondition(Collections.singletonList(tempFilter));
+        AlarmCondition alarmTempCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
         AlarmRule alarmTempRule = new AlarmRule();
         alarmTempRule.setCondition(alarmTempCondition);
 
-        AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
-        highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
-        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
-        highTemperaturePredicate.setValue(new FilterPredicateValue<>(50.0));
-        highTempFilter.setPredicate(highTemperaturePredicate);
+        AlarmConditionFilter highTempFilter = getAlarmConditionFilter(TIME_SERIES, "temperature", GREATER, 50.0);
         AlarmCondition alarmHighTempCondition = new AlarmCondition();
         alarmHighTempCondition.setCondition(Collections.singletonList(highTempFilter));
         AlarmRule alarmHighTempRule = new AlarmRule();
@@ -401,10 +382,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         alarmEnabledFilter.setPredicate(alarmEnabledPredicate);
 
         AlarmConditionFilter temperatureFilter = new AlarmConditionFilter();
-        temperatureFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        temperatureFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         temperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
-        temperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        temperaturePredicate.setOperation(GREATER);
         temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
         temperatureFilter.setPredicate(temperaturePredicate);
 
@@ -494,10 +475,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         alarmEnabledFilter.setPredicate(alarmEnabledPredicate);
 
         AlarmConditionFilter temperatureFilter = new AlarmConditionFilter();
-        temperatureFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        temperatureFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         temperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate temperaturePredicate = new NumericFilterPredicate();
-        temperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        temperaturePredicate.setOperation(GREATER);
         temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
         temperatureFilter.setPredicate(temperaturePredicate);
 
@@ -576,10 +557,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Collections.singletonList(entry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setOperation(GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(
                 0.0,
                 null,
@@ -670,10 +651,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Arrays.asList(entry, alarmDelayAttributeKvEntry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setOperation(GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(
                 0.0,
                 null,
@@ -805,10 +786,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Optional.empty());
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setOperation(GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(
                 0.0,
                 null,
@@ -937,10 +918,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Arrays.asList(entry, alarmDelayAttributeKvEntry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setOperation(GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(
                 0.0,
                 null,
@@ -1065,10 +1046,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Optional.empty());
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setOperation(GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(
                 0.0,
                 null,
@@ -1182,10 +1163,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Collections.singletonList(entry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setOperation(GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(
                 0.0,
                 null,
@@ -1299,10 +1280,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Collections.singletonList(entry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setOperation(GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(
                 0.0,
                 null,
@@ -1395,10 +1376,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Collections.singletonList(entryActiveSchedule));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setOperation(GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(
                 0.0,
                 null,
@@ -1492,10 +1473,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Collections.singletonList(entryInactiveSchedule));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
-        highTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         highTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
-        highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        highTemperaturePredicate.setOperation(GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(
                 0.0,
                 null,
@@ -1593,10 +1574,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        lowTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate lowTempPredicate = new NumericFilterPredicate();
-        lowTempPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
+        lowTempPredicate.setOperation(LESS);
         lowTempPredicate.setValue(
                 new FilterPredicateValue<>(
                         20.0,
@@ -1679,10 +1660,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        lowTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate lowTempPredicate = new NumericFilterPredicate();
-        lowTempPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
+        lowTempPredicate.setOperation(LESS);
         lowTempPredicate.setValue(
                 new FilterPredicateValue<>(
                         32.0,
@@ -1769,10 +1750,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        lowTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate lowTempPredicate = new NumericFilterPredicate();
-        lowTempPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        lowTempPredicate.setOperation(GREATER);
         lowTempPredicate.setValue(
                 new FilterPredicateValue<>(
                         0.0,
@@ -1865,10 +1846,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 Futures.immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
-        lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        lowTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
         lowTempFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate lowTempPredicate = new NumericFilterPredicate();
-        lowTempPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        lowTempPredicate.setOperation(GREATER);
         lowTempPredicate.setValue(
                 new FilterPredicateValue<>(
                         0.0,
@@ -1942,6 +1923,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private void registerCreateAlarmMock(AlarmApiCallResult a, boolean created) {
+        registerCreateAlarmMock(a, created, false);
+    }
+
+    private void registerCreateAlarmMock(AlarmApiCallResult a, boolean created, boolean cleared) {
         when(a).thenAnswer(invocationOnMock -> {
             AlarmInfo alarm = new AlarmInfo(new Alarm(new AlarmId(UUID.randomUUID())));
             AlarmModificationRequest request = invocationOnMock.getArgument(0);
@@ -1950,6 +1935,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                     .successful(true)
                     .created(created)
                     .modified(true)
+                    .cleared(cleared)
                     .alarm(alarm)
                     .build();
         });
@@ -1979,6 +1965,100 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                         "{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}")
         );
 
+    }
+
+    @Test
+    public void testAlarmCreateWithAttrAndTsCondition() throws Exception {
+        init();
+
+        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfileData deviceProfileData = new DeviceProfileData();
+
+        AlarmConditionFilter filter = getAlarmConditionFilter(TIME_SERIES, "temperature", GREATER, 30.0);
+        AlarmConditionFilter filter2 = getAlarmConditionFilter(ATTRIBUTE, "battery", LESS, 10.0);
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(List.of(filter, filter2));
+        AlarmRule createRule = new AlarmRule();
+        createRule.setCondition(alarmCondition);
+
+        AlarmConditionFilter filter3 = getAlarmConditionFilter(TIME_SERIES, "temperature", LESS, 10.0);
+        AlarmConditionFilter filter4 = getAlarmConditionFilter(ATTRIBUTE, "battery", GREATER, 50.0);
+        AlarmCondition clearCondition = new AlarmCondition();
+        clearCondition.setCondition(List.of(filter3, filter4));
+        AlarmRule clearRule = new AlarmRule();
+        clearRule.setCondition(clearCondition);
+
+        DeviceProfileAlarm dpa = new DeviceProfileAlarm();
+        dpa.setId("highTemperatureAlarmID");
+        dpa.setAlarmType("highTemperatureAlarm");
+        dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, createRule)));
+        dpa.setClearRule(clearRule);
+
+        deviceProfileData.setAlarms(Collections.singletonList(dpa));
+        deviceProfile.setProfileData(deviceProfileData);
+
+        ListenableFuture<List<TsKvEntry>> tsKvList =
+                Futures.immediateFuture(Collections.singletonList(getTsKvEntry("temperature", 35L)));
+        ListenableFuture<List<AttributeKvEntry>> attrList =
+                Futures.immediateFuture(Collections.emptyList());
+
+        Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        Mockito.when(timeseriesService.findLatest(tenantId, deviceId, Collections.singleton("temperature")))
+                .thenReturn(tsKvList);
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), any(), anySet()))
+                .thenReturn(attrList);
+        Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm")).thenReturn(null);
+        registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+
+        TbMsg theMsg = TbMsg.newMsg()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .build();
+        when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg);
+
+        // send attribute
+        ObjectNode data = JacksonUtil.newObjectNode();
+        data.put("battery", 8);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .build();
+        node.onMsg(ctx, msg);
+        verify(ctx).tellSuccess(msg);
+        verify(ctx).enqueueForTellNext(theMsg, "Alarm Created");
+        verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
+    }
+
+    private TsKvEntry getTsKvEntry(String key, Long value) {
+        TsKvEntity tsKv = new TsKvEntity();
+        tsKv.setKey(10);
+        tsKv.setLongValue(value);
+        tsKv.setStrKey(key);
+        tsKv.setTs(System.currentTimeMillis());
+        return tsKv.toData();
+    }
+
+    private AlarmCondition getNumericAlarmCondition(AlarmConditionKeyType alarmConditionKeyType, String key, NumericOperation operation, Double value) {
+        AlarmConditionFilter filter = getAlarmConditionFilter(alarmConditionKeyType, key, operation, value);
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(Collections.singletonList(filter));
+        return alarmCondition;
+    }
+
+    private AlarmConditionFilter getAlarmConditionFilter(AlarmConditionKeyType alarmConditionKeyType, String key, NumericOperation operation, Double value) {
+        AlarmConditionFilter filter = new AlarmConditionFilter();
+        filter.setKey(new AlarmConditionFilterKey(alarmConditionKeyType, key));
+        filter.setValueType(EntityKeyValueType.NUMERIC);
+        NumericFilterPredicate highTemperaturePredicate = new NumericFilterPredicate();
+        highTemperaturePredicate.setOperation(operation);
+        highTemperaturePredicate.setValue(new FilterPredicateValue<>(value));
+        filter.setPredicate(highTemperaturePredicate);
+        return filter;
     }
 
     @Override

@@ -88,12 +88,6 @@ class AlarmRuleState {
     }
 
     public boolean validateAttrUpdate(Set<AlarmConditionFilterKey> changedKeys) {
-        //If the attribute was updated, but no new telemetry arrived - we ignore this until new telemetry is there.
-        for (AlarmConditionFilterKey key : entityKeys) {
-            if (key.getType().equals(AlarmConditionKeyType.TIME_SERIES)) {
-                return false;
-            }
-        }
         for (AlarmConditionFilterKey key : changedKeys) {
             if (entityKeys.contains(key)) {
                 return true;

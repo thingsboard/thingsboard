@@ -74,7 +74,6 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     private MqttClient mqttClient;
     private Device createdDevice;
     private MqttMessageListener listener;
-    private JsonParser jsonParser = new JsonParser();
 
     AbstractListeningExecutor handlerExecutor;
 
@@ -98,7 +97,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     }
 
     @AfterMethod
-    public void removeGateway()  {
+    public void removeGateway() {
         testRestClient.deleteDeviceIfExists(this.gatewayDevice.getId());
         testRestClient.deleteDeviceIfExists(this.createdDevice.getId());
         this.listener = null;
@@ -195,7 +194,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
         event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
 
-        JsonObject responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        JsonObject responseData = JsonParser.parseString(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
         assertThat(responseData.has("value")).isTrue();
         assertThat(responseData.get("value").getAsString()).isEqualTo(sharedAttributes.get("attr1").getAsString());
 
@@ -211,7 +210,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
         event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        responseData = JsonParser.parseString(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
 
         assertThat(responseData.has("values")).isTrue();
         assertThat(responseData.get("values").getAsJsonObject().get("attr1").getAsString()).isEqualTo(sharedAttributes.get("attr1").getAsString());
@@ -229,7 +228,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
         event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        responseData = JsonParser.parseString(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
 
         assertThat(responseData.has("values")).isTrue();
         assertThat(responseData.get("values").getAsJsonObject().get("attr1").getAsString()).isEqualTo(sharedAttributes.get("attr1").getAsString());
@@ -834,7 +833,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(gatewayAttributesRequest.toString().getBytes())).get();
         MqttEvent clientAttributeEvent = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
         assertThat(clientAttributeEvent).isNotNull();
-        JsonObject responseMessage = new JsonParser().parse(Objects.requireNonNull(clientAttributeEvent).getMessage()).getAsJsonObject();
+        JsonObject responseMessage = JsonParser.parseString(Objects.requireNonNull(clientAttributeEvent).getMessage()).getAsJsonObject();
 
         assertThat(responseMessage.get("id").getAsInt()).isEqualTo(messageId);
         assertThat(responseMessage.get("device").getAsString()).isEqualTo(createdDevice.getName());
@@ -902,6 +901,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         clientConfig.setOwnerId(getOwnerId());
         clientConfig.setClientId("MQTT client from test");
         clientConfig.setUsername(deviceCredentials.getCredentialsId());
+        clientConfig.setRetransmissionConfig(new MqttClientConfig.RetransmissionConfig(3, 5000L, 0.15d)); // same as defaults in thingsboard.yml as of time of this writing
         MqttClient mqttClient = MqttClient.create(clientConfig, listener, handlerExecutor);
         mqttClient.connect("localhost", 1883).get();
         return mqttClient;
