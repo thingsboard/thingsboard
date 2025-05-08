@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs;
+package org.thingsboard.server.common.data.job;
 
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
+public class DummyJobResult extends JobResult {
 
-@Service
-public class DummyTenantRoutingInfoService implements TenantRoutingInfoService {
     @Override
-    public TenantRoutingInfo getRoutingInfo(TenantId tenantId) {
-        return null;
+    public String getDescription() {
+        if (getGeneralError() != null) {
+            return getGeneralError();
+        }
+        return getSuccessfulCount() + "/" + getTotalCount() + " successful, " + getFailedCount() + " failed";
+    }
+
+    @Override
+    public JobType getJobType() {
+        return JobType.DUMMY;
     }
 
 }
