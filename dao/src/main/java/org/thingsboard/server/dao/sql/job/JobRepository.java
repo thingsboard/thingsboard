@@ -15,12 +15,9 @@
  */
 package org.thingsboard.server.dao.sql.job;
 
-import jakarta.persistence.LockModeType;
-import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,28 +34,29 @@ import java.util.UUID;
 public interface JobRepository extends JpaRepository<JobEntity, UUID> {
 
     @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId " +
-            "AND (:searchText IS NULL OR ilike(j.key, concat('%', :searchText, '%')) = true " +
-            "OR ilike(j.description, concat('%', :searchText, '%')) = true)")
-    Page<JobEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
-                                                @Param("searchText") String searchText,
-                                                Pageable pageable);
+           "AND (:types IS NULL OR j.type IN (:types)) AND (:statuses IS NULL OR j.status IN (:statuses)) " +
+           "AND (:searchText IS NULL OR ilike(j.key, concat('%', :searchText, '%')) = true " +
+           "OR ilike(j.description, concat('%', :searchText, '%')) = true)")
+    Page<JobEntity> findByTenantIdAndTypesAndStatusesAndSearchText(@Param("tenantId") UUID tenantId,
+                                                                   @Param("types") List<JobType> types,
+                                                                   @Param("statuses") List<JobStatus> statuses,
+                                                                   @Param("searchText") String searchText,
+                                                                   Pageable pageable);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE) // SELECT FOR UPDATE
-    @Query("SELECT j FROM JobEntity j WHERE j.id = :id")
+    @Query(value = "SELECT * FROM job j WHERE j.id = :id FOR UPDATE", nativeQuery = true)
     JobEntity findByIdForUpdate(UUID id);
 
     @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId AND j.key = :key " +
-            "ORDER BY j.createdTime DESC")
+           "ORDER BY j.createdTime DESC")
     JobEntity findLatestByTenantIdAndKey(@Param("tenantId") UUID tenantId, @Param("key") String key);
 
     boolean existsByTenantIdAndKeyAndStatusIn(UUID tenantId, String key, List<JobStatus> statuses);
 
     boolean existsByTenantIdAndTypeAndStatusIn(UUID tenantId, JobType type, List<JobStatus> statuses);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE) // SELECT FOR UPDATE
-    @Query("SELECT j FROM JobEntity j WHERE j.tenantId = :tenantId AND j.type = :type " +
-            "AND j.status = :status ORDER BY j.createdTime ASC, j.id ASC")
-    JobEntity findOldestByTenantIdAndTypeAndStatusForUpdate(UUID tenantId, JobType type, JobStatus status, Limit limit);
+    @Query(value = "SELECT * FROM job j WHERE j.tenant_id = :tenantId AND j.type = :type " +
+                   "AND j.status = :status ORDER BY j.created_time ASC, j.id ASC LIMIT 1 FOR UPDATE", nativeQuery = true)
+    JobEntity findOldestByTenantIdAndTypeAndStatusForUpdate(UUID tenantId, String type, String status);
 
     @Transactional
     @Modifying

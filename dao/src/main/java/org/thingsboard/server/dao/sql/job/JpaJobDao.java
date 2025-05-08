@@ -17,17 +17,18 @@ package org.thingsboard.server.dao.sql.job;
 
 import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobFilter;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.job.JobDao;
 import org.thingsboard.server.dao.model.sql.JobEntity;
@@ -45,8 +46,11 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
     private final JobRepository jobRepository;
 
     @Override
-    public PageData<Job> findByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(jobRepository.findByTenantIdAndSearchText(tenantId.getId(), Strings.emptyToNull(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
+    public PageData<Job> findByTenantIdAndFilter(TenantId tenantId, JobFilter filter, PageLink pageLink) {
+        return DaoUtil.toPageData(jobRepository.findByTenantIdAndTypesAndStatusesAndSearchText(tenantId.getId(),
+                CollectionsUtil.isEmpty(filter.getTypes()) ? null : filter.getTypes(),
+                CollectionsUtil.isEmpty(filter.getStatuses()) ? null : filter.getStatuses(),
+                Strings.emptyToNull(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
@@ -71,7 +75,7 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
 
     @Override
     public Job findOldestByTenantIdAndTypeAndStatusForUpdate(TenantId tenantId, JobType type, JobStatus status) {
-        return DaoUtil.getData(jobRepository.findOldestByTenantIdAndTypeAndStatusForUpdate(tenantId.getId(), type, status, Limit.of(1)));
+        return DaoUtil.getData(jobRepository.findOldestByTenantIdAndTypeAndStatusForUpdate(tenantId.getId(), type.name(), status.name()));
     }
 
     @Override

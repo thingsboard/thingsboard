@@ -1900,6 +1900,11 @@ queue:
   tasks:
     # Partitions count for tasks queues
     partitions: "${TB_QUEUE_TASKS_PARTITIONS:12}"
+    # Custom partitions count for tasks queues per type. Format: 'TYPE1:24;TYPE2:36', e.g. 'CF_REPROCESSING:24;TENANT_EXPORT:6'
+    partitions_per_type: "${TB_QUEUE_TASKS_PARTITIONS_PER_TYPE:}"
+    # Tasks partitioning strategy: 'tenant' or 'entity'. By default, using 'tenant' - tasks of a specific tenant are processed in the same partition.
+    # In a single-tenant environment, use 'entity' strategy to distribute the tasks among multiple partitions.
+    partitioning_strategy: "${TB_QUEUE_TASKS_PARTITIONING_STRATEGY:tenant}"
     stats:
       # Interval in milliseconds to process job stats
       processing_interval_ms: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:1000}"

@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobFilter;
 import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobStatus;
@@ -174,8 +175,8 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     }
 
     @Override
-    public PageData<Job> findJobsByTenantId(TenantId tenantId, PageLink pageLink) {
-        return jobDao.findByTenantId(tenantId, pageLink);
+    public PageData<Job> findJobsByFilter(TenantId tenantId, JobFilter filter, PageLink pageLink) {
+        return jobDao.findByTenantIdAndFilter(tenantId, filter, pageLink);
     }
 
     @Override

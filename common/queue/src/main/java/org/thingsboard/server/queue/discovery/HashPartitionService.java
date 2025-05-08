@@ -40,12 +40,14 @@ import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -87,7 +89,9 @@ public class HashPartitionService implements PartitionService {
     @Value("${queue.edqs.partitions:12}")
     private Integer edqsPartitions;
     @Value("${queue.tasks.partitions:12}")
-    private Integer tasksPartitions;
+    private Integer defaultTasksPartitions;
+    @Value("${queue.tasks.partitions_per_type:}")
+    private String tasksPartitionsPerType;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
 
@@ -135,11 +139,18 @@ public class HashPartitionService implements PartitionService {
         partitionSizesMap.put(edqsKey, edqsPartitions);
         partitionTopicsMap.put(edqsKey, "edqs"); // placeholder, not used
 
-        for (JobType jobType : JobType.values()) {
-            QueueKey queueKey = new QueueKey(ServiceType.TASK_PROCESSOR, jobType.name());
-            partitionSizesMap.put(queueKey, tasksPartitions);
-            partitionTopicsMap.put(queueKey, jobType.getTasksTopic());
+        Map<JobType, Integer> tasksPartitions = new EnumMap<>(JobType.class);
+        PropertyUtils.getProps(tasksPartitionsPerType).forEach((type, partitions) -> {
+            tasksPartitions.put(JobType.valueOf(type), Integer.parseInt(partitions));
+        });
+        for (JobType type : JobType.values()) {
+            tasksPartitions.putIfAbsent(type, defaultTasksPartitions);
         }
+        tasksPartitions.forEach((type, partitions) -> {
+            QueueKey queueKey = new QueueKey(ServiceType.TASK_PROCESSOR, type.name());
+            partitionSizesMap.put(queueKey, partitions);
+            partitionTopicsMap.put(queueKey, type.getTasksTopic());
+        });
     }
 
     @AfterStartUp(order = AfterStartUp.QUEUE_INFO_INITIALIZATION)

@@ -24,6 +24,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
@@ -79,6 +80,8 @@ public class DefaultJobManager implements JobManager {
     private final ExecutorService executor;
     private final ExecutorService consumerExecutor;
 
+    @Value("${queue.tasks.partitioning_strategy:tenant}")
+    private String tasksPartitioningStrategy;
     @Value("${queue.tasks.stats.processing_interval_ms:1000}")
     private int statsProcessingInterval;
 
@@ -148,7 +151,7 @@ public class DefaultJobManager implements JobManager {
             JobProcessor processor = getJobProcessor(job.getType());
             List<TaskResult> toReprocess = job.getConfiguration().getToReprocess();
             if (toReprocess == null) {
-                int tasksCount = processor.process(job, this::submitTask); // todo: think about stopping tb - while tasks are being submitted
+                int tasksCount = processor.process(job, this::submitTask);
                 log.info("[{}][{}][{}] Submitted {} tasks", tenantId, jobId, job.getType(), tasksCount);
                 jobStatsService.reportAllTasksSubmitted(tenantId, jobId, tasksCount);
             } else {
@@ -197,17 +200,24 @@ public class DefaultJobManager implements JobManager {
     }
 
     private void submitTask(Task<?> task) {
-        log.info("[{}][{}] Submitting task: {}", task.getTenantId(), task.getJobId(), task);
+        log.debug("[{}][{}] Submitting task: {}", task.getTenantId(), task.getJobId(), task);
         TaskProto taskProto = TaskProto.newBuilder()
                 .setValue(JacksonUtil.toString(task))
                 .build();
 
         TbQueueProducer<TbProtoQueueMsg<TaskProto>> producer = taskProducers.get(task.getJobType());
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TASK_PROCESSOR, task.getJobType().name(), task.getTenantId(), task.getTenantId()); // one job at a time for a given tenant
+        EntityId entityId = null;
+        if (tasksPartitioningStrategy.equals("entity")) {
+            entityId = task.getEntityId();
+        }
+        if (entityId == null) {
+            entityId = task.getTenantId();
+        }
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TASK_PROCESSOR, task.getJobType().name(), task.getTenantId(), entityId);
         producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), taskProto), new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
-                log.trace("Submitted task: {}", task);
+                log.trace("Submitted task to {}: {}", tpi, taskProto);
             }
 
             @Override
@@ -247,7 +257,7 @@ public class DefaultJobManager implements JobManager {
         });
         consumer.commit();
 
-        Thread.sleep(statsProcessingInterval); // todo: test with bigger interval
+        Thread.sleep(statsProcessingInterval);
     }
 
     private void sendJobFinishedNotification(Job job) {

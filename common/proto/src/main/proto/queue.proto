@@ -1854,7 +1854,7 @@ message EdqsResponseMsg {
 }
 
 message TaskProto {
-  string value = 1; // fixme: TMP, make more efficient
+  string value = 1;
 }
 
 message JobStatsMsg {
@@ -1867,5 +1867,5 @@ message JobStatsMsg {
 }
 
 message TaskResultProto {
-  string value = 1; // fixme: TMP, make more efficient
+  string value = 1;
 }

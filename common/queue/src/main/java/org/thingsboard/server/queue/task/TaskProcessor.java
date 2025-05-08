@@ -63,7 +63,7 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
 
     private QueueKey queueKey;
     private MainQueueConsumerManager<TbProtoQueueMsg<TaskProto>, QueueConfig> taskConsumer;
-    private final ExecutorService taskExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getJobType().name().toLowerCase() + "-task-processor"));
+    private final ExecutorService taskExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(getJobType().name().toLowerCase() + "-task-processor"));
 
     private final SetCache<UUID> discardedJobs = new SetCache<>(TimeUnit.MINUTES.toMillis(60));
     private final SetCache<UUID> deletedTenants = new SetCache<>(TimeUnit.MINUTES.toMillis(60));

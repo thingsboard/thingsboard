@@ -29,7 +29,7 @@ public class JobId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "TASK", allowableValues = "TASK")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "JOB", allowableValues = "JOB")
     @Override
     public EntityType getEntityType() {
         return EntityType.JOB;

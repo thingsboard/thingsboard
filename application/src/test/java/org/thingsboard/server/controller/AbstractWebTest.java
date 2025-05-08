@@ -109,6 +109,7 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -168,6 +169,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -1268,6 +1270,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected List<Job> findJobs() throws Exception {
         return doGetTypedWithPageLink("/api/jobs?", new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
+    }
+
+    protected List<Job> findJobs(JobType... types) throws Exception {
+        return doGetTypedWithPageLink("/api/jobs?types=" + Arrays.stream(types).map(Enum::name).collect(Collectors.joining(",")) + "&",
+                new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
     }
 
     protected void cancelJob(JobId jobId) throws Exception {
