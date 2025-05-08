@@ -18,6 +18,8 @@ package org.thingsboard.server.common.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -76,12 +78,15 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
+import org.thingsboard.server.common.msg.gen.MsgProtos;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponseActorMsg;
 import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
@@ -93,8 +98,8 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceDeleteMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ApiUsageRecordKeyProto;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1342,6 +1347,21 @@ public class ProtoUtils {
             }
         }
         return builder.build();
+    }
+
+    @Deprecated(forRemoval = true, since = "4.1")
+    public static MsgProtos.TbMsgProto getTbMsgProto(TransportProtos.ToRuleEngineMsg ruleEngineMsg) throws InvalidProtocolBufferException {
+        if (ruleEngineMsg.getTbMsg().isEmpty()) {
+            return ruleEngineMsg.getTbMsgProto();
+        } else {
+            return MsgProtos.TbMsgProto.parseFrom(ruleEngineMsg.getTbMsg());
+        }
+    }
+
+    @SneakyThrows
+    @Deprecated(forRemoval = true, since = "4.1") // inline to TbMsg.fromProto(queueName, ruleEngineMsg.getTbMsgProto(), callback)
+    public static TbMsg fromTbMsgProto(String queueName, TransportProtos.ToRuleEngineMsg ruleEngineMsg, TbMsgCallback callback) {
+        return TbMsg.fromProto(queueName, getTbMsgProto(ruleEngineMsg), callback);
     }
 
     private static boolean isNotNull(Object obj) {
