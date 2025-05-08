@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 ///
 
 import {
-  CellActionDescriptor,
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
@@ -30,12 +29,11 @@ import {
   RecipientNotificationDialogData
 } from '@home/pages/notification/recipient/recipient-notification-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { EntityAction } from '@home/models/entity/entity-component.models';
-import { RecipientTableHeaderComponent } from '@home/pages/notification/recipient/recipient-table-header.component';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class RecipientTableConfigResolver  {
@@ -50,11 +48,13 @@ export class RecipientTableConfigResolver  {
 
     this.config.entityType = EntityType.NOTIFICATION_TARGET;
     this.config.detailsPanelEnabled = false;
-    this.config.addEnabled = false;
+    this.config.addAsTextButton = true;
     this.config.rowPointer = true;
 
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_TARGET);
     this.config.entityResources = {} as EntityTypeResource<NotificationTarget>;
+
+    this.config.addEntity = () => this.notificationTargetDialog(null, true);
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTargets(pageLink);
 
@@ -64,11 +64,6 @@ export class RecipientTableConfigResolver  {
     this.config.deleteEntitiesContent = () => this.translate.instant('notification.delete-recipients-text');
 
     this.config.deleteEntity = id => this.notificationService.deleteNotificationTarget(id.id);
-
-    this.config.cellActionDescriptors = this.configureCellActions();
-
-    this.config.headerComponent = RecipientTableHeaderComponent;
-    this.config.onEntityAction = action => this.onTargetAction(action);
 
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
@@ -89,19 +84,17 @@ export class RecipientTableConfigResolver  {
     );
   }
 
-  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTarget> {
+  resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTarget> {
     return this.config;
   }
 
-  private configureCellActions(): Array<CellActionDescriptor<NotificationTarget>> {
-    return [];
+  private editTarget($event: Event, target: NotificationTarget): void {
+    $event?.stopPropagation();
+    this.notificationTargetDialog(target).subscribe(res => res ? this.config.updateData() : null);
   }
 
-  private editTarget($event: Event, target: NotificationTarget, isAdd = false) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<RecipientNotificationDialogComponent, RecipientNotificationDialogData,
+  private notificationTargetDialog(target: NotificationTarget, isAdd = false): Observable<NotificationTarget> {
+    return this.dialog.open<RecipientNotificationDialogComponent, RecipientNotificationDialogData,
       NotificationTarget>(RecipientNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -109,20 +102,6 @@ export class RecipientTableConfigResolver  {
         isAdd,
         target
       }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
-  }
-
-  private onTargetAction(action: EntityAction<NotificationTarget>): boolean {
-    switch (action.action) {
-      case 'add':
-        this.editTarget(action.event, action.entity, true);
-        return true;
-    }
-    return false;
+    }).afterClosed();
   }
 }

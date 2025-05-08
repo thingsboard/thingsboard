@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.OriginatorAlarmFilter;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
@@ -84,7 +85,7 @@ import static org.thingsboard.server.dao.DaoUtil.toPageable;
 @Slf4j
 @Component
 @SqlDao
-public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements AlarmDao {
+public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements AlarmDao, TenantEntityDao<Alarm> {
 
     @Autowired
     private AlarmRepository alarmRepository;
@@ -415,8 +416,8 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
-        return alarmQueryRepository.countAlarmsByQuery(tenantId, customerId, query);
+    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query, Collection<EntityId> orderedEntityIds) {
+        return alarmQueryRepository.countAlarmsByQuery(tenantId, customerId, query, orderedEntityIds);
     }
 
     @Override
@@ -549,6 +550,11 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         } else {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public PageData<Alarm> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(alarmRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

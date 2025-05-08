@@ -2768,8 +2768,7 @@
         "metadata-required": "元資料項不能為空。",
         "output": "輸出",
         "test": "測試",
-        "help": "幫助",
-        "reset-debug-mode": "重置所有節點中的調試模式"
+        "help": "幫助"
     },
     "timezone": {
         "timezone": "時區",
@@ -3311,7 +3310,6 @@
         "type": "部件類型",
         "resources": "資源",
         "resource-url": "JavaScript/CSS URL",
-        "resource-is-module": "是模組",
         "remove-resource": "刪除資源",
         "add-resource": "增加資源",
         "html": "HTML",

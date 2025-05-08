@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,6 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
             EntityType.NOTIFICATION_TEMPLATE, EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE
     );
 
-
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
         if (!rateLimitService.checkRateLimit(LimitedApi.ENTITY_EXPORT, ctx.getTenantId())) {
@@ -129,12 +128,10 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         }
     }
 
-
     @Override
     public Comparator<EntityType> getEntityTypeComparatorForImport() {
         return Comparator.comparing(SUPPORTED_ENTITY_TYPES::indexOf);
     }
-
 
     @SuppressWarnings("unchecked")
     private <I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> EntityExportService<I, E, D> getExportService(EntityType entityType) {

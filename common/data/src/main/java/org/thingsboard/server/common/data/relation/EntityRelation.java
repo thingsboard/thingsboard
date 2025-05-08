@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.edqs.EdqsObject;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.validation.Length;
 
@@ -34,13 +36,14 @@ import java.io.Serializable;
 @Schema
 @EqualsAndHashCode(exclude = "additionalInfoBytes")
 @ToString(exclude = {"additionalInfoBytes"})
-public class EntityRelation implements HasVersion, Serializable {
+public class EntityRelation implements HasVersion, Serializable, EdqsObject {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
     public static final String EDGE_TYPE = "ManagedByEdge";
     public static final String CONTAINS_TYPE = "Contains";
     public static final String MANAGES_TYPE = "Manages";
+    public static final String USES_TYPE = "Uses";
 
     @Setter
     private EntityId from;
@@ -107,13 +110,28 @@ public class EntityRelation implements HasVersion, Serializable {
         return typeGroup;
     }
 
-    @Schema(description = "Additional parameters of the relation",implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the relation", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     public JsonNode getAdditionalInfo() {
         return BaseDataWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
     }
 
     public void setAdditionalInfo(JsonNode addInfo) {
         BaseDataWithAdditionalInfo.setJson(addInfo, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
+    }
+
+    @JsonIgnore
+    public String key() {
+        return "r_" + from + "_" + to + "_" + typeGroup + "_" + type;
+    }
+
+    @Override
+    public Long version() {
+        return version;
+    }
+
+    @Override
+    public ObjectType type() {
+        return ObjectType.RELATION;
     }
 
 }

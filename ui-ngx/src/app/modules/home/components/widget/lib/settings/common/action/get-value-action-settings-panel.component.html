@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -131,7 +131,9 @@
           class="tb-form-panel stroked" formGroupName="dataToValue">
       <div class="tb-form-row no-padding no-border column-xs">
         <div class="fixed-title-width" translate>widgets.value-action.action-result-converter</div>
-        <tb-toggle-select class="flex-1" formControlName="type">
+        <tb-toggle-select formControlName="type"
+                          class="flex-1"
+                          [class.invisible]="getValueSettingsFormGroup.get('action').value === getValueAction.GET_DASHBOARD_STATE_OBJECT">
           <tb-toggle-option [value]="dataToValueType.NONE">{{ 'widgets.value-action.converter-none' | translate }}</tb-toggle-option>
           <tb-toggle-option [value]="dataToValueType.FUNCTION">{{ 'widgets.value-action.converter-function' | translate }}</tb-toggle-option>
         </tb-toggle-select>
@@ -143,7 +145,7 @@
                   [globalVariables]="functionScopeVariables"
                   [functionArgs]="['data']"
                   functionTitle="{{ 'widgets.value-action.parse-value-function' | translate }}"
-                  helpId="widget/lib/rpc/parse_value_fn">
+                  [helpId]="getParseValueFunctionHelpId()">
       </tb-js-func>
       <div *ngIf="valueType === ValueType.BOOLEAN" class="tb-form-row align-start no-gap column-xs">
         <div class="fixed-title-width fixed-title-height">{{ 'widgets.value-action.state-when-result-is' | translate:{state: stateLabel} }}</div>

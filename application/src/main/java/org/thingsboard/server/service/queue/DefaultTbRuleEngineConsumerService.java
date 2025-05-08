@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package org.thingsboard.server.service.queue;
 
-import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -46,9 +45,10 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
+import org.thingsboard.server.service.queue.processing.AbstractPartitionBasedConsumerService;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineConsumerContext;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumerManager;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -64,8 +64,7 @@ import java.util.stream.Collectors;
 
 @Service
 @TbRuleEngineComponent
-@Slf4j
-public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
+public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
 
     private final TbRuleEngineConsumerContext ctx;
     private final QueueService queueService;
@@ -83,16 +82,16 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbApiUsageStateService apiUsageStateService,
                                               PartitionService partitionService,
                                               ApplicationEventPublisher eventPublisher,
-                                              JwtSettingsService jwtSettingsService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
+                                              JwtSettingsService jwtSettingsService,
+                                              CalculatedFieldCache calculatedFieldCache) {
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;
     }
 
-    @PostConstruct
-    public void init() {
-        super.init("tb-rule-engine");
+    @Override
+    protected void onStartUp() {
         List<Queue> queues = queueService.findAllQueues();
         for (Queue configuration : queues) {
             if (partitionService.isManagedByCurrentService(configuration.getTenantId())) {
@@ -103,8 +102,11 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     @Override
-    protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        event.getPartitionsMap().forEach((queueKey, partitions) -> {
+    protected void onPartitionChangeEvent(PartitionChangeEvent event) {
+        event.getNewPartitions().forEach((queueKey, partitions) -> {
+            if (DataConstants.CF_QUEUE_NAME.equals(queueKey.getQueueName()) || DataConstants.CF_STATES_QUEUE_NAME.equals(queueKey.getQueueName())) {
+                return;
+            }
             if (partitionService.isManagedByCurrentService(queueKey.getTenantId())) {
                 var consumer = getConsumer(queueKey).orElseGet(() -> {
                     Queue config = queueService.findQueueByTenantIdAndName(queueKey.getTenantId(), queueKey.getQueueName());
@@ -142,6 +144,11 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Override
     protected ServiceType getServiceType() {
         return ServiceType.TB_RULE_ENGINE;
+    }
+
+    @Override
+    protected String getPrefix() {
+        return "tb-rule-engine";
     }
 
     @Override
@@ -227,7 +234,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             if (event.getEvent() == ComponentLifecycleEvent.DELETED) {
                 List<QueueKey> toRemove = consumers.keySet().stream()
                         .filter(queueKey -> queueKey.getTenantId().equals(event.getTenantId()))
-                        .collect(Collectors.toList());
+                        .toList();
                 toRemove.forEach(queueKey -> {
                     removeConsumer(queueKey).ifPresent(consumer -> consumer.delete(false));
                 });

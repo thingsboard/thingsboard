@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ public class ResourcesUpdater {
         }
 
         executor.shutdown();
-        if (!executor.awaitTermination(10, TimeUnit.MINUTES)) {
+        if (!executor.awaitTermination(5, TimeUnit.HOURS)) {
             throw new RuntimeException("Dashboards resources update timeout"); // just in case, should happen
         }
         log.info("Updated {} dashboards", updatedCount);
@@ -142,7 +142,7 @@ public class ResourcesUpdater {
         }
 
         executor.shutdown();
-        if (!executor.awaitTermination(10, TimeUnit.MINUTES)) {
+        if (!executor.awaitTermination(5, TimeUnit.HOURS)) {
             throw new RuntimeException("Widgets resources update timeout");
         }
         log.info("Updated {} widgets", updatedCount);

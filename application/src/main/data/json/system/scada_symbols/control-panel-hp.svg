@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="400" height="200" fill="none" version="1.1" viewBox="0 0 400 200"><tb:metadata xmlns=""><![CDATA[{
   "title": "HP Control panel",
-  "description": "Control panel",
+  "description": "Sends the command to the device or updates attribute/time series when the user pushes the button. Widget settings will enable you to configure behavior, how to fetch the initial state, and what to trigger when power on/off states.",
   "searchTags": [
     "control"
   ],

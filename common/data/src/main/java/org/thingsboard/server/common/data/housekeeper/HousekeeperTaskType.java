@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ public enum HousekeeperTaskType {
     DELETE_ALARMS("alarms deletion"),
     UNASSIGN_ALARMS("alarms unassigning"),
     DELETE_TENANT_ENTITIES("tenant entities deletion"),
-    DELETE_ENTITIES("entities deletion");
+    DELETE_ENTITIES("entities deletion"),
+    DELETE_CALCULATED_FIELDS("calculated fields deletion");
 
     private final String description;
 

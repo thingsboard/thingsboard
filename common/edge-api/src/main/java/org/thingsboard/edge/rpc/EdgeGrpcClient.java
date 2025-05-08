@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder()
                         .setEdgeRoutingKey(edgeKey)
                         .setEdgeSecret(edgeSecret)
-                        .setEdgeVersion(EdgeVersion.V_3_9_0)
+                        .setEdgeVersion(EdgeVersion.V_4_0_0)
                         .setMaxInboundMessageSize(maxInboundMessageSize)
                         .build())
                 .build());

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,13 @@ package org.thingsboard.rule.engine.util;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -160,6 +163,17 @@ public class TenantIdLoader {
                 break;
             case MOBILE_APP_BUNDLE:
                 tenantEntity = ctx.getMobileAppBundleService().findMobileAppBundleById(ctxTenantId, new MobileAppBundleId(id));
+                break;
+            case CALCULATED_FIELD:
+                tenantEntity = ctx.getCalculatedFieldService().findById(ctxTenantId, new CalculatedFieldId(id));
+                break;
+            case CALCULATED_FIELD_LINK:
+                CalculatedFieldLink calculatedFieldLink = ctx.getCalculatedFieldService().findCalculatedFieldLinkById(ctxTenantId, new CalculatedFieldLinkId(id));
+                if (calculatedFieldLink != null) {
+                    tenantEntity = ctx.getCalculatedFieldService().findById(ctxTenantId, calculatedFieldLink.getCalculatedFieldId());
+                } else {
+                    tenantEntity = null;
+                }
                 break;
             default:
                 throw new RuntimeException("Unexpected entity type: " + entityId.getEntityType());

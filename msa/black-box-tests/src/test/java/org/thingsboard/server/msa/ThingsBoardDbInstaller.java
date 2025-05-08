@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class ThingsBoardDbInstaller {
     private final static String TB_MQTT_TRANSPORT_LOG_VOLUME = "tb-mqtt-transport-log-test-volume";
     private final static String TB_SNMP_TRANSPORT_LOG_VOLUME = "tb-snmp-transport-log-test-volume";
     private final static String TB_VC_EXECUTOR_LOG_VOLUME = "tb-vc-executor-log-test-volume";
+    private final static String TB_EDQS_LOG_VOLUME = "tb-edqs-log-test-volume";
     private final static String JAVA_OPTS = "-Xmx512m";
 
     private final DockerComposeExecutor dockerCompose;
@@ -65,6 +66,7 @@ public class ThingsBoardDbInstaller {
     private final String tbMqttTransportLogVolume;
     private final String tbSnmpTransportLogVolume;
     private final String tbVcExecutorLogVolume;
+    private final String tbEdqsLogVolume;
     private final Map<String, String> env;
 
     public ThingsBoardDbInstaller() {
@@ -103,6 +105,7 @@ public class ThingsBoardDbInstaller {
         tbMqttTransportLogVolume = project + "_" + TB_MQTT_TRANSPORT_LOG_VOLUME;
         tbSnmpTransportLogVolume = project + "_" + TB_SNMP_TRANSPORT_LOG_VOLUME;
         tbVcExecutorLogVolume = project + "_" + TB_VC_EXECUTOR_LOG_VOLUME;
+        tbEdqsLogVolume = project + "_" + TB_EDQS_LOG_VOLUME;
 
         dockerCompose = new DockerComposeExecutor(composeFiles, project);
 
@@ -119,6 +122,7 @@ public class ThingsBoardDbInstaller {
         env.put("TB_MQTT_TRANSPORT_LOG_VOLUME", tbMqttTransportLogVolume);
         env.put("TB_SNMP_TRANSPORT_LOG_VOLUME", tbSnmpTransportLogVolume);
         env.put("TB_VC_EXECUTOR_LOG_VOLUME", tbVcExecutorLogVolume);
+        env.put("TB_EDQS_LOG_VOLUME", tbEdqsLogVolume);
         if (IS_REDIS_CLUSTER) {
             for (int i = 0; i < 6; i++) {
                 env.put("REDIS_CLUSTER_DATA_VOLUME_" + i, redisClusterDataVolume + '-' + i);
@@ -189,6 +193,9 @@ public class ThingsBoardDbInstaller {
             dockerCompose.withCommand("volume create " + tbVcExecutorLogVolume);
             dockerCompose.invokeDocker();
 
+            dockerCompose.withCommand("volume create " + tbEdqsLogVolume);
+            dockerCompose.invokeDocker();
+
             StringBuilder additionalServices = new StringBuilder();
             if (IS_HYBRID_MODE) {
                 additionalServices.append(" cassandra");
@@ -220,7 +227,8 @@ public class ThingsBoardDbInstaller {
             dockerCompose.withCommand("up -d postgres" + additionalServices);
             dockerCompose.invokeCompose();
 
-            dockerCompose.withCommand("run --no-deps --rm -e INSTALL_TB=true -e LOAD_DEMO=true tb-core1");
+            dockerCompose.withCommand("run --no-deps --rm -e INSTALL_TB=true -e LOAD_DEMO=true " +
+                    "tb-core1");
             dockerCompose.invokeCompose();
 
         } finally {
@@ -240,6 +248,7 @@ public class ThingsBoardDbInstaller {
         copyLogs(tbMqttTransportLogVolume, "./target/tb-mqtt-transport-logs/");
         copyLogs(tbSnmpTransportLogVolume, "./target/tb-snmp-transport-logs/");
         copyLogs(tbVcExecutorLogVolume, "./target/tb-vc-executor-logs/");
+        copyLogs(tbEdqsLogVolume, "./target/tb-edqs-logs/");
 
         StringJoiner rmVolumesCommand = new StringJoiner(" ")
                 .add("volume rm -f")
@@ -251,6 +260,7 @@ public class ThingsBoardDbInstaller {
                 .add(tbMqttTransportLogVolume)
                 .add(tbSnmpTransportLogVolume)
                 .add(tbVcExecutorLogVolume)
+                .add(tbEdqsLogVolume)
                 .add(resolveRedisComposeVolumeLog());
 
         if (IS_HYBRID_MODE) {

@@ -26,7 +26,7 @@ For [Latest values{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/us
                     label: 'Sin', // label of the dataKey. Used as display value (for ex. in the widget legend section) 
                     color: '#ffffff', // color of the key. Can be used by widget to set color of the key data (for ex. lines in line chart or segments in the pie chart).  
                     funcBody: "", // only applicable for datasource with type "function" and "function" key type. Defines body of the function to generate simulated data.
-                    settings: {} // dataKey specific settings with structure according to the defined Data key settings json schema. See "Settings schema section".
+                    settings: {} // dataKey specific settings with structure according to the defined Data key settings form.
                },
                //...
            ]
@@ -72,7 +72,7 @@ For [Alarm widget{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/use
                  type: 'alarm', // type of the dataKey. Only "alarm" in this case. 
                  label: 'Severity', // label of the dataKey. Used as display value (for ex. as a column title in the Alarms table) 
                  color: '#ffffff', // color of the key. Can be used by widget to set color of the key data.  
-                 settings: {} // dataKey specific settings with structure according to the defined Data key settings json schema. See "Settings schema section".
+                 settings: {} // dataKey specific settings with structure according to the defined Data key settings form.
             },
             //...
           ] 

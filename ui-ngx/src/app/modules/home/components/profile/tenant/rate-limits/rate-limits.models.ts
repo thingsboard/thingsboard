@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -45,7 +45,8 @@ export enum RateLimitsType {
   EDGE_EVENTS_RATE_LIMIT = 'EDGE_EVENTS_RATE_LIMIT',
   EDGE_EVENTS_PER_EDGE_RATE_LIMIT = 'EDGE_EVENTS_PER_EDGE_RATE_LIMIT',
   EDGE_UPLINK_MESSAGES_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_RATE_LIMIT',
-  EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT'
+  EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT',
+  CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT = 'CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT',
 }
 
 export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
@@ -74,6 +75,7 @@ export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
     [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-events-per-edge-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-per-edge-rate-limit'],
+    [RateLimitsType.CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT, 'tenant-profile.rate-limits.calculated-field-debug-event-rate-limit'],
   ]
 );
 
@@ -103,6 +105,7 @@ export const rateLimitsDialogTitleTranslationMap = new Map<RateLimitsType, strin
     [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-events-per-edge-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-per-edge-rate-limit'],
+    [RateLimitsType.CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-calculated-field-debug-event-rate-limit']
   ]
 );
 

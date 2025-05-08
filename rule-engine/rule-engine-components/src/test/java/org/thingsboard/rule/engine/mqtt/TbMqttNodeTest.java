@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttConnectResult;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
+import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -80,6 +81,7 @@ import static org.mockito.BDDMockito.spy;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
@@ -106,6 +108,22 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
     protected void setUp() {
         mqttNode = spy(new TbMqttNode());
         mqttNodeConfig = new TbMqttNodeConfiguration().defaultConfiguration();
+        lenient().when(ctxMock.getMqttClientSettings()).thenReturn(new MqttClientSettings() {
+            @Override
+            public int getRetransmissionMaxAttempts() {
+                return 3;
+            }
+
+            @Override
+            public long getRetransmissionInitialDelayMillis() {
+                return 5000L;
+            }
+
+            @Override
+            public double getRetransmissionJitterFactor() {
+                return 0.15;
+            }
+        });
     }
 
     @Test
@@ -283,7 +301,12 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
             return null;
         }).given(future).addListener(any());
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
         mqttNode.onMsg(ctxMock, msg);
 
         then(ctxMock).should().ack(msg);
@@ -322,7 +345,12 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
             return null;
         }).given(future).addListener(any());
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, "\"string\"");
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data("\"string\"")
+                .build();
         mqttNode.onMsg(ctxMock, msg);
 
         then(ctxMock).should(never()).ack(msg);
@@ -330,7 +358,9 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         then(mqttClientMock).should().publish(mqttNodeConfig.getTopicPattern(), Unpooled.wrappedBuffer(expectedData.getBytes(StandardCharsets.UTF_8)), MqttQoS.AT_LEAST_ONCE, false);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metaData)
+                .build();
         ArgumentCaptor<TbMsg> actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().tellFailure(actualMsgCaptor.capture(), eq(exception));
         TbMsg actualMsg = actualMsgCaptor.getValue();

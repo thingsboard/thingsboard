@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,44 +94,26 @@ public class AlarmEdgeTest extends AbstractEdgeTest {
         Alarm savedAlarm = doPost("/api/alarm", alarm, Alarm.class);
         edgeImitator.ignoreType(AlarmCommentUpdateMsg.class);
 
-        // ack alarm
+        // ack alarm - send only by using push to edge node
         edgeImitator.expectMessageAmount(1);
         doPost("/api/alarm/" + savedAlarm.getUuidId() + "/ack");
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof AlarmUpdateMsg);
-        AlarmUpdateMsg alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
-        Assert.assertEquals(UpdateMsgType.ALARM_ACK_RPC_MESSAGE, alarmUpdateMsg.getMsgType());
-        Alarm alarmMsg = JacksonUtil.fromString(alarmUpdateMsg.getEntity(), Alarm.class, true);
-        Assert.assertNotNull(alarmMsg);
-        Assert.assertEquals(savedAlarm.getType(), alarmMsg.getType());
-        Assert.assertEquals(savedAlarm.getName(), alarmMsg.getName());
-        Assert.assertEquals(AlarmStatus.ACTIVE_ACK, alarmMsg.getStatus());
+        Assert.assertFalse(edgeImitator.waitForMessages(5));
 
-        // clear alarm
+        // clear alarm - send only by using push to edge node
         edgeImitator.expectMessageAmount(1);
         doPost("/api/alarm/" + savedAlarm.getUuidId() + "/clear");
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof AlarmUpdateMsg);
-        alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
-        Assert.assertEquals(UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE, alarmUpdateMsg.getMsgType());
-        alarmMsg = JacksonUtil.fromString(alarmUpdateMsg.getEntity(), Alarm.class, true);
-        Assert.assertNotNull(alarmMsg);
-        Assert.assertEquals(savedAlarm.getType(), alarmMsg.getType());
-        Assert.assertEquals(savedAlarm.getName(), alarmMsg.getName());
-        Assert.assertEquals(AlarmStatus.CLEARED_ACK, alarmMsg.getStatus());
+        Assert.assertFalse(edgeImitator.waitForMessages(5));
 
         // delete alarm
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/alarm/" + savedAlarm.getUuidId())
                 .andExpect(status().isOk());
         Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof AlarmUpdateMsg);
-        alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
+        AlarmUpdateMsg alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, alarmUpdateMsg.getMsgType());
-        alarmMsg = JacksonUtil.fromString(alarmUpdateMsg.getEntity(), Alarm.class, true);
+        Alarm alarmMsg = JacksonUtil.fromString(alarmUpdateMsg.getEntity(), Alarm.class, true);
         Assert.assertNotNull(alarmMsg);
         Assert.assertEquals(savedAlarm.getType(), alarmMsg.getType());
         Assert.assertEquals(savedAlarm.getName(), alarmMsg.getName());
@@ -252,4 +234,5 @@ public class AlarmEdgeTest extends AbstractEdgeTest {
         alarmComment.setCreatedTime(Uuids.unixTimestamp(uuid));
         return alarmComment;
     }
+
 }

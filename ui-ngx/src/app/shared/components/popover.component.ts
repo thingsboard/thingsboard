@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -311,6 +311,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       #overlay="cdkConnectedOverlay"
       cdkConnectedOverlay
       [cdkConnectedOverlayHasBackdrop]="hasBackdrop"
+      [cdkConnectedOverlayBackdropClass]="backdropClass"
       [cdkConnectedOverlayOrigin]="origin"
       [cdkConnectedOverlayPositions]="positions"
       [cdkConnectedOverlayScrollStrategy]="scrollStrategy"
@@ -374,7 +375,6 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   tbComponentInjector: Injector | null = null;
   tbComponentStyle: { [klass: string]: any }  = {};
   tbOverlayClassName!: string;
-  tbOverlayStyle: { [klass: string]: any } = {};
   tbPopoverInnerStyle: { [klass: string]: any } = {};
   tbPopoverInnerContentStyle: { [klass: string]: any } = {};
   tbBackdrop = false;
@@ -382,6 +382,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   tbMouseLeaveDelay?: number;
   tbHideOnClickOutside = true;
   tbShowCloseButton = true;
+  tbModal = false;
 
   tbAnimationState = 'active';
 
@@ -461,7 +462,23 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   }
 
   get hasBackdrop(): boolean {
-    return this.tbTrigger === 'click' ? this.tbBackdrop : false;
+    return this.tbModal || (this.tbTrigger === 'click' && this.tbBackdrop);
+  }
+
+  get backdropClass(): string {
+    return this.tbModal ? 'tb-popover-overlay-backdrop' : '';
+  }
+
+
+  set tbOverlayStyle(value: { [klass: string]: any }) {
+    this._tbOverlayStyle = value;
+    if (this.popover) {
+      this.cdr.detectChanges();
+    }
+  }
+
+  get tbOverlayStyle(): { [klass: string]: any } {
+    return this._tbOverlayStyle;
   }
 
   preferredPlacement: PopoverPlacement = 'top';
@@ -479,6 +496,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
       this.cdr.markForCheck();
     }
   }, {threshold: [0.5]});
+  private _tbOverlayStyle: { [klass: string]: any } = {};
 
   constructor(
     public cdr: ChangeDetectorRef,
@@ -634,7 +652,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   }
 
   onClickOutside(event: MouseEvent): void {
-    if (this.tbHideOnClickOutside && !this.origin.elementRef.nativeElement.contains(event.target) && this.tbTrigger !== null) {
+    if (!this.tbModal && this.tbHideOnClickOutside && !this.origin.elementRef.nativeElement.contains(event.target) && this.tbTrigger !== null) {
       if (!this.isTopOverlay(event.target as Element)) {
         this.hide();
       }

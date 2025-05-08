@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -32,7 +32,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
-import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
+import { DataKeyConfigComponent } from '@home/components/widget/lib/settings/common/key/data-key-config.component';
 import {
   chartLabelPositions,
   chartLabelPositionTranslations,
@@ -41,6 +41,7 @@ import {
   chartShapes,
   chartShapeTranslations
 } from '@home/components/widget/lib/chart/chart.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-chart-line-settings',
@@ -90,7 +91,8 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
 
   constructor(protected store: Store<AppState>,
               private dataKeyConfigComponent: DataKeyConfigComponent,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -112,14 +114,18 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
       pointSize: [null, [Validators.min(0)]],
       fillAreaSettings: [null, []]
     });
-    this.lineSettingsFormGroup.valueChanges.subscribe(() => {
+    this.lineSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     merge(this.lineSettingsFormGroup.get('showLine').valueChanges,
       this.lineSettingsFormGroup.get('step').valueChanges,
       this.lineSettingsFormGroup.get('showPointLabel').valueChanges,
-      this.lineSettingsFormGroup.get('enablePointLabelBackground').valueChanges)
-    .subscribe(() => {
+      this.lineSettingsFormGroup.get('enablePointLabelBackground').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }

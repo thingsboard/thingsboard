@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import {
   baseUrl,
   createLabelFromDatasource,
   deepClone,
-  deleteNullProperties,
   guid,
   hashCode,
   isDefined,
@@ -41,7 +40,6 @@ import { DataKeyType, SharedTelemetrySubscriber } from '@app/shared/models/telem
 import { alarmFields, alarmSeverityTranslations, alarmStatusTranslations } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
-import jsonSchemaDefaults from 'json-schema-defaults';
 import { Observable } from 'rxjs';
 import { publishReplay, refCount } from 'rxjs/operators';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
@@ -51,6 +49,7 @@ import { DatePipe, DOCUMENT } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import cssjs from '@core/css/css';
 import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
+import { defaultFormProperties, FormProperty } from '@shared/models/dynamic-form.models';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
@@ -138,10 +137,10 @@ export class UtilsService {
     return predefinedFunctions[func];
   }
 
-  public getDefaultDatasource(dataKeySchema: any): Datasource {
+  public getDefaultDatasource(dataKeyForm: FormProperty[]): Datasource {
     const datasource = deepClone(this.defaultDatasource);
-    if (isDefined(dataKeySchema)) {
-      datasource.dataKeys[0].settings = this.generateObjectFromJsonSchema(dataKeySchema);
+    if (dataKeyForm?.length) {
+      datasource.dataKeys[0].settings = defaultFormProperties(dataKeyForm);
     }
     return datasource;
   }
@@ -189,12 +188,6 @@ export class UtilsService {
     return '';
   }
 
-  public generateObjectFromJsonSchema(schema: any): any {
-    const obj = jsonSchemaDefaults(schema);
-    deleteNullProperties(obj);
-    return obj;
-  }
-
   public processWidgetException(exception: any): ExceptionData {
     const data = this.parseException(exception, -6);
     if (data.message?.startsWith('NG0')) {
@@ -215,7 +208,7 @@ export class UtilsService {
     return parseException(exception, lineOffset);
   }
 
-  public customTranslation(translationValue: string, defaultValue: string): string {
+  public customTranslation(translationValue: string, defaultValue: string = translationValue): string {
     if (translationValue && isString(translationValue)) {
       if (translationValue.includes(`{${i18nPrefix}`)) {
         const matches = translationValue.match(i18nRegExp);

@@ -3,7 +3,7 @@
 <div class="divider"></div>
 <br/>
 
-*function (origXPos, origYPos, data, dsData, dsIndex, aspect): {x: number, y: number}*
+*function (origXPos, origYPos, data, dsData, aspect): {x: number, y: number}*
 
 A JavaScript function used to convert original relative x, y coordinates of the marker.
 
@@ -22,8 +22,8 @@ Should return position data having the following structure:
 
 ```typescript
 { 
-   x: number,
-   y: number
+   x: number;
+   y: number;
 }
 ```
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,10 +228,9 @@ public class AuthController extends BaseController {
 
     @ApiOperation(value = "Reset password (resetPassword)",
             notes = "Checks the password reset token and updates the password. " +
-                    "If token is valid, returns the object that contains [JWT](https://jwt.io/) access and refresh tokens. " +
                     "If token is not valid, returns '400 Bad Request'.")
     @PostMapping(value = "/noauth/resetPassword")
-    public JwtPair resetPassword(@Parameter(description = "Reset password request.")
+    public void resetPassword(@Parameter(description = "Reset password request.")
                                  @RequestBody ResetPasswordRequest resetPasswordRequest,
                                  HttpServletRequest request) throws ThingsboardException {
         String resetToken = resetPasswordRequest.getResetToken();
@@ -263,8 +262,6 @@ public class AuthController extends BaseController {
             }
 
             eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
-
-            return tokenFactory.createTokenPair(securityUser);
         } else {
             throw new ThingsboardException("Invalid reset token!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }

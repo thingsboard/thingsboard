@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,6 +23,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
+import org.thingsboard.server.common.data.edqs.fields.AssetProfileFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
 
@@ -80,5 +82,9 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(a.id, 'ASSET_PROFILE', a.name) " +
             "FROM AssetProfileEntity a WHERE a.tenantId = :tenantId")
     List<EntityInfo> findAllTenantAssetProfileNames(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.AssetProfileFields(a.id, a.createdTime, a.tenantId," +
+            "a.name, a.version, a.isDefault) FROM AssetProfileEntity a WHERE a.id > :id ORDER BY a.id")
+    List<AssetProfileFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
 }

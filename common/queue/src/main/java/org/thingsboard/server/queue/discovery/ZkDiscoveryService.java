@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.ProtocolStringList;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
@@ -68,6 +69,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     private Integer zkConnectionTimeout;
     @Value("${zk.session_timeout_ms}")
     private Integer zkSessionTimeout;
+    @Getter
     @Value("${zk.zk_dir}")
     private String zkDir;
     @Value("${zk.recalculate_delay:0}")
@@ -80,6 +82,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     private final PartitionService partitionService;
 
     private ScheduledExecutorService zkExecutorService;
+    @Getter
     private CuratorFramework client;
     private PathChildrenCache cache;
     private String nodePath;
@@ -140,6 +143,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         } else {
             log.info("Received application ready event. Starting current ZK node.");
         }
+        subscribeToEvents();
         if (client.getState() != CuratorFrameworkState.STARTED) {
             log.debug("Ignoring application ready event, ZK client is not started, ZK client state [{}]", client.getState());
             return;
@@ -209,6 +213,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             try {
                 destroyZkClient();
                 initZkClient();
+                subscribeToEvents();
                 publishCurrentServer();
             } catch (Exception e) {
                 log.error("Failed to reconnect to ZK: {}", e.getMessage(), e);
@@ -224,7 +229,6 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             client.start();
             client.blockUntilConnected();
             cache = new PathChildrenCache(client, zkNodesDir, true);
-            cache.getListenable().addListener(this);
             cache.start();
             stopped = false;
             log.info("ZK client connected");
@@ -236,6 +240,10 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         }
     }
 
+    private void subscribeToEvents() {
+        cache.getListenable().addListener(this);
+    }
+
     private void unpublishCurrentServer() {
         try {
             if (nodePath != null) {
@@ -243,25 +251,21 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             }
         } catch (Exception e) {
             log.error("Failed to delete ZK node {}", nodePath, e);
-            throw new RuntimeException(e);
         }
     }
 
     private void destroyZkClient() {
         stopped = true;
-        try {
-            unpublishCurrentServer();
-        } catch (Exception e) {
-        }
+        unpublishCurrentServer();
         CloseableUtils.closeQuietly(cache);
         CloseableUtils.closeQuietly(client);
         log.info("ZK client disconnected");
     }
 
     @PreDestroy
-    public void destroy() {
-        destroyZkClient();
+    private void destroy() {
         zkExecutorService.shutdownNow();
+        destroyZkClient();
         log.info("Stopped discovery service");
     }
 
@@ -311,7 +315,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
                 ScheduledFuture<?> task = delayedTasks.remove(serviceId);
                 if (task != null) {
                     if (task.cancel(false)) {
-                        log.debug("[{}] Recalculate partitions ignored. Service was restarted in time [{}].",
+                        log.info("[{}] Recalculate partitions ignored. Service was restarted in time [{}].",
                                 serviceId, serviceTypesList);
                     } else {
                         log.debug("[{}] Going to recalculate partitions. Service was not restarted in time [{}]!",

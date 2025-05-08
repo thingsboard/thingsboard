@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -49,6 +49,7 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
@@ -73,6 +74,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -130,36 +132,25 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         filter.setDeviceNameFilter("");
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
-
-        Long count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
-        Assert.assertEquals(97, count.longValue());
+        countByQueryAndCheck(countQuery, 97);
 
         filter.setDeviceTypes(List.of("unknown"));
-        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
-        Assert.assertEquals(0, count.longValue());
+        countByQueryAndCheck(countQuery, 0);
 
         filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("Device1");
-
-        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
-        Assert.assertEquals(11, count.longValue());
+        countByQueryAndCheck(countQuery, 11);
 
         EntityListFilter entityListFilter = new EntityListFilter();
         entityListFilter.setEntityType(EntityType.DEVICE);
         entityListFilter.setEntityList(devices.stream().map(Device::getId).map(DeviceId::toString).collect(Collectors.toList()));
-
         countQuery = new EntityCountQuery(entityListFilter);
-
-        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
-        Assert.assertEquals(97, count.longValue());
+        countByQueryAndCheck(countQuery, 97);
 
         EntityTypeFilter filter2 = new EntityTypeFilter();
         filter2.setEntityType(EntityType.DEVICE);
-
-        EntityCountQuery countQuery2 = new EntityCountQuery(filter2);
-
-        Long count2 = doPostWithResponse("/api/entitiesQuery/count", countQuery2, Long.class);
-        Assert.assertEquals(97, count2.longValue());
+        countQuery = new EntityCountQuery(filter2);
+        countByQueryAndCheck(countQuery, 97);
     }
 
     @Test
@@ -169,51 +160,44 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         EntityTypeFilter allDeviceFilter = new EntityTypeFilter();
         allDeviceFilter.setEntityType(EntityType.DEVICE);
         EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
-        Long initialCount = doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
+        countByQueryAndCheck(query, 0);
 
         loginTenantAdmin();
 
         List<Device> devices = new ArrayList<>();
+        String devicePrefix = "Device" + RandomStringUtils.randomAlphabetic(5);
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
-            device.setName("Device" + i);
+            device.setName(devicePrefix + i);
             device.setType("default");
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
             devices.add(doPost("/api/device", device, Device.class));
             Thread.sleep(1);
         }
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         loginSysAdmin();
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
+        countByQueryAndCheck(countQuery, 97);
 
-        Long count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
-        Assert.assertEquals(97, count.longValue());
+        filter.setDeviceTypes(List.of("unknown"));
+        countByQueryAndCheck(countQuery, 0);
 
-        filter.setDeviceType("unknown");
-        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
-        Assert.assertEquals(0, count.longValue());
-
-        filter.setDeviceType("default");
-        filter.setDeviceNameFilter("Device1");
-
-        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
-        Assert.assertEquals(11, count.longValue());
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter(devicePrefix + "1");
+        countByQueryAndCheck(countQuery, 11);
 
         EntityListFilter entityListFilter = new EntityListFilter();
         entityListFilter.setEntityType(EntityType.DEVICE);
         entityListFilter.setEntityList(devices.stream().map(Device::getId).map(DeviceId::toString).collect(Collectors.toList()));
 
         countQuery = new EntityCountQuery(entityListFilter);
+        countByQueryAndCheck(countQuery, 97);
 
-        count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
-        Assert.assertEquals(97, count.longValue());
-
-        Long count2 = doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
-        Assert.assertEquals(initialCount + 97, count2.longValue());
+        countByQueryAndCheck(countQuery, 97);
     }
 
     @Test
@@ -371,11 +355,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
 
-        PageData<EntityData> data =
-                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-                });
-
-        Assert.assertEquals(97, data.getTotalElements());
+        PageData<EntityData> data = findByQueryAndCheck(query, 97);
         Assert.assertEquals(10, data.getTotalPages());
         Assert.assertTrue(data.hasNext());
         Assert.assertEquals(10, data.getData().size());
@@ -383,8 +363,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         List<EntityData> loadedEntities = new ArrayList<>(data.getData());
         while (data.hasNext()) {
             query = query.next();
-            data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-            });
+            data = findByQuery(query);
             loadedEntities.addAll(data.getData());
         }
         Assert.assertEquals(97, loadedEntities.size());
@@ -406,8 +385,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         pageLink = new EntityDataPageLink(10, 0, "device1", sortOrder);
         query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
-        data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-        });
+        data = findByQuery(query);
         Assert.assertEquals(11, data.getTotalElements());
         Assert.assertEquals("Device19", data.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
 
@@ -423,9 +401,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityDataQuery query2 = new EntityDataQuery(filter2, pageLink2, entityFields2, null, null);
 
-        PageData<EntityData> data2 =
-                doPostWithTypedResponse("/api/entitiesQuery/find", query2, new TypeReference<PageData<EntityData>>() {
-                });
+        PageData<EntityData> data2 = findByQuery(query2);
 
         Assert.assertEquals(97, data2.getTotalElements());
         Assert.assertEquals(10, data2.getTotalPages());
@@ -473,20 +449,15 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
-
-        PageData<EntityData> data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {});
-
-        Assert.assertEquals(87, data.getTotalElements());
+        findByQueryAndCheck(query, 87);
 
         filter.setFilters(List.of(new RelationEntityTypeFilter("NOT_CONTAINS", List.of(EntityType.DEVICE), false)));
         query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
-        data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {});
-        Assert.assertEquals(10, data.getTotalElements());
+        findByQueryAndCheck(query, 10);
 
         filter.setFilters(List.of(new RelationEntityTypeFilter("NOT_CONTAINS", List.of(EntityType.DEVICE), true)));
         query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
-        data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {});
-        Assert.assertEquals(87, data.getTotalElements());
+        findByQueryAndCheck(query, 87);
     }
 
     private EntityRelation createFromRelation(Device mainDevice, Device device, String relationType) {
@@ -528,17 +499,16 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
         List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
-        List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        List<EntityKey> latestValues = List.of(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"),
+                new EntityKey(EntityKeyType.ATTRIBUTE, "non-existing-attribute"));
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, null);
-        PageData<EntityData> data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-        });
+        PageData<EntityData> data = findByQueryAndCheck(query, 67);
 
         List<EntityData> loadedEntities = new ArrayList<>(data.getData());
         while (data.hasNext()) {
             query = query.next();
-            data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-            });
+            data = findByQuery(query);
             loadedEntities.addAll(data.getData());
         }
         Assert.assertEquals(67, loadedEntities.size());
@@ -548,9 +518,18 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         List<String> deviceTemperatures = temperatures.stream().map(aLong -> Long.toString(aLong)).collect(Collectors.toList());
         Assert.assertEquals(deviceTemperatures, loadedTemperatures);
 
+        // check ts value == 0, value is empty string for non-existing data points
+        List<TsValue> loadedNonExistingAttributes = loadedEntities.stream().map(entityData ->
+                entityData.getLatest().get(EntityKeyType.ATTRIBUTE).get("non-existing-attribute")).toList();
+        loadedNonExistingAttributes.forEach(tsValue -> {
+            assertThat(tsValue.getTs()).isEqualTo(0L);
+            assertThat(tsValue.getValue()).isEqualTo("");
+        });
+
         pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
         KeyFilter highTemperatureFilter = new KeyFilter();
         highTemperatureFilter.setKey(new EntityKey(EntityKeyType.ATTRIBUTE, "temperature"));
+        highTemperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate predicate = new NumericFilterPredicate();
         predicate.setValue(FilterPredicateValue.fromDouble(45));
         predicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
@@ -559,13 +538,11 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, keyFilters);
 
-        data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-        });
+        data = findByQuery(query);
         loadedEntities = new ArrayList<>(data.getData());
         while (data.hasNext()) {
             query = query.next();
-            data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-            });
+            data = findByQuery(query);
             loadedEntities.addAll(data.getData());
         }
         Assert.assertEquals(highTemperatures.size(), loadedEntities.size());
@@ -604,6 +581,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         KeyFilter highTemperatureFilter = new KeyFilter();
         highTemperatureFilter.setKey(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "alarmActiveTime"));
+        highTemperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate predicate = new NumericFilterPredicate();
 
         DynamicValue<Double> dynamicValue =
@@ -627,16 +605,16 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, keyFilters);
 
-        Awaitility.await()
+        await()
                 .alias("data by query")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
-                    var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
+                    var data = findByQuery(query);
                     var loadedEntities = new ArrayList<>(data.getData());
                     return loadedEntities.size() == numOfDevices;
                 });
 
-        var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
+        var data = findByQuery(query);
         var loadedEntities = new ArrayList<>(data.getData());
 
         Assert.assertEquals(numOfDevices, loadedEntities.size());
@@ -694,11 +672,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityDataQuery query = new EntityDataQuery(entityTypeFilter, pageLink, entityFields, null, null);
 
-        PageData<EntityData> data =
-                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-                });
-
-        Assert.assertEquals(97, data.getTotalElements());
+        PageData<EntityData> data = findByQueryAndCheck(query, 97);
         Assert.assertEquals(10, data.getTotalPages());
         Assert.assertTrue(data.hasNext());
         Assert.assertEquals(10, data.getData().size());
@@ -712,9 +686,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         });
 
         EntityCountQuery countQuery = new EntityCountQuery(entityTypeFilter);
-
-        Long count = doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
-        Assert.assertEquals(97, count.longValue());
+        countByQueryAndCheck(countQuery, 97);
     }
 
     @Test
@@ -742,28 +714,29 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         KeyFilter activeAlarmTimeToLongFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 30);
         KeyFilter tenantOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", TEST_TENANT_NAME);
         KeyFilter wrongOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", "wrongName");
-        KeyFilter tenantOwnerTypeFilter =  getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
+        KeyFilter tenantOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
         KeyFilter customerOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "CUSTOMER");
 
         // all devices with ownerName = TEST TENANT
-        EntityCountQuery query = new EntityCountQuery(filter,  List.of(activeAlarmTimeFilter, tenantOwnerNameFilter));
-        checkEntitiesCount(query, numOfDevices);
+        EntityCountQuery query = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, tenantOwnerNameFilter));
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countByQuery(query),
+                result -> result == numOfDevices);
 
         // all devices with ownerName = TEST TENANT
-        EntityCountQuery activeAlarmTimeToLongQuery = new EntityCountQuery(filter,  List.of(activeAlarmTimeToLongFilter, tenantOwnerNameFilter));
-        checkEntitiesCount(activeAlarmTimeToLongQuery, 0);
+        EntityCountQuery activeAlarmTimeToLongQuery = new EntityCountQuery(filter, List.of(activeAlarmTimeToLongFilter, tenantOwnerNameFilter));
+        countByQueryAndCheck(activeAlarmTimeToLongQuery, 0);
 
         // all devices with wrong ownerName
         EntityCountQuery wrongTenantNameQuery = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, wrongOwnerNameFilter));
-        checkEntitiesCount(wrongTenantNameQuery, 0);
+        countByQueryAndCheck(wrongTenantNameQuery, 0);
 
         // all devices with owner type = TENANT
         EntityCountQuery tenantEntitiesQuery = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, tenantOwnerTypeFilter));
-        checkEntitiesCount(tenantEntitiesQuery, numOfDevices);
+        countByQueryAndCheck(tenantEntitiesQuery, numOfDevices);
 
         // all devices with owner type = CUSTOMER
         EntityCountQuery customerEntitiesQuery = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, customerOwnerTypeFilter));
-        checkEntitiesCount(customerEntitiesQuery, 0);
+        countByQueryAndCheck(customerEntitiesQuery, 0);
     }
 
     @Test
@@ -790,7 +763,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         KeyFilter activeAlarmTimeFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 5);
         KeyFilter tenantOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", TEST_TENANT_NAME);
         KeyFilter wrongOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", "wrongName");
-        KeyFilter tenantOwnerTypeFilter =  getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
+        KeyFilter tenantOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
         KeyFilter customerOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "CUSTOMER");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
@@ -851,41 +824,29 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
 
-        PageData<EntityData> data =
-                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-                });
-
-        Assert.assertEquals(1, data.getTotalElements());
-        Assert.assertEquals(1, data.getTotalPages());
-        Assert.assertEquals(1, data.getData().size());
+        findByQueryAndCheck(query, 1);
 
         // unnassign dashboard
         login(TENANT_EMAIL, TENANT_PASSWORD);
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString() + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
 
         login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
-        PageData<EntityData> dataAfterUnassign =
-                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-                });
-
-        Assert.assertEquals(0, dataAfterUnassign.getTotalElements());
-        Assert.assertEquals(0, dataAfterUnassign.getTotalPages());
-        Assert.assertEquals(0, dataAfterUnassign.getData().size());
+        findByQueryAndCheck(query, 0);
     }
 
     private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, String expectedOwnerName, String expectedOwnerType) throws Exception {
-        Awaitility.await()
+        await()
                 .alias("data by query")
                 .atMost(30, TimeUnit.SECONDS)
                 .until(() -> {
-                    var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
+                    var data = findByQuery(query);
                     var loadedEntities = new ArrayList<>(data.getData());
                     return loadedEntities.size() == expectedNumOfDevices;
                 });
-         if (expectedNumOfDevices == 0) {
-             return;
-         }
-        var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
+        if (expectedNumOfDevices == 0) {
+            return;
+        }
+        var data = findByQuery(query);
         var loadedEntities = new ArrayList<>(data.getData());
 
         Assert.assertEquals(expectedNumOfDevices, loadedEntities.size());
@@ -898,25 +859,37 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             String alarmActiveTime = entity.getLatest().get(EntityKeyType.ATTRIBUTE).getOrDefault("alarmActiveTime", new TsValue(0, "-1")).getValue();
 
             Assert.assertEquals("Device" + i, name);
-            Assert.assertEquals( expectedOwnerName, ownerName);
-            Assert.assertEquals( expectedOwnerType, ownerType);
+            Assert.assertEquals(expectedOwnerName, ownerName);
+            Assert.assertEquals(expectedOwnerType, ownerType);
             Assert.assertEquals("1" + i, alarmActiveTime);
         }
     }
 
-    private void checkEntitiesCount(EntityCountQuery query, int expectedNumOfDevices) {
-        Awaitility.await()
-                .alias("count by query")
-                .atMost(30, TimeUnit.SECONDS)
-                .until(() -> {
-                    var count = doPost("/api/entitiesQuery/count", query, Integer.class);
-                    return count == expectedNumOfDevices;
-                });
-   }
+    protected PageData<EntityData> findByQuery(EntityDataQuery query) throws Exception {
+        return doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {
+        });
+    }
+
+    protected PageData<EntityData> findByQueryAndCheck(EntityDataQuery query, int expectedResultSize) throws Exception {
+        PageData<EntityData> result = findByQuery(query);
+        assertThat(result.getTotalElements()).isEqualTo(expectedResultSize);
+        return result;
+    }
+
+    protected Long countByQuery(EntityCountQuery countQuery) throws Exception {
+        return doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
+    }
+
+    protected Long countByQueryAndCheck(EntityCountQuery query, long expectedResult) throws Exception {
+        Long result = countByQuery(query);
+        assertThat(result).isEqualTo(expectedResult);
+        return result;
+    }
 
     private KeyFilter getEntityFieldStringEqualToKeyFilter(String keyName, String value) {
         KeyFilter tenantOwnerNameFilter = new KeyFilter();
         tenantOwnerNameFilter.setKey(new EntityKey(EntityKeyType.ENTITY_FIELD, keyName));
+        tenantOwnerNameFilter.setValueType(EntityKeyValueType.STRING);
         StringFilterPredicate ownerNamePredicate = new StringFilterPredicate();
         ownerNamePredicate.setValue(FilterPredicateValue.fromString(value));
         ownerNamePredicate.setOperation(StringFilterPredicate.StringOperation.EQUAL);
@@ -927,6 +900,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     private KeyFilter getServerAttributeNumericGreaterThanKeyFilter(String attribute, int value) {
         KeyFilter numericFilter = new KeyFilter();
         numericFilter.setKey(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, attribute));
+        numericFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate predicate = new NumericFilterPredicate();
         predicate.setValue(FilterPredicateValue.fromDouble(value));
         predicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);

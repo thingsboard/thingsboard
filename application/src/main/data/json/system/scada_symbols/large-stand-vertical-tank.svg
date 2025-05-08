@@ -34,7 +34,7 @@
     },
     {
       "tag": "scale",
-      "stateRenderFunction": "if (!ctx.properties.scale) {\n        element.hide();\n} else {\n    var scaleSet = element.remember('scaleSet');\n    if (!scaleSet) {\n        element.remember('scaleSet', true);\n        element.clear();\n        \n        var majorIntervals = ctx.properties.majorIntervals;\n        var minorIntervals = ctx.properties.minorIntervals;\n        \n        var start = 203;\n        var majorIntervalLength = 763 / majorIntervals;\n        var minorIntervalLength = majorIntervalLength / minorIntervals;\n        for (var i = 0; i < majorIntervals + 1; i++) {\n            var y = start + i * majorIntervalLength;\n            var line = ctx.svg.line(676, y, 708, y).stroke({ width: 3 }).attr({class: 'majorTick'});\n            element.add(line);\n            var majorText = (100 - i * (100/majorIntervals)).toFixed(0);\n            var majorTickText = ctx.svg.text(majorText);\n            majorTickText.attr({x: 666, y: y + 2, 'text-anchor': 'end', class: 'majorTickText'});\n            majorTickText.first().attr({'dominant-baseline': 'middle'});\n            element.add(majorTickText);\n            if (i < majorIntervals) {\n                drawMinorTicks(y, minorIntervals, minorIntervalLength);\n            }\n        }\n    }\n    \n    var majorFont = ctx.properties.majorFont;\n    var majorColor = ctx.properties.majorColor;\n    var minorColor = ctx.properties.minorColor;\n    if (ctx.values.critical) {\n        majorColor = ctx.properties.majorCriticalColor;\n        minorColor = ctx.properties.minorCriticalColor;\n    } else if (ctx.values.warning) {\n        majorColor = ctx.properties.minorWarningColor;\n        minorColor = ctx.properties.minorWarningColor;\n    }\n    \n    var majorTicks = element.find('line.majorTick');\n    majorTicks.forEach(t => t.attr({stroke: majorColor}));\n    \n    var majorTicksText = element.find('text.majorTickText');\n    ctx.api.font(majorTicksText, majorFont, majorColor);\n    \n    var minorTicks = element.find('line.minorTick');\n    minorTicks.forEach(t => t.attr({stroke: minorColor}));\n    \n    var elementCriticalAnimation = element.remember('criticalAnimation');\n    var criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\n    if (elementCriticalAnimation !== criticalAnimation) {\n        element.remember('criticalAnimation', criticalAnimation);\n        if (criticalAnimation) {\n            ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n        } else {\n            ctx.api.resetCssAnimation(element);\n        }\n    }\n}\n\nfunction drawMinorTicks(start, minorIntervals, minorIntervalLength) {\n    for (var i = 1; i < minorIntervals; i++) {\n        var minorY = start + i * minorIntervalLength;\n        var minorLine = ctx.svg.line(688, minorY, 708, minorY).stroke({ width: 3 }).attr({class: 'minorTick'});\n        element.add(minorLine);\n    }\n}",
+      "stateRenderFunction": "if (!ctx.properties.scale) {\n        element.hide();\n} else {\n    var scaleSet = element.remember('scaleSet');\n    if (!scaleSet) {\n        element.remember('scaleSet', true);\n        element.clear();\n        \n        var majorIntervals = ctx.properties.majorIntervals;\n        var minorIntervals = ctx.properties.minorIntervals;\n        \n        var start = 203;\n        var majorIntervalLength = 763 / majorIntervals;\n        var minorIntervalLength = majorIntervalLength / minorIntervals;\n        var tankCapacity = ctx.properties.scaleDisplayFormat ? 100 : (ctx.values.tankCapacity || 100);\n        for (var i = 0; i < majorIntervals + 1; i++) {\n            var y = start + i * majorIntervalLength;\n            var line = ctx.svg.line(676, y, 708, y).stroke({ width: 3 }).attr({class: 'majorTick'});\n            element.add(line);\n            var majorText = ctx.api.formatValue((tankCapacity - i * (tankCapacity/majorIntervals)).toFixed(0), 0, ctx.properties.majorUnits, false);\n            var majorTickText = ctx.svg.text(majorText);\n            majorTickText.attr({x: 666, y: y + 2, 'text-anchor': 'end', class: 'majorTickText'});\n            majorTickText.first().attr({'dominant-baseline': 'middle'});\n            element.add(majorTickText);\n            if (i < majorIntervals) {\n                drawMinorTicks(y, minorIntervals, minorIntervalLength);\n            }\n        }\n    }\n    \n    var majorFont = ctx.properties.majorFont;\n    var majorColor = ctx.properties.majorColor;\n    var minorColor = ctx.properties.minorColor;\n    if (ctx.values.critical) {\n        majorColor = ctx.properties.majorCriticalColor;\n        minorColor = ctx.properties.minorCriticalColor;\n    } else if (ctx.values.warning) {\n        majorColor = ctx.properties.minorWarningColor;\n        minorColor = ctx.properties.minorWarningColor;\n    }\n    \n    var majorTicks = element.find('line.majorTick');\n    majorTicks.forEach(t => t.attr({stroke: majorColor}));\n    \n    var majorTicksText = element.find('text.majorTickText');\n    ctx.api.font(majorTicksText, majorFont, majorColor);\n    \n    var minorTicks = element.find('line.minorTick');\n    minorTicks.forEach(t => t.attr({stroke: minorColor}));\n    \n    var elementCriticalAnimation = element.remember('criticalAnimation');\n    var criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\n    if (elementCriticalAnimation !== criticalAnimation) {\n        element.remember('criticalAnimation', criticalAnimation);\n        if (criticalAnimation) {\n            ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n        } else {\n            ctx.api.resetCssAnimation(element);\n        }\n    }\n}\n\nfunction drawMinorTicks(start, minorIntervals, minorIntervalLength) {\n    for (var i = 1; i < minorIntervals; i++) {\n        var minorY = start + i * minorIntervalLength;\n        var minorLine = ctx.svg.line(688, minorY, 708, minorY).stroke({ width: 3 }).attr({class: 'minorTick'});\n        element.add(minorLine);\n    }\n}",
       "actions": null
     },
     {
@@ -279,80 +279,43 @@
       "name": "{i18n:scada.symbol.tank-color}",
       "type": "color",
       "default": "#E5E5E5",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "fluidColor",
       "name": "{i18n:scada.symbol.fluid-color}",
       "type": "color",
       "default": "#1EC1F480",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueBox",
       "name": "{i18n:scada.symbol.value-box}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueBoxColor",
       "name": "{i18n:scada.symbol.value-box}",
       "type": "color",
       "default": "#F3F3F3",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "valueBox",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueUnits",
       "name": "{i18n:scada.symbol.value-text}",
       "type": "units",
       "default": "gal",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.units}",
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "valueBox",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueTextFont",
@@ -365,80 +328,78 @@
         "weight": "500",
         "style": "normal"
       },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "valueBox",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueTextColor",
       "name": "{i18n:scada.symbol.value-text}",
       "type": "color",
       "default": "#0000008A",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "valueBox",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "scale",
       "name": "{i18n:scada.symbol.scale}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "scaleDisplayFormat",
+      "name": "{i18n:scada.symbol.scale}",
+      "type": "select",
+      "default": true,
+      "subLabel": "{i18n:scada.symbol.display-format}",
+      "disableOnProperty": "scale",
+      "items": [
+        {
+          "value": true,
+          "label": "Percentage"
+        },
+        {
+          "value": false,
+          "label": "Absolute"
+        }
+      ],
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "transparent",
       "name": "{i18n:scada.symbol.transparent-mode}",
       "type": "switch",
       "default": false,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorIntervals",
       "name": "{i18n:scada.symbol.major-ticks}",
       "type": "number",
       "default": 10,
-      "required": null,
       "subLabel": "{i18n:scada.symbol.intervals}",
       "divider": true,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
       "min": 1,
-      "max": null,
-      "step": 1
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "majorUnits",
+      "name": "{i18n:scada.symbol.major-ticks}",
+      "type": "units",
+      "subLabel": "{i18n:scada.symbol.units}",
+      "divider": true,
+      "disableOnProperty": "scale",
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorFont",
@@ -451,128 +412,84 @@
         "weight": "500",
         "style": "normal"
       },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorColor",
       "name": "{i18n:scada.symbol.major-ticks-color}",
       "type": "color",
       "default": "#00000061",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.normal}",
       "divider": true,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorWarningColor",
       "name": "{i18n:scada.symbol.major-ticks-color}",
       "type": "color",
       "default": "#FAA405",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.warning}",
       "divider": true,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorCriticalColor",
       "name": "{i18n:scada.symbol.major-ticks-color}",
       "type": "color",
       "default": "#D12730",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.critical}",
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minorIntervals",
       "name": "{i18n:scada.symbol.minor-ticks}",
       "type": "number",
       "default": 5,
-      "required": null,
       "subLabel": "{i18n:scada.symbol.intervals}",
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
       "min": 1,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minorColor",
       "name": "{i18n:scada.symbol.minor-ticks-color}",
       "type": "color",
       "default": "#0000001F",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.normal}",
       "divider": true,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minorWarningColor",
       "name": "{i18n:scada.symbol.minor-ticks-color}",
       "type": "color",
       "default": "#FAA405",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.warning}",
       "divider": true,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minorCriticalColor",
       "name": "{i18n:scada.symbol.minor-ticks-color}",
       "type": "color",
       "default": "#D12730",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.critical}",
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     }
   ]
 }]]></tb:metadata>
@@ -652,7 +569,7 @@
   <text x="505" y="90" fill="#727171" font-family="Roboto" font-size="32px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">1660 gal</tspan></text>
  </g><mask id="path-316-inside-2_1711_311697" fill="white">
   <path d="m7 181c-3.866 0-7-3.134-7-7s3.134-7 7-7h986c3.866 0 7 3.134 7 7s-3.134 7-7 7h-986z"/>
- </mask><path d="m7 181c-3.866 0-7-3.134-7-7s3.134-7 7-7h986c3.866 0 7 3.134 7 7s-3.134 7-7 7h-986z" fill="#D9D9D9"/><path d="m7 170h986v-6h-986v6zm986 8h-986v6h986v-6zm4-4c0 2.209-1.791 4-4 4v6c5.523 0 10-4.477 10-10h-6zm-4-4c2.209 0 4 1.791 4 4h6c0-5.523-4.477-10-10-10v6zm-990 4c0-2.209 1.7909-4 4-4v-6c-5.5228 0-10 4.477-10 10h6zm-6 0c0 5.523 4.4771 10 10 10v-6c-2.2091 0-4-1.791-4-4h-6z" fill="#727171" mask="url(#path-316-inside-2_1711_311697)"/><path d="m335.68-5e-4s-336.32 0-336.32 201v985.08c0 7.9536 8.9543 13.921 20 13.921h960c11.045 0 20-5.9676 20-13.921v-985.08c0-201-330.35-201-330.35-201h-169.65zm335.35 243.6c-6.4433 0-11.667 3.7608-11.667 8.4v901.2c0 4.6392 5.2233 8.4 11.667 8.4h73.333c6.4433 0 11.667-3.7608 11.667-8.4v-901.2c0-4.6392-5.2233-8.4-11.667-8.4z" fill="#000" fill-opacity="0" style="stroke-width:1.0954" tb:tag="clickArea"/><rect x="122" y="1163" width="80" height="24" rx="7" fill="#fff"/><rect x="122" y="1163" width="80" height="24" rx="7" fill="url(#paint245_linear_1711_311696)" style="fill:url(#paint245_linear_1711_311696)"/><rect x="123.5" y="1164.5" width="77" height="21" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="798" y="1163" width="80" height="24" rx="7" fill="#fff"/><rect x="798" y="1163" width="80" height="24" rx="7" fill="url(#paint246_linear_1711_311696)" style="fill:url(#paint246_linear_1711_311696)"/><rect x="799.5" y="1164.5" width="77" height="21" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect transform="rotate(10 168.69 996.46)" x="168.69" y="996.46" width="676" height="8" fill="#727171"/><rect transform="rotate(-10 158.11 1114.7)" x="158.11" y="1114.7" width="687.16" height="8" fill="#727171"/><path d="m146 1163v-169l32 1v168z" fill="#fff"/><path d="m146 1163v-169l32 1v168z" fill="url(#paint247_linear_1711_311696)" style="fill:url(#paint247_linear_1711_311696)"/><path d="m147.5 1161.5v-165.95l29 0.906v165.05z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m822 1163v-167l32-1v168z" fill="#fff"/><path d="m822 1163v-167l32-1v168z" fill="url(#paint248_linear_1711_311696)" style="fill:url(#paint248_linear_1711_311696)"/><path d="m823.5 1161.5v-164.05l29-0.906v164.95z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect transform="rotate(10 135.43 1006.5)" x="135.43" y="1006.5" width="751.02" height="12" fill="#838282"/><rect transform="rotate(-10 130.48 1136)" x="130.48" y="1136" width="748.07" height="12" fill="#838282"/><circle cx="870" cy="885" r="32" fill="url(#paint249_radial_1711_311696)" style="fill:url(#paint249_radial_1711_311696)"/><circle cx="870" cy="885" r="30.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="130" cy="885" r="32" fill="url(#paint250_radial_1711_311696)" style="fill:url(#paint250_radial_1711_311696)"/><circle cx="130" cy="885" r="30.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m114 1171v-284c0-8.837 7.163-16 16-16s16 7.163 16 16v284z" fill="#fff"/><path d="m114 1171v-284c0-8.837 7.163-16 16-16s16 7.163 16 16v284z" fill="url(#paint251_linear_1711_311696)" style="fill:url(#paint251_linear_1711_311696)"/><path d="m115.5 1169.5v-282.5c0-8.008 6.492-14.5 14.5-14.5s14.5 6.492 14.5 14.5v282.5z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m854 1171v-284c0-8.837 7.163-16 16-16s16 7.163 16 16v284z" fill="#fff"/><path d="m854 1171v-284c0-8.837 7.163-16 16-16s16 7.163 16 16v284z" fill="url(#paint252_linear_1711_311696)" style="fill:url(#paint252_linear_1711_311696)"/><path d="m855.5 1169.5v-282.5c0-8.008 6.492-14.5 14.5-14.5s14.5 6.492 14.5 14.5v282.5z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="80" y="1171" width="100" height="29" rx="7" fill="#fff"/><rect x="80" y="1171" width="100" height="29" rx="7" fill="url(#paint253_linear_1711_311696)" style="fill:url(#paint253_linear_1711_311696)"/><rect x="81.5" y="1172.5" width="97" height="26" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="820" y="1171" width="100" height="29" rx="7" fill="#fff"/><rect x="820" y="1171" width="100" height="29" rx="7" fill="url(#paint254_linear_1711_311696)" style="fill:url(#paint254_linear_1711_311696)"/><rect x="821.5" y="1172.5" width="97" height="26" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><defs>
+ </mask><path d="m7 181c-3.866 0-7-3.134-7-7s3.134-7 7-7h986c3.866 0 7 3.134 7 7s-3.134 7-7 7h-986z" fill="#D9D9D9"/><path d="m7 170h986v-6h-986v6zm986 8h-986v6h986v-6zm4-4c0 2.209-1.791 4-4 4v6c5.523 0 10-4.477 10-10h-6zm-4-4c2.209 0 4 1.791 4 4h6c0-5.523-4.477-10-10-10v6zm-990 4c0-2.209 1.7909-4 4-4v-6c-5.5228 0-10 4.477-10 10h6zm-6 0c0 5.523 4.4771 10 10 10v-6c-2.2091 0-4-1.791-4-4h-6z" fill="#727171" mask="url(#path-316-inside-2_1711_311697)"/><path d="m335.68-5e-4s-336.32 0-336.32 201v985.08c0 7.9536 8.9543 13.921 20 13.921h960c11.045 0 20-5.9676 20-13.921v-985.08c0-201-330.35-201-330.35-201h-169.65zm335.35 243.6c-6.4433 0-11.667 3.7608-11.667 8.4v901.2c0 4.6392 5.2233 8.4 11.667 8.4h73.333c6.4433 0 11.667-3.7608 11.667-8.4v-901.2c0-4.6392-5.2233-8.4-11.667-8.4z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><rect x="122" y="1163" width="80" height="24" rx="7" fill="#fff"/><rect x="122" y="1163" width="80" height="24" rx="7" fill="url(#paint245_linear_1711_311696)" style="fill:url(#paint245_linear_1711_311696)"/><rect x="123.5" y="1164.5" width="77" height="21" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="798" y="1163" width="80" height="24" rx="7" fill="#fff"/><rect x="798" y="1163" width="80" height="24" rx="7" fill="url(#paint246_linear_1711_311696)" style="fill:url(#paint246_linear_1711_311696)"/><rect x="799.5" y="1164.5" width="77" height="21" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect transform="rotate(10 168.69 996.46)" x="168.69" y="996.46" width="676" height="8" fill="#727171"/><rect transform="rotate(-10 158.11 1114.7)" x="158.11" y="1114.7" width="687.16" height="8" fill="#727171"/><path d="m146 1163v-169l32 1v168z" fill="#fff"/><path d="m146 1163v-169l32 1v168z" fill="url(#paint247_linear_1711_311696)" style="fill:url(#paint247_linear_1711_311696)"/><path d="m147.5 1161.5v-165.95l29 0.906v165.05z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m822 1163v-167l32-1v168z" fill="#fff"/><path d="m822 1163v-167l32-1v168z" fill="url(#paint248_linear_1711_311696)" style="fill:url(#paint248_linear_1711_311696)"/><path d="m823.5 1161.5v-164.05l29-0.906v164.95z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect transform="rotate(10 135.43 1006.5)" x="135.43" y="1006.5" width="751.02" height="12" fill="#838282"/><rect transform="rotate(-10 130.48 1136)" x="130.48" y="1136" width="748.07" height="12" fill="#838282"/><circle cx="870" cy="885" r="32" fill="url(#paint249_radial_1711_311696)" style="fill:url(#paint249_radial_1711_311696)"/><circle cx="870" cy="885" r="30.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="130" cy="885" r="32" fill="url(#paint250_radial_1711_311696)" style="fill:url(#paint250_radial_1711_311696)"/><circle cx="130" cy="885" r="30.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m114 1171v-284c0-8.837 7.163-16 16-16s16 7.163 16 16v284z" fill="#fff"/><path d="m114 1171v-284c0-8.837 7.163-16 16-16s16 7.163 16 16v284z" fill="url(#paint251_linear_1711_311696)" style="fill:url(#paint251_linear_1711_311696)"/><path d="m115.5 1169.5v-282.5c0-8.008 6.492-14.5 14.5-14.5s14.5 6.492 14.5 14.5v282.5z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m854 1171v-284c0-8.837 7.163-16 16-16s16 7.163 16 16v284z" fill="#fff"/><path d="m854 1171v-284c0-8.837 7.163-16 16-16s16 7.163 16 16v284z" fill="url(#paint252_linear_1711_311696)" style="fill:url(#paint252_linear_1711_311696)"/><path d="m855.5 1169.5v-282.5c0-8.008 6.492-14.5 14.5-14.5s14.5 6.492 14.5 14.5v282.5z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="80" y="1171" width="100" height="29" rx="7" fill="#fff"/><rect x="80" y="1171" width="100" height="29" rx="7" fill="url(#paint253_linear_1711_311696)" style="fill:url(#paint253_linear_1711_311696)"/><rect x="81.5" y="1172.5" width="97" height="26" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="820" y="1171" width="100" height="29" rx="7" fill="#fff"/><rect x="820" y="1171" width="100" height="29" rx="7" fill="url(#paint254_linear_1711_311696)" style="fill:url(#paint254_linear_1711_311696)"/><rect x="821.5" y="1172.5" width="97" height="26" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><defs>
   <filter id="filter0_ii_1711_311697" x="376" y="44" width="248" height="88" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
    <feFlood flood-opacity="0" result="BackgroundImageFix"/>
    <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>

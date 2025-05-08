@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { DataAggregator, onAggregatedData } from '@core/api/data-aggregator';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
-import { firstValueFrom, from, Observable, of, ReplaySubject, Subject, tap } from 'rxjs';
+import { firstValueFrom, from, Observable, of, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import {
@@ -75,6 +75,7 @@ import {
 } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
 import Timeout = NodeJS.Timeout;
+import { finalize, switchMap } from 'rxjs/operators';
 
 declare type DataKeyFunction = (time: number, prevValue: any) => any;
 declare type DataKeyPostFunction = (time: number, value: any, prevValue: any, timePrev: number, prevOrigValue: any) => any;
@@ -141,6 +142,7 @@ export class EntityDataSubscription {
   private aggTsValues: Array<AggKey>;
   private aggTsComparisonValues: Array<AggKey>;
 
+  private subscribeSubscription: Subscription;
   private entityDataResolveSubject: Subject<EntityDataLoadResult>;
   private pageData: PageData<EntityData>;
   private prematureUpdates: Array<Array<EntityData>>;
@@ -216,7 +218,7 @@ export class EntityDataSubscription {
         if (isNotEmptyTbFunction(dataKey.postFuncBody) && !dataKey.postFunc) {
           try {
             dataKey.postFunc = await firstValueFrom(compileTbFunction(this.http, dataKey.postFuncBody, 'time', 'value', 'prevValue', 'timePrev', 'prevOrigValue'));
-          } catch (e) {}
+          } catch (e) {/**/}
         }
       }
       let key: string;
@@ -245,6 +247,10 @@ export class EntityDataSubscription {
   }
 
   public unsubscribe() {
+    if (this.subscribeSubscription) {
+      this.subscribeSubscription.unsubscribe();
+      this.subscribeSubscription = null;
+    }
     if (this.timeseriesTimer) {
       clearTimeout(this.timeseriesTimer);
       this.timeseriesTimer = null;
@@ -277,8 +283,14 @@ export class EntityDataSubscription {
 
   public subscribe(): Observable<EntityDataLoadResult> {
     this.entityDataResolveSubject = new ReplaySubject(1);
-    from(this.initializeSubscription()).pipe(
-      tap(() => {
+    const subscribeSubject = new ReplaySubject<void>(1);
+    this.subscribeSubscription = from(this.initializeSubscription()).pipe(
+      finalize(() => {
+        subscribeSubject.next();
+        subscribeSubject.complete();
+      })
+    ).subscribe(
+      () => {
         if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
           this.started = true;
           this.dataResolved = true;
@@ -621,13 +633,17 @@ export class EntityDataSubscription {
           );
           this.subscriber.subscribe();
         }
+      }
+    );
+    return subscribeSubject.pipe(
+      switchMap(() => {
+        if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
+          return of(null);
+        } else {
+          return this.entityDataResolveSubject.asObservable();
+        }
       })
-    ).subscribe();
-    if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
-      return of(null);
-    } else {
-      return this.entityDataResolveSubject.asObservable();
-    }
+    );
   }
 
   public start() {
@@ -685,7 +701,7 @@ export class EntityDataSubscription {
       if (this.tsFields.length > 0) {
         if (this.history) {
           cmd.historyCmd = {
-            keys: this.tsFields.map(key => key.key),
+            keys: [... new Set(this.tsFields.map(key => key.key))],
             startTs: this.subsTw.fixedWindow.startTimeMs,
             endTs: this.subsTw.fixedWindow.endTimeMs,
             interval: 0,
@@ -702,7 +718,7 @@ export class EntityDataSubscription {
           }
         } else {
           cmd.tsCmd = {
-            keys: this.tsFields.map(key => key.key),
+            keys: [... new Set(this.tsFields.map(key => key.key))],
             startTs: this.subsTw.startTs,
             timeWindow: this.subsTw.aggregation.timeWindow,
             interval: 0,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.NONE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 
 @Slf4j
@@ -53,12 +54,13 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             return value;
         }
 
-        if (currentType == expectedType) {
-            /** expected type */
-            return value;
-        }
         if (currentType == null) {
             currentType = OPAQUE;
+        }
+
+        if (currentType == expectedType || currentType == NONE) {
+            /** expected type */
+            return value;
         }
 
         switch (expectedType) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,7 +26,12 @@ import { WidgetService } from '@core/http/widget.service';
 import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
 import { map } from 'rxjs/operators';
 import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
-import { widgetType, WidgetTypeDetails, WidgetTypeInfo } from '@app/shared/models/widget.models';
+import {
+  migrateWidgetTypeToDynamicForms,
+  widgetType,
+  WidgetTypeDetails,
+  WidgetTypeInfo
+} from '@app/shared/models/widget.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { WidgetTypesTableConfigResolver } from '@home/pages/widget/widget-types-table-config.resolver';
@@ -68,10 +73,13 @@ const widgetEditorDataResolver: ResolveFn<WidgetEditorData> = (route: ActivatedR
     );
   } else {
     return inject(WidgetService).getWidgetTypeById(widgetTypeId).pipe(
-      map((result) => ({
-        widgetTypeDetails: result,
-        widget: detailsToWidgetInfo(result)
-      }))
+      map((result) => {
+        result = migrateWidgetTypeToDynamicForms(result);
+        return {
+          widgetTypeDetails: result,
+          widget: detailsToWidgetInfo(result)
+        };
+      })
     );
   }
 };

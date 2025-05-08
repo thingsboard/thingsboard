@@ -21,9 +21,13 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
         "singletonMode": false,
-        "configurationVersion": 0,
+        "configurationVersion": 1,
         "configuration": {
-          "defaultTTL": 0
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         },
         "externalId": null
       },
@@ -35,8 +39,11 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Attributes",
         "singletonMode": false,
-        "configurationVersion": 1,
+        "configurationVersion": 3,
         "configuration": {
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          },
           "scope": "CLIENT_SCOPE",
           "notifyDevice": false,
           "sendAttributesUpdatedNotification": false,
@@ -273,9 +280,13 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
         "singletonMode": false,
-        "configurationVersion": 0,
+        "configurationVersion": 1,
         "configuration": {
-          "defaultTTL": 0
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         },
         "externalId": null
       },
@@ -307,11 +318,13 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries with TTL",
         "singletonMode": false,
-        "configurationVersion": 0,
+        "configurationVersion": 1,
         "configuration": {
           "defaultTTL": 180,
-          "skipLatestPersistence": null,
-          "useServerTs": null
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         },
         "externalId": null
       }

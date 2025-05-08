@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -104,7 +104,8 @@ export enum MenuId {
   features = 'features',
   otaUpdates = 'otaUpdates',
   version_control = 'version_control',
-  api_usage = 'api_usage'
+  api_usage = 'api_usage',
+  trendz_settings = 'trendz_settings'
 }
 
 declare type MenuFilter = (authState: AuthState) => boolean;
@@ -684,6 +685,17 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       path: '/usage',
       icon: 'insert_chart'
     }
+  ],
+  [
+    MenuId.trendz_settings,
+    {
+      id: MenuId.trendz_settings,
+      name: 'admin.trendz',
+      fullName: 'admin.trendz-settings',
+      type: 'link',
+      path: '/settings/trendz',
+      icon: 'trendz-settings'
+    }
   ]
 ]);
 
@@ -843,7 +855,8 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.home_settings},
           {id: MenuId.notification_settings},
           {id: MenuId.repository_settings},
-          {id: MenuId.auto_commit_settings}
+          {id: MenuId.auto_commit_settings},
+          {id: MenuId.trendz_settings}
         ]
       },
       {
@@ -946,7 +959,7 @@ const defaultHomeSectionMap = new Map<Authority, HomeSectionReference[]>([
       },
       {
         name: 'admin.system-settings',
-        places: [MenuId.home_settings, MenuId.resources_library, MenuId.repository_settings, MenuId.auto_commit_settings]
+        places: [MenuId.home_settings, MenuId.resources_library, MenuId.repository_settings, MenuId.auto_commit_settings, MenuId.trendz_settings]
       }
     ]
   ],

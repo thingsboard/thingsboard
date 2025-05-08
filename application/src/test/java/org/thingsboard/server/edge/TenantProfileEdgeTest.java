@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,8 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
     @Test
     public void testTenantProfiles() throws Exception {
         loginSysAdmin();
-
-        // save current values into tmp to revert after test
-        TenantProfile edgeTenantProfile = doGet("/api/tenantProfile/" + tenantProfileId.getId(), TenantProfile.class);
+        TenantProfile originalTenantProfile = doGet("/api/tenantProfile/" + tenantProfileId.getId(), TenantProfile.class);
+        TenantProfile edgeTenantProfile = new TenantProfile(originalTenantProfile);
 
         // updated edge tenant profile
         edgeTenantProfile.setName("Tenant Profile Edge Test");
@@ -64,14 +63,15 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals("Updated tenant profile Edge Test", tenantProfileMsg.getDescription());
         Assert.assertEquals("Tenant Profile Edge Test", tenantProfileMsg.getName());
 
+        doPost("/api/tenantProfile", originalTenantProfile, TenantProfile.class);
         loginTenantAdmin();
     }
 
     @Test
     public void testIsolatedTenantProfile() throws Exception {
         loginSysAdmin();
-
-        TenantProfile edgeTenantProfile = doGet("/api/tenantProfile/" + tenantProfileId.getId(), TenantProfile.class);
+        TenantProfile originalTenantProfile = doGet("/api/tenantProfile/" + tenantProfileId.getId(), TenantProfile.class);
+        TenantProfile edgeTenantProfile = new TenantProfile(originalTenantProfile);
 
         // set tenant profile isolated and add 2 queues - main and isolated
         edgeTenantProfile.setIsolatedTbRuleEngine(true);
@@ -110,6 +110,10 @@ public class TenantProfileEdgeTest extends AbstractEdgeTest {
             Assert.assertNotNull(queue);
             Assert.assertEquals(tenantId, queue.getTenantId());
         }
+
+        loginSysAdmin();
+        doPost("/api/tenantProfile", originalTenantProfile, TenantProfile.class);
+        loginTenantAdmin();
     }
 
     private TenantProfileQueueConfiguration createQueueConfig(String queueName, String queueTopic) {

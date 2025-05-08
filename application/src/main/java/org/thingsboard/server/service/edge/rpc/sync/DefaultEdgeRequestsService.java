@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,8 +152,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 entityData = new HashMap<>();
                 attributes = JacksonUtil.newObjectNode();
                 for (AttributeKvEntry attr : ssAttributes) {
-                    if (DefaultDeviceStateService.PERSISTENT_ATTRIBUTES.contains(attr.getKey())
-                            && !DefaultDeviceStateService.INACTIVITY_TIMEOUT.equals(attr.getKey())) {
+                    if (DefaultDeviceStateService.ACTIVITY_KEYS_WITHOUT_INACTIVITY_TIMEOUT.contains(attr.getKey())) {
                         continue;
                     }
                     if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
@@ -200,7 +199,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             }
             Map<Long, Map<String, Object>> tsData = new HashMap<>();
             for (TsKvEntry tsKvEntry : tsKvEntries) {
-                if (DefaultDeviceStateService.PERSISTENT_ATTRIBUTES.contains(tsKvEntry.getKey())) {
+                if (DefaultDeviceStateService.ACTIVITY_KEYS_WITH_INACTIVITY_TIMEOUT.contains(tsKvEntry.getKey())) {
                     continue;
                 }
                 tsData.computeIfAbsent(tsKvEntry.getTs(), k -> new HashMap<>()).put(tsKvEntry.getKey(), tsKvEntry.getValue());
@@ -235,6 +234,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     if (relationsList != null && !relationsList.isEmpty()) {
                         List<ListenableFuture<Void>> futures = new ArrayList<>();
                         for (List<EntityRelation> entityRelations : relationsList) {
+                            if (entityRelations.isEmpty()) {
+                                continue;
+                            }
                             log.trace("[{}][{}][{}][{}] relation(s) are going to be pushed to edge.", tenantId, edge.getId(), entityId, entityRelations.size());
                             for (EntityRelation relation : entityRelations) {
                                 try {
@@ -255,19 +257,23 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                                 }
                             }
                         }
-                        Futures.addCallback(Futures.allAsList(futures), new FutureCallback<>() {
-                            @Override
-                            public void onSuccess(@Nullable List<Void> voids) {
-                                futureToSet.set(null);
-                            }
+                        if (futures.isEmpty()) {
+                            futureToSet.set(null);
+                        } else {
+                            Futures.addCallback(Futures.allAsList(futures), new FutureCallback<>() {
+                                @Override
+                                public void onSuccess(@Nullable List<Void> voids) {
+                                    futureToSet.set(null);
+                                }
 
-                            @Override
-                            public void onFailure(Throwable throwable) {
-                                String errMsg = String.format("[%s][%s] Exception during saving edge events [%s]!", tenantId, edge.getId(), relationRequestMsg);
-                                log.error(errMsg, throwable);
-                                futureToSet.setException(new RuntimeException(errMsg, throwable));
-                            }
-                        }, dbCallbackExecutorService);
+                                @Override
+                                public void onFailure(Throwable throwable) {
+                                    String errMsg = String.format("[%s][%s] Exception during saving edge events [%s]!", tenantId, edge.getId(), relationRequestMsg);
+                                    log.error(errMsg, throwable);
+                                    futureToSet.setException(new RuntimeException(errMsg, throwable));
+                                }
+                            }, dbCallbackExecutorService);
+                        }
                     } else {
                         futureToSet.set(null);
                     }

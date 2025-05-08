@@ -4504,7 +4504,6 @@
         "output": "Output",
         "test": "Test",
         "help": "Help",
-        "reset-debug-mode": "Reset debug mode in all nodes",
         "test-with-this-message": "{{test}} with this message"
     },
     "role": {
@@ -5894,7 +5893,6 @@
         "type": "Tipas",
         "resources": "Resursai",
         "resource-url": "JavaScript/CSS URL",
-        "resource-is-module": "Is module",
         "remove-resource": "Panaikinti resursą",
         "add-resource": "Pridėti resursą",
         "html": "HTML",

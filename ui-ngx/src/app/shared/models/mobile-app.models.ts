@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import { MobileAppId } from '@shared/models/id/mobile-app-id';
 import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
 import { MobileAppBundleId } from '@shared/models/id/mobile-app-bundle-id';
 import { deepClone, isNotEmptyStr } from '@core/utils';
+
+export const WEB_URL_REGEX = /^(https?:\/\/)?(localhost|([\p{L}\p{M}\w-]+\.)+[\p{L}\p{M}\w-]+)(:\d+)?(\/[\w\-._~:/?#[\]@!$&'()*+,;=%\p{L}\p{N}]*)?$/u;
 
 export interface QrCodeSettings extends HasTenantId {
   useDefaultApp: boolean;

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@
           </mat-cell>
         </ng-container>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; let $index = index; trackBy: trackByColumnDef;">
-          <mat-header-cell [style]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="isSorting(column)">
+          <mat-header-cell [style]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="!column.sortable">
             {{ column.title }}
           </mat-header-cell>
           <mat-cell *matCellDef="let alarm; let row = index"

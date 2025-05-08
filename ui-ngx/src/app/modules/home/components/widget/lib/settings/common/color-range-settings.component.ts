@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -121,15 +121,18 @@ export class ColorRangeSettingsComponent implements OnInit, ControlValueAccessor
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        colorRangeSettings: this.modelValue,
-        settingsComponents: this.colorSettingsComponentService.getOtherColorSettingsComponents(this)
-      };
-      const colorRangeSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ColorRangePanelComponent, 'left', true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const colorRangeSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: ColorRangePanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'left',
+        context: {
+          colorRangeSettings: this.modelValue,
+          settingsComponents: this.colorSettingsComponentService.getOtherColorSettingsComponents(this)
+        },
+        isModal: true
+      });
       colorRangeSettingsPanelPopover.tbComponentRef.instance.popover = colorRangeSettingsPanelPopover;
       colorRangeSettingsPanelPopover.tbComponentRef.instance.colorRangeApplied.subscribe((colorRangeSettings: Array<ColorRange>) => {
         colorRangeSettingsPanelPopover.hide();

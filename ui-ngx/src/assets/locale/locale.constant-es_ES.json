@@ -3529,7 +3529,6 @@
         "output": "Salida",
         "test": "Test",
         "help": "Ayuda",
-        "reset-debug-mode": "Restablecer el modo de depuración en todos los nodos",
         "test-with-this-message": "{{test}} con este mensaje"
     },
     "timezone": {
@@ -4557,7 +4556,6 @@
         "type": "Tipo de widget",
         "resources": "Recursos",
         "resource-url": "URL JavaScript/CSS",
-        "resource-is-module": "Es módulo",
         "remove-resource": "Eliminar recurso",
         "add-resource": "Agregar recurso",
         "html": "HTML",

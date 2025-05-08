@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,24 @@ public enum MsgType {
      * Messages that are sent to and from edge session to start edge synchronization process
      */
     EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG,
-    EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG;
+    EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG,
+
+
+    CF_CACHE_INIT_MSG, // Sent to init caches for CF actor;
+    CF_INIT_PROFILE_ENTITY_MSG, // Sent to init profile entities cache;
+    CF_INIT_MSG, // Sent to init particular calculated field;
+    CF_LINK_INIT_MSG, // Sent to init particular calculated field;
+    CF_STATE_RESTORE_MSG, // Sent to restore particular calculated field entity state;
+    CF_PARTITIONS_CHANGE_MSG, // Sent when cluster event occures;
+
+    CF_ENTITY_LIFECYCLE_MSG, // Sent on CF/Device/Asset create/update/delete;
+    CF_TELEMETRY_MSG, // Sent from queue to actor system;
+    CF_LINKED_TELEMETRY_MSG, // Sent from queue to actor system;
+
+    /* CF Manager Actor -> CF Entity actor */
+    CF_ENTITY_TELEMETRY_MSG,
+    CF_ENTITY_INIT_CF_MSG,
+    CF_ENTITY_DELETE_MSG;
 
     @Getter
     private final boolean ignoreOnStart;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -79,7 +79,8 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
     this.restoreFormGroup = this.fb.group({
       loadAttributes: [true, []],
       loadRelations: [true, []],
-      loadCredentials: [true, []]
+      loadCredentials: [true, []],
+      loadCalculatedFields: [true, []]
     });
     this.entitiesVersionControlService.getEntityDataInfo(this.externalEntityId, this.versionId).subscribe((data) => {
       this.entityDataInfo = data;
@@ -110,7 +111,8 @@ export class EntityVersionRestoreComponent extends PageComponent implements OnIn
       config: {
         loadRelations: this.entityDataInfo.hasRelations ? this.restoreFormGroup.get('loadRelations').value : false,
         loadAttributes: this.entityDataInfo.hasAttributes ? this.restoreFormGroup.get('loadAttributes').value : false,
-        loadCredentials: this.entityDataInfo.hasCredentials ? this.restoreFormGroup.get('loadCredentials').value : false
+        loadCredentials: this.entityDataInfo.hasCredentials ? this.restoreFormGroup.get('loadCredentials').value : false,
+        loadCalculatedFields: this.entityDataInfo.hasCalculatedFields ? this.restoreFormGroup.get('loadCalculatedFields').value : false
       },
       type: VersionLoadRequestType.SINGLE_ENTITY
     };

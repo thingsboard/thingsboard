@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2024 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,14 +49,14 @@ ADDITIONAL_COMPOSE_ARGS=$(additionalComposeArgs) || exit $?
 
 ADDITIONAL_CACHE_ARGS=$(additionalComposeCacheArgs) || exit $?
 
-ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
+ADDITIONAL_COMPOSE_EDQS_ARGS=$(additionalComposeEdqsArgs) || exit $?
 
-checkFolders --create || exit $?
+ADDITIONAL_STARTUP_SERVICES=$(additionalStartupServices) || exit $?
 
 if [ ! -z "${ADDITIONAL_STARTUP_SERVICES// }" ]; then
 
     COMPOSE_ARGS="\
-          -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} \
+          -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} ${ADDITIONAL_COMPOSE_EDQS_ARGS} \
           up -d ${ADDITIONAL_STARTUP_SERVICES}"
 
     case $COMPOSE_VERSION in
@@ -73,7 +73,7 @@ if [ ! -z "${ADDITIONAL_STARTUP_SERVICES// }" ]; then
 fi
 
 COMPOSE_ARGS="\
-      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} \
+      -f docker-compose.yml ${ADDITIONAL_CACHE_ARGS} ${ADDITIONAL_COMPOSE_ARGS} ${ADDITIONAL_COMPOSE_QUEUE_ARGS} ${ADDITIONAL_COMPOSE_EDQS_ARGS} \
       run --no-deps --rm -e INSTALL_TB=true -e LOAD_DEMO=${loadDemo} \
       tb-core1"
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,15 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setRestEndpointUrlPattern(String.format("http://localhost:%d%s", server.getLocalPort(), path));
         initWithConfig(config);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(originator)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         restNode.onMsg(ctx, msg);
 
         assertTrue(latch.await(10, TimeUnit.SECONDS), "Server handled request");
@@ -203,7 +211,15 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setRestEndpointUrlPattern(String.format("http://localhost:%d%s", server.getLocalPort(), path));
         initWithConfig(config);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(originator)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         restNode.onMsg(ctx, msg);
 
         assertTrue(latch.await(10, TimeUnit.SECONDS), "Server handled request");

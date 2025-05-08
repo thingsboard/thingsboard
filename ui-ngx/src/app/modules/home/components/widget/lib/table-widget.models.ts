@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ export interface TableWidgetSettings {
   enableStickyHeader: boolean;
   displayPagination: boolean;
   defaultPageSize: number;
+  pageStepIncrement: number;
+  pageStepCount: number;
   useRowStyleFunction: boolean;
   rowStyleFunction?: TbFunction;
   reserveSpaceForHiddenAction?: boolean;
@@ -61,6 +63,7 @@ export interface TableWidgetDataKeySettings {
   cellContentFunction?: TbFunction;
   defaultColumnVisibility?: ColumnVisibilityOptions;
   columnSelectionToDisplay?: ColumnSelectionOptions;
+  disableSorting?: boolean;
 }
 
 export type ShowCellButtonActionFunction = (ctx: WidgetContext, data: EntityData | AlarmDataInfo | FormattedData) => boolean;
@@ -145,7 +148,7 @@ export function entityDataSortOrderFromString(strSortOrder: string, columns: Ent
   if (!column) {
     column = findColumnByName(property, columns);
   }
-  if (column && column.entityKey) {
+  if (column && column.entityKey && column.sortable) {
     return {key: column.entityKey, direction};
   }
   return null;
@@ -557,4 +560,22 @@ export function getHeaderTitle(dataKey: DataKey, keySettings: TableWidgetDataKey
     return utils.customTranslation(keySettings.customTitle, keySettings.customTitle);
   }
   return dataKey.label;
+}
+
+export function buildPageStepSizeValues(pageStepCount: number, pageStepIncrement: number): Array<number> {
+  const pageSteps: Array<number> = [];
+  if (isValidPageStepCount(pageStepCount) && isValidPageStepIncrement(pageStepIncrement)) {
+    for (let i = 1; i <= pageStepCount; i++) {
+      pageSteps.push(pageStepIncrement * i);
+    }
+  }
+  return pageSteps;
+}
+
+export function isValidPageStepIncrement(value: number): boolean {
+  return Number.isInteger(value) && value > 0;
+}
+
+export function isValidPageStepCount(value: number): boolean {
+  return Number.isInteger(value) && value > 0 && value <= 100;
 }

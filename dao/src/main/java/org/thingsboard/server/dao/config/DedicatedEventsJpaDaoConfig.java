@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
+import org.thingsboard.server.dao.model.sql.CalculatedFieldDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.ErrorEventEntity;
 import org.thingsboard.server.dao.model.sql.LifecycleEventEntity;
 import org.thingsboard.server.dao.model.sql.RuleChainDebugEventEntity;
@@ -68,7 +69,7 @@ public class DedicatedEventsJpaDaoConfig {
                                                                              EntityManagerFactoryBuilder builder) {
         return builder
                 .dataSource(eventsDataSource)
-                .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class, AuditLogEntity.class)
+                .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class, AuditLogEntity.class, CalculatedFieldDebugEventEntity.class)
                 .persistenceUnit(EVENTS_PERSISTENCE_UNIT)
                 .build();
     }

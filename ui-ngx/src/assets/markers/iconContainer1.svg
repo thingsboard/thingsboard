@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" class="marker-color" fill="#307FE5">
+  <g filter="url(#shadow-filter)">
+    <path class="marker-opacity" d="M19 24.5C17.4075 27.4125 17 33 17 33C17 33 27.0858 32.1955 30.9992 27.4998C34 23.8992 31.9992 19 27.9992 19C23.9993 19 21.1929 20.4894 19 24.5Z" fill="black" fill-opacity="0.24"/>
+  </g>
+  <circle cx="17" cy="13" r="13" fill="white"/>
+  <g class="marker-icon-container" transform="translate(17,13)">
+  </g>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M 30,12.9625 C 30,6.39011 25.6157,0 17,0 8.38434,0 4,6.39011 4,12.9625 4,25 17,34 17,34 17,34 30,25 30,12.9625 Z M 26,13 c 0,4.9706 -4.0294,9 -9,9 -4.9706,0 -9,-4.0294 -9,-9 0,-4.97056 4.0294,-9 9,-9 4.9706,0 9,4.02944 9,9 z" />
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M 25.9405,4.72663 C 23.9805,2.54472 21.024,1.0625 17,1.0625 12.976,1.0625 10.0195,2.54472 8.05955,4.72663 6.08332,6.92661 5.0625,9.90415 5.0625,12.9625 c 0,5.6425 3.05689,10.659 6.2408,14.3374 1.5807,1.8261 3.1639,3.289 4.352,4.2949 0.5466,0.4628 1.008,0.8274 1.3447,1.0849 0.3367,-0.2575 0.7981,-0.6221 1.3447,-1.0849 1.1881,-1.0059 2.7713,-2.4688 4.3519,-4.2949 3.184,-3.6784 6.2409,-8.6949 6.2409,-14.3374 0,-3.05835 -1.0208,-6.03589 -2.997,-8.23587 z M 17,34 C 17,34 4,25 4,12.9625 4,6.39011 8.38434,0 17,0 25.6157,0 30,6.39011 30,12.9625 30,25 17,34 17,34 Z M 27.0625,13 C 27.0625,18.5574 22.5574,23.0625 17,23.0625 11.4426,23.0625 6.9375,18.5574 6.9375,13 6.9375,7.44263 11.4426,2.9375 17,2.9375 22.5574,2.9375 27.0625,7.44263 27.0625,13 Z M 17,22 c 4.9706,0 9,-4.0294 9,-9 0,-4.97056 -4.0294,-9 -9,-9 -4.9706,0 -9,4.02944 -9,9 0,4.9706 4.0294,9 9,9 z" style="filter:url(#stroke-filter)" />
+  <defs>
+    <filter id="shadow-filter" x="12.75" y="14.75" width="23.9434" height="22.5" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="2.125"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_8817_262071"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_8817_262071" result="shape"/>
+      <feGaussianBlur stdDeviation="0.5" result="effect2_foregroundBlur_8817_262071"/>
+    </filter>
+    <filter
+      id="stroke-filter"
+      style="color-interpolation-filters:sRGB"
+      x="0" y="0" width="1" height="1">
+      <feColorMatrix values="0.6 0 0 0 0 0 0.6 0 0 0 0 0 0.6 0 0 0 0 0 1 0" />
+    </filter>
+  </defs>
+</svg>

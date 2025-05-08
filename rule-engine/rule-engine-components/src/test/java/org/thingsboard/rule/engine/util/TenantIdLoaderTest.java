@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -67,6 +69,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -155,6 +158,8 @@ public class TenantIdLoaderTest {
     private MobileAppService mobileAppService;
     @Mock
     private MobileAppBundleService mobileAppBundleService;
+    @Mock
+    private CalculatedFieldService calculatedFieldService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -401,6 +406,18 @@ public class TenantIdLoaderTest {
                 mobileAppBundle.setTenantId(tenantId);
                 when(ctx.getMobileAppBundleService()).thenReturn(mobileAppBundleService);
                 doReturn(mobileAppBundle).when(mobileAppBundleService).findMobileAppBundleById(eq(tenantId), any());
+                break;
+            case CALCULATED_FIELD:
+                CalculatedField calculatedField = new CalculatedField();
+                calculatedField.setTenantId(tenantId);
+                when(ctx.getCalculatedFieldService()).thenReturn(calculatedFieldService);
+                doReturn(calculatedField).when(calculatedFieldService).findById(eq(tenantId), any());
+                break;
+            case CALCULATED_FIELD_LINK:
+                CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
+                calculatedFieldLink.setTenantId(tenantId);
+                when(ctx.getCalculatedFieldService()).thenReturn(calculatedFieldService);
+                doReturn(calculatedFieldLink).when(calculatedFieldService).findCalculatedFieldLinkById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

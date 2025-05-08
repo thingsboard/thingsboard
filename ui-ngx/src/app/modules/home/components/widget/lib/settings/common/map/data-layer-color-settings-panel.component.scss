@@ -1,0 +1,66 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../../../../../../scss/constants';
+
+.tb-data-layer-color-settings-panel {
+  --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
+  --mat-form-field-trailing-icon-color: rgba(0,0,0,0.38);
+  width: 700px;
+  max-width: 90vw;
+  min-height: 300px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  @media #{$mat-xs} {
+    width: 90vw;
+  }
+  .tb-data-layer-color-settings-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  .tb-form-row {
+    height: auto;
+  }
+  .tb-data-layer-color-settings-panel-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: auto;
+  }
+  .tb-data-layer-color-settings-panel-buttons {
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+  .tb-color-ranges-panel {
+    flex: 1;
+    min-height: 0;
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    .tb-color-ranges {
+      --mat-icon-color: rgba(0, 0, 0, 0.38);
+    }
+  }
+}

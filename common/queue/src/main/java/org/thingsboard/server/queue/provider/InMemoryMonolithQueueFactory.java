@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,33 @@
  */
 package org.thingsboard.server.queue.provider;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
+import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
+import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
+import org.thingsboard.server.queue.edqs.EdqsConfig;
 import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueConsumer;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
+import org.thingsboard.server.queue.settings.TbQueueCalculatedFieldSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueEdgeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -43,36 +52,21 @@ import org.thingsboard.server.queue.settings.TbQueueVersionControlSettings;
 @Slf4j
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='in-memory' && '${service.type:null}'=='monolith'")
+@RequiredArgsConstructor
 public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngineQueueFactory, TbVersionControlQueueFactory {
 
     private final TopicService topicService;
     private final TbQueueCoreSettings coreSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
+    private final TbQueueAdmin queueAdmin;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private final TbQueueVersionControlSettings vcSettings;
     private final TbQueueTransportApiSettings transportApiSettings;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
     private final TbQueueEdgeSettings edgeSettings;
+    private final TbQueueCalculatedFieldSettings calculatedFieldSettings;
+    private final EdqsConfig edqsConfig;
     private final InMemoryStorage storage;
-
-    public InMemoryMonolithQueueFactory(TopicService topicService, TbQueueCoreSettings coreSettings,
-                                        TbQueueRuleEngineSettings ruleEngineSettings,
-                                        TbQueueVersionControlSettings vcSettings,
-                                        TbServiceInfoProvider serviceInfoProvider,
-                                        TbQueueTransportApiSettings transportApiSettings,
-                                        TbQueueTransportNotificationSettings transportNotificationSettings,
-                                        TbQueueEdgeSettings edgeSettings,
-                                        InMemoryStorage storage) {
-        this.topicService = topicService;
-        this.coreSettings = coreSettings;
-        this.vcSettings = vcSettings;
-        this.serviceInfoProvider = serviceInfoProvider;
-        this.ruleEngineSettings = ruleEngineSettings;
-        this.transportApiSettings = transportApiSettings;
-        this.transportNotificationSettings = transportNotificationSettings;
-        this.edgeSettings = edgeSettings;
-        this.storage = storage;
-    }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> createTransportNotificationsMsgProducer() {
@@ -137,6 +131,36 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     @Override
     public TbQueueRequestTemplate<TbProtoJsQueueMsg<JsInvokeProtos.RemoteJsRequest>, TbProtoQueueMsg<JsInvokeProtos.RemoteJsResponse>> createRemoteJsRequestTemplate() {
         return null;
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToCalculatedFieldMsg>> createToCalculatedFieldMsgConsumer(TopicPartitionInfo tpi) {
+        return new InMemoryTbQueueConsumer<>(storage, topicService.buildTopicName(calculatedFieldSettings.getEventTopic()));
+    }
+
+    @Override
+    public TbQueueAdmin getCalculatedFieldQueueAdmin() {
+        return queueAdmin;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCalculatedFieldMsg>> createToCalculatedFieldMsgProducer() {
+        return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(calculatedFieldSettings.getEventTopic()));
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToCalculatedFieldNotificationMsg>> createToCalculatedFieldNotificationMsgConsumer() {
+        return new InMemoryTbQueueConsumer<>(storage, topicService.getCalculatedFieldNotificationsTopic(serviceInfoProvider.getServiceId()).getFullTopicName());
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateConsumer() {
+        return new InMemoryTbQueueConsumer<>(storage, topicService.buildTopicName(calculatedFieldSettings.getStateTopic()));
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateProducer() {
+        return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(calculatedFieldSettings.getStateTopic()));
     }
 
     @Override
@@ -207,6 +231,31 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToEdgeEventNotificationMsg>> createEdgeEventMsgProducer() {
         return null;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCalculatedFieldNotificationMsg>> createToCalculatedFieldNotificationMsgProducer() {
+        return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(calculatedFieldSettings.getEventTopic()));
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsEventsProducer() {
+        return new InMemoryTbQueueProducer<>(storage, edqsConfig.getEventsTopic());
+    }
+
+    @Override
+    public TbQueueRequestTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> createEdqsRequestTemplate() {
+        TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> requestProducer = new InMemoryTbQueueProducer<>(storage, edqsConfig.getRequestsTopic());
+        TbQueueConsumer<TbProtoQueueMsg<FromEdqsMsg>> responseConsumer = new InMemoryTbQueueConsumer<>(storage, edqsConfig.getResponsesTopic());
+
+        return DefaultTbQueueRequestTemplate.<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>>builder()
+                .queueAdmin(queueAdmin)
+                .requestTemplate(requestProducer)
+                .responseTemplate(responseConsumer)
+                .maxPendingRequests(edqsConfig.getMaxPendingRequests())
+                .maxRequestTimeout(edqsConfig.getMaxRequestTimeout())
+                .pollInterval(edqsConfig.getPollInterval())
+                .build();
     }
 
     @Scheduled(fixedRateString = "${queue.in_memory.stats.print-interval-ms:60000}")

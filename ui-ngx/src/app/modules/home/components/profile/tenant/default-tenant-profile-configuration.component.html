@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -155,10 +155,10 @@
                formControlName="maxTransportMessages"
                type="number">
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('required')">
-          {{ 'tenant-profile.max-transport-messages-range' | translate}}
+          {{ 'tenant-profile.max-transport-messages-required' | translate}}
         </mat-error>
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('min')">
-          {{ 'tenant-profile.max-transport-messages-required' | translate}}
+          {{ 'tenant-profile.max-transport-messages-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
       </mat-form-field>
@@ -222,6 +222,92 @@
             </mat-error>
             <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('min')">
               {{ 'tenant-profile.max-transport-data-points-range' | translate}}
+            </mat-error>
+            <mat-hint></mat-hint>
+          </mat-form-field>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.calculated-fields' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.max-calculated-fields</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxCalculatedFieldsPerEntity"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCalculatedFieldsPerEntity').hasError('required')">
+          {{ 'tenant-profile.max-calculated-fields-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCalculatedFieldsPerEntity').hasError('min')">
+          {{ 'tenant-profile.max-calculated-fields-range' | translate}}
+        </mat-error>
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.max-data-points-per-rolling-arg</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxDataPointsPerRollingArg"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDataPointsPerRollingArg').hasError('required')">
+          {{ 'tenant-profile.max-data-points-per-rolling-arg-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDataPointsPerRollingArg').hasError('min')">
+          {{ 'tenant-profile.max-data-points-per-rolling-arg-range' | translate}}
+        </mat-error>
+        <mat-hint></mat-hint>
+      </mat-form-field>
+    </div>
+    <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.max-arguments-per-cf</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="maxArgumentsPerCF"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxArgumentsPerCF').hasError('required')">
+          {{ 'tenant-profile.max-arguments-per-cf-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxArgumentsPerCF').hasError('min')">
+          {{ 'tenant-profile.max-arguments-per-cf-range' | translate}}
+        </mat-error>
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <div class="flex-1"></div>
+    </div>
+    <mat-expansion-panel class="configuration-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-description class="flex items-stretch justify-end" translate>
+          tenant-profile.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.max-state-size</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="maxStateSizeInKBytes"
+                   type="number">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxStateSizeInKBytes').hasError('required')">
+              {{ 'tenant-profile.max-state-size-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxStateSizeInKBytes').hasError('min')">
+              {{ 'tenant-profile.max-state-size-range' | translate}}
+            </mat-error>
+            <mat-hint></mat-hint>
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.max-value-argument-size</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="maxSingleValueArgumentSizeInKBytes"
+                   type="number">
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSingleValueArgumentSizeInKBytes').hasError('required')">
+              {{ 'tenant-profile.max-value-argument-size-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSingleValueArgumentSizeInKBytes').hasError('min')">
+              {{ 'tenant-profile.max-value-argument-size-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
           </mat-form-field>
@@ -637,6 +723,12 @@
           <tb-rate-limits class="flex-1" formControlName="edgeUplinkMessagesRateLimitsPerEdge"
                           [type]="rateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT">
           </tb-rate-limits>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <tb-rate-limits class="flex-1" formControlName="calculatedFieldDebugEventsRateLimit"
+                          [type]="rateLimitsType.CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT">
+          </tb-rate-limits>
+          <div class="flex-1"></div>
         </div>
       </ng-template>
     </mat-expansion-panel>

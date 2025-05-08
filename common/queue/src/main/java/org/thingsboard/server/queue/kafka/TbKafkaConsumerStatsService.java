@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,10 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -55,10 +50,6 @@ public class TbKafkaConsumerStatsService {
 
     private final TbKafkaSettings kafkaSettings;
     private final TbKafkaConsumerStatisticConfig statsConfig;
-
-    @Lazy
-    @Autowired
-    private PartitionService partitionService;
 
     private Consumer<String, byte[]> consumer;
     private ScheduledExecutorService statsPrintScheduler;
@@ -111,9 +102,7 @@ public class TbKafkaConsumerStatsService {
     }
 
     private boolean isStatsPrintRequired() {
-        boolean isMyRuleEnginePartition = partitionService.isMyPartition(ServiceType.TB_RULE_ENGINE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID);
-        boolean isMyCorePartition = partitionService.isMyPartition(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID);
-        return log.isInfoEnabled() && (isMyRuleEnginePartition || isMyCorePartition);
+        return log.isInfoEnabled();
     }
 
     private List<GroupTopicStats> getTopicsStatsWithLag(Map<TopicPartition, OffsetAndMetadata> groupOffsets, Map<TopicPartition, Long> endOffsets) {

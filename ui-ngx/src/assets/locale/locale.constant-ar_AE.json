@@ -4602,7 +4602,6 @@
         "output": "الإخراج",
         "test": "اختبار",
         "help": "مساعدة",
-        "reset-debug-mode": "إعادة تعيين وضع التصحيح في جميع العقد",
         "test-with-this-message": "{{test}} مع هذه الرسالة"
     },
     "role": {
@@ -6017,7 +6016,6 @@
         "type": "نوع الأداة",
         "resources": "الموارد",
         "resource-url": "رابط JavaScript/CSS",
-        "resource-is-module": "هو وحدة",
         "remove-resource": "إزالة المورد",
         "add-resource": "إضافة مورد",
         "html": "HTML",

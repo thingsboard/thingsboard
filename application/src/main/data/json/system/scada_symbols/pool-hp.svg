@@ -38,7 +38,7 @@
     },
     {
       "tag": "scale",
-      "stateRenderFunction": "if (!ctx.properties.scale) {\n        element.hide();\n} else {\n    var scaleSet = element.remember('scaleSet');\n    if (!scaleSet) {\n        element.remember('scaleSet', true);\n        element.clear();\n        \n        var majorIntervals = ctx.properties.majorIntervals;\n        var minorIntervals = ctx.properties.minorIntervals;\n        \n        var start = 3;\n        var majorIntervalLength = 792 / majorIntervals;\n        var minorIntervalLength = majorIntervalLength / minorIntervals;\n        for (var i = 0; i < majorIntervals + 1; i++) {\n            var y = start + i * majorIntervalLength;\n            var line = ctx.svg.line(298, y, 330, y).stroke({ width: 3 }).attr({class: 'majorTick'});\n            element.add(line);\n            var majorText = (100 - i * (100/majorIntervals)).toFixed(0);\n            var majorTickText = ctx.svg.text(majorText);\n            if (i === 0) {\n                majorTickText.attr({x: 288, y: y + 10, 'text-anchor': 'end', class: 'majorTickText'});\n            } else if (i === majorIntervals) {\n                majorTickText.attr({x: 288, y: y - 5, 'text-anchor': 'end', class: 'majorTickText'});\n            } else {\n                majorTickText.attr({x: 288, y: y + 2, 'text-anchor': 'end', class: 'majorTickText'});\n            }\n            majorTickText.first().attr({'dominant-baseline': 'middle'});\n            element.add(majorTickText);\n            if (i < majorIntervals) {\n                drawMinorTicks(y, minorIntervals, minorIntervalLength);\n            }\n        }\n    }\n    \n    var majorFont = ctx.properties.majorFont;\n    var majorColor = ctx.properties.majorColor;\n    var minorColor = ctx.properties.minorColor;\n    \n    var majorTicks = element.find('line.majorTick');\n    majorTicks.forEach(t => t.attr({stroke: majorColor}));\n    \n    var majorTicksText = element.find('text.majorTickText');\n    ctx.api.font(majorTicksText, majorFont, majorColor);\n    \n    var minorTicks = element.find('line.minorTick');\n    minorTicks.forEach(t => t.attr({stroke: minorColor}));\n}\n\nfunction drawMinorTicks(start, minorIntervals, minorIntervalLength) {\n    for (var i = 1; i < minorIntervals; i++) {\n        var minorY = start + i * minorIntervalLength;\n        var minorLine = ctx.svg.line(310, minorY, 330, minorY).stroke({ width: 3 }).attr({class: 'minorTick'});\n        element.add(minorLine);\n    }\n}",
+      "stateRenderFunction": "if (!ctx.properties.scale) {\n        element.hide();\n} else {\n    var scaleSet = element.remember('scaleSet');\n    if (!scaleSet) {\n        element.remember('scaleSet', true);\n        element.clear();\n        \n        var majorIntervals = ctx.properties.majorIntervals;\n        var minorIntervals = ctx.properties.minorIntervals;\n        \n        var start = 3;\n        var majorIntervalLength = 792 / majorIntervals;\n        var minorIntervalLength = majorIntervalLength / minorIntervals;\n        var tankCapacity = ctx.properties.scaleDisplayFormat ? 100 : (ctx.values.tankCapacity || 100);\n        for (var i = 0; i < majorIntervals + 1; i++) {\n            var y = start + i * majorIntervalLength;\n            var line = ctx.svg.line(298, y, 330, y).stroke({ width: 3 }).attr({class: 'majorTick'});\n            element.add(line);\n            var majorText = ctx.api.formatValue((tankCapacity - i * (tankCapacity/majorIntervals)).toFixed(0), 0, ctx.properties.majorUnits, false);\n            var majorTickText = ctx.svg.text(majorText);\n            if (i === 0) {\n                majorTickText.attr({x: 288, y: y + 10, 'text-anchor': 'end', class: 'majorTickText'});\n            } else if (i === majorIntervals) {\n                majorTickText.attr({x: 288, y: y - 5, 'text-anchor': 'end', class: 'majorTickText'});\n            } else {\n                majorTickText.attr({x: 288, y: y + 2, 'text-anchor': 'end', class: 'majorTickText'});\n            }\n            majorTickText.first().attr({'dominant-baseline': 'middle'});\n            element.add(majorTickText);\n            if (i < majorIntervals) {\n                drawMinorTicks(y, minorIntervals, minorIntervalLength);\n            }\n        }\n    }\n    \n    var majorFont = ctx.properties.majorFont;\n    var majorColor = ctx.properties.majorColor;\n    var minorColor = ctx.properties.minorColor;\n    \n    var majorTicks = element.find('line.majorTick');\n    majorTicks.forEach(t => t.attr({stroke: majorColor}));\n    \n    var majorTicksText = element.find('text.majorTickText');\n    ctx.api.font(majorTicksText, majorFont, majorColor);\n    \n    var minorTicks = element.find('line.minorTick');\n    minorTicks.forEach(t => t.attr({stroke: minorColor}));\n}\n\nfunction drawMinorTicks(start, minorIntervals, minorIntervalLength) {\n    for (var i = 1; i < minorIntervals; i++) {\n        var minorY = start + i * minorIntervalLength;\n        var minorLine = ctx.svg.line(310, minorY, 330, minorY).stroke({ width: 3 }).attr({class: 'minorTick'});\n        element.add(minorLine);\n    }\n}",
       "actions": null
     },
     {
@@ -307,64 +307,57 @@
       "name": "{i18n:scada.symbol.tank-color}",
       "type": "color",
       "default": "#EBEBEB",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "fluidColor",
       "name": "{i18n:scada.symbol.fluid-color}",
       "type": "color",
       "default": "#C8DFF7",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "scale",
       "name": "{i18n:scada.symbol.scale}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "scaleDisplayFormat",
+      "name": "{i18n:scada.symbol.scale}",
+      "type": "select",
+      "default": true,
+      "subLabel": "{i18n:scada.symbol.display-format}",
+      "disableOnProperty": "scale",
+      "items": [
+        {
+          "value": true,
+          "label": "Percentage"
+        },
+        {
+          "value": false,
+          "label": "Absolute"
+        }
+      ],
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorIntervals",
       "name": "{i18n:scada.symbol.major-ticks}",
       "type": "number",
       "default": 10,
-      "required": null,
       "subLabel": "{i18n:scada.symbol.intervals}",
       "divider": false,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
       "min": 1,
-      "max": null,
-      "step": 1
+      "step": 1,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorFont",
@@ -377,96 +370,67 @@
         "weight": "500",
         "style": "normal"
       },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "majorColor",
       "name": "{i18n:scada.symbol.major-ticks}",
       "type": "color",
       "default": "#00000061",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minorIntervals",
       "name": "{i18n:scada.symbol.minor-ticks}",
       "type": "number",
       "default": 5,
-      "required": null,
       "subLabel": "{i18n:scada.symbol.intervals}",
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
       "min": 1,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "majorUnits",
+      "name": "{i18n:scada.symbol.major-ticks}",
+      "type": "units",
+      "subLabel": "{i18n:scada.symbol.units}",
+      "divider": true,
+      "disableOnProperty": "scale",
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minorColor",
       "name": "{i18n:scada.symbol.minor-ticks}",
       "type": "color",
       "default": "#0000001F",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "scale",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "warningColor",
       "name": "{i18n:scada.symbol.alarm-colors}",
       "type": "color",
       "default": "#FAA405",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.warning}",
       "divider": true,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "criticalColor",
       "name": "{i18n:scada.symbol.alarm-colors}",
       "type": "color",
       "default": "#D12730",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.critical}",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     }
   ]
 }]]></tb:metadata>
@@ -537,7 +501,7 @@
   <path d="m275.2 639.35v2.25h-11.437v-1.934l5.554-6.059c0.61-0.687 1.09-1.281 1.442-1.781 0.351-0.5 0.598-0.949 0.738-1.347 0.149-0.407 0.223-0.801 0.223-1.184 0-0.539-0.102-1.012-0.305-1.418-0.195-0.414-0.484-0.738-0.867-0.973-0.383-0.242-0.848-0.363-1.395-0.363-0.632 0-1.164 0.137-1.593 0.41-0.43 0.274-0.754 0.653-0.973 1.137-0.219 0.476-0.328 1.023-0.328 1.641h-2.824c0-0.993 0.226-1.899 0.679-2.719 0.453-0.828 1.11-1.485 1.969-1.969 0.86-0.492 1.895-0.738 3.106-0.738 1.14 0 2.109 0.191 2.906 0.574s1.402 0.926 1.816 1.629c0.422 0.703 0.633 1.535 0.633 2.496 0 0.531-0.086 1.059-0.258 1.582s-0.418 1.047-0.738 1.57c-0.313 0.516-0.684 1.035-1.113 1.559-0.43 0.516-0.903 1.039-1.418 1.57l-3.692 4.067zm13.575-7.711v2.789c0 1.336-0.133 2.476-0.399 3.422-0.258 0.937-0.633 1.699-1.125 2.285s-1.082 1.015-1.769 1.289c-0.68 0.273-1.442 0.41-2.286 0.41-0.671 0-1.296-0.086-1.875-0.258-0.57-0.172-1.086-0.441-1.546-0.808-0.461-0.368-0.856-0.84-1.184-1.418-0.32-0.586-0.57-1.286-0.75-2.098-0.172-0.813-0.258-1.754-0.258-2.824v-2.789c0-1.344 0.133-2.477 0.399-3.399 0.265-0.929 0.644-1.683 1.136-2.261 0.492-0.586 1.078-1.012 1.758-1.278 0.688-0.265 1.453-0.398 2.297-0.398 0.68 0 1.305 0.086 1.875 0.258 0.578 0.164 1.094 0.425 1.547 0.785 0.461 0.359 0.851 0.828 1.172 1.406 0.328 0.57 0.578 1.262 0.75 2.074 0.172 0.805 0.258 1.742 0.258 2.813zm-2.825 3.187v-3.609c0-0.68-0.039-1.278-0.117-1.793-0.078-0.524-0.195-0.965-0.351-1.324-0.149-0.368-0.336-0.664-0.563-0.891-0.226-0.234-0.484-0.402-0.773-0.504-0.289-0.109-0.614-0.164-0.973-0.164-0.438 0-0.828 0.086-1.172 0.258-0.344 0.164-0.633 0.43-0.867 0.797s-0.414 0.851-0.539 1.453c-0.117 0.594-0.176 1.316-0.176 2.168v3.609c0 0.688 0.039 1.293 0.117 1.817 0.078 0.523 0.196 0.972 0.352 1.347 0.156 0.367 0.344 0.672 0.562 0.914 0.227 0.235 0.485 0.407 0.774 0.516 0.297 0.109 0.621 0.164 0.972 0.164 0.446 0 0.84-0.086 1.184-0.258s0.633-0.445 0.867-0.82c0.235-0.383 0.41-0.879 0.528-1.488 0.117-0.61 0.175-1.34 0.175-2.192z" fill="#000" fill-opacity=".38"/>
   <path d="m271.47 702.18v17.121h-2.824v-13.77l-4.184 1.418v-2.332l6.668-2.437zm17.301 7.16v2.789c0 1.336-0.133 2.476-0.399 3.422-0.258 0.937-0.633 1.699-1.125 2.285s-1.082 1.016-1.769 1.289c-0.68 0.273-1.442 0.41-2.286 0.41-0.671 0-1.296-0.086-1.875-0.258-0.57-0.172-1.086-0.441-1.546-0.808-0.461-0.367-0.856-0.84-1.184-1.418-0.32-0.586-0.57-1.285-0.75-2.098-0.172-0.812-0.258-1.754-0.258-2.824v-2.789c0-1.344 0.133-2.477 0.399-3.399 0.265-0.929 0.644-1.683 1.136-2.261 0.492-0.586 1.078-1.012 1.758-1.278 0.688-0.265 1.453-0.398 2.297-0.398 0.68 0 1.305 0.086 1.875 0.258 0.578 0.164 1.094 0.426 1.547 0.785 0.461 0.359 0.851 0.828 1.172 1.406 0.328 0.57 0.578 1.262 0.75 2.074 0.172 0.805 0.258 1.743 0.258 2.813zm-2.825 3.187v-3.609c0-0.68-0.039-1.277-0.117-1.793-0.078-0.523-0.195-0.965-0.351-1.324-0.149-0.367-0.336-0.664-0.563-0.891-0.226-0.234-0.484-0.402-0.773-0.504-0.289-0.109-0.614-0.164-0.973-0.164-0.438 0-0.828 0.086-1.172 0.258-0.344 0.164-0.633 0.43-0.867 0.797s-0.414 0.851-0.539 1.453c-0.117 0.594-0.176 1.316-0.176 2.168v3.609c0 0.688 0.039 1.293 0.117 1.817 0.078 0.523 0.196 0.972 0.352 1.347 0.156 0.368 0.344 0.672 0.562 0.914 0.227 0.235 0.485 0.407 0.774 0.516 0.297 0.109 0.621 0.164 0.972 0.164 0.446 0 0.84-0.086 1.184-0.258s0.633-0.445 0.867-0.82c0.235-0.383 0.41-0.879 0.528-1.488 0.117-0.61 0.175-1.34 0.175-2.192z" fill="#000" fill-opacity=".38"/>
   <path d="m288.77 787.04v2.789c0 1.336-0.133 2.477-0.399 3.422-0.258 0.938-0.633 1.699-1.125 2.285s-1.082 1.016-1.769 1.289c-0.68 0.274-1.442 0.41-2.286 0.41-0.671 0-1.296-0.086-1.875-0.257-0.57-0.172-1.086-0.442-1.546-0.809-0.461-0.367-0.856-0.84-1.184-1.418-0.32-0.586-0.57-1.285-0.75-2.098-0.172-0.812-0.258-1.754-0.258-2.824v-2.789c0-1.344 0.133-2.477 0.399-3.398 0.265-0.93 0.644-1.684 1.136-2.262 0.492-0.586 1.078-1.012 1.758-1.277 0.688-0.266 1.453-0.399 2.297-0.399 0.68 0 1.305 0.086 1.875 0.258 0.578 0.164 1.094 0.426 1.547 0.785 0.461 0.359 0.851 0.828 1.172 1.406 0.328 0.571 0.578 1.262 0.75 2.075 0.172 0.804 0.258 1.742 0.258 2.812zm-2.825 3.188v-3.61c0-0.679-0.039-1.277-0.117-1.793-0.078-0.523-0.195-0.965-0.351-1.324-0.149-0.367-0.336-0.664-0.563-0.891-0.226-0.234-0.484-0.402-0.773-0.504-0.289-0.109-0.614-0.164-0.973-0.164-0.438 0-0.828 0.086-1.172 0.258-0.344 0.164-0.633 0.43-0.867 0.797s-0.414 0.852-0.539 1.453c-0.117 0.594-0.176 1.317-0.176 2.168v3.61c0 0.687 0.039 1.293 0.117 1.816s0.196 0.973 0.352 1.348c0.156 0.367 0.344 0.671 0.562 0.914 0.227 0.234 0.485 0.406 0.774 0.515 0.297 0.11 0.621 0.164 0.972 0.164 0.446 0 0.84-0.086 1.184-0.257 0.344-0.172 0.633-0.446 0.867-0.821 0.235-0.383 0.41-0.879 0.528-1.488 0.117-0.609 0.175-1.34 0.175-2.191z" fill="#000" fill-opacity=".38"/>
- </g><path d="m807.17 0s-807.17 0-807.17 134v656.72c0 5.3024 21.491 9.2808 48 9.2808h2304c26.508 0 48-3.9784 48-9.2808v-656.72c0-134-792.84-134-792.84-134h-407.15zm804.84 162.4c-15.464 0-28 2.5072-28 5.6v600.8c0 3.0928 12.536 5.6 28 5.6h175.99c15.464 0 28-2.5072 28-5.6v-600.8c0-3.0928-12.536-5.6-28-5.6z" fill="#000" fill-opacity="0" style="stroke-width:6.9281" tb:tag="clickArea"/><g fill="#d12730" style="display: none;" tb:tag="critical">
+ </g><path d="m807.17 0s-807.17 0-807.17 134v656.72c0 5.3024 21.491 9.2808 48 9.2808h2304c26.508 0 48-3.9784 48-9.2808v-656.72c0-134-792.84-134-792.84-134h-407.15zm804.84 162.4c-15.464 0-28 2.5072-28 5.6v600.8c0 3.0928 12.536 5.6 28 5.6h175.99c15.464 0 28-2.5072 28-5.6v-600.8c0-3.0928-12.536-5.6-28-5.6z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><g fill="#d12730" style="display: none;" tb:tag="critical">
   <rect width="84" height="84" rx="4" fill="#fff" style=""/>
   <rect width="84" height="84" rx="4" style=""/>
   <rect x="2" y="2" width="80" height="80" rx="2" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>

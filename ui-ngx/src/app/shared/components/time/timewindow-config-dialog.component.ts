@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -245,9 +245,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           this.timewindowForm.get('realtime.advancedParams.lastAggIntervalsConfig').value;
         if (lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
           lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-          this.timewindowForm.get('realtime.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(
             lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('realtime.quickInterval').valueChanges.pipe(
@@ -257,9 +257,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           this.timewindowForm.get('realtime.advancedParams.quickAggIntervalsConfig').value;
         if (quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
           quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-          this.timewindowForm.get('realtime.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(
             quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('history.timewindowMs').valueChanges.pipe(
@@ -269,9 +269,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           this.timewindowForm.get('history.advancedParams.lastAggIntervalsConfig').value;
         if (lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
           lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-          this.timewindowForm.get('history.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('history.interval').patchValue(
             lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('history.quickInterval').valueChanges.pipe(
@@ -281,9 +281,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           this.timewindowForm.get('history.advancedParams.quickAggIntervalsConfig').value;
         if (quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
           quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-          this.timewindowForm.get('history.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('history.interval').patchValue(
             quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
 
@@ -554,13 +554,17 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    const trigger = ($event.target || $event.currentTarget) as Element;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const aggregationConfigPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, AggregationOptionsConfigPanelComponent, ['left', 'leftTop', 'leftBottom'], true, null,
-        {
+      const aggregationConfigPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        hostView: this.viewContainerRef,
+        componentType: AggregationOptionsConfigPanelComponent,
+        preferredPlacement: ['left', 'leftTop', 'leftBottom'],
+        context: {
           allowedAggregationTypes: deepClone(this.timewindowForm.get('allowedAggTypes').value),
           onClose: (result: Array<AggregationType> | null) => {
             aggregationConfigPopover.hide();
@@ -570,8 +574,10 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
             }
           }
         },
-        {maxHeight: '500px', height: '100%'},
-        {}, {}, true, () => {}, {padding: 0});
+        overlayStyle: {maxHeight: '500px', height: '100%'},
+        popoverContentStyle: {padding: 0},
+        isModal: true
+      });
       aggregationConfigPopover.tbComponentRef.instance.popoverComponent = aggregationConfigPopover;
     }
     this.cd.detectChanges();
@@ -608,13 +614,17 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    const trigger = ($event.target || $event.currentTarget) as Element;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const intervalsConfigPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, IntervalOptionsConfigPanelComponent, ['left', 'leftTop', 'leftBottom'], true, null,
-        {
+      const intervalsConfigPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        hostView: this.viewContainerRef,
+        componentType: IntervalOptionsConfigPanelComponent,
+        preferredPlacement: ['left', 'leftTop', 'leftBottom'],
+        context: {
           aggregation: this.aggregation,
           allowedIntervals: deepClone(this.timewindowForm.get(allowedIntervalsControlName).value),
           aggIntervalsConfig: deepClone(this.timewindowForm.get(aggIntervalsConfigControlName).value),
@@ -629,8 +639,10 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
             }
           }
         },
-        {maxHeight: '500px', height: '100%'},
-        {}, {}, true, () => {}, {padding: 0});
+        overlayStyle: {maxHeight: '500px', height: '100%'},
+        popoverContentStyle: {padding: 0},
+        isModal: true
+      });
       intervalsConfigPopover.tbComponentRef.instance.popoverComponent = intervalsConfigPopover;
     }
     this.cd.detectChanges();

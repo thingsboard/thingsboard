@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,7 +323,9 @@ public class TbHttpClient {
         metaData.putValue(STATUS_REASON, httpStatus.getReasonPhrase());
         metaData.putValue(ERROR_BODY, response.getBody());
         headersToMetaData(response.getHeaders(), metaData::putValue);
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     private TbMsg processException(TbMsg origMsg, Throwable e) {
@@ -334,7 +336,9 @@ public class TbHttpClient {
             metaData.putValue(STATUS_CODE, restClientResponseException.getStatusCode().value() + "");
             metaData.putValue(ERROR_BODY, restClientResponseException.getResponseBodyAsString());
         }
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     private void prepareHeaders(HttpHeaders headers, TbMsg msg) {
@@ -343,7 +347,7 @@ public class TbHttpClient {
         if (CredentialsType.BASIC == credentials.getType()) {
             BasicCredentials basicCredentials = (BasicCredentials) credentials;
             String authString = basicCredentials.getUsername() + ":" + basicCredentials.getPassword();
-            String encodedAuthString = new String(Base64.getDecoder().decode(authString.getBytes(StandardCharsets.UTF_8)));
+            String encodedAuthString = new String(Base64.getEncoder().encode(authString.getBytes(StandardCharsets.UTF_8)));
             headers.add("Authorization", "Basic " + encodedAuthString);
         }
     }

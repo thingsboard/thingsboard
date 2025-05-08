@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -101,6 +102,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
+import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegrationTest.CLIENT_LWM2M_SETTINGS_19;
 
 @TestPropertySource(properties = {
         "transport.lwm2m.enabled=true",
@@ -147,8 +149,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    \"telemetry\": [],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
-    public static  String OBSERVE_ATTRIBUTES_WITH_PARAMS =
-
+    public static  String TELEMETRY_WITHOUT_OBSERVE =
             "    {\n" +
                     "    \"keyName\": {\n" +
                     "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
@@ -161,6 +162,39 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    ],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
+    public static  String TELEMETRY_WITH_ONE_OBSERVE =
+            "    {\n" +
+                    "    \"keyName\": {\n" +
+                    "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
+                    "    },\n" +
+                    "    \"observe\": [\n" +
+                    "      \"/3_1.2/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"attribute\": [\n" +
+                    "    ],\n" +
+                    "    \"telemetry\": [\n" +
+                    "      \"/3_1.2/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"attributeLwm2m\": {}\n" +
+                    "  }";
+
+    public static  String TELEMETRY_WITH_MANY_OBSERVE =
+               "    {\n" +
+                       "    \"keyName\": {\n" +
+                       "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\"\n" +
+                       "    },\n" +
+                       "    \"observe\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\"\n" +
+                       "    ],\n" +
+                       "    \"attribute\": [],\n" +
+                       "    \"telemetry\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\"\n" +
+                       "    ],\n" +
+                       "    \"attributeLwm2m\": {}\n" +
+                       "  }";
 
     public static final String CLIENT_LWM2M_SETTINGS =
             "     {\n" +
@@ -217,7 +251,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                                                     LwM2MDeviceCredentials deviceCredentials,
                                                     String endpoint,
                                                     boolean queueMode) throws Exception {
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS, getBootstrapServerCredentialsNoSec(NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITHOUT_OBSERVE, getBootstrapServerCredentialsNoSec(NONE));
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
         Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
 
@@ -314,7 +348,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
                                 String endpoint, Integer clientDtlsCidLength, boolean queueMode, String deviceIdStr) throws Exception {
         this.clientDestroy(false);
-        lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
+        lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint, resources);
 
         try (ServerSocket socket = new ServerSocket(0)) {
             int clientPort = socket.getLocalPort();
@@ -327,7 +361,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
     private void clientDestroy(boolean isAfter) {
         try {
-            if (lwM2MTestClient != null) {
+            if (lwM2MTestClient != null && lwM2MTestClient.getLeshanClient() != null) {
                 if (isAfter) {
                     sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
                     awaitDeleteDevice(lwM2MTestClient.getDeviceIdStr());
@@ -343,6 +377,17 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
         TelemetryMappingConfiguration observeAttrConfiguration = JacksonUtil.fromString(observeAttr, TelemetryMappingConfiguration.class);
         OtherConfiguration clientLwM2mSettings = JacksonUtil.fromString(CLIENT_LWM2M_SETTINGS, OtherConfiguration.class);
+        transportConfiguration.setBootstrapServerUpdateEnable(true);
+        transportConfiguration.setObserveAttr(observeAttrConfiguration);
+        transportConfiguration.setClientLwM2mSettings(clientLwM2mSettings);
+        transportConfiguration.setBootstrap(bootstrapServerCredentials);
+        return transportConfiguration;
+    }
+
+    protected Lwm2mDeviceProfileTransportConfiguration getTransportConfiguration19(String observeAttr, List<LwM2MBootstrapServerCredential> bootstrapServerCredentials) {
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
+        TelemetryMappingConfiguration observeAttrConfiguration = JacksonUtil.fromString(observeAttr, TelemetryMappingConfiguration.class);
+        OtherConfiguration clientLwM2mSettings = JacksonUtil.fromString(CLIENT_LWM2M_SETTINGS_19, OtherConfiguration.class);
         transportConfiguration.setBootstrapServerUpdateEnable(true);
         transportConfiguration.setObserveAttr(observeAttrConfiguration);
         transportConfiguration.setClientLwM2mSettings(clientLwM2mSettings);
@@ -425,9 +470,15 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         return rpcActualResult.get("value").asText();
     }
+    protected void sendRpcObserveWithContainsLwM2mSingleResource(String params) throws Exception {
+        String rpcActualResult = sendRpcObserveOkWithResultValue("Observe", params);
+        assertTrue(rpcActualResult.contains("LwM2mSingleResource") || rpcActualResult.contains("LwM2mMultipleResource"));
+    }
+
     protected String sendRpcObserveOk(String method, String params) throws Exception {
         return sendObserveOK(method, params, lwM2MTestClient.getDeviceIdStr());
     }
+
     protected String sendObserveOK(String method, String params, String deviceIdStr) throws Exception {
         String sendRpcRequest;
         if (params == null) {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,11 +16,28 @@
 
 -->
 <div class="tb-form-panel no-padding no-border" [formGroup]="widgetActionFormGroup">
+  <div *ngIf="withName" class="tb-form-row">
+    <div class="fixed-title-width">{{'widget-config.action-name' | translate}}*</div>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="(widgetActionFormGroup.get('name').hasError('required')
+                                     ? 'widget-config.action-name-required'
+                                     : 'widget-config.action-name-not-unique') | translate"
+                *ngIf="widgetActionFormGroup.get('name').invalid
+                       && (widgetActionFormGroup.get('name').touched || widgetActionFormGroup.get('name').hasError('actionNameNotUnique'))"
+                class="tb-error">
+        warning
+      </mat-icon>
+    </mat-form-field>
+  </div>
   <div class="tb-form-row">
     <div translate>widget-config.action</div>
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select required formControlName="type" placeholder="{{ 'widget-config.set' | translate }}">
-        <mat-option *ngFor="let actionType of widgetActionTypes" [value]="actionType">
+        <mat-option *ngFor="let actionType of actionTypes()" [value]="actionType">
           {{ widgetActionTypeTranslations.get(widgetActionType[actionType]) | translate }}
         </mat-option>
       </mat-select>
@@ -239,11 +256,31 @@
           [editorCompleter]="customActionEditorCompleter"
           withModules
           helpId="widget/action/custom_action_fn"
+          [helpPopupStyle]="{width: '900px'}"
       ></tb-js-func>
     </ng-template>
-    <ng-template [ngSwitchCase]="widgetActionType.customPretty">
+    <ng-template [ngSwitchCase]="widgetActionType.placeMapItem">
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'widget-action.map-item-type' | translate }}</div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-select placeholder="{{ 'widget-config.set' | translate }}" formControlName="mapItemType">
+            @for(type of mapItemTypes; track type) {
+              <mat-option [value]="type">{{ mapItemTypeTranslationMap.get(type) | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <tb-map-item-tooltips
+        [mapItemType]="actionTypeFormGroup.get('mapItemType').value"
+        formControlName="mapItemTooltips">
+      </tb-map-item-tooltips>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.customPretty
+                                  || widgetActionFormGroup.get('type').value === widgetActionType.placeMapItem
+                                  ? widgetActionFormGroup.get('type').value : ''">
       <tb-custom-action-pretty-editor
-          formControlName="customAction">
+        [widgetActionType]="widgetActionFormGroup.get('type').value"
+        formControlName="customAction">
       </tb-custom-action-pretty-editor>
     </ng-template>
     <ng-template [ngSwitchCase]="widgetActionType.mobileAction">

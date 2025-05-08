@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,5 +144,10 @@ public class DataConstants {
 
     public static final String EDGE_QUEUE_NAME = "Edge";
     public static final String EDGE_EVENT_QUEUE_NAME = "EdgeEvent";
+
+    public static final String CF_QUEUE_NAME = "CalculatedFields";
+    public static final String CF_STATES_QUEUE_NAME = "CalculatedFieldStates";
+
+    public static final String LATEST_TELEMETRY_SCOPE = "LATEST_TELEMETRY";
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,13 +78,21 @@ public interface DashboardInfoRepository extends JpaRepository<DashboardInfoEnti
 
     @Query(nativeQuery = true,
             value = "SELECT * FROM dashboard d WHERE d.tenant_id = :tenantId " +
-                    "and (d.image = :imageLink or d.configuration ILIKE CONCAT('%\"', :imageLink, '\"%')) limit :lmt"
+                    "and (d.image = :imageLink or d.configuration ILIKE CONCAT('%\"', :imageLink, '\"%')) limit :limit"
     )
-    List<DashboardInfoEntity> findByTenantAndImageLink(@Param("tenantId") UUID tenantId, @Param("imageLink") String imageLink, @Param("lmt") int lmt);
+    List<DashboardInfoEntity> findByTenantAndImageLink(@Param("tenantId") UUID tenantId, @Param("imageLink") String imageLink, @Param("limit") int limit);
 
     @Query(nativeQuery = true,
-            value = "SELECT * FROM dashboard d WHERE d.image = :imageLink or d.configuration ILIKE CONCAT('%\"', :imageLink, '\"%') limit :lmt"
+            value = "SELECT * FROM dashboard d WHERE d.image = :imageLink or d.configuration ILIKE CONCAT('%\"', :imageLink, '\"%') limit :limit"
     )
-    List<DashboardInfoEntity> findByImageLink(@Param("imageLink") String imageLink, @Param("lmt") int lmt);
+    List<DashboardInfoEntity> findByImageLink(@Param("imageLink") String imageLink, @Param("limit") int limit);
+
+    @Query(value = "SELECT * FROM dashboard d WHERE d.tenant_id = :tenantId and d.configuration ILIKE CONCAT('%', :link, '%') limit :limit",
+            nativeQuery = true)
+    List<DashboardInfoEntity> findDashboardInfosByTenantIdAndResourceLink(@Param("tenantId") UUID tenantId, @Param("link") String link, @Param("limit") int limit);
+
+    @Query(value = "SELECT * FROM dashboard d WHERE d.configuration ILIKE CONCAT('%', :link, '%') limit :limit",
+            nativeQuery = true)
+    List<DashboardInfoEntity> findDashboardInfosByResourceLink(@Param("link") String link, @Param("limit") int limit);
 
 }

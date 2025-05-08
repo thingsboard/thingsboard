@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.user.UserCredentialsDao;
@@ -34,7 +37,7 @@ import java.util.UUID;
  */
 @Component
 @SqlDao
-public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity, UserCredentials> implements UserCredentialsDao {
+public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity, UserCredentials> implements UserCredentialsDao, TenantEntityDao<UserCredentials> {
 
     @Autowired
     private UserCredentialsRepository userCredentialsRepository;
@@ -82,6 +85,11 @@ public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity,
     @Override
     public void setFailedLoginAttempts(TenantId tenantId, UserId userId, int failedLoginAttempts) {
         userCredentialsRepository.updateFailedLoginAttemptsByUserId(userId.getId(), failedLoginAttempts);
+    }
+
+    @Override
+    public PageData<UserCredentials> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(userCredentialsRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
 }

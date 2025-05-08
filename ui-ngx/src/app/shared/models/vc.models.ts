@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ export interface VersionCreateConfig {
   saveRelations: boolean;
   saveAttributes: boolean;
   saveCredentials: boolean;
+  saveCalculatedFields: boolean;
 }
 
 export enum VersionCreateRequestType {
@@ -106,6 +107,7 @@ export function createDefaultEntityTypesVersionCreate(): {[entityType: string]: 
       syncStrategy: null,
       saveAttributes: !entityTypesWithoutRelatedData.has(entityType),
       saveRelations: !entityTypesWithoutRelatedData.has(entityType),
+      saveCalculatedFields: typesWithCalculatedFields.has(entityType),
       saveCredentials: true,
       allEntities: true,
       entityIds: []
@@ -118,6 +120,7 @@ export interface VersionLoadConfig {
   loadRelations: boolean;
   loadAttributes: boolean;
   loadCredentials: boolean;
+  loadCalculatedFields: boolean;
 }
 
 export enum VersionLoadRequestType {
@@ -154,6 +157,7 @@ export function createDefaultEntityTypesVersionLoad(): {[entityType: string]: En
       loadAttributes: !entityTypesWithoutRelatedData.has(entityType),
       loadRelations: !entityTypesWithoutRelatedData.has(entityType),
       loadCredentials: true,
+      loadCalculatedFields: typesWithCalculatedFields.has(entityType),
       removeOtherEntities: false,
       findExistingEntityByName: true
     };
@@ -254,4 +258,7 @@ export interface EntityDataInfo {
   hasRelations: boolean;
   hasAttributes: boolean;
   hasCredentials: boolean;
+  hasCalculatedFields: boolean;
 }
+
+export const typesWithCalculatedFields = new Set<EntityType | AliasEntityType>([EntityType.DEVICE, EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE_PROFILE]);

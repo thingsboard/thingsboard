@@ -1554,8 +1554,7 @@
     "metadata-required": "As entradas de metadados não podem estar em branco.",
     "output": "Saída",
     "test": "Teste",
-    "help": "Ajuda",
-    "reset-debug-mode": "Redefinir modo de depuração em todos os nós"
+    "help": "Ajuda"
   },
   "timezone": {
     "timezone": "Fuso horário",
@@ -1730,7 +1729,6 @@
     "type": "Tipo de widget",
     "resources": "Recursos",
     "resource-url": "URL de JavaScript/CSS",
-    "resource-is-module": "É módulo",
     "remove-resource": "Remover recurso",
     "add-resource": "Adicionar recurso",
     "html": "HTML",

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,5 +36,8 @@ public interface UserAuthSettingsRepository extends JpaRepository<UserAuthSettin
     @Modifying
     @Query("DELETE FROM UserAuthSettingsEntity e WHERE e.userId = :userId")
     void deleteByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT s FROM UserAuthSettingsEntity s WHERE s.userId IN (SELECT u.id FROM UserEntity u WHERE u.tenantId = :tenantId)")
+    Page<UserAuthSettingsEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
 }

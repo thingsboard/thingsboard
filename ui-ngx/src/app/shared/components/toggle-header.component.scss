@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,12 @@
   .tb-toggle-header {
     transition: transform 500ms cubic-bezier(0.35, 0, 0.25, 1);
   }
+
+  .tb-error-icon {
+    width: 12px;
+    height: 12px;
+    font-size: 12px;
+  }
 }
 
 :host ::ng-deep {
@@ -77,6 +83,12 @@
       background: none;
       &:before {
         border-radius: 100px;
+      }
+    }
+    .tb-toggle-button-error {
+      .mat-button-toggle-button {
+        border: 1px solid rgb(221, 44, 0);
+        border-radius: 20px;
       }
     }
     .mat-button-toggle + .mat-button-toggle {

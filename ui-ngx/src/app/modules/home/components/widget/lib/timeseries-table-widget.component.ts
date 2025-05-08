@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import {
   hashCode,
   isDefined,
   isDefinedAndNotNull,
-  isNumber,
   isObject,
   isUndefined
 } from '@core/utils';
@@ -85,6 +84,8 @@ import {
   getColumnSelectionAvailability,
   getRowStyleInfo,
   getTableCellButtonActions,
+  isValidPageStepCount,
+  isValidPageStepIncrement,
   noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
@@ -173,7 +174,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public enableStickyHeader = true;
   public enableStickyAction = true;
   public showCellActionsMenu = true;
-  public pageSizeOptions;
+  public pageSizeOptions = [];
   public textSearchMode = false;
   public hidePageSize = false;
   public sources: TimeseriesTableSource[];
@@ -192,7 +193,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private latestData: Array<DatasourceData>;
   private datasources: Array<Datasource>;
 
-  private defaultPageSize = 10;
+  private defaultPageSize;
   private defaultSortOrder = '-0';
   private hideEmptyLines = false;
   public showTimestamp = true;
@@ -352,10 +353,25 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'rowData, ctx');
 
     const pageSize = this.settings.defaultPageSize;
-    if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
+    let pageStepIncrement = isValidPageStepIncrement(this.settings.pageStepIncrement) ? this.settings.pageStepIncrement : null;
+    let pageStepCount = isValidPageStepCount(this.settings.pageStepCount) ? this.settings.pageStepCount : null;
+
+    if (Number.isInteger(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
+
+    if (!this.defaultPageSize) {
+      this.defaultPageSize = pageStepIncrement ?? 10;
+    }
+
+    if (!isDefinedAndNotNull(pageStepIncrement) || !isDefinedAndNotNull(pageStepCount)) {
+      pageStepIncrement = this.defaultPageSize;
+      pageStepCount = 3;
+    }
+
+    for (let i = 1; i <= pageStepCount; i++) {
+      this.pageSizeOptions.push(pageStepIncrement * i);
+    }
 
     this.noDataDisplayMessageText =
       noDataMessage(this.widgetConfig.noDataDisplayMessage, 'widget.no-data-found', this.utils, this.translate);
@@ -440,7 +456,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       $event.stopPropagation();
     }
     if (this.sources.length) {
-      const target = $event.target || $event.srcElement || $event.currentTarget;
+      const target = $event.target || $event.currentTarget;
       const config = new OverlayConfig({
         panelClass: 'tb-panel-container',
         backdropClass: 'cdk-overlay-transparent-backdrop',
@@ -518,8 +534,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     const latestDataKeys = datasource.latestDataKeys;
     let header: TimeseriesHeader[] = [];
     dataKeys.forEach((dataKey, index) => {
-      const sortable = !dataKey.usePostProcessing;
       const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+      const sortable = !keySettings.disableSorting && !dataKey.usePostProcessing;
       const styleInfo = getCellStyleInfo(this.ctx, keySettings, 'value, rowData, ctx');
       const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, rowData, ctx');
       const columnDefaultVisibility = getColumnDefaultVisibility(keySettings, this.ctx);
@@ -544,8 +560,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if (latestDataKeys) {
       latestDataKeys.forEach((dataKey, latestIndex) => {
         const index = dataKeys.length + latestIndex;
-        const sortable = !dataKey.usePostProcessing;
         const keySettings: TimeseriesWidgetLatestDataKeySettings = dataKey.settings;
+        const sortable = !keySettings.disableSorting && !dataKey.usePostProcessing;
         const styleInfo = getCellStyleInfo(this.ctx, keySettings, 'value, rowData, ctx');
         const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, rowData, ctx');
         const columnDefaultVisibility = getColumnDefaultVisibility(keySettings, this.ctx);

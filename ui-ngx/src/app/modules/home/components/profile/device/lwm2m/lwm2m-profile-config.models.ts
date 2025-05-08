@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -124,13 +124,15 @@ export const PowerModeTranslationMap = new Map<PowerMode, string>(
 
 export enum ObjectIDVer {
   V1_0 = '1.0',
-  V1_1 = '1.1'
+  V1_1 = '1.1',
+  V1_2 = '1.2',
 }
 
 export const ObjectIDVerTranslationMap = new Map<ObjectIDVer, string>(
   [
     [ObjectIDVer.V1_0, 'device-profile.lwm2m.default-object-id-ver.v1-0'],
-    [ObjectIDVer.V1_1, 'device-profile.lwm2m.default-object-id-ver.v1-1']
+    [ObjectIDVer.V1_1, 'device-profile.lwm2m.default-object-id-ver.v1-1'],
+    [ObjectIDVer.V1_2, 'device-profile.lwm2m.default-object-id-ver.v1-2'],
   ]
 );
 
@@ -167,6 +169,7 @@ export interface Lwm2mProfileConfigModels {
 
 export interface ClientLwM2mSettings {
   clientOnlyObserveAfterConnect: number;
+  useObject19ForOtaInfo?: boolean;
   fwUpdateStrategy: number;
   swUpdateStrategy: number;
   fwUpdateResource?: string;

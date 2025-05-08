@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -874,7 +874,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   public exportDashboard($event: Event) {
     if ($event) {
-      $event.stopPropagation();
+      $event.preventDefault();
     }
     this.importExport.exportDashboard(this.currentDashboardId);
   }
@@ -1118,6 +1118,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.dashboardCtx.aliasController.dashboardStateChanged();
         this.isRightLayoutOpened = openRightLayout ? true : false;
         this.updateLayouts(layoutsData);
+        this.cd.markForCheck();
       }
       setTimeout(() => {
         this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
@@ -1335,8 +1336,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
-    this.widgetComponentService.getWidgetInfo(widget.typeFullFqn).subscribe(
-      (widgetTypeInfo) => {
+    this.widgetComponentService.getWidgetInfo(widget.typeFullFqn).subscribe({
+      next: (widgetTypeInfo) => {
         const config: WidgetConfig = this.dashboardUtils.widgetConfigFromWidgetType(widgetTypeInfo);
         if (!config.title) {
           config.title = 'New ' + widgetTypeInfo.widgetName;
@@ -1389,8 +1390,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
             }
           });
         }
+      },
+      error: (errorData) => {
+        const errorMessages: string[] = errorData.errorMessages;
+        this.dialogService.alert(this.translate.instant('widget.widget-type-load-error'),
+          errorMessages.join('<br>').replace(/\n/g, '<br>'));
       }
-    );
+    });
   }
 
   onRevertWidgetEdit() {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   EventEmitter,
   Input,
   OnInit,
@@ -44,6 +45,7 @@ import {
   widgetButtonToggleStates,
   widgetButtonToggleStatesTranslations
 } from '@home/components/widget/lib/button/segmented-button-widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-widget-button-toggle-custom-style-panel',
@@ -106,7 +108,8 @@ export class WidgetButtonToggleCustomStylePanelComponent extends PageComponent i
 
   constructor(private fb: UntypedFormBuilder,
               protected store: Store<AppState>,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -126,11 +129,15 @@ export class WidgetButtonToggleCustomStylePanelComponent extends PageComponent i
     );
     merge(this.customStyleFormGroup.get('overrideMainColor').valueChanges,
       this.customStyleFormGroup.get('overrideBackgroundColor').valueChanges,
-      this.customStyleFormGroup.get('overrideBorderColor').valueChanges)
-      .subscribe(() => {
-        this.updateValidators();
-      });
-    this.customStyleFormGroup.valueChanges.subscribe(() => {
+      this.customStyleFormGroup.get('overrideBorderColor').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateValidators();
+    });
+    this.customStyleFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updatePreviewAppearance();
     });
     this.setStyle(this.customStyle);

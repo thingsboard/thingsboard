@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,12 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Invalid message structure, it is not a JSON Object: " + null);
@@ -206,7 +211,12 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                   "humidity": 77
                 }
                 """;
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(data)
+                .build();
         assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Message data doesn't contain key: 'temp'!");
@@ -227,7 +237,12 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                 "temp": [value]
                 }
                 """;
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(data)
+                .build();
         assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Message data key: 'temp' with value: '[\"value\"]' is not a JSON Object or JSON Primitive!");
@@ -249,7 +264,12 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
         mockSubmittingCassandraTask();
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(sessionMock).should().prepare(expectedQuery);
@@ -299,7 +319,12 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                     }
                 }
                 """;
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(data)
+                .build();
         node.onMsg(ctxMock, msg);
 
         verifySettingStatementBuilder();

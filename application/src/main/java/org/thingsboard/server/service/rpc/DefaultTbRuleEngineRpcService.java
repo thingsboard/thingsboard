@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,8 +115,9 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
         ToDeviceRpcRequest request = new ToDeviceRpcRequest(src.getRequestUUID(), src.getTenantId(), src.getDeviceId(),
                 src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()), src.isPersisted(), src.getRetries(), src.getAdditionalInfo());
         forwardRpcRequestToDeviceActor(request, response -> {
-            if (src.isRestApiCall()) {
-                sendRpcResponseToTbCore(src.getOriginServiceId(), response);
+            String originServiceId = src.getOriginServiceId();
+            if (src.isRestApiCall() && originServiceId != null) {
+                sendRpcResponseToTbCore(originServiceId, response);
             }
             consumer.accept(RuleEngineDeviceRpcResponse.builder()
                     .deviceId(src.getDeviceId())
@@ -132,7 +133,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
         TransportProtos.RestApiCallResponseMsgProto msg = TransportProtos.RestApiCallResponseMsgProto.newBuilder()
                 .setRequestIdMSB(requestId.getMostSignificantBits())
                 .setRequestIdLSB(requestId.getLeastSignificantBits())
-                .setResponse(TbMsg.toByteString(tbMsg))
+                .setResponseProto(TbMsg.toProto(tbMsg))
                 .build();
         clusterService.pushNotificationToCore(serviceId, msg, null);
     }

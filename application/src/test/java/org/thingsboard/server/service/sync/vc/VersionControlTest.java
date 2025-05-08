@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,22 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -104,6 +116,8 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.controller.TbResourceControllerTest.TEST_DATA;
+import static org.thingsboard.server.controller.TbResourceControllerTest.JS_TEST_FILE_NAME;
 
 @DaoSqlTest
 public class VersionControlTest extends AbstractControllerTest {
@@ -562,6 +576,103 @@ public class VersionControlTest extends AbstractControllerTest {
         checkImportedEntity(tenantId1, defaultDeviceProfile, tenantId2, importedDeviceProfile);
     }
 
+    @Test
+    public void testVcWithCalculatedFields_betweenTenants() throws Exception {
+        Asset asset = createAsset(null, null, "Asset 1");
+        Device device = createDevice(null, null, "Device 1", "test1");
+        CalculatedField calculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
+        String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        loginTenant2();
+        loadVersion(versionId, config -> {
+            config.setLoadCredentials(false);
+        }, EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        Asset importedAsset = findAsset(asset.getName());
+        Device importedDevice = findDevice(device.getName());
+        checkImportedEntity(tenantId1, device, tenantId2, importedDevice);
+        checkImportedEntity(tenantId1, asset, tenantId2, importedAsset);
+
+        List<CalculatedField> importedCalculatedFields = findCalculatedFieldsByEntityId(importedDevice.getId());
+        assertThat(importedCalculatedFields).size().isOne();
+        assertThat(importedCalculatedFields.get(0)).satisfies(importedField -> {
+            assertThat(importedField.getName()).isEqualTo(calculatedField.getName());
+            assertThat(importedField.getType()).isEqualTo(calculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(calculatedField.getId());
+        });
+    }
+
+    @Test
+    public void testVcWithReferencedCalculatedFields_betweenTenants() throws Exception {
+        Asset asset = createAsset(null, null, "Asset 1");
+        Device device = createDevice(null, null, "Device 1", "test1");
+        CalculatedField deviceCalculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
+        CalculatedField assetCalculatedField = createCalculatedField("CalculatedField2", asset.getId(), device.getId());
+        String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        loginTenant2();
+        loadVersion(versionId, config -> {
+            config.setLoadCredentials(false);
+        }, EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        Asset importedAsset = findAsset(asset.getName());
+        Device importedDevice = findDevice(device.getName());
+        checkImportedEntity(tenantId1, device, tenantId2, importedDevice);
+        checkImportedEntity(tenantId1, asset, tenantId2, importedAsset);
+
+        List<CalculatedField> importedDeviceCalculatedFields = findCalculatedFieldsByEntityId(importedDevice.getId());
+        assertThat(importedDeviceCalculatedFields).size().isOne();
+        assertThat(importedDeviceCalculatedFields.get(0)).satisfies(importedField -> {
+            assertThat(importedField.getName()).isEqualTo(deviceCalculatedField.getName());
+            assertThat(importedField.getType()).isEqualTo(deviceCalculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(deviceCalculatedField.getId());
+            assertThat(importedField.getConfiguration().getArguments().get("T").getRefEntityId()).isEqualTo(importedAsset.getId());
+        });
+
+        List<CalculatedField> importedAssetCalculatedFields = findCalculatedFieldsByEntityId(importedAsset.getId());
+        assertThat(importedAssetCalculatedFields).size().isOne();
+        assertThat(importedAssetCalculatedFields.get(0)).satisfies(importedField -> {
+            assertThat(importedField.getName()).isEqualTo(assetCalculatedField.getName());
+            assertThat(importedField.getType()).isEqualTo(assetCalculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(assetCalculatedField.getId());
+            assertThat(importedField.getConfiguration().getArguments().get("T").getRefEntityId()).isEqualTo(importedDevice.getId());
+        });
+    }
+
+    @Test
+    public void testVcWithCalculatedFields_sameTenant() throws Exception {
+        Asset asset = createAsset(null, null, "Asset 1");
+        CalculatedField calculatedField = createCalculatedField("CalculatedField", asset.getId(), asset.getId());
+        String versionId = createVersion("asset and field", EntityType.ASSET);
+
+        loadVersion(versionId, EntityType.ASSET);
+        CalculatedField importedCalculatedField = findCalculatedFieldByEntityId(asset.getId());
+        assertThat(importedCalculatedField.getId()).isEqualTo(calculatedField.getId());
+        assertThat(importedCalculatedField.getName()).isEqualTo(calculatedField.getName());
+        assertThat(importedCalculatedField.getConfiguration()).isEqualTo(calculatedField.getConfiguration());
+        assertThat(importedCalculatedField.getType()).isEqualTo(calculatedField.getType());
+    }
+
+    @Test
+    public void testResourceVc_sameTenant() throws Exception {
+        TbResourceInfo resourceInfo = createResource("Test resource");
+        String versionId = createVersion("resources", EntityType.TB_RESOURCE);
+
+        TbResource resource = findResource(resourceInfo.getName());
+
+        loadVersion(versionId, EntityType.TB_RESOURCE);
+        TbResource importedResource = findResource(resource.getName());
+        checkImportedEntity(tenantId1, resource, tenantId1, importedResource);
+        checkImportedResourceData(resource, importedResource);
+    }
+
+    protected void checkImportedResourceData(TbResource resource, TbResource importedResource) {
+        assertThat(importedResource.getName()).isEqualTo(resource.getName());
+        assertThat(importedResource.getData()).isEqualTo(resource.getData());
+        assertThat(importedResource.getResourceKey()).isEqualTo(resource.getResourceKey());
+        assertThat(importedResource.getResourceType()).isEqualTo(resource.getResourceType());
+    }
+
     private <E extends ExportableEntity<?> & HasTenantId> void checkImportedEntity(TenantId tenantId1, E initialEntity, TenantId tenantId2, E importedEntity) {
         assertThat(initialEntity.getTenantId()).isEqualTo(tenantId1);
         assertThat(importedEntity.getTenantId()).isEqualTo(tenantId2);
@@ -626,10 +737,10 @@ public class VersionControlTest extends AbstractControllerTest {
         request.setEntityTypes(Arrays.stream(entityTypes).collect(Collectors.toMap(t -> t, entityType -> {
             EntityTypeVersionCreateConfig config = new EntityTypeVersionCreateConfig();
             config.setAllEntities(true);
-
             config.setSaveRelations(true);
             config.setSaveAttributes(true);
             config.setSaveCredentials(true);
+            config.setSaveCalculatedFields(true);
             return config;
         })));
 
@@ -695,6 +806,7 @@ public class VersionControlTest extends AbstractControllerTest {
             config.setLoadAttributes(true);
             config.setLoadRelations(true);
             config.setLoadCredentials(true);
+            config.setLoadCalculatedFields(true);
             config.setRemoveOtherEntities(false);
             config.setFindExistingEntityByName(true);
             configModifier.accept(config);
@@ -941,6 +1053,38 @@ public class VersionControlTest extends AbstractControllerTest {
         return doPost("/api/v2/relation", relation, EntityRelation.class);
     }
 
+    private CalculatedField createCalculatedField(String name, EntityId entityId, EntityId referencedEntityId) {
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(entityId);
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName(name);
+        calculatedField.setConfigurationVersion(1);
+        calculatedField.setConfiguration(getCalculatedFieldConfig(referencedEntityId));
+        calculatedField.setVersion(1L);
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+    }
+
+    private CalculatedFieldConfiguration getCalculatedFieldConfig(EntityId referencedEntityId) {
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        argument.setRefEntityId(referencedEntityId);
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
+
+        config.setArguments(Map.of("T", argument));
+
+        config.setExpression("T - (100 - H) / 5");
+
+        Output output = new Output();
+        output.setName("output");
+        output.setType(OutputType.TIME_SERIES);
+
+        config.setOutput(output);
+
+        return config;
+    }
+
     protected void checkImportedRuleChainData(RuleChain initialRuleChain, RuleChainMetaData initialMetaData, RuleChain importedRuleChain, RuleChainMetaData importedMetaData) {
         assertThat(importedRuleChain.getType()).isEqualTo(initialRuleChain.getType());
         assertThat(importedRuleChain.getName()).isEqualTo(initialRuleChain.getName());
@@ -995,11 +1139,36 @@ public class VersionControlTest extends AbstractControllerTest {
 
     private RuleChain findRuleChain(String name) throws Exception {
         return doGetTypedWithPageLink("/api/ruleChains?", new TypeReference<PageData<RuleChain>>() {}, new PageLink(100, 0, name)).getData().get(0);
-
     }
 
     private RuleChainMetaData findRuleChainMetaData(RuleChainId ruleChainId) throws Exception {
         return doGet("/api/ruleChain/" + ruleChainId + "/metadata", RuleChainMetaData.class);
+    }
+
+    private CalculatedField findCalculatedFieldByEntityId(EntityId entityId) throws Exception {
+        return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields?", new TypeReference<PageData<CalculatedField>>() {}, new PageLink(100, 0)).getData().get(0);
+    }
+
+    private List<CalculatedField> findCalculatedFieldsByEntityId(EntityId entityId) throws Exception {
+        return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields?", new TypeReference<PageData<CalculatedField>>() {}, new PageLink(100, 0)).getData();
+    }
+
+    private TbResourceInfo createResource(String name) {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JKS);
+        resource.setTitle(name);
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setEncodedData(TEST_DATA);
+
+        return saveTbResource(resource);
+    }
+
+    private TbResourceInfo saveTbResource(TbResource tbResource) {
+        return doPost("/api/resource", tbResource, TbResourceInfo.class);
+    }
+
+    private TbResource findResource(String name) throws Exception {
+        return doGetTypedWithPageLink("/api/resource?", new TypeReference<PageData<TbResource>>() {}, new PageLink(100, 0, name)).getData().get(0);
     }
 
 }

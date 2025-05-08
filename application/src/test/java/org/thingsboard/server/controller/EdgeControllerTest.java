@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -885,6 +885,10 @@ public class EdgeControllerTest extends AbstractControllerTest {
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
 
+        // create public customer
+        doPost("/api/customer/public/device/" + savedDevice.getId().getId(), Device.class);
+        doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
+
         simulateEdgeActivation(edge);
 
         doPost("/api/edge/" + edge.getId().getId().toString()
@@ -897,7 +901,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(26);
+        edgeImitator.expectMessageAmount(27);
         edgeImitator.connect();
         waitForMessages(edgeImitator);
 
@@ -1002,6 +1006,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "connectivity"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "jwt"));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));

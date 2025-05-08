@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,12 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
             EntityId originator = (EntityId) (invocationOnMock.getArguments())[2];
             TbMsgMetaData metaData = (TbMsgMetaData) (invocationOnMock.getArguments())[3];
             String data = (String) (invocationOnMock.getArguments())[4];
-            return TbMsg.newMsg(type, originator, metaData.copy(), data);
+            return TbMsg.newMsg()
+                    .type(type)
+                    .originator(originator)
+                    .copyMetaData(metaData)
+                    .data(data)
+                    .build();
         }).when(ctx).newMsg(isNull(), eq(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
         node = spy(new TbMsgDeduplicationNode());
         config = new TbMsgDeduplicationNodeConfiguration().defaultConfiguration();
@@ -452,12 +457,13 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         dataNode.put("deviceId", deviceId.getId().toString());
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ts", String.valueOf(ts));
-        return TbMsg.newMsg(
-                DataConstants.MAIN_QUEUE_NAME,
-                TbMsgType.POST_TELEMETRY_REQUEST,
-                deviceId,
-                metaData,
-                JacksonUtil.toString(dataNode));
+        return TbMsg.newMsg()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(metaData)
+                .data(JacksonUtil.toString(dataNode))
+                .build();
     }
 
     private String getMergedData(List<TbMsg> msgs) {

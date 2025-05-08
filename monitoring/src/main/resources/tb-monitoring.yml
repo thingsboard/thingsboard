@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2024 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -104,6 +104,9 @@ monitoring:
           check_domain_ips: '${LWM2M_TRANSPORT_CHECK_DOMAIN_IPS:false}'
         # To add more targets, use following environment variables:
         # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
+
+  edqs:
+    enabled: "${EDQS_MONITORING_ENABLED:false}"
 
   notifications:
     message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'

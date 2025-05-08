@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.relation;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
@@ -29,7 +30,7 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
     protected ListenableFuture<Void> processRelationMsg(TenantId tenantId, RelationUpdateMsg relationUpdateMsg) {
         log.trace("[{}] processRelationMsg [{}]", tenantId, relationUpdateMsg);
         try {
-            EntityRelation entityRelation = constructEntityRelationFromUpdateMsg(relationUpdateMsg);
+            EntityRelation entityRelation = JacksonUtil.fromString(relationUpdateMsg.getEntity(), EntityRelation.class, true);
             if (entityRelation == null) {
                 throw new RuntimeException("[{" + tenantId + "}] relationUpdateMsg {" + relationUpdateMsg + "} cannot be converted to entity relation");
             }
@@ -55,7 +56,5 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
         }
         return Futures.immediateFuture(null);
     }
-
-    protected abstract EntityRelation constructEntityRelationFromUpdateMsg(RelationUpdateMsg relationUpdateMsg);
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 
@@ -95,9 +94,8 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                 partitions = subscribeQueue.poll();
             }
             if (!subscribed) {
-                List<String> topicNames = getFullTopicNames();
-                log.info("Subscribing to topics {}", topicNames);
-                doSubscribe(topicNames);
+                log.info("Subscribing to {}", partitions);
+                doSubscribe(partitions);
                 subscribed = true;
             }
             records = partitions.isEmpty() ? emptyList() : doPoll(durationInMillis);
@@ -120,9 +118,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                 if (record != null) {
                     result.add(decode(record));
                 }
-            } catch (IOException e) {
-                log.error("Failed decode record: [{}]", record);
-                throw new RuntimeException("Failed to decode record: ", e);
+            } catch (Exception e) {
+                log.error("Failed to decode record {}", record, e);
+                throw new RuntimeException("Failed to decode record " + record, e);
             }
         });
         return result;
@@ -149,6 +147,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     @Override
     public void commit() {
         if (consumerLock.isLocked()) {
+            if (stopped) {
+                return;
+            }
             log.error("commit. consumerLock is locked. will wait with no timeout. it looks like a race conditions or deadlock topic " + topic, new RuntimeException("stacktrace"));
         }
         consumerLock.lock();
@@ -166,7 +167,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
 
     @Override
     public void unsubscribe() {
-        log.info("Unsubscribing and stopping consumer for topics {}", getFullTopicNames());
+        log.info("Unsubscribing and stopping consumer for {}", partitions);
         stopped = true;
         consumerLock.lock();
         try {
@@ -187,7 +188,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
 
     abstract protected T decode(R record) throws IOException;
 
-    abstract protected void doSubscribe(List<String> topicNames);
+    abstract protected void doSubscribe(Set<TopicPartitionInfo> partitions);
 
     abstract protected void doCommit();
 
@@ -198,7 +199,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
         if (partitions == null) {
             return Collections.emptyList();
         }
-        return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
+        return partitions.stream()
+                .map(TopicPartitionInfo::getFullTopicName)
+                .toList();
     }
 
     protected boolean isLongPollingSupported() {

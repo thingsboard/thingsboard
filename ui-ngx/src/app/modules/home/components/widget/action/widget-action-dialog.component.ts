@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -28,7 +28,6 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import {
@@ -43,14 +42,18 @@ import {
   CellClickColumnInfo,
   defaultWidgetAction,
   WidgetActionSource,
+  WidgetActionType,
+  WidgetHeaderActionButtonType,
+  WidgetHeaderActionButtonTypes,
+  widgetHeaderActionButtonTypeTranslationMap,
   widgetType
 } from '@shared/models/widget.models';
-import { takeUntil } from 'rxjs/operators';
 import { CustomActionEditorCompleter } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import { WidgetService } from '@core/http/widget.service';
 import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import { MatSelect } from '@angular/material/select';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
@@ -58,6 +61,8 @@ export interface WidgetActionDialogData {
   actionsData: WidgetActionsData;
   action?: WidgetActionDescriptorInfo;
   widgetType: widgetType;
+  defaultIconColor?: string;
+  additionalWidgetActionTypes?: WidgetActionType[];
 }
 
 @Component({
@@ -67,14 +72,14 @@ export interface WidgetActionDialogData {
   styleUrls: []
 })
 export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDialogComponent,
-                                                 WidgetActionDescriptorInfo> implements OnInit, OnDestroy, ErrorStateMatcher {
-
-  private destroy$ = new Subject<void>();
+                                                 WidgetActionDescriptorInfo> implements OnInit, ErrorStateMatcher {
 
   widgetActionFormGroup: FormGroup;
 
   isAdd: boolean;
   action: WidgetActionDescriptorInfo;
+
+  defaultIconColor: string;
 
   customActionEditorCompleter = CustomActionEditorCompleter;
 
@@ -84,6 +89,10 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
 
   configuredColumns: Array<CellClickColumnInfo> = [];
   usedCellClickColumns: Array<number> = [];
+
+  widgetHeaderActionButtonType = WidgetHeaderActionButtonType
+  widgetHeaderActionButtonTypes = WidgetHeaderActionButtonTypes;
+  widgetHeaderActionButtonTypeTranslationMap = widgetHeaderActionButtonTypeTranslationMap;
 
   @ViewChild('columnIndexSelect') columnIndexSelect: MatSelect;
   columnIndexPlaceholderText = this.translate.instant('widget-config.select-column-index');
@@ -96,9 +105,11 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<WidgetActionDialogComponent, WidgetActionDescriptorInfo>,
               public fb: FormBuilder,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
+    this.defaultIconColor = data.defaultIconColor;
     if (this.isAdd) {
       this.action = {
         id: this.utils.guid(),
@@ -120,14 +131,25 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       actionSourceId: [this.action.actionSourceId, Validators.required],
       columnIndex: [{value: this.checkColumnIndex(this.action.columnIndex), disabled: true}, Validators.required],
       name: [this.action.name, [this.validateActionName(), Validators.required]],
+      buttonType: [{ value: this.action.buttonType ?? WidgetHeaderActionButtonType.icon, disabled: true}, []],
+      showIcon: [{ value: this.action.showIcon ?? true, disabled: true}, []],
       icon: [this.action.icon, Validators.required],
+      buttonColor: [{ value: this.action.buttonColor ?? this.defaultIconColor, disabled: true}, []],
+      buttonFillColor: [{ value: this.action.buttonFillColor ?? '#305680', disabled: true}, []],
+      buttonBorderColor: [{ value: this.action.buttonBorderColor ?? '#0000001F', disabled: true}, []],
+      customButtonStyle: [{ value: this.action.customButtonStyle ?? {}, disabled: true}, []],
       useShowWidgetActionFunction: [this.action.useShowWidgetActionFunction],
       showWidgetActionFunction: [this.action.showWidgetActionFunction || 'return true;'],
       widgetAction: [actionDescriptorToAction(toWidgetActionDescriptor(this.action)), Validators.required]
     });
     this.updateShowWidgetActionForm();
+    if (this.widgetActionFormGroup.get('actionSourceId').value === 'headerButton') {
+      this.widgetActionFormGroup.get('buttonType').enable({emitEvent: false});
+      this.widgetActionFormGroup.get('buttonColor').enable({emitEvent: false});
+      this.widgetHeaderButtonValidators(true);
+    }
     this.widgetActionFormGroup.get('actionSourceId').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((value) => {
       this.widgetActionFormGroup.get('name').updateValueAndValidity();
       this.updateShowWidgetActionForm();
@@ -137,12 +159,26 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       } else {
         this.widgetActionFormGroup.get('columnIndex').disable();
       }
+      if (value === 'headerButton') {
+        this.widgetActionFormGroup.get('buttonType').enable({emitEvent: false});
+        this.widgetActionFormGroup.get('buttonColor').enable({emitEvent: false});
+        this.widgetHeaderButtonValidators(true);
+      } else {
+        this.widgetActionFormGroup.get('buttonType').disable({emitEvent: false});
+        this.widgetActionFormGroup.get('showIcon').disable({emitEvent: false});
+        this.widgetActionFormGroup.get('buttonColor').disable({emitEvent: false});
+        this.widgetActionFormGroup.get('buttonFillColor').disable({emitEvent: false});
+        this.widgetActionFormGroup.get('buttonBorderColor').disable({emitEvent: false});
+      }
     });
     this.widgetActionFormGroup.get('useShowWidgetActionFunction').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateShowWidgetActionForm();
     });
+    this.widgetActionFormGroup.get('buttonType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.widgetHeaderButtonValidators());
     setTimeout(() => {
       if (this.action?.actionSourceId === 'cellClick') {
         this.widgetActionFormGroup.get('columnIndex').enable();
@@ -154,10 +190,40 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     });
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-    super.ngOnDestroy();
+  private widgetHeaderButtonValidators(ignoreUpdatedButtonColor = false) {
+    const buttonType = this.widgetActionFormGroup.get('buttonType').value;
+    if (!ignoreUpdatedButtonColor) {
+      if ([WidgetHeaderActionButtonType.raised, WidgetHeaderActionButtonType.flat, WidgetHeaderActionButtonType.miniFab].includes(buttonType)) {
+        this.widgetActionFormGroup.get('buttonColor').patchValue('#ffffff', {emitEvent: false});
+      } else if ([WidgetHeaderActionButtonType.stroked].includes(buttonType)) {
+        this.widgetActionFormGroup.get('buttonColor').patchValue('#305680', {emitEvent: false});
+      } else {
+        this.widgetActionFormGroup.get('buttonColor').patchValue(this.defaultIconColor, {emitEvent: false});
+      }
+    }
+    this.widgetActionFormGroup.get('showIcon').disable({emitEvent: false});
+    this.widgetActionFormGroup.get('buttonFillColor').disable({emitEvent: false});
+    this.widgetActionFormGroup.get('buttonBorderColor').disable({emitEvent: false});
+    switch (buttonType) {
+      case WidgetHeaderActionButtonType.basic:
+        this.widgetActionFormGroup.get('showIcon').enable({emitEvent: false});
+        break;
+      case WidgetHeaderActionButtonType.raised:
+        this.widgetActionFormGroup.get('showIcon').enable({emitEvent: false});
+        this.widgetActionFormGroup.get('buttonFillColor').enable({emitEvent: false});
+        break;
+      case WidgetHeaderActionButtonType.stroked:
+        this.widgetActionFormGroup.get('showIcon').enable({emitEvent: false});
+        this.widgetActionFormGroup.get('buttonBorderColor').enable({emitEvent: false});
+        break;
+      case WidgetHeaderActionButtonType.flat:
+        this.widgetActionFormGroup.get('showIcon').enable({emitEvent: false});
+        this.widgetActionFormGroup.get('buttonFillColor').enable({emitEvent: false});
+        break;
+      case WidgetHeaderActionButtonType.miniFab:
+        this.widgetActionFormGroup.get('buttonFillColor').enable({emitEvent: false});
+        break;
+    }
   }
 
   displayShowWidgetActionForm(): boolean {
