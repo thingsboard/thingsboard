@@ -28,9 +28,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -46,6 +48,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -69,6 +72,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.spy;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.ALARM_ORIGINATOR;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.CUSTOMER;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
@@ -76,7 +80,7 @@ import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.TENANT;
 
 @ExtendWith(MockitoExtension.class)
-public class TbChangeOriginatorNodeTest {
+public class TbChangeOriginatorNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("79830b6d-4f93-49bd-9b5b-d31ce51da77b"));
     private final CustomerId CUSTOMER_ID = new CustomerId(UUID.fromString("c6b2c94b-5517-4f20-bf8e-ae9407eb8a7a"));
@@ -101,7 +105,7 @@ public class TbChangeOriginatorNodeTest {
 
     @BeforeEach
     public void before() throws TbNodeException {
-        node = new TbChangeOriginatorNode();
+        node = spy(new TbChangeOriginatorNode());
         config = new TbChangeOriginatorNodeConfiguration().defaultConfiguration();
     }
 
@@ -117,6 +121,7 @@ public class TbChangeOriginatorNodeTest {
         assertThat(config.getRelationsQuery()).isEqualTo(relationsQuery);
         assertThat(config.getEntityType()).isNull();
         assertThat(config.getEntityNamePattern()).isNull();
+        assertThat(config.isTellNotFound()).isFalse();
     }
 
     @Test
@@ -365,7 +370,85 @@ public class TbChangeOriginatorNodeTest {
 
         ArgumentCaptor<Throwable> throwable = ArgumentCaptor.forClass(Throwable.class);
         then(ctxMock).should().tellFailure(eq(msg), throwable.capture());
-        assertThat(throwable.getValue()).isInstanceOf(IllegalStateException.class).hasMessage("Failed to find asset with name 'test-asset'!");
+        assertThat(throwable.getValue()).isInstanceOf(NoSuchElementException.class).hasMessage("Failed to find new originator!");
+    }
+
+    @Test
+    public void givenTellNotFoundIsTrueAndEntityCouldNotFound_whenOnMsg_thenTellNextWithNotFoundRelation() throws TbNodeException {
+        config.setOriginatorSource(ENTITY);
+        config.setEntityType(EntityType.ASSET.name());
+        config.setEntityNamePattern("Test Asset");
+        config.setTellNotFound(true);
+
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.getAssetService()).willReturn(assetServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(assetServiceMock.findAssetByTenantIdAndName(any(TenantId.class), any(String.class))).willReturn(null);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+        node.onMsg(ctxMock, msg);
+
+        then(ctxMock).should().tellNext(msg, TbNodeConnectionType.NOT_FOUND);
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // config for version 0
+                Arguments.of(0,
+                        """
+                                {
+                                          "originatorSource": "CUSTOMER",
+                                          "relationsQuery": {
+                                            "direction": "FROM",
+                                            "maxLevel": 1,
+                                            "filters": [
+                                              {
+                                                "relationType": "Contains",
+                                                "entityTypes": [],
+                                                "negate": false
+                                              }
+                                            ],
+                                            "fetchLastLevelOnly": false
+                                          },
+                                          "entityType": null,
+                                          "entityNamePattern": null
+                                        }
+                                """,
+                        true,
+                        """
+                                {
+                                          "originatorSource": "CUSTOMER",
+                                          "relationsQuery": {
+                                            "direction": "FROM",
+                                            "maxLevel": 1,
+                                            "filters": [
+                                              {
+                                                "relationType": "Contains",
+                                                "entityTypes": [],
+                                                "negate": false
+                                              }
+                                            ],
+                                            "fetchLastLevelOnly": false
+                                          },
+                                          "entityType": null,
+                                          "entityNamePattern": null,
+                                          "tellNotFound": false
+                                        }
+                                """
+                )
+        );
+
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
     }
 
 }
