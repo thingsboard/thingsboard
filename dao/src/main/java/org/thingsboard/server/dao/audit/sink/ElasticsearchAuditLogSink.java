@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.audit.sink;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -27,16 +26,12 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.nio.entity.NStringEntity;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.ResponseListener;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.AuditLogUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -118,7 +113,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     }
 
     private void doLogAction(AuditLog auditLogEntry) {
-        String jsonContent = createElasticJsonRecord(auditLogEntry);
+        String jsonContent = AuditLogUtil.createJsonRecord(auditLogEntry);
 
         HttpEntity entity = new NStringEntity(
                 jsonContent,
@@ -130,27 +125,6 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
         restClient.performRequestAsync(request, responseListener);
     }
 
-    private String createElasticJsonRecord(AuditLog auditLog) {
-        ObjectNode auditLogNode = JacksonUtil.newObjectNode();
-        auditLogNode.put("postDate", LocalDateTime.now().toString());
-        auditLogNode.put("id", auditLog.getId().getId().toString());
-        auditLogNode.put("entityName", auditLog.getEntityName());
-        auditLogNode.put("tenantId", auditLog.getTenantId().getId().toString());
-        if (auditLog.getCustomerId() != null) {
-            auditLogNode.put("customerId", auditLog.getCustomerId().getId().toString());
-        }
-        auditLogNode.put("entityId", auditLog.getEntityId().getId().toString());
-        auditLogNode.put("entityType", auditLog.getEntityId().getEntityType().name());
-        auditLogNode.put("userId", auditLog.getUserId().getId().toString());
-        auditLogNode.put("userName", auditLog.getUserName());
-        auditLogNode.put("actionType", auditLog.getActionType().name());
-        if (auditLog.getActionData() != null) {
-            auditLogNode.put("actionData", auditLog.getActionData().toString());
-        }
-        auditLogNode.put("actionStatus", auditLog.getActionStatus().name());
-        auditLogNode.put("actionFailureDetails", auditLog.getActionFailureDetails());
-        return auditLogNode.toString();
-    }
 
     private ResponseListener responseListener = new ResponseListener() {
         @Override
