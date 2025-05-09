@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.transport.lwm2m.server.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
 
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Data
 @AllArgsConstructor
-public class ResultUpdateResource {
-    LwM2mClient lwM2MClient;
-    Set<String> paths;
-
-    public ResultUpdateResource(LwM2mClient lwM2MClient) {
-        this.lwM2MClient = lwM2MClient;
-        this.paths = new HashSet<>();
-    }
+public class ParametersUpdateAnalyzeResult {
+    ParametersAnalyzeResult analyzerParameters;
+    Set<String> newObjectsToRead;
+    Set<String> newObjectsToCancelRead;
+    Map<String, ObjectAttributes> attributeLwm2mNew;
 }
+

@@ -49,7 +49,7 @@ public enum TelemetryObserveStrategy {
                 return strategy;
             }
         }
-        return null;
+        throw new IllegalArgumentException("Unknown TelemetryObserveStrategy id: " + id);
     }
 
     @Override

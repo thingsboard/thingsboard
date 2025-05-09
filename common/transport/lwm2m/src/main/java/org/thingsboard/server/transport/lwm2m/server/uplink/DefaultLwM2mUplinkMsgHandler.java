@@ -78,7 +78,6 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientStateException;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
-import org.thingsboard.server.transport.lwm2m.server.client.ParametersAnalyzeResult;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultUpdateResource;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAddKeyValueProto;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
@@ -98,6 +97,9 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MO
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfig;
 import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfigService;
+import org.thingsboard.server.transport.lwm2m.server.model.ParametersAnalyzeResult;
+import org.thingsboard.server.transport.lwm2m.server.model.ParametersObserveAnalyzeResult;
+import org.thingsboard.server.transport.lwm2m.server.model.ParametersUpdateAnalyzeResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
@@ -117,6 +119,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -140,9 +143,11 @@ import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaU
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_WARN;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.areArraysStringEqual;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertOtaUpdateValueToString;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.groupByObjectIdVersionedIds;
 
 
 @Slf4j
@@ -403,14 +408,15 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onDeviceProfileUpdate(SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
         try {
+
             List<LwM2mClient> clients = clientContext.getLwM2mClients()
                     .stream().filter(e -> e.getProfileId() != null)
                     .filter(e -> e.getProfileId().equals(deviceProfile.getUuidId())).collect(Collectors.toList());
             clients.forEach(client -> {
                 client.onDeviceProfileUpdate(deviceProfile);
             });
-            if (clients.size() > 0) {
-                var oldProfile = clientContext.getProfile(deviceProfile.getUuidId());
+            if (!clients.isEmpty()) {
+                var oldProfile = clientContext.getProfile(clients.get(0).getRegistration());
                 this.onDeviceProfileUpdate(clients, oldProfile, deviceProfile);
             }
         } catch (Exception e) {
@@ -476,7 +482,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * @param lwM2MClient - object with All parameters off client
      */
     private void initClientTelemetry(LwM2mClient lwM2MClient) {
-        Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getProfileId());
+        Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getRegistration());
         Set<String> supportedObjects = clientContext.getSupportedIdVerInClient(lwM2MClient);
         if (supportedObjects != null && supportedObjects.size() > 0) {
             this.sendReadRequests(lwM2MClient, profile, supportedObjects);
@@ -690,7 +696,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     private void onDeviceUpdate(LwM2mClient lwM2MClient, Device device, Optional<DeviceProfile> deviceProfileOpt) {
-        var oldProfile = clientContext.getProfile(lwM2MClient.getProfileId());
+        var oldProfile = clientContext.getProfile(lwM2MClient.getRegistration());
         deviceProfileOpt.ifPresent(deviceProfile -> this.onDeviceProfileUpdate(Collections.singletonList(lwM2MClient), oldProfile, deviceProfile));
         lwM2MClient.onDeviceUpdate(device, deviceProfileOpt);
     }
@@ -774,7 +780,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
 
     private TransportProtos.KeyValueProto getKvToThingsBoard(String pathIdVer, Registration registration) {
         LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
-        Map<String, String> names = clientContext.getProfile(lwM2MClient.getProfileId()).getObserveAttr().getKeyName();
+        Map<String, String> names = clientContext.getProfile(lwM2MClient.getRegistration()).getObserveAttr().getKeyName();
         if (names != null && names.containsKey(pathIdVer)) {
             String resourceName = names.get(pathIdVer);
             if (resourceName != null && !resourceName.isEmpty()) {
@@ -861,80 +867,49 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         this.updateAttrTelemetry(updateResource, null);
     }
 
-    //TODO: review and optimize the logic to minimize number of the requests to device.
-    private void onDeviceProfileUpdate(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration oldProfile, DeviceProfile deviceProfile) {
+    private void onDeviceProfileUpdate(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration oldProfileTransportConfiguration, DeviceProfile deviceProfile) {
         if (clientContext.profileUpdate(deviceProfile) != null) {
-            TelemetryMappingConfiguration oldTelemetryParams = oldProfile.getObserveAttr();
-            Set<String> attributeSetOld = oldTelemetryParams.getAttribute();
-            Set<String> telemetrySetOld = oldTelemetryParams.getTelemetry();
-            Set<String> observeOld = oldTelemetryParams.getObserve();
-            Map<String, String> keyNameOld = oldTelemetryParams.getKeyName();
-            Map<String, ObjectAttributes> attributeLwm2mOld = oldTelemetryParams.getAttributeLwm2m();
-
-            var newProfile = clientContext.getProfile(deviceProfile.getUuidId());
-            TelemetryMappingConfiguration newTelemetryParams = newProfile.getObserveAttr();
-            Set<String> attributeSetNew = newTelemetryParams.getAttribute();
-            Set<String> telemetrySetNew = newTelemetryParams.getTelemetry();
-            Set<String> observeNew = newTelemetryParams.getObserve();
-            Map<String, String> keyNameNew = newTelemetryParams.getKeyName();
-            Map<String, ObjectAttributes> attributeLwm2mNew = newTelemetryParams.getAttributeLwm2m();
-
-            Set<String> observeToAdd = diffSets(observeOld, observeNew);
-            Set<String> observeToRemove = diffSets(observeNew, observeOld);
-
-            Set<String> newObjectsToRead = new HashSet<>();
-            Set<String> newObjectsToCancelRead = new HashSet<>();
-
-            if (!attributeSetOld.equals(attributeSetNew)) {
-                newObjectsToRead.addAll(diffSets(attributeSetOld, attributeSetNew));
-                newObjectsToCancelRead.addAll(diffSets(attributeSetNew, attributeSetOld));
-
-            }
-            if (!telemetrySetOld.equals(telemetrySetNew)) {
-                newObjectsToRead.addAll(diffSets(telemetrySetOld, telemetrySetNew));
-                newObjectsToCancelRead.addAll(diffSets(telemetrySetNew, telemetrySetOld));
-            }
-            if (!keyNameOld.equals(keyNameNew)) {
-                ParametersAnalyzeResult keyNameChange = this.getAnalyzerKeyName(keyNameOld, keyNameNew);
-                newObjectsToRead.addAll(keyNameChange.getPathPostParametersAdd());
-            }
-
-            ParametersAnalyzeResult analyzerParameters = getAttributesAnalyzer(attributeLwm2mOld, attributeLwm2mNew);
-
-            clients.forEach(client -> {
-                LwM2MModelConfig modelConfig = new LwM2MModelConfig(client.getEndpoint());
-                modelConfig.getToRead().addAll(diffSets(observeToAdd, newObjectsToRead));
-                modelConfig.getToCancelRead().addAll(newObjectsToCancelRead);
-                modelConfig.getToCancelObserve().addAll(observeToRemove);
-                modelConfig.getToObserve().addAll(observeToAdd);
-
-                Set<String> clientObjects = clientContext.getSupportedIdVerInClient(client);
-                Set<String> pathToAdd = analyzerParameters.getPathPostParametersAdd().stream().filter(target -> clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]))
-                        .collect(Collectors.toUnmodifiableSet());
-                modelConfig.getAttributesToAdd().putAll(pathToAdd.stream().collect(Collectors.toMap(t -> t, attributeLwm2mNew::get)));
-
-                Set<String> pathToRemove = analyzerParameters.getPathPostParametersDel().stream().filter(target -> clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]))
-                        .collect(Collectors.toUnmodifiableSet());
-                modelConfig.getAttributesToRemove().addAll(pathToRemove);
-
-                modelConfigService.sendUpdates(client, modelConfig);
-            });
-
-            // update value in fwInfo
-            OtherConfiguration newLwM2mSettings = newProfile.getClientLwM2mSettings();
-            OtherConfiguration oldLwM2mSettings = oldProfile.getClientLwM2mSettings();
-            if (!newLwM2mSettings.getFwUpdateStrategy().equals(oldLwM2mSettings.getFwUpdateStrategy())
-                    || (StringUtils.isNotEmpty(newLwM2mSettings.getFwUpdateResource()) &&
-                    !newLwM2mSettings.getFwUpdateResource().equals(oldLwM2mSettings.getFwUpdateResource()))) {
-                clients.forEach(lwM2MClient -> otaService.onFirmwareStrategyUpdate(lwM2MClient, newLwM2mSettings));
-            }
-
-            if (!newLwM2mSettings.getSwUpdateStrategy().equals(oldLwM2mSettings.getSwUpdateStrategy())
-                    || (StringUtils.isNotEmpty(newLwM2mSettings.getSwUpdateResource()) &&
-                    !newLwM2mSettings.getSwUpdateResource().equals(oldLwM2mSettings.getSwUpdateResource()))) {
-                clients.forEach(lwM2MClient -> otaService.onCurrentSoftwareStrategyUpdate(lwM2MClient, newLwM2mSettings));
-            }
+            var newProfileTransportConfiguration = clientContext.getProfile(clients.get(0).getRegistration());
+            ParametersUpdateAnalyzeResult parametersUpdate = getParametersUpdate(oldProfileTransportConfiguration, newProfileTransportConfiguration);
+            ParametersObserveAnalyzeResult parametersObserve = getParametersObserve(oldProfileTransportConfiguration.getObserveAttr(), newProfileTransportConfiguration.getObserveAttr(), deviceProfile.getId().getId());
+            compareAndSetWriteAttributesObservations(clients, parametersUpdate, parametersObserve);
+            updateValueOta(clients, newProfileTransportConfiguration, oldProfileTransportConfiguration);
         }
+    }
+
+    private ParametersUpdateAnalyzeResult getParametersUpdate(Lwm2mDeviceProfileTransportConfiguration oldProfile, Lwm2mDeviceProfileTransportConfiguration newProfile){
+        TelemetryMappingConfiguration newTelemetryParams = newProfile.getObserveAttr();
+        Map<String, String> keyNameNew = newTelemetryParams.getKeyName();
+        Map<String, ObjectAttributes> attributeLwm2mNew = newTelemetryParams.getAttributeLwm2m();
+        Set<String> attributeSetNew = newTelemetryParams.getAttribute();
+        Set<String> telemetrySetNew = newTelemetryParams.getTelemetry();
+
+        TelemetryMappingConfiguration oldTelemetryParams = oldProfile.getObserveAttr();
+        Map<String, String> keyNameOld = oldTelemetryParams.getKeyName();
+        Map<String, ObjectAttributes> attributeLwm2mOld = oldTelemetryParams.getAttributeLwm2m();
+        ParametersAnalyzeResult analyzerParameters = getAttributesAnalyzer(attributeLwm2mOld, attributeLwm2mNew);
+
+            //         analyze Read
+        Set<String> newObjectsToRead = new HashSet<>();
+        Set<String> newObjectsToCancelRead = new HashSet<>();
+
+        Set<String> attributeSetOld = oldTelemetryParams.getAttribute();
+        Set<String> telemetrySetOld = oldTelemetryParams.getTelemetry();
+
+        if (!attributeSetOld.equals(attributeSetNew)) {
+            newObjectsToRead.addAll(diffSets(attributeSetOld, attributeSetNew));
+            newObjectsToCancelRead.addAll(diffSets(attributeSetNew, attributeSetOld));
+
+        }
+        if (!telemetrySetOld.equals(telemetrySetNew)) {
+            newObjectsToRead.addAll(diffSets(telemetrySetOld, telemetrySetNew));
+            newObjectsToCancelRead.addAll(diffSets(telemetrySetNew, telemetrySetOld));
+        }
+        if (!keyNameOld.equals(keyNameNew)) {
+            ParametersAnalyzeResult keyNameChange = this.getAnalyzerKeyName(keyNameOld, keyNameNew);
+            newObjectsToRead.addAll(keyNameChange.getPathPostParametersAdd());
+        }
+        return new ParametersUpdateAnalyzeResult(analyzerParameters, newObjectsToRead, newObjectsToCancelRead, attributeLwm2mNew);
     }
 
     private ParametersAnalyzeResult getAnalyzerKeyName(Map<String, String> keyNameOld, Map<String, String> keyNameNew) {
@@ -945,6 +920,55 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)).keySet();
         analyzerParameters.setPathPostParametersAdd(paths);
         return analyzerParameters;
+    }
+
+    private ParametersObserveAnalyzeResult getParametersObserve(TelemetryMappingConfiguration oldTelemetryParams, TelemetryMappingConfiguration newTelemetryParams, UUID profileId){
+        try {
+            TelemetryObserveStrategy observeStrategyOld = oldTelemetryParams.getObserveStrategy();
+            TelemetryObserveStrategy observeStrategyNew = newTelemetryParams.getObserveStrategy();
+            Set<String> observeOld = oldTelemetryParams.getObserve();
+            Set<String> observeNew = newTelemetryParams.getObserve();
+            Set<String> observeSingleToNew = diffSets(observeOld, observeNew);
+            Set<String> observeSingleToCancel = diffSets(observeNew, observeOld);
+            if (!observeSingleToNew.isEmpty() || !observeSingleToCancel.isEmpty()) {
+                ParametersObserveAnalyzeResult observeAnalyzeResult = new ParametersObserveAnalyzeResult(observeSingleToCancel,
+                        observeSingleToNew, observeStrategyOld, observeStrategyNew);
+                if (SINGLE.equals(observeStrategyOld) && SINGLE.equals(observeStrategyNew)) {
+                    return observeAnalyzeResult;
+                } else if (COMPOSITE_BY_OBJECT.equals(observeStrategyOld) && COMPOSITE_BY_OBJECT.equals(observeStrategyNew)) {
+                    Map<Integer, String[]> observeByObjectToCancel = new ConcurrentHashMap<>();
+                    Map<Integer, String[]> observeByObjectToNew =  new ConcurrentHashMap<>();
+                    Map<Integer, String[]> observeByObjectOld = groupByObjectIdVersionedIds(observeOld);
+                    Map<Integer, String[]> observeByObjectNew = groupByObjectIdVersionedIds(observeNew);
+                    for (Map.Entry<Integer, String[]> entry : observeByObjectNew.entrySet()) {
+                        Integer key = entry.getKey();
+                        String[] newValue = entry.getValue();
+                        if (observeByObjectOld.containsKey(key)) {
+                            String[] oldValue = observeByObjectOld.get(key);
+                            if (!areArraysStringEqual(oldValue, newValue)) {
+                                observeByObjectToCancel.put(key, oldValue);
+                                observeByObjectToNew.put(key, newValue);
+                            }
+                        } else {
+                            observeByObjectToNew.put(key, newValue);
+                        }
+                    }
+                    observeAnalyzeResult.setObserveByObjectToCancel(observeByObjectToCancel);
+                    observeAnalyzeResult.setObserveByObjectToNew(observeByObjectToNew);
+                    return observeAnalyzeResult;
+                } else {
+                    // Observe Cancel All
+                    observeAnalyzeResult.setObserveSingleToCancel(observeOld);
+                    // Observe All new
+                    observeAnalyzeResult.setObserveSingleToNew(observeNew);
+                    return observeAnalyzeResult;
+                }
+            }
+            return new ParametersObserveAnalyzeResult();
+        } catch (IllegalArgumentException e) {
+            log.error("Error lwm2m on Profile Update id: [{}]. Failed observe Strategy: [{}]", profileId, e.getMessage());
+            return new ParametersObserveAnalyzeResult();
+        }
     }
 
     private ParametersAnalyzeResult getAttributesAnalyzer(Map<String, ObjectAttributes> attributeLwm2mOld, Map<String, ObjectAttributes> attributeLwm2mNew) {
@@ -963,8 +987,37 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         return analyzerParameters;
     }
 
-    private void compareAndSetWriteAttributes(LwM2mClient client, ParametersAnalyzeResult analyzerParameters, Map<String, ObjectAttributes> lwm2mAttributesNew, LwM2MModelConfig modelConfig) {
+    private void compareAndSetWriteAttributesObservations(List<LwM2mClient> clients, ParametersUpdateAnalyzeResult parametersUpdate, ParametersObserveAnalyzeResult parametersObserve) {
+        clients.forEach(client -> {
+            Set<String> clientObjects = clientContext.getSupportedIdVerInClient(client);
+            Set<String> pathToAdd = parametersUpdate.getAnalyzerParameters().getPathPostParametersAdd().stream().filter(target -> clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]))
+                    .collect(Collectors.toUnmodifiableSet());
+            Map<String, ObjectAttributes> attributesToAdd = pathToAdd.stream().collect(Collectors.toMap(t -> t, parametersUpdate.getAttributeLwm2mNew()::get));
+            Set<String> attributesToRemove = parametersUpdate.getAnalyzerParameters().getPathPostParametersDel().stream().filter(target -> clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]))
+                    .collect(Collectors.toUnmodifiableSet());
+            Set<String> toRead = diffSets(parametersObserve.getObserveSingleToNew(), parametersUpdate.getNewObjectsToRead());
+            LwM2MModelConfig modelConfig = new LwM2MModelConfig(client.getEndpoint(),  attributesToAdd, attributesToRemove, parametersObserve.getObserveSingleToNew(),
+                    parametersObserve.getObserveSingleToCancel(), parametersObserve.getObserveByObjectToNew(), parametersObserve.getObserveByObjectToCancel(),
+                    toRead, parametersObserve.getObserveStrategyOld(), parametersObserve.getObserveStrategyNew());
+            modelConfig.getToCancelRead().addAll(parametersUpdate.getNewObjectsToCancelRead());
+            modelConfigService.sendUpdates(client, modelConfig);
+        });
+    }
 
+    private void  updateValueOta(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration oldProfile, Lwm2mDeviceProfileTransportConfiguration newProfile) {
+        OtherConfiguration newLwM2mSettings = newProfile.getClientLwM2mSettings();
+        OtherConfiguration oldLwM2mSettings = oldProfile.getClientLwM2mSettings();
+        if (!newLwM2mSettings.getFwUpdateStrategy().equals(oldLwM2mSettings.getFwUpdateStrategy())
+                || (StringUtils.isNotEmpty(newLwM2mSettings.getFwUpdateResource()) &&
+                !newLwM2mSettings.getFwUpdateResource().equals(oldLwM2mSettings.getFwUpdateResource()))) {
+            clients.forEach(lwM2MClient -> otaService.onFirmwareStrategyUpdate(lwM2MClient, newLwM2mSettings));
+        }
+
+        if (!newLwM2mSettings.getSwUpdateStrategy().equals(oldLwM2mSettings.getSwUpdateStrategy())
+                || (StringUtils.isNotEmpty(newLwM2mSettings.getSwUpdateResource()) &&
+                !newLwM2mSettings.getSwUpdateResource().equals(oldLwM2mSettings.getSwUpdateResource()))) {
+            clients.forEach(lwM2MClient -> otaService.onCurrentSoftwareStrategyUpdate(lwM2MClient, newLwM2mSettings));
+        }
     }
 
     /**
@@ -1041,7 +1094,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     private Map<String, String> getNamesFromProfileForSharedAttributes(LwM2mClient lwM2MClient) {
-        Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getProfileId());
+        Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getRegistration());
         return profile.getObserveAttr().getKeyName();
     }
 
@@ -1076,16 +1129,5 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         } else {
             clientContext.update(lwM2MClient);
         }
-    }
-
-    private Map<Integer, String[]> groupByObjectIdVersionedIds(Set<String> targetIds){
-        return targetIds.stream()
-                .collect(Collectors.groupingBy(
-                        id -> new LwM2mPath(fromVersionedIdToObjectId(id)).getObjectId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                list -> list.toArray(new String[0])
-                        )
-                ));
     }
 }
