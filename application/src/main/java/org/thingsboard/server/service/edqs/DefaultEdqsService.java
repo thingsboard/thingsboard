@@ -20,11 +20,13 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
+import org.thingsboard.server.common.data.edqs.EdqsState;
+import org.thingsboard.server.common.data.edqs.EdqsState.EdqsSyncStatus;
 import org.thingsboard.server.common.data.edqs.EdqsSyncRequest;
 import org.thingsboard.server.common.data.edqs.Entity;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsMsg;
@@ -53,18 +57,22 @@ import org.thingsboard.server.edqs.processor.EdqsProducer;
 import org.thingsboard.server.edqs.state.EdqsPartitionService;
 import org.thingsboard.server.edqs.util.EdqsConverter;
 import org.thingsboard.server.gen.transport.TransportProtos.EdqsEventMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsCoreServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
+import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.environment.DistributedLock;
 import org.thingsboard.server.queue.environment.DistributedLockService;
 import org.thingsboard.server.queue.provider.EdqsClientQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -80,25 +88,36 @@ public class DefaultEdqsService implements EdqsService {
     private final DistributedLockService distributedLockService;
     private final AttributesService attributesService;
     private final EdqsPartitionService edqsPartitionService;
-    private final TopicService topicService;
     private final TbServiceInfoProvider serviceInfoProvider;
+    private final DiscoveryService discoveryService;
     @Autowired @Lazy
     private TbClusterService clusterService;
     @Autowired @Lazy
     private HashPartitionService hashPartitionService;
 
+    @Value("${queue.edqs.api.auto_enable:true}")
+    private boolean autoEnableApi;
+    @Value("${queue.edqs.readiness_check_interval:60000}")
+    private int edqsReadinessCheckInterval;
+
     private EdqsProducer eventsProducer;
     private ExecutorService executor;
+    private ScheduledExecutorService scheduler;
     private DistributedLock syncLock;
+
+    @Getter
+    private EdqsState state;
 
     @PostConstruct
     private void init() {
         executor = ThingsBoardExecutors.newWorkStealingPool(12, getClass());
+        scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edqs-check");
         eventsProducer = EdqsProducer.builder()
                 .producer(queueFactory.createEdqsEventsProducer())
                 .partitionService(edqsPartitionService)
                 .build();
         syncLock = distributedLockService.getLock("edqs_sync");
+        state = new EdqsState();
     }
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
@@ -106,6 +125,26 @@ public class DefaultEdqsService implements EdqsService {
         if (!serviceInfoProvider.isService(ServiceType.TB_CORE)) {
             return;
         }
+        if (edqsApiService.isSupported()) {
+            scheduler.scheduleWithFixedDelay(() -> {
+                if (!hashPartitionService.isSystemPartitionMine(ServiceType.TB_CORE)) {
+                    return;
+                }
+
+                List<ServiceInfo> servers = new ArrayList<>(discoveryService.getOtherServers());
+                servers.add(serviceInfoProvider.getServiceInfo());
+
+                List<ServiceInfo> readyEdqsServers = servers.stream()
+                        .filter(serviceInfo -> serviceInfo.getServiceTypesList().contains(ServiceType.EDQS.name()))
+                        .filter(ServiceInfo::getReady)
+                        .toList();
+                boolean changed = state.setEdqsReady(!readyEdqsServers.isEmpty());
+                if (changed) {
+                    broadcastEdqsReady(state.getEdqsReady());
+                }
+            }, 0, edqsReadinessCheckInterval, TimeUnit.MILLISECONDS);
+        }
+
         executor.submit(() -> {
             try {
                 EdqsSyncState syncState = getSyncState();
@@ -115,9 +154,9 @@ public class DefaultEdqsService implements EdqsService {
                                 .syncRequest(new EdqsSyncRequest())
                                 .build());
                     }
-                } else if (edqsApiService.isSupported() && edqsApiService.isAutoEnable()) {
+                } else {
                     // only if topic/RocksDB is not empty and sync is finished
-                    edqsApiService.setEnabled(true);
+                    onSyncStatusUpdate(EdqsSyncStatus.FINISHED);
                 }
             } catch (Throwable e) {
                 log.error("Failed to start EDQS service", e);
@@ -131,7 +170,10 @@ public class DefaultEdqsService implements EdqsService {
         if (request.getSyncRequest() != null) {
             saveSyncState(EdqsSyncStatus.REQUESTED);
         }
-        broadcast(request.toInternalMsg());
+        broadcast(ToCoreEdqsMsg.builder()
+                .syncRequest(request.getSyncRequest())
+                .apiEnabled(request.getApiEnabled())
+                .build());
     }
 
     @Override
@@ -140,7 +182,13 @@ public class DefaultEdqsService implements EdqsService {
             log.info("Processing system msg {}", msg);
             try {
                 if (msg.getApiEnabled() != null) {
-                    edqsApiService.setEnabled(msg.getApiEnabled());
+                    state.setApiEnabled(msg.getApiEnabled());
+                }
+                if (msg.getEdqsReady() != null) {
+                    onEdqsReady(msg.getEdqsReady());
+                }
+                if (msg.getSyncStatus() != null) {
+                    onSyncStatusUpdate(msg.getSyncStatus());
                 }
 
                 if (msg.getSyncRequest() != null) {
@@ -154,23 +202,16 @@ public class DefaultEdqsService implements EdqsService {
                                 return;
                             }
                         }
-
                         saveSyncState(EdqsSyncStatus.STARTED);
-                        edqsSyncService.sync();
-                        saveSyncState(EdqsSyncStatus.FINISHED);
 
-                        if (edqsApiService.isSupported())
-                            if (edqsApiService.isAutoEnable()) {
-                                log.info("EDQS sync is finished, auto-enabling API");
-                                broadcast(ToCoreEdqsMsg.builder()
-                                        .apiEnabled(Boolean.TRUE)
-                                        .build());
-                            } else {
-                                log.info("EDQS sync is finished, but leaving API disabled");
-                            }
+                        edqsSyncService.sync();
+
+                        saveSyncState(EdqsSyncStatus.FINISHED);
+                        broadcastSyncStatusUpdate(EdqsSyncStatus.FINISHED);
                     } catch (Exception e) {
                         log.error("Failed to complete sync", e);
                         saveSyncState(EdqsSyncStatus.FAILED);
+                        broadcastSyncStatusUpdate(EdqsSyncStatus.FAILED);
                     } finally {
                         syncLock.unlock();
                     }
@@ -179,6 +220,60 @@ public class DefaultEdqsService implements EdqsService {
                 log.error("Failed to process msg {}", msg, e);
             }
         });
+    }
+
+    private void broadcastEdqsReady(boolean ready) {
+        broadcast(ToCoreEdqsMsg.builder()
+                .edqsReady(ready)
+                .build());
+    }
+
+    private void onEdqsReady(boolean ready) {
+        state.setEdqsReady(ready);
+        checkState();
+    }
+
+    private void broadcastSyncStatusUpdate(EdqsSyncStatus status) {
+        broadcast(ToCoreEdqsMsg.builder()
+                .syncStatus(status)
+                .build());
+    }
+
+    private void onSyncStatusUpdate(EdqsSyncStatus status) {
+        state.setSyncStatus(status);
+        checkState();
+    }
+
+    private void checkState() {
+        if (!edqsApiService.isSupported()) {
+            log.info("New state: {}. EDQS API not supported", state);
+            return;
+        }
+
+        if (state.isApiReady()) {
+            if (autoEnableApi) {
+                if (state.getApiEnabled() == null) {
+                    state.setApiEnabled(true);
+                    log.info("New state: {}. Auto-enabled EDQS API", state);
+                } else {
+                    log.info("New state: {}. API mode left as is", state);
+                }
+            } else {
+                log.info("New state: {}. API auto-enabling is disabled", state);
+            }
+        } else {
+            if (state.isApiEnabled()) {
+                state.setApiEnabled(false);
+                log.info("New state: {}. Disabled EDQS API", state);
+            } else {
+                log.info("New state: {}. API left disabled", state);
+            }
+        }
+    }
+
+    @Override
+    public boolean isApiEnabled() {
+        return state.isApiEnabled();
     }
 
     @Override
@@ -278,6 +373,7 @@ public class DefaultEdqsService implements EdqsService {
     @PreDestroy
     private void stop() {
         executor.shutdown();
+        scheduler.shutdownNow();
         eventsProducer.stop();
     }
 
@@ -286,13 +382,6 @@ public class DefaultEdqsService implements EdqsService {
     @NoArgsConstructor
     private static class EdqsSyncState {
         private EdqsSyncStatus status;
-    }
-
-    private enum EdqsSyncStatus {
-        REQUESTED,
-        STARTED,
-        FINISHED,
-        FAILED
     }
 
 }

@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -42,8 +41,6 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
 
     @Getter
     protected final Map<QueueKey, Set<TopicPartitionInfo>> partitions = new HashMap<>();
-    protected final Set<TopicPartitionInfo> partitionsInProgress = ConcurrentHashMap.newKeySet();
-    protected boolean initialized;
 
     protected final ReadWriteLock partitionsLock = new ReentrantReadWriteLock();
 
@@ -52,7 +49,7 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
         this.otherConsumers = otherConsumers;
     }
 
-    public void update(QueueKey queueKey, Set<TopicPartitionInfo> newPartitions) {
+    public void update(QueueKey queueKey, Set<TopicPartitionInfo> newPartitions, Runnable whenAllProcessed) {
         newPartitions = withTopic(newPartitions, eventConsumer.getTopic());
         var writeLock = partitionsLock.writeLock();
         writeLock.lock();
@@ -74,12 +71,18 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
         }
 
         if (!addedPartitions.isEmpty()) {
-            addPartitions(queueKey, addedPartitions);
+            addPartitions(queueKey, addedPartitions, whenAllProcessed);
+        } else {
+            if (whenAllProcessed != null) {
+                whenAllProcessed.run();
+            }
         }
-        initialized = true;
     }
 
-    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
+    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions, Runnable whenAllProcessed) {
+        if (whenAllProcessed != null) {
+            whenAllProcessed.run();
+        }
         eventConsumer.addPartitions(partitions);
         for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
             consumer.addPartitions(withTopic(partitions, consumer.getTopic()));
@@ -112,10 +115,6 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
         for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
             consumer.removePartitions(withTopic(partitions, consumer.getTopic()));
         }
-    }
-
-    public Set<TopicPartitionInfo> getPartitionsInProgress() {
-        return initialized ? partitionsInProgress : null;
     }
 
     public void stop() {

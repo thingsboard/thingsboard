@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.msg.edqs.EdqsApiService;
+import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.common.stats.EdqsStatsService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
@@ -87,6 +88,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     EntityServiceRegistry entityServiceRegistry;
 
     @Autowired
+    private EdqsService edqsService;
+
+    @Autowired
     @Lazy
     private EdqsApiService edqsApiService;
 
@@ -102,7 +106,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
         long startNs = System.nanoTime();
         Long result;
-        if (edqsApiService.isEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
+        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityCountQuery(query)
                     .build();
@@ -124,7 +128,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
         long startNs = System.nanoTime();
         PageData<EntityData> result;
-        if (edqsApiService.isEnabled() && validForEdqs(query)) {
+        if (edqsService.isApiEnabled() && validForEdqs(query)) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityDataQuery(query)
                     .build();
@@ -285,7 +289,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         }
 
         if ((query.getEntityFields() == null || query.getEntityFields().isEmpty()) &&
-                (query.getLatestValues() == null || query.getLatestValues().isEmpty())) {
+            (query.getLatestValues() == null || query.getLatestValues().isEmpty())) {
             return false;
         }
 

@@ -34,7 +34,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
-import org.thingsboard.server.queue.common.state.QueueStateService;
+import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.edqs.EdqsConfig;
 import org.thingsboard.server.queue.edqs.EdqsExecutors;
@@ -61,20 +61,22 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private final EdqsConfig config;
     private final EdqsPartitionService partitionService;
     private final KafkaEdqsQueueFactory queueFactory;
+    private final DiscoveryService discoveryService;
     private final EdqsExecutors edqsExecutors;
     @Autowired
     @Lazy
     private EdqsProcessor edqsProcessor;
 
     private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> stateConsumer;
-    private QueueStateService<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<ToEdqsMsg>> queueStateService;
+    private KafkaQueueStateService<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<ToEdqsMsg>> queueStateService;
     private QueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventsToBackupConsumer;
     private EdqsProducer stateProducer;
 
     private final VersionsStore versionsStore = new VersionsStore();
     private final AtomicInteger stateReadCount = new AtomicInteger();
     private final AtomicInteger eventsReadCount = new AtomicInteger();
-    private Boolean ready;
+
+    private boolean ready = false;
 
     @Override
     public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer, List<PartitionedQueueConsumerManager<?>> otherConsumers) {
@@ -187,7 +189,10 @@ public class KafkaEdqsStateService implements EdqsStateService {
             eventsToBackupConsumer.subscribe(allPartitions);
             eventsToBackupConsumer.launch();
         }
-        queueStateService.update(new QueueKey(ServiceType.EDQS), partitions);
+        queueStateService.update(new QueueKey(ServiceType.EDQS), partitions, () -> {
+            ready = true;
+            discoveryService.setReady(true);
+        });
     }
 
     @Override
@@ -197,13 +202,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
 
     @Override
     public boolean isReady() {
-        if (ready == null) {
-            Set<TopicPartitionInfo> partitionsInProgress = queueStateService.getPartitionsInProgress();
-            if (partitionsInProgress != null && partitionsInProgress.isEmpty()) {
-                ready = true; // once true - always true, not to change readiness status on each repartitioning
-            }
-        }
-        return ready != null && ready;
+        return ready;
     }
 
     private TenantId getTenantId(ToEdqsMsg edqsMsg) {
