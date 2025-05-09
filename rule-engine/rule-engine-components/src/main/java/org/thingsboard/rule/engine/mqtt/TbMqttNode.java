@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
@@ -126,6 +127,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
             config.setClientId(getClientId(ctx));
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
+        config.setProtocolVersion(this.mqttNodeConfiguration.getProtocolVersion());
 
         MqttClientSettings mqttClientSettings = ctx.getMqttClientSettings();
         config.setRetransmissionConfig(new MqttClientConfig.RetransmissionConfig(
@@ -202,9 +204,17 @@ public class TbMqttNode extends TbAbstractExternalNode {
                     ((ObjectNode) oldConfiguration).put(parseToPlainText, false);
                 }
                 break;
+            case 1:
+                String protocolVersion = "protocolVersion";
+                if (!oldConfiguration.has(protocolVersion)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(protocolVersion, MqttVersion.MQTT_3_1_1.name());
+                }
+                break;
             default:
                 break;
         }
         return new TbPair<>(hasChanges, oldConfiguration);
     }
+
 }

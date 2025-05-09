@@ -20,6 +20,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.concurrent.Future;
@@ -138,6 +139,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         assertThat(mqttNodeConfig.isCleanSession()).isTrue();
         assertThat(mqttNodeConfig.isSsl()).isFalse();
         assertThat(mqttNodeConfig.isParseToPlainText()).isFalse();
+        assertThat(mqttNodeConfig.getProtocolVersion()).isEqualTo(MqttVersion.MQTT_3_1_1);
         assertThat(mqttNodeConfig.getCredentials()).isInstanceOf(AnonymousCredentials.class);
     }
 
@@ -381,6 +383,24 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         then(mqttClientMock).shouldHaveNoInteractions();
     }
 
+    @ParameterizedTest
+    @MethodSource
+    public void verifyProtocolVersionMapping(MqttVersion expectedVersion) throws Exception {
+        mqttNodeConfig.setProtocolVersion(expectedVersion);
+
+        given(ctxMock.isExternalNodeForceAck()).willReturn(false);
+        mockSuccessfulInit();
+        mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig)));
+
+        ArgumentCaptor<MqttClientConfig> configCaptor = ArgumentCaptor.forClass(MqttClientConfig.class);
+        then(mqttNode).should().prepareMqttClientConfig(configCaptor.capture());
+        assertThat(expectedVersion).isEqualTo(configCaptor.getValue().getProtocolVersion());
+    }
+
+    private static Stream<Arguments> verifyProtocolVersionMapping() {
+        return Stream.of(MqttVersion.values()).map(Arguments::of);
+    }
+
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
         return Stream.of(
                 // default config for version 0
@@ -391,10 +411,14 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
                 // default config for version 1 with upgrade from version 0
                 Arguments.of(1,
                         "{\"topicPattern\":\"my-topic\",\"port\":1883,\"connectTimeoutSec\":10,\"cleanSession\":true, \"ssl\":false, \"retainedMessage\":false,\"credentials\":{\"type\":\"anonymous\"},\"parseToPlainText\":false}",
+                        true,
+                        "{\"topicPattern\":\"my-topic\",\"port\":1883,\"connectTimeoutSec\":10,\"cleanSession\":true, \"ssl\":false, \"retainedMessage\":false,\"credentials\":{\"type\":\"anonymous\"},\"parseToPlainText\":false, \"protocolVersion\":\"MQTT_3_1_1\"}"),
+                // default config for version 2 with upgrade from version 1
+                Arguments.of(2,
+                        "{\"topicPattern\":\"my-topic\",\"port\":1883,\"connectTimeoutSec\":10,\"cleanSession\":true, \"ssl\":false, \"retainedMessage\":false,\"credentials\":{\"type\":\"anonymous\"},\"parseToPlainText\":false, \"protocolVersion\":\"MQTT_3_1_1\"}",
                         false,
-                        "{\"topicPattern\":\"my-topic\",\"port\":1883,\"connectTimeoutSec\":10,\"cleanSession\":true, \"ssl\":false, \"retainedMessage\":false,\"credentials\":{\"type\":\"anonymous\"},\"parseToPlainText\":false}")
+                        "{\"topicPattern\":\"my-topic\",\"port\":1883,\"connectTimeoutSec\":10,\"cleanSession\":true, \"ssl\":false, \"retainedMessage\":false,\"credentials\":{\"type\":\"anonymous\"},\"parseToPlainText\":false, \"protocolVersion\":\"MQTT_3_1_1\"}")
         );
-
     }
 
     @Override
