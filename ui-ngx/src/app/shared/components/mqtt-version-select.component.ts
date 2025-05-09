@@ -17,8 +17,21 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { MqttVersion, MqttVersions, MqttVersionTranslation } from '@shared/models/device.models';
 import { SubscriptSizing, MatFormFieldAppearance } from '@angular/material/form-field';
+
+export enum MqttVersion {
+  MQTT_3_1 = 'MQTT_3_1',
+  MQTT_3_1_1 = 'MQTT_3_1_1',
+  MQTT_5 = 'MQTT_5'
+}
+
+export const DEFAULT_MQTT_VERSION = MqttVersion.MQTT_3_1_1;
+
+export const MqttVersionTranslation = new Map<MqttVersion, string>([
+  [MqttVersion.MQTT_3_1, 'MQTT 3.1'],
+  [MqttVersion.MQTT_3_1_1, 'MQTT 3.1.1'],
+  [MqttVersion.MQTT_5, 'MQTT 5.0']
+]);
 
 @Component({
   selector: 'tb-mqtt-version-select',
@@ -41,7 +54,7 @@ export class MqttVersionSelectComponent implements ControlValueAccessor {
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
-  mqttVersions = MqttVersions;
+  mqttVersions = Object.values(MqttVersion);
   mqttVersionTranslation = MqttVersionTranslation;
   modelValue: MqttVersion;
 
