@@ -19,13 +19,11 @@ version: '3.0'
 services:
   kafka:
     restart: always
-    image: "bitnami/kafka:3.7.0"
+    image: "bitnami/kafka:4.0"
     ports:
       - "9092:9092"
     env_file:
       - kafka.env
-    depends_on:
-      - zookeeper
   tb-js-executor:
     env_file:
       - queue-kafka.env
