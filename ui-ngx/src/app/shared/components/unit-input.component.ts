@@ -31,7 +31,14 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of, shareReplay } from 'rxjs';
-import { AllMeasures, TbUnit, UnitInfo, UnitsType, UnitSystem } from '@shared/models/unit.models';
+import {
+  AllMeasures,
+  getSourceTbUnitSymbol,
+  TbUnit,
+  UnitInfo,
+  UnitsType,
+  UnitSystem
+} from '@shared/models/unit.models';
 import { map, mergeMap } from 'rxjs/operators';
 import { UnitService } from '@core/services/unit.service';
 import { TbPopoverService } from '@shared/components/popover.service';
@@ -74,9 +81,9 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   unitSystem: UnitSystem;
 
   @Input({transform: booleanAttribute})
-  allowConverted = false;
+  supportsUnitConversion = false;
 
-  filteredUnits: Observable<Array<[AllMeasures, Array<UnitInfo>]>>;
+  filteredUnits$: Observable<Array<[AllMeasures, Array<UnitInfo>]>>;
 
   searchText = '';
 
@@ -100,14 +107,13 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
 
   ngOnInit() {
     this.unitsFormControl = this.fb.control<TbUnit | UnitInfo>('', this.required ? [Validators.required] : []);
-    this.filteredUnits = this.unitsFormControl.valueChanges
-      .pipe(
-        map(value => {
-          this.updateView(value);
-          return this.getUnitSymbol(value);
-        }),
-        mergeMap(symbol => this.fetchUnits(symbol))
-      );
+    this.filteredUnits$ = this.unitsFormControl.valueChanges.pipe(
+      map(value => {
+        this.updateModel(value);
+        return getSourceTbUnitSymbol(value);
+      }),
+      mergeMap(symbol => this.fetchUnits(symbol))
+    );
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -144,7 +150,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
 
   displayUnitFn(unit?: TbUnit | UnitInfo): string | undefined {
     if (unit) {
-      return this.getUnitSymbol(unit);
+      return getSourceTbUnitSymbol(unit);
     }
     return undefined;
   }
@@ -168,7 +174,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   clear($event: Event) {
     $event.stopPropagation();
     this.unitsFormControl.patchValue(null, {emitEvent: true});
-    if (!this.allowConverted) {
+    if (!this.supportsUnitConversion) {
       setTimeout(() => {
         this.unitInput.nativeElement.blur();
         this.unitInput.nativeElement.focus();
@@ -177,40 +183,38 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   }
 
   openConvertSettingsPopup($event: Event) {
-    if (!this.allowConverted) {
+    if (!this.supportsUnitConversion) {
       return;
     }
-    if ($event) {
-      $event.stopPropagation();
-    }
+    $event.stopPropagation();
     this.unitInput.nativeElement.blur();
     const trigger = this.elementRef.nativeElement;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const convertUnitSettingsPanelPopover = this.popoverService.displayPopover({
+      const popover = this.popoverService.displayPopover({
         trigger,
         renderer: this.renderer,
         componentType: ConvertUnitSettingsPanelComponent,
         hostView: this.viewContainerRef,
         preferredPlacement: ['left', 'bottom', 'top'],
         context: {
-          unit: this.getTbUnit(this.unitsFormControl.value),
+          unit: this.extractTbUnit(this.unitsFormControl.value),
           required: this.required,
           disabled: this.disabled,
         },
         isModal: true
       });
-      convertUnitSettingsPanelPopover.tbComponentRef.instance.unitSettingsApplied.subscribe((unitSetting) => {
-        convertUnitSettingsPanelPopover.hide();
+      popover.tbComponentRef.instance.unitSettingsApplied.subscribe((unitSetting) => {
+        popover.hide();
         this.unitsFormControl.patchValue(unitSetting, {emitEvent: false});
-        this.updateView(unitSetting);
+        this.updateModel(unitSetting);
       });
     }
   }
 
-  private updateView(value: UnitInfo | TbUnit ) {
-    const res = this.getTbUnit(value);
+  private updateModel(value: UnitInfo | TbUnit ) {
+    const res = this.extractTbUnit(value);
     if (this.modelValue !== res) {
       this.modelValue = res;
       this.isUnitMapping = (res !== null && isObject(res));
@@ -220,12 +224,12 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
 
   private fetchUnits(searchText?: string): Observable<Array<[AllMeasures, Array<UnitInfo>]>> {
     this.searchText = searchText;
-    return this.unitsConstant().pipe(
+    return this.getGroupedUnits().pipe(
       map(unit => this.searchUnit(unit, searchText))
     );
   }
 
-  private unitsConstant(): Observable<Array<[AllMeasures, Array<UnitInfo>]>> {
+  private getGroupedUnits(): Observable<Array<[AllMeasures, Array<UnitInfo>]>> {
     if (this.fetchUnits$ === null) {
       this.fetchUnits$ = of(this.unitService.getUnitsGroupedByMeasure(this.measure, this.unitSystem)).pipe(
         map(data => {
@@ -258,22 +262,12 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     return units;
   }
 
-  private getUnitSymbol(value: TbUnit | UnitInfo | null): string {
-    if (value === null) {
-      return '';
-    }
-    if (typeof value === 'string') {
-      return value;
-    }
-    if ('abbr' in value) {
-      return value.abbr;
-    }
-    return value.from;
-  }
-
-  private getTbUnit(value: TbUnit | UnitInfo | null): TbUnit {
+  private extractTbUnit(value: TbUnit | UnitInfo | null): TbUnit {
     if (value === null) {
       return null;
+    }
+    if (value === undefined) {
+      return undefined;
     }
     if (typeof value === 'string') {
       return value;

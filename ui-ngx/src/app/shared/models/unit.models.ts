@@ -650,3 +650,16 @@ export function getUnitConverter(translate: TranslateService): Converter {
   const unitCache = buildUnitCache(allMeasures, translate);
   return new Converter(allMeasures, unitCache);
 }
+
+export const getSourceTbUnitSymbol = (value: TbUnit | UnitInfo | null): string => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if ('abbr' in value) {
+    return value.abbr;
+  }
+  return value.from;
+}

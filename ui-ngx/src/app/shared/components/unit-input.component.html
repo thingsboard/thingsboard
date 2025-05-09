@@ -22,11 +22,11 @@
          [class.!pointer-events-none]="disabled"
          (focusin)="onFocus()"
          [matAutocomplete]="unitsAutocomplete"
-         [matAutocompleteDisabled]="allowConverted">
+         [matAutocompleteDisabled]="supportsUnitConversion">
   <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid"
           type="button"
           class="tb-icon-24 mr-2"
-          [class.mr-2]="!allowConverted || !isUnitMapping"
+          [class.mr-2]="!supportsUnitConversion || !isUnitMapping"
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear($event)">
     <mat-icon class="material-icons">close</mat-icon>
@@ -42,7 +42,7 @@
            [color]="disabled ? null : 'primary'"
            matTooltipPosition="above"
            [matTooltip]="'unit.convert.set-units-conversion-settings' | translate"
-           *ngIf="allowConverted && isUnitMapping" class="material-icons tb-icon-24 tb-suffix-show-always">
+           *ngIf="supportsUnitConversion && isUnitMapping" class="material-icons tb-suffix-show-always mr-2 !p-0">
     mdi:swap-vertical-circle-outline
   </tb-icon>
   <mat-autocomplete
@@ -50,7 +50,7 @@
     class="tb-autocomplete tb-unit-input-autocomplete"
     panelWidth="fit-content"
     [displayWith]="displayUnitFn.bind(this)">
-    @for (group of filteredUnits | async; track group[0]) {
+    @for (group of filteredUnits$ | async; track group[0]) {
       <mat-optgroup [label]="'unit.measures.' + group[0] | translate">
         @for(unit of group[1]; track unit.abbr) {
           <mat-option [value]="unit">

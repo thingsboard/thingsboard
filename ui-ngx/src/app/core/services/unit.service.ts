@@ -88,11 +88,11 @@ export class UnitService {
     return this.converter.getUnitConverter(unit as string, to);
   }
 
-  getTargetUnitSymbol(unit: TbUnitMapping): string {
+  getTargetUnitSymbol(unit: TbUnitMapping | string): string {
     if (isObject(unit)) {
-      return isNotEmptyStr(unit[this.currentUnitSystem]) ? unit[this.currentUnitSystem] : unit.from;
+      return isNotEmptyStr(unit[this.currentUnitSystem]) ? unit[this.currentUnitSystem] : (unit as TbUnitMapping).from;
     }
-    return null;
+    return typeof unit === 'string' ? unit : null;
   }
 
   convertUnitValue(value: number, unit: TbUnitMapping): number;
