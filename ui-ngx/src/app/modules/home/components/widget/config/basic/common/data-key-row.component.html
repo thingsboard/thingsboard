@@ -69,6 +69,7 @@
   </div>
   <div *ngIf="!hideUnits && !hideDataKeyUnits && (!singleRow || displayUnitsOrDigits)" class="tb-units-field">
     <tb-unit-input *ngIf="displayUnitsOrDigits"
+      [allowConverted]="supportsUnitConversion"
       formControlName="units">
     </tb-unit-input>
   </div>

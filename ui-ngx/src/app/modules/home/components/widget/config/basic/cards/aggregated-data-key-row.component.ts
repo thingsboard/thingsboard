@@ -123,6 +123,10 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
     return [DatasourceType.device, DatasourceType.entity].includes(this.datasourceType);
   }
 
+  get supportsUnitConversion(): boolean {
+    return this.widgetConfigComponent.modelValue?.typeParameters?.supportsUnitConversion ?? false;
+  }
+
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
@@ -222,7 +226,8 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
           callbacks: this.callbacks,
           hideDataKeyName: true,
           hideDataKeyLabel: true,
-          hideDataKeyColor: true
+          hideDataKeyColor: true,
+          supportsUnitConversion: this.supportsUnitConversion
         }
       }).afterClosed().subscribe((updatedDataKey) => {
       if (updatedDataKey) {

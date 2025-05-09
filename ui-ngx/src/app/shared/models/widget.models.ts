@@ -196,6 +196,7 @@ export interface WidgetTypeParameters {
   dataKeySettingsFunction?: DataKeySettingsFunction;
   displayRpcMessageToast?: boolean;
   targetDeviceOptional?: boolean;
+  supportsUnitConversion?: boolean;
   additionalWidgetActionTypes?: WidgetActionType[];
 }
 

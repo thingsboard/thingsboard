@@ -49,6 +49,7 @@
         <div class="tb-form-row space-between" *ngIf="!hideDataKeyUnits">
           <div translate>widget-config.units-short</div>
           <tb-unit-input
+            [allowConverted]="supportsUnitConversion"
             formControlName="units">
           </tb-unit-input>
         </div>
