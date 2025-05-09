@@ -33,15 +33,17 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.TopicType;
+import org.thingsboard.server.transport.mqtt.session.AbstractGatewayDeviceSessionContext;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
 
@@ -119,8 +121,12 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
-    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
-        return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg);
+    public Optional<MqttMessage> convertToGatewayPublish(AbstractGatewayDeviceSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
+        if (TopicType.V2_GATEWAY == ctx.getParent().getAttrReqTopicType()) {
+            return processConvertFromGatewayAttributeResponseMsgV2(ctx, deviceName, responseMsg);
+        } else {
+            return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg);
+        }
     }
     
     @Override
@@ -185,9 +191,15 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
             if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
+                result.setAddClient(true);
             }
             if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
+                result.setAddShared(true);
+            }
+            if (clientKeys == null && sharedKeys == null) {
+                result.setAddClient(true);
+                result.setAddShared(true);
             }
             return result.build();
         } catch (RuntimeException e) {
@@ -243,6 +255,16 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
+    private Optional<MqttMessage> processConvertFromGatewayAttributeResponseMsgV2(AbstractGatewayDeviceSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
+        if (!StringUtils.isEmpty(responseMsg.getError())) {
+            throw new AdaptorException(responseMsg.getError());
+        } else {
+            JsonObject result = JsonConverter.getJsonObjectForGatewayV2(deviceName, responseMsg);
+            String mqttTopic = ctx.getParent().getAttrReqTopicType().getAttributesResponseTopicBase();
+            return Optional.of(createMqttPublishMsg(ctx, mqttTopic, result));
+        }
+    }
+
     protected MqttPublishMessage createMqttPublishMsg(MqttDeviceAwareSessionContext ctx, String topic, JsonElement json) {
         MqttFixedHeader mqttFixedHeader =
                 new MqttFixedHeader(MqttMessageType.PUBLISH, false, ctx.getQoSForTopic(topic), false, 0);
@@ -255,7 +277,10 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     private Set<String> toStringSet(JsonElement requestBody, String name) {
         JsonElement element = requestBody.getAsJsonObject().get(name);
         if (element != null) {
-            return new HashSet<>(Arrays.asList(element.getAsString().split(",")));
+            return Arrays.stream(element.getAsString().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
         } else {
             return null;
         }

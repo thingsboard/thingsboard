@@ -100,6 +100,40 @@ public class HttpClientTest extends AbstractContainerTest {
     }
 
     @Test
+    public void getClientAttributesByKeys() throws Exception {
+        String accessToken = testRestClient.getDeviceCredentialsByDeviceId(device.getId()).getCredentialsId();
+        assertThat(accessToken).isNotNull();
+
+        JsonNode clientAttribute = mapper.readTree(createPayload().toString());
+        testRestClient.postAttribute(accessToken, clientAttribute);
+
+        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
+
+        JsonNode attributes = testRestClient.getAttributes(accessToken, "stringKey,longKey", null);
+
+        assertThat(attributes.has("shared")).isFalse();
+        assertThat(attributes.get("client").get("stringKey")).isEqualTo(clientAttribute.get("stringKey"));
+        assertThat(attributes.get("client").get("longKey")).isEqualTo(clientAttribute.get("longKey"));
+    }
+
+    @Test
+    public void getSharedAttributesByKeys() throws Exception {
+        String accessToken = testRestClient.getDeviceCredentialsByDeviceId(device.getId()).getCredentialsId();
+        assertThat(accessToken).isNotNull();
+
+        JsonNode sharedAttribute = mapper.readTree(createPayload().toString());
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, sharedAttribute);
+
+        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
+
+        JsonNode attributes = testRestClient.getAttributes(accessToken, null, "stringKey,longKey");
+
+        assertThat(attributes.has("client")).isFalse();
+        assertThat(attributes.get("shared").get("stringKey")).isEqualTo(sharedAttribute.get("stringKey"));
+        assertThat(attributes.get("shared").get("longKey")).isEqualTo(sharedAttribute.get("longKey"));
+    }
+
+    @Test
     public void provisionRequestForDeviceWithPreProvisionedStrategy() throws Exception {
 
         DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());

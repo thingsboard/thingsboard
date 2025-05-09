@@ -35,10 +35,15 @@ public class CoapAdaptorUtils {
             Set<String> sharedKeys = toKeys(queryElements, "sharedKeys");
             if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
+                result.setAddClient(true);
             }
             if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
+                result.setAddShared(true);
             }
+        } else {
+            result.setAddShared(true);
+            result.setAddClient(true);
         }
         result.setOnlyShared(false);
         return result.build();

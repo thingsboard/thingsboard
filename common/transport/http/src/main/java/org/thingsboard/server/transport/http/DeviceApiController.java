@@ -157,9 +157,15 @@ public class DeviceApiController implements TbTransportService {
                     List<String> sharedKeySet = !StringUtils.isEmpty(sharedKeys) ? Arrays.asList(sharedKeys.split(",")) : null;
                     if (clientKeySet != null) {
                         request.addAllClientAttributeNames(clientKeySet);
+                        request.setAddClient(true);
                     }
                     if (sharedKeySet != null) {
                         request.addAllSharedAttributeNames(sharedKeySet);
+                        request.setAddShared(true);
+                    }
+                    if (clientKeySet == null && sharedKeySet == null) {
+                        request.setAddClient(true);
+                        request.setAddShared(true);
                     }
                     TransportService transportService = transportContext.getTransportService();
                     transportService.registerSyncSession(sessionInfo,
