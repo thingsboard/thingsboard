@@ -203,7 +203,6 @@ public class TbMqttNode extends TbAbstractExternalNode {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put(parseToPlainText, false);
                 }
-                break;
             case 1:
                 String protocolVersion = "protocolVersion";
                 if (!oldConfiguration.has(protocolVersion)) {
