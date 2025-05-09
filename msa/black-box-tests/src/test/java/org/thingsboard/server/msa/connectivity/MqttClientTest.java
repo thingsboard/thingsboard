@@ -924,65 +924,6 @@ public class MqttClientTest extends AbstractContainerTest {
         };
     }
 
-    private void checkAttributeByKey(String key, String expectedValue, boolean client, MqttClient mqttClient, MqttMessageListener listener) throws Exception {
-        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
-
-        JsonObject request = new JsonObject();
-        if (client) {
-            request.addProperty("clientKeys", key);
-        } else {
-            request.addProperty("sharedKeys", key);
-        }
-        mqttClient.publish("v1/devices/me/attributes/request/123", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
-
-        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        AttributesResponse response = mapper.readValue(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
-
-        if (client) {
-            assertThat(response.getClient()).containsEntry(key, expectedValue);
-            assertThat(response.getShared()).isNullOrEmpty();
-        } else {
-            assertThat(response.getShared()).containsEntry(key, expectedValue);
-            assertThat(response.getClient()).isNullOrEmpty();
-        }
-    }
-
-    private void checkMultipleAttributes(List<String> keys, List<String> values, boolean client, MqttClient mqttClient, MqttMessageListener listener) throws Exception {
-        mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
-
-        String keyString = String.join(",", keys);
-        JsonObject request = new JsonObject();
-        if (client) {
-            request.addProperty("clientKeys", keyString);
-        } else {
-            request.addProperty("sharedKeys", keyString);
-        }
-
-        mqttClient.publish("v1/devices/me/attributes/request/124", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
-
-        MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        AttributesResponse response = mapper.readValue(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
-
-        for (int i = 0; i < keys.size(); i++) {
-            String key = keys.get(i);
-            String expectedValue = values.get(i);
-            if (client) {
-                assertThat(response.getClient()).containsEntry(key, expectedValue);
-                assertThat(response.getShared()).isNullOrEmpty();
-            } else {
-                assertThat(response.getShared()).containsEntry(key, expectedValue);
-                assertThat(response.getClient()).isNullOrEmpty();
-            }
-        }
-
-        // Ensure no extra attributes
-        if (client) {
-            assertThat(response.getClient()).hasSize(keys.size());
-        } else {
-            assertThat(response.getShared()).hasSize(keys.size());
-        }
-    }
-
     private MqttClient getMqttClient(DeviceCredentials deviceCredentials, MqttMessageListener listener) throws InterruptedException, ExecutionException {
         return getMqttClient(deviceCredentials.getCredentialsId(), listener, MqttVersion.MQTT_3_1_1, true);
     }

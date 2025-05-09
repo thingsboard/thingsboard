@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.msa.connectivity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -438,7 +439,8 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
         assertThat(response.has("value")).isTrue();
 
@@ -470,8 +472,10 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
+        assertThat(response.isObject()).isTrue();
         assertThat(response.has("value")).isTrue();
         checkAttributeByKey("clientOnlyAttr", "clientVal", true);
     }
@@ -494,11 +498,15 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
+        assertThat(response.isObject()).isTrue();
         assertThat(response.has("values")).isTrue();
-        assertThat(response.getAsJsonObject("values").entrySet()).hasSize(1);
-        assertThat(response.getAsJsonObject("values").get("clientAttr").getAsString()).isEqualTo("val1");
+        assertThat(response.get("values").isObject()).isTrue();
+        assertThat(response.get("values").size()).isEqualTo(1);
+        assertThat(response.get("values").has("clientAttr")).isTrue();
+        assertThat(response.get("values").get("clientAttr").asText()).isEqualTo("val1");
     }
 
     @Test
@@ -519,11 +527,15 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
+        assertThat(response.isObject()).isTrue();
         assertThat(response.has("values")).isTrue();
-        assertThat(response.getAsJsonObject("values").entrySet()).hasSize(1);
-        assertThat(response.getAsJsonObject("values").get("sharedAttr").getAsString()).isEqualTo("sval1");
+        assertThat(response.get("values").isObject()).isTrue();
+        assertThat(response.get("values").size()).isEqualTo(1);
+        assertThat(response.get("values").has("sharedAttr")).isTrue();
+        assertThat(response.get("values").get("sharedAttr").asText()).isEqualTo("sval1");
     }
 
     @Test
@@ -555,16 +567,26 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
-        assertThat(response.get("device").getAsString()).isEqualTo(createdDevice.getName());
-        assertThat(response.get("id").getAsString()).isEqualTo("101");
+        assertThat(response.isObject()).isTrue();
+        assertThat(response.has("device")).isTrue();
+        assertThat(response.get("device").asText()).isEqualTo(createdDevice.getName());
+        assertThat(response.has("id")).isTrue();
+        assertThat(response.get("id").asText()).isEqualTo("101");
 
-        JsonObject clientValues = response.getAsJsonObject("client");
-        JsonObject sharedValues = response.getAsJsonObject("shared");
+        assertThat(response.has("client")).isTrue();
+        assertThat(response.has("shared")).isTrue();
+        JsonNode clientValues = response.get("client");
+        JsonNode sharedValues = response.get("shared");
 
-        assertThat(clientValues.get("clientKey1").getAsString()).isEqualTo("cval1");
-        assertThat(sharedValues.get("sharedKey2").getAsString()).isEqualTo("sval2");
+        assertThat(clientValues.isObject()).isTrue();
+        assertThat(sharedValues.isObject()).isTrue();
+        assertThat(clientValues.has("clientKey1")).isTrue();
+        assertThat(sharedValues.has("sharedKey2")).isTrue();
+        assertThat(clientValues.get("clientKey1").asText()).isEqualTo("cval1");
+        assertThat(sharedValues.get("sharedKey2").asText()).isEqualTo("sval2");
     }
 
     @Test
@@ -579,10 +601,14 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
-        assertThat(response.get("id").getAsString()).isEqualTo("102");
-        assertThat(response.get("device").getAsString()).isEqualTo(createdDevice.getName());
+        assertThat(response.isObject()).isTrue();
+        assertThat(response.has("device")).isTrue();
+        assertThat(response.get("device").asText()).isEqualTo(createdDevice.getName());
+        assertThat(response.has("id")).isTrue();
+        assertThat(response.get("id").asText()).isEqualTo("102");
         assertThat(response.has("client")).isFalse();
         assertThat(response.has("shared")).isFalse();
     }
@@ -603,12 +629,23 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
-        JsonObject client = response.getAsJsonObject("client");
-        assertThat(client.entrySet()).hasSize(2);
-        assertThat(client.get("key1").getAsString()).isEqualTo("value1");
-        assertThat(client.get("key2").getAsString()).isEqualTo("value2");
+        assertThat(response.isObject()).isTrue();
+        assertThat(response.has("device")).isTrue();
+        assertThat(response.get("device").asText()).isEqualTo(createdDevice.getName());
+        assertThat(response.has("id")).isTrue();
+        assertThat(response.get("id").asText()).isEqualTo("103");
+        assertThat(response.has("client")).isTrue();
+        assertThat(response.has("shared")).isFalse();
+        JsonNode client = response.get("client");
+        assertThat(client.isObject()).isTrue();
+        assertThat(client.size()).isEqualTo(2);
+        assertThat(client.has("key1")).isTrue();
+        assertThat(client.has("key2")).isTrue();
+        assertThat(client.get("key1").asText()).isEqualTo("value1");
+        assertThat(client.get("key2").asText()).isEqualTo("value2");
     }
 
     @Test
@@ -628,12 +665,22 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
-        JsonObject shared = response.getAsJsonObject("shared");
-        assertThat(shared.entrySet()).hasSize(2);
-        assertThat(shared.get("sharedA").getAsString()).isEqualTo("valA");
-        assertThat(shared.get("sharedB").getAsString()).isEqualTo("valB");
+        assertThat(response.isObject()).isTrue();
+        assertThat(response.has("device")).isTrue();
+        assertThat(response.get("device").asText()).isEqualTo(createdDevice.getName());
+        assertThat(response.has("id")).isTrue();
+        assertThat(response.get("id").asText()).isEqualTo("104");
+        assertThat(response.has("client")).isFalse();
+        assertThat(response.has("shared")).isTrue();
+        assertThat(response.get("shared").isObject()).isTrue();
+        assertThat(response.get("shared").size()).isEqualTo(2);
+        assertThat(response.get("shared").has("sharedA")).isTrue();
+        assertThat(response.get("shared").has("sharedB")).isTrue();
+        assertThat(response.get("shared").get("sharedA").asText()).isEqualTo("valA");
+        assertThat(response.get("shared").get("sharedB").asText()).isEqualTo("valB");
     }
 
     @Test
@@ -645,10 +692,13 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.on("v2/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
-        JsonObject response = waitForV2Response("201");
+        JsonNode response = waitForV2Response("201");
         assertThat(response.has("client")).isTrue();
-        assertThat(response.getAsJsonObject("client").get("clientKey1").getAsString()).isEqualTo("cval1");
         assertThat(response.has("shared")).isFalse();
+        assertThat(response.get("client").isObject()).isTrue();
+        assertThat(response.get("client").size()).isEqualTo(1);
+        assertThat(response.get("client").has("clientKey1")).isTrue();
+        assertThat(response.get("client").get("clientKey1").asText()).isEqualTo("cval1");
     }
 
     @Test
@@ -661,10 +711,13 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
-        JsonObject response = waitForV2Response("202");
+        JsonNode response = waitForV2Response("202");
         assertThat(response.has("client")).isFalse();
         assertThat(response.has("shared")).isTrue();
-        assertThat(response.getAsJsonObject("shared").get("sharedKey1").getAsString()).isEqualTo("sval1");
+        assertThat(response.get("shared").isObject()).isTrue();
+        assertThat(response.get("shared").size()).isEqualTo(1);
+        assertThat(response.get("shared").has("sharedKey1")).isTrue();
+        assertThat(response.get("shared").get("sharedKey1").asText()).isEqualTo("sval1");
     }
 
     @Test
@@ -680,9 +733,19 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
-        JsonObject response = waitForV2Response("203");
-        assertThat(response.getAsJsonObject("client").get("clientKey1").getAsString()).isEqualTo("cval1");
-        assertThat(response.getAsJsonObject("shared").entrySet()).hasSize(2);
+        JsonNode response = waitForV2Response("203");
+        assertThat(response.has("client")).isTrue();
+        assertThat(response.has("shared")).isTrue();
+        assertThat(response.get("client").isObject()).isTrue();
+        assertThat(response.get("shared").isObject()).isTrue();
+        assertThat(response.get("client").size()).isEqualTo(1);
+        assertThat(response.get("shared").size()).isEqualTo(2);
+        assertThat(response.get("client").has("clientKey1")).isTrue();
+        assertThat(response.get("shared").has("sharedKey1")).isTrue();
+        assertThat(response.get("shared").has("sharedKey2")).isTrue();
+        assertThat(response.get("client").get("clientKey1").asText()).isEqualTo("cval1");
+        assertThat(response.get("shared").get("sharedKey1").asText()).isEqualTo("sval1");
+        assertThat(response.get("shared").get("sharedKey2").asText()).isEqualTo("sval2");
     }
 
     @Test
@@ -698,9 +761,19 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
-        JsonObject response = waitForV2Response("204");
-        assertThat(response.getAsJsonObject("client").entrySet()).hasSize(2);
-        assertThat(response.getAsJsonObject("shared").get("sharedKey1").getAsString()).isEqualTo("sval1");
+        JsonNode response = waitForV2Response("204");
+        assertThat(response.has("client")).isTrue();
+        assertThat(response.has("shared")).isTrue();
+        assertThat(response.get("client").isObject()).isTrue();
+        assertThat(response.get("shared").isObject()).isTrue();
+        assertThat(response.get("client").size()).isEqualTo(2);
+        assertThat(response.get("shared").size()).isEqualTo(1);
+        assertThat(response.get("client").has("clientKey1")).isTrue();
+        assertThat(response.get("client").has("clientKey2")).isTrue();
+        assertThat(response.get("shared").has("sharedKey1")).isTrue();
+        assertThat(response.get("client").get("clientKey1").asText()).isEqualTo("cval1");
+        assertThat(response.get("client").get("clientKey2").asText()).isEqualTo("cval2");
+        assertThat(response.get("shared").get("sharedKey1").asText()).isEqualTo("sval1");
     }
 
     @Test
@@ -715,9 +788,13 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
-        JsonObject response = waitForV2Response("205");
+        JsonNode response = waitForV2Response("205");
+        assertThat(response.has("shared")).isTrue();
         assertThat(response.has("client")).isFalse();
-        assertThat(response.getAsJsonObject("shared").get("sharedKey1").getAsString()).isEqualTo("sval1");
+        assertThat(response.get("shared").isObject()).isTrue();
+        assertThat(response.get("shared").size()).isEqualTo(1);
+        assertThat(response.get("shared").has("sharedKey1")).isTrue();
+        assertThat(response.get("shared").get("sharedKey1").asText()).isEqualTo("sval1");
     }
 
     @Test
@@ -732,9 +809,13 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
-        JsonObject response = waitForV2Response("206");
+        JsonNode response = waitForV2Response("206");
         assertThat(response.has("shared")).isFalse();
-        assertThat(response.getAsJsonObject("client").get("clientKey1").getAsString()).isEqualTo("cval1");
+        assertThat(response.has("client")).isTrue();
+        assertThat(response.get("client").isObject()).isTrue();
+        assertThat(response.get("client").size()).isEqualTo(1);
+        assertThat(response.get("client").has("clientKey1")).isTrue();
+        assertThat(response.get("client").get("clientKey1").asText()).isEqualTo("cval1");
     }
 
     @Test
@@ -747,7 +828,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
         mqttClient.publish("v2/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
-        JsonObject response = waitForV2Response("207");
+        JsonNode response = waitForV2Response("207");
         assertThat(response.has("client")).isFalse();
         assertThat(response.has("shared")).isFalse();
     }
@@ -778,10 +859,11 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
         assertThat(response).isNotNull();
-        assertThat(response.get("value").getAsString()).isEqualTo(expectedValue);
+        assertThat(response.get("value").asText()).isEqualTo(expectedValue);
     }
 
     private void checkMultipleAttributes(List<String> keys, List<String> values, Boolean client) throws Exception {
@@ -802,18 +884,20 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(request.toString().getBytes())).get();
 
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonObject response = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        assertThat(event).isNotNull();
+        JsonNode response = mapper.readTree(event.getMessage());
 
         assertThat(response.has("values")).isTrue();
-        JsonObject valuesObject = response.getAsJsonObject("values");
+        JsonNode valuesObject = response.get("values");
 
-        assertThat(valuesObject.entrySet()).hasSize(keys.size());
+        assertThat(valuesObject.isObject()).isTrue();
+        assertThat(valuesObject.size()).isEqualTo(keys.size());
 
         for (int i = 0; i < keys.size(); i++) {
             String key = keys.get(i);
             String expectedValue = values.get(i);
             assertThat(valuesObject.has(key)).isTrue();
-            assertThat(valuesObject.get(key).getAsString()).isEqualTo(expectedValue);
+            assertThat(valuesObject.get(key).asText()).isEqualTo(expectedValue);
         }
     }
 
@@ -864,11 +948,15 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         return array;
     }
 
-    private JsonObject waitForV2Response(String id) throws InterruptedException {
+    private JsonNode waitForV2Response(String id) throws InterruptedException, JsonProcessingException {
         MqttEvent event = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
         assertThat(event).isNotNull();
-        JsonObject response = jsonParser.parse(event.getMessage()).getAsJsonObject();
-        assertThat(response.get("id").getAsString()).isEqualTo(id);
+        JsonNode response = mapper.readTree(event.getMessage());
+        assertThat(response.isObject()).isTrue();
+        assertThat(response.has("device")).isTrue();
+        assertThat(response.get("device").asText()).isEqualTo(createdDevice.getName());
+        assertThat(response.has("id")).isTrue();
+        assertThat(response.get("id").asText()).isEqualTo(id);
         return response;
     }
 
