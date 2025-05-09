@@ -42,6 +42,8 @@ public interface CalculatedFieldState {
 
     Map<String, ArgumentEntry> getArguments();
 
+    long getLastUpdateTimestamp();
+
     void setRequiredArguments(List<String> requiredArguments);
 
     boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues);
