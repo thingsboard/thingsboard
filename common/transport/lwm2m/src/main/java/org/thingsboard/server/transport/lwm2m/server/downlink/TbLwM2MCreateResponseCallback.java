@@ -30,7 +30,7 @@ public class TbLwM2MCreateResponseCallback extends TbLwM2MUplinkTargetedCallback
     @Override
     public void onSuccess(CreateRequest request, CreateResponse response) {
         super.onSuccess(request, response);
-        handler.onCreateResponseOk(client, versionedId, request);
+        handler.onCreatebjectInstancesResponseOk(client, versionedId, request);
     }
 
 }

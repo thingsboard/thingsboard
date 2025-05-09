@@ -25,6 +25,20 @@
             (removeList)="removeObjectsList($event)"
             formControlName="objectIds">
           </tb-profile-lwm2m-object-list>
+          <mat-form-field class="mat-block">
+            <mat-label translate>device-profile.lwm2m.observe-strategy.observe-strategy</mat-label>
+            <mat-select formControlName="observeStrategy">
+              <mat-select-trigger>
+                {{ observeStrategyMap.get(lwm2mDeviceProfileFormGroup.get('observeStrategy').value)?.name | translate }}
+              </mat-select-trigger>
+              <mat-option *ngFor="let strategy of observeStrategyList" [value]="strategy">
+                {{ observeStrategyMap.get(strategy).name | translate  }}
+                <small style="display: block;">
+                  {{ observeStrategyMap.get(strategy).description | translate }}
+                </small>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
           <tb-profile-lwm2m-observe-attr-telemetry
             formControlName="observeAttrTelemetry">
           </tb-profile-lwm2m-observe-attr-telemetry>

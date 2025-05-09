@@ -136,6 +136,41 @@ export const ObjectIDVerTranslationMap = new Map<ObjectIDVer, string>(
   ]
 );
 
+export interface ObserveStrategyData {
+  name: string;
+  description: string;
+}
+
+export enum ObserveStrategy {
+  SINGLE = 'SINGLE',
+  COMPOSITE_ALL = 'COMPOSITE_ALL',
+  COMPOSITE_BY_OBJECT = 'COMPOSITE_BY_OBJECT'
+}
+
+export const ObserveStrategyMap = new Map<ObserveStrategy, ObserveStrategyData>([
+  [
+    ObserveStrategy.SINGLE,
+    {
+      name: 'device-profile.lwm2m.observe-strategy.single',
+      description: 'device-profile.lwm2m.observe-strategy.single-description'
+    }
+  ],
+  [
+    ObserveStrategy.COMPOSITE_ALL,
+    {
+      name: 'device-profile.lwm2m.observe-strategy.composite-all',
+      description: 'device-profile.lwm2m.observe-strategy.composite-all-description'
+    }
+  ],
+  [
+    ObserveStrategy.COMPOSITE_BY_OBJECT,
+    {
+      name: 'device-profile.lwm2m.observe-strategy.composite-by-object',
+      description: 'device-profile.lwm2m.observe-strategy.composite-by-object-description'
+    }
+  ]
+]);
+
 export interface ServerSecurityConfig {
   host?: string;
   port?: number;
@@ -187,6 +222,7 @@ export interface ObservableAttributes {
   telemetry: string[];
   keyName: {};
   attributeLwm2m: AttributesNameValueMap;
+  observeStrategy: ObserveStrategy;
 }
 
 export function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
@@ -195,7 +231,8 @@ export function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
     attribute: [],
     telemetry: [],
     keyName: {},
-    attributeLwm2m: {}
+    attributeLwm2m: {},
+    observeStrategy: ObserveStrategy.SINGLE
   };
 }
 
