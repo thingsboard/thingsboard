@@ -99,6 +99,7 @@
           </mat-form-field>
           <tb-unit-input *ngIf="levelCardWidgetSettingsForm.get('widgetUnitsSource').value !== DataSourceType.attribute; else selectUnitsAttributes"
                          required class="flex"
+                         supportsUnitConversion
                          [tagFilter]="unitsType.capacity"
                          formControlName="units">
           </tb-unit-input>
@@ -239,6 +240,7 @@
             </mat-slide-toggle>
             <div class="tb-flex row flex-start align-center">
               <tb-unit-input [tagFilter]="unitsType.capacity"
+                             supportsUnitConversion
                              required class="flex" formControlName="tooltipUnits">
               </tb-unit-input>
               <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">

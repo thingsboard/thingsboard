@@ -5855,7 +5855,7 @@
             "to-imperial": "To imperial",
             "to-hybrid": "To hybrid",
             "convert-unit": "Convert unit",
-            "convert-unit-hint": "Work only with the default unit"
+            "convert-unit-hint": "Works only with system units and measures that have multiple options"
         },
         "unit-system": "Unit system",
         "unit-system-type": {

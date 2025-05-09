@@ -15,13 +15,13 @@
 ///
 
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { AllMeasures, TbUnit, UnitInfo, UnitSystem } from '@shared/models/unit.models';
+import { AllMeasures, isNotEmptyTbUnits, TbUnit, UnitInfo, UnitsType, UnitSystem } from '@shared/models/unit.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UnitService } from '@core/services/unit.service';
 import { debounceTime, first } from 'rxjs/operators';
-import { isEmptyStr } from '@core/utils';
+import { isUndefinedOrNull } from '@core/utils';
 import type { UnitInputComponent } from '@shared/components/unit-input.component';
 
 @Component({
@@ -47,9 +47,15 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
   @Output()
   unitSettingsApplied = new EventEmitter<TbUnit>();
 
+  @Input()
+  tagFilter: UnitsType;
+
+  @Input()
+  measure: AllMeasures;
+
   UnitSystem = UnitSystem;
 
-  measure: AllMeasures;
+  targetMeasure: AllMeasures;
 
   convertUnitForm =  this.fb.group({
     from: [''],
@@ -69,16 +75,17 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
       takeUntilDestroyed()
     ).subscribe(unit => {
       const unitDescription = this.unitService.getUnitInfo(unit);
-      if (unitDescription) {
+      const units = unitDescription ? this.unitService.getUnits(unitDescription.measure) : [];
+      if (unitDescription && units.length > 1) {
         this.convertUnitForm.get('convertUnit').enable({emitEvent: true});
-        this.measure = unitDescription.measure;
+        this.targetMeasure = unitDescription.measure;
         if (unitDescription.system === UnitSystem.IMPERIAL) {
-          this.convertUnitForm.get('METRIC').setValue(this.unitService.getDefaultUnit(this.measure, UnitSystem.METRIC), {emitEvent: false});
+          this.convertUnitForm.get('METRIC').setValue(this.unitService.getDefaultUnit(this.targetMeasure, UnitSystem.METRIC), {emitEvent: false});
           this.convertUnitForm.get('IMPERIAL').setValue(unit, {emitEvent: false});
           this.convertUnitForm.get('HYBRID').setValue(unit, {emitEvent: false});
         } else {
           this.convertUnitForm.get('METRIC').setValue(unit, {emitEvent: false});
-          this.convertUnitForm.get('IMPERIAL').setValue(this.unitService.getDefaultUnit(this.measure, UnitSystem.IMPERIAL), {emitEvent: false});
+          this.convertUnitForm.get('IMPERIAL').setValue(this.unitService.getDefaultUnit(this.targetMeasure, UnitSystem.IMPERIAL), {emitEvent: false});
           this.convertUnitForm.get('HYBRID').setValue(unit, {emitEvent: false});
         }
       } else {
@@ -111,32 +118,36 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
     let unitDescription: UnitInfo;
     if (this.required) {
       this.convertUnitForm.get('from').setValidators(Validators.required);
-      this.convertUnitForm.get('from').updateValueAndValidity({emitEvent: false});
     }
     if (typeof this.unit === 'string') {
       this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
-      this.convertUnitForm.get('from').setValue(this.unit, {emitEvent: true});
+      this.convertUnitForm.get('from').setValue(this.unit);
       unitDescription = this.unitService.getUnitInfo(this.unit);
-    } else if (this.unit === null) {
+    } else if (isUndefinedOrNull(this.unit)) {
       this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
-      this.convertUnitForm.get('from').setValue(null, {emitEvent: true});
+      this.convertUnitForm.get('from').setValue(null);
     } else {
       this.convertUnitForm.patchValue(this.unit, {emitEvent: false});
       unitDescription = this.unitService.getUnitInfo(this.unit.from);
     }
 
     if (unitDescription?.measure) {
-      this.measure = unitDescription.measure;
+      this.targetMeasure = unitDescription.measure;
     } else {
       this.convertUnitForm.get('convertUnit').disable({emitEvent: false});
     }
     if (this.disabled) {
       this.convertUnitForm.disable({emitEvent: false});
-    } else if (this.unit === null || isEmptyStr(this.unit)) {
+    }
+    else if (!isNotEmptyTbUnits(this.unit)) {
       this.popover.tbAnimationDone.pipe(first()).subscribe(() => {
         this.unitFrom.unitInput.nativeElement.focus();
       });
     }
+  }
+
+  clearUnit() {
+    this.unitSettingsApplied.emit(null);
   }
 
   cancel() {

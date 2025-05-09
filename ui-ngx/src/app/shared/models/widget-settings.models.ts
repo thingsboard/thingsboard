@@ -934,11 +934,7 @@ export class UnitConverterValueFormatProcessor extends ValueFormatProcessor {
     const unitService = this.$injector.get(UnitService);
     const unit = settings.units as TbUnitMapping;
     this.unitSymbol = settings.ignoreUnitSymbol ? null : unitService.getTargetUnitSymbol(unit);
-    try {
-      this.unitConverter = unitService.geUnitConverter(unit);
-    } catch (e) {
-      console.warn('Failed to create unit converter:', e);
-    }
+    this.unitConverter = unitService.geUnitConverter(unit);
 
     this.isDefinedDecimals = isDefinedAndNotNull(settings.decimals);
     this.hideZeroDecimals = !settings.showZeroDecimals;

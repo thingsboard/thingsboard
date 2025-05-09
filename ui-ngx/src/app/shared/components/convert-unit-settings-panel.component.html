@@ -20,7 +20,8 @@
   <div class="tb-convert-settings-panel-content" [formGroup]="convertUnitForm">
     <div class="tb-form-row">
       <div class="min-w-25" [class.tb-disabled-label]="convertUnitForm.get('from').disabled" translate>unit.convert.convert-from</div>
-      <tb-unit-input #unitFrom class="flex-1" [required]="required" formControlName="from"></tb-unit-input>
+      <tb-unit-input #unitFrom class="flex-1" [required]="required" formControlName="from"
+                     [measure]="measure" [tagFilter]="tagFilter"></tb-unit-input>
     </div>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="convertUnit">
@@ -32,28 +33,43 @@
     <div class="tb-form-row">
       <div class="min-w-25" [class.tb-disabled-label]="convertUnitForm.get('METRIC').disabled" translate>unit.convert.to-metric</div>
       <tb-unit-input class="flex-1"
+                     onlySystemUnits
                      formControlName="METRIC"
+                     [tagFilter]="tagFilter"
                      [unitSystem]="UnitSystem.METRIC"
-                     [measure]="measure">
+                     [measure]="targetMeasure">
       </tb-unit-input>
     </div>
     <div class="tb-form-row">
       <div class="min-w-25" [class.tb-disabled-label]="convertUnitForm.get('IMPERIAL').disabled" translate>unit.convert.to-imperial</div>
       <tb-unit-input class="flex-1"
+                     onlySystemUnits
                      formControlName="IMPERIAL"
+                     [tagFilter]="tagFilter"
                      [unitSystem]="UnitSystem.IMPERIAL"
-                     [measure]="measure">
+                     [measure]="targetMeasure">
       </tb-unit-input>
     </div>
     <div class="tb-form-row">
       <div class="min-w-25" [class.tb-disabled-label]="convertUnitForm.get('HYBRID').disabled" translate>unit.convert.to-imperial</div>
       <tb-unit-input class="flex-1"
+                     onlySystemUnits
+                     [tagFilter]="tagFilter"
                      formControlName="HYBRID"
-                     [measure]="measure">
+                     [measure]="targetMeasure">
       </tb-unit-input>
     </div>
   </div>
   <div class="tb-convert-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            *ngIf="!disabled"
+            (click)="clearUnit()"
+            [disabled]="!(!!convertUnitForm.value.from || convertUnitForm.value.convertUnit)">
+      {{ 'action.clear' | translate }}
+    </button>
+    <span class="flex-1"></span>
     <button mat-button
             color="primary"
             type="button"

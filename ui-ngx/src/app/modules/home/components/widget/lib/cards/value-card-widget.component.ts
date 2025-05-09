@@ -32,8 +32,8 @@ import {
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
+  createValueFormatterFromSettings,
   DateFormatProcessor,
-  getDataKey,
   getLabel,
   getSingleTsValue,
   iconStyle,
@@ -116,16 +116,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.ctx.$scope.valueCardWidget = this;
     this.settings = {...valueCardDefaultSettings(this.horizontal), ...this.ctx.settings};
 
-    let decimals = this.ctx.decimals;
-    let units = this.ctx.units;
-    const dataKey = getDataKey(this.ctx.datasources);
-    if (isDefinedAndNotNull(dataKey?.decimals)) {
-      decimals = dataKey.decimals;
-    }
-    if (dataKey?.units) {
-      units = dataKey.units;
-    }
-    this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units: units, dec: decimals});
+    this.valueFormat = createValueFormatterFromSettings(this.ctx);
 
     this.layout = this.settings.layout;
 
@@ -188,7 +179,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && tsValue[0] !== 0) {
       ts = tsValue[0];
       value = tsValue[1];
-      this.valueText = this.valueFormat.update(value); // formatValue(value, this.decimals, this.units, false);
+      this.valueText = this.valueFormat.format(value);
     } else {
       this.valueText = 'N/A';
     }

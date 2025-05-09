@@ -34,6 +34,7 @@ import {
 } from '@shared/models/js-function.models';
 import { forkJoin, Observable, of, ReplaySubject } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
+import type { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
@@ -106,8 +107,7 @@ export interface CellContentFunctionInfo {
 
 export interface CellContentInfo {
   contentFunction: Observable<CellContentFunctionInfo>;
-  units?: string;
-  decimals?: number;
+  valueFormat?: ValueFormatProcessor
 }
 
 export type CellStyleFunction = (...args: any[]) => any;

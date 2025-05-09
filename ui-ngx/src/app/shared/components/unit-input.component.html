@@ -23,10 +23,9 @@
          (focusin)="onFocus()"
          [matAutocomplete]="unitsAutocomplete"
          [matAutocompleteDisabled]="supportsUnitConversion">
-  <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid"
+  <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid && !isUnitMapping"
           type="button"
           class="tb-icon-24 mr-2"
-          [class.mr-2]="!supportsUnitConversion || !isUnitMapping"
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear($event)">
     <mat-icon class="material-icons">close</mat-icon>

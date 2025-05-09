@@ -81,11 +81,16 @@ export class UnitService {
   geUnitConverter(unit: TbUnitMapping): TbUnitConverter;
   geUnitConverter(from: string, to: string): TbUnitConverter;
   geUnitConverter(unit: TbUnitMapping | string, to?: string): TbUnitConverter {
-    if (unit !== null && typeof unit === 'object') {
-      const target = this.getTargetUnitSymbol(unit);
-      return this.converter.getUnitConverter(unit.from, target);
+    try {
+      if (unit !== null && typeof unit === 'object') {
+        const target = this.getTargetUnitSymbol(unit);
+        return this.converter.getUnitConverter(unit.from, target);
+      }
+      return this.converter.getUnitConverter(unit as string, to);
+    } catch (e) {
+      console.warn(e);
+      return (x: number) => x;
     }
-    return this.converter.getUnitConverter(unit as string, to);
   }
 
   getTargetUnitSymbol(unit: TbUnitMapping | string): string {
@@ -98,11 +103,16 @@ export class UnitService {
   convertUnitValue(value: number, unit: TbUnitMapping): number;
   convertUnitValue(value: number, from: string, to: string): number;
   convertUnitValue(value: number, unit: string | TbUnitMapping, to?: string): number {
-    if (unit !== null && typeof unit === 'object') {
-      const target = this.getTargetUnitSymbol(unit);
-      return this.converter.convert(value, unit.from, target);
+    try {
+      if (unit !== null && typeof unit === 'object') {
+        const target = this.getTargetUnitSymbol(unit);
+        return this.converter.convert(value, unit.from, target);
+      }
+      return this.converter.convert(value, unit as string, to);
+    } catch (e) {
+      console.warn(e);
+      return value;
     }
-    return this.converter.convert(value, unit as string, to);
   }
 
   private getUnitSystemByTimezone(): UnitSystem {

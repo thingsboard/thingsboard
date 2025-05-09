@@ -34,6 +34,7 @@ import { Observable, of, shareReplay } from 'rxjs';
 import {
   AllMeasures,
   getSourceTbUnitSymbol,
+  isTbUnitMapping,
   TbUnit,
   UnitInfo,
   UnitsType,
@@ -43,7 +44,7 @@ import { map, mergeMap } from 'rxjs/operators';
 import { UnitService } from '@core/services/unit.service';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ConvertUnitSettingsPanelComponent } from '@shared/components/convert-unit-settings-panel.component';
-import { isNotEmptyStr, isObject } from '@core/utils';
+import { isDefinedAndNotNull, isEqual, isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-unit-input',
@@ -82,6 +83,9 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
 
   @Input({transform: booleanAttribute})
   supportsUnitConversion = false;
+
+  @Input({transform: booleanAttribute})
+  onlySystemUnits = false;
 
   filteredUnits$: Observable<Array<[AllMeasures, Array<UnitInfo>]>>;
 
@@ -136,7 +140,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
       this.isUnitMapping = false;
     } else {
       this.unitsFormControl.patchValue(symbol, {emitEvent: false});
-      this.isUnitMapping = symbol !== null;
+      this.isUnitMapping = isDefinedAndNotNull(symbol);
     }
     this.dirty = true;
   }
@@ -174,12 +178,10 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   clear($event: Event) {
     $event.stopPropagation();
     this.unitsFormControl.patchValue(null, {emitEvent: true});
-    if (!this.supportsUnitConversion) {
-      setTimeout(() => {
-        this.unitInput.nativeElement.blur();
-        this.unitInput.nativeElement.focus();
-      }, 0);
-    }
+    setTimeout(() => {
+      this.unitInput.nativeElement.blur();
+      this.unitInput.nativeElement.focus();
+    }, 0);
   }
 
   openConvertSettingsPopup($event: Event) {
@@ -202,6 +204,8 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
           unit: this.extractTbUnit(this.unitsFormControl.value),
           required: this.required,
           disabled: this.disabled,
+          tagFilter: this.tagFilter,
+          measure: this.measure
         },
         isModal: true
       });
@@ -214,10 +218,20 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   }
 
   private updateModel(value: UnitInfo | TbUnit ) {
-    const res = this.extractTbUnit(value);
-    if (this.modelValue !== res) {
+    let res = this.extractTbUnit(value);
+    if (this.onlySystemUnits && !isTbUnitMapping(res)) {
+      const unitInfo = this.unitService.getUnitInfo(res as string);
+      if (unitInfo) {
+        if (this.measure && unitInfo.measure !== this.measure) {
+          res = null;
+        }
+      } else {
+        res = null;
+      }
+    }
+    if (!isEqual(this.modelValue, res)) {
       this.modelValue = res;
-      this.isUnitMapping = (res !== null && isObject(res));
+      this.isUnitMapping = isTbUnitMapping(res);
       this.propagateChange(this.modelValue);
     }
   }

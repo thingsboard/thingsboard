@@ -56,7 +56,7 @@ import {
   ShapesTranslations,
   updatedFormSettingsValidators
 } from '@home/components/widget/lib/indicator/liquid-level-widget.models';
-import { UnitsType } from '@shared/models/unit.models';
+import { getSourceTbUnitSymbol, UnitsType } from '@shared/models/unit.models';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ImageCardsSelectComponent } from '@home/components/widget/lib/settings/common/image-cards-select.component';
 import { map, share, tap } from 'rxjs/operators';
@@ -357,13 +357,13 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.levelCardWidgetConfigForm.get('units').value;
+    const units: string = getSourceTbUnitSymbol(this.levelCardWidgetConfigForm.get('units').value);
     const decimals: number = this.levelCardWidgetConfigForm.get('decimals').value;
     return formatValue(22, decimals, units, true);
   }
 
   private _tooltipValuePreviewFn() {
-    const units: string = this.levelCardWidgetConfigForm.get('tooltipUnits').value;
+    const units: string = getSourceTbUnitSymbol(this.levelCardWidgetConfigForm.get('tooltipUnits').value);
     const decimals: number = this.levelCardWidgetConfigForm.get('tooltipLevelDecimals').value;
     return formatValue(32, decimals, units, true);
   }
@@ -372,7 +372,7 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
     const value = this.levelCardWidgetConfigForm.get('volumeConstant').value;
     const datasourceUnits = this.levelCardWidgetConfigForm.get('datasourceUnits').value;
     const decimals: number = this.widgetConfig.config.decimals;
-    let units: string = this.widgetConfig.config.units;
+    let units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
 
     if (datasourceUnits !== CapacityUnits.percent) {
       units = datasourceUnits;

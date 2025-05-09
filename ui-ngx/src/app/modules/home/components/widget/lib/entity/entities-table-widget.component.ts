@@ -107,6 +107,7 @@ import { AggregationType } from '@shared/models/time/time.models';
 import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
+import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -475,14 +476,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
         this.stylesInfo[dataKey.def] = getCellStyleInfo(this.ctx, keySettings, 'value, entity, ctx');
         const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, entity, ctx');
-        const contentInfo: CellContentInfo = {
+        const decimals = (dataKey.decimals || dataKey.decimals === 0) ? dataKey.decimals : this.ctx.widgetConfig.decimals;
+        const units = dataKey.units || this.ctx.widgetConfig.units;
+        const valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units, decimals, showZeroDecimals: true});
+        this.contentsInfo[dataKey.def] = {
           contentFunction: contentFunctionInfo,
-          units: dataKey.units,
-          decimals: dataKey.decimals
+          valueFormat
         };
-        this.contentsInfo[dataKey.def] = contentInfo;
-        this.contentsInfo[dataKey.def].units = dataKey.units;
-        this.contentsInfo[dataKey.def].decimals = dataKey.decimals;
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
         this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings, this.ctx);
         this.columnSelectionAvailability[dataKey.def] = getColumnSelectionAvailability(keySettings);
@@ -629,7 +629,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   public rowStyle(entity: EntityData, row: number): Observable<any> {
     let style$: Observable<any>;
-    let res = this.rowStyleCache[row];
+    const res = this.rowStyleCache[row];
     if (!res) {
       style$ = this.rowStylesInfo.pipe(
         map(styleInfo => {
@@ -667,7 +667,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     let style$: Observable<any>;
     const col = this.columns.indexOf(key);
     const index = row * this.columns.length + col;
-    let res = this.cellStyleCache[index];
+    const res = this.cellStyleCache[index];
     if (!res) {
       if (entity && key) {
         style$ = this.stylesInfo[key.def].pipe(
@@ -717,7 +717,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     let content$: Observable<SafeHtml>;
     const col = this.columns.indexOf(key);
     const index = row * this.columns.length + col;
-    let res = this.cellContentCache[index];
+    const res = this.cellContentCache[index];
     if (isUndefined(res)) {
       const contentInfo = this.contentsInfo[key.def];
       content$ = contentInfo.contentFunction.pipe(
@@ -766,9 +766,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
         }
       }
-      const decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : this.ctx.widgetConfig.decimals;
-      const units = contentInfo.units || this.ctx.widgetConfig.units;
-      return this.ctx.utils.formatValue(value, decimals, units, true);
+      return contentInfo.valueFormat.format(value);
     } else {
       return '';
     }
