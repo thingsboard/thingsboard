@@ -31,7 +31,8 @@ import {
   ComponentStyle,
   iconStyle,
   overlayStyle,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
@@ -43,7 +44,7 @@ import {
   sliderWidgetDefaultSettings,
   SliderWidgetSettings
 } from '@home/components/widget/lib/rpc/slider-widget.models';
-import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
+import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import tinycolor from 'tinycolor2';
 
@@ -126,6 +127,7 @@ export class SliderWidgetComponent extends
   private panelResize$: ResizeObserver;
 
   private valueSetter: ValueSetter<number>;
+  private valueFormat: ValueFormatProcessor;
 
   private sliderCssClass: string;
 
@@ -154,6 +156,11 @@ export class SliderWidgetComponent extends
     this.showValue = this.layout !== SliderLayout.simplified && this.settings.showValue;
     this.valueStyle = textStyle(this.settings.valueFont);
     this.valueStyle.color = this.settings.valueColor;
+
+    this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {
+      units: this.settings.valueUnits,
+      decimals: this.settings.valueDecimals
+    });
 
     this.showLeftRightIcon = this.layout === SliderLayout.extended;
     if (this.showLeftRightIcon) {
@@ -257,7 +264,7 @@ export class SliderWidgetComponent extends
   }
 
   private _sliderValueText(value: number): string {
-    return formatValue(value, this.settings.valueDecimals, this.settings.valueUnits, false);
+    return this.valueFormat.format(value);
   }
 
   private onValue(value: number): void {
@@ -269,7 +276,7 @@ export class SliderWidgetComponent extends
 
   private updateValueText() {
     if (isDefinedAndNotNull(this.value) && isNumeric(this.value)) {
-      this.valueText = formatValue(this.value, this.settings.valueDecimals, this.settings.valueUnits, false);
+      this.valueText = this.valueFormat.format(this.value);
     } else {
       this.valueText = 'N/A';
     }

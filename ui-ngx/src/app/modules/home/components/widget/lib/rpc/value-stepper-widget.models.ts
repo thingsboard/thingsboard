@@ -26,6 +26,7 @@ import {
 import { WidgetButtonCustomStyles } from '@shared/components/button/widget-button.models';
 import { BackgroundSettings, BackgroundType, cssUnit, Font } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { TbUnit } from '@shared/models/unit.models';
 
 const defaultMainColor = '#305680';
 
@@ -76,7 +77,7 @@ export interface ValueStepperAppearance {
   maxValueRange: number;
   valueStep: number;
   showValueBox: boolean;
-  valueUnits: string;
+  valueUnits: TbUnit;
   valueDecimals: number;
   valueFont: Font;
   valueColor: string;

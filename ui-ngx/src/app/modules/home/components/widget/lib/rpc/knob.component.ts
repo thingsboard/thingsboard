@@ -165,7 +165,8 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       donutStartAngle: 3 / 4 * Math.PI,
       donutEndAngle: 9 / 4 * Math.PI,
       animation: false,
-      barColorProcessor: ColorProcessor.fromSettings(gradientColor('rgba(0, 0, 0, 0)', levelColors, this.minValue, this.maxValue), this.ctx)
+      barColorProcessor: ColorProcessor.fromSettings(gradientColor('rgba(0, 0, 0, 0)', levelColors, this.minValue, this.maxValue), this.ctx),
+      valueFormat: null
     };
 
     this.knob.on('click', (e) => {
