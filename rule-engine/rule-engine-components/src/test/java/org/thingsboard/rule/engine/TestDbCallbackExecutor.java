@@ -28,7 +28,7 @@ public class TestDbCallbackExecutor implements ListeningExecutor {
         try {
             return Futures.immediateFuture(task.call());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return Futures.immediateFailedFuture(e);
         }
     }
 
