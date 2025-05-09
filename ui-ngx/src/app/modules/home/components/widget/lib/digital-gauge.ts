@@ -21,7 +21,7 @@ import {
   DigitalGaugeSettings
 } from '@home/components/widget/lib/digital-gauge.models';
 import tinycolor from 'tinycolor2';
-import { isDefined, isDefinedAndNotNull, isNotEmptyStr, isObject } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
@@ -33,6 +33,7 @@ import {
   ValueSourceType
 } from '@shared/models/widget-settings.models';
 import { UnitService } from '@core/services/unit.service';
+import { isNotEmptyTbUnits } from '@shared/models/unit.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 // @dynamic
@@ -77,8 +78,8 @@ export class TbCanvasDigitalGauge {
     this.localSettings.decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
       (isDefinedAndNotNull(settings.decimals) ? settings.decimals : ctx.decimals);
 
-    this.localSettings.units = dataKey.units && dataKey.units.length ? dataKey.units :
-      (isDefined(settings.units) && (isObject(settings.units) || isNotEmptyStr(settings.units)) ? settings.units : ctx.units);
+    this.localSettings.units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units :
+      (isNotEmptyTbUnits(settings.units) ? settings.units : ctx.units);
 
     this.localSettings.hideValue = settings.showValue !== true;
     this.localSettings.hideMinMax = settings.showMinMax !== true;

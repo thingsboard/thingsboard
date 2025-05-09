@@ -104,6 +104,7 @@ import voltage, { VoltageUnits } from '@shared/models/units/voltage';
 import volume, { VolumeUnits } from '@shared/models/units/volume';
 import volumeFlow, { VolumeFlowUnits } from '@shared/models/units/volume-flow';
 import { TranslateService } from '@ngx-translate/core';
+import { isNotEmptyStr } from '@core/utils';
 
 export type AllMeasuresUnits =
   | AbsorbedDoseRateUnits
@@ -663,3 +664,15 @@ export const getSourceTbUnitSymbol = (value: TbUnit | UnitInfo | null): string =
   }
   return value.from;
 }
+
+export const isNotEmptyTbUnits = (unit: any): boolean => {
+  if (typeof unit === 'object' && unit !== null && isNotEmptyStr(unit?.from)) {
+    return true;
+  }
+  return isNotEmptyStr(unit);
+}
+
+export const isTbUnitMapping = (unit: any): boolean => {
+  if (typeof unit !== 'object' || unit === null) return false;
+  return isNotEmptyStr(unit.from);
+};

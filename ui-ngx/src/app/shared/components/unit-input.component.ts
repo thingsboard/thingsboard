@@ -43,7 +43,7 @@ import { map, mergeMap } from 'rxjs/operators';
 import { UnitService } from '@core/services/unit.service';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ConvertUnitSettingsPanelComponent } from '@shared/components/convert-unit-settings-panel.component';
-import { isNotEmptyStr, isObject } from '@core/utils';
+import { isDefinedAndNotNull, isNotEmptyStr, isObject } from '@core/utils';
 
 @Component({
   selector: 'tb-unit-input',
@@ -136,7 +136,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
       this.isUnitMapping = false;
     } else {
       this.unitsFormControl.patchValue(symbol, {emitEvent: false});
-      this.isUnitMapping = symbol !== null;
+      this.isUnitMapping = isDefinedAndNotNull(symbol);
     }
     this.dirty = true;
   }

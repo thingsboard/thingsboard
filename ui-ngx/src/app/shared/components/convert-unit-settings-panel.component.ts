@@ -21,7 +21,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UnitService } from '@core/services/unit.service';
 import { debounceTime, first } from 'rxjs/operators';
-import { isEmptyStr } from '@core/utils';
+import { isEmptyStr, isUndefinedOrNull } from '@core/utils';
 import type { UnitInputComponent } from '@shared/components/unit-input.component';
 
 @Component({
@@ -117,7 +117,7 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
       this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
       this.convertUnitForm.get('from').setValue(this.unit, {emitEvent: true});
       unitDescription = this.unitService.getUnitInfo(this.unit);
-    } else if (this.unit === null) {
+    } else if (isUndefinedOrNull(this.unit)) {
       this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
       this.convertUnitForm.get('from').setValue(null, {emitEvent: true});
     } else {

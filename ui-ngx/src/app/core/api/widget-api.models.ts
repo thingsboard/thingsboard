@@ -23,7 +23,9 @@ import {
   DatasourceType,
   KeyInfo,
   LegendConfig,
-  LegendData, TargetDevice, WidgetAction,
+  LegendData,
+  TargetDevice,
+  WidgetAction,
   WidgetActionDescriptor,
   widgetType
 } from '@shared/models/widget.models';
@@ -60,9 +62,10 @@ import { AlarmDataService } from '@core/api/alarm-data.service';
 import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { PersistentRpc } from '@shared/models/rpc.models';
-import { EventEmitter } from '@angular/core';
+import { EventEmitter, Injector } from '@angular/core';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { MatDialogRef } from '@angular/material/dialog';
+import { TbUnit } from '@shared/models/unit.models';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -232,6 +235,7 @@ export class WidgetSubscriptionContext {
   dashboardUtils: DashboardUtilsService;
   raf: RafService;
   widgetUtils: IWidgetUtils;
+  $injector: Injector;
   getServerTimeDiff: () => Observable<number>;
 }
 
@@ -283,7 +287,7 @@ export interface WidgetSubscriptionOptions {
   timeForComparison?: ComparisonDuration;
   comparisonCustomIntervalValue?: number;
   decimals?: number;
-  units?: string;
+  units?: TbUnit;
   callbacks?: WidgetSubscriptionCallbacks;
 }
 

@@ -342,6 +342,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     this.subscriptionContext.dashboardUtils = this.dashboardUtils;
     this.subscriptionContext.raf = this.raf;
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
+    this.subscriptionContext.$injector = this.injector;
     this.subscriptionContext.getServerTimeDiff = this.dashboardService.getServerTimeDiff.bind(this.dashboardService);
 
     this.widgetComponentService.getWidgetInfo(this.widget.typeFullFqn).subscribe({
