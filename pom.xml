@@ -57,7 +57,7 @@
         <rat.version>0.10</rat.version> <!-- unused -->
         <cassandra.version>4.17.0</cassandra.version>
         <metrics.version>4.2.25</metrics.version>
-        <cassandra-all.version>3.11.17</cassandra-all.version> <!-- tools -->
+        <cassandra-all.version>5.0.4</cassandra-all.version> <!-- tools -->
         <guava.version>33.1.0-jre</guava.version>
         <caffeine.version>3.1.8</caffeine.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
@@ -1825,11 +1825,6 @@
             <dependency>
                 <groupId>org.apache.cassandra</groupId>
                 <artifactId>cassandra-all</artifactId>
-                <version>${cassandra-all.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cassandra</groupId>
-                <artifactId>cassandra-thrift</artifactId>
                 <version>${cassandra-all.version}</version>
             </dependency>
             <dependency>
