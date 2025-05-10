@@ -75,7 +75,7 @@
         <jackson-databind.version>2.17.2</jackson-databind.version>
         <fasterxml-classmate.version>1.7.0</fasterxml-classmate.version>
         <auth0-jwt.version>4.4.0</auth0-jwt.version>
-        <json-schema-validator.version>2.2.14</json-schema-validator.version>
+        <json-schema-validator.version>1.5.6</json-schema-validator.version>
         <milo.version>0.6.12</milo.version>
         <californium.version>3.12.1</californium.version>
         <leshan.version>2.0.0-M15</leshan.version>
@@ -1620,15 +1620,9 @@
                 <version>${auth0-jwt.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.github.java-json-tools</groupId>
+                <groupId>com.networknt</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>${json-schema-validator.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.sun.mail</groupId>
-                        <artifactId>mailapi</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.leshan</groupId>
