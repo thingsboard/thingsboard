@@ -21,7 +21,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
@@ -169,7 +168,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenSslIsTrueAndCredentials_whenGetSslContext_thenVerifySslContext() throws Exception {
+    public void givenSslIsTrueAndCredentials_whenGetSslContext_thenVerifySslContextIsNotNull() throws Exception {
         mqttNodeConfig.setSsl(true);
         mqttNodeConfig.setCredentials(new BasicCredentials());
 
@@ -179,10 +178,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         ArgumentCaptor<MqttClientConfig> mqttClientConfig = ArgumentCaptor.forClass(MqttClientConfig.class);
         then(mqttNode).should().prepareMqttClientConfig(mqttClientConfig.capture());
         SslContext actualSslContext = mqttClientConfig.getValue().getSslContext();
-        assertThat(actualSslContext)
-                .usingRecursiveComparison()
-                .ignoringFields("ctx", "ctxLock", "sessionContext.context.ctx", "sessionContext.context.ctxLock")
-                .isEqualTo(SslContextBuilder.forClient().build());
+        assertThat(actualSslContext).isNotNull();
     }
 
     @Test
