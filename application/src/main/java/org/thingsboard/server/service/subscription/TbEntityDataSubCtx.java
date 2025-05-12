@@ -94,35 +94,36 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
     private void sendLatestWsMsg(EntityId entityId, String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
         Map<String, TsValue> latestUpdate = new HashMap<>();
-        subscriptionUpdate.getData().forEach((k, v) -> {
-            Object[] data = (Object[]) v.get(0);
-            latestUpdate.put(k, new TsValue((Long) data[0], (String) data[1]));
-        });
+        subscriptionUpdate.getData().forEach((key, data) -> data.stream()
+                .filter(o -> o instanceof Object[] && ((Object[]) o).length > 0 && ((Object[]) o)[0] instanceof Long)
+                .max(Comparator.comparingLong(o -> (Long) ((Object[]) o)[0]))
+                .ifPresent(max -> {
+                    Object[] arr = (Object[]) max;
+                    latestUpdate.put(key, new TsValue((Long) arr[0], (String) arr[1]));
+                }));
         EntityData entityData = getDataForEntity(entityId);
         if (entityData != null && entityData.getLatest() != null) {
-            Map<String, TsValue> latestCtxValues = entityData.getLatest().get(keyType);
+            Map<String, TsValue> latestCtxValues = entityData.getLatest().computeIfAbsent(keyType, key -> new HashMap<>());
             log.trace("[{}][{}][{}] Going to compare update with {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), latestCtxValues);
-            if (latestCtxValues != null) {
-                latestCtxValues.forEach((k, v) -> {
-                    TsValue update = latestUpdate.get(k);
-                    if (update != null) {
-                        //Ignore notifications about deleted keys
-                        if (!(update.getTs() == 0 && (update.getValue() == null || update.getValue().isEmpty()))) {
-                            if (update.getTs() < v.getTs()) {
-                                log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                                latestUpdate.remove(k);
-                            } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
-                                log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                                latestUpdate.remove(k);
-                            }
-                        } else {
-                            log.trace("[{}][{}][{}] Received deleted notification for: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k);
+            latestCtxValues.forEach((k, v) -> {
+                TsValue update = latestUpdate.get(k);
+                if (update != null) {
+                    //Ignore notifications about deleted keys
+                    if (!(update.getTs() == 0 && (update.getValue() == null || update.getValue().isEmpty()))) {
+                        if (update.getTs() < v.getTs()) {
+                            log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                            latestUpdate.remove(k);
+                        } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
+                            log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                            latestUpdate.remove(k);
                         }
+                    } else {
+                        log.trace("[{}][{}][{}] Received deleted notification for: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k);
                     }
-                });
-                //Setting new values
-                latestUpdate.forEach(latestCtxValues::put);
-            }
+                }
+            });
+            //Setting new values
+            latestCtxValues.putAll(latestUpdate);
         }
         if (!latestUpdate.isEmpty()) {
             Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
