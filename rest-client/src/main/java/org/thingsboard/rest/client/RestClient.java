@@ -55,9 +55,9 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
@@ -86,6 +86,7 @@ import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
@@ -3765,7 +3766,7 @@ public class RestClient implements Closeable {
     }
 
     public PageData<TbResourceInfo> getImages(PageLink pageLink, boolean includeSystemImages) {
-       return this.getImages(pageLink, null, includeSystemImages);
+        return this.getImages(pageLink, null, includeSystemImages);
     }
 
     public PageData<TbResourceInfo> getImages(PageLink pageLink, ResourceSubType imageSubType, boolean includeSystemImages) {
@@ -4054,6 +4055,21 @@ public class RestClient implements Closeable {
                 entityId.getId(),
                 queueName,
                 timeout).getBody();
+    }
+
+    public CalculatedField saveCalculatedField(CalculatedField calculatedField) {
+        return restTemplate.postForEntity(baseURL + "/api/calculatedField", calculatedField, CalculatedField.class).getBody();
+    }
+
+    public PageData<CalculatedField> getCalculatedFieldsByEntityId(EntityId entityId, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<CalculatedField>>() {
+                }, params).getBody();
+
     }
 
     private String getTimeUrlParams(TimePageLink pageLink) {
