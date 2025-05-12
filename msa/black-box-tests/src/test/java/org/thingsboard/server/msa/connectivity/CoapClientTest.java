@@ -142,6 +142,7 @@ public class CoapClientTest extends AbstractCoapClientTest {
         testRestClient.postAttribute(accessToken, payload);
         testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, payload);
         testRestClient.postTelemetry(accessToken, payload);
+        Thread.sleep(1000);
 
         JsonNode response = getAttributes("", "");
         assertThat(response.has("client")).isTrue();
@@ -155,6 +156,7 @@ public class CoapClientTest extends AbstractCoapClientTest {
         JsonNode payload = mapper.readTree(createPayload().toString());
         testRestClient.postAttribute(accessToken, payload);
         testRestClient.postTelemetry(accessToken, payload);
+        Thread.sleep(1000);
 
         JsonNode response = getAttributes("boolKey,stringKey", "");
         assertThat(response.get("client").get("boolKey")).isEqualTo(payload.get("boolKey"));
@@ -167,6 +169,7 @@ public class CoapClientTest extends AbstractCoapClientTest {
         JsonNode payload = mapper.readTree(createPayload().toString());
         testRestClient.postAttribute(accessToken, payload);
         testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, payload);
+        Thread.sleep(1000);
 
         JsonNode response = getAttributes("", "boolKey,stringKey");
         assertThat(response.get("shared").get("boolKey")).isEqualTo(payload.get("boolKey"));
