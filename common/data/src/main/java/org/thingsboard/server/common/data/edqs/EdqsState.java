@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.common.data.edqs;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.BooleanUtils;
 
 @Getter
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EdqsState {
 
     private Boolean edqsReady;
