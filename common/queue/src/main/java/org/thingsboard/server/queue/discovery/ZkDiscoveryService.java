@@ -179,6 +179,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
 
     @Override
     public void setReady(boolean ready) {
+        log.debug("Marking current service as {}", ready ? "ready" : "NOT ready");
         boolean changed = serviceInfoProvider.setReady(ready);
         if (changed) {
             try {
