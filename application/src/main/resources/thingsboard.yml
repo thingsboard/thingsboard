@@ -644,6 +644,9 @@ cache:
     mobileSecretKey:
       timeToLiveInMinutes: "${CACHE_MOBILE_SECRET_KEY_TTL:2}" # QR secret key cache TTL
       maxSize: "${CACHE_MOBILE_SECRET_KEY_MAX_SIZE:10000}" # 0 means the cache is disabled
+    trendzSettings:
+      timeToLiveInMinutes: "${CACHE_SPECS_TRENDZ_SETTINGS_TTL:1440}" # Trendz settings cache TTL
+      maxSize: "${CACHE_SPECS_TRENDZ_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -1628,6 +1631,12 @@ queue:
         - key: max.poll.records
           # Max poll records for edqs.state topic
           value: "${TB_QUEUE_KAFKA_EDQS_STATE_MAX_POLL_RECORDS:512}"
+    # If you override any default Kafka topic name using environment variables, you must also specify the related consumer properties
+    # for the new topic in `consumer-properties-per-topic-inline`. Otherwise, the topic will not inherit its expected configuration (e.g., max.poll.records, timeouts, etc).
+    # Each entry sets a single property for a specific topic. To define multiple properties for a topic, repeat the topic key.
+    # Format: "topic1:key=value;topic1:key=value;topic2:key=value"
+    # Example: tb_core_updated:max.poll.records=10;tb_core_updated:bootstrap.servers=kafka1:9092,kafka2:9092;tb_edge_updated:auto.offset.reset=latest
+    consumer-properties-per-topic-inline: "${TB_QUEUE_KAFKA_CONSUMER_PROPERTIES_PER_TOPIC_INLINE:}"
     other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
     other: # DEPRECATED. In this section, you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
     #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
@@ -1952,3 +1961,27 @@ mobileApp:
   googlePlayLink: "${TB_MOBILE_APP_GOOGLE_PLAY_LINK:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}"
   # Link to App Store for Thingsboard Live mobile application
   appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"
+
+mqtt:
+  # MQTT client configuration parameters
+  client:
+    # Parameters that control the retransmission mechanism.
+    # This mechanism only applies to the handling of MQTT Publish, Subscribe, Unsubscribe and Pubrel messages.
+    # With the updated default settings:
+    #   - After sending the message, wait approximately 5000 ms (± jitter) for the 1st attempt.
+    #   - The 2nd attempt will occur after roughly 5000 * 2 = 10,000 ms (± jitter).
+    #   - The 3rd attempt will occur after roughly 5000 * 4 = 20,000 ms (± jitter).
+    #   - The 4th "attempt" will not actually perform a retransmission.
+    #     Instead, the system will detect that the maximum number of attempts has been reached and drop the pending message.
+    retransmission:
+      # Maximum number of retransmission attempts allowed.
+      # If the attempt count exceeds this value, retransmissions will stop and the pending message will be dropped.
+      max_attempts: "${TB_MQTT_CLIENT_RETRANSMISSION_MAX_ATTEMPTS:3}"
+      # Base delay (in milliseconds) before the first retransmission attempt, measured from the moment the message is sent.
+      # Subsequent delays are calculated using exponential backoff.
+      # This base delay is also used as the reference value for applying jitter.
+      initial_delay_millis: "${TB_MQTT_CLIENT_RETRANSMISSION_INITIAL_DELAY_MILLIS:5000}"
+      # Jitter factor applied to the calculated retransmission delay.
+      # The actual delay is randomized within a range defined by multiplying the base delay by a factor between (1 - jitter_factor) and (1 + jitter_factor).
+      # For example, a jitter_factor of 0.15 means the actual delay may vary by up to ±15% of the base delay.
+      jitter_factor: "${TB_MQTT_CLIENT_RETRANSMISSION_JITTER_FACTOR:0.15}"

@@ -86,7 +86,7 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             otaPackage.setContentType(contentType);
             otaPackage.setData(ByteBuffer.wrap(data));
             otaPackage.setDataSize((long) data.length);
-            OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
+            OtaPackageInfo savedOtaPackage = new OtaPackageInfo(otaPackageService.saveOtaPackage(otaPackage));
             logEntityActionService.logEntityAction(tenantId, savedOtaPackage.getId(), savedOtaPackage, null, actionType, user);
             return savedOtaPackage;
         } catch (Exception e) {
