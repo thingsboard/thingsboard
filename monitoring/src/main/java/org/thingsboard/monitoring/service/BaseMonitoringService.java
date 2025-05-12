@@ -16,7 +16,6 @@
 package org.thingsboard.monitoring.service;
 
 import com.google.common.collect.Sets;
-import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -85,12 +84,11 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
     @Value("${monitoring.calculated_fields.enabled:true}")
     protected boolean checkCalculatedFields;
 
-    @PostConstruct
-    private void init() {
+    public void init() {
         if (configs == null || configs.isEmpty()) {
             return;
         }
-        tbClient.logIn();
+
         configs.forEach(config -> {
             config.getTargets().forEach(target -> {
                 BaseHealthChecker<C, T> healthChecker = initHealthChecker(target, config);
@@ -108,7 +106,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
     private BaseHealthChecker<C, T> initHealthChecker(T target, C config) {
         BaseHealthChecker<C, T> healthChecker = (BaseHealthChecker<C, T>) createHealthChecker(config, target);
         log.info("Initializing {} for {}", healthChecker.getClass().getSimpleName(), target.getBaseUrl());
-        healthChecker.initialize(tbClient);
+        healthChecker.initialize();
         devices.add(target.getDeviceId());
         return healthChecker;
     }
@@ -140,7 +138,7 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
                 reporter.serviceIsOk(MonitoredServiceKey.EDQS);
             }
 
-            reporter.reportLatencies(tbClient);
+            reporter.reportLatencies();
             log.debug("Finished {}", getName());
         } catch (ServiceFailureException e) {
             reporter.serviceFailure(e.getServiceKey(), e);
