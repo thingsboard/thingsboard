@@ -19,6 +19,5 @@ public class MonitoredServiceKey {
 
     public static final String GENERAL = "Monitoring";
     public static final String EDQS = "*EDQS*";
-    public static final String CF = "*CF*";
 
 }

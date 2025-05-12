@@ -117,11 +117,9 @@ public abstract class BaseHealthChecker<C extends MonitoringConfig, T extends Mo
             String cfTestValue = testValue + "-cf";
             String actualCfValue = latest.get(TEST_CF_TELEMETRY_KEY);
             if (actualCfValue == null) {
-                throw new ServiceFailureException(MonitoredServiceKey.CF, "No CF value arrived");
+                throw new ServiceFailureException(info, "No calculated field value arrived");
             } else if (!cfTestValue.equals(actualCfValue)) {
-                throw new ServiceFailureException(MonitoredServiceKey.CF, "Was expecting CF value " + cfTestValue + " but got " + actualCfValue);
-            } else {
-                reporter.serviceIsOk(MonitoredServiceKey.CF);
+                throw new ServiceFailureException(info, "Was expecting calculated field value " + cfTestValue + " but got " + actualCfValue);
             }
         }
         reporter.reportLatency(Latencies.wsUpdate(getKey()), stopWatch.getTime());
