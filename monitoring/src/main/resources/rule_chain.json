@@ -154,7 +154,7 @@
           "tbelScript": "return msg.temperature > 20;"
         },
         "additionalInfo": {
-          "description": "dashboardId: ${MONITORING:dashboardId}",
+          "description": "",
           "layoutX": 251,
           "layoutY": 499
         }

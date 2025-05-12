@@ -29,6 +29,7 @@ import org.thingsboard.monitoring.config.transport.TransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.TransportType;
 import org.thingsboard.monitoring.util.ResourceUtils;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
@@ -113,6 +114,8 @@ public class MonitoringEntityService {
         RuleChainMetaData metaData = JacksonUtil.fromString(metadataJson, RuleChainMetaData.class);
         metaData.setRuleChainId(ruleChainId);
         tbClient.saveRuleChainMetaData(metaData);
+        tbClient.saveEntityAttributesV2(ruleChainId, DataConstants.SERVER_SCOPE, JacksonUtil.newObjectNode()
+                .put("version", newVersion));
     }
 
     public Asset getOrCreateMonitoringAsset() {
@@ -184,7 +187,11 @@ public class MonitoringEntityService {
             credentials.setCredentialsValue(JacksonUtil.toString(lwm2mCreds));
         }
 
-        return tbClient.saveDeviceWithCredentials(device, credentials).get();
+        device = tbClient.saveDeviceWithCredentials(device, credentials).get();
+        if (calculatedFieldsMonitoringEnabled) {
+            createCalculatedField(device);
+        }
+        return device;
     }
 
     private DeviceProfile getOrCreateDeviceProfile(TransportMonitoringConfig config, TransportMonitoringTarget target) {
