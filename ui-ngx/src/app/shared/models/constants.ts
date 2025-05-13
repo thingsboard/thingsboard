@@ -198,8 +198,9 @@ export const HelpLinks = {
     mobileApplication: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/applications/`,
     mobileBundle: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/mobile-center/`,
     mobileQrCode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/mobile-qr-code/`,
-    calculatedField: `${helpBaseUrl}/docs${docPlatformPrefix}/`,
+    calculatedField: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/calculated-fields/`,
     timewindowSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/dashboards/#time-window`,
+    trendzSettings: `${helpBaseUrl}/docs/trendz/`
   }
 };
 /* eslint-enable max-len */

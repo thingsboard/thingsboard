@@ -545,7 +545,11 @@
         "slack-settings": "Slack settings",
         "mobile-settings": "Mobile settings",
         "firebase-service-account-file": "Firebase service account credentials JSON file",
-        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or "
+        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or ",
+        "trendz": "Trendz",
+        "trendz-settings": "Trendz settings",
+        "trendz-url": "Trendz URL",
+        "trendz-enable": "Enable Trendz"
       },
     "alarm": {
         "alarm": "Alarm",
