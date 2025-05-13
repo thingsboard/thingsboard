@@ -204,6 +204,7 @@ export type AllMeasures =
   | 'angle'
   | 'angular-acceleration'
   | 'area'
+  | 'area-density'
   | 'capacitance'
   | 'catalytic-activity'
   | 'catalytic-concentration'
@@ -287,28 +288,51 @@ const allMeasures: Record<
   AllMeasures,
   TbMeasure<AllMeasuresUnits>
 > = Object.freeze({
-  'absorbed-dose-rate': absorbedDoseRate,
-  acceleration,
-  acidity,
-  'air-quality-index': airQualityIndex,
-  'amount-of-substance': amountOfSubstance,
-  angle,
-  'angular-acceleration': angularAcceleration,
+  temperature,
+  pressure,
+  voltage,
+  'current-density': currentDensity,
+  'electric-current': electricCurrent,
+  power,
+  energy,
+  speed,
+  length,
+  mass,
+  time,
   area,
-  'area-density': areaDensity,
+  volume,
+  'volume-flow': volumeFlow,
+  density,
+  acceleration,
+  'air-quality-index': airQualityIndex,
+  illuminance,
+  'signal-level': signalLevel,
+  'fuel-efficiency': fuelEfficiency,
+  frequency,
   capacitance,
+  inductance,
+  resistance,
+  torque,
+  force,
+  'magnetic-flux-density': magneticFluxDensity,
+  'magnetic-flux': magneticFlux,
+  radioactivity,
+  'radioactive-decay': radioactiveDecay,
+  'specific-energy': specificEnergy,
+  'specific-heat-capacity': specificHeatCapacity,
+  'kinematic-viscosity': kinematicViscosity,
+  'dynamic-viscosity': dynamicViscosity,
+  'thermal-conductivity': thermalConductivity,
+  turbidity,
+  'earthquake-magnitude': earthquakeMagnitude,
+  'data-transfer-rate': dataTransferRate,
+  'parts-per-million': partsPerMillion,
+  'molar-concentration': molarConcentration,
+  'number-concentration': numberConcentration,
   'catalytic-activity': catalyticActivity,
   'catalytic-concentration': catalyticConcentration,
   charge,
-  'current-density': currentDensity,
-  'data-transfer-rate': dataTransferRate,
-  density,
-  digital,
-  'dimension-ratio': dimensionRatio,
-  'dynamic-viscosity': dynamicViscosity,
-  'earthquake-magnitude': earthquakeMagnitude,
   'electric-charge-density': electricChargeDensity,
-  'electric-current': electricCurrent,
   'electric-dipole-moment': electricDipoleMoment,
   'electric-field-strength': electricFieldStrength,
   'electric-flux': electricFlux,
@@ -316,69 +340,42 @@ const allMeasures: Record<
   'electric-polarizability': electricPolarizability,
   'electrical-conductance': electricalConductance,
   'electrical-conductivity': electricalConductivity,
-  energy,
-  'energy-density': energyDensity,
-  force,
-  frequency,
-  'fuel-efficiency': fuelEfficiency,
-  'heat-capacity': heatCapacity,
-  illuminance,
-  inductance,
-  'kinematic-viscosity': kinematicViscosity,
-  length,
-  'light-exposure': lightExposure,
-  'linear-charge-density': linerChargeDensity,
-  'logarithmic-ratio': logarithmicRatio,
-  'luminous-efficacy': luminousEfficacy,
-  'luminous-flux': luminousFlux,
-  'luminous-intensity': luminousIntensity,
-  'number-concentration': numberConcentration,
   'magnetic-field-gradient': magneticFieldGradient,
-  'magnetic-flux': magneticFlux,
-  'magnetic-flux-density': magneticFluxDensity,
   'magnetic-moment': magneticMoment,
   'magnetic-permeability': magneticPermeability,
-  mass,
-  'mass-fraction': massFraction,
-  'molar-concentration': molarConcentration,
-  'molar-energy': molarEnergy,
-  'molar-heat-capacity': molarHeatCapacity,
-  'molar-mass': molarMass,
-  'parts-per-million': partsPerMillion,
-  power,
-  'power-density': powerDensity,
-  pressure,
   radiance,
   'radiant-intensity': radiantIntensity,
   'radiation-dose': radiationDose,
-  'radioactive-decay': radioactiveDecay,
-  radioactivity,
   'radioactivity-concentration': radioactivityConcentration,
   'reciprocal-length': reciprocalLength,
-  resistance,
   'reynolds-number': reynoldsNumber,
-  'signal-level': signalLevel,
-  'solid-angle': solidAngle,
-  'specific-energy': specificEnergy,
-  'specific-heat-capacity': specificHeatCapacity,
-  'specific-humidity': specificHumidity,
-  'specific-volume': specificVolume,
-  speed,
   'surface-charge-density': surfaceChargeDensity,
   'surface-tension': surfaceTension,
-  temperature,
-  'thermal-conductivity': thermalConductivity,
-  time,
-  torque,
-  turbidity,
-  voltage,
-  volume,
-  'volume-flow': volumeFlow,
+  'specific-volume': specificVolume,
+  'specific-humidity': specificHumidity,
+  'angular-acceleration': angularAcceleration,
+  angle,
+  'solid-angle': solidAngle,
+  'light-exposure': lightExposure,
+  'luminous-intensity': luminousIntensity,
+  'luminous-flux': luminousFlux,
+  'luminous-efficacy': luminousEfficacy,
+  'molar-energy': molarEnergy,
+  'molar-heat-capacity': molarHeatCapacity,
+  'molar-mass': molarMass,
+  'mass-fraction': massFraction,
+  'logarithmic-ratio': logarithmicRatio,
+  'dimension-ratio': dimensionRatio,
+  'absorbed-dose-rate': absorbedDoseRate,
+  acidity,
+  'amount-of-substance': amountOfSubstance,
+  digital,
+  'area-density': areaDensity,
+  'energy-density': energyDensity,
+  'heat-capacity': heatCapacity,
+  'linear-charge-density': linerChargeDensity,
+  'power-density': powerDensity,
 });
-
-export enum UnitsType {
-  capacity = 'capacity'
-}
 
 export type TbUnitConverter = (value: number) => number;
 export type UnitInfoGroupByMeasure<TMeasure extends string> = Partial<Record<TMeasure, UnitInfo[]>>;
@@ -389,7 +386,6 @@ export interface UnitInfo {
   system: UnitSystem;
   name: string;
   tags: string[];
-  searchText: string;
 }
 
 export enum UnitSystem {
@@ -430,7 +426,6 @@ export interface UnitCacheInfo {
   measure: AllMeasures;
   unit: Unit;
   abbr: AllMeasuresUnits;
-  searchText: string;
 }
 
 export type UnitCache = Map<AllMeasuresUnits | string, UnitCacheInfo>;
@@ -591,8 +586,7 @@ export class Converter {
       measure: unit.measure,
       system: unit.system,
       name: unit.unit.name,
-      tags: unit.unit.tags,
-      searchText: unit.searchText
+      tags: unit.unit.tags
     };
   }
 
@@ -638,7 +632,6 @@ function buildUnitCache(measures: Record<AllMeasures, TbMeasure<AllMeasuresUnits
           measure: measureName,
           system: systemName,
           abbr: testAbbr,
-          searchText: unit.tags.join(';').toUpperCase(),
           unit,
         });
       }

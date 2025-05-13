@@ -5848,15 +5848,19 @@
         "background-blur": "Background blur"
     },
     "unit": {
-        "convert": {
-            "set-units-conversion-settings": "Set units conversion settings",
-            "units-conversion-settings": "Units conversion settings",
-            "convert-from": "Convert from",
-            "to-metric": "To metric",
-            "to-imperial": "To imperial",
-            "to-hybrid": "To hybrid",
-            "convert-unit": "Convert unit",
-            "convert-unit-hint": "Works only with system units and measures that have multiple options"
+        "conversion": {
+            "set-unit-conversion": "Set unit conversion",
+            "unit-settings": "Unit settings",
+            "source-unit": "Source unit",
+            "source-unit-hint": "This is the unit of the stored value. The unit you’re converting from. Enter the symbol your source data uses (e.g. m, km, ft, in).",
+            "target-metric-unit": "Target metric unit",
+            "target-metric-unit-hint": "Choose which metric unit (SI) you want your source value converted into (e.g. cm, mm, km).",
+            "target-imperial-unit": "Target imperial unit",
+            "target-imperial-unit-hint": "Choose which imperial unit you want your source value converted into (e.g. in, ft, yd).",
+            "target-hybrid-unit": "Target hybrid unit",
+            "target-hybrid-unit-hint": "Choose which hybrid unit you want your source value converted into (e.g. cm, in, km). Hybrid units combine metric, or imperial units.",
+            "enable-unit-conversion": "Enable unit conversion",
+            "enable-unit-conversion-hint": "Toggle on to activate conversion. When off, your source value will pass through unchanged. Disabled if there is only one unit in the corresponding measurement group (e.g. Luminous flux, AQI)."
         },
         "unit-system": "Unit system",
         "unit-system-type": {

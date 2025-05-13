@@ -37,7 +37,6 @@ import {
   isTbUnitMapping,
   TbUnit,
   UnitInfo,
-  UnitsType,
   UnitSystem
 } from '@shared/models/unit.models';
 import { map, mergeMap } from 'rxjs/operators';
@@ -73,7 +72,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   required = false;
 
   @Input()
-  tagFilter: UnitsType;
+  tagFilter: string;
 
   @Input()
   measure: AllMeasures;
@@ -264,16 +263,66 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
 
   private searchUnit(units: Array<[AllMeasures, Array<UnitInfo>]>, searchText?: string): Array<[AllMeasures, Array<UnitInfo>]> {
     if (isNotEmptyStr(searchText)) {
-      const filterValue = searchText.trim().toUpperCase()
-      return units.reduce((result: Array<[AllMeasures, Array<UnitInfo>]>, [measure, unitInfos]) => {
-        const filteredUnits = unitInfos.filter(unit => unit.searchText.toUpperCase().includes(filterValue));
-        if (filteredUnits.length > 0) {
-          result.push([measure, filteredUnits]);
-        }
-        return result;
-      }, []);
+      const filterValue = searchText.trim().toUpperCase();
+
+      const scoredGroups = units
+        .map(([measure, unitInfos]) => {
+          const scoredUnits = unitInfos
+            .map(unit => ({
+              unit,
+              score: this.calculateRelevanceScore(unit, filterValue)
+            }))
+            .filter(({ score }) => score > 0)
+            .sort((a, b) => b.score - a.score)
+            .map(({ unit }) => unit);
+
+          let groupScore = scoredUnits.length > 0
+            ? Math.max(...scoredUnits.map(unit => this.calculateRelevanceScore(unit, filterValue)))
+            : 0;
+
+          if (measure.toUpperCase() === filterValue) {
+            groupScore += 200;
+          }
+
+          return { measure, units: scoredUnits, groupScore };
+        })
+        .filter(group => group.units.length > 0)
+        .sort((a, b) => {
+          if (b.groupScore !== a.groupScore) {
+            return b.groupScore - a.groupScore;
+          }
+          return b.units.length - a.units.length;
+        });
+
+      return scoredGroups.map(group => [group.measure, group.units] as [AllMeasures, Array<UnitInfo>]);
     }
     return units;
+  }
+
+  private calculateRelevanceScore(unit: UnitInfo, filterValue: string): number {
+    const name = unit.name.toUpperCase();
+    const abbr = unit.abbr.toUpperCase();
+    const tags = unit.tags.map(tag => tag.toUpperCase());
+
+    let score = 0;
+
+    if (name === filterValue || abbr === filterValue) {
+      score += 100;
+    } else if (tags.includes(filterValue)) {
+      score += 80;
+    } else if (name.startsWith(filterValue) || abbr.startsWith(filterValue)) {
+      score += 60;
+    } else if (tags.some(tag => tag.startsWith(filterValue))) {
+      score += 50;
+    } else if (tags.some(tag => tag.includes(filterValue))) {
+      score += 30;
+    }
+
+    if (score > 0) {
+      score += Math.max(0, 10 - (name.length + abbr.length) / 2);
+    }
+
+    return score;
   }
 
   private extractTbUnit(value: TbUnit | UnitInfo | null): TbUnit {

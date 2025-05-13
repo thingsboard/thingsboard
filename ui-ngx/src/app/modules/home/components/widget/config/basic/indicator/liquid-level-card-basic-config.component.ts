@@ -56,7 +56,7 @@ import {
   ShapesTranslations,
   updatedFormSettingsValidators
 } from '@home/components/widget/lib/indicator/liquid-level-widget.models';
-import { getSourceTbUnitSymbol, UnitsType } from '@shared/models/unit.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ImageCardsSelectComponent } from '@home/components/widget/lib/settings/common/image-cards-select.component';
 import { map, share, tap } from 'rxjs/operators';
@@ -115,8 +115,6 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   shapes = Object.values(Shapes) as Shapes[];
   shapesImageMap: Map<Shapes, string> = new Map();
   ShapesTranslationMap = ShapesTranslations;
-
-  unitsType = UnitsType;
 
   levelCardWidgetConfigForm: FormGroup;
 

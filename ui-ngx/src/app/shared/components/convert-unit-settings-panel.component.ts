@@ -15,7 +15,7 @@
 ///
 
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { AllMeasures, isNotEmptyTbUnits, TbUnit, UnitInfo, UnitsType, UnitSystem } from '@shared/models/unit.models';
+import { AllMeasures, isNotEmptyTbUnits, TbUnit, UnitInfo, UnitSystem } from '@shared/models/unit.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -48,7 +48,7 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
   unitSettingsApplied = new EventEmitter<TbUnit>();
 
   @Input()
-  tagFilter: UnitsType;
+  tagFilter: string;
 
   @Input()
   measure: AllMeasures;

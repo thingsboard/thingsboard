@@ -16,13 +16,16 @@
 @import '../scss/constants';
 
 .tb-convert-settings-panel {
-  width: 320px;
+  width: 360px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   max-height: calc(100vh - 24px);
   @media #{$mat-xs} {
     width: 90vw;
+    .tb-form-row tb-unit-input {
+      width: 90px;
+    }
   }
   .tb-convert-settings-title {
     font-size: 16px;

@@ -46,8 +46,6 @@ export class UnitService {
       takeUntilDestroyed()
     ).subscribe(() => {
       this.converter = getUnitConverter(this.translate);
-      console.warn(this.converter.listUnits());
-      console.warn(this.converter.listUnits(null, UnitSystem.IMPERIAL));
     });
   }
 
@@ -61,7 +59,6 @@ export class UnitService {
     } else {
       this.currentUnitSystem = this.getUnitSystemByTimezone();
     }
-    console.warn('[Unit system] setUnitSystem', this.currentUnitSystem);
   }
 
   getUnits(measure?: AllMeasures, unitSystem?: UnitSystem): UnitInfo[] {
