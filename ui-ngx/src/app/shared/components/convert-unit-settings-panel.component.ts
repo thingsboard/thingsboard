@@ -139,11 +139,6 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
     if (this.disabled) {
       this.convertUnitForm.disable({emitEvent: false});
     }
-    else if (!isNotEmptyTbUnits(this.unit)) {
-      this.popover.tbAnimationDone.pipe(first()).subscribe(() => {
-        this.unitFrom.unitInput.nativeElement.focus();
-      });
-    }
   }
 
   clearUnit() {
