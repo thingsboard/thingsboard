@@ -44,6 +44,7 @@ export interface TimeSeriesChartTooltipWidgetSettings {
   tooltipDateColor: string;
   tooltipBackgroundColor: string;
   tooltipBackgroundBlur: number;
+  tooltipStackedShowTotal?: boolean
 }
 
 export enum TimeSeriesChartTooltipTrigger {
@@ -128,9 +129,16 @@ export class TimeSeriesChartTooltip {
       if (this.settings.tooltipShowDate) {
         this.renderer.appendChild(tooltipItemsElement, this.constructTooltipDateElement(items[0].param, interval));
       }
+      let total = 0, isStacked = false;
       for (const item of items) {
         this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
+        if (item.dataItem?.barRenderContext?.barStackIndex !== undefined && !isNaN(Number(item.param.value[1]))) {
+          isStacked = true;
+          total += Number(item.param.value[1]);
+        }
       }
+      if (isStacked && this.settings.tooltipStackedShowTotal)
+        this.renderer.appendChild(tooltipItemsElement, this.constructTooltipTotalStackedElement(total));
     }
   }
 
@@ -218,7 +226,42 @@ export class TimeSeriesChartTooltip {
     return labelValueElement;
   }
 
-  private static mapTooltipParams(params: CallbackDataParams[] | CallbackDataParams,
+  private constructTooltipTotalStackedElement(total: number): HTMLElement {
+    const labelValueElement: HTMLElement = this.renderer.createElement('div');
+    this.renderer.setStyle(labelValueElement, 'display', 'flex');
+    this.renderer.setStyle(labelValueElement, 'flex-direction', 'row');
+    this.renderer.setStyle(labelValueElement, 'align-items', 'center');
+    this.renderer.setStyle(labelValueElement, 'align-self', 'stretch');
+    this.renderer.setStyle(labelValueElement, 'gap', '12px');
+    const labelElement: HTMLElement = this.renderer.createElement('div');
+    this.renderer.setStyle(labelElement, 'display', 'flex');
+    this.renderer.setStyle(labelElement, 'align-items', 'center');
+    this.renderer.setStyle(labelElement, 'gap', '8px');
+    this.renderer.appendChild(labelValueElement, labelElement);
+    const labelTextElement: HTMLElement = this.renderer.createElement('div');
+    this.renderer.setProperty(labelTextElement, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, 'Total'));
+    this.renderer.setStyle(labelTextElement, 'font-family', this.settings.tooltipLabelFont.family);
+    this.renderer.setStyle(labelTextElement, 'font-size', this.settings.tooltipLabelFont.size + this.settings.tooltipLabelFont.sizeUnit);
+    this.renderer.setStyle(labelTextElement, 'font-style', this.settings.tooltipLabelFont.style);
+    this.renderer.setStyle(labelTextElement, 'font-weight', 'bold');
+    this.renderer.setStyle(labelTextElement, 'line-height', this.settings.tooltipLabelFont.lineHeight);
+    this.renderer.setStyle(labelTextElement, 'color', this.settings.tooltipLabelColor);
+    this.renderer.appendChild(labelElement, labelTextElement);
+    const valueElement: HTMLElement = this.renderer.createElement('div');
+    this.renderer.setProperty(valueElement, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, total.toString()));
+    this.renderer.setStyle(valueElement, 'flex', '1');
+    this.renderer.setStyle(valueElement, 'text-align', 'end');
+    this.renderer.setStyle(valueElement, 'font-family', this.settings.tooltipValueFont.family);
+    this.renderer.setStyle(valueElement, 'font-size', this.settings.tooltipValueFont.size + this.settings.tooltipValueFont.sizeUnit);
+    this.renderer.setStyle(valueElement, 'font-style', this.settings.tooltipValueFont.style);
+    this.renderer.setStyle(valueElement, 'font-weight', 'bold');
+    this.renderer.setStyle(valueElement, 'line-height', this.settings.tooltipValueFont.lineHeight);
+    this.renderer.setStyle(valueElement, 'color', this.settings.tooltipValueColor);
+    this.renderer.appendChild(labelValueElement, valueElement);
+    return labelValueElement;
+  }
+
+private static mapTooltipParams(params: CallbackDataParams[] | CallbackDataParams,
                                   series?: TimeSeriesChartDataItem[],
                                   focusedSeriesIndex?: number): TooltipParams {
     const result: TooltipParams = {
