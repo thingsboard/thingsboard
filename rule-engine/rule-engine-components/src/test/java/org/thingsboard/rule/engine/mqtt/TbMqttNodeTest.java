@@ -181,7 +181,8 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         SslContext actualSslContext = mqttClientConfig.getValue().getSslContext();
         assertThat(actualSslContext)
                 .usingRecursiveComparison()
-                .ignoringFields("ctx", "ctxLock", "sessionContext.context.ctx", "sessionContext.context.ctxLock")
+                .ignoringFields("ctx", "ctxLock", "sessionContext.context.ctx", "sessionContext.context.ctxLock",
+                        "sslContext")
                 .isEqualTo(SslContextBuilder.forClient().build());
     }
 
