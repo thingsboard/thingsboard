@@ -60,7 +60,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { DataEntry } from '@shared/models/widget.models';
-import { getSourceTbUnitSymbol, isNotEmptyTbUnits, isTbUnitMapping, TbUnit } from '@shared/models/unit.models';
+import {
+  getSourceTbUnitSymbol,
+  isNotEmptyTbUnits,
+  isTbUnitMapping,
+  TbUnit,
+  TbUnitConverter
+} from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
@@ -110,10 +116,10 @@ export class LiquidLevelWidgetComponent implements OnInit {
   private tooltipContent: string;
   private widgetUnits: TbUnit;
   private widgetUnitsSymbol: string;
-  private widgetUnitsConvertor = (x: number) => x;
+  private widgetUnitsConvertor: TbUnitConverter;
   private volumeUnits: string;
   private tooltipUnitSymbol: string;
-  private tooltipUnitConvertor = (x: number) => x;
+  private tooltipUnitConvertor: TbUnitConverter;
 
   private capacityUnits = Object.values(CapacityUnits);
 
@@ -164,14 +170,11 @@ export class LiquidLevelWidgetComponent implements OnInit {
         }
 
         this.widgetUnitsSymbol = this.unitService.getTargetUnitSymbol(this.widgetUnits);
-        if (isTbUnitMapping(this.widgetUnits)) {
-          this.widgetUnitsConvertor = this.unitService.geUnitConverter(this.widgetUnits as any);
-        }
+        this.widgetUnitsConvertor = this.unitService.geUnitConverter(this.widgetUnits);
 
         this.tooltipUnitSymbol = this.unitService.getTargetUnitSymbol(this.settings.tooltipUnits);
-        if (isTbUnitMapping(this.settings.tooltipUnits)) {
-          this.tooltipUnitConvertor = this.unitService.geUnitConverter(this.settings.tooltipUnits as any);
-        }
+        this.tooltipUnitConvertor = this.unitService.geUnitConverter(this.settings.tooltipUnits);
+
         this.update(true);
       }
     });

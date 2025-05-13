@@ -1790,7 +1790,8 @@
             "array-item": "Array item",
             "item-type": "Item type",
             "item-name": "Item name",
-            "no-items": "No items"
+            "no-items": "No items",
+            "support-unit-conversion": "Support unit conversion"
         },
         "clear-form": "Clear form",
         "clear-form-prompt": "Are you sure you want to remove all form properties?",

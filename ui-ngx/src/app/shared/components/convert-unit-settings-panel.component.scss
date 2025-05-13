@@ -20,7 +20,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  @media #{$mat-lt-md} {
+  max-height: calc(100vh - 24px);
+  @media #{$mat-xs} {
     width: 90vw;
   }
   .tb-convert-settings-title {

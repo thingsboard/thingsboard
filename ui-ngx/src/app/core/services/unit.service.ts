@@ -21,6 +21,8 @@ import {
   AllMeasuresUnits,
   Converter,
   getUnitConverter,
+  isTbUnitMapping,
+  TbUnit,
   TbUnitConverter,
   TbUnitMapping,
   UnitInfo,
@@ -78,15 +80,18 @@ export class UnitService {
     return this.converter.getDefaultUnit(measure, unitSystem);
   }
 
-  geUnitConverter(unit: TbUnitMapping): TbUnitConverter;
+  geUnitConverter(unit: TbUnit): TbUnitConverter;
   geUnitConverter(from: string, to: string): TbUnitConverter;
-  geUnitConverter(unit: TbUnitMapping | string, to?: string): TbUnitConverter {
+  geUnitConverter(unit: TbUnit, to?: string): TbUnitConverter {
     try {
-      if (unit !== null && typeof unit === 'object') {
+      if (isTbUnitMapping(unit)) {
         const target = this.getTargetUnitSymbol(unit);
-        return this.converter.getUnitConverter(unit.from, target);
+        return this.converter.getUnitConverter((unit as TbUnitMapping).from, target);
       }
-      return this.converter.getUnitConverter(unit as string, to);
+      if (isNotEmptyStr(to)) {
+        return this.converter.getUnitConverter(unit as string, to);
+      }
+      return (x: number) => x;
     } catch (e) {
       console.warn(e);
       return (x: number) => x;
@@ -100,15 +105,18 @@ export class UnitService {
     return typeof unit === 'string' ? unit : null;
   }
 
-  convertUnitValue(value: number, unit: TbUnitMapping): number;
+  convertUnitValue(value: number, unit: TbUnit): number;
   convertUnitValue(value: number, from: string, to: string): number;
-  convertUnitValue(value: number, unit: string | TbUnitMapping, to?: string): number {
+  convertUnitValue(value: number, unit: TbUnit, to?: string): number {
     try {
-      if (unit !== null && typeof unit === 'object') {
+      if (isTbUnitMapping(unit)) {
         const target = this.getTargetUnitSymbol(unit);
-        return this.converter.convert(value, unit.from, target);
+        return this.converter.convert(value, (unit as TbUnitMapping).from, target);
       }
-      return this.converter.convert(value, unit as string, to);
+      if (isNotEmptyStr(to)) {
+        return this.converter.convert(value, unit as string, to);
+      }
+      return value;
     } catch (e) {
       console.warn(e);
       return value;

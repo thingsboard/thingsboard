@@ -83,7 +83,7 @@ import {
   TimeSeriesChartTooltipValueFormatFunction
 } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 import { UnitService } from '@core/services/unit.service';
-import { isNotEmptyTbUnits, isTbUnitMapping, TbUnit, TbUnitMapping } from '@shared/models/unit.models';
+import { isNotEmptyTbUnits, TbUnit } from '@shared/models/unit.models';
 
 export class TbTimeSeriesChart {
 
@@ -420,10 +420,7 @@ export class TbTimeSeriesChart {
           const datasourceData = this.ctx.data ? this.ctx.data.find(d => d.dataKey === dataKey) : null;
           const units: TbUnit = isNotEmptyTbUnits(dataKey.units) ? dataKey.units : this.ctx.units;
           const unitSymbol = this.unitService.getTargetUnitSymbol(units);
-          let unitConvertor: (value: number) => number;
-          if (isTbUnitMapping(units)) {
-            unitConvertor = this.unitService.geUnitConverter(units as unknown as TbUnitMapping);
-          }
+          const unitConvertor = this.unitService.geUnitConverter(units);
           const data = datasourceData?.data ?
             toTimeSeriesChartDataSet(datasourceData.data, this.stateValueConverter?.valueConverter ?? unitConvertor) : [];
           const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
@@ -467,12 +464,9 @@ export class TbTimeSeriesChart {
       let latestDataKey: DataKey = null;
       let entityDataKey: DataKey = null;
       let value = null;
-      const units: TbUnit = isNotEmptyTbUnits(threshold.units) ? threshold.units : this.ctx.units;
+      const units = isNotEmptyTbUnits(threshold.units) ? threshold.units : this.ctx.units;
       const unitSymbol = this.unitService.getTargetUnitSymbol(units);
-      let unitConvertor: (value: number) => number;
-      if (isTbUnitMapping(units)) {
-        unitConvertor = this.unitService.geUnitConverter(units as unknown as TbUnitMapping);
-      }
+      const unitConvertor = this.unitService.geUnitConverter(units);
       if (threshold.type === ValueSourceType.latestKey) {
         if (this.ctx.datasources.length) {
           for (const datasource of this.ctx.datasources) {
@@ -558,12 +552,9 @@ export class TbTimeSeriesChart {
     for (const yAxisSettings of yAxisSettingsList) {
       const axisSettings = mergeDeep<TimeSeriesChartYAxisSettings>({} as TimeSeriesChartYAxisSettings,
         defaultTimeSeriesChartYAxisSettings, yAxisSettings);
-      const units: TbUnit = isNotEmptyTbUnits(axisSettings.units) ? axisSettings.units : this.ctx.units;
+      const units = isNotEmptyTbUnits(axisSettings.units) ? axisSettings.units : this.ctx.units;
       const unitSymbol = this.unitService.getTargetUnitSymbol(units);
-      let unitConvertor: (value: number) => number = (x) => x;
-      if (isTbUnitMapping(units)) {
-        unitConvertor = this.unitService.geUnitConverter(units as unknown as TbUnitMapping);
-      }
+      const unitConvertor = this.unitService.geUnitConverter(units);
       const decimals = isDefinedAndNotNull(axisSettings.decimals) ? axisSettings.decimals :
         (isDefinedAndNotNull(this.ctx.decimals) ? this.ctx.decimals : 2);
       if (this.stateValueConverter) {

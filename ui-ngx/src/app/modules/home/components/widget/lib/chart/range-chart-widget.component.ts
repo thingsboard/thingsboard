@@ -48,7 +48,7 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import { WidgetComponent } from '@home/components/widget/widget.component';
-import { isTbUnitMapping, TbUnitMapping } from '@shared/models/unit.models';
+import { TbUnitConverter } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
 
 @Component({
@@ -80,7 +80,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
   private decimals = 0;
   private units: string = '';
-  private unitConvertor = (x: number) => x;
+  private unitConvertor: TbUnitConverter;
 
   private rangeItems: RangeItem[];
 
@@ -111,9 +111,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
       dataKey.settings = rangeChartTimeSeriesKeySettings(this.settings);
     }
     this.units = unitService.getTargetUnitSymbol(units);
-    if (isTbUnitMapping(units)) {
-      this.unitConvertor = unitService.geUnitConverter(units as unknown as TbUnitMapping);
-    }
+    this.unitConvertor = unitService.geUnitConverter(units);
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);

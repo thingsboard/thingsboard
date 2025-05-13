@@ -162,8 +162,13 @@ export interface FormHtmlSection extends FormPropertyBase {
   htmlContent?: string;
 }
 
+export interface FormUnitProperty extends FormPropertyBase {
+  supportsUnitConversion?: boolean;
+}
+
 export type FormProperty = FormPropertyBase & FormTextareaProperty & FormNumberProperty & FormSelectProperty & FormRadiosProperty
-  & FormDateTimeProperty & FormJavascriptProperty & FormMarkdownProperty & FormFieldSetProperty & FormArrayProperty & FormHtmlSection;
+  & FormDateTimeProperty & FormJavascriptProperty & FormMarkdownProperty & FormFieldSetProperty & FormArrayProperty & FormHtmlSection
+  & FormUnitProperty;
 
 export const cleanupFormProperties = (properties: FormProperty[]): FormProperty[] => {
   for (const property of properties) {
@@ -212,6 +217,9 @@ export const cleanupFormProperty = (property: FormProperty): FormProperty => {
   if (property.type !== FormPropertyType.htmlSection) {
     delete property.htmlClassList;
     delete property.htmlContent;
+  }
+  if (property.type !== FormPropertyType.units) {
+    delete property.supportsUnitConversion;
   }
   for (const key of Object.keys(property)) {
     const val = property[key];
@@ -276,9 +284,9 @@ export const toPropertyGroups = (properties: FormProperty[],
                                  customTranslate: CustomTranslatePipe,
                                  sanitizer: DomSanitizer): FormPropertyGroup[] => {
   const groups: {title: string, properties: FormProperty[]}[] = [];
-  for (let property of properties) {
+  for (const property of properties) {
     if (!property.group) {
-      let group = groups.length ? groups[groups.length - 1] : null;
+      const group = groups.length ? groups[groups.length - 1] : null;
       if (group && !group.title) {
         group.properties.push(property);
       } else {
@@ -311,7 +319,7 @@ const toPropertyContainers = (properties: FormProperty[],
                               customTranslate: CustomTranslatePipe,
                               sanitizer: DomSanitizer): FormPropertyContainer[] => {
   const result: FormPropertyContainer[] = [];
-  for (let property of properties) {
+  for (const property of properties) {
     if (property.type === FormPropertyType.array) {
       const propertyArray: FormPropertyArray = {
         property,
@@ -382,7 +390,7 @@ const toPropertyContainers = (properties: FormProperty[],
       }
     }
   }
-  for (let container of result.filter(c =>
+  for (const container of result.filter(c =>
     c.type === FormPropertyContainerType.row && !c.switch && c.properties?.length === 1)) {
     const property = container.properties[0];
     if (isInputFieldPropertyType(property.type)) {

@@ -47,6 +47,7 @@ import {
 import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import tinycolor from 'tinycolor2';
+import { UnitService } from '@core/services/unit.service';
 
 @Component({
   selector: 'tb-slider-widget',
@@ -115,6 +116,8 @@ export class SliderWidgetComponent extends
 
   showTicks = true;
   ticksStyle: ComponentStyle = {};
+  tickMinText: number;
+  tickMaxText: number;
 
   sliderStep: number = undefined;
 
@@ -137,7 +140,8 @@ export class SliderWidgetComponent extends
               private utils: UtilsService,
               private widgetComponent: WidgetComponent,
               protected cd: ChangeDetectorRef,
-              private elementRef: ElementRef) {
+              private elementRef: ElementRef,
+              private unitService: UnitService) {
     super(cd);
   }
 
@@ -180,6 +184,8 @@ export class SliderWidgetComponent extends
     if (this.showTicks) {
       this.ticksStyle = textStyle(this.settings.ticksFont);
       this.ticksStyle.color = this.settings.ticksColor;
+      this.tickMinText = this.unitService.convertUnitValue(this.settings.tickMin, this.settings.valueUnits);
+      this.tickMaxText = this.unitService.convertUnitValue(this.settings.tickMax, this.settings.valueUnits);
     }
 
     if (this.settings.showTickMarks) {

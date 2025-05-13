@@ -54,7 +54,7 @@ import {
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import { UnitService } from '@core/services/unit.service';
-import { TbUnit, TbUnitConverter, TbUnitMapping } from '@shared/models/unit.models';
+import { TbUnit, TbUnitConverter } from '@shared/models/unit.models';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -932,7 +932,7 @@ export class UnitConverterValueFormatProcessor extends ValueFormatProcessor {
               protected settings: ValueFormatSettings) {
     super($injector, settings);
     const unitService = this.$injector.get(UnitService);
-    const unit = settings.units as TbUnitMapping;
+    const unit = settings.units;
     this.unitSymbol = settings.ignoreUnitSymbol ? null : unitService.getTargetUnitSymbol(unit);
     this.unitConverter = unitService.geUnitConverter(unit);
 
@@ -942,10 +942,7 @@ export class UnitConverterValueFormatProcessor extends ValueFormatProcessor {
 
   format(value: any): string {
     if (isDefinedAndNotNull(value) && isNumeric(value)) {
-      let formatted = Number(value);
-      if (this.unitConverter) {
-        formatted = this.unitConverter(value);
-      }
+      const formatted = this.unitConverter(Number(value));
       return this.formatValue(formatted);
     }
     return value ?? '';
