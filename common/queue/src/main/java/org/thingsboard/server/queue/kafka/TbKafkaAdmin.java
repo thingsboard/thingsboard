@@ -136,6 +136,9 @@ public class TbKafkaAdmin implements TbQueueAdmin, TbEdgeQueueAdmin {
     }
 
     public CreateTopicsResult createTopic(NewTopic topic) {
+        if (!topic.name().startsWith("test.")) { // FIXME: remove me
+            log.error("Creating topic without configured prefix: {}", topic.name(), new RuntimeException("stacktrace"));
+        }
         return settings.getAdminClient().createTopics(Collections.singletonList(topic));
     }
 
