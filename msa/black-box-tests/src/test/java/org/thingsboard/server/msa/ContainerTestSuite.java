@@ -130,6 +130,7 @@ public class ContainerTestSuite {
 
             Map<String, String> queueEnv = new HashMap<>();
             queueEnv.put("TB_QUEUE_TYPE", QUEUE_TYPE);
+            queueEnv.put("TB_QUEUE_PREFIX", "test");
             switch (QUEUE_TYPE) {
                 case "kafka":
                     composeFiles.add(new File(targetDir + "docker-compose.kafka.yml"));
