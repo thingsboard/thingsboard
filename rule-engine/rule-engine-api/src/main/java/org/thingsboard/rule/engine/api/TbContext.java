@@ -417,6 +417,8 @@ public interface TbContext {
 
     AuditLogService getAuditLogService();
 
+    RuleEngineAiService getAiService();
+
     // Configuration parameters for the MQTT client that is used in the MQTT node and Azure IoT hub node
 
     MqttClientSettings getMqttClientSettings();

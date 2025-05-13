@@ -14,3 +14,13 @@
 -- limitations under the License.
 --
 
+CREATE TABLE ai_settings (
+    id           UUID          NOT NULL PRIMARY KEY,
+    created_time BIGINT        NOT NULL,
+    tenant_id    UUID          NOT NULL,
+    version      BIGINT        NOT NULL DEFAULT 1,
+    name         VARCHAR(255)  NOT NULL,
+    provider     VARCHAR(255)  NOT NULL,
+    model        VARCHAR(255)  NOT NULL,
+    api_key      VARCHAR(1000) NOT NULL
+);

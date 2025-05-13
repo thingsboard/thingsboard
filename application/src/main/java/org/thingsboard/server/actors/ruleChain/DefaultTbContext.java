@@ -27,6 +27,7 @@ import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.rule.engine.api.RuleEngineAiService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
@@ -1010,6 +1011,11 @@ public class DefaultTbContext implements TbContext {
     @Override
     public AuditLogService getAuditLogService() {
         return mainCtx.getAuditLogService();
+    }
+
+    @Override
+    public RuleEngineAiService getAiService() {
+        return mainCtx.getAiService();
     }
 
     @Override
