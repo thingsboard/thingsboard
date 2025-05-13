@@ -14,98 +14,98 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { NgModule } from "@angular/core";
+import { RouterModule, Routes } from "@angular/router";
 
-import { LoginComponent } from './pages/login/login.component';
-import { AuthGuard } from '@core/guards/auth.guard';
-import { ResetPasswordRequestComponent } from '@modules/login/pages/login/reset-password-request.component';
-import { ResetPasswordComponent } from '@modules/login/pages/login/reset-password.component';
-import { CreatePasswordComponent } from '@modules/login/pages/login/create-password.component';
-import { TwoFactorAuthLoginComponent } from '@modules/login/pages/login/two-factor-auth-login.component';
-import { Authority } from '@shared/models/authority.enum';
-import { LinkExpiredComponent } from '@modules/login/pages/login/link-expired.component';
+import { LoginComponent } from "./pages/login/login.component";
+import { AuthGuard } from "@core/guards/auth.guard";
+import { ResetPasswordRequestComponent } from "@modules/login/pages/login/reset-password-request.component";
+import { ResetPasswordComponent } from "@modules/login/pages/login/reset-password.component";
+import { CreatePasswordComponent } from "@modules/login/pages/login/create-password.component";
+import { TwoFactorAuthLoginComponent } from "@modules/login/pages/login/two-factor-auth-login.component";
+import { Authority } from "@shared/models/authority.enum";
+import { LinkExpiredComponent } from "@modules/login/pages/login/link-expired.component";
 
 const routes: Routes = [
   {
-    path: 'login',
+    path: "login",
     component: LoginComponent,
     data: {
-      title: 'login.login',
-      module: 'public'
+      title: "login.login",
+      module: "public",
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'login/resetPasswordRequest',
+    path: "login/resetPasswordRequest",
     component: ResetPasswordRequestComponent,
     data: {
-      title: 'login.request-password-reset',
-      module: 'public'
+      title: "login.request-password-reset",
+      module: "public",
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'login/resetPassword',
+    path: "login/resetPassword",
     component: ResetPasswordComponent,
     data: {
-      title: 'login.reset-password',
-      module: 'public'
+      title: "login.reset-password",
+      module: "public",
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'login/resetExpiredPassword',
+    path: "login/resetExpiredPassword",
     component: ResetPasswordComponent,
     data: {
-      title: 'login.reset-password',
-      module: 'public',
-      expiredPassword: true
+      title: "login.reset-password",
+      module: "public",
+      expiredPassword: true,
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'login/createPassword',
+    path: "login/createPassword",
     component: CreatePasswordComponent,
     data: {
-      title: 'login.create-password',
-      module: 'public'
+      title: "login.create-password",
+      module: "public",
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'login/mfa',
+    path: "login/mfa",
     component: TwoFactorAuthLoginComponent,
     data: {
-      title: 'login.two-factor-authentication',
+      title: "login.two-factor-authentication",
       auth: [Authority.PRE_VERIFICATION_TOKEN],
-      module: 'public'
+      module: "public",
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'activationLinkExpired',
+    path: "activationLinkExpired",
     component: LinkExpiredComponent,
     data: {
-      title: 'login.activation-link-expired',
-      module: 'public'
+      title: "login.activation-link-expired",
+      module: "public",
     },
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
   },
   {
-    path: 'passwordResetLinkExpired',
+    path: "passwordResetLinkExpired",
     component: LinkExpiredComponent,
     data: {
-      title: 'login.reset-password-link-expired',
-      module: 'public',
-      passwordLinkExpired: true
+      title: "login.reset-password-link-expired",
+      module: "public",
+      passwordLinkExpired: true,
     },
-    canActivate: [AuthGuard]
-  }
+    canActivate: [AuthGuard],
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class LoginRoutingModule { }
+export class LoginRoutingModule {}

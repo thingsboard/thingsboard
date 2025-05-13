@@ -15,26 +15,59 @@
     limitations under the License.
 
 -->
-<div class="tb-expired-link-content mat-app-background tb-dark flex flex-row items-center justify-center"
-     style="width: 100%;">
-  <mat-card appearance="raised" class="tb-expired-link-card">
-    <mat-card-header style="justify-content: center">
-      <mat-card-title>
-        <span class="mat-headline-5">{{ title | translate }}</span>
+<div class="flex-1 items-center justify-center">
+  <mat-card-content>
+    <div class="mt-2 flex flex-1 flex-col items-center">
+      <tb-logo class="login-logo"></tb-logo>
+    </div>
+
+    <div class="ti-login-wrapper">
+      <mat-card-title class="mat-headline-5 tb-card-title">
+        {{ title | translate }}
       </mat-card-title>
-    </mat-card-header>
-    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-    </mat-progress-bar>
-    <span style="height: 4px;" *ngIf="!(isLoading$ | async)"></span>
-    <mat-card-content style="padding: 24px 16px">
-      <div>{{ message | translate }}</div>
-    </mat-card-content>
-    <mat-card-actions class="flex flex-row justify-center">
-      <button mat-raised-button color="accent"
-              [disabled]="(isLoading$ | async)"
-              (click)="navigateToLoginPage()">
-        {{ 'login.login' | translate }}
-      </button>
-    </mat-card-actions>
-  </mat-card>
+
+      <mat-progress-bar
+        color="warn"
+        mode="indeterminate"
+        *ngIf="isLoading$ | async"
+      ></mat-progress-bar>
+      <span
+        class="height-spacer-4px"
+        *ngIf="(isLoading$ | async) === false"
+      ></span>
+
+      <mat-card-content>
+        <div class="mat-body text-center">
+          {{ message | translate }}
+        </div>
+      </mat-card-content>
+      <span class="height-spacer-4px"></span>
+      <div class="tb-action-button flex flex-col">
+        <button
+          mat-raised-button
+          type="button"
+          color="accent"
+          [disabled]="isLoading$ | async"
+          (click)="navigateToLoginPage()"
+        >
+          {{ "login.login" | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-1 flex-col items-center">
+      <div class="ti-footer-wrapper">
+        &copy; 2023&ndash;2025 | Telemetry Insights &ndash; All Rights
+        Reserved<br />
+        Powered by
+        <a
+          href="https://thingsboard.io/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ThingsBoard
+        </a>
+      </div>
+    </div>
+  </mat-card-content>
 </div>

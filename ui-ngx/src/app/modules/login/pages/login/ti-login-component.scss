@@ -1,0 +1,153 @@
+// Optimized ti-login-component.scss - overrides only necessary TB styles
+
+.ti-login-wrapper {
+  width: 100%;
+  max-width: 320px;
+  margin: 5px auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+
+  mat-card-title,
+  mat-card-subtitle {
+    text-align: center;
+    width: 100%;
+  }
+
+  mat-form-field {
+    width: 120%;
+    max-width: 120%;
+    align-self: center;
+
+  }
+
+  input.mat-input-element {
+    font-size: 14px;
+    color: #000;
+  }
+
+  .mat-form-field-label {
+    color: #666;
+  }
+
+  .mat-form-field-outline {
+    color: #ccc;
+  }
+
+  .mat-error {
+    font-size: 12px;
+    margin: -10px 0 10px;
+    text-align: left;
+    color: #d32f2f;
+  }
+
+  .forgot-password {
+    width: 100%;
+    margin: 4px 0 5px;
+    text-align: right;
+
+    button {
+      width: 80%;
+      align-self: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1976d2;
+      text-transform: none;
+    }
+  }
+
+  .tb-action-button {
+    width: 100%;
+    margin-top: 5px;
+
+    button {
+      width: 80%;
+      align-self: center;
+      background-color: #57b857 !important;
+      color: #fff !important;
+      font-weight: 600;
+      padding: 12px;
+      font-size: 15px;
+      border-radius: 4px;
+      text-transform: none;
+    }
+  }
+
+  .oauth-container {
+    width: 100%;
+  }
+
+  .container-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px 0;
+    width: 100%;
+
+    .line {
+      flex: 1;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .text {
+      padding: 0 12px;
+      font-size: 12px;
+      color: #888;
+    }
+  }
+
+  .login-with-button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    font-weight: 500;
+    text-transform: none;
+    width: 100%;
+  }
+
+  mat-progress-bar {
+    width: 120%;
+    align-self: center;
+    margin-bottom: 10px;
+  }
+
+  .height-spacer-4px {
+    height: 4px;
+  }
+
+  .height-spacer-50px {
+    height: 50px;
+  }
+}
+
+.ti-footer-wrapper {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+  margin-top: 10px;
+
+  a {
+    color: #57b857;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// Responsive max-width override
+@media (min-width: 361px) {
+  .ti-login-wrapper {
+    max-width: 400px;
+  }
+}

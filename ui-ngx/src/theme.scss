@@ -21,26 +21,30 @@
 @include mat.all-component-typographies();
 @include mat.core();
 
-$tb-mat-indigo: (
-  50: #e8eaf6,
-  100: #c5cae9,
-  200: #9fa8da,
-  300: #7986cb,
-  400: #5c6bc0,
-  500: $tb-primary-color,
-  600: $tb-secondary-color,
-  700: #303f9f,
-  800: #283593,
-  900: #1a237e,
-  A100: $tb-hue3-color,
-  A200: #536dfe,
-  A400: #3d5afe,
-  A700: #304ffe,
+// ------------------------------------------------------
+// ✅ TI Green Palette Definition (Best Practice)
+// ------------------------------------------------------
+
+$ti-green-palette: (
+  50: #e8f5e9,
+  100: #c8e6c9,
+  200: #a5d6a7,
+  300: #81c784,
+  400: #66bb6a,
+  500: #57b857,
+  600: #43a047,
+  700: #388e3c,
+  800: #2e7d32,
+  900: #1b5e20,
+  A100: #b9f6ca,
+  A200: #69f0ae,
+  A400: #00e676,
+  A700: #00c853,
   contrast: (
     50: rgba(black, 0.87),
     100: rgba(black, 0.87),
     200: rgba(black, 0.87),
-    300: white,
+    300: rgba(black, 0.87),
     400: white,
     500: white,
     600: white,
@@ -48,17 +52,18 @@ $tb-mat-indigo: (
     800: white,
     900: white,
     A100: rgba(black, 0.87),
-    A200: white,
-    A400: white,
-    A700: white,
+    A200: rgba(black, 0.87),
+    A400: black,
+    A700: black
   )
 );
 
-$tb-primary: mat.m2-define-palette($tb-mat-indigo);
+// ✅ Apply custom palette
+$tb-primary: mat.m2-define-palette($ti-green-palette);
 $tb-accent: mat.m2-define-palette(mat.$m2-deep-orange-palette);
 
+// Background adjustments
 $background: (background: map_get(mat.$m2-grey-palette, 200));
-
 $tb-theme-background: map_merge(mat.$m2-light-theme-background-palette, $background);
 
 $tb-mat-theme: mat.m2-define-light-theme((
@@ -80,55 +85,32 @@ $tb-theme: map_merge($tb-mat-theme, $color);
 $primary: mat.m2-get-color-from-palette($tb-primary);
 $accent: mat.m2-get-color-from-palette($tb-accent);
 
-$tb-dark-mat-indigo: (
-  50: #e8eaf6,
-  100: #c5cae9,
-  200: #9fa8da,
-  300: #7986cb,
-  400: #5c6bc0,
-  500: $tb-dark-primary-color,
-  600: $tb-secondary-color,
-  700: #303f9f,
-  800: $tb-primary-color,
-  900: #1a237e,
-  A100: $tb-hue3-color,
-  A200: #536dfe,
-  A400: #3d5afe,
-  A700: #304ffe,
-  contrast: (
-    50: rgba(black, 0.87),
-    100: rgba(black, 0.87),
-    200: rgba(black, 0.87),
-    300: rgba(black, 0.87),
-    400: rgba(black, 0.87),
-    500: map_get($tb-mat-indigo, 900),
-    600: white,
-    700: white,
-    800: white,
-    900: white,
-    A100: rgba(black, 0.87),
-    A200: rgba(black, 0.87),
-    A400: rgba(black, 0.87),
-    A700: rgba(black, 0.87),
-  )
-);
+// ------------------------------------------------------
+// ✅ Dark Theme: use adjusted TI Green palette
+// ------------------------------------------------------
 
-$tb-dark-primary: mat.m2-define-palette($tb-dark-mat-indigo);
+$ti-dark-green-palette: map_merge($ti-green-palette, (
+  500: #57b857,
+  800: #388e3c,
+  900: #2e7d32
+));
+
+$tb-dark-primary: mat.m2-define-palette($ti-dark-green-palette);
 
 $tb-dark-theme-background: (
   status-bar: black,
-  app-bar:    map_get($tb-dark-mat-indigo, 900),
-  background: map_get($tb-dark-mat-indigo, 800),
+  app-bar:    map_get($ti-dark-green-palette, 900),
+  background: map_get($ti-dark-green-palette, 800),
   hover:      rgba(white, 0.04),
-  card:       map_get($tb-dark-mat-indigo, 800),
-  dialog:     map_get($tb-dark-mat-indigo, 800),
+  card:       map_get($ti-dark-green-palette, 800),
+  dialog:     map_get($ti-dark-green-palette, 800),
   disabled-button: rgba(white, 0.12),
-  raised-button: map-get($tb-dark-mat-indigo, 50),
+  raised-button: map-get($ti-dark-green-palette, 50),
   focused-button: rgba(white, 0.12),
-  selected-button: map_get($tb-dark-mat-indigo, 900),
-  selected-disabled-button: map_get($tb-dark-mat-indigo, 800),
+  selected-button: map_get($ti-dark-green-palette, 900),
+  selected-disabled-button: map_get($ti-dark-green-palette, 800),
   disabled-button-toggle: black,
-  unselected-chip: map_get($tb-dark-mat-indigo, 700),
+  unselected-chip: map_get($ti-dark-green-palette, 700),
   disabled-list-option: black,
   tooltip: map_get(mat.$m2-grey-palette, 700),
 );
@@ -146,6 +128,10 @@ $color: map_get($tb-dark-theme, color);
 $color: map_merge($color, (background: $tb-dark-theme-background));
 $tb-dark-theme: map_merge($tb-dark-theme, (color: $color));
 $tb-dark-theme: map_merge($tb-dark-theme, $color);
+
+// ------------------------------------------------------
+// ✅ Theme mixins
+// ------------------------------------------------------
 
 @mixin mat-fab-toolbar-theme($theme) {
   $primary: map-get($theme, primary);
@@ -219,14 +205,13 @@ $tb-dark-theme: map_merge($tb-dark-theme, $color);
       }
     }
   }
-
 }
 
 @mixin tb-components-theme($theme) {
   $primary: map-get($theme, primary);
   $warn: map-get($theme, warn);
 
-  mat-toolbar{
+  mat-toolbar {
     &.mat-hue-3 {
       background-color: mat.m2-get-color-from-palette($primary, 'A100');
     }
@@ -254,6 +239,10 @@ $tb-dark-theme: map_merge($tb-dark-theme, $color);
     }
   }
 }
+
+// ------------------------------------------------------
+// ✅ Apply the Themes
+// ------------------------------------------------------
 
 .tb-default {
   @include mat.all-component-themes($tb-theme);

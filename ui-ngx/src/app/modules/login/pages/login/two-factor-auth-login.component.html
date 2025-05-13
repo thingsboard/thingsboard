@@ -15,82 +15,188 @@
     limitations under the License.
 
 -->
-<div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-row items-center justify-center"
-     style="width: 100%;">
-  <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
-    <mat-card-header>
-      <mat-card-title class="mat-headline-5 flex flex-row items-center justify-start">
-        <button mat-icon-button type="button" (click)="cancelLogin()">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        {{ 'login.verify-your-identity' | translate }}
-      </mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="providers-container tb-default flex flex-col gap-2" *ngIf="!selectedProvider">
-        <p class="mat-body" translate>login.select-way-to-verify</p>
-        <ng-container *ngFor="let provider of allowProviders">
-          <button type="button" mat-stroked-button class="provider" (click)="selectProvider(provider)">
-            <mat-icon class="tb-mat-18" svgIcon="{{ providersData.get(provider).icon }}"></mat-icon>
-            {{ providersData.get(provider).name | translate }}
-          </button>
-        </ng-container>
-      </div>
-      <form [formGroup]="verificationForm" (ngSubmit)="sendVerificationCode()" *ngIf="selectedProvider">
-        <fieldset [disabled]="isLoading$ | async">
-          <div tb-toast class="flex flex-col">
+<div class="flex-1 items-center justify-center">
+  <mat-card-content>
+    <div class="mt-2 flex flex-1 flex-col items-center">
+      <tb-logo class="login-logo"></tb-logo>
+    </div>
+    <div class="ti-login-wrapper">
+      <form
+        class="tb-login-form"
+        [formGroup]="verificationForm"
+        (ngSubmit)="sendVerificationCode()"
+        *ngIf="selectedProvider"
+      >
+        <fieldset class="flex flex-col" [disabled]="isLoading$ | async">
+          <mat-progress-bar
+            color="warn"
+            mode="indeterminate"
+            *ngIf="isLoading$ | async"
+          ></mat-progress-bar>
+
+          <span
+            class="height-spacer-4px"
+            *ngIf="(isLoading$ | async) === false"
+          ></span>
+
+          <div tb-toast class="layout-padding flex flex-col">
+            <mat-card-title class="mat-headline-5 flex flex-row items-center">
+              <button mat-icon-button type="button" (click)="cancelLogin()">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              {{ "login.verify-your-identity" | translate }}
+            </mat-card-title>
+
+            <div
+              class="providers-container tb-default flex flex-col gap-2"
+              *ngIf="!selectedProvider"
+            >
+              <p class="mat-body" translate>login.select-way-to-verify</p>
+              <ng-container *ngFor="let provider of allowProviders">
+                <button
+                  type="button"
+                  mat-stroked-button
+                  class="provider"
+                  (click)="selectProvider(provider)"
+                >
+                  <mat-icon
+                    class="tb-mat-18"
+                    svgIcon="{{ providersData.get(provider).icon }}"
+                  ></mat-icon>
+                  {{ providersData.get(provider).name | translate }}
+                </button>
+              </ng-container>
+            </div>
             <p class="mat-body">{{ providerDescription }}</p>
             <div class="code-block flex flex-row gap-2">
-              <mat-form-field class="mat-block tb-appearance-transparent flex-1">
-                <input matInput formControlName="verificationCode"
-                       required [maxlength]="maxLengthInput" type="text"
-                       [attr.inputmode]="inputMode" [pattern]="pattern"
-                       autocomplete="off"
-                       placeholder="{{ providersData.get(selectedProvider).placeholder | translate }}"/>
-                <mat-error *ngIf="verificationForm.get('verificationCode').getError('required') ||
-                                  verificationForm.get('verificationCode').getError('minlength') ||
-                                  verificationForm.get('verificationCode').getError('maxlength') ||
-                                  verificationForm.get('verificationCode').getError('pattern')">
-                  {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
+              <mat-form-field>
+                <mat-label translate>{{
+                  providersData.get(selectedProvider).placeholder | translate
+                }}</mat-label>
+                <input
+                  matInput
+                  formControlName="verificationCode"
+                  required
+                  [maxlength]="maxLengthInput"
+                  type="text"
+                  [attr.inputmode]="inputMode"
+                  [pattern]="pattern"
+                  autocomplete="off"
+                  [placeholder]="
+                    providersData.get(selectedProvider).placeholder | translate
+                  "
+                  [title]="
+                    providersData.get(selectedProvider).placeholder | translate
+                  "
+                />
+                <mat-error
+                  *ngIf="
+                    verificationForm
+                      .get('verificationCode')
+                      .getError('required') ||
+                    verificationForm
+                      .get('verificationCode')
+                      .getError('minlength') ||
+                    verificationForm
+                      .get('verificationCode')
+                      .getError('maxlength') ||
+                    verificationForm.get('verificationCode').getError('pattern')
+                  "
+                >
+                  {{
+                    "security.2fa.dialog.verification-code-invalid" | translate
+                  }}
                 </mat-error>
-                <mat-error *ngIf="verificationForm.get('verificationCode').getError('incorrectCode')">
-                  {{ 'security.2fa.dialog.verification-code-incorrect' | translate }}
+
+                <mat-error
+                  *ngIf="
+                    verificationForm
+                      .get('verificationCode')
+                      .getError('incorrectCode')
+                  "
+                >
+                  {{
+                    "security.2fa.dialog.verification-code-incorrect"
+                      | translate
+                  }}
                 </mat-error>
-                <mat-error *ngIf="verificationForm.get('verificationCode').getError('tooManyRequest')">
-                  {{ 'security.2fa.dialog.verification-code-many-request' | translate }}
+
+                <mat-error
+                  *ngIf="
+                    verificationForm
+                      .get('verificationCode')
+                      .getError('tooManyRequest')
+                  "
+                >
+                  {{
+                    "security.2fa.dialog.verification-code-many-request"
+                      | translate
+                  }}
                 </mat-error>
               </mat-form-field>
             </div>
-            <span style="height: 50px;"></span>
-            <button mat-raised-button
-                    color="accent"
-                    [disabled]="(isLoading$ | async) || verificationForm.invalid"
-                    type="submit">
-              {{ 'action.continue' | translate }}
-            </button>
-            <span style="height: 16px;"></span>
-            <div class="action-row flex flex-row items-center justify-between gap-2">
-              <div *ngIf="showResendAction" class="action-resend flex flex-1 items-center justify-center">
-                <div *ngIf="countDownTime" class="timer">
-                  {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
+            <span class="height-spacer-4px"></span>
+            <div class="tb-action-button flex flex-col">
+              <button
+                mat-raised-button
+                color="accent"
+                [disabled]="(isLoading$ | async) || verificationForm.invalid"
+                type="submit"
+              >
+                {{ "action.continue" | translate }}
+              </button>
+              <span class="height-spacer-4px"></span>
+              <div
+                class="action-row flex flex-row items-center justify-between gap-2"
+              >
+                <div
+                  *ngIf="showResendAction"
+                  class="action-resend flex flex-1 items-center justify-center"
+                >
+                  <div *ngIf="countDownTime" class="timer">
+                    {{
+                      "login.resend-code-wait"
+                        | translate : { time: countDownTime }
+                    }}
+                  </div>
+                  <button
+                    mat-button
+                    class="flex-1"
+                    [class.!hidden]="hideResendButton"
+                    (click)="sendCode($event)"
+                    type="button"
+                  >
+                    {{ "login.resend-code" | translate }}
+                  </button>
                 </div>
-                <button mat-button class="flex-1"
-                        [class.!hidden]="hideResendButton"
-                        (click)="sendCode($event)"
-                        type="button">
-                  {{ 'login.resend-code' | translate }}
+                <button
+                  mat-button
+                  class="flex-1"
+                  type="button"
+                  *ngIf="allowProviders.length > 1"
+                  (click)="selectProvider(null)"
+                >
+                  {{ "login.try-another-way" | translate }}
                 </button>
               </div>
-              <button mat-button class="flex-1"
-                      type="button"
-                      *ngIf="allowProviders.length > 1"
-                      (click)="selectProvider(null)">
-                {{ 'login.try-another-way' | translate }}
-              </button>
             </div>
           </div>
         </fieldset>
       </form>
-    </mat-card-content>
-  </mat-card>
+    </div>
+
+    <div class="mt-5 flex flex-1 flex-col items-center">
+      <div class="ti-footer-wrapper">
+        &copy; 2023&ndash;2025 | Telemetry Insights &ndash; All Rights
+        Reserved<br />
+        Powered by
+        <a
+          href="https://thingsboard.io/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >ThingsBoard</a
+        >
+      </div>
+    </div>
+  </mat-card-content>
 </div>

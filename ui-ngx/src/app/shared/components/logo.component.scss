@@ -15,13 +15,14 @@
  */
 :host-context(.login-logo) {
   img.tb-logo-title {
-    width: 280px;
-    height: 60px;
+    width: 320px;
+    height: 100px;
+    // ti change 25-5-12 width: 280px;
+    // ti change 25-5-12 height: 60px;
     text-decoration: none;
     cursor: pointer;
     border: none;
     transform: none;
-
     &:focus {
       outline: 0;
     }

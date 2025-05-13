@@ -16,16 +16,20 @@
 @use '@angular/material' as mat;
 
 @mixin theme-overwrites($primary, $config-or-theme) {
-  @include _mat-form-field-overwrites($primary, $config-or-theme);
-  @include _mat-button-overwrites($primary, $config-or-theme);
-  @include _mat-icon-overwrites();
+  @include _mat-form-field-overwrites($primary);
+  @include _mat-button-overwrites($primary);
+  @include _mat-icon-overwrites($primary);
+  @include _mat-toolbar-sidenav-overrides($primary);
+  @include _mat-toggle-overrides($primary);
 }
 
-@mixin _mat-form-field-overwrites($primary, $config-or-theme) {
+// === Form Field Styling ===
+@mixin _mat-form-field-overwrites($primary) {
   .mat-mdc-form-field.mat-form-field-appearance-fill {
-    .mdc-text-field--filled, .mat-mdc-form-field-focus-overlay {
+    .mdc-text-field--filled,
+    .mat-mdc-form-field-focus-overlay {
       &:before {
-        content: "";
+        content: '';
         display: block;
         width: 100%;
         height: 100%;
@@ -36,6 +40,7 @@
       }
       background-color: transparent;
     }
+
     .mdc-text-field--filled {
       &:before {
         opacity: 0.03;
@@ -47,12 +52,14 @@
         background-color: transparent;
       }
     }
+
     .mat-mdc-form-field-focus-overlay {
       &:before {
         opacity: 0.87;
       }
     }
   }
+
   .mat-mdc-form-field {
     .mat-mdc-form-field-hint-wrapper {
       color: rgba(0, 0, 0, 0.6);
@@ -60,19 +67,91 @@
   }
 }
 
-@mixin _mat-button-overwrites($primary, $config-or-theme) {
+// === Button and Outline Styling ===
+@mixin _mat-button-overwrites($primary) {
   .mat-toolbar {
     .mat-mdc-outlined-button {
-      --mdc-outlined-button-outline-color: inherit;
+      --mdc-outlined-button-outline-color: mat.m2-get-color-from-palette($primary);
       &:not(:disabled) {
-        border-color: inherit;
+        border-color: mat.m2-get-color-from-palette($primary);
+        color: mat.m2-get-color-from-palette($primary);
       }
+    }
+  }
+
+  .mat-button,
+  .mat-raised-button,
+  .mat-stroked-button,
+  .mat-icon-button {
+    &:not(:disabled) {
+      color: mat.m2-get-color-from-palette($primary);
+      border-color: mat.m2-get-color-from-palette($primary);
     }
   }
 }
 
-@mixin _mat-icon-overwrites() {
-  .mat-icon, .mat-icon.mat-primary, .mat-icon.mat-accent, .mat-icon.mat-warn {
-    color: var(--mat-icon-color);
+// === Icon Color Handling ===
+@mixin _mat-icon-overwrites($primary) {
+  .mat-icon,
+  .mat-icon.mat-primary,
+  .mat-icon.mat-accent,
+  .mat-icon.mat-warn {
+    color: var(--mat-icon-color); // dynamic color when available
+  }
+}
+
+// === Toolbar and Sidenav — Static White as Requested ===
+@mixin _mat-toolbar-sidenav-overrides($primary) {
+  .mat-toolbar.tb-primary-toolbar,
+  .tb-app-header,
+  .mat-toolbar.mat-primary,
+  .mat-toolbar.mat-mdc-toolbar {
+    background-color: white !important;
+    color: black !important;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .tb-side-nav,
+  .mat-sidenav {
+    background-color: white !important;
+    color: mat.m2-get-color-from-palette($primary) !important;
+    border-right: 1px solid #e0e0e0;
+
+    .mat-icon,
+    .mat-list-item .mat-line,
+    .mat-list-item .mat-list-item-content,
+    .mat-mdc-button,
+    .tb-menu-link {
+      color: mat.m2-get-color-from-palette($primary) !important;
+    }
+
+    .mat-list-item:hover,
+    .tb-menu-link:hover {
+      background-color: rgba(87, 184, 87, 0.08);
+    }
+  }
+
+  // === Fix: Top-right menu icon inside header ===
+  .mat-toolbar.tb-primary-toolbar {
+    .mat-mdc-icon-button.mat-icon-no-color,
+    .mat-mdc-icon-button .mat-icon.mat-icon-no-color {
+      color: #57b857 !important;
+      opacity: 0.87 !important;
+    }
+
+    .mat-mdc-icon-button:hover {
+      background-color: rgba(87, 184, 87, 0.08) !important;
+      border-radius: 50%;
+    }
+  }
+}
+
+// === Toggle Switch Active Green ===
+@mixin _mat-toggle-overrides($primary) {
+  .mat-slide-toggle.mat-checked {
+    .mat-slide-toggle-bar,
+    .mat-slide-toggle-thumb {
+      background-color: mat.m2-get-color-from-palette($primary);
+    }
   }
 }

@@ -14,34 +14,47 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { skip, startWith, Subject } from 'rxjs';
-import { Store } from '@ngrx/store';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Inject,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from "@angular/core";
+import { skip, startWith, Subject } from "rxjs";
+import { Store } from "@ngrx/store";
+import { debounceTime, distinctUntilChanged, takeUntil } from "rxjs/operators";
 
-import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { PageComponent } from '@shared/components/page.component';
-import { AppState } from '@core/core.state';
-import { getCurrentAuthState } from '@core/auth/auth.selectors';
-import { MediaBreakpoints } from '@shared/models/constants';
-import screenfull from 'screenfull';
-import { MatSidenav } from '@angular/material/sidenav';
-import { AuthState } from '@core/auth/auth.models';
-import { WINDOW } from '@core/services/window.service';
-import { instanceOfSearchableComponent, ISearchableComponent } from '@home/models/searchable-component.models';
-import { ActiveComponentService } from '@core/services/active-component.service';
-import { RouterTabsComponent } from '@home/components/router-tabs.component';
-import { FormBuilder } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { BreakpointObserver, BreakpointState } from "@angular/cdk/layout";
+import { PageComponent } from "@shared/components/page.component";
+import { AppState } from "@core/core.state";
+import { getCurrentAuthState } from "@core/auth/auth.selectors";
+import { MediaBreakpoints } from "@shared/models/constants";
+import screenfull from "screenfull";
+import { MatSidenav } from "@angular/material/sidenav";
+import { AuthState } from "@core/auth/auth.models";
+import { WINDOW } from "@core/services/window.service";
+import {
+  instanceOfSearchableComponent,
+  ISearchableComponent,
+} from "@home/models/searchable-component.models";
+import { ActiveComponentService } from "@core/services/active-component.service";
+import { RouterTabsComponent } from "@home/components/router-tabs.component";
+import { FormBuilder } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { isDefined, isDefinedAndNotNull } from "@core/utils";
 
 @Component({
-  selector: 'tb-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  selector: "tb-home",
+  templateUrl: "./home.component.html",
+  styleUrls: ["./home.component.scss"],
 })
-export class HomeComponent extends PageComponent implements AfterViewInit, OnInit, OnDestroy {
-
+export class HomeComponent
+  extends PageComponent
+  implements AfterViewInit, OnInit, OnDestroy
+{
   authState: AuthState = getCurrentAuthState(this.store);
 
   forceFullscreen = this.authState.forceFullscreen;
@@ -49,53 +62,53 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   activeComponent: any;
   searchableComponent: ISearchableComponent;
 
-  sidenavMode: 'over' | 'push' | 'side' = 'side';
+  sidenavMode: "over" | "push" | "side" = "side";
   sidenavOpened = true;
 
-  logo = 'assets/logo_title_white.svg';
+  logo = "assets/logo_title_white.png";
 
-  @ViewChild('sidenav')
+  @ViewChild("sidenav")
   sidenav: MatSidenav;
 
-  @ViewChild('searchInput') searchInputField: ElementRef;
+  @ViewChild("searchInput") searchInputField: ElementRef;
 
   fullscreenEnabled = screenfull.isEnabled;
 
   searchEnabled = false;
   showSearch = false;
-  textSearch = this.fb.control('', {nonNullable: true});
+  textSearch = this.fb.control("", { nonNullable: true });
 
   hideLoadingBar = false;
 
   private destroy$ = new Subject<void>();
 
-  constructor(protected store: Store<AppState>,
-              @Inject(WINDOW) private window: Window,
-              private activeComponentService: ActiveComponentService,
-              private fb: FormBuilder,
-              public breakpointObserver: BreakpointObserver) {
+  constructor(
+    protected store: Store<AppState>,
+    @Inject(WINDOW) private window: Window,
+    private activeComponentService: ActiveComponentService,
+    private fb: FormBuilder,
+    public breakpointObserver: BreakpointObserver
+  ) {
     super(store);
   }
 
   ngOnInit() {
-
-    const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
-    this.sidenavMode = isGtSm ? 'side' : 'over';
+    const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints["gt-sm"]);
+    this.sidenavMode = isGtSm ? "side" : "over";
     this.sidenavOpened = isGtSm;
 
     this.breakpointObserver
-      .observe(MediaBreakpoints['gt-sm'])
+      .observe(MediaBreakpoints["gt-sm"])
       .pipe(takeUntil(this.destroy$))
       .subscribe((state: BreakpointState) => {
-          if (state.matches) {
-            this.sidenavMode = 'side';
-            this.sidenavOpened = true;
-          } else {
-            this.sidenavMode = 'over';
-            this.sidenavOpened = false;
-          }
+        if (state.matches) {
+          this.sidenavMode = "side";
+          this.sidenavOpened = true;
+        } else {
+          this.sidenavMode = "over";
+          this.sidenavOpened = false;
         }
-      );
+      });
   }
 
   ngOnDestroy() {
@@ -104,17 +117,19 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   ngAfterViewInit() {
-    this.textSearch.valueChanges.pipe(
-      debounceTime(150),
-      startWith(''),
-      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
-      skip(1),
-      takeUntil(this.destroy$)
-    ).subscribe(value => this.searchTextUpdated(value.trim()));
+    this.textSearch.valueChanges
+      .pipe(
+        debounceTime(150),
+        startWith(""),
+        distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
+        skip(1),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((value) => this.searchTextUpdated(value.trim()));
   }
 
   sidenavClicked() {
-    if (this.sidenavMode === 'over') {
+    if (this.sidenavMode === "over") {
       this.sidenav.toggle();
     }
   }
@@ -147,18 +162,30 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   private updateActiveComponent(activeComponent: any) {
     this.showSearch = false;
     this.hideLoadingBar = false;
-    this.textSearch.reset('', {emitEvent: false});
+    this.textSearch.reset("", { emitEvent: false });
     this.activeComponent = activeComponent;
 
-    if (activeComponent && activeComponent instanceof RouterTabsComponent
-      && isDefinedAndNotNull(this.activeComponent.activatedRoute?.snapshot?.data?.showMainLoadingBar)) {
-      this.hideLoadingBar = !this.activeComponent.activatedRoute.snapshot.data.showMainLoadingBar;
-    } else if (activeComponent && activeComponent instanceof PageComponent
-      && isDefinedAndNotNull(this.activeComponent?.showMainLoadingBar)) {
+    if (
+      activeComponent &&
+      activeComponent instanceof RouterTabsComponent &&
+      isDefinedAndNotNull(
+        this.activeComponent.activatedRoute?.snapshot?.data?.showMainLoadingBar
+      )
+    ) {
+      this.hideLoadingBar =
+        !this.activeComponent.activatedRoute.snapshot.data.showMainLoadingBar;
+    } else if (
+      activeComponent &&
+      activeComponent instanceof PageComponent &&
+      isDefinedAndNotNull(this.activeComponent?.showMainLoadingBar)
+    ) {
       this.hideLoadingBar = !this.activeComponent.showMainLoadingBar;
     }
 
-    if (this.activeComponent && instanceOfSearchableComponent(this.activeComponent)) {
+    if (
+      this.activeComponent &&
+      instanceOfSearchableComponent(this.activeComponent)
+    ) {
       this.searchEnabled = true;
       this.searchableComponent = this.activeComponent;
     } else {
