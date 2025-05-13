@@ -207,7 +207,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
                 String protocolVersion = "protocolVersion";
                 if (!oldConfiguration.has(protocolVersion)) {
                     hasChanges = true;
-                    ((ObjectNode) oldConfiguration).put(protocolVersion, MqttVersion.MQTT_3_1_1.name());
+                    ((ObjectNode) oldConfiguration).put(protocolVersion, MqttVersion.MQTT_3_1.name());
                 }
                 break;
             default:
