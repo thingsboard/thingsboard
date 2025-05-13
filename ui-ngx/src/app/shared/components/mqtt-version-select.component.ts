@@ -45,14 +45,9 @@ export class MqttVersionSelectComponent implements ControlValueAccessor {
   mqttVersionTranslation = MqttVersionTranslation;
   modelValue: MqttVersion;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  required = false;
 
   private propagateChange = (v: any) => { };
 
