@@ -20,7 +20,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "queue.tasks.stats.processing_interval_ms=0",
+        "queue.tasks.stats.processing_interval=0",
         "queue.tasks.partitioning_strategy=entity",
         "queue.tasks.partitions_per_type=DUMMY:100;DUMMY:50"
 })

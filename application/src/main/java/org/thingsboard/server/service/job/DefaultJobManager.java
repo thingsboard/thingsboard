@@ -18,7 +18,6 @@ package org.thingsboard.server.service.job;
 import jakarta.annotation.PreDestroy;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -51,6 +50,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
+import org.thingsboard.server.queue.settings.TasksQueueConfig;
 import org.thingsboard.server.queue.task.JobStatsService;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -74,23 +74,21 @@ public class DefaultJobManager implements JobManager {
     private final JobStatsService jobStatsService;
     private final NotificationCenter notificationCenter;
     private final PartitionService partitionService;
+    private final TasksQueueConfig queueConfig;
     private final Map<JobType, JobProcessor> jobProcessors;
     private final Map<JobType, TbQueueProducer<TbProtoQueueMsg<TaskProto>>> taskProducers;
     private final QueueConsumerManager<TbProtoQueueMsg<JobStatsMsg>> jobStatsConsumer;
     private final ExecutorService executor;
     private final ExecutorService consumerExecutor;
 
-    @Value("${queue.tasks.partitioning_strategy:tenant}")
-    private String tasksPartitioningStrategy;
-    @Value("${queue.tasks.stats.processing_interval_ms:1000}")
-    private int statsProcessingInterval;
-
     public DefaultJobManager(JobService jobService, JobStatsService jobStatsService, NotificationCenter notificationCenter,
-                             PartitionService partitionService, TbCoreQueueFactory queueFactory, List<JobProcessor> jobProcessors) {
+                             PartitionService partitionService, TbCoreQueueFactory queueFactory, TasksQueueConfig queueConfig,
+                             List<JobProcessor> jobProcessors) {
         this.jobService = jobService;
         this.jobStatsService = jobStatsService;
         this.notificationCenter = notificationCenter;
         this.partitionService = partitionService;
+        this.queueConfig = queueConfig;
         this.jobProcessors = jobProcessors.stream().collect(Collectors.toMap(JobProcessor::getType, Function.identity()));
         this.taskProducers = Arrays.stream(JobType.values()).collect(Collectors.toMap(Function.identity(), queueFactory::createTaskProducer));
         this.executor = ThingsBoardExecutors.newWorkStealingPool(Math.max(4, Runtime.getRuntime().availableProcessors()), getClass());
@@ -98,7 +96,7 @@ public class DefaultJobManager implements JobManager {
         this.jobStatsConsumer = QueueConsumerManager.<TbProtoQueueMsg<JobStatsMsg>>builder()
                 .name("job-stats")
                 .msgPackProcessor(this::processStats)
-                .pollInterval(125)
+                .pollInterval(queueConfig.getStatsPollInterval())
                 .consumerCreator(queueFactory::createJobStatsConsumer)
                 .consumerExecutor(consumerExecutor)
                 .build();
@@ -113,7 +111,7 @@ public class DefaultJobManager implements JobManager {
     @Override
     public Job submitJob(Job job) {
         log.debug("Submitting job: {}", job);
-        return jobService.submitJob(job.getTenantId(), job);
+        return jobService.saveJob(job.getTenantId(), job);
     }
 
     @Override
@@ -196,7 +194,7 @@ public class DefaultJobManager implements JobManager {
 
         job.getConfiguration().setToReprocess(taskFailures);
 
-        jobService.submitJob(tenantId, job);
+        jobService.saveJob(tenantId, job);
     }
 
     private void submitTask(Task<?> task) {
@@ -207,7 +205,7 @@ public class DefaultJobManager implements JobManager {
 
         TbQueueProducer<TbProtoQueueMsg<TaskProto>> producer = taskProducers.get(task.getJobType());
         EntityId entityId = null;
-        if (tasksPartitioningStrategy.equals("entity")) {
+        if (queueConfig.getPartitioningStrategy().equals("entity")) {
             entityId = task.getEntityId();
         }
         if (entityId == null) {
@@ -257,7 +255,7 @@ public class DefaultJobManager implements JobManager {
         });
         consumer.commit();
 
-        Thread.sleep(statsProcessingInterval);
+        Thread.sleep(queueConfig.getStatsProcessingInterval());
     }
 
     private void sendJobFinishedNotification(Job job) {

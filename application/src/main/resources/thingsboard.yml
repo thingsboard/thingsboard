@@ -1908,9 +1908,12 @@ queue:
     # In a single-tenant environment, use 'entity' strategy to distribute the tasks among multiple partitions.
     partitioning_strategy: "${TB_QUEUE_TASKS_PARTITIONING_STRATEGY:tenant}"
     stats:
+      # Name for the tasks stats topic
       topic: "${TB_QUEUE_TASKS_STATS_TOPIC:jobs.stats}"
+      # Poll interval in milliseconds for tasks stats topic
+      poll_interval: "${TB_QUEUE_TASKS_STATS_POLL_INTERVAL_MS:500}"
       # Interval in milliseconds to process job stats
-      processing_interval_ms: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:1000}"
+      processing_interval: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:1000}"
 
 # Event configuration parameters
 event:

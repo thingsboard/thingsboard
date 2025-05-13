@@ -26,7 +26,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 public interface JobService extends EntityDaoService {
 
-    Job submitJob(TenantId tenantId, Job job);
+    Job saveJob(TenantId tenantId, Job job);
 
     Job findJobById(TenantId tenantId, JobId jobId);
 

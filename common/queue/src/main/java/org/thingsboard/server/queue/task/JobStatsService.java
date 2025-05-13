@@ -53,12 +53,13 @@ public class JobStatsService {
     }
 
     private void report(TenantId tenantId, JobId jobId, JobStatsMsg.Builder statsMsg) {
-        log.debug("[{}] Reporting: {}", jobId, statsMsg);
+        log.debug("[{}][{}] Reporting: {}", tenantId, jobId, statsMsg);
         statsMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setJobIdMSB(jobId.getId().getMostSignificantBits())
                 .setJobIdLSB(jobId.getId().getLeastSignificantBits());
 
+        // using job id as msg key so that all stats for a certain job are submitted to the same partition
         TbProtoQueueMsg<JobStatsMsg> msg = new TbProtoQueueMsg<>(jobId.getId(), statsMsg.build());
         producer.send(TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build(), msg, TbQueueCallback.EMPTY);
     }

@@ -25,8 +25,10 @@ import java.util.List;
 
 @Data
 public class JobStats {
+
     private final TenantId tenantId;
     private final JobId jobId;
     private final List<TaskResult> taskResults = new ArrayList<>();
     private Integer totalTasksCount;
+
 }

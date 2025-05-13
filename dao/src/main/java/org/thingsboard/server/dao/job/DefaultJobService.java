@@ -54,7 +54,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
     @Transactional
     @Override
-    public Job submitJob(TenantId tenantId, Job job) {
+    public Job saveJob(TenantId tenantId, Job job) {
         if (jobDao.existsByTenantAndKeyAndStatusOneOf(tenantId, job.getKey(), QUEUED, PENDING, RUNNING)) {
             throw new IllegalArgumentException("The same job is already queued or running");
         }
@@ -62,6 +62,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
             job.setStatus(QUEUED);
         } else {
             job.setStatus(PENDING);
+            job.getResult().setStartTs(System.currentTimeMillis());
         }
         return saveJob(tenantId, job, true, null);
     }
@@ -140,6 +141,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
                     job.setStatus(COMPLETED);
                     publishEvent = true;
                 }
+                result.setFinishTs(System.currentTimeMillis());
             }
         }
 

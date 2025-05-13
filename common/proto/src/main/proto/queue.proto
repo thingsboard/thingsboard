@@ -536,10 +536,6 @@ message ToEdqsCoreServiceMsg {
   bytes value = 1;
 }
 
-message ToJobManagerMsg {
-  bytes value = 1;
-}
-
 message LwM2MRegistrationRequestMsg {
   string tenantId = 1;
   string endpoint = 2;

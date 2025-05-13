@@ -44,6 +44,8 @@ public abstract class JobResult implements Serializable {
     private List<TaskResult> results = new ArrayList<>();
     private String generalError;
 
+    private long startTs;
+    private long finishTs;
     private long cancellationTs;
 
     @JsonIgnore
