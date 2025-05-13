@@ -16,7 +16,7 @@
 
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { SubscriptSizing, MatFormFieldAppearance } from '@angular/material/form-field';
 import { MqttVersionTranslation, MqttVersion } from '@shared/models/mqtt.models';
 
