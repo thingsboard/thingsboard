@@ -32,6 +32,7 @@ import org.thingsboard.server.queue.kafka.TbKafkaConsumerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
 import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
+import org.thingsboard.server.queue.settings.TasksQueueConfig;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='kafka'")
@@ -39,6 +40,7 @@ public class KafkaTaskProcessorQueueFactory implements TaskProcessorQueueFactory
 
     private final TopicService topicService;
     private final TbServiceInfoProvider serviceInfoProvider;
+    private final TasksQueueConfig tasksQueueConfig;
     private final TbKafkaSettings kafkaSettings;
     private final TbKafkaConsumerStatsService consumerStatsService;
 
@@ -46,12 +48,14 @@ public class KafkaTaskProcessorQueueFactory implements TaskProcessorQueueFactory
 
     public KafkaTaskProcessorQueueFactory(TopicService topicService,
                                           TbServiceInfoProvider serviceInfoProvider,
+                                          TasksQueueConfig tasksQueueConfig,
                                           TbKafkaSettings kafkaSettings,
                                           TbKafkaConsumerStatsService consumerStatsService,
                                           TbKafkaTopicConfigs kafkaTopicConfigs) {
-        this.serviceInfoProvider = serviceInfoProvider;
-        this.kafkaSettings = kafkaSettings;
         this.topicService = topicService;
+        this.serviceInfoProvider = serviceInfoProvider;
+        this.tasksQueueConfig = tasksQueueConfig;
+        this.kafkaSettings = kafkaSettings;
         this.consumerStatsService = consumerStatsService;
         this.tasksAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getTasksConfigs());
     }
@@ -73,7 +77,7 @@ public class KafkaTaskProcessorQueueFactory implements TaskProcessorQueueFactory
     public TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer() {
         return TbKafkaProducerTemplate.<TbProtoQueueMsg<JobStatsMsg>>builder()
                 .clientId("job-stats-producer-" + serviceInfoProvider.getServiceId())
-                .defaultTopic(topicService.buildTopicName("jobs.stats"))
+                .defaultTopic(topicService.buildTopicName(tasksQueueConfig.getStatsTopic()))
                 .settings(kafkaSettings)
                 .admin(tasksAdmin)
                 .build();

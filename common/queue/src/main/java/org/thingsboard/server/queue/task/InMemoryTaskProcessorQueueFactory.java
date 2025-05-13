@@ -27,6 +27,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueConsumer;
 import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
+import org.thingsboard.server.queue.settings.TasksQueueConfig;
 
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='in-memory'")
@@ -34,6 +35,7 @@ import org.thingsboard.server.queue.memory.InMemoryTbQueueProducer;
 public class InMemoryTaskProcessorQueueFactory implements TaskProcessorQueueFactory {
 
     private final InMemoryStorage storage;
+    private final TasksQueueConfig tasksQueueConfig;
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TaskProto>> createTaskConsumer(JobType jobType) {
@@ -42,7 +44,7 @@ public class InMemoryTaskProcessorQueueFactory implements TaskProcessorQueueFact
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<JobStatsMsg>> createJobStatsProducer() {
-        return new InMemoryTbQueueProducer<>(storage, "jobs.stats");
+        return new InMemoryTbQueueProducer<>(storage, tasksQueueConfig.getStatsTopic());
     }
 
 }

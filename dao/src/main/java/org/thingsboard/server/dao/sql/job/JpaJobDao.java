@@ -59,7 +59,7 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
     }
 
     @Override
-    public Job findLatestByKey(TenantId tenantId, String key) {
+    public Job findLatestByTenantIdAndKey(TenantId tenantId, String key) {
         return DaoUtil.getData(jobRepository.findLatestByTenantIdAndKey(tenantId.getId(), key));
     }
 

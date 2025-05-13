@@ -20,7 +20,6 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.SetCache;
@@ -40,6 +39,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.settings.TasksQueueConfig;
 
 import java.util.List;
 import java.util.Set;
@@ -61,9 +61,8 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
     private JobStatsService statsService;
     @Autowired
     private TaskProcessorExecutors executors;
-
-    @Value("${queue.tasks.poll_interval:500}")
-    private int pollInterval;
+    @Autowired
+    private TasksQueueConfig config;
 
     private QueueKey queueKey;
     private MainQueueConsumerManager<TbProtoQueueMsg<TaskProto>, QueueConfig> taskConsumer;
@@ -77,7 +76,7 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
         queueKey = new QueueKey(ServiceType.TASK_PROCESSOR, getJobType().name());
         taskConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<TaskProto>, QueueConfig>builder()
                 .queueKey(queueKey)
-                .config(QueueConfig.of(true, pollInterval))
+                .config(QueueConfig.of(true, config.getPollInterval()))
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator((queueConfig, tpi) -> queueFactory.createTaskConsumer(getJobType()))
                 .consumerExecutor(executors.getConsumersExecutor())

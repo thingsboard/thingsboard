@@ -181,7 +181,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
     @Override
     public Job findLatestJobByKey(TenantId tenantId, String key) {
-        return jobDao.findLatestByKey(tenantId, key);
+        return jobDao.findLatestByTenantIdAndKey(tenantId, key);
     }
 
     private Job findForUpdate(TenantId tenantId, JobId jobId) {

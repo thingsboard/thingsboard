@@ -25,8 +25,6 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcType;
-import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonbType;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobConfiguration;
@@ -68,7 +66,6 @@ public class JobEntity extends BaseSqlEntity<Job> {
     private JsonNode configuration;
 
     @Convert(converter = JsonConverter.class)
-    @JdbcType(PostgreSQLJsonPGObjectJsonbType.class)
     @Column(name = ModelConstants.JOB_RESULT_PROPERTY)
     private JsonNode result;
 

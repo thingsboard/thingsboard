@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.queue.settings;
 
-public interface TbQueueCallback {
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-    TbQueueCallback EMPTY = new TbQueueCallback() {
+@Data
+@Component
+public class TasksQueueConfig {
 
-        @Override
-        public void onSuccess(TbQueueMsgMetadata metadata) {
+    @Value("${queue.tasks.poll_interval}")
+    private int pollInterval;
 
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-
-        }
-    };
-
-    void onSuccess(TbQueueMsgMetadata metadata);
-
-    void onFailure(Throwable t);
+    @Value("${queue.tasks.stats.topic}")
+    private String statsTopic;
 
 }
