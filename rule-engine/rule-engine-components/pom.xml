@@ -141,12 +141,12 @@
         </dependency>
         <dependency>
             <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-netty-no-dependencies</artifactId>
+            <artifactId>mockserver-netty</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-client-java-no-dependencies</artifactId>
+            <artifactId>mockserver-client-java</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
