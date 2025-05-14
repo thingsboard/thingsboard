@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.data.edqs.EdqsState;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -149,9 +150,9 @@ public class EntityQueryController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @GetMapping("/edqs/enabled")
-    public boolean isEdqsApiEnabled() {
-        return edqsApiService.isEnabled();
+    @GetMapping("/edqs/state")
+    public EdqsState getEdqsState() {
+        return edqsService.getState();
     }
 
 }

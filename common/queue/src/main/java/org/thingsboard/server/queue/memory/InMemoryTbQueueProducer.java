@@ -34,11 +34,6 @@ public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueuePro
     }
 
     @Override
-    public void init() {
-
-    }
-
-    @Override
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
         boolean result = storage.put(tpi.getFullTopicName(), msg);
         if (result) {

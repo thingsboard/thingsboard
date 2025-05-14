@@ -25,4 +25,6 @@ public interface DiscoveryService {
 
     boolean isMonolith();
 
+    void setReady(boolean ready);
+
 }

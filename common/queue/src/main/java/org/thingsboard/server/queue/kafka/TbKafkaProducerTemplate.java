@@ -75,10 +75,6 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
         topics = ConcurrentHashMap.newKeySet();
     }
 
-    @Override
-    public void init() {
-    }
-
     void addAnalyticHeaders(List<Header> headers) {
         headers.add(new RecordHeader("_producerId", getClientId().getBytes(StandardCharsets.UTF_8)));
         headers.add(new RecordHeader("_threadName", Thread.currentThread().getName().getBytes(StandardCharsets.UTF_8)));

@@ -22,7 +22,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -50,11 +49,6 @@ public class DefaultEdqsApiService implements EdqsApiService {
     private final EdqsPartitionService edqsPartitionService;
     private final EdqsClientQueueFactory queueFactory;
     private TbQueueRequestTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> requestTemplate;
-
-    @Value("${queue.edqs.api.auto_enable:true}")
-    private boolean autoEnable;
-
-    private Boolean apiEnabled = null;
 
     @PostConstruct
     private void init() {
@@ -86,28 +80,8 @@ public class DefaultEdqsApiService implements EdqsApiService {
     }
 
     @Override
-    public boolean isEnabled() {
-        return Boolean.TRUE.equals(apiEnabled);
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        if (enabled) {
-            log.info("Enabling EDQS API");
-        } else {
-            log.info("Disabling EDQS API");
-        }
-        apiEnabled = enabled;
-    }
-
-    @Override
     public boolean isSupported() {
         return true;
-    }
-
-    @Override
-    public boolean isAutoEnable() {
-        return autoEnable;
     }
 
     @PreDestroy

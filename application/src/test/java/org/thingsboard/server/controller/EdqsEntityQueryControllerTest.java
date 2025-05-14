@@ -23,9 +23,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
-import org.thingsboard.server.common.msg.edqs.EdqsApiService;
+import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.edqs.state.EdqsStateService;
 import org.thingsboard.server.edqs.util.EdqsRocksDb;
 
 import java.util.concurrent.TimeUnit;
@@ -39,22 +38,20 @@ import static org.awaitility.Awaitility.await;
         "queue.edqs.sync.enabled=true",
         "queue.edqs.api.supported=true",
         "queue.edqs.api.auto_enable=true",
-        "queue.edqs.mode=local"
+        "queue.edqs.mode=local",
+        "queue.edqs.readiness_check_interval=1000"
 })
 public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
 
     @Autowired
-    private EdqsApiService edqsApiService;
-
-    @Autowired
-    private EdqsStateService edqsStateService;
+    private EdqsService edqsService;
 
     @MockBean // so that we don't do backup for tests
     private EdqsRocksDb edqsRocksDb;
 
     @Before
     public void before() {
-        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> edqsApiService.isEnabled() && edqsStateService.isReady());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> edqsService.getState().isApiEnabled());
     }
 
     @Override

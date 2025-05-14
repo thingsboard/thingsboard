@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -78,6 +79,10 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "queue.edqs.sync.enabled=true", // only enabling sync
+        "queue.edqs.api.supported=false",
+})
 public class EntityQueryControllerTest extends AbstractControllerTest {
 
     private static final String CUSTOMER_USER_EMAIL = "entityQueryCustomer@thingsboard.org";
@@ -803,7 +808,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         //assign dashboard
         doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-                + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+               + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
 
         // check entity data query by customer
         User customerUser = new User();

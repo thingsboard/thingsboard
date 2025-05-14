@@ -91,7 +91,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     @Override
     public void init() {
         queueAdmin.createTopicIfNotExists(responseTemplate.getTopic());
-        requestTemplate.init();
         responseTemplate.subscribe();
         executor.submit(this::mainLoop);
     }

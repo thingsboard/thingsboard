@@ -55,4 +55,13 @@ public class DummyDiscoveryService implements DiscoveryService {
     public boolean isMonolith() {
         return true;
     }
+
+    @Override
+    public void setReady(boolean ready) {
+        boolean changed = serviceInfoProvider.setReady(ready);
+        if (changed) {
+            serviceInfoProvider.generateNewServiceInfoWithCurrentSystemInfo();
+        }
+    }
+
 }

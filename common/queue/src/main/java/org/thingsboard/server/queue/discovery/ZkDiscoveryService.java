@@ -177,6 +177,19 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         }
     }
 
+    @Override
+    public void setReady(boolean ready) {
+        log.debug("Marking current service as {}", ready ? "ready" : "NOT ready");
+        boolean changed = serviceInfoProvider.setReady(ready);
+        if (changed) {
+            try {
+                publishCurrentServer();
+            } catch (Exception e) {
+                log.error("Failed to update server readiness status", e);
+            }
+        }
+    }
+
     private boolean currentServerExists() {
         if (nodePath == null) {
             return false;

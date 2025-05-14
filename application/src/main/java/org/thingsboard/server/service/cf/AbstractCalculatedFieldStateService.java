@@ -72,7 +72,7 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
 
     @Override
     public void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
-        stateService.update(queueKey, partitions);
+        stateService.update(queueKey, partitions, null);
     }
 
     @Override
