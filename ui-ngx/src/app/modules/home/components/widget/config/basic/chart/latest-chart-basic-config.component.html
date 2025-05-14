@@ -143,6 +143,9 @@
             </tb-color-input>
           </div>
         </div>
+        <mat-slide-toggle class="mat-slide flex items-stretch justify-left" formControlName="legendShowTotal" (click)="$event.stopPropagation()">
+          {{ 'legend.show-total' | translate }}
+        </mat-slide-toggle>
       </ng-template>
     </mat-expansion-panel>
   </div>
