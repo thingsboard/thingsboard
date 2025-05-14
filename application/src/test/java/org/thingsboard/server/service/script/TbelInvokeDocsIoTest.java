@@ -33,6 +33,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
 
@@ -2343,6 +2346,83 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("dIsoN2", d.toISOString());
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void isMap_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {}
+                """;
+        decoderStr = """
+                return isMap(msg);
+                """;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertInstanceOf(Boolean.class, actual);
+        assertTrue((Boolean) actual);
+        decoderStr = """
+                return isList(msg);
+                """;
+        actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertInstanceOf(Boolean.class, actual);
+        assertFalse((Boolean) actual);
+    }
+
+    @Test
+    public void isList_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {}
+                """;
+        decoderStr = String.format("""
+                var list = [];
+                list.add(0x35);
+                return isList(list);
+                """);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertInstanceOf(Boolean.class, actual);
+        assertTrue((Boolean) actual);
+        decoderStr = String.format("""
+                var list = [];
+                list.add(0x35);
+                return isMap(list);
+                """);
+        actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertInstanceOf(Boolean.class, actual);
+        assertFalse((Boolean) actual);
+        decoderStr = String.format("""
+                var list = [];
+                list.add(0x35);
+                return isArray(list);
+                """);
+        actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertInstanceOf(Boolean.class, actual);
+        assertFalse((Boolean) actual);
+    }
+
+    @Test
+    public void isArray_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {}
+                """;
+        decoderStr = """
+                var array = new int[3];
+                array[0] = 1;
+                array[1] = 2;
+                array[2] = 3;
+                return isArray(array);
+                """;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertInstanceOf(Boolean.class, actual);
+        assertTrue((Boolean) actual);
+        decoderStr = """
+                var array = new int[3];
+                array[0] = 1;
+                array[1] = 2;
+                array[2] = 3;
+                return isList(array);
+                """;
+        actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertInstanceOf(Boolean.class, actual);
+        assertFalse((Boolean) actual);
     }
 
     private List splice(List oldList, int start, int deleteCount, Object... values) {
