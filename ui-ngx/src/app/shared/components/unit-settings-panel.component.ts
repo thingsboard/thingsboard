@@ -14,26 +14,23 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { AllMeasures, isNotEmptyTbUnits, TbUnit, UnitInfo, UnitSystem } from '@shared/models/unit.models';
+import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { AllMeasures, TbUnit, UnitInfo, UnitSystem } from '@shared/models/unit.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UnitService } from '@core/services/unit.service';
-import { debounceTime, first } from 'rxjs/operators';
+import { debounceTime } from 'rxjs/operators';
 import { isUndefinedOrNull } from '@core/utils';
-import type { UnitInputComponent } from '@shared/components/unit-input.component';
 
 @Component({
   selector: 'tb-covert-unit-settings-panel',
-  templateUrl: './convert-unit-settings-panel.component.html',
-  styleUrls: ['./convert-unit-settings-panel.component.scss'],
+  templateUrl: './unit-settings-panel.component.html',
+  styleUrls: ['./unit-settings-panel.component.scss'],
   providers: [],
   encapsulation: ViewEncapsulation.None
 })
-export class ConvertUnitSettingsPanelComponent implements OnInit {
-
-  @ViewChild('unitFrom', {static: true}) unitFrom: UnitInputComponent;
+export class UnitSettingsPanelComponent implements OnInit {
 
   @Input()
   unit: TbUnit;
@@ -57,7 +54,7 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
 
   targetMeasure: AllMeasures;
 
-  convertUnitForm =  this.fb.group({
+  unitSettingForm =  this.fb.group({
     from: [''],
     convertUnit: [true],
     METRIC: [''],
@@ -66,32 +63,32 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
   })
 
   constructor(
-    private popover: TbPopoverComponent<ConvertUnitSettingsPanelComponent>,
+    private popover: TbPopoverComponent<UnitSettingsPanelComponent>,
     private fb: FormBuilder,
     private unitService: UnitService
   ) {
-    this.convertUnitForm.get('from').valueChanges.pipe(
+    this.unitSettingForm.get('from').valueChanges.pipe(
       debounceTime(200),
       takeUntilDestroyed()
     ).subscribe(unit => {
       const unitDescription = this.unitService.getUnitInfo(unit);
       const units = unitDescription ? this.unitService.getUnits(unitDescription.measure) : [];
       if (unitDescription && units.length > 1) {
-        this.convertUnitForm.get('convertUnit').enable({emitEvent: true});
+        this.unitSettingForm.get('convertUnit').enable({emitEvent: true});
         this.targetMeasure = unitDescription.measure;
         if (unitDescription.system === UnitSystem.IMPERIAL) {
-          this.convertUnitForm.get('METRIC').setValue(this.unitService.getDefaultUnit(this.targetMeasure, UnitSystem.METRIC), {emitEvent: false});
-          this.convertUnitForm.get('IMPERIAL').setValue(unit, {emitEvent: false});
-          this.convertUnitForm.get('HYBRID').setValue(unit, {emitEvent: false});
+          this.unitSettingForm.get('METRIC').setValue(this.unitService.getDefaultUnit(this.targetMeasure, UnitSystem.METRIC), {emitEvent: false});
+          this.unitSettingForm.get('IMPERIAL').setValue(unit, {emitEvent: false});
+          this.unitSettingForm.get('HYBRID').setValue(unit, {emitEvent: false});
         } else {
-          this.convertUnitForm.get('METRIC').setValue(unit, {emitEvent: false});
-          this.convertUnitForm.get('IMPERIAL').setValue(this.unitService.getDefaultUnit(this.targetMeasure, UnitSystem.IMPERIAL), {emitEvent: false});
-          this.convertUnitForm.get('HYBRID').setValue(unit, {emitEvent: false});
+          this.unitSettingForm.get('METRIC').setValue(unit, {emitEvent: false});
+          this.unitSettingForm.get('IMPERIAL').setValue(this.unitService.getDefaultUnit(this.targetMeasure, UnitSystem.IMPERIAL), {emitEvent: false});
+          this.unitSettingForm.get('HYBRID').setValue(unit, {emitEvent: false});
         }
       } else {
-        this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
-        this.convertUnitForm.get('convertUnit').disable({emitEvent: false});
-        this.convertUnitForm.patchValue({
+        this.unitSettingForm.get('convertUnit').setValue(false, {onlySelf: true});
+        this.unitSettingForm.get('convertUnit').disable({emitEvent: false});
+        this.unitSettingForm.patchValue({
           METRIC: '',
           IMPERIAL: '',
           HYBRID: ''
@@ -99,17 +96,17 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
       }
     })
 
-    this.convertUnitForm.get('convertUnit').valueChanges.pipe(
+    this.unitSettingForm.get('convertUnit').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe(value => {
       if (value) {
-        this.convertUnitForm.get('METRIC').enable({emitEvent: false});
-        this.convertUnitForm.get('IMPERIAL').enable({emitEvent: false});
-        this.convertUnitForm.get('HYBRID').enable({emitEvent: false});
+        this.unitSettingForm.get('METRIC').enable({emitEvent: false});
+        this.unitSettingForm.get('IMPERIAL').enable({emitEvent: false});
+        this.unitSettingForm.get('HYBRID').enable({emitEvent: false});
       } else {
-        this.convertUnitForm.get('METRIC').disable({emitEvent: false});
-        this.convertUnitForm.get('IMPERIAL').disable({emitEvent: false});
-        this.convertUnitForm.get('HYBRID').disable({emitEvent: false});
+        this.unitSettingForm.get('METRIC').disable({emitEvent: false});
+        this.unitSettingForm.get('IMPERIAL').disable({emitEvent: false});
+        this.unitSettingForm.get('HYBRID').disable({emitEvent: false});
       }
     });
   }
@@ -117,27 +114,27 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
   ngOnInit() {
     let unitDescription: UnitInfo;
     if (this.required) {
-      this.convertUnitForm.get('from').setValidators(Validators.required);
+      this.unitSettingForm.get('from').setValidators(Validators.required);
     }
     if (typeof this.unit === 'string') {
-      this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
-      this.convertUnitForm.get('from').setValue(this.unit);
+      this.unitSettingForm.get('convertUnit').setValue(false, {onlySelf: true});
+      this.unitSettingForm.get('from').setValue(this.unit);
       unitDescription = this.unitService.getUnitInfo(this.unit);
     } else if (isUndefinedOrNull(this.unit)) {
-      this.convertUnitForm.get('convertUnit').setValue(false, {onlySelf: true});
-      this.convertUnitForm.get('from').setValue(null);
+      this.unitSettingForm.get('convertUnit').setValue(false, {onlySelf: true});
+      this.unitSettingForm.get('from').setValue(null);
     } else {
-      this.convertUnitForm.patchValue(this.unit, {emitEvent: false});
+      this.unitSettingForm.patchValue(this.unit, {emitEvent: false});
       unitDescription = this.unitService.getUnitInfo(this.unit.from);
     }
 
     if (unitDescription?.measure) {
       this.targetMeasure = unitDescription.measure;
     } else {
-      this.convertUnitForm.get('convertUnit').disable({emitEvent: false});
+      this.unitSettingForm.get('convertUnit').disable({emitEvent: false});
     }
     if (this.disabled) {
-      this.convertUnitForm.disable({emitEvent: false});
+      this.unitSettingForm.disable({emitEvent: false});
     }
   }
 
@@ -150,12 +147,12 @@ export class ConvertUnitSettingsPanelComponent implements OnInit {
   }
 
   applyUnitSettings() {
-    if (this.convertUnitForm.value.convertUnit) {
-      const formValue = this.convertUnitForm.value;
+    if (this.unitSettingForm.value.convertUnit) {
+      const formValue = this.unitSettingForm.value;
       delete formValue.convertUnit;
       this.unitSettingsApplied.emit(formValue as TbUnit);
     } else {
-      this.unitSettingsApplied.emit(this.convertUnitForm.value.from);
+      this.unitSettingsApplied.emit(this.unitSettingForm.value.from);
     }
   }
 }

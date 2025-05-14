@@ -16,7 +16,7 @@
 
 -->
 <mat-form-field appearance="outline" class="tb-inline-field tb-suffix-show-on-hover w-full flex-1" subscriptSizing="dynamic"
-                (click)="openConvertSettingsPopup($event)">
+                (click)="openUnitSettingsPopup($event)">
   <input matInput #unitInput [formControl]="unitsFormControl"
          placeholder="{{ 'widget-config.set' | translate }}"
          [class.!pointer-events-none]="disabled"
@@ -40,7 +40,7 @@
   <tb-icon matSuffix
            [color]="disabled ? null : 'primary'"
            matTooltipPosition="above"
-           [matTooltip]="'unit.conversion.set-unit-conversion' | translate"
+           [matTooltip]="'unit.set-unit-conversion' | translate"
            *ngIf="supportsUnitConversion && isUnitMapping" class="material-icons tb-suffix-show-always mr-2 !p-0">
     mdi:swap-vertical-circle-outline
   </tb-icon>

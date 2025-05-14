@@ -42,7 +42,7 @@ import {
 import { map, mergeMap } from 'rxjs/operators';
 import { UnitService } from '@core/services/unit.service';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { ConvertUnitSettingsPanelComponent } from '@shared/components/convert-unit-settings-panel.component';
+import { UnitSettingsPanelComponent } from '@shared/components/unit-settings-panel.component';
 import { isDefinedAndNotNull, isEqual, isNotEmptyStr } from '@core/utils';
 
 @Component({
@@ -183,7 +183,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
     }, 0);
   }
 
-  openConvertSettingsPopup($event: Event) {
+  openUnitSettingsPopup($event: Event) {
     if (!this.supportsUnitConversion) {
       return;
     }
@@ -196,7 +196,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
       const popover = this.popoverService.displayPopover({
         trigger,
         renderer: this.renderer,
-        componentType: ConvertUnitSettingsPanelComponent,
+        componentType: UnitSettingsPanelComponent,
         hostView: this.viewContainerRef,
         preferredPlacement: ['left', 'bottom', 'top'],
         context: {
