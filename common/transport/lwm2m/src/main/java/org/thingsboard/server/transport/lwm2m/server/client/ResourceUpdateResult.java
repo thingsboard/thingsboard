@@ -23,11 +23,11 @@ import java.util.Set;
 
 @Data
 @AllArgsConstructor
-public class ResultUpdateResource {
-    LwM2mClient lwM2MClient;
-    Set<String> paths;
+public class ResourceUpdateResult {
+    private LwM2mClient lwM2MClient;
+    private Set<String> paths;
 
-    public ResultUpdateResource(LwM2mClient lwM2MClient) {
+    public ResourceUpdateResult(LwM2mClient lwM2MClient) {
         this.lwM2MClient = lwM2MClient;
         this.paths = new HashSet<>();
     }
