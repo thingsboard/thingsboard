@@ -437,14 +437,7 @@ public abstract class BaseController {
         } else if (exception instanceof AsyncRequestTimeoutException) {
             return new ThingsboardException("Request timeout", ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof DataAccessException) {
-            if (!logControllerErrorStackTrace) { // not to log the error twice
-                log.warn("Database error: {} - {}", exception.getClass().getSimpleName(), ExceptionUtils.getRootCauseMessage(exception));
-            }
-            if (cause instanceof ConstraintViolationException) {
-                return new ThingsboardException(ExceptionUtils.getRootCause(exception).getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            } else {
-                return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
-            }
+            return new ThingsboardException(exception, ThingsboardErrorCode.DATABASE);
         } else if (exception instanceof EntityVersionMismatchException) {
             return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.VERSION_CONFLICT);
         }
@@ -964,8 +957,12 @@ public abstract class BaseController {
         }
     }
 
-    protected CalculatedField checkCalculatedFieldId(CalculatedFieldId calculatedFieldId, Operation operation) throws ThingsboardException {
-        return checkEntityId(calculatedFieldId, calculatedFieldService::findById, operation);
+    private void checkCalculatedFieldId(CalculatedFieldId calculatedFieldId, Operation operation) throws ThingsboardException {
+        validateId(calculatedFieldId, "Invalid entity id");
+        SecurityUser user = getCurrentUser();
+        CalculatedField cf = calculatedFieldService.findById(user.getTenantId(), calculatedFieldId);
+        checkNotNull(cf, calculatedFieldId.getEntityType().getNormalName() + " with id [" + calculatedFieldId + "] is not found");
+        checkEntityId(cf.getEntityId(), operation);
     }
 
     protected HomeDashboardInfo getHomeDashboardInfo(SecurityUser securityUser, JsonNode additionalInfo) {

@@ -58,6 +58,9 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input()
   debugEventTypes: Array<DebugEventType>;
 
+  @Input()
+  hideClearEventAction: boolean = false;
+
   activeValue = false;
   dirtyValue = false;
   entityIdValue: EntityId;
@@ -147,12 +150,13 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.cd,
       this.store,
       this.functionTestButtonLabel,
-      this.debugEventSelected
+      this.debugEventSelected,
+      this.hideClearEventAction
     );
   }
 
   ngAfterViewInit() {
-    this.isEmptyData$ = this.entitiesTable.dataSource.isEmpty().subscribe(value => this.eventTableConfig.hideClearEventAction = value);
+    this.isEmptyData$ = this.entitiesTable.dataSource.isEmpty().subscribe(value => this.eventTableConfig.hideClearEventAction = value || this.hideClearEventAction);
   }
 
   ngOnDestroy() {
