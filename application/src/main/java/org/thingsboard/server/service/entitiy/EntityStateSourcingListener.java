@@ -62,6 +62,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.service.job.JobManager;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -72,7 +73,7 @@ public class EntityStateSourcingListener {
     private final TenantService tenantService;
     private final TbClusterService tbClusterService;
     private final EdgeSynchronizationManager edgeSynchronizationManager;
-    private final JobManager jobManager;
+    private final Optional<JobManager> jobManager;
 
     @PostConstruct
     public void init() {
@@ -303,7 +304,7 @@ public class EntityStateSourcingListener {
     }
 
     private void onJobUpdate(Job job) {
-        jobManager.onJobUpdate(job);
+        jobManager.ifPresent(jobManager -> jobManager.onJobUpdate(job));
         if (job.getResult().getCancellationTs() > 0 || (job.getStatus().isOneOf(JobStatus.FAILED) && job.getResult().getGeneralError() != null)) {
             // task processors will add this job to the list of discarded
             tbClusterService.broadcastEntityStateChangeEvent(job.getTenantId(), job.getId(), ComponentLifecycleEvent.STOPPED);
