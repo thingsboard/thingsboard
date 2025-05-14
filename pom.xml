@@ -2233,7 +2233,7 @@
             </dependency>
             <dependency>
                 <groupId>org.mock-server</groupId>
-                <artifactId>mockserver-netty-no-dependencies</artifactId>
+                <artifactId>mockserver-netty</artifactId>
                 <version>${mock-server.version}</version>
                 <scope>test</scope>
                 <exclusions>
@@ -2245,7 +2245,7 @@
             </dependency>
             <dependency>
                 <groupId>org.mock-server</groupId>
-                <artifactId>mockserver-client-java-no-dependencies</artifactId>
+                <artifactId>mockserver-client-java</artifactId>
                 <version>${mock-server.version}</version>
                 <scope>test</scope>
             </dependency>
