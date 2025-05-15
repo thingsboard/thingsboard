@@ -29,7 +29,7 @@ services:
       - ./tb-node/postgres:/var/lib/postgresql/data
   cassandra:
     restart: always
-    image: "cassandra:4.1"
+    image: "cassandra:5.0"
     ports:
       - "9042"
     volumes:
