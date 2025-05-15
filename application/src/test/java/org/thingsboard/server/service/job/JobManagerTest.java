@@ -27,13 +27,16 @@ import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.DummyJobConfiguration;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobFilter;
 import org.thingsboard.server.common.data.job.JobResult;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.DummyTaskResult;
 import org.thingsboard.server.common.data.job.task.DummyTaskResult.DummyTaskFailure;
 import org.thingsboard.server.common.data.notification.Notification;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.queue.task.JobStatsService;
 
@@ -64,6 +67,9 @@ public class JobManagerTest extends AbstractControllerTest {
 
     @SpyBean
     private JobStatsService jobStatsService;
+
+    @Autowired
+    private JobService jobService;
 
     @Before
     public void setUp() throws Exception {
@@ -250,7 +256,7 @@ public class JobManagerTest extends AbstractControllerTest {
 
         Thread.sleep(3000);
         verify(jobStatsService, never()).reportTaskResult(any(), any(), any());
-        assertThat(findJobs()).isEmpty();
+        assertThat(jobService.findJobsByFilter(tenantId, JobFilter.builder().build(), new PageLink(100)).getData()).isEmpty();
     }
 
     @Test
