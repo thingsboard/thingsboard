@@ -49,4 +49,5 @@ public abstract class AbstractRuleNodeUpgradeTest {
         ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
         assertThat(upgradedConfig).isEqualTo(expectedConfig);
     }
+
 }

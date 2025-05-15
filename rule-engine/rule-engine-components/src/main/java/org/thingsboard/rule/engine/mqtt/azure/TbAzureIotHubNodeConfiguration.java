@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.mqtt.azure;
 
+import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.Data;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
 
@@ -30,6 +31,7 @@ public class TbAzureIotHubNodeConfiguration extends TbMqttNodeConfiguration {
         configuration.setConnectTimeoutSec(10);
         configuration.setCleanSession(true);
         configuration.setSsl(true);
+        configuration.setProtocolVersion(MqttVersion.MQTT_3_1_1);
         configuration.setCredentials(new AzureIotHubSasCredentials());
         return configuration;
     }

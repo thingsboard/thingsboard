@@ -52,6 +52,7 @@ export class MqttConfigComponent extends RuleNodeConfigurationComponent {
       cleanSession: [configuration ? configuration.cleanSession : false, []],
       retainedMessage: [configuration ? configuration.retainedMessage : false, []],
       ssl: [configuration ? configuration.ssl : false, []],
+      protocolVersion: [configuration ? configuration.protocolVersion : null, []],
       credentials: [configuration ? configuration.credentials : null, []]
     });
   }
