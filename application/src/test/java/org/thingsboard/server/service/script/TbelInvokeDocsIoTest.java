@@ -1092,6 +1092,24 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     }
 
     @Test
+    public void toInt_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    return{
+                       toInt1: toInt(0.3),
+                       toInt2: toInt(0.5),
+                       toInt3: toInt(2.7)
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("toInt1", 0);
+        expected.put("toInt2", 1);
+        expected.put("toInt3", 3);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void stringToBytesBinaryString_Test() throws ExecutionException, InterruptedException {
         String base64Str = "eyJoZWxsbyI6ICJ3b3JsZCJ9";
         String inputStr = "hello, world";
@@ -1173,7 +1191,9 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                        "decimal": isDecimal("4567039"),
                        "notDecimal": isDecimal("C100110"),
                        "hexadecimal": isHexadecimal("F5D7039"),
-                       "notHexadecimal": isHexadecimal("K100110")
+                       "notHexadecimal": isHexadecimal("K100110"),
+                       "nan": isNaN(0.0 / 0.0),
+                       "number": isNaN(1.0)
                       }
                 """;
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
@@ -1185,6 +1205,8 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("notDecimal", -1);
         expected.put("hexadecimal", 16);
         expected.put("notHexadecimal", -1);
+        expected.put("nan", true);
+        expected.put("number", false);
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
@@ -1460,7 +1482,6 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                         "bytesLongToDouble1": parseBytesLongToDouble(coordinatesasBytes, offsetLatLong, 8, false) / factor,
                         "bytesLongToDouble2": parseBytesLongToDouble(coordinatesasBytes, offsetLatLong + 8, 8, false) / factor,
                         "bytesLongToExecutionArrayList": bytesToExecutionArrayList(bytesExecutionArrayList)
-
                     }
                 """;
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
@@ -1512,7 +1533,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("hexToBytes", bytesToList(new byte[]{1, 117, 43, 3, 103, -6, 0, 5, 0, 1, 4, -120, -1, -1, -1, -1, -1, -1, -1, -1, 51}));
         // [-86, -69, -52, -35, -18] == new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD, (byte) 0xEE}
         expected.put("hexToBytesArray", bytesToList(new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD, (byte) 0xEE}));
-        assertEquals( expected, actual);
+        assertEquals(expected, actual);
     }
 
     // parseBinaryArray
@@ -1769,6 +1790,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
+
     @Test
     public void bitwiseOperationsMix_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
@@ -2423,6 +2445,42 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         actual = invokeScript(evalScript(decoderStr), msgStr);
         assertInstanceOf(Boolean.class, actual);
         assertFalse((Boolean) actual);
+    }
+
+    @Test
+    public void isInsidePolygon_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    String perimeter = "[[[37.7810,-122.4210],[37.7890,-122.3900],[37.7700,-122.3800],[37.7600,-122.4000],[37.7700,-122.4250],[37.7810,-122.4210]],[[37.7730,-122.4050],[37.7700,-122.3950],[37.7670,-122.3980],[37.7690,-122.4100],[37.7730,-122.4050]]]";
+                    return{
+                       outsidePolygon: isInsidePolygon(37.8000, -122.4300, perimeter),
+                       insidePolygon: isInsidePolygon(37.7725, -122.4010, perimeter),
+                       insideHole: isInsidePolygon(37.7700, -122.4030, perimeter)
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("outsidePolygon", false);
+        expected.put("insidePolygon", true);
+        expected.put("insideHole", false);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void isInsideCircle_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    String perimeter = "{\\"latitude\\":37.7749,\\"longitude\\":-122.4194,\\"radius\\":3000,\\"radiusUnit\\":\\"METER\\"}";
+                    return{
+                       outsideCircle: isInsideCircle(37.8044, -122.2712, perimeter),
+                       insideCircle: isInsideCircle(37.7599, -122.4148, perimeter)
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("outsideCircle", false);
+        expected.put("insideCircle", true);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
     }
 
     private List splice(List oldList, int start, int deleteCount, Object... values) {
