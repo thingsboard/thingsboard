@@ -85,7 +85,6 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
         twoFaConfigManager.deletePlatformTwoFaSettings(tenantId);
     }
 
-
     @Test
     public void testSavePlatformTwoFaSettings() throws Exception {
         loginSysAdmin();
@@ -102,6 +101,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
         twoFaSettings.setVerificationCodeCheckRateLimit("3:900");
         twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(10);
         twoFaSettings.setTotalAllowedTimeForVerification(3600);
+        twoFaSettings.setEnforceTwoFa(true);
 
         doPost("/api/2fa/settings", twoFaSettings).andExpect(status().isOk());
 
@@ -109,6 +109,21 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         assertThat(savedTwoFaSettings.getProviders()).hasSize(2);
         assertThat(savedTwoFaSettings.getProviders()).contains(totpTwoFaProviderConfig, smsTwoFaProviderConfig);
+    }
+
+    @Test
+    public void testSavePlatformTwoFaSettingsWithEnforceTwoFaWithoutProviders() throws Exception {
+        loginSysAdmin();
+
+        PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
+        twoFaSettings.setProviders(List.of());
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setVerificationCodeCheckRateLimit("3:900");
+        twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(10);
+        twoFaSettings.setTotalAllowedTimeForVerification(3600);
+        twoFaSettings.setEnforceTwoFa(true);
+
+        doPost("/api/2fa/settings", twoFaSettings).andExpect(status().isBadRequest());
     }
 
     @Test

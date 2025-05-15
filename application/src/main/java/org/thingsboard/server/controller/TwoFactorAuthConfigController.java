@@ -56,7 +56,6 @@ public class TwoFactorAuthConfigController extends BaseController {
     private final TwoFaConfigManager twoFaConfigManager;
     private final TwoFactorAuthService twoFactorAuthService;
 
-
     @ApiOperation(value = "Get account 2FA settings (getAccountTwoFaSettings)",
             notes = "Get user's account 2FA configuration. Configuration contains configs for different 2FA providers." + NEW_LINE +
                     "Example:\n" +
@@ -72,7 +71,6 @@ public class TwoFactorAuthConfigController extends BaseController {
         SecurityUser user = getCurrentUser();
         return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user.getId()).orElse(null);
     }
-
 
     @ApiOperation(value = "Generate 2FA account config (generateTwoFaAccountConfig)",
             notes = "Generate new 2FA account config template for specified provider type. " + NEW_LINE +
@@ -99,7 +97,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "Will throw an error (Bad Request) if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config/generate")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'ENFORCE_MFA_TOKEN')")
     public TwoFaAccountConfig generateTwoFaAccountConfig(@Parameter(description = "2FA provider type to generate new account config for", schema = @Schema(defaultValue = "TOTP", requiredMode = Schema.RequiredMode.REQUIRED))
                                                          @RequestParam TwoFaProviderType providerType) throws Exception {
         SecurityUser user = getCurrentUser();
@@ -139,7 +137,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "Will throw an error (Bad Request) if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'ENFORCE_MFA_TOKEN')")
     public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig,
                                                                 @RequestParam(required = false) String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
@@ -189,7 +187,6 @@ public class TwoFactorAuthConfigController extends BaseController {
         return twoFaConfigManager.deleteTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType);
     }
 
-
     @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
             "Get the list of provider types available for user to use (the ones configured by tenant or sysadmin).\n" +
                     "Example of response:\n" +
@@ -197,14 +194,13 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER
     )
     @GetMapping("/providers")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'ENFORCE_MFA_TOKEN')")
     public List<TwoFaProviderType> getAvailableTwoFaProviders() throws ThingsboardException {
         return twoFaConfigManager.getPlatformTwoFaSettings(getTenantId(), true)
                 .map(PlatformTwoFaSettings::getProviders).orElse(Collections.emptyList()).stream()
                 .map(TwoFaProviderConfig::getProviderType)
                 .collect(Collectors.toList());
     }
-
 
     @ApiOperation(value = "Get platform 2FA settings (getPlatformTwoFaSettings)",
             notes = "Get platform settings for 2FA. The settings are described for savePlatformTwoFaSettings API method. " +
@@ -260,10 +256,9 @@ public class TwoFactorAuthConfigController extends BaseController {
     @PostMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     public PlatformTwoFaSettings savePlatformTwoFaSettings(@Parameter(description = "Settings value", required = true)
-                                          @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
+                                                           @RequestBody PlatformTwoFaSettings twoFaSettings) throws ThingsboardException {
         return twoFaConfigManager.savePlatformTwoFaSettings(getTenantId(), twoFaSettings);
     }
-
 
     @Data
     public static class TwoFaAccountConfigUpdateRequest {
