@@ -64,7 +64,7 @@ export class StatusWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...statusWidgetDefaultSettings};
+    return statusWidgetDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

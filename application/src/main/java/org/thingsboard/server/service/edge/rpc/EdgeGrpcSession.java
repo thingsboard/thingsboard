@@ -528,7 +528,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                 sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
                 log.debug("[{}][{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg);
             } else {
-                log.error("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg.getErrorMsg());
+                log.debug("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg.getErrorMsg());
                 DownlinkMsg downlinkMsg = sessionState.getPendingMsgsMap().get(msg.getDownlinkMsgId());
                 // if NOT timeseries or attributes failures - ack failed downlink
                 if (downlinkMsg.getEntityDataCount() == 0) {

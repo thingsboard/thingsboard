@@ -91,7 +91,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                         }
                     }
                 })
-                .consumerCreator((config, partitionId) -> queueFactory.createCalculatedFieldStateConsumer())
+                .consumerCreator((queueConfig, tpi) -> queueFactory.createCalculatedFieldStateConsumer())
                 .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .scheduler(eventConsumer.getScheduler())

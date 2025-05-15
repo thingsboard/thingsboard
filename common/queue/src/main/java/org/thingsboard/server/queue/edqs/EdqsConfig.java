@@ -38,7 +38,7 @@ public class EdqsConfig {
     private String requestsTopic;
     @Value("${queue.edqs.responses_topic:edqs.responses}")
     private String responsesTopic;
-    @Value("${queue.edqs.poll_interval:125}")
+    @Value("${queue.edqs.poll_interval:25}")
     private long pollInterval;
     @Value("${queue.edqs.max_pending_requests:10000}")
     private int maxPendingRequests;

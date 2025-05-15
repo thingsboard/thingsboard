@@ -115,6 +115,7 @@ import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/co
 import { UtilsService } from '@core/services/utils.service';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { FormProperty } from '@shared/models/dynamic-form.models';
+import { ExportableEntity } from '@shared/models/base-data';
 
 export interface IWidgetAction {
   name: string;
@@ -573,7 +574,7 @@ export interface IDynamicWidgetComponent {
   [key: string]: any;
 }
 
-export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescriptor {
+export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescriptor, ExportableEntity<WidgetTypeId> {
   widgetName: string;
   fullFqn: string;
   deprecated: boolean;
@@ -681,6 +682,7 @@ export const toWidgetInfo = (widgetTypeEntity: WidgetType): WidgetInfo => ({
   fullFqn: fullWidgetTypeFqn(widgetTypeEntity),
   deprecated: widgetTypeEntity.deprecated,
   scada: widgetTypeEntity.scada,
+  externalId: widgetTypeEntity.externalId,
   type: widgetTypeEntity.descriptor.type,
   sizeX: widgetTypeEntity.descriptor.sizeX,
   sizeY: widgetTypeEntity.descriptor.sizeY,
@@ -736,6 +738,7 @@ export const toWidgetType = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     name: widgetInfo.widgetName,
     deprecated: widgetInfo.deprecated,
     scada: widgetInfo.scada,
+    externalId: widgetInfo.externalId,
     descriptor
   };
 };

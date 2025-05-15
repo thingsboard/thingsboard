@@ -57,7 +57,7 @@ export class SignalStrengthWidgetSettingsComponent extends WidgetSettingsCompone
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...signalStrengthDefaultSettings};
+    return signalStrengthDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

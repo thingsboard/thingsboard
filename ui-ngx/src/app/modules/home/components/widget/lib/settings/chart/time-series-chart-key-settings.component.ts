@@ -19,13 +19,16 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import {
   timeSeriesChartKeyDefaultSettings,
   TimeSeriesChartKeySettings,
   TimeSeriesChartSeriesType,
   timeSeriesChartSeriesTypes,
-  timeSeriesChartSeriesTypeTranslations, TimeSeriesChartType, timeSeriesChartTypeTranslations, TimeSeriesChartYAxisId
+  timeSeriesChartSeriesTypeTranslations,
+  TimeSeriesChartType,
+  timeSeriesChartTypeTranslations,
+  TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { TimeSeriesChartWidgetSettings } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
@@ -79,8 +82,7 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
-      timeSeriesChartKeyDefaultSettings);
+    return timeSeriesChartKeyDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

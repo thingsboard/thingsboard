@@ -42,6 +42,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceM
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.queue.TbEdgeQueueAdmin;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -99,7 +100,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueAdmin vcAdmin;
     private final TbQueueAdmin housekeeperAdmin;
     private final TbQueueAdmin housekeeperReprocessingAdmin;
-    private final TbQueueAdmin edgeAdmin;
+    private final TbEdgeQueueAdmin edgeAdmin;
     private final TbQueueAdmin edgeEventAdmin;
     private final TbQueueAdmin cfAdmin;
     private final TbQueueAdmin edqsEventsAdmin;
@@ -439,9 +440,13 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     public TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> createEdgeEventMsgConsumer(TenantId tenantId, EdgeId edgeId) {
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic());
+        String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
+
+        edgeAdmin.syncEdgeNotificationsOffsets(topicService.buildTopicName("tb-core-edge-event-consumer"), topic);
+
+        consumerBuilder.topic(topic);
         consumerBuilder.clientId("tb-core-edge-event-consumer-" + serviceInfoProvider.getServiceId() + "-" + edgeConsumerCount.incrementAndGet());
-        consumerBuilder.groupId(topicService.buildTopicName("tb-core-edge-event-consumer"));
+        consumerBuilder.groupId(topic);
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToEdgeEventNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(edgeEventAdmin);
         consumerBuilder.statsService(consumerStatsService);
