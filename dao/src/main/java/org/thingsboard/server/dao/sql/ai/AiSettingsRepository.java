@@ -35,12 +35,7 @@ public interface AiSettingsRepository extends JpaRepository<AiSettingsEntity, UU
 
     Optional<AiSettingsEntity> findByTenantIdAndId(UUID tenantId, UUID id);
 
-    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.AiSettingsFields(" +
-            "ai.id, ai.createdTime, ai.tenantId, ai.version, ai.provider, ai.name, ai.model, ai.apiKey) " +
-            "FROM AiSettingsEntity ai WHERE ai.id > :id ORDER BY ai.id")
-    List<AiSettingsFields> findNextBatch(@Param("id") UUID id, Limit limit);
-
-    Long countByTenantId(UUID tenantId);
+    long countByTenantId(UUID tenantId);
 
     @Transactional
     void deleteByTenantId(UUID tenantId);
