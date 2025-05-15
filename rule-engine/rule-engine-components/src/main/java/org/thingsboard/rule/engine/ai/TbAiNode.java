@@ -53,27 +53,20 @@ import static org.thingsboard.server.dao.service.ConstraintValidator.validateFie
 )
 public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
-    private static final SystemMessage SYSTEM_MESSAGE = SystemMessage.from("""
-            Take a deep breath and work on this step by step.
-            You are an industry-leading IoT domain expert with deep experience in telemetry data analysis.
-            Your task is to complete the user-provided task or answer a question.
-            You may use additional context information called "Rule engine message payload", "Rule engine message metadata" and "Rule engine message type".
-            Your response must be in JSON format.""");
-
-    private TbAiNodeConfiguration config;
-
+    private SystemMessage systemMessage;
     private PromptTemplate userPromptTemplate;
     private ChatModel chatModel;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        config = TbNodeUtils.convert(configuration, TbAiNodeConfiguration.class);
+        var config = TbNodeUtils.convert(configuration, TbAiNodeConfiguration.class);
         String errorPrefix = "'" + ctx.getSelf().getName() + "' node configuration is invalid: ";
         try {
             validateFields(config, errorPrefix);
         } catch (DataValidationException e) {
             throw new TbNodeException(e, true);
         }
+        systemMessage = SystemMessage.from(config.getSystemPrompt());
         userPromptTemplate = PromptTemplate.from("""
                 User-provided task or question: %s
                 Rule engine message payload: {{msgPayload}}
@@ -96,7 +89,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         UserMessage userMessage = userPromptTemplate.apply(variables).toUserMessage();
 
         var chatRequest = ChatRequest.builder()
-                .messages(List.of(SYSTEM_MESSAGE, userMessage))
+                .messages(List.of(systemMessage, userMessage))
                 .responseFormat(ResponseFormat.JSON)
                 .build();
 
@@ -121,7 +114,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
     @Override
     public void destroy() {
-        config = null;
+        systemMessage = null;
         userPromptTemplate = null;
         chatModel = null;
     }

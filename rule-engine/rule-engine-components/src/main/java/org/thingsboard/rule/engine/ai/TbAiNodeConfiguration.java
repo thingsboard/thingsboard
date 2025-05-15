@@ -30,11 +30,21 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
 
     @NotBlank
     @Length(min = 1, max = 1000)
+    private String systemPrompt;
+
+    @NotBlank
+    @Length(min = 1, max = 1000)
     private String userPrompt;
 
     @Override
     public TbAiNodeConfiguration defaultConfiguration() {
         var configuration = new TbAiNodeConfiguration();
+        configuration.setSystemPrompt("""
+            Take a deep breath and work on this step by step.
+            You are an industry-leading IoT domain expert with deep experience in telemetry data analysis.
+            Your task is to complete the user-provided task or answer a question.
+            You may use additional context information called "Rule engine message payload", "Rule engine message metadata" and "Rule engine message type".
+            Your response must be in JSON format.""");
         configuration.setUserPrompt("Tell me a joke");
         return configuration;
     }
