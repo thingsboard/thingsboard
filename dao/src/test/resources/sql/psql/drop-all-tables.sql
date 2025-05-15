@@ -14,6 +14,7 @@ DROP VIEW IF EXISTS device_info_active_attribute_view CASCADE;
 DROP VIEW IF EXISTS device_info_active_ts_view CASCADE;
 DROP VIEW IF EXISTS device_info_view CASCADE;
 DROP VIEW IF EXISTS alarm_info CASCADE;
+DROP VIEW IF EXISTS edge_acitve_attribute_view CASCADE;
 
 DROP TABLE IF EXISTS admin_settings;
 DROP TABLE IF EXISTS entity_alarm;
