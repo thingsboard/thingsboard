@@ -76,6 +76,7 @@ public class DummyJobProcessor implements JobProcessor {
         return DummyTask.builder()
                 .tenantId(job.getTenantId())
                 .jobId(job.getId())
+                .key(configuration.getTasksKey())
                 .retries(configuration.getRetries())
                 .number(number)
                 .processingTimeMs(configuration.getTaskProcessingTimeMs())

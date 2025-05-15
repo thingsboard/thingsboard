@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @ToString(callSuper = true)
@@ -42,19 +44,26 @@ public class Job extends BaseData<JobId> implements HasTenantId {
     private String key;
     @NotBlank
     private String description;
+    @NotNull
     private JobStatus status;
     @NotNull
     @Valid
     private JobConfiguration configuration;
+    @NotNull
     private JobResult result;
 
-    @Builder
+    @Builder(toBuilder = true)
     public Job(TenantId tenantId, JobType type, String key, String description, JobConfiguration configuration) {
         this.tenantId = tenantId;
         this.type = type;
         this.key = key;
         this.description = description;
         this.configuration = configuration;
+        this.configuration.setTasksKey(UUID.randomUUID().toString());
+        presetResult();
+    }
+
+    public void presetResult() {
         this.result = switch (type) {
             case DUMMY -> new DummyJobResult();
         };

@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.job.JobType;
 })
 public abstract class TaskResult {
 
+    private String key;
     private boolean success;
     private boolean discarded;
 

@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.job.task.DummyTaskResult.DummyTaskFail
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.controller.AbstractControllerTest;
-import org.thingsboard.server.dao.job.JobService;
+import org.thingsboard.server.dao.job.JobDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.queue.task.JobStatsService;
 
@@ -69,7 +69,7 @@ public class JobManagerTest extends AbstractControllerTest {
     private JobStatsService jobStatsService;
 
     @Autowired
-    private JobService jobService;
+    private JobDao jobDao;
 
     @Before
     public void setUp() throws Exception {
@@ -220,7 +220,7 @@ public class JobManagerTest extends AbstractControllerTest {
                 inv.callRealMethod();
             }
             return null;
-        }).when(taskProcessor).addToDiscardedJobs(any()); // ignoring cancellation event,
+        }).when(taskProcessor).addToDiscarded(any()); // ignoring cancellation event,
         cancelJob(jobId);
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -256,7 +256,7 @@ public class JobManagerTest extends AbstractControllerTest {
 
         Thread.sleep(3000);
         verify(jobStatsService, never()).reportTaskResult(any(), any(), any());
-        assertThat(jobService.findJobsByFilter(tenantId, JobFilter.builder().build(), new PageLink(100)).getData()).isEmpty();
+        assertThat(jobDao.findByTenantIdAndFilter(tenantId, JobFilter.builder().build(), new PageLink(100)).getData()).isEmpty();
     }
 
     @Test
@@ -340,7 +340,7 @@ public class JobManagerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGeneralJobError() {
+    public void testSubmitJob_generalError() {
         int submittedTasks = 100;
         JobId jobId = jobManager.submitJob(Job.builder()
                 .tenantId(tenantId)
@@ -358,7 +358,7 @@ public class JobManagerTest extends AbstractControllerTest {
             Job job = findJobById(jobId);
             assertThat(job.getStatus()).isEqualTo(JobStatus.FAILED);
             assertThat(job.getResult().getSuccessfulCount()).isBetween(1, submittedTasks);
-            assertThat(job.getResult().getDiscardedCount()).isBetween(1, submittedTasks);
+            assertThat(job.getResult().getDiscardedCount()).isZero();
             assertThat(job.getResult().getTotalCount()).isNull();
         });
 
@@ -369,7 +369,70 @@ public class JobManagerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testJobReprocessing() throws Exception {
+    public void testSubmitJob_immediateGeneralError() {
+        JobId jobId = jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key("test-job")
+                .description("Test job")
+                .configuration(DummyJobConfiguration.builder()
+                        .generalError("Some error while submitting tasks")
+                        .submittedTasksBeforeGeneralError(0)
+                        .build())
+                .build()).getId();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.FAILED);
+            assertThat(job.getResult().getSuccessfulCount()).isZero();
+            assertThat(job.getResult().getDiscardedCount()).isZero();
+            assertThat(job.getResult().getFailedCount()).isZero();
+            assertThat(job.getResult().getTotalCount()).isNull();
+        });
+    }
+
+    @Test
+    public void testReprocessJob_generalError() throws Exception {
+        int submittedTasks = 100;
+        JobId jobId = jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key("test-job")
+                .description("Test job")
+                .configuration(DummyJobConfiguration.builder()
+                        .generalError("Some error while submitting tasks")
+                        .submittedTasksBeforeGeneralError(submittedTasks)
+                        .taskProcessingTimeMs(10)
+                        .build())
+                .build()).getId();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.FAILED);
+            assertThat(job.getResult().getGeneralError()).isEqualTo("Some error while submitting tasks");
+        });
+
+        Job savedJob = jobDao.findById(tenantId, jobId.getId());
+        DummyJobConfiguration configuration = savedJob.getConfiguration();
+        configuration.setGeneralError(null);
+        configuration.setSuccessfulTasksCount(submittedTasks);
+        jobDao.save(tenantId, savedJob);
+
+        reprocessJob(jobId);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(job.getResult().getGeneralError()).isNull();
+            assertThat(job.getResult().getSuccessfulCount()).isEqualTo(submittedTasks);
+            assertThat(job.getResult().getTotalCount()).isEqualTo(submittedTasks);
+            assertThat(job.getResult().getFailedCount()).isZero();
+            assertThat(job.getResult().getDiscardedCount()).isZero();
+        });
+    }
+
+    @Test
+    public void testReprocessJob() throws Exception {
         int successfulTasks = 3;
         int failedTasks = 2;
         int totalTasksCount = successfulTasks + failedTasks;
@@ -410,11 +473,12 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getFailedCount()).isZero();
             assertThat(job.getResult().getTotalCount()).isEqualTo(totalTasksCount);
             assertThat(job.getResult().getResults()).isEmpty();
+            assertThat(job.getConfiguration().getToReprocess()).isNullOrEmpty();
         });
     }
 
     @Test
-    public void testJobReprocessing_somePermanentlyFailed() throws Exception {
+    public void testReprocessJob_somePermanentlyFailed() throws Exception {
         int successfulTasks = 3;
         int failedTasks = 2;
         int permanentlyFailedTasks = 1;

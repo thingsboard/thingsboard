@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
-import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -305,10 +304,24 @@ public class EntityStateSourcingListener {
 
     private void onJobUpdate(Job job) {
         jobManager.ifPresent(jobManager -> jobManager.onJobUpdate(job));
-        if (job.getResult().getCancellationTs() > 0 || (job.getStatus().isOneOf(JobStatus.FAILED) && job.getResult().getGeneralError() != null)) {
-            // task processors will add this job to the list of discarded
-            tbClusterService.broadcastEntityStateChangeEvent(job.getTenantId(), job.getId(), ComponentLifecycleEvent.STOPPED);
+
+        ComponentLifecycleEvent event;
+        if (job.getResult().getCancellationTs() > 0) {
+            event = ComponentLifecycleEvent.STOPPED;
+        } else if (job.getResult().getGeneralError() != null) {
+            event = ComponentLifecycleEvent.FAILED;
+        } else {
+            return;
         }
+        ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                .tenantId(job.getTenantId())
+                .entityId(job.getId())
+                .event(event)
+                .info(JacksonUtil.newObjectNode()
+                        .put("tasksKey", job.getConfiguration().getTasksKey()))
+                .build();
+        // task processors will add this job to the list of discarded
+        tbClusterService.broadcast(msg);
     }
 
     private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {

@@ -36,7 +36,7 @@ public class JobManagerTest_EntityPartitioningStrategy extends JobManagerTest {
     }
 
     @Override
-    public void testGeneralJobError() {
+    public void testSubmitJob_generalError() {
 
     }
 

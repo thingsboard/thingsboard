@@ -1261,6 +1261,7 @@ message ComponentLifecycleMsgProto {
   int64 oldProfileIdLSB = 10;
   int64 profileIdMSB = 11;
   int64 profileIdLSB = 12;
+  optional string info = 13;
 }
 
 message EdgeEventMsgProto {

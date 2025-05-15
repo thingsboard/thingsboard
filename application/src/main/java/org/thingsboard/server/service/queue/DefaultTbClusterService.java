@@ -579,7 +579,8 @@ public class DefaultTbClusterService implements TbClusterService {
         }
     }
 
-    private void broadcast(ComponentLifecycleMsg msg) {
+    @Override
+    public void broadcast(ComponentLifecycleMsg msg) {
         ComponentLifecycleMsgProto componentLifecycleMsgProto = toProto(msg);
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
         Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);

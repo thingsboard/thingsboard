@@ -40,4 +40,6 @@ public interface JobService extends EntityDaoService {
 
     Job findLatestJobByKey(TenantId tenantId, String key);
 
+    void deleteJob(TenantId tenantId, JobId jobId);
+
 }

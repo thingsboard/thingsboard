@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.service.ConstraintValidator;
 
 import java.util.Optional;
 
@@ -119,6 +120,11 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
         boolean publishEvent = false;
         for (TaskResult taskResult : jobStats.getTaskResults()) {
+            if (!taskResult.getKey().equals(job.getConfiguration().getTasksKey())) {
+                log.debug("Ignoring task result {} with outdated key {}", taskResult, job.getConfiguration().getTasksKey());
+                continue;
+            }
+
             result.processTaskResult(taskResult);
 
             if (result.getCancellationTs() > 0) {
@@ -142,6 +148,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
                     publishEvent = true;
                 }
                 result.setFinishTs(System.currentTimeMillis());
+                job.getConfiguration().setToReprocess(null);
             }
         }
 
@@ -149,6 +156,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     }
 
     private Job saveJob(TenantId tenantId, Job job, boolean publishEvent, JobStatus prevStatus) {
+        ConstraintValidator.validateFields(job);
         job = jobDao.save(tenantId, job);
         if (publishEvent) {
             eventPublisher.publishEvent(SaveEntityEvent.builder()
@@ -184,6 +192,15 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     @Override
     public Job findLatestJobByKey(TenantId tenantId, String key) {
         return jobDao.findLatestByTenantIdAndKey(tenantId, key);
+    }
+
+    @Override
+    public void deleteJob(TenantId tenantId, JobId jobId) {
+        Job job = findJobById(tenantId, jobId);
+        if (!job.getStatus().isOneOf(CANCELLED, COMPLETED, FAILED)) {
+            throw new IllegalArgumentException("Job must be cancelled, completed or failed");
+        }
+        jobDao.removeById(tenantId, jobId.getId());
     }
 
     private Job findForUpdate(TenantId tenantId, JobId jobId) {

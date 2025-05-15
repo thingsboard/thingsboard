@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.job.task;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.thingsboard.server.common.data.job.JobType;
 
@@ -25,29 +26,34 @@ import org.thingsboard.server.common.data.job.JobType;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @SuperBuilder
+@ToString(callSuper = true)
 public class DummyTaskResult extends TaskResult {
-
-    private static final DummyTaskResult SUCCESS = DummyTaskResult.builder().success(true).build();
-    private static final DummyTaskResult DISCARDED = DummyTaskResult.builder().discarded(true).build();
 
     private DummyTaskFailure failure;
 
-    public static DummyTaskResult success() {
-        return SUCCESS;
+    public static DummyTaskResult success(DummyTask task) {
+        return DummyTaskResult.builder()
+                .key(task.getKey())
+                .success(true)
+                .build();
     }
 
     public static DummyTaskResult failed(DummyTask task, Throwable error) {
-        DummyTaskResult result = new DummyTaskResult();
-        result.setFailure(DummyTaskFailure.builder()
-                .error(error.getMessage())
-                .number(task.getNumber())
-                .failAlways(task.isFailAlways())
-                .build());
-        return result;
+        return DummyTaskResult.builder()
+                .key(task.getKey())
+                .failure(DummyTaskFailure.builder()
+                        .error(error.getMessage())
+                        .number(task.getNumber())
+                        .failAlways(task.isFailAlways())
+                        .build())
+                .build();
     }
 
-    public static DummyTaskResult discarded() {
-        return DISCARDED;
+    public static DummyTaskResult discarded(DummyTask task) {
+        return DummyTaskResult.builder()
+                .key(task.getKey())
+                .discarded(true)
+                .build();
     }
 
     @Override

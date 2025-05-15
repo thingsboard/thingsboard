@@ -68,7 +68,9 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
     private MainQueueConsumerManager<TbProtoQueueMsg<TaskProto>, QueueConfig> taskConsumer;
     private final ExecutorService taskExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(getJobType().name().toLowerCase() + "-task-processor"));
 
-    private final SetCache<UUID> discardedJobs = new SetCache<>(TimeUnit.MINUTES.toMillis(60));
+    private final SetCache<String> discarded = new SetCache<>(TimeUnit.MINUTES.toMillis(60));
+    private final SetCache<String> failed = new SetCache<>(TimeUnit.MINUTES.toMillis(60));
+
     private final SetCache<UUID> deletedTenants = new SetCache<>(TimeUnit.MINUTES.toMillis(60));
 
     @PostConstruct
@@ -98,9 +100,13 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
         EntityId entityId = event.getEntityId();
         switch (entityId.getEntityType()) {
             case JOB -> {
+                String tasksKey = event.getInfo().get("tasksKey").asText();
                 if (event.getEvent() == ComponentLifecycleEvent.STOPPED) {
-                    log.info("Adding job {} to discarded", entityId);
-                    addToDiscardedJobs(entityId.getId());
+                    log.info("Adding job {} ({}) to discarded", entityId, tasksKey);
+                    addToDiscarded(tasksKey);
+                } else if (event.getEvent() == ComponentLifecycleEvent.FAILED) {
+                    log.info("Adding job {} ({}) to failed", entityId, tasksKey);
+                    failed.add(tasksKey);
                 }
             }
             case TENANT -> {
@@ -117,14 +123,18 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
             try {
                 @SuppressWarnings("unchecked")
                 T task = (T) JacksonUtil.fromString(msg.getValue().getValue(), Task.class);
-                if (discardedJobs.contains(task.getJobId().getId())) {
-                    log.debug("Skipping task for cancelled job {}: {}", task.getJobId(), task);
+                if (discarded.contains(task.getKey())) {
+                    log.debug("Skipping task for discarded job {}: {}", task.getJobId(), task);
                     reportTaskDiscarded(task);
+                    continue;
+                } else if (failed.contains(task.getKey())) {
+                    log.debug("Skipping task for failed job {}: {}", task.getJobId(), task);
                     continue;
                 } else if (deletedTenants.contains(task.getTenantId().getId())) {
                     log.debug("Skipping task for deleted tenant {}: {}", task.getTenantId(), task);
                     continue;
                 }
+
                 processTask(task);
             } catch (InterruptedException e) {
                 throw e;
@@ -185,8 +195,8 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
         statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
     }
 
-    public void addToDiscardedJobs(UUID jobId) {
-        discardedJobs.add(jobId);
+    public void addToDiscarded(String tasksKey) {
+        discarded.add(tasksKey);
     }
 
     protected <V> V wait(Future<V> future) throws Exception {

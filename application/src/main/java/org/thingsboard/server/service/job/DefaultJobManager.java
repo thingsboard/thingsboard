@@ -18,6 +18,7 @@ package org.thingsboard.server.service.job;
 import jakarta.annotation.PreDestroy;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -178,26 +179,29 @@ public class DefaultJobManager implements JobManager {
 
         JobResult result = job.getResult();
         if (result.getGeneralError() != null) {
-            throw new IllegalArgumentException("Reprocessing not allowed since job has general error");
+            job.presetResult();
+        } else {
+            List<TaskResult> taskFailures = result.getResults().stream()
+                    .filter(taskResult -> !taskResult.isSuccess() && !taskResult.isDiscarded())
+                    .toList();
+            if (result.getFailedCount() > taskFailures.size()) {
+                throw new IllegalArgumentException("Reprocessing not allowed since there are too many failures (more than " + taskFailures.size() + ")");
+            }
+            result.setFailedCount(0);
+            result.setResults(result.getResults().stream()
+                    .filter(TaskResult::isSuccess)
+                    .toList());
+            job.getConfiguration().setToReprocess(taskFailures);
         }
-        List<TaskResult> taskFailures = result.getResults().stream()
-                .filter(taskResult -> !taskResult.isSuccess() && !taskResult.isDiscarded())
-                .toList();
-        if (result.getFailedCount() > taskFailures.size()) {
-            throw new IllegalArgumentException("Reprocessing not allowed since there are too many failures (more than " + taskFailures.size() + ")");
-        }
-
-        result.setFailedCount(0);
-        result.setResults(result.getResults().stream()
-                .filter(TaskResult::isSuccess)
-                .toList());
-
-        job.getConfiguration().setToReprocess(taskFailures);
-
+        job.getConfiguration().setTasksKey(UUID.randomUUID().toString());
         jobService.saveJob(tenantId, job);
     }
 
     private void submitTask(Task<?> task) {
+        if (ObjectUtils.anyNull(task.getTenantId(), task.getJobId(), task.getKey())) {
+            throw new IllegalArgumentException("Task " + task + " missing required fields");
+        }
+
         log.debug("[{}][{}] Submitting task: {}", task.getTenantId(), task.getJobId(), task);
         TaskProto taskProto = TaskProto.newBuilder()
                 .setValue(JacksonUtil.toString(task))

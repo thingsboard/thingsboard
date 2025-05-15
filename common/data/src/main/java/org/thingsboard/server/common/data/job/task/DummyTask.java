@@ -46,7 +46,7 @@ public class DummyTask extends Task<DummyTaskResult> {
 
     @Override
     public DummyTaskResult toDiscarded() {
-        return DummyTaskResult.discarded();
+        return DummyTaskResult.discarded(this);
     }
 
     @Override

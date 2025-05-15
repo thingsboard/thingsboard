@@ -139,6 +139,9 @@ public class ProtoUtils {
         if (msg.getOldName() != null) {
             builder.setOldName(msg.getOldName());
         }
+        if (msg.getInfo() != null) {
+            builder.setInfo(JacksonUtil.toString(msg.getInfo()));
+        }
         return builder.build();
     }
 
@@ -165,6 +168,9 @@ public class ProtoUtils {
         if (proto.getOldProfileIdMSB() != 0 || proto.getOldProfileIdLSB() != 0) {
             var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
             builder.oldProfileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB())));
+        }
+        if (proto.hasInfo()) {
+            builder.info(JacksonUtil.toJsonNode(proto.getInfo()));
         }
         return builder.build();
     }
