@@ -48,6 +48,7 @@ public interface LwM2mUplinkMsgHandler {
     void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response);
 
     void onUpdateValueAfterReadCompositeResponse(Registration registration, ReadCompositeResponse response);
+
     void onErrorObservation(Registration registration, String errorMsg);
 
     void onUpdateValueWithSendRequest(Registration registration, TimestampedLwM2mNodes data);
@@ -66,7 +67,7 @@ public interface LwM2mUplinkMsgHandler {
 
     void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request, int code);
 
-    void onCreateResponseOk(LwM2mClient client, String path, CreateRequest request);
+    void onCreatebjectInstancesResponseOk(LwM2mClient client, String path, CreateRequest request);
 
     void onWriteCompositeResponseOk(LwM2mClient client, WriteCompositeRequest request, int code);
 

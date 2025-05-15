@@ -15,18 +15,20 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Data
-public class ParametersAnalyzeResult {
-    Set<String> pathPostParametersAdd;
-    Set<String> pathPostParametersDel;
+@AllArgsConstructor
+public class ResourceUpdateResult {
+    private LwM2mClient lwM2MClient;
+    private Set<String> paths;
 
-    public ParametersAnalyzeResult() {
-        this.pathPostParametersAdd = ConcurrentHashMap.newKeySet();
-        this.pathPostParametersDel = ConcurrentHashMap.newKeySet();
+    public ResourceUpdateResult(LwM2mClient lwM2MClient) {
+        this.lwM2MClient = lwM2MClient;
+        this.paths = new HashSet<>();
     }
 }

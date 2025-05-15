@@ -85,7 +85,7 @@
             <mat-error *ngIf="lambdaConfigForm.get('connectionTimeout').hasError('min')">
               {{ 'rule-node-config.connection-timeout-min' | translate }}
             </mat-error>
-            <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+            <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
                       color="primary"
                       matTooltip="{{ 'rule-node-config.connection-timeout-hint' | translate }}">help</mat-icon>
           </mat-form-field>
@@ -98,7 +98,7 @@
             <mat-error *ngIf="lambdaConfigForm.get('requestTimeout').hasError('min')">
               {{ 'rule-node-config.request-timeout-min' | translate }}
             </mat-error>
-            <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+            <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
                       color="primary"
                       matTooltip="{{ 'rule-node-config.request-timeout-hint' | translate }}">help</mat-icon>
           </mat-form-field>

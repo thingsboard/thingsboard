@@ -3,7 +3,7 @@
   "description": "Long vertical connector with an optional directional arrow to visually indicate flow.",
   "widgetSizeX": 1,
   "widgetSizeY": 2,
-  "stateRenderFunction": "const {\n    flowAnimation,\n    arrowDirection: flowDirection,\n    flowAnimationSpeed\n} = ctx.values;\nconst {\n    flowAnimationWidth: lineWidth,\n    flowAnimationColor: lineColor,\n    flowStyleDash: dashWidth,\n    flowStyleGap: dashGap,\n    flowDashCap: dashCap\n} = ctx.properties;\nconst line = ctx.tags.line[0].attr('d');\nconst animation = ctx.tags.animationGroup[0];\nconst offset = Date.now() % 1000;\nconst duration = 1 / flowAnimationSpeed;\n\nconst prevFlowAnimation = animation.remember('flowAnimation');\nconst prevFlowDirection = animation.remember('flowDirection');\nconst prevFlowDuration = animation.remember('flowDuration');\n\nif (flowAnimation && flowAnimation !== prevFlowAnimation) {\n    animation.remember('flowAnimation', flowAnimation);\n    animation.remember('flowDuration', duration);\n    animation.remember('flowDirection', flowDirection);\n    animateFlow(offset, flowDirection);\n} else if (flowAnimation && flowDirection !== prevFlowDirection) {\n    animation.remember('flowDirection', flowDirection);\n    animateFlow(offset, flowDirection);\n} else if (flowAnimation && duration !== prevFlowDuration) {\n    animation.remember('flowDuration', duration);\n    animation.findOne('animate').attr('dur', `${duration}s`) ;\n} else if (!flowAnimation && prevFlowAnimation) {\n    animation.remember('flowAnimation', null);\n    animation.clear();\n}\n\nfunction animateFlow(offset, flowDirection) {\n    animation.clear();\n    const dashArray = `${dashWidth}${dashGap ? ` ${dashGap}` : ''}`;\n    const value = flowDirection ? `${dashWidth + (dashGap || dashWidth)}` : `-${dashWidth + (dashGap || dashWidth)}`;\n\n    animation.add(`<path style=\"stroke-dasharray: ${dashArray}; stroke-linecap: ${dashCap}; stroke-dashoffset: 0;\" d=\"${line}\" stroke-miterlimit=\"10\" fill=\"none\" stroke=\"${lineColor}\" stroke-width=\"${lineWidth}\"><animate attributeName=\"stroke-dashoffset\" values=\"${value};0\" dur=\"${duration}s\" begin=\"-${offset}ms\" calcMode=\"linear\" repeatCount=\"indefinite\" /></path>`);\n}\n",
+  "stateRenderFunction": "const {\n    flowAnimation,\n    arrowDirection: flowDirection,\n    flowAnimationSpeed\n} = ctx.values;\nconst {\n    flowAnimationWidth: lineWidth,\n    flowAnimationColor: lineColor,\n    flowStyleDash: dashWidth,\n    flowStyleGap: dashGap,\n    flowDashCap: dashCap\n} = ctx.properties;\nconst line = ctx.tags.line[0].attr('d');\nconst lineReversed = 'M 100,0 V 400';\nconst animation = ctx.tags.animationGroup[0];\nconst duration = 1 / flowAnimationSpeed;\n\nlet animateFlow = ctx.api.connectorAnimation(animation);\n\nif (flowAnimation) {\n    if (!animateFlow) {\n        animateFlow = ctx.api.connectorAnimate(animation, line, lineReversed).flowAppearance(lineWidth, lineColor, dashCap, dashWidth, dashGap).duration(duration).direction(flowDirection).play();\n    } else {\n        animateFlow.duration(duration).direction(flowDirection).play();\n    }\n} else {\n    if (animateFlow) {\n        animateFlow.finish();\n    }\n}\n\n",
   "tags": [
     {
       "tag": "arrow",
@@ -12,7 +12,7 @@
     },
     {
       "tag": "line",
-      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nif (ctx.properties.mainLine) {\n    element.attr({'stroke-width': ctx.properties.mainLineSize});\n} else {\n    element.attr({'stroke-width': ctx.properties.secondaryLineSize});\n}",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nelement.attr({'stroke-width': ctx.properties.mainLineSize});",
       "actions": null
     }
   ],
@@ -27,41 +27,6 @@
       "trueLabel": "{i18n:scada.symbol.present}",
       "falseLabel": "{i18n:scada.symbol.absent}",
       "stateLabel": "{i18n:scada.symbol.arrow-present}",
-      "defaultGetValueSettings": {
-        "action": "DO_NOTHING",
-        "defaultValue": true,
-        "executeRpc": {
-          "method": "getState",
-          "requestTimeout": 5000,
-          "requestPersistent": false,
-          "persistentPollingInterval": 1000
-        },
-        "getAttribute": {
-          "scope": null,
-          "key": "state"
-        },
-        "getTimeSeries": {
-          "key": "state"
-        },
-        "dataToValue": {
-          "type": "NONE",
-          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
-          "compareToValue": true
-        }
-      },
-      "defaultSetValueSettings": null,
-      "defaultWidgetActionSettings": null
-    },
-    {
-      "id": "arrowDirection",
-      "name": "{i18n:scada.symbol.arrow-direction}",
-      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
-      "group": null,
-      "type": "value",
-      "valueType": "BOOLEAN",
-      "trueLabel": "{i18n:scada.symbol.forward}",
-      "falseLabel": "{i18n:scada.symbol.reverse}",
-      "stateLabel": "{i18n:scada.symbol.forward}",
       "defaultGetValueSettings": {
         "action": "DO_NOTHING",
         "defaultValue": true,
@@ -127,6 +92,41 @@
       "defaultWidgetActionSettings": null
     },
     {
+      "id": "arrowDirection",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": "{i18n:scada.symbol.forward}",
+      "falseLabel": "{i18n:scada.symbol.reverse}",
+      "stateLabel": "{i18n:scada.symbol.forward}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": true,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
       "id": "flowAnimationSpeed",
       "name": "{i18n:scada.symbol.flow-animation-speed}",
       "hint": "{i18n:scada.symbol.flow-animation-speed-hint}",
@@ -167,35 +167,12 @@
   ],
   "properties": [
     {
-      "id": "mainLine",
-      "name": "{i18n:scada.symbol.main-line}",
-      "type": "switch",
-      "default": true,
-      "disabled": false,
-      "visible": true
-    },
-    {
       "id": "mainLineSize",
       "name": "{i18n:scada.symbol.line}",
       "type": "number",
       "default": 6,
       "required": true,
-      "subLabel": "Main",
-      "divider": true,
-      "fieldSuffix": "px",
-      "min": 0,
-      "max": 99,
-      "step": 1,
-      "disabled": false,
-      "visible": true
-    },
-    {
-      "id": "secondaryLineSize",
-      "name": "{i18n:scada.symbol.line}",
-      "type": "number",
-      "default": 2,
-      "required": true,
-      "subLabel": "Secondary",
+      "divider": false,
       "fieldSuffix": "px",
       "min": 0,
       "max": 99,
@@ -205,7 +182,7 @@
     },
     {
       "id": "lineColor",
-      "name": "{i18n:scada.symbol.line-color}",
+      "name": "{i18n:scada.symbol.line}",
       "type": "color",
       "default": "#1A1A1A",
       "disabled": false,
@@ -213,11 +190,11 @@
     },
     {
       "id": "flowAnimationWidth",
-      "name": "{i18n:scada.symbol.flow}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "number",
       "default": 4,
-      "subLabel": "Width",
+      "divider": false,
       "fieldSuffix": "px",
       "min": 1,
       "step": 1,
@@ -226,20 +203,23 @@
     },
     {
       "id": "flowAnimationColor",
-      "name": "{i18n:scada.symbol.flow}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "color",
-      "default": "#C8DFF7"
+      "default": "#C8DFF7",
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "flowStyleDash",
-      "name": "{i18n:scada.symbol.flow-style}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line-style}",
+      "hint": "{i18n:scada.symbol.flow-style-hint}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "number",
       "default": 10,
       "required": true,
       "subLabel": "{i18n:scada.symbol.dash}",
-      "divider": true,
+      "divider": false,
       "fieldSuffix": "px",
       "min": 0,
       "step": 1,
@@ -248,21 +228,20 @@
     },
     {
       "id": "flowStyleGap",
-      "name": "{i18n:scada.symbol.flow-style}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line-style}",
+      "hint": "{i18n:scada.symbol.flow-style-hint}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "number",
       "default": 10,
       "subLabel": "{i18n:scada.symbol.gap}",
       "fieldSuffix": "px",
-      "min": 1,
-      "step": 1,
-      "disabled": false,
-      "visible": true
+      "min": 0,
+      "step": 1
     },
     {
       "id": "flowDashCap",
       "name": "{i18n:scada.symbol.flow-dash-cap}",
-      "group": "{i18n:scada.symbol.animation}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "select",
       "default": "butt",
       "items": [
@@ -284,5 +263,5 @@
     }
   ]
 }]]></tb:metadata>
-<path d="m100 400v-400" stroke="#1A1A1A" stroke-width="6" tb:tag="line"/><path d="m100 171 29 58h-58l29-58z" fill="#1A1A1A" tb:tag="arrow"/><g tb:tag="animationGroup"/>
+<path d="M 100,400 V 0" stroke="#1A1A1A" stroke-width="6" tb:tag="line"/><path d="m100 171 29 58h-58l29-58z" fill="#1A1A1A" tb:tag="arrow"/><g tb:tag="animationGroup"/>
 </svg>

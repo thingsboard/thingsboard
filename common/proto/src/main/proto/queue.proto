@@ -20,6 +20,8 @@ package transport;
 option java_package = "org.thingsboard.server.gen.transport";
 option java_outer_classname = "TransportProtos";
 
+import "tbmsg.proto";
+
 /**
  * Common data structures
  */
@@ -127,7 +129,8 @@ message SessionInfoProto {
 message RestApiCallResponseMsgProto {
   int64 requestIdMSB = 1;
   int64 requestIdLSB = 2;
-  bytes response = 5;
+  bytes response = 5 [deprecated = true];
+  msgqueue.TbMsgProto responseProto = 6;
 }
 
 enum SessionEvent {
@@ -1703,9 +1706,10 @@ message ToCalculatedFieldNotificationMsg {
 message ToRuleEngineMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  bytes tbMsg = 3;
+  bytes tbMsg = 3 [deprecated = true]; // for removal in 4.2
   repeated string relationTypes = 4;
   string failureMessage = 5;
+  msgqueue.TbMsgProto tbMsgProto = 6;
 }
 
 message ToRuleEngineNotificationMsg {

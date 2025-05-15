@@ -52,6 +52,7 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryMappingConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.NoSecLwM2MBootstrapServerCredential;
@@ -89,10 +90,15 @@ import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.COMPOSITE_ALL;
+import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.COMPOSITE_BY_OBJECT;
+import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.SINGLE;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_INIT;
@@ -179,21 +185,97 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "  }";
 
     public static  String TELEMETRY_WITH_MANY_OBSERVE =
+            "    {\n" +
+                    "    \"keyName\": {\n" +
+                    "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                    "      \"/3_1.2/0/20\": \"batteryStatus\"\n" +
+                    "    },\n" +
+                    "    \"observe\": [\n" +
+                    "      \"/3_1.2/0/9\",\n" +
+                    "      \"/3_1.2/0/20\"\n" +
+                    "    ],\n" +
+                    "    \"attribute\": [],\n" +
+                    "    \"telemetry\": [\n" +
+                    "      \"/3_1.2/0/9\",\n" +
+                    "      \"/3_1.2/0/20\"\n" +
+                    "    ],\n" +
+                    "    \"attributeLwm2m\": {},\n" +
+                    "    \"observeStrategy\": 0\n" +
+                    "  }";
+
+    public static  String TELEMETRY_WITH_SINGLE_PARAMS_OBJECT_ID_5_ID_3 =
+            "    {\n" +
+                    "    \"keyName\": {\n" +
+                    "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                    "      \"/5_1.2/0/3\": \"state\",\n" +
+                    "      \"/5_1.2/0/5\": \"updateResult\",\n" +
+                    "      \"/5_1.2/0/6\": \"pkgname\",\n" +
+                    "      \"/5_1.2/0/7\": \"pkgversion\",\n" +
+                    "      \"/5_1.2/0/9\": \"firmwareUpdateDeliveryMethod\"\n" +
+                    "    },\n" +
+                    "    \"observe\": [\n" +
+                    "      \"/3_1.2/0/9\",\n" +
+                    "      \"/5_1.2/0/3\",\n" +
+                    "      \"/5_1.2/0/5\",\n" +
+                    "      \"/5_1.2/0/6\",\n" +
+                    "      \"/5_1.2/0/7\",\n" +
+                    "      \"/5_1.2/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"attribute\": [],\n" +
+                    "    \"telemetry\": [\n" +
+                    "      \"/3_1.2/0/9\",\n" +
+                    "      \"/5_1.2/0/3\",\n" +
+                    "      \"/5_1.2/0/5\",\n" +
+                    "      \"/5_1.2/0/6\",\n" +
+                    "      \"/5_1.2/0/7\",\n" +
+                    "      \"/5_1.2/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"attributeLwm2m\": {},\n" +
+                    "    \"observeStrategy\": 0\n" +
+                    "  }";
+
+    public static  String TELEMETRY_WITH_COMPOSITE_ALL_OBSERVE_ID_3_ID_19 =
                "    {\n" +
                        "    \"keyName\": {\n" +
                        "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
-                       "      \"/3_1.2/0/20\": \"batteryStatus\"\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
+                       "      \"/19_1.1/0/2\": \"dataCreationTime\"\n" +
                        "    },\n" +
                        "    \"observe\": [\n" +
                        "      \"/3_1.2/0/9\",\n" +
-                       "      \"/3_1.2/0/20\"\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
                        "    ],\n" +
                        "    \"attribute\": [],\n" +
                        "    \"telemetry\": [\n" +
                        "      \"/3_1.2/0/9\",\n" +
-                       "      \"/3_1.2/0/20\"\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
                        "    ],\n" +
-                       "    \"attributeLwm2m\": {}\n" +
+                       "    \"attributeLwm2m\": {},\n" +
+                       "    \"observeStrategy\": 1\n" +
+                       "  }";
+
+    public static  String TELEMETRY_WITH_COMPOSITE_BY_OBJECT_OBSERVE_ID_3_ID_5_ID_19 =
+               "    {\n" +
+                       "    \"keyName\": {\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
+                       "      \"/5_1.2/0/6\": \"pkgname\",\n" +
+                       "      \"/19_1.1/0/2\": \"dataCreationTime\"\n" +
+                       "    },\n" +
+                       "    \"observe\": [\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/5_1.2/0/6\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
+                       "    ],\n" +
+                       "    \"attribute\": [],\n" +
+                       "    \"telemetry\": [\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/5_1.2/0/6\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
+                       "    ],\n" +
+                       "    \"attributeLwm2m\": {},\n" +
+                       "    \"observeStrategy\": 2\n" +
                        "  }";
 
     public static final String CLIENT_LWM2M_SETTINGS =
@@ -208,6 +290,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    \"pagingTransmissionWindow\": null,\n" +
                     "    \"clientOnlyObserveAfterConnect\": 1\n" +
                     "  }";
+
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccessUpdate = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS, ON_UPDATE_STARTED, ON_UPDATE_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
@@ -247,11 +330,12 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         }
     }
 
-    public void basicTestConnectionObserveTelemetry(Security security,
-                                                    LwM2MDeviceCredentials deviceCredentials,
-                                                    String endpoint,
-                                                    boolean queueMode) throws Exception {
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITHOUT_OBSERVE, getBootstrapServerCredentialsNoSec(NONE));
+    public void basicTestConnectionObserveSingleTelemetry(Security security,
+                                                          LwM2MDeviceCredentials deviceCredentials,
+                                                          String endpoint,
+                                                          boolean queueMode,
+                                                          boolean isUpdateProfile) throws Exception {
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_ONE_OBSERVE, getBootstrapServerCredentialsNoSec(NONE));
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
         Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
 
@@ -268,7 +352,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
         getWsClient().registerWaitForUpdate();
         this.createNewClient(security, null, false, endpoint, null, queueMode, device.getId().getId().toString());
-        awaitObserveReadAll(0, lwM2MTestClient.getDeviceIdStr());
+        awaitObserveReadAll(1, lwM2MTestClient.getDeviceIdStr());
         String msg = getWsClient().waitForUpdate();
 
         EntityDataUpdate update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
@@ -279,13 +363,127 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
         Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
         var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
-        Assert.assertThat(Long.parseLong(tsValue.getValue()), instanceOf(Long.class));
+        assertThat(Long.parseLong(tsValue.getValue()), instanceOf(Long.class));
         int expectedMax = 50;
         int expectedMin = 5;
         Assert.assertTrue(expectedMax >= Long.parseLong(tsValue.getValue()));
         Assert.assertTrue(expectedMin <= Long.parseLong(tsValue.getValue()));
+        if (isUpdateProfile) {
+            String actualResultReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
+            String expectedReadAll = "[\"SingleObservation:/3/0/9\"]";
+            assertEquals(expectedReadAll, actualResultReadAll);
 
+            updateProfile(deviceProfile, TELEMETRY_WITH_SINGLE_PARAMS_OBJECT_ID_5_ID_3, SINGLE);
+            awaitObserveReadAll(6, lwM2MTestClient.getDeviceIdStr());
+            String expectedReadAll_3_9 = "\"SingleObservation:/3/0/9\"";
+            String expectedReadAll_5_5 = "\"SingleObservation:/5/0/5\"";
+            String expectedReadAll_5_6 = "\"SingleObservation:/5/0/6\"";
+            String expectedReadAll_5_7 = "\"SingleObservation:/5/0/7\"";
+            String expectedReadAll_5_9 = "\"SingleObservation:/5/0/9\"";
+            actualResultReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
+            assertTrue(expectedReadAll, actualResultReadAll.contains(expectedReadAll_3_9));
+            assertTrue(expectedReadAll, actualResultReadAll.contains(expectedReadAll_5_5));
+            assertTrue(expectedReadAll, actualResultReadAll.contains(expectedReadAll_5_6));
+            assertTrue(expectedReadAll, actualResultReadAll.contains(expectedReadAll_5_7));
+            assertTrue(expectedReadAll, actualResultReadAll.contains(expectedReadAll_5_9));
 
+            updateProfile(deviceProfile, TELEMETRY_WITH_MANY_OBSERVE, SINGLE);
+            awaitObserveReadAll(2, lwM2MTestClient.getDeviceIdStr());
+            String expectedReadAll_3_20 = "\"SingleObservation:/3/0/20\"";
+            actualResultReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
+            assertTrue(expectedReadAll, actualResultReadAll.contains(expectedReadAll_3_9));
+            assertTrue(expectedReadAll, actualResultReadAll.contains(expectedReadAll_3_20));
+        }
+    }
+
+    public void basicTestConnectionObserveCompositeTelemetry(Security security,
+                                                    LwM2MDeviceCredentials deviceCredentials,
+                                                    String endpoint,
+                                                    Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
+                                                    int cntObserve,
+                                                    int varTest) throws Exception {
+
+        DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
+        Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
+
+        SingleEntityFilter sef = new SingleEntityFilter();
+        sef.setSingleEntity(device.getId());
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        String key1 = "pkgname";
+        String key2 = "pkgversion";
+        String key3 = "batteryLevel";
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, key1)));
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, key2)));
+        EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+
+        EntityDataCmd cmd = new EntityDataCmd(3, edq, null, latestCmd, null);
+        getWsClient().send(cmd);
+        getWsClient().waitForReply();
+
+        getWsClient().registerWaitForUpdate();
+        this.createNewClient(security, null, false, endpoint, null, true, device.getId().getId().toString());
+        awaitObserveReadAll(cntObserve, lwM2MTestClient.getDeviceIdStr());
+        String msg = getWsClient().waitForUpdate();
+
+        EntityDataUpdate update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
+        Assert.assertEquals(3, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        var tsValue1 = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get(key1);
+        var tsValue2 = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get(key2);
+        var tsValue3 = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get(key3);
+        var value = tsValue1 != null ? tsValue1.getValue() : tsValue2.getValue();
+        if (tsValue3 != null) {
+            assertThat(Long.parseLong(tsValue3.getValue()), instanceOf(Long.class));
+            int expectedMax = 50;
+            int expectedMin = 5;
+            Assert.assertTrue(expectedMax >= Long.parseLong(tsValue3.getValue()));
+            Assert.assertTrue(expectedMin <= Long.parseLong(tsValue3.getValue()));
+        } else {
+            assertNotNull(value);
+        }
+
+        String expectedReadAll;
+        String actualResultReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
+        if (varTest == 0) {
+            expectedReadAll = "[\"CompositeObservation: [/5/0/9, /3/0/9, /5/0/5, /5/0/6, /5/0/7, /5/0/3]\"]";
+            assertEquals(expectedReadAll, actualResultReadAll);
+            updateProfile(deviceProfile, TELEMETRY_WITH_COMPOSITE_ALL_OBSERVE_ID_3_ID_19, COMPOSITE_ALL);
+            awaitObserveReadAll(1, lwM2MTestClient.getDeviceIdStr());
+            expectedReadAll = "[\"CompositeObservation: [/19/0/2, /3/0/20, /3/0/9]\"]";
+            actualResultReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
+            assertEquals(expectedReadAll, actualResultReadAll);
+        } else if (varTest == 1) {
+            String expectedReadAll3 = "\"CompositeObservation: [/3/0/9]\"";
+            String expectedReadAll5 = "\"CompositeObservation: [/5/0/9, /5/0/5, /5/0/6, /5/0/7, /5/0/3]\"";
+            assertTrue(actualResultReadAll.contains(expectedReadAll3));
+            assertTrue(actualResultReadAll.contains(expectedReadAll5));
+            updateProfile(deviceProfile, TELEMETRY_WITH_COMPOSITE_BY_OBJECT_OBSERVE_ID_3_ID_5_ID_19, COMPOSITE_BY_OBJECT);
+            awaitObserveReadAll(3, lwM2MTestClient.getDeviceIdStr());
+            String expectedReadAll_3 = "\"CompositeObservation: [/3/0/20]\"";
+            String expectedReadAll_5 = "\"CompositeObservation: [/3/0/20]\"";
+            String expectedReadAll_19 = "\"CompositeObservation: [/19/0/2]\"";
+            actualResultReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
+            assertTrue(actualResultReadAll.contains(expectedReadAll_3));
+            assertTrue(actualResultReadAll.contains(expectedReadAll_5));
+            assertTrue(actualResultReadAll.contains(expectedReadAll_19));
+        } else if (varTest == 2) {
+            String expectedReadAll3 = "\"CompositeObservation: [/3/0/9]\"";
+            String expectedReadAll5 = "\"CompositeObservation: [/5/0/9, /5/0/5, /5/0/6, /5/0/7, /5/0/3]\"";
+            assertTrue(actualResultReadAll.contains(expectedReadAll3));
+            assertTrue(actualResultReadAll.contains(expectedReadAll5));
+            updateProfile(deviceProfile, TELEMETRY_WITH_MANY_OBSERVE, SINGLE);
+            awaitObserveReadAll(2, lwM2MTestClient.getDeviceIdStr());
+            String expectedReadAll_3_9 = "\"SingleObservation:/3/0/9\"";
+            String expectedReadAll_3_20 = "\"SingleObservation:/3/0/20\"";
+            actualResultReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
+            assertTrue(actualResultReadAll.contains(expectedReadAll_3_9));
+            assertTrue(actualResultReadAll.contains(expectedReadAll_3_20));
+        }
     }
 
     protected DeviceProfile createLwm2mDeviceProfile(String name, Lwm2mDeviceProfileTransportConfiguration transportConfiguration) throws Exception {
@@ -306,6 +504,14 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         lwm2mDeviceProfile = doPost("/api/deviceProfile", lwm2mDeviceProfile, DeviceProfile.class);
         Assert.assertNotNull(lwm2mDeviceProfile);
         return lwm2mDeviceProfile;
+    }
+
+    protected void updateProfile(DeviceProfile deviceProfile, String telemetryObserve, TelemetryObserveStrategy telemetryObserveStrategy)  throws Exception  {
+        Lwm2mDeviceProfileTransportConfiguration  transportConfiguration = getTransportConfiguration(telemetryObserve, getBootstrapServerCredentialsNoSec(NONE));
+        transportConfiguration.getObserveAttr().setObserveStrategy(telemetryObserveStrategy);
+        DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + deviceProfile.getId().getId().toString(), DeviceProfile.class);
+        foundDeviceProfile.getProfileData().setTransportConfiguration(transportConfiguration);
+        doPost("/api/deviceProfile", foundDeviceProfile, DeviceProfile.class);
     }
 
     protected Device createLwm2mDevice(LwM2MDeviceCredentials credentials, String endpoint, DeviceProfileId deviceProfileId) throws Exception {
