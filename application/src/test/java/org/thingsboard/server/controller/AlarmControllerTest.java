@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +58,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
@@ -306,6 +309,21 @@ public class AlarmControllerTest extends AbstractControllerTest {
                 .andExpect(statusReason(containsString(msgErrorPermission)));
 
         testNotifyEntityNever(alarm.getId(), alarm);
+    }
+
+    @Test
+    public void testDeleteNonExistentAlarm() throws Exception {
+        loginTenantAdmin();
+
+        var nonExistentAlarmId = Uuids.timeBased();
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        doDelete("/api/alarm/" + nonExistentAlarmId)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is("Alarm with id [" + nonExistentAlarmId + "] is not found")));
+
+        verifyNoInteractions(tbClusterService, auditLogService);
     }
 
     @Test
@@ -634,12 +652,12 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
 
-         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
-             AlarmInfo alarmInfo = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
-             Assert.assertNotNull(alarmInfo);
-             Assert.assertNull(alarmInfo.getAssigneeId());
-             Assert.assertTrue(alarmInfo.getAssignTs() >= afterAssignmentTs);
-         });
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            AlarmInfo alarmInfo = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+            Assert.assertNotNull(alarmInfo);
+            Assert.assertNull(alarmInfo.getAssigneeId());
+            Assert.assertTrue(alarmInfo.getAssignTs() >= afterAssignmentTs);
+        });
     }
 
     @Test

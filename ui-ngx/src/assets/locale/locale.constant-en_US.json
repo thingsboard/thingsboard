@@ -545,7 +545,11 @@
         "slack-settings": "Slack settings",
         "mobile-settings": "Mobile settings",
         "firebase-service-account-file": "Firebase service account credentials JSON file",
-        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or "
+        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or ",
+        "trendz": "Trendz",
+        "trendz-settings": "Trendz settings",
+        "trendz-url": "Trendz URL",
+        "trendz-enable": "Enable Trendz"
       },
     "alarm": {
         "alarm": "Alarm",
@@ -2209,6 +2213,15 @@
                 "v1-0": "1.0",
                 "v1-1": "1.1",
                 "v1-2": "1.2"
+            },
+            "observe-strategy": {
+                "observe-strategy": "Observe strategy",
+                "single": "Single",
+                "single-description": "One Observe request per resource (higher precision, more network traffic)",
+                "composite-all": "Composite all",
+                "composite-all-description": "All resources are observed with a single Composite Observe request (more efficient, less flexible)",
+                "composite-by-object": "Composite by objects",
+                "composite-by-object-description": "Resources are grouped by object type and observed using separate Composite Observe requests (balanced approach)"
             }
         },
         "snmp": {
@@ -3442,15 +3455,15 @@
             "arrow-presence": "Arrow presence",
             "arrow-presence-hint": "Indicates whether arrow is present in connector.",
             "arrow-present": "Arrow present",
-            "arrow-direction": "Arrow/Animation direction",
+            "arrow-direction": "Flow direction",
             "arrow-direction-hint": "Indicates flow direction.",
-            "animation-direction": "Flow animation direction",
-            "animation-direction-hint": "Indicates animation flow direction.",
-            "flow-animation": "Flow animation",
-            "flow-animation-hint": "Indicates whether animation is present in connector.",
+            "flow-animation": "Flow presence",
+            "flow-animation-hint": "Indicates whether fluid is flowing in connector.",
             "flow": "Flow",
-            "flow-style": "Flow style",
-            "flow-dash-cap": "Flow dash cap",
+            "flow-line": "Line",
+            "flow-line-style": "Line style",
+            "flow-style-hint": "Set the Dash and Gap values so that their sum is divisible by 100 without a remainder for perfect animation synchronization.",
+            "flow-dash-cap": "Dash cap",
             "dash-cap-butt": "Butt",
             "dash-cap-round": "Round",
             "dash-cap-square": "Square",
