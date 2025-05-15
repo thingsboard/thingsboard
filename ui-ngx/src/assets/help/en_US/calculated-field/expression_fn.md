@@ -1,7 +1,7 @@
 ## Calculated Field TBEL Script Function
 
 The **calculate()** function is a user-defined script that enables custom calculations using [TBEL](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/tbel/) on telemetry and attribute data.
-It receives arguments configured in the calculated field setup, along with an additional `ctx` object that provides access to all arguments.
+It receives arguments configured in the calculated field setup, along with an additional `ctx` object that stores `msgTs` and provides access to all arguments.
 
 ### Function Signature
 
@@ -44,7 +44,7 @@ Let's modify the function that converts Fahrenheit to Celsius to also return the
 var temperatureC = (temperatureF - 32) / 1.8;
 return {
   "ts": ctx.args.temperatureF.ts,
-  "values": { "temperatureC": toFixed(temperatureC, 2) }
+  "values": {"temperatureC": toFixed(temperatureC, 2)}
 };
 ```
 
@@ -88,7 +88,7 @@ foreach(t: temperature) {
 }
 // iterate through all values and calculate the sum using for loop:
 sum = 0.0;
-for(var i = 0; i < temperature.values.size; i++) {
+for (var i = 0; i < temperature.values.size; i++) {
   sum += temperature.values[i].value;
 }
 // use built-in function to calculate the sum
@@ -146,12 +146,13 @@ function calculate(ctx, altitude, temperature) {
 
 Time series rolling arguments can be **merged** to align timestamps across multiple datasets.
 
-| Method                       | Description                                                                                                               | Returns                                             | Example                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-|:-----------------------------|:--------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `merge(other, settings)`     | Merges with another rolling argument. Aligns timestamps and filling missing values with the previous available value.     | Merged object with `timeWindow` and aligned values. | <span tb-help-popup="calculated-field/examples/merge-functions/merge_input" tb-help-popup-placement="top" trigger-text="Input"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_usage" tb-help-popup-placement="top" trigger-text="Usage"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_output" tb-help-popup-placement="top" trigger-text="Output"></span>         |
-| `mergeAll(others, settings)` | Merges multiple rolling arguments. Aligns timestamps and filling missing values with the previous available value.        | Merged object with `timeWindow` and aligned values. | <span tb-help-popup="calculated-field/examples/merge-functions/merge_input" tb-help-popup-placement="top" trigger-text="Input"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_all_usage" tb-help-popup-placement="top" trigger-text="Usage"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_all_output" tb-help-popup-placement="top" trigger-text="Output"></span> |
+| Method                       | Description                                                                                                           | Returns                                             | Example                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+|:-----------------------------|:----------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `merge(other, settings)`     | Merges with another rolling argument. Aligns timestamps and filling missing values with the previous available value. | Merged object with `timeWindow` and aligned values. | <span tb-help-popup="calculated-field/examples/merge-functions/merge_input" tb-help-popup-placement="top" trigger-text="Input"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_usage" tb-help-popup-placement="top" trigger-text="Usage"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_output" tb-help-popup-placement="top" trigger-text="Output"></span>         |
+| `mergeAll(others, settings)` | Merges multiple rolling arguments. Aligns timestamps and filling missing values with the previous available value.    | Merged object with `timeWindow` and aligned values. | <span tb-help-popup="calculated-field/examples/merge-functions/merge_input" tb-help-popup-placement="top" trigger-text="Input"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_all_usage" tb-help-popup-placement="top" trigger-text="Usage"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_all_output" tb-help-popup-placement="top" trigger-text="Output"></span> |
 
 ##### Parameters
+
 | Parameter            | Description                                                                                                                                                              |
 |:---------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `other` or `others`  | Another rolling argument or array of rolling arguments to merge with.                                                                                                    |
@@ -187,28 +188,50 @@ function calculate(ctx, temperature, defrost) {
 The result is a list of issues that may be used to configure alarm rules:
 
 ```json
-[{
+[
+  {
     "ts": 1741613833843,
     "values": {
-        "issue": {
-            "temperature": -3.12,
-            "defrostState": false
-        }
+      "issue": {
+        "temperature": -3.12,
+        "defrostState": false
+      }
     }
-}, {
+  },
+  {
     "ts": 1741613923848,
     "values": {
-        "issue": {
-            "temperature": -4.16,
-            "defrostState": false
-        }
+      "issue": {
+        "temperature": -4.16,
+        "defrostState": false
+      }
     }
-}]
+  }
+]
 ```
 
 ### Function return format
 
 The return format depends on the output type configured in the calculated field settings (default: **Time Series**).
+
+### Message timestamp
+
+The `ctx` object also includes property `msgTs`, which represents the timestamp of the incoming telemetry message that triggered the calculated field execution in milliseconds.
+
+You can use `ctx.msgTs` to set the timestamp of the resulting output explicitly when returning a time series object.
+
+```javascript
+var temperatureC = (temperatureF - 32) / 1.8;
+return {
+  ts: ctx.msgTs,
+  values: {
+    "temperatureC": toFixed(temperatureC, 2)
+  }
+}
+
+```
+
+This ensures that the calculated data point aligns with the timestamp of the triggering telemetry.
 
 ##### Time Series Output
 
@@ -246,7 +269,7 @@ With timestamp:
       "someArray": [1,2,3],
       "someNestedObject": {"key": "value"}
     }
-   }
+  }
 }
 ```
 
@@ -265,7 +288,7 @@ Array containing multiple timestamps and different values of the `airDensity` :
     "values": {
       "airDensity": 1.07
     }
-  }  
+  }
 ]
 ```
 
