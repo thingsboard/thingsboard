@@ -15,23 +15,25 @@
  */
 package org.thingsboard.server.dao.sql.ai;
 
-import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.edqs.fields.AiSettingsFields;
 import org.thingsboard.server.dao.model.sql.AiSettingsEntity;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface AiSettingsRepository extends JpaRepository<AiSettingsEntity, UUID> {
 
-    Page<AiSettingsEntity> findByTenantId(UUID tenantId, Pageable pageable);
+    @Query("SELECT ai " +
+            "FROM AiSettingsEntity ai " +
+            "WHERE ai.tenantId = :tenantId " +
+            "AND (:textSearch IS NULL OR ilike(ai.name, CONCAT('%', :textSearch, '%')) = true)")
+    Page<AiSettingsEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
 
     Optional<AiSettingsEntity> findByTenantIdAndId(UUID tenantId, UUID id);
 
@@ -41,6 +43,8 @@ public interface AiSettingsRepository extends JpaRepository<AiSettingsEntity, UU
     void deleteByTenantId(UUID tenantId);
 
     @Transactional
-    boolean deleteByTenantIdAndId(UUID tenantId, UUID id);
+    @Modifying
+    @Query("DELETE FROM AiSettingsEntity ai WHERE ai.tenantId = :tenantId AND ai.id = :id")
+    int deleteByTenantIdAndId(@Param("tenantId") UUID tenantId, @Param("id") UUID id);
 
 }

@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.Optional;
 
+import static org.thingsboard.server.dao.service.Validator.validatePageLink;
+
 @Service
 @RequiredArgsConstructor
 class AiSettingsServiceImpl implements AiSettingsService {
@@ -35,9 +37,8 @@ class AiSettingsServiceImpl implements AiSettingsService {
     private final AiSettingsDao aiSettingsDao;
 
     @Override
-    public AiSettings save(TenantId tenantId, AiSettings aiSettings) {
-        aiSettings.setTenantId(tenantId);
-        return aiSettingsDao.saveAndFlush(tenantId, aiSettings);
+    public AiSettings save(AiSettings aiSettings) {
+        return aiSettingsDao.saveAndFlush(aiSettings.getTenantId(), aiSettings);
     }
 
     @Override
@@ -47,6 +48,7 @@ class AiSettingsServiceImpl implements AiSettingsService {
 
     @Override
     public PageData<AiSettings> findAiSettingsByTenantId(TenantId tenantId, PageLink pageLink) {
+        validatePageLink(pageLink);
         return aiSettingsDao.findAllByTenantId(tenantId, pageLink);
     }
 

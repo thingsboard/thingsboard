@@ -16,12 +16,11 @@
 package org.thingsboard.server.dao.sql.ai;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Limit;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiSettings;
-import org.thingsboard.server.common.data.edqs.fields.AiSettingsFields;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -32,7 +31,6 @@ import org.thingsboard.server.dao.model.sql.AiSettingsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,13 +47,10 @@ class JpaAiSettingsDao extends JpaAbstractDao<AiSettingsEntity, AiSettings> impl
     }
 
     @Override
-    public List<AiSettingsFields> findNextBatch(UUID id, int batchSize) {
-        return aiSettingsRepository.findNextBatch(id, Limit.of(batchSize));
-    }
-
-    @Override
     public PageData<AiSettings> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(aiSettingsRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(aiSettingsRepository.findByTenantId(
+                tenantId.getId(), StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), DaoUtil.toPageable(pageLink))
+        );
     }
 
     @Override
@@ -70,7 +65,7 @@ class JpaAiSettingsDao extends JpaAbstractDao<AiSettingsEntity, AiSettings> impl
 
     @Override
     public boolean deleteByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId) {
-        return aiSettingsRepository.deleteByTenantIdAndId(tenantId.getId(), aiSettingsId.getId());
+        return aiSettingsRepository.deleteByTenantIdAndId(tenantId.getId(), aiSettingsId.getId()) > 0;
     }
 
     @Override

@@ -15,66 +15,135 @@
  */
 package org.thingsboard.server.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.ai.AiSettings;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.ai.AiSettingsService;
-import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
-// TODO: TbAiSettingsService?
+import static org.thingsboard.server.controller.ControllerConstants.AI_SETTINGS_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/ai-settings")
 public class AiSettingsController extends BaseController {
 
-    private final AiSettingsService aiSettingsService;
+    private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of("createdTime", "name", "provider", "model");
 
+    @ApiOperation(
+            value = "Create or update AI settings (saveAiSettings)",
+            notes = "Creates or updates an AI settings record.\n\n" +
+                    "• **Create:** Omit the `id` to create a new record. The platform assigns a UUID to the new settings and returns it in the `id` field of the response.\n\n" +
+                    "• **Update:** Include an existing `id` to modify that record. If no matching record exists, the API responds with **404 Not Found**.\n\n" +
+                    "Tenant ID for the AI settings will be taken from the authenticated user making the request, regardless of any value provided in the request body." +
+                    TENANT_AUTHORITY_PARAGRAPH
+    )
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping
-    public AiSettings saveAiSettings(
-            @RequestBody AiSettings aiSettings,
-
-            @AuthenticationPrincipal SecurityUser requestingUser
-    ) {
-        return aiSettingsService.save(requestingUser.getTenantId(), aiSettings);
+    public AiSettings saveAiSettings(@RequestBody AiSettings aiSettings) throws ThingsboardException {
+        aiSettings.setTenantId(getTenantId());
+        checkEntity(aiSettings.getId(), aiSettings, Resource.AI_SETTINGS);
+        return aiSettingsService.save(aiSettings);
     }
 
+    @ApiOperation(
+            value = "Get AI settings by ID (getAiSettingsById)",
+            notes = "Fetches an AI settings record by its `id`." +
+                    TENANT_AUTHORITY_PARAGRAPH
+    )
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/{aiSettingsId}")
     public AiSettings getAiSettingsById(
-            @PathVariable("aiSettingsId") UUID aiSettingsUuid,
-
-            @AuthenticationPrincipal SecurityUser requestingUser
+            @Parameter(
+                    description = "ID of the AI settings record",
+                    required = true,
+                    example = "de7900d4-30e2-11f0-9cd2-0242ac120002"
+            )
+            @PathVariable("aiSettingsId") UUID aiSettingsUuid
     ) throws ThingsboardException {
-        return checkNotNull(aiSettingsService.findAiSettingsByTenantIdAndId(requestingUser.getTenantId(), new AiSettingsId(aiSettingsUuid)));
+        return checkAiSettingsId(new AiSettingsId(aiSettingsUuid), Operation.READ);
     }
 
+    @ApiOperation(
+            value = "Get AI settings (getAiSettings)",
+            notes = "Returns a page of AI settings. " +
+                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH
+    )
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping
-    public PageData<AiSettings> getAllAiSettings(
-            @AuthenticationPrincipal SecurityUser requestingUser
-    ) {
-        return aiSettingsService.findAiSettingsByTenantId(requestingUser.getTenantId(), new PageLink(Integer.MAX_VALUE));
+    public PageData<AiSettings> getAiSettings(
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @Parameter(description = AI_SETTINGS_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "provider", "model"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder
+    ) throws ThingsboardException {
+        var user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.AI_SETTINGS, Operation.READ);
+        validateSortProperty(sortProperty);
+        var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return aiSettingsService.findAiSettingsByTenantId(user.getTenantId(), pageLink);
     }
 
+    private static void validateSortProperty(String sortProperty) {
+        if (sortProperty != null && !ALLOWED_SORT_PROPERTIES.contains(sortProperty)) {
+            throw new IllegalArgumentException("Unsupported sort property '" + sortProperty + "'! Only '" + String.join("', '", ALLOWED_SORT_PROPERTIES) + "' are allowed.");
+        }
+    }
+
+    @ApiOperation(
+            value = "Delete AI settings by ID (deleteAiSettingsById)",
+            notes = "Deletes the AI settings record by its `id`. " +
+                    "If a record with the specified `id` exists, the record is deleted and the endpoint returns `true`. " +
+                    "If no such record exists, the endpoint returns `false`." +
+                    TENANT_AUTHORITY_PARAGRAPH
+    )
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @DeleteMapping("/{aiSettingsId}")
     public boolean deleteAiSettingsById(
-            @PathVariable("aiSettingsId") UUID aiSettingsUuid,
-
-            @AuthenticationPrincipal SecurityUser requestingUser
-    ) {
-        return aiSettingsService.deleteByTenantIdAndId(requestingUser.getTenantId(), new AiSettingsId(aiSettingsUuid));
+            @Parameter(
+                    description = "ID of the AI settings record",
+                    required = true,
+                    example = "de7900d4-30e2-11f0-9cd2-0242ac120002"
+            )
+            @PathVariable("aiSettingsId") UUID aiSettingsUuid
+    ) throws ThingsboardException {
+        var user = getCurrentUser();
+        var aiSettingsId = new AiSettingsId(aiSettingsUuid);
+        accessControlService.checkPermission(user, Resource.AI_SETTINGS, Operation.DELETE);
+        Optional<AiSettings> aiSettingsOpt = aiSettingsService.findAiSettingsByTenantIdAndId(user.getTenantId(), aiSettingsId);
+        if (aiSettingsOpt.isEmpty()) {
+            return false;
+        }
+        accessControlService.checkPermission(user, Resource.AI_SETTINGS, Operation.DELETE, aiSettingsId, aiSettingsOpt.get());
+        return aiSettingsService.deleteByTenantIdAndId(user.getTenantId(), aiSettingsId);
     }
 
 }

@@ -26,7 +26,7 @@ import java.util.Optional;
 
 public interface AiSettingsService extends EntityDaoService {
 
-    AiSettings save(TenantId tenantId, AiSettings aiSettings);
+    AiSettings save(AiSettings aiSettings);
 
     Optional<AiSettings> findAiSettingsById(TenantId tenantId, AiSettingsId aiSettingsId);
 

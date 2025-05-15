@@ -47,7 +47,7 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     TenantId tenantId;
 
     @Schema(
-            requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+            requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_ONLY,
             description = "Version of the AI settings; increments automatically whenever the settings are changed",
             example = "7",
@@ -66,7 +66,7 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Name of the LLM provider, e.g. 'openai', 'anthropic'",
+            description = "Name of the LLM provider",
             example = "openai"
     )
     String provider;
@@ -74,7 +74,7 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Identifier of the LLM model to use, e.g. 'gpt-4o-mini'",
+            description = "Identifier of the LLM model to use",
             example = "gpt-4o-mini"
     )
     String model;

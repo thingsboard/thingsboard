@@ -63,6 +63,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.ai.AiSettings;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -77,6 +78,7 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -129,6 +131,7 @@ import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.ai.AiSettingsService;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -372,6 +375,9 @@ public abstract class BaseController {
 
     @Autowired
     protected CalculatedFieldService calculatedFieldService;
+
+    @Autowired
+    protected AiSettingsService aiSettingsService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -681,6 +687,9 @@ public abstract class BaseController {
                 case CALCULATED_FIELD:
                     checkCalculatedFieldId(new CalculatedFieldId(entityId.getId()), operation);
                     return;
+                case AI_SETTINGS:
+                    checkAiSettingsId(new AiSettingsId(entityId.getId()), operation);
+                    return;
                 default:
                     checkEntityId(entityId, entitiesService::findEntityByTenantIdAndId, operation);
             }
@@ -879,6 +888,10 @@ public abstract class BaseController {
 
     NotificationTarget checkNotificationTargetId(NotificationTargetId notificationTargetId, Operation operation) throws ThingsboardException {
         return checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, operation);
+    }
+
+    AiSettings checkAiSettingsId(AiSettingsId aiSettingsId, Operation operation) throws ThingsboardException {
+        return checkEntityId(aiSettingsId, (tenantId, id) -> aiSettingsService.findAiSettingsByTenantIdAndId(tenantId, id).orElse(null), operation);
     }
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {
