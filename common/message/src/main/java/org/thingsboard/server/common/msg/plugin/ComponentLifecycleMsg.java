@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.msg.plugin;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
@@ -45,13 +46,14 @@ public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
     private final String name;
     private final EntityId oldProfileId;
     private final EntityId profileId;
+    private final JsonNode info;
 
     public ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event) {
-        this(tenantId, entityId, event, null, null, null, null);
+        this(tenantId, entityId, event, null, null, null, null, null);
     }
 
     @Builder
-    private ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event, String oldName, String name, EntityId oldProfileId, EntityId profileId) {
+    private ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event, String oldName, String name, EntityId oldProfileId, EntityId profileId, JsonNode info) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.event = event;
@@ -59,6 +61,7 @@ public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
         this.name = name;
         this.oldProfileId = oldProfileId;
         this.profileId = profileId;
+        this.info = info;
     }
 
     public Optional<RuleChainId> getRuleChainId() {

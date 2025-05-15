@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -58,7 +59,9 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.service.job.JobManager;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -69,6 +72,7 @@ public class EntityStateSourcingListener {
     private final TenantService tenantService;
     private final TbClusterService tbClusterService;
     private final EdgeSynchronizationManager edgeSynchronizationManager;
+    private final Optional<JobManager> jobManager;
 
     @PostConstruct
     public void init() {
@@ -133,6 +137,9 @@ public class EntityStateSourcingListener {
             }
             case CALCULATED_FIELD -> {
                 onCalculatedFieldUpdate(event.getEntity(), event.getOldEntity());
+            }
+            case JOB -> {
+                onJobUpdate((Job) event.getEntity());
             }
             default -> {
             }
@@ -212,8 +219,8 @@ public class EntityStateSourcingListener {
     public void handleEvent(ActionEntityEvent<?> event) {
         log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
         if (ActionType.CREDENTIALS_UPDATED.equals(event.getActionType()) &&
-                EntityType.DEVICE.equals(event.getEntityId().getEntityType())
-                && event.getEntity() instanceof DeviceCredentials) {
+            EntityType.DEVICE.equals(event.getEntityId().getEntityType())
+            && event.getEntity() instanceof DeviceCredentials) {
             tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(event.getTenantId(),
                     (DeviceId) event.getEntityId(), (DeviceCredentials) event.getEntity()), null);
         } else if (ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType()) && event.getEntity() instanceof Device device) {
@@ -293,6 +300,28 @@ public class EntityStateSourcingListener {
             oldCalculatedField = (CalculatedField) oldEntity;
         }
         tbClusterService.onCalculatedFieldUpdated(calculatedField, oldCalculatedField, TbQueueCallback.EMPTY);
+    }
+
+    private void onJobUpdate(Job job) {
+        jobManager.ifPresent(jobManager -> jobManager.onJobUpdate(job));
+
+        ComponentLifecycleEvent event;
+        if (job.getResult().getCancellationTs() > 0) {
+            event = ComponentLifecycleEvent.STOPPED;
+        } else if (job.getResult().getGeneralError() != null) {
+            event = ComponentLifecycleEvent.FAILED;
+        } else {
+            return;
+        }
+        ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                .tenantId(job.getTenantId())
+                .entityId(job.getId())
+                .event(event)
+                .info(JacksonUtil.newObjectNode()
+                        .put("tasksKey", job.getConfiguration().getTasksKey()))
+                .build();
+        // task processors will add this job to the list of discarded
+        tbClusterService.broadcast(msg);
     }
 
     private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {
