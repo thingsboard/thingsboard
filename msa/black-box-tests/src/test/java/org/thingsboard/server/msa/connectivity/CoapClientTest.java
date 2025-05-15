@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonObject;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.CoAP;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -62,25 +63,37 @@ public class CoapClientTest extends AbstractCoapClientTest {
 
     private void initCoapClient(String token, String clientKeys, String sharedKeys) {
         StringBuilder uri = new StringBuilder("coap://localhost:5683/api/v1/").append(token).append("/attributes");
-        if (!clientKeys.isEmpty() || !sharedKeys.isEmpty()) {
+        if (clientKeys != null || sharedKeys != null) {
             uri.append("?");
-            if (!clientKeys.isEmpty()) {
-                uri.append("clientKeys=").append(clientKeys);
+            if (clientKeys != null) {
+                uri.append("clientKeys=");
+                if (!clientKeys.isEmpty()) {
+                    uri.append(clientKeys);
+                }
             }
-            if (!sharedKeys.isEmpty()) {
-                if (!clientKeys.isEmpty()) uri.append("&");
-                uri.append("sharedKeys=").append(sharedKeys);
+            if (sharedKeys != null) {
+                if (clientKeys != null) {
+                    uri.append("&");
+                }
+                uri.append("sharedKeys=");
+                if (!sharedKeys.isEmpty()) {
+                    uri.append(sharedKeys);
+                }
             }
         }
         this.coapClient = new CoapClient(uri.toString());
     }
 
     private JsonNode getAttributes(String clientKeys, String sharedKeys) throws Exception {
+        return getAttributes(clientKeys, sharedKeys, CoAP.ResponseCode.CONTENT);
+    }
+
+    private JsonNode getAttributes(String clientKeys, String sharedKeys, CoAP.ResponseCode expectedCode) throws Exception {
         initCoapClient(accessToken, clientKeys, sharedKeys);
         coapClient.setTimeout(COAP_RESPONSE_TIMEOUT_MS);
         CoapResponse response = coapClient.get();
         assertThat(response).isNotNull();
-        assertThat(response.getCode().name()).isEqualTo("CONTENT");
+        assertThat(response.getCode()).isEqualTo(expectedCode);
         return mapper.readTree(response.getPayload());
     }
 
@@ -158,7 +171,7 @@ public class CoapClientTest extends AbstractCoapClientTest {
         testRestClient.postTelemetry(accessToken, payload);
         Thread.sleep(1000);
 
-        JsonNode response = getAttributes("boolKey,stringKey", "");
+        JsonNode response = getAttributes("boolKey,stringKey", null);
         assertThat(response.get("client").get("boolKey")).isEqualTo(payload.get("boolKey"));
         assertThat(response.get("client").get("stringKey")).isEqualTo(payload.get("stringKey"));
         assertThat(response.has("shared")).isFalse();
@@ -171,7 +184,7 @@ public class CoapClientTest extends AbstractCoapClientTest {
         testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, payload);
         Thread.sleep(1000);
 
-        JsonNode response = getAttributes("", "boolKey,stringKey");
+        JsonNode response = getAttributes(null, "boolKey,stringKey");
         assertThat(response.get("shared").get("boolKey")).isEqualTo(payload.get("boolKey"));
         assertThat(response.get("shared").get("stringKey")).isEqualTo(payload.get("stringKey"));
         assertThat(response.has("client")).isFalse();

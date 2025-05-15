@@ -55,9 +55,11 @@ public class CoapAdaptorUtils {
             String[] queryItem = queryElement.split("=");
             if (queryItem.length == 2 && queryItem[0].equals(attributeName)) {
                 keys = queryItem[1];
+            } else if (queryItem.length == 1 && queryItem[0].equals(attributeName)) {
+                return new HashSet<>();
             }
         }
-        if (keys != null && !StringUtils.isEmpty(keys)) {
+        if (keys != null) {
             return new HashSet<>(Arrays.asList(keys.split(",")));
         } else {
             return null;
