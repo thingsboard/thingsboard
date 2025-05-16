@@ -36,7 +36,7 @@ public final class AiSettingsId extends UUIDBased implements EntityId {
     @Override
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
-            description = "Entity type of the AI settings, always 'AI_SETTINGS'",
+            description = "Entity type of the AI settings",
             example = "AI_SETTINGS",
             allowableValues = "AI_SETTINGS"
     )

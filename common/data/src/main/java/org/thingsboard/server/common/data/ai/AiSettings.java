@@ -83,11 +83,10 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
 
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
-            accessMode = Schema.AccessMode.WRITE_ONLY,
-            description = "API key for authenticating with the selected AI provider",
-            example = "sk-********************************"
+            accessMode = Schema.AccessMode.READ_WRITE,
+            description = "Provider-specific settings for the chosen AI model"
     )
-    String apiKey;
+    AiConfig configuration;
 
     public AiSettings() {}
 

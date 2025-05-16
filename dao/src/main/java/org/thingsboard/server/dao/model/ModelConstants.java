@@ -747,7 +747,7 @@ public class ModelConstants {
     public static final String AI_SETTINGS_NAME_COLUMN_NAME = NAME_PROPERTY;
     public static final String AI_SETTINGS_PROVIDER_COLUMN_NAME = "provider";
     public static final String AI_SETTINGS_MODEL_COLUMN_NAME = "model";
-    public static final String AI_SETTINGS_API_KEY_COLUMN_NAME = "api_key";
+    public static final String AI_SETTINGS_CONFIGURATION_COLUMN_NAME = "configuration";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

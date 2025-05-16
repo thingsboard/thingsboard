@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,7 +24,9 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Type;
 import org.hibernate.proxy.HibernateProxy;
+import org.thingsboard.server.common.data.ai.AiConfig;
 import org.thingsboard.server.common.data.ai.AiProvider;
 import org.thingsboard.server.common.data.ai.AiSettings;
 import org.thingsboard.server.common.data.id.AiSettingsId;
@@ -41,7 +44,7 @@ import java.util.UUID;
 @Table(name = ModelConstants.AI_SETTINGS_TABLE_NAME)
 public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
 
-    @Column(name = ModelConstants.AI_SETTINGS_TENANT_ID_COLUMN_NAME, nullable = false, columnDefinition = "uuid")
+    @Column(name = ModelConstants.AI_SETTINGS_TENANT_ID_COLUMN_NAME, nullable = false, columnDefinition = "UUID")
     private UUID tenantId;
 
     @Column(name = ModelConstants.AI_SETTINGS_NAME_COLUMN_NAME, nullable = false)
@@ -54,8 +57,9 @@ public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
     @Column(name = ModelConstants.AI_SETTINGS_MODEL_COLUMN_NAME, nullable = false)
     private String model;
 
-    @Column(name = ModelConstants.AI_SETTINGS_API_KEY_COLUMN_NAME, nullable = false)
-    private String apiKey;
+    @Type(JsonBinaryType.class)
+    @Column(name = ModelConstants.AI_SETTINGS_CONFIGURATION_COLUMN_NAME, nullable = false, columnDefinition = "JSONB")
+    private AiConfig configuration;
 
     public AiSettingsEntity() {}
 
@@ -65,7 +69,7 @@ public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
         name = aiSettings.getName();
         provider = aiSettings.getProvider();
         model = aiSettings.getModel();
-        apiKey = aiSettings.getApiKey();
+        configuration = aiSettings.getConfiguration();
     }
 
     @Override
@@ -77,7 +81,7 @@ public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
         settings.setName(name);
         settings.setProvider(provider);
         settings.setModel(model);
-        settings.setApiKey(apiKey);
+        settings.setConfiguration(configuration);
         return settings;
     }
 

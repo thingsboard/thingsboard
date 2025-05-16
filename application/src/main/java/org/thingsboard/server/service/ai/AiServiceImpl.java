@@ -46,15 +46,15 @@ class AiServiceImpl implements RuleEngineAiService {
 
         return switch (aiSettings.getProvider()) {
             case OPENAI -> OpenAiChatModel.builder()
-                    .apiKey(aiSettings.getApiKey())
+                    .apiKey(aiSettings.getConfiguration().getApiKey())
                     .modelName(aiSettings.getModel())
                     .build();
             case MISTRAL_AI -> MistralAiChatModel.builder()
-                    .apiKey(aiSettings.getApiKey())
+                    .apiKey(aiSettings.getConfiguration().getApiKey())
                     .modelName(aiSettings.getModel())
                     .build();
             case GOOGLE_AI_GEMINI -> GoogleAiGeminiChatModel.builder()
-                    .apiKey(aiSettings.getApiKey())
+                    .apiKey(aiSettings.getConfiguration().getApiKey())
                     .modelName(aiSettings.getModel())
                     .build();
         };
