@@ -33,7 +33,6 @@ import { svgIcons, svgIconsUrl } from '@shared/models/icon.models';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
 import { SETTINGS_KEY } from '@core/settings/settings.effects';
 import { initCustomJQueryEvents } from '@shared/models/jquery-event.models';
-import { UnitService } from '@core/services/unit.service';
 
 @Component({
   selector: 'tb-root',
@@ -47,8 +46,7 @@ export class AppComponent {
               private translate: TranslateService,
               private matIconRegistry: MatIconRegistry,
               private domSanitizer: DomSanitizer,
-              private authService: AuthService,
-              private unitService: UnitService) {
+              private authService: AuthService) {
 
     console.log(`ThingsBoard Version: ${env.tbVersion}`);
 
@@ -96,14 +94,12 @@ export class AppComponent {
     this.store.select(selectUserReady).pipe(
       filter((data) => data.isUserLoaded),
       tap((data) => {
-        const userDetails = getCurrentAuthState(this.store).userDetails;
-        let userLang = userDetails?.additionalInfo?.lang ?? null;
+        let userLang = getCurrentAuthState(this.store).userDetails?.additionalInfo?.lang ?? null;
         if (!userLang && !data.isAuthenticated) {
           const settings = this.storageService.getItem(SETTINGS_KEY);
           userLang = settings?.userLang ?? null;
         }
         this.notifyUserLang(userLang);
-        this.unitService.setUnitSystem(userDetails?.additionalInfo?.unitSystem);
       }),
       skip(1),
     ).subscribe((data) => {

@@ -34,7 +34,9 @@ import { Observable, of, shareReplay } from 'rxjs';
 import {
   AllMeasures,
   getSourceTbUnitSymbol,
+  getTbUnitFromSearch,
   isTbUnitMapping,
+  searchUnit,
   TbUnit,
   UnitInfo,
   UnitSystem
@@ -43,7 +45,7 @@ import { map, mergeMap } from 'rxjs/operators';
 import { UnitService } from '@core/services/unit.service';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { UnitSettingsPanelComponent } from '@shared/components/unit-settings-panel.component';
-import { isDefinedAndNotNull, isEqual, isNotEmptyStr } from '@core/utils';
+import { isDefinedAndNotNull, isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-unit-input',
@@ -200,7 +202,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
         hostView: this.viewContainerRef,
         preferredPlacement: ['left', 'bottom', 'top'],
         context: {
-          unit: this.extractTbUnit(this.unitsFormControl.value),
+          unit: getTbUnitFromSearch(this.unitsFormControl.value),
           required: this.required,
           disabled: this.disabled,
           tagFilter: this.tagFilter,
@@ -217,7 +219,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   }
 
   private updateModel(value: UnitInfo | TbUnit ) {
-    let res = this.extractTbUnit(value);
+    let res = getTbUnitFromSearch(value);
     if (this.onlySystemUnits && !isTbUnitMapping(res)) {
       const unitInfo = this.unitService.getUnitInfo(res as string);
       if (unitInfo) {
@@ -238,106 +240,17 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit, OnChang
   private fetchUnits(searchText?: string): Observable<Array<[AllMeasures, Array<UnitInfo>]>> {
     this.searchText = searchText;
     return this.getGroupedUnits().pipe(
-      map(unit => this.searchUnit(unit, searchText))
+      map(unit => searchUnit(unit, searchText))
     );
   }
 
   private getGroupedUnits(): Observable<Array<[AllMeasures, Array<UnitInfo>]>> {
     if (this.fetchUnits$ === null) {
-      this.fetchUnits$ = of(this.unitService.getUnitsGroupedByMeasure(this.measure, this.unitSystem)).pipe(
-        map(data => {
-          let objectData = Object.entries(data) as Array<[AllMeasures, UnitInfo[]]>;
-
-          if (this.tagFilter) {
-            objectData = objectData
-              .map((measure) => [measure[0], measure[1].filter(u => u.tags.includes(this.tagFilter))] as [AllMeasures, UnitInfo[]])
-              .filter((measure) => measure[1].length > 0);
-          }
-          return objectData;
-        }),
+      this.fetchUnits$ = of(this.unitService.getUnitsGroupedByMeasure(this.measure, this.unitSystem, this.tagFilter)).pipe(
+        map(data => Object.entries(data) as Array<[AllMeasures, UnitInfo[]]>),
         shareReplay(1)
       );
     }
     return this.fetchUnits$;
-  }
-
-  private searchUnit(units: Array<[AllMeasures, Array<UnitInfo>]>, searchText?: string): Array<[AllMeasures, Array<UnitInfo>]> {
-    if (isNotEmptyStr(searchText)) {
-      const filterValue = searchText.trim().toUpperCase();
-
-      const scoredGroups = units
-        .map(([measure, unitInfos]) => {
-          const scoredUnits = unitInfos
-            .map(unit => ({
-              unit,
-              score: this.calculateRelevanceScore(unit, filterValue)
-            }))
-            .filter(({ score }) => score > 0)
-            .sort((a, b) => b.score - a.score)
-            .map(({ unit }) => unit);
-
-          let groupScore = scoredUnits.length > 0
-            ? Math.max(...scoredUnits.map(unit => this.calculateRelevanceScore(unit, filterValue)))
-            : 0;
-
-          if (measure.toUpperCase() === filterValue) {
-            groupScore += 200;
-          }
-
-          return { measure, units: scoredUnits, groupScore };
-        })
-        .filter(group => group.units.length > 0)
-        .sort((a, b) => {
-          if (b.groupScore !== a.groupScore) {
-            return b.groupScore - a.groupScore;
-          }
-          return b.units.length - a.units.length;
-        });
-
-      return scoredGroups.map(group => [group.measure, group.units] as [AllMeasures, Array<UnitInfo>]);
-    }
-    return units;
-  }
-
-  private calculateRelevanceScore(unit: UnitInfo, filterValue: string): number {
-    const name = unit.name.toUpperCase();
-    const abbr = unit.abbr.toUpperCase();
-    const tags = unit.tags.map(tag => tag.toUpperCase());
-
-    let score = 0;
-
-    if (name === filterValue || abbr === filterValue) {
-      score += 100;
-    } else if (tags.includes(filterValue)) {
-      score += 80;
-    } else if (name.startsWith(filterValue) || abbr.startsWith(filterValue)) {
-      score += 60;
-    } else if (tags.some(tag => tag.startsWith(filterValue))) {
-      score += 50;
-    } else if (tags.some(tag => tag.includes(filterValue))) {
-      score += 30;
-    }
-
-    if (score > 0) {
-      score += Math.max(0, 10 - (name.length + abbr.length) / 2);
-    }
-
-    return score;
-  }
-
-  private extractTbUnit(value: TbUnit | UnitInfo | null): TbUnit {
-    if (value === null) {
-      return null;
-    }
-    if (value === undefined) {
-      return undefined;
-    }
-    if (typeof value === 'string') {
-      return value;
-    }
-    if ('abbr' in value) {
-      return value.abbr;
-    }
-    return value;
   }
 }

@@ -32,6 +32,10 @@ import {
 import { isNotEmptyStr, isObject } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { selectAuth, selectIsAuthenticated } from '@core/auth/auth.selectors';
+import { filter, switchMap, take } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -41,12 +45,19 @@ export class UnitService {
   private currentUnitSystem: UnitSystem = UnitSystem.METRIC;
   private converter: Converter;
 
-  constructor(private translate: TranslateService) {
+  constructor(private translate: TranslateService,
+              private store: Store<AppState>) {
     this.translate.onLangChange.pipe(
       takeUntilDestroyed()
     ).subscribe(() => {
       this.converter = getUnitConverter(this.translate);
     });
+    this.store.select(selectIsAuthenticated).pipe(
+      filter((data) => data),
+      switchMap(() => this.store.select(selectAuth).pipe(take(1)))
+    ).subscribe((data) => {
+      this.setUnitSystem(data.userDetails?.additionalInfo?.unitSystem)
+    })
   }
 
   getUnitSystem(): UnitSystem {
@@ -65,8 +76,8 @@ export class UnitService {
     return this.converter?.listUnits(measure, unitSystem);
   }
 
-  getUnitsGroupedByMeasure(measure?: AllMeasures, unitSystem?: UnitSystem): UnitInfoGroupByMeasure<AllMeasures> {
-    return this.converter?.unitsGroupByMeasure(measure, unitSystem);
+  getUnitsGroupedByMeasure(measure?: AllMeasures, unitSystem?: UnitSystem, tagFilter?: string): UnitInfoGroupByMeasure<AllMeasures> {
+    return this.converter?.unitsGroupByMeasure(measure, unitSystem, tagFilter);
   }
 
   getUnitInfo(symbol: AllMeasuresUnits | string): UnitInfo {

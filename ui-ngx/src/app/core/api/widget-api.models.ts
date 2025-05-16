@@ -62,10 +62,11 @@ import { AlarmDataService } from '@core/api/alarm-data.service';
 import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { PersistentRpc } from '@shared/models/rpc.models';
-import { EventEmitter, Injector } from '@angular/core';
+import { EventEmitter } from '@angular/core';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { MatDialogRef } from '@angular/material/dialog';
 import { TbUnit } from '@shared/models/unit.models';
+import { UnitService } from '@core/services/unit.service';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -234,8 +235,8 @@ export class WidgetSubscriptionContext {
   utils: UtilsService;
   dashboardUtils: DashboardUtilsService;
   raf: RafService;
+  unitService: UnitService;
   widgetUtils: IWidgetUtils;
-  $injector: Injector;
   getServerTimeDiff: () => Observable<number>;
 }
 

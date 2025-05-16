@@ -118,10 +118,6 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
     return this.widgetConfigComponent.modelValue?.latestDataKeySettingsDirective;
   }
 
-  get supportsUnitConversion(): boolean {
-    return this.widgetConfigComponent.modelValue?.typeParameters?.supportsUnitConversion ?? false;
-  }
-
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
@@ -220,7 +216,7 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
           hideDataKeyName: true,
           hideDataKeyLabel: true,
           hideDataKeyColor: true,
-          supportsUnitConversion: this.supportsUnitConversion
+          supportsUnitConversion: true
         }
       }).afterClosed().subscribe((updatedDataKey) => {
       if (updatedDataKey) {

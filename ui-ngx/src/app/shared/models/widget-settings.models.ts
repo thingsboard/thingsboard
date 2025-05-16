@@ -875,15 +875,16 @@ export abstract class ValueFormatProcessor {
   protected hideZeroDecimals: boolean;
   protected unitSymbol: string;
 
-  static fromSettings($injector: Injector, settings: ValueFormatSettings): ValueFormatProcessor {
+  static fromSettings($injector: Injector, settings: ValueFormatSettings): ValueFormatProcessor;
+  static fromSettings(unitService: UnitService, settings: ValueFormatSettings): ValueFormatProcessor;
+  static fromSettings(unitServiceOrInjector: Injector | UnitService, settings: ValueFormatSettings): ValueFormatProcessor {
     if (settings.units !== null && typeof settings.units === 'object') {
-      return new UnitConverterValueFormatProcessor($injector, settings)
+      return new UnitConverterValueFormatProcessor(unitServiceOrInjector, settings)
     }
-    return new SimpleValueFormatProcessor($injector, settings);
+    return new SimpleValueFormatProcessor(settings);
   }
 
-  protected constructor(protected $injector: Injector,
-                        protected settings: ValueFormatSettings) {
+  protected constructor(protected settings: ValueFormatSettings) {
   }
 
   abstract format(value: any): string;
@@ -908,9 +909,8 @@ export class SimpleValueFormatProcessor extends ValueFormatProcessor {
 
   private readonly isDefinedUnit: boolean;
 
-  constructor(protected $injector: Injector,
-              protected settings: ValueFormatSettings) {
-    super($injector, settings);
+  constructor(protected settings: ValueFormatSettings) {
+    super(settings);
     this.unitSymbol = !settings.ignoreUnitSymbol && isNotEmptyStr(settings.units) ? (settings.units as string) : null;
     this.isDefinedDecimals = isDefinedAndNotNull(settings.decimals);
     this.hideZeroDecimals = !settings.showZeroDecimals;
@@ -928,10 +928,10 @@ export class UnitConverterValueFormatProcessor extends ValueFormatProcessor {
 
   private readonly unitConverter: TbUnitConverter;
 
-  constructor(protected $injector: Injector,
+  constructor(protected unitServiceOrInjector: Injector | UnitService,
               protected settings: ValueFormatSettings) {
-    super($injector, settings);
-    const unitService = this.$injector.get(UnitService);
+    super(settings);
+    const unitService = this.unitServiceOrInjector instanceof UnitService ? this.unitServiceOrInjector : this.unitServiceOrInjector.get(UnitService);
     const unit = settings.units;
     this.unitSymbol = settings.ignoreUnitSymbol ? null : unitService.getTargetUnitSymbol(unit);
     this.unitConverter = unitService.geUnitConverter(unit);

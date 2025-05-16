@@ -1419,7 +1419,7 @@ export class WidgetSubscription implements IWidgetSubscription {
               if (this.displayLegend) {
                 const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals : this.decimals;
                 const units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units : this.units;
-                const valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {decimals, units})
+                const valueFormat = ValueFormatProcessor.fromSettings(this.ctx.unitService, {decimals, units})
                 const legendKey: LegendKey = {
                   dataKey,
                   dataIndex: dataKeyIndex,
