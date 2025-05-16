@@ -45,19 +45,18 @@ class AiServiceImpl implements RuleEngineAiService {
         var aiSettings = aiSettingsOpt.get();
 
         return switch (aiSettings.getProvider()) {
-            case "openai" -> OpenAiChatModel.builder()
+            case OPENAI -> OpenAiChatModel.builder()
                     .apiKey(aiSettings.getApiKey())
                     .modelName(aiSettings.getModel())
                     .build();
-            case "mistral-ai" -> MistralAiChatModel.builder()
+            case MISTRAL_AI -> MistralAiChatModel.builder()
                     .apiKey(aiSettings.getApiKey())
                     .modelName(aiSettings.getModel())
                     .build();
-            case "google-ai-gemini" -> GoogleAiGeminiChatModel.builder()
+            case GOOGLE_AI_GEMINI -> GoogleAiGeminiChatModel.builder()
                     .apiKey(aiSettings.getApiKey())
                     .modelName(aiSettings.getModel())
                     .build();
-            default -> throw new IllegalArgumentException("Unsupported AI provider: " + aiSettings.getProvider());
         };
     }
 

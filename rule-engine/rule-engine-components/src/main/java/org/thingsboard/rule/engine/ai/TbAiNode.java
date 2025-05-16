@@ -48,7 +48,7 @@ import static org.thingsboard.server.dao.service.ConstraintValidator.validateFie
         type = ComponentType.EXTERNAL,
         name = "AI",
         nodeDescription = "Interact with AI",
-        nodeDetails = "This node makes requests to LLM based on a prompt and a input message and returns a response in a form of output message",
+        nodeDetails = "This node makes requests to AI based on a prompt and a input message and returns a response in a form of output message",
         configClazz = TbAiNodeConfiguration.class
 )
 public final class TbAiNode extends TbAbstractExternalNode implements TbNode {

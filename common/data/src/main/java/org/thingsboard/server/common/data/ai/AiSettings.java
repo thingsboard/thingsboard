@@ -66,15 +66,17 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Name of the LLM provider",
-            example = "openai"
+            description = "Name of the AI provider",
+            example = "OPENAI",
+            allowableValues = {"OPENAI", "GOOGLE_AI_GEMINI", "MISTRAL_AI"},
+            type = "string"
     )
-    String provider;
+    AiProvider provider;
 
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Identifier of the LLM model to use",
+            description = "Identifier of the AI model to use",
             example = "gpt-4o-mini"
     )
     String model;
@@ -82,7 +84,7 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.WRITE_ONLY,
-            description = "API key for authenticating with the selected LLM provider",
+            description = "API key for authenticating with the selected AI provider",
             example = "sk-********************************"
     )
     String apiKey;

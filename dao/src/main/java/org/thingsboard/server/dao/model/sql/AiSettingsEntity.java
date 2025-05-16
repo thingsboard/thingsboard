@@ -17,11 +17,14 @@ package org.thingsboard.server.dao.model.sql;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.proxy.HibernateProxy;
+import org.thingsboard.server.common.data.ai.AiProvider;
 import org.thingsboard.server.common.data.ai.AiSettings;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -44,8 +47,9 @@ public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
     @Column(name = ModelConstants.AI_SETTINGS_NAME_COLUMN_NAME, nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.AI_SETTINGS_PROVIDER_COLUMN_NAME, nullable = false)
-    private String provider;
+    private AiProvider provider;
 
     @Column(name = ModelConstants.AI_SETTINGS_MODEL_COLUMN_NAME, nullable = false)
     private String model;
