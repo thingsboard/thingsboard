@@ -33,6 +33,7 @@ public class TbChangeOriginatorNodeConfiguration implements NodeConfiguration<Tb
     private RelationsQuery relationsQuery;
     private String entityType;
     private String entityNamePattern;
+    private boolean tellNotFound;
 
     @Override
     public TbChangeOriginatorNodeConfiguration defaultConfiguration() {
@@ -45,6 +46,8 @@ public class TbChangeOriginatorNodeConfiguration implements NodeConfiguration<Tb
         RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
         relationsQuery.setFilters(Collections.singletonList(relationEntityTypeFilter));
         configuration.setRelationsQuery(relationsQuery);
+
+        configuration.setTellNotFound(false);
 
         return configuration;
     }
