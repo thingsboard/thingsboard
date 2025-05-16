@@ -383,11 +383,11 @@
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-anthropic</artifactId>
+            <artifactId>langchain4j-google-ai-gemini</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-google-ai-gemini</artifactId>
+            <artifactId>langchain4j-mistral-ai</artifactId>
         </dependency>
     </dependencies>
 

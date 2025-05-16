@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.ai;
 
-import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.model.mistralai.MistralAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -49,7 +49,7 @@ class AiServiceImpl implements RuleEngineAiService {
                     .apiKey(aiSettings.getApiKey())
                     .modelName(aiSettings.getModel())
                     .build();
-            case "anthropic" -> AnthropicChatModel.builder()
+            case "mistral-ai" -> MistralAiChatModel.builder()
                     .apiKey(aiSettings.getApiKey())
                     .modelName(aiSettings.getModel())
                     .build();
