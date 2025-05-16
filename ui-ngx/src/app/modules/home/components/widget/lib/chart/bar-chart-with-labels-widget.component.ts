@@ -58,6 +58,9 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
   @Input()
   ctx: WidgetContext;
 
+  @Input()
+  widgetTitlePanel: TemplateRef<any>;
+
   showLegend: boolean;
   legendClass: string;
 
