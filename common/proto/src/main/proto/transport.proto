@@ -99,3 +99,10 @@ message GatewayAttributesRequestMsg {
   bool client = 3;
   repeated string keys = 4;
 }
+
+message GatewayAttributesRequestMsgV2 {
+  int32  id = 1;
+  string deviceName = 2;
+  repeated string clientKeys = 3;
+  repeated string sharedKeys = 4;
+}

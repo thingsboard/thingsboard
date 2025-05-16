@@ -372,6 +372,16 @@ public class JsonConverter {
         return result;
     }
 
+    public static JsonObject getJsonObjectForGatewayV2(
+            String deviceName,
+            TransportProtos.GetAttributeResponseMsg responseMsg
+    ) {
+        JsonObject result = toJson(responseMsg);
+        result.addProperty("id", responseMsg.getRequestId());
+        result.addProperty(DEVICE_PROPERTY, deviceName);
+        return result;
+    }
+
     public static JsonObject getJsonObjectForGateway(String deviceName, AttributeUpdateNotificationMsg
             notificationMsg) {
         JsonObject result = new JsonObject();

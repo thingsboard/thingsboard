@@ -17,6 +17,9 @@ package org.thingsboard.server.msa.connectivity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonObject;
+import org.eclipse.californium.core.CoapClient;
+import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.CoAP;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -29,21 +32,69 @@ import org.thingsboard.server.msa.AbstractCoapClientTest;
 import org.thingsboard.server.msa.DisableUIListeners;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
+
 @DisableUIListeners
-public class CoapClientTest extends AbstractCoapClientTest{
+public class CoapClientTest extends AbstractCoapClientTest {
+
     private Device device;
+    private String accessToken;
+    private CoapClient coapClient;
+    private static final long COAP_RESPONSE_TIMEOUT_MS = 5000;
+
     @BeforeMethod
     public void setUp() throws Exception {
         testRestClient.login("tenant@thingsboard.org", "tenant");
         device = testRestClient.postDevice("", defaultDevicePrototype("http_"));
+        accessToken = testRestClient.getDeviceCredentialsByDeviceId(device.getId()).getCredentialsId();
+        initCoapClient(accessToken, "", "");
     }
 
     @AfterMethod
     public void tearDown() {
         testRestClient.deleteDeviceIfExists(device.getId());
+        if (coapClient != null) {
+            coapClient.shutdown();
+        }
         disconnect();
+    }
+
+    private void initCoapClient(String token, String clientKeys, String sharedKeys) {
+        StringBuilder uri = new StringBuilder("coap://localhost:5683/api/v1/").append(token).append("/attributes");
+        if (clientKeys != null || sharedKeys != null) {
+            uri.append("?");
+            if (clientKeys != null) {
+                uri.append("clientKeys=");
+                if (!clientKeys.isEmpty()) {
+                    uri.append(clientKeys);
+                }
+            }
+            if (sharedKeys != null) {
+                if (clientKeys != null) {
+                    uri.append("&");
+                }
+                uri.append("sharedKeys=");
+                if (!sharedKeys.isEmpty()) {
+                    uri.append(sharedKeys);
+                }
+            }
+        }
+        this.coapClient = new CoapClient(uri.toString());
+    }
+
+    private JsonNode getAttributes(String clientKeys, String sharedKeys) throws Exception {
+        return getAttributes(clientKeys, sharedKeys, CoAP.ResponseCode.CONTENT);
+    }
+
+    private JsonNode getAttributes(String clientKeys, String sharedKeys, CoAP.ResponseCode expectedCode) throws Exception {
+        initCoapClient(accessToken, clientKeys, sharedKeys);
+        coapClient.setTimeout(COAP_RESPONSE_TIMEOUT_MS);
+        CoapResponse response = coapClient.get();
+        assertThat(response).isNotNull();
+        assertThat(response.getCode()).isEqualTo(expectedCode);
+        return mapper.readTree(response.getPayload());
     }
 
     @Test
@@ -97,5 +148,45 @@ public class CoapClientTest extends AbstractCoapClientTest{
 
         assertThat(response.get("status").asText()).isEqualTo("NOT_FOUND");
     }
-}
 
+    @Test
+    public void getAllAttributes() throws Exception {
+        JsonNode payload = mapper.readTree(createPayload().toString());
+        testRestClient.postAttribute(accessToken, payload);
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, payload);
+        testRestClient.postTelemetry(accessToken, payload);
+        Thread.sleep(1000);
+
+        JsonNode response = getAttributes("", "");
+        assertThat(response.has("client")).isTrue();
+        assertThat(response.has("shared")).isTrue();
+        assertThat(response.get("client")).isEqualTo(payload);
+        assertThat(response.get("shared")).isEqualTo(payload);
+    }
+
+    @Test
+    public void getOnlyClientAttributes() throws Exception {
+        JsonNode payload = mapper.readTree(createPayload().toString());
+        testRestClient.postAttribute(accessToken, payload);
+        testRestClient.postTelemetry(accessToken, payload);
+        Thread.sleep(1000);
+
+        JsonNode response = getAttributes("boolKey,stringKey", null);
+        assertThat(response.get("client").get("boolKey")).isEqualTo(payload.get("boolKey"));
+        assertThat(response.get("client").get("stringKey")).isEqualTo(payload.get("stringKey"));
+        assertThat(response.has("shared")).isFalse();
+    }
+
+    @Test
+    public void getOnlySharedAttributes() throws Exception {
+        JsonNode payload = mapper.readTree(createPayload().toString());
+        testRestClient.postAttribute(accessToken, payload);
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, payload);
+        Thread.sleep(1000);
+
+        JsonNode response = getAttributes(null, "boolKey,stringKey");
+        assertThat(response.get("shared").get("boolKey")).isEqualTo(payload.get("boolKey"));
+        assertThat(response.get("shared").get("stringKey")).isEqualTo(payload.get("stringKey"));
+        assertThat(response.has("client")).isFalse();
+    }
+}
