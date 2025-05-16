@@ -58,7 +58,7 @@ public class TbGetRelatedAttributeNode extends TbAbstractGetEntityDataNode<Entit
     @Override
     public ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
         var relatedAttrConfig = (TbGetRelatedDataNodeConfiguration) config;
-        return Futures.transformAsync(
+        return Futures.transform(
                 EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, relatedAttrConfig.getRelationsQuery()),
                 checkIfEntityIsPresentOrThrow(RELATED_ENTITY_NOT_FOUND_MESSAGE),
                 ctx.getDbCallbackExecutor());
