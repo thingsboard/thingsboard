@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-value-stepper-widget\n    [ctx]='ctx'\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-stepper-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.actionWidget.onInit();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '230px',\n        previewHeight: '110px',\n        embedTitlePanel: true,\n        displayRpcMessageToast: false\n    };\n};\n\nself.onDestroy = function() {\n}\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.actionWidget.onInit();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '230px',\n        previewHeight: '110px',\n        embedTitlePanel: true,\n        displayRpcMessageToast: false,\n        supportsUnitConversion: true\n    };\n};\n\nself.onDestroy = function() {\n}\n",
     "dataKeySettingsForm": [],
     "settingsDirective": "tb-value-stepper-widget-settings",
     "hasBasicMode": true,

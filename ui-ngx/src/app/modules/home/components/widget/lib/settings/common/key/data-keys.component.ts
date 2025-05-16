@@ -170,6 +170,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   simpleDataKeysLabel = false;
 
   @Input()
+  @coerceBoolean()
+  supportsUnitConversion = false;
+
+  @Input()
   aliasController: IAliasController;
 
   @Input()
@@ -610,7 +614,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
           hideDataKeyLabel: this.hideDataKeyLabel,
           hideDataKeyColor: this.hideDataKeyColor,
           hideDataKeyUnits: this.hideDataKeyUnits,
-          hideDataKeyDecimals: this.hideDataKeyDecimals
+          hideDataKeyDecimals: this.hideDataKeyDecimals,
+          supportsUnitConversion: this.supportsUnitConversion
         }
       }).afterClosed().subscribe((updatedDataKey) => {
         if (updatedDataKey) {

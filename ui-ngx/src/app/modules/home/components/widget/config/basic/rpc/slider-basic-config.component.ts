@@ -33,6 +33,7 @@ import {
   SliderWidgetSettings
 } from '@home/components/widget/lib/rpc/slider-widget.models';
 import { cssSizeToStrSize, resolveCssSize } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-slider-basic-config',
@@ -304,7 +305,7 @@ export class SliderBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.sliderWidgetConfigForm.get('valueUnits').value;
+    const units: string = getSourceTbUnitSymbol(this.sliderWidgetConfigForm.get('valueUnits').value);
     const decimals: number = this.sliderWidgetConfigForm.get('valueDecimals').value;
     return formatValue(48, decimals, units, false);
   }

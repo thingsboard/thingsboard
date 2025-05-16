@@ -16,7 +16,7 @@
 
 import 'hammerjs';
 
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 import { environment as env } from '@env/environment';
 
@@ -39,7 +39,7 @@ import { initCustomJQueryEvents } from '@shared/models/jquery-event.models';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
 
   constructor(private store: Store<AppState>,
               private storageService: LocalStorageService,
@@ -108,10 +108,7 @@ export class AppComponent implements OnInit {
     this.authService.reloadUser();
   }
 
-  ngOnInit() {
-  }
-
-  onActivateComponent($event: any) {
+  onActivateComponent(_$event: any) {
     const loadingElement = $('div#tb-loading-spinner');
     if (loadingElement.length) {
       loadingElement.remove();

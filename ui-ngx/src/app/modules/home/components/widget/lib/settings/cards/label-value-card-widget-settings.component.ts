@@ -21,6 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { labelValueCardWidgetDefaultSettings } from '@home/components/widget/lib/cards/label-value-card-widget.models';
 import { formatValue } from '@core/utils';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-label-value-card-widget-settings',
@@ -101,7 +102,7 @@ export class LabelValueCardWidgetSettingsComponent extends WidgetSettingsCompone
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, true);
   }

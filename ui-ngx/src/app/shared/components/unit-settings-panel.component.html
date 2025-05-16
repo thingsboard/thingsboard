@@ -1,0 +1,100 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-convert-settings-panel">
+  <div class="tb-convert-settings-title" translate>unit.unit-settings.unit-settings</div>
+  <div class="tb-convert-settings-panel-content" [formGroup]="unitSettingForm">
+    <div class="tb-form-row">
+      <div class="min-w-44"
+           [class.tb-disabled-label]="unitSettingForm.get('from').disabled"
+           tb-hint-tooltip-icon="{{ 'unit.unit-settings.source-unit-hint' | translate }}"
+           translate>unit.unit-settings.source-unit</div>
+      <tb-unit-input class="flex-1" [required]="required" formControlName="from"
+                     [measure]="measure" [tagFilter]="tagFilter"></tb-unit-input>
+    </div>
+    <div class="tb-form-panel stroked">
+      <mat-slide-toggle class="mat-slide" formControlName="convertUnit">
+        <div tb-hint-tooltip-icon="{{ 'unit.unit-settings.enable-unit-conversion-hint' | translate }}">
+          {{ 'unit.unit-settings.enable-unit-conversion' | translate }}
+        </div>
+      </mat-slide-toggle>
+      <div class="tb-form-row">
+        <div class="min-w-44"
+             [class.tb-disabled-label]="unitSettingForm.get('METRIC').disabled"
+             tb-hint-tooltip-icon="{{ 'unit.unit-settings.target-metric-unit-hint' | translate }}"
+             translate>unit.unit-settings.target-metric-unit</div>
+        <tb-unit-input class="flex-1"
+                       onlySystemUnits="true"
+                       formControlName="METRIC"
+                       [tagFilter]="tagFilter"
+                       [unitSystem]="UnitSystem.METRIC"
+                       [measure]="targetMeasure">
+        </tb-unit-input>
+      </div>
+      <div class="tb-form-row">
+        <div class="min-w-44"
+             [class.tb-disabled-label]="unitSettingForm.get('IMPERIAL').disabled"
+             tb-hint-tooltip-icon="{{ 'unit.unit-settings.target-imperial-unit-hint' | translate }}"
+             translate>unit.unit-settings.target-imperial-unit</div>
+        <tb-unit-input class="flex-1"
+                       onlySystemUnits="true"
+                       formControlName="IMPERIAL"
+                       [tagFilter]="tagFilter"
+                       [unitSystem]="UnitSystem.IMPERIAL"
+                       [measure]="targetMeasure">
+        </tb-unit-input>
+      </div>
+      <div class="tb-form-row">
+        <div class="min-w-44"
+             [class.tb-disabled-label]="unitSettingForm.get('HYBRID').disabled"
+             tb-hint-tooltip-icon="{{ 'unit.unit-settings.target-hybrid-unit-hint' | translate }}"
+             translate>unit.unit-settings.target-hybrid-unit</div>
+        <tb-unit-input class="flex-1"
+                       onlySystemUnits="true"
+                       [tagFilter]="tagFilter"
+                       formControlName="HYBRID"
+                       [measure]="targetMeasure">
+        </tb-unit-input>
+      </div>
+    </div>
+  </div>
+  <div class="tb-convert-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            *ngIf="!disabled"
+            (click)="clearUnit()"
+            [disabled]="!(!!unitSettingForm.value.from || unitSettingForm.value.convertUnit)">
+      {{ 'action.clear' | translate }}
+    </button>
+    <span class="flex-1"></span>
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ (disabled ? 'action.close': 'action.cancel') | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            *ngIf="!disabled"
+            (click)="applyUnitSettings()"
+            [disabled]="unitSettingForm.invalid || unitSettingForm.pristine">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

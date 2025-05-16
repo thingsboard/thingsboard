@@ -106,7 +106,7 @@
         {{ 'widgets.value-stepper.value' | translate }}
       </mat-slide-toggle>
       <div class="flex flex-1 flex-row items-center justify-start gap-2">
-        <tb-unit-input class="flex" formControlName="valueUnits"></tb-unit-input>
+        <tb-unit-input class="flex" formControlName="valueUnits" supportsUnitConversion></tb-unit-input>
         <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="valueDecimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>

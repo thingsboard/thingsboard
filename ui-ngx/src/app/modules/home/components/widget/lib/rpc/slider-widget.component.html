@@ -42,10 +42,10 @@
         </mat-slider>
         <div *ngIf="showTicks" class="tb-slider-ticks" [style]="ticksStyle">
           <div #sliderTickMinContainer>
-            <div #sliderTickMin>{{ settings.tickMin }}</div>
+            <div #sliderTickMin>{{ tickMinText }}</div>
           </div>
           <div #sliderTickMaxContainer>
-            <div #sliderTickMax>{{ settings.tickMax }}</div>
+            <div #sliderTickMax>{{ tickMaxText }}</div>
           </div>
         </div>
       </div>

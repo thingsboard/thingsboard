@@ -135,6 +135,10 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
     return this.widgetConfigComponent.modelValue?.dataKeySettingsFunction;
   }
 
+  public get supportsUnitConversion(): boolean {
+    return this.widgetConfigComponent.modelValue?.typeParameters?.supportsUnitConversion ?? false;
+  }
+
   public get dashboard(): Dashboard {
     return this.widgetConfigComponent.dashboard;
   }

@@ -53,11 +53,12 @@
       <div translate>widget-config.units-short</div>
       <div class="flex flex-row items-center justify-start gap-2">
         <tb-unit-input
+          supportsUnitConversion
           formControlName="units">
         </tb-unit-input>
         <tb-font-settings formControlName="unitsFont"
                           disabledLineHeight
-                          [previewText]="radialGaugeWidgetConfigForm.get('units').value">
+                          [previewText]="unitsPreviewFn">
         </tb-font-settings>
         <tb-color-input asBoxInput
                         colorClearButton

@@ -15,7 +15,6 @@
 ///
 
 import {
-  ChangeDetectorRef,
   Component,
   DestroyRef,
   forwardRef,
@@ -33,11 +32,9 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup
 } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKey, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { DataKey, DatasourceType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { UtilsService } from '@core/services/utils.service';
 import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { aggregatedValueCardDefaultKeySettings } from '@home/components/widget/lib/cards/aggregated-value-card.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -70,25 +67,13 @@ export class AggregatedDataKeysPanelComponent implements ControlValueAccessor, O
 
   keysListFormGroup: UntypedFormGroup;
 
-  get widgetType(): widgetType {
-    return this.widgetConfigComponent.widgetType;
-  }
-
   get callbacks(): DataKeysCallbacks {
     return this.widgetConfigComponent.widgetConfigCallbacks;
-  }
-
-  get noKeys(): boolean {
-    const keys: DataKey[] = this.keysListFormGroup.get('keys').value;
-    return keys.length === 0;
   }
 
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
-              private dialog: MatDialog,
-              private cd: ChangeDetectorRef,
-              private utils: UtilsService,
               private widgetConfigComponent: WidgetConfigComponent,
               private destroyRef: DestroyRef) {
   }

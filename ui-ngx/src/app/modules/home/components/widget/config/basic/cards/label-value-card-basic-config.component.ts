@@ -37,6 +37,7 @@ import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-label-value-card-basic-config',
@@ -184,7 +185,7 @@ export class LabelValueCardBasicConfigComponent extends BasicWidgetConfigCompone
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.labelValueCardWidgetConfigForm.get('units').value;
+    const units = getSourceTbUnitSymbol(this.labelValueCardWidgetConfigForm.get('units').value);
     const decimals: number = this.labelValueCardWidgetConfigForm.get('decimals').value;
     return formatValue(22, decimals, units, true);
   }

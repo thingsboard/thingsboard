@@ -662,6 +662,9 @@ export class WidgetComponentService {
         if (isUndefined(result.typeParameters.targetDeviceOptional)) {
           result.typeParameters.targetDeviceOptional = false;
         }
+        if (isUndefined(result.typeParameters.supportsUnitConversion)) {
+          result.typeParameters.supportsUnitConversion = false;
+        }
         if (isDefinedAndNotNull(result.typeParameters.additionalWidgetActionTypes)) {
           if (Array.isArray(result.typeParameters.additionalWidgetActionTypes)) {
             result.typeParameters.additionalWidgetActionTypes = result.typeParameters.additionalWidgetActionTypes.filter(type => WidgetActionType[type]);

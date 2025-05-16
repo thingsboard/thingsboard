@@ -38,6 +38,7 @@ import {
 } from '@home/components/widget/lib/chart/chart.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getSourceTbUnitSymbol, isNotEmptyTbUnits } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-chart-bar-settings',
@@ -183,10 +184,10 @@ export class ChartBarSettingsComponent implements OnInit, ControlValueAccessor {
     if (this.series) {
       const dataKey = this.dataKeyConfigComponent.modelValue;
       const widgetConfig = this.dataKeyConfigComponent.widgetConfig;
-      const units = dataKey.units && dataKey.units.length ? dataKey.units : widgetConfig.config.units;
+      const units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units : widgetConfig.config.units;
       const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
         (isDefinedAndNotNull(widgetConfig.config.decimals) ? widgetConfig.config.decimals : 2);
-      return formatValue(22, decimals, units, false);
+      return formatValue(22, decimals, getSourceTbUnitSymbol(units), false);
     } else {
       return 'Wind';
     }
