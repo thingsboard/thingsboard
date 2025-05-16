@@ -47,6 +47,7 @@ export class UnitService {
 
   constructor(private translate: TranslateService,
               private store: Store<AppState>) {
+    this.converter = getUnitConverter(this.translate);
     this.translate.onLangChange.pipe(
       takeUntilDestroyed()
     ).subscribe(() => {
