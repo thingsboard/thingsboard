@@ -180,7 +180,8 @@ export class TemplateNotificationDialogComponent
       NotificationType.API_USAGE_LIMIT,
       NotificationType.NEW_PLATFORM_VERSION,
       NotificationType.RATE_LIMITS,
-      NotificationType.TASK_PROCESSING_FAILURE
+      NotificationType.TASK_PROCESSING_FAILURE,
+      NotificationType.RESOURCES_SHORTAGE
     ]);
 
     if (this.isSysAdmin()) {
