@@ -87,6 +87,8 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     )
     String apiKey;
 
+    public AiSettings() {}
+
     public AiSettings(AiSettingsId id) {
         super(id);
     }
