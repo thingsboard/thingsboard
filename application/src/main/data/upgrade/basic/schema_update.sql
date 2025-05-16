@@ -22,5 +22,6 @@ CREATE TABLE ai_settings (
     name         VARCHAR(255)  NOT NULL,
     provider     VARCHAR(255)  NOT NULL,
     model        VARCHAR(255)  NOT NULL,
-    api_key      VARCHAR(1000) NOT NULL
+    api_key      VARCHAR(1000) NOT NULL,
+    CONSTRAINT ai_settings_name_unq_key UNIQUE (tenant_id, name)
 );

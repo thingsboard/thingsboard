@@ -58,7 +58,7 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Human-readable name of the AI settings",
+            description = "Human-readable name of the AI settings; must be unique within the scope of the tenant",
             example = "Default AI Settings"
     )
     String name;

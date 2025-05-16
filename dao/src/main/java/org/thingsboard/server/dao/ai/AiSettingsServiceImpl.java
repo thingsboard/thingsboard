@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.Optional;
 
+import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
@@ -38,7 +39,12 @@ class AiSettingsServiceImpl implements AiSettingsService {
 
     @Override
     public AiSettings save(AiSettings aiSettings) {
-        return aiSettingsDao.saveAndFlush(aiSettings.getTenantId(), aiSettings);
+        try {
+            return aiSettingsDao.saveAndFlush(aiSettings.getTenantId(), aiSettings);
+        } catch (Exception e) {
+            checkConstraintViolation(e, "ai_settings_name_unq_key", "AI settings record with such name already exists!");
+            throw e;
+        }
     }
 
     @Override
