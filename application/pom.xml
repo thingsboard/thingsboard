@@ -380,7 +380,7 @@
     </dependencies>
 
     <build>
-        <finalName>thingsboard</finalName>
+        <finalName>${pkg.name}-${project.version}</finalName>
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
