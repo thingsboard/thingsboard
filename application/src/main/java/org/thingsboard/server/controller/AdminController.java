@@ -90,6 +90,7 @@ import org.thingsboard.server.service.update.UpdateService;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -254,13 +255,13 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/settings/testSms", method = RequestMethod.POST)
     public void sendTestSms(
             @Parameter(description = "A JSON value representing the Test SMS request.")
-            @RequestBody TestSmsRequest testSmsRequest) throws ThingsboardException {
+            @RequestBody TestSmsRequest testSmsRequest) throws Exception {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
         try {
-            smsService.sendTestSms(testSmsRequest);
+            smsService.sendTestSms(testSmsRequest).get(30, TimeUnit.SECONDS);
             auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, null, testSmsRequest.getNumberTo());
-        } catch (ThingsboardException e) {
+        } catch (Exception e) {
             auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, e, testSmsRequest.getNumberTo());
             throw e;
         }
