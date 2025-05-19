@@ -48,7 +48,6 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.settings.TasksQueueConfig;
 import org.thingsboard.server.queue.task.JobStatsService;
 import org.thingsboard.server.queue.task.TaskProducerQueueFactory;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Arrays;
 import java.util.List;
@@ -58,7 +57,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@TbCoreComponent
 @Component
 @Slf4j
 public class DefaultJobManager implements JobManager {
