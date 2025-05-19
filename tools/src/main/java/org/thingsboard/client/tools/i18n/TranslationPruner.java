@@ -1,8 +1,14 @@
 package org.thingsboard.client.tools.i18n;
 
+import com.fasterxml.jackson.core.FormatFeature;
+import com.fasterxml.jackson.core.PrettyPrinter;
+import com.fasterxml.jackson.core.util.Separators;
+import com.fasterxml.jackson.core.util.Separators.Spacing;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,8 +79,9 @@ public class TranslationPruner {
                     throw new IllegalArgumentException("Source JSON must be an object at root");
                 }
                 ObjectNode pruned = pruneNode((ObjectNode) sourceRoot, validKeys, "", mapper);
-
-                mapper.writerWithDefaultPrettyPrinter().writeValue(destFile, pruned);
+                Separators seps = Separators.createDefaultInstance()
+                        .withObjectFieldValueSpacing(Spacing.AFTER);
+                mapper.writer(new DefaultPrettyPrinter().withSeparators(seps)).writeValue(destFile, pruned);
                 System.out.println("Pruned translation written to " + destFile.getPath());
             }
         } catch (IOException e) {
