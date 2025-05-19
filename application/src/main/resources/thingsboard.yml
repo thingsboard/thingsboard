@@ -389,6 +389,12 @@ sql:
     # Specify Interval size for new data chunks storage.
     chunk_time_interval: "${SQL_TIMESCALE_CHUNK_TIME_INTERVAL:604800000}"
     batch_threads: "${SQL_TIMESCALE_BATCH_THREADS:3}" # batch thread count has to be a prime number like 3 or 5 to gain perfect hash distribution
+    # Enable/disable compression for timeseries data
+    compression_enabled: "${SQL_TIMESCALE_COMPRESSION_ENABLED:true}"
+    # Compression schedule interval in milliseconds (default: 7 days)
+    compression_schedule_interval: "${SQL_TIMESCALE_COMPRESSION_SCHEDULE_INTERVAL:604800000}"
+    # Compression policy for timeseries data (default: 30 days)
+    compression_policy_days: "${SQL_TIMESCALE_COMPRESSION_POLICY_DAYS:30}"
   ttl:
     ts:
       # Enable/disable TTL (Time To Live) for timeseries records

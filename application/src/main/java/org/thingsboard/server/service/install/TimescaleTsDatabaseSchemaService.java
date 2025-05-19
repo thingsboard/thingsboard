@@ -30,6 +30,15 @@ public class TimescaleTsDatabaseSchemaService extends SqlAbstractDatabaseSchemaS
     @Value("${sql.timescale.chunk_time_interval:86400000}")
     private long chunkTimeInterval;
 
+    @Value("${sql.timescale.compression_enabled:true}")
+    private boolean compressionEnabled;
+
+    @Value("${sql.timescale.compression_policy_days:30}")
+    private int compressionPolicyDays;
+
+    @Value("${sql.timescale.compression_schedule_interval:604800000}")
+    private long compressionScheduleInterval;
+
     public TimescaleTsDatabaseSchemaService() {
         super("schema-timescale.sql", null);
     }
@@ -38,6 +47,27 @@ public class TimescaleTsDatabaseSchemaService extends SqlAbstractDatabaseSchemaS
     public void createDatabaseSchema() throws Exception {
         super.createDatabaseSchema();
         executeQuery("SELECT create_hypertable('ts_kv', 'ts', chunk_time_interval => " + chunkTimeInterval + ", if_not_exists => true);");
+
+        if (compressionEnabled) {
+            log.info("Enabling TimescaleDB compression for ts_kv table with policy of {} days and schedule interval of {} ms", 
+                    compressionPolicyDays, compressionScheduleInterval);
+            try {
+                // Enable compression on the hypertable
+                executeQuery("ALTER TABLE ts_kv SET (timescaledb.compress = true);");
+
+                // Add compression policy to compress data older than the specified number of days
+                // Also specify how often the compression job should run (schedule_interval)
+                String compressionPolicy = String.format(
+                        "SELECT add_compression_policy('ts_kv', INTERVAL '%d days', schedule_interval => INTERVAL '%d milliseconds');", 
+                        compressionPolicyDays, compressionScheduleInterval);
+                executeQuery(compressionPolicy);
+
+                log.info("TimescaleDB compression enabled successfully with policy of {} days and schedule interval of {} ms", 
+                        compressionPolicyDays, compressionScheduleInterval);
+            } catch (Exception e) {
+                log.error("Failed to enable TimescaleDB compression", e);
+            }
+        }
     }
 
 }
