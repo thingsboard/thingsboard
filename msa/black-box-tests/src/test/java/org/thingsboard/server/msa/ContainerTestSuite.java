@@ -126,6 +126,7 @@ public class ContainerTestSuite {
                     new File(targetDir + ("docker-selenium.yml"))
             ));
             addToFile(targetDir, "queue-kafka.env", Map.of("TB_QUEUE_PREFIX", "test"));
+            addToFile(targetDir, "tb-edqs.env", Map.of("TB_QUEUE_PREFIX", "test"));
 
             if (IS_HYBRID_MODE) {
                 composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
