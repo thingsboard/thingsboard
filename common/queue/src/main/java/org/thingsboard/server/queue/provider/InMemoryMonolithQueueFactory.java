@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -260,11 +259,6 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
                 .maxRequestTimeout(edqsConfig.getMaxRequestTimeout())
                 .pollInterval(edqsConfig.getPollInterval())
                 .build();
-    }
-
-    @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.TaskProto>> createTaskProducer(JobType jobType) {
-        return new InMemoryTbQueueProducer<>(storage, jobType.getTasksTopic());
     }
 
     @Override

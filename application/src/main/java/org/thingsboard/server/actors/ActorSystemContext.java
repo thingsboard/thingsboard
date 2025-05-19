@@ -31,6 +31,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
+import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.NotificationCenter;
@@ -553,10 +554,13 @@ public class ActorSystemContext {
     @Getter
     private CalculatedFieldQueueService calculatedFieldQueueService;
 
-    @Lazy
-    @Autowired(required = false)
+    @Autowired
     @Getter
     private JobService jobService;
+
+    @Autowired
+    @Getter
+    private JobManager jobManager;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter

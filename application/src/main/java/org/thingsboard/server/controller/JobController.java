@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.job.JobManager;
+import org.thingsboard.rule.engine.api.JobManager;
 
 import java.util.List;
 import java.util.UUID;

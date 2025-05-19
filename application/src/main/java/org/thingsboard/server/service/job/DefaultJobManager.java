@@ -16,20 +16,18 @@
 package org.thingsboard.server.service.job;
 
 import jakarta.annotation.PreDestroy;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobResult;
-import org.thingsboard.server.common.data.job.JobStats;
 import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.Task;
@@ -41,28 +39,22 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
-import org.thingsboard.server.gen.transport.TransportProtos.JobStatsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
 import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.settings.TasksQueueConfig;
 import org.thingsboard.server.queue.task.JobStatsService;
-import org.thingsboard.server.queue.util.AfterStartUp;
+import org.thingsboard.server.queue.task.TaskProducerQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -78,12 +70,10 @@ public class DefaultJobManager implements JobManager {
     private final TasksQueueConfig queueConfig;
     private final Map<JobType, JobProcessor> jobProcessors;
     private final Map<JobType, TbQueueProducer<TbProtoQueueMsg<TaskProto>>> taskProducers;
-    private final QueueConsumerManager<TbProtoQueueMsg<JobStatsMsg>> jobStatsConsumer;
     private final ExecutorService executor;
-    private final ExecutorService consumerExecutor;
 
     public DefaultJobManager(JobService jobService, JobStatsService jobStatsService, NotificationCenter notificationCenter,
-                             PartitionService partitionService, TbCoreQueueFactory queueFactory, TasksQueueConfig queueConfig,
+                             PartitionService partitionService, TaskProducerQueueFactory queueFactory, TasksQueueConfig queueConfig,
                              List<JobProcessor> jobProcessors) {
         this.jobService = jobService;
         this.jobStatsService = jobStatsService;
@@ -93,20 +83,6 @@ public class DefaultJobManager implements JobManager {
         this.jobProcessors = jobProcessors.stream().collect(Collectors.toMap(JobProcessor::getType, Function.identity()));
         this.taskProducers = Arrays.stream(JobType.values()).collect(Collectors.toMap(Function.identity(), queueFactory::createTaskProducer));
         this.executor = ThingsBoardExecutors.newWorkStealingPool(Math.max(4, Runtime.getRuntime().availableProcessors()), getClass());
-        this.consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("job-stats-consumer"));
-        this.jobStatsConsumer = QueueConsumerManager.<TbProtoQueueMsg<JobStatsMsg>>builder()
-                .name("job-stats")
-                .msgPackProcessor(this::processStats)
-                .pollInterval(queueConfig.getStatsPollInterval())
-                .consumerCreator(queueFactory::createJobStatsConsumer)
-                .consumerExecutor(consumerExecutor)
-                .build();
-    }
-
-    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
-    public void afterStartUp() {
-        jobStatsConsumer.subscribe();
-        jobStatsConsumer.launch();
     }
 
     @Override
@@ -229,39 +205,6 @@ public class DefaultJobManager implements JobManager {
         });
     }
 
-    @SneakyThrows
-    private void processStats(List<TbProtoQueueMsg<JobStatsMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<JobStatsMsg>> consumer) {
-        Map<JobId, JobStats> stats = new HashMap<>();
-
-        for (TbProtoQueueMsg<JobStatsMsg> msg : msgs) {
-            JobStatsMsg statsMsg = msg.getValue();
-            TenantId tenantId = TenantId.fromUUID(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
-            JobId jobId = new JobId(new UUID(statsMsg.getJobIdMSB(), statsMsg.getJobIdLSB()));
-            JobStats jobStats = stats.computeIfAbsent(jobId, __ -> new JobStats(tenantId, jobId));
-
-            if (statsMsg.hasTaskResult()) {
-                TaskResult taskResult = JacksonUtil.fromString(statsMsg.getTaskResult().getValue(), TaskResult.class);
-                jobStats.getTaskResults().add(taskResult);
-            }
-            if (statsMsg.hasTotalTasksCount()) {
-                jobStats.setTotalTasksCount(statsMsg.getTotalTasksCount());
-            }
-        }
-
-        stats.forEach((jobId, jobStats) -> {
-            TenantId tenantId = jobStats.getTenantId();
-            try {
-                log.debug("[{}][{}] Processing job stats: {}", tenantId, jobId, stats);
-                jobService.processStats(tenantId, jobId, jobStats);
-            } catch (Exception e) {
-                log.error("[{}][{}] Failed to process job stats: {}", tenantId, jobId, jobStats, e);
-            }
-        });
-        consumer.commit();
-
-        Thread.sleep(queueConfig.getStatsProcessingInterval());
-    }
-
     private void sendJobFinishedNotification(Job job) {
         NotificationTemplate template = DefaultNotifications.DefaultNotification.builder()
                 .name("Job finished")
@@ -284,9 +227,7 @@ public class DefaultJobManager implements JobManager {
 
     @PreDestroy
     private void destroy() {
-        jobStatsConsumer.stop();
         executor.shutdownNow();
-        consumerExecutor.shutdownNow();
     }
 
 }
