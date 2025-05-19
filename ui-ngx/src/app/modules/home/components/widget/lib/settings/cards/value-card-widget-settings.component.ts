@@ -21,16 +21,15 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   valueCardDefaultSettings,
-  ValueCardLayout, valueCardLayoutImages,
-  valueCardLayouts, valueCardLayoutTranslations
+  ValueCardLayout,
+  valueCardLayoutImages,
+  valueCardLayouts,
+  valueCardLayoutTranslations
 } from '@home/components/widget/lib/cards/value-card-widget.models';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import {
-  DateFormatProcessor,
-  DateFormatSettings,
-  getLabel
-} from '@shared/models/widget-settings.models';
+import { DateFormatProcessor, DateFormatSettings, getLabel } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-value-card-widget-settings',
@@ -188,7 +187,7 @@ export class ValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, true);
   }
