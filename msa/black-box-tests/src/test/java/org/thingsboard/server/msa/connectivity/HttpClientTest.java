@@ -21,6 +21,7 @@ import io.restassured.path.json.JsonPath;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -35,13 +36,13 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
 @DisableUIListeners
 public class HttpClientTest extends AbstractContainerTest {
     private Device device;
+
     @BeforeMethod
     public void setUp() throws Exception {
         testRestClient.login("tenant@thingsboard.org", "tenant");
@@ -100,7 +101,7 @@ public class HttpClientTest extends AbstractContainerTest {
     }
 
     @Test
-    public void getClientAttributesByKeys() throws Exception {
+    public void getClientAttributes() throws Exception {
         String accessToken = testRestClient.getDeviceCredentialsByDeviceId(device.getId()).getCredentialsId();
         assertThat(accessToken).isNotNull();
 
@@ -109,7 +110,13 @@ public class HttpClientTest extends AbstractContainerTest {
 
         TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
 
-        JsonNode attributes = testRestClient.getAttributes(accessToken, "stringKey,longKey", null);
+        JsonNode attributes = testRestClient.getAttributesByScope(accessToken, AttributeScope.CLIENT_SCOPE, "stringKey,longKey");
+
+        assertThat(attributes.has("shared")).isFalse();
+        assertThat(attributes.get("client").get("stringKey")).isEqualTo(clientAttribute.get("stringKey"));
+        assertThat(attributes.get("client").get("longKey")).isEqualTo(clientAttribute.get("longKey"));
+
+        attributes = testRestClient.getAttributesByScope(accessToken, AttributeScope.CLIENT_SCOPE, null);
 
         assertThat(attributes.has("shared")).isFalse();
         assertThat(attributes.get("client").get("stringKey")).isEqualTo(clientAttribute.get("stringKey"));
@@ -117,7 +124,7 @@ public class HttpClientTest extends AbstractContainerTest {
     }
 
     @Test
-    public void getSharedAttributesByKeys() throws Exception {
+    public void getSharedAttributes() throws Exception {
         String accessToken = testRestClient.getDeviceCredentialsByDeviceId(device.getId()).getCredentialsId();
         assertThat(accessToken).isNotNull();
 
@@ -126,12 +133,19 @@ public class HttpClientTest extends AbstractContainerTest {
 
         TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
 
-        JsonNode attributes = testRestClient.getAttributes(accessToken, null, "stringKey,longKey");
+        JsonNode attributes = testRestClient.getAttributesByScope(accessToken, AttributeScope.SHARED_SCOPE, "stringKey,longKey");
+
+        assertThat(attributes.has("client")).isFalse();
+        assertThat(attributes.get("shared").get("stringKey")).isEqualTo(sharedAttribute.get("stringKey"));
+        assertThat(attributes.get("shared").get("longKey")).isEqualTo(sharedAttribute.get("longKey"));
+
+        attributes = testRestClient.getAttributesByScope(accessToken, AttributeScope.SHARED_SCOPE, null);
 
         assertThat(attributes.has("client")).isFalse();
         assertThat(attributes.get("shared").get("stringKey")).isEqualTo(sharedAttribute.get("stringKey"));
         assertThat(attributes.get("shared").get("longKey")).isEqualTo(sharedAttribute.get("longKey"));
     }
+
 
     @Test
     public void provisionRequestForDeviceWithPreProvisionedStrategy() throws Exception {

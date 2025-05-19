@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -174,6 +175,40 @@ public class DeviceApiController implements TbTransportService {
                     transportService.process(sessionInfo, request.build(), new SessionCloseOnErrorCallback(transportService, sessionInfo));
                 }));
         return responseWriter;
+    }
+
+    @Operation(summary = "Get attributes (getDeviceClientAttributes)",
+            description = "Returns all client attributes that belong to device. "
+                    + "Use optional 'keys' parameter to return specific attributes. "
+                    + "\n Example of the result: "
+                    + MARKDOWN_CODE_BLOCK_START
+                    + ATTRIBUTE_PAYLOAD_EXAMPLE
+                    + MARKDOWN_CODE_BLOCK_END
+                    + REQUIRE_ACCESS_TOKEN)
+    @RequestMapping(value = "/{deviceToken}/attributes/client", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity> getDeviceClientAttributes(
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @PathVariable("deviceToken") String deviceToken,
+            @Parameter(description = "Comma separated key names for attributes", required = true, schema = @Schema(defaultValue = "state"))
+            @RequestParam(value = "keys", required = false) String keys) {
+        return handleAttributeRequest(deviceToken, AttributeScope.CLIENT_SCOPE, keys);
+    }
+
+    @Operation(summary = "Get attributes (getDeviceSharedAttributes)",
+            description = "Returns all shared attributes that belong to device. "
+                    + "Use optional 'keys' parameter to return specific attributes. "
+                    + "\n Example of the result: "
+                    + MARKDOWN_CODE_BLOCK_START
+                    + ATTRIBUTE_PAYLOAD_EXAMPLE
+                    + MARKDOWN_CODE_BLOCK_END
+                    + REQUIRE_ACCESS_TOKEN)
+    @RequestMapping(value = "/{deviceToken}/attributes/shared", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity> getDeviceSharedAttributes(
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
+            @PathVariable("deviceToken") String deviceToken,
+            @Parameter(description = "Comma separated key names for attributes", required = true, schema = @Schema(defaultValue = "state"))
+            @RequestParam(value = "keys", required = false) String keys) {
+        return handleAttributeRequest(deviceToken, AttributeScope.SHARED_SCOPE, keys);
     }
 
     @Operation(summary = "Post attributes (postDeviceAttributes)",
@@ -624,6 +659,39 @@ public class DeviceApiController implements TbTransportService {
             responseWriter.setResult(new ResponseEntity<>("Device was deleted!", HttpStatus.FORBIDDEN));
         }
 
+    }
+
+    private DeferredResult<ResponseEntity> handleAttributeRequest(String deviceToken, AttributeScope scope, String keys) {
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
+        List<String> keySet = !StringUtils.isEmpty(keys) ? Arrays.asList(keys.split(",")) : List.of();
+        GetAttributeRequestMsg.Builder builder = GetAttributeRequestMsg.newBuilder()
+                .setRequestId(0);
+        switch (scope) {
+            case CLIENT_SCOPE:
+                builder.setAddClient(true);
+                builder.addAllClientAttributeNames(keySet);
+                break;
+            case SHARED_SCOPE:
+                builder.setAddShared(true);
+                builder.addAllSharedAttributeNames(keySet);
+                break;
+            default:
+                responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+                return responseWriter;
+        }
+        transportContext.getTransportService().process(
+                DeviceTransportType.DEFAULT,
+                ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+                new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                    TransportService transportService = transportContext.getTransportService();
+                    transportService.registerSyncSession(
+                            sessionInfo,
+                            new HttpSessionListener(responseWriter, transportService, sessionInfo),
+                            transportContext.getDefaultTimeout());
+                    transportService.process(sessionInfo, builder.build(), new SessionCloseOnErrorCallback(transportService, sessionInfo));
+                })
+        );
+        return responseWriter;
     }
 
     private static MediaType parseMediaType(String contentType) {

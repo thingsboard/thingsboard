@@ -515,7 +515,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     private void handleGetAttributesRequest(SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
-        log.error("[{}][{}] Processing get attributes request: {}", deviceId, requestId, request);
+        log.trace("[{}][{}] Processing get attributes request: {}", deviceId, requestId, request);
         Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
