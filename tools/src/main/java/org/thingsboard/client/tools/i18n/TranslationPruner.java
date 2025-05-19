@@ -53,28 +53,30 @@ public class TranslationPruner {
     }
 
     public static void main(String[] args) {
-        if (args.length < 3) {
-            System.err.println("Usage: java TranslationPruner <source.json> <reference.json> [output.json]");
+        if (args.length < 2) {
+            System.err.println("Usage: `java TranslationPruner <source folder> <dest folder>`, where dest folder must contain the locale.constant-en_US.json for reference structure.");
             System.exit(1);
         }
         try {
-            File sourceFile = new File(args[0]);
-            File referenceFile = new File(args[1]);
-            File outputFile = new File(args[2]);
+            File sourceFolder = new File(args[0]);
+            File destFolder = new File(args[1]);
 
+            File referenceFile = new File(destFolder, "locale.constant-en_US.json");
             ObjectMapper mapper = new ObjectMapper();
             JsonNode usRoot = mapper.readTree(referenceFile);
             Set<String> validKeys = new HashSet<>();
             collectKeys(usRoot, "", validKeys);
+            for (File sourceFile : sourceFolder.listFiles()) {
+                File destFile = new File(destFolder, sourceFile.getName());
+                JsonNode sourceRoot = mapper.readTree(sourceFile);
+                if (!sourceRoot.isObject()) {
+                    throw new IllegalArgumentException("Source JSON must be an object at root");
+                }
+                ObjectNode pruned = pruneNode((ObjectNode) sourceRoot, validKeys, "", mapper);
 
-            JsonNode sourceRoot = mapper.readTree(sourceFile);
-            if (!sourceRoot.isObject()) {
-                throw new IllegalArgumentException("Source JSON must be an object at root");
+                mapper.writerWithDefaultPrettyPrinter().writeValue(destFile, pruned);
+                System.out.println("Pruned translation written to " + destFile.getPath());
             }
-            ObjectNode pruned = pruneNode((ObjectNode) sourceRoot, validKeys, "", mapper);
-
-            mapper.writerWithDefaultPrettyPrinter().writeValue(outputFile, pruned);
-            System.out.println("Pruned translation written to " + outputFile.getPath());
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(2);
