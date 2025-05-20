@@ -121,7 +121,11 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxWsSubscriptionsPerPublicUser;
     private String wsUpdatesPerSessionRateLimit;
 
-    private String cassandraQueryTenantRateLimitsConfiguration;
+    private String cassandraReadQueryTenantCoreRateLimits;
+    private String cassandraWriteQueryTenantCoreRateLimits;
+
+    private String cassandraReadQueryTenantRuleEngineRateLimits;
+    private String cassandraWriteQueryTenantRuleEngineRateLimits;
 
     private String edgeEventRateLimits;
     private String edgeEventRateLimitsPerEdge;

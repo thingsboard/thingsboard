@@ -78,11 +78,9 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
             }
         }
         log.info("Current Service ID: {}", serviceId);
-        if (serviceType.equalsIgnoreCase("monolith")) {
-            serviceTypes = List.of(ServiceType.values());
-        } else {
-            serviceTypes = Collections.singletonList(ServiceType.of(serviceType));
-        }
+        serviceTypes = isMonolith() ?
+                List.of(ServiceType.values()) :
+                Collections.singletonList(ServiceType.of(serviceType));
         if (!serviceTypes.contains(ServiceType.TB_RULE_ENGINE) || assignedTenantProfiles == null) {
             assignedTenantProfiles = Collections.emptySet();
         }
@@ -111,6 +109,11 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Override
     public ServiceInfo getServiceInfo() {
         return serviceInfo;
+    }
+
+    @Override
+    public boolean isMonolith() {
+        return serviceType.equalsIgnoreCase("monolith");
     }
 
     @Override

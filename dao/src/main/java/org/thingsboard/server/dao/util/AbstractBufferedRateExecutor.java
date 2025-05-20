@@ -34,12 +34,14 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -78,13 +80,14 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     private final EntityService entityService;
     private final RateLimitService rateLimitService;
+    private final TbServiceInfoProvider serviceInfoProvider;
 
     private final boolean printTenantNames;
     private final Map<TenantId, String> tenantNamesCache = new HashMap<>();
 
     public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads,
                                         int callbackThreads, long pollMs, int printQueriesFreq, StatsFactory statsFactory,
-                                        EntityService entityService, RateLimitService rateLimitService, boolean printTenantNames) {
+                                        EntityService entityService, RateLimitService rateLimitService, TbServiceInfoProvider serviceInfoProvider, boolean printTenantNames) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
@@ -99,6 +102,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
         this.entityService = entityService;
         this.rateLimitService = rateLimitService;
+        this.serviceInfoProvider = serviceInfoProvider;
         this.printTenantNames = printTenantNames;
 
         for (int i = 0; i < dispatcherThreads; i++) {
@@ -114,7 +118,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         boolean perTenantLimitReached = false;
         TenantId tenantId = task.getTenantId();
         if (tenantId != null && !tenantId.isSysTenantId()) {
-            if (!rateLimitService.checkRateLimit(LimitedApi.CASSANDRA_QUERIES, tenantId, tenantId, true)) {
+            if (!rateLimitService.checkRateLimit(getMyLimitedApi(), tenantId, tenantId, true)) {
                 stats.incrementRateLimitedTenant(tenantId);
                 stats.getTotalRateLimited().increment();
                 settableFuture.setException(new TenantRateLimitException());
@@ -136,6 +140,16 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         return result;
     }
 
+    private LimitedApi getMyLimitedApi() {
+        if (serviceInfoProvider.isMonolith()) {
+            return getBufferedRateExecutorType().getMonolithLimitedApi();
+        }
+        if (serviceInfoProvider.isService(ServiceType.TB_RULE_ENGINE)) {
+            return getBufferedRateExecutorType().getRuleEngineLimitedApi();
+        }
+        return getBufferedRateExecutorType().getCoreLimitedApi();
+    }
+
     public void stop() {
         if (dispatcherExecutor != null) {
             dispatcherExecutor.shutdownNow();
@@ -154,7 +168,11 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     protected abstract ListenableFuture<V> execute(AsyncTaskContext<T, V> taskCtx);
 
-    public abstract String getBufferName();
+    private String getBufferName() {
+        return getBufferedRateExecutorType().getDisplayName();
+    }
+
+    protected abstract BufferedRateExecutorType getBufferedRateExecutorType();
 
     private void dispatch() {
         log.info("[{}] Buffered rate executor thread started", getBufferName());
