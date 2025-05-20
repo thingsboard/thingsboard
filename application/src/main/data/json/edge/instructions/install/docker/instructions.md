@@ -24,6 +24,8 @@ In Memory queue implementation is built-in and default. It is useful for develop
 
 Kafka is recommended for production deployments. This queue is used on the most of ThingsBoard production environments now.
 
+Hybrid implementation combines PostgreSQL and Cassandra databases with Kafka queue service. It is recommended if you plan to manage 1M+ devices in production or handle high data ingestion rate (more than 5000 msg/sec).
+
 Create a docker compose file for the ThingsBoard Edge service:
 
 ##### In Memory
