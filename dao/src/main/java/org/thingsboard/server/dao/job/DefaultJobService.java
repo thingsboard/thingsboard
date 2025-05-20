@@ -157,6 +157,10 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
     private Job saveJob(TenantId tenantId, Job job, boolean publishEvent, JobStatus prevStatus) {
         ConstraintValidator.validateFields(job);
+        if (!Job.SUPPORTED_ENTITY_TYPES.contains(job.getEntityId().getEntityType())) {
+            throw new IllegalArgumentException("Unsupported entity type " + job.getEntityId().getEntityType());
+        }
+
         job = jobDao.save(tenantId, job);
         if (publishEvent) {
             eventPublisher.publishEvent(SaveEntityEvent.builder()
@@ -203,6 +207,11 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
         jobDao.removeById(tenantId, jobId.getId());
     }
 
+    @Override
+    public int deleteJobsByEntityId(TenantId tenantId, EntityId entityId) { // TODO: cancel all jobs for this entity
+        return jobDao.removeByEntityId(tenantId, entityId);
+    }
+
     private Job findForUpdate(TenantId tenantId, JobId jobId) {
         return jobDao.findByIdForUpdate(tenantId, jobId);
     }
@@ -219,7 +228,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
     @Override
     public void deleteByTenantId(TenantId tenantId) {
-        jobDao.deleteByTenantId(tenantId);
+        jobDao.removeByTenantId(tenantId);
     }
 
     @Override

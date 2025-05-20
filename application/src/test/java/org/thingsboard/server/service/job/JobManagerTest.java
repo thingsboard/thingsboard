@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.job;
 
-import org.assertj.core.api.ThrowingConsumer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.rule.engine.api.JobManager;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.DummyJobConfiguration;
@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.DummyTaskResult;
 import org.thingsboard.server.common.data.job.task.DummyTaskResult.DummyTaskFailure;
-import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.job.JobDao;
@@ -53,6 +52,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -72,9 +72,14 @@ public class JobManagerTest extends AbstractControllerTest {
     @Autowired
     private JobDao jobDao;
 
+    private TenantId tenantId;
+    private Device jobEntity;
+
     @Before
     public void setUp() throws Exception {
         loginTenantAdmin();
+        tenantId = super.tenantId;
+        jobEntity = createDevice("Test", "Test");
     }
 
     @After
@@ -84,15 +89,9 @@ public class JobManagerTest extends AbstractControllerTest {
     @Test
     public void testSubmitJob_allTasksSuccessful() {
         int tasksCount = 5;
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("Test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .successfulTasksCount(tasksCount)
-                        .taskProcessingTimeMs(1000)
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(tasksCount)
+                .taskProcessingTimeMs(1000)
                 .build()).getId();
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -108,29 +107,18 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getResults()).isEmpty();
             assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
         });
-
-        checkJobNotification(notification -> {
-            assertThat(notification.getSubject()).isEqualTo("Dummy job task completed");
-            assertThat(notification.getText()).isEqualTo("Test job completed: 5/5 successful, 0 failed");
-        });
     }
 
     @Test
     public void testSubmitJob_someTasksPermanentlyFailed() {
         int successfulTasks = 3;
         int failedTasks = 2;
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("Test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .successfulTasksCount(successfulTasks)
-                        .failedTasksCount(failedTasks)
-                        .errors(List.of("error1", "error2", "error3"))
-                        .retries(2)
-                        .taskProcessingTimeMs(100)
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(successfulTasks)
+                .failedTasksCount(failedTasks)
+                .errors(List.of("error1", "error2", "error3"))
+                .retries(2)
+                .taskProcessingTimeMs(100)
                 .build()).getId();
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -145,24 +133,13 @@ public class JobManagerTest extends AbstractControllerTest {
             });
             assertThat(jobResult.getCompletedCount()).isEqualTo(jobResult.getTotalCount());
         });
-
-        checkJobNotification(notification -> {
-            assertThat(notification.getSubject()).isEqualTo("Dummy job task failed");
-            assertThat(notification.getText()).isEqualTo("Test job failed: 3/5 successful, 2 failed");
-        });
     }
 
     @Test
     public void testSubmitJob_taskTimeout() {
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("Test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .successfulTasksCount(1)
-                        .taskProcessingTimeMs(5000) // bigger than DummyTaskProcessor.getTaskProcessingTimeout()
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(1)
+                .taskProcessingTimeMs(5000) // bigger than DummyTaskProcessor.getTaskProcessingTimeout()
                 .build()).getId();
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -177,15 +154,9 @@ public class JobManagerTest extends AbstractControllerTest {
     @Test
     public void testCancelJob_whileRunning() throws Exception {
         int tasksCount = 100;
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .successfulTasksCount(tasksCount)
-                        .taskProcessingTimeMs(100)
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(tasksCount)
+                .taskProcessingTimeMs(100)
                 .build()).getId();
 
         Thread.sleep(500);
@@ -203,15 +174,9 @@ public class JobManagerTest extends AbstractControllerTest {
     @Test
     public void testCancelJob_simulateTaskProcessorRestart() throws Exception {
         int tasksCount = 10;
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .successfulTasksCount(tasksCount)
-                        .taskProcessingTimeMs(500)
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(tasksCount)
+                .taskProcessingTimeMs(500)
                 .build()).getId();
 
         // simulate cancelled jobs are forgotten
@@ -239,16 +204,10 @@ public class JobManagerTest extends AbstractControllerTest {
         loginSysAdmin();
         createDifferentTenant();
 
-        TenantId tenantId = this.differentTenantId;
-        jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .successfulTasksCount(1000)
-                        .taskProcessingTimeMs(500)
-                        .build())
+        this.tenantId = this.differentTenantId;
+        submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(1000)
+                .taskProcessingTimeMs(500)
                 .build());
 
         Thread.sleep(2000);
@@ -261,25 +220,18 @@ public class JobManagerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSubmitMultipleJobs() {
+    public void testSubmitMultipleJobs() throws Exception {
         int tasksCount = 3;
         int jobsCount = 3;
         for (int i = 1; i <= jobsCount; i++) {
-            Job job = Job.builder()
-                    .tenantId(tenantId)
-                    .type(JobType.DUMMY)
-                    .key("test-job-" + i)
-                    .description("test job")
-                    .configuration(DummyJobConfiguration.builder()
-                            .successfulTasksCount(tasksCount)
-                            .taskProcessingTimeMs(1000)
-                            .build())
-                    .build();
-            jobManager.submitJob(job);
+            submitJob(DummyJobConfiguration.builder()
+                    .successfulTasksCount(tasksCount)
+                    .taskProcessingTimeMs(1000)
+                    .build(), "test-job-" + i);
         }
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<Job> jobs = findJobs(JobType.DUMMY);
+            List<Job> jobs = findJobs(List.of(JobType.DUMMY), List.of(jobEntity.getUuidId()));
             assertThat(jobs).hasSize(jobsCount);
             Job firstJob = jobs.get(2); // ordered by createdTime descending
             assertThat(firstJob.getStatus()).isEqualTo(JobStatus.RUNNING);
@@ -297,6 +249,11 @@ public class JobManagerTest extends AbstractControllerTest {
                 assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
             }
         });
+
+        doDelete("/api/device/" + jobEntity.getId()).andExpect(status().isOk());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(findJobs(List.of(JobType.DUMMY), List.of(jobEntity.getUuidId()))).isEmpty();
+        });
     }
 
     @Test
@@ -305,17 +262,11 @@ public class JobManagerTest extends AbstractControllerTest {
         int jobsCount = 3;
         List<JobId> jobIds = new ArrayList<>();
         for (int i = 1; i <= jobsCount; i++) {
-            Job job = Job.builder()
-                    .tenantId(tenantId)
-                    .type(JobType.DUMMY)
-                    .key("test-job-" + i)
-                    .description("test job")
-                    .configuration(DummyJobConfiguration.builder()
-                            .successfulTasksCount(tasksCount)
-                            .taskProcessingTimeMs(1000)
-                            .build())
-                    .build();
-            jobIds.add(jobManager.submitJob(job).getId());
+            Job job = submitJob(DummyJobConfiguration.builder()
+                    .successfulTasksCount(tasksCount)
+                    .taskProcessingTimeMs(1000)
+                    .build(), "test-job-" + i);
+            jobIds.add(job.getId());
         }
 
         for (int i = 1; i < jobIds.size(); i++) {
@@ -343,16 +294,10 @@ public class JobManagerTest extends AbstractControllerTest {
     @Test
     public void testSubmitJob_generalError() {
         int submittedTasks = 100;
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("Test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .generalError("Some error while submitting tasks")
-                        .submittedTasksBeforeGeneralError(submittedTasks)
-                        .taskProcessingTimeMs(10)
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .generalError("Some error while submitting tasks")
+                .submittedTasksBeforeGeneralError(submittedTasks)
+                .taskProcessingTimeMs(10)
                 .build()).getId();
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -362,24 +307,13 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getDiscardedCount()).isZero();
             assertThat(job.getResult().getTotalCount()).isNull();
         });
-
-        checkJobNotification(notification -> {
-            assertThat(notification.getSubject()).isEqualTo("Dummy job task failed");
-            assertThat(notification.getText()).isEqualTo("Test job failed: Some error while submitting tasks");
-        });
     }
 
     @Test
     public void testSubmitJob_immediateGeneralError() {
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("Test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .generalError("Some error while submitting tasks")
-                        .submittedTasksBeforeGeneralError(0)
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .generalError("Some error while submitting tasks")
+                .submittedTasksBeforeGeneralError(0)
                 .build()).getId();
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -395,16 +329,10 @@ public class JobManagerTest extends AbstractControllerTest {
     @Test
     public void testReprocessJob_generalError() throws Exception {
         int submittedTasks = 100;
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("Test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .generalError("Some error while submitting tasks")
-                        .submittedTasksBeforeGeneralError(submittedTasks)
-                        .taskProcessingTimeMs(10)
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .generalError("Some error while submitting tasks")
+                .submittedTasksBeforeGeneralError(submittedTasks)
+                .taskProcessingTimeMs(10)
                 .build()).getId();
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -437,17 +365,11 @@ public class JobManagerTest extends AbstractControllerTest {
         int successfulTasks = 3;
         int failedTasks = 2;
         int totalTasksCount = successfulTasks + failedTasks;
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .successfulTasksCount(successfulTasks)
-                        .failedTasksCount(failedTasks)
-                        .errors(List.of("error"))
-                        .taskProcessingTimeMs(100)
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(successfulTasks)
+                .failedTasksCount(failedTasks)
+                .errors(List.of("error"))
+                .taskProcessingTimeMs(100)
                 .build()).getId();
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -484,18 +406,12 @@ public class JobManagerTest extends AbstractControllerTest {
         int failedTasks = 2;
         int permanentlyFailedTasks = 1;
         int totalTasksCount = successfulTasks + failedTasks + permanentlyFailedTasks;
-        JobId jobId = jobManager.submitJob(Job.builder()
-                .tenantId(tenantId)
-                .type(JobType.DUMMY)
-                .key("test-job")
-                .description("test job")
-                .configuration(DummyJobConfiguration.builder()
-                        .successfulTasksCount(successfulTasks)
-                        .failedTasksCount(failedTasks)
-                        .permanentlyFailedTasksCount(permanentlyFailedTasks)
-                        .errors(List.of("error"))
-                        .taskProcessingTimeMs(100)
-                        .build())
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(successfulTasks)
+                .failedTasksCount(failedTasks)
+                .permanentlyFailedTasksCount(permanentlyFailedTasks)
+                .errors(List.of("error"))
+                .taskProcessingTimeMs(100)
                 .build()).getId();
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -534,14 +450,18 @@ public class JobManagerTest extends AbstractControllerTest {
         });
     }
 
-    private void checkJobNotification(ThrowingConsumer<Notification> assertFunction) {
-        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
-            Notification notification = getMyNotifications(true, 100).stream()
-                    .findFirst().orElse(null);
-            assertThat(notification).isNotNull();
+    private Job submitJob(DummyJobConfiguration configuration) {
+        return submitJob(configuration, "test-job");
+    }
 
-            assertFunction.accept(notification);
-        });
+    private Job submitJob(DummyJobConfiguration configuration, String key) {
+        return jobManager.submitJob(Job.builder()
+                .tenantId(tenantId)
+                .type(JobType.DUMMY)
+                .key(key)
+                .entityId(jobEntity.getId())
+                .configuration(configuration)
+                .build());
     }
 
     private List<DummyTaskFailure> getFailures(JobResult jobResult) {

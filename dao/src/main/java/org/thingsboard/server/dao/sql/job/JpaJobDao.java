@@ -17,9 +17,11 @@ package org.thingsboard.server.dao.sql.job;
 
 import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
@@ -47,9 +49,12 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
 
     @Override
     public PageData<Job> findByTenantIdAndFilter(TenantId tenantId, JobFilter filter, PageLink pageLink) {
-        return DaoUtil.toPageData(jobRepository.findByTenantIdAndTypesAndStatusesAndSearchText(tenantId.getId(),
+        return DaoUtil.toPageData(jobRepository.findByTenantIdAndTypesAndStatusesAndEntitiesAndTimeAndSearchText(tenantId.getId(),
                 CollectionsUtil.isEmpty(filter.getTypes()) ? null : filter.getTypes(),
                 CollectionsUtil.isEmpty(filter.getStatuses()) ? null : filter.getStatuses(),
+                CollectionsUtil.isEmpty(filter.getEntities()) ? null : filter.getEntities(),
+                filter.getStartTime() != null ? filter.getStartTime() : 0,
+                filter.getEndTime() != null ? filter.getEndTime() : 0,
                 Strings.emptyToNull(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
     }
 
@@ -60,7 +65,7 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
 
     @Override
     public Job findLatestByTenantIdAndKey(TenantId tenantId, String key) {
-        return DaoUtil.getData(jobRepository.findLatestByTenantIdAndKey(tenantId.getId(), key));
+        return DaoUtil.getData(jobRepository.findLatestByTenantIdAndKey(tenantId.getId(), key, Limit.of(1)));
     }
 
     @Override
@@ -74,13 +79,23 @@ public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao 
     }
 
     @Override
+    public boolean existsByTenantIdAndEntityIdAndStatusOneOf(TenantId tenantId, EntityId entityId, JobStatus... statuses) {
+        return jobRepository.existsByTenantIdAndEntityIdAndStatusIn(tenantId.getId(), entityId.getId(), Arrays.stream(statuses).toList());
+    }
+
+    @Override
     public Job findOldestByTenantIdAndTypeAndStatusForUpdate(TenantId tenantId, JobType type, JobStatus status) {
         return DaoUtil.getData(jobRepository.findOldestByTenantIdAndTypeAndStatusForUpdate(tenantId.getId(), type.name(), status.name()));
     }
 
     @Override
-    public void deleteByTenantId(TenantId tenantId) {
+    public void removeByTenantId(TenantId tenantId) {
         jobRepository.deleteByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public int removeByEntityId(TenantId tenantId, EntityId entityId) {
+        return jobRepository.deleteByEntityId(entityId.getId());
     }
 
     @Override

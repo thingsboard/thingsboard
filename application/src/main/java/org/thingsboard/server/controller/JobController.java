@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.job.Job;
@@ -36,7 +37,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.rule.engine.api.JobManager;
 
 import java.util.List;
 import java.util.UUID;
@@ -76,12 +76,18 @@ public class JobController extends BaseController {
                                  @Parameter(description = SORT_ORDER_DESCRIPTION)
                                  @RequestParam(required = false) String sortOrder,
                                  @RequestParam(required = false) List<JobType> types,
-                                 @RequestParam(required = false) List<JobStatus> statuses) throws ThingsboardException {
+                                 @RequestParam(required = false) List<JobStatus> statuses,
+                                 @RequestParam(required = false) List<UUID> entities,
+                                 @RequestParam(required = false) Long startTime,
+                                 @RequestParam(required = false) Long endTime) throws ThingsboardException {
         // todo check permissions
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         JobFilter filter = JobFilter.builder()
                 .types(types)
                 .statuses(statuses)
+                .entities(entities)
+                .startTime(startTime)
+                .endTime(endTime)
                 .build();
         return jobService.findJobsByFilter(getTenantId(), filter, pageLink);
     }

@@ -955,7 +955,8 @@ CREATE TABLE IF NOT EXISTS job (
     tenant_id uuid NOT NULL,
     type varchar NOT NULL,
     key varchar NOT NULL,
-    description varchar NOT NULL,
+    entity_id uuid NOT NULL,
+    entity_type varchar NOT NULL,
     status varchar NOT NULL,
     configuration varchar NOT NULL,
     result varchar

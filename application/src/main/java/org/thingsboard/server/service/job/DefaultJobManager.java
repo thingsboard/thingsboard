@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.JobManager;
-import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,13 +31,9 @@ import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.Task;
 import org.thingsboard.server.common.data.job.task.TaskResult;
-import org.thingsboard.server.common.data.notification.info.GeneralNotificationInfo;
-import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
-import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.job.JobService;
-import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.gen.transport.TransportProtos.TaskProto;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
@@ -63,19 +58,17 @@ public class DefaultJobManager implements JobManager {
 
     private final JobService jobService;
     private final JobStatsService jobStatsService;
-    private final NotificationCenter notificationCenter;
     private final PartitionService partitionService;
     private final TasksQueueConfig queueConfig;
     private final Map<JobType, JobProcessor> jobProcessors;
     private final Map<JobType, TbQueueProducer<TbProtoQueueMsg<TaskProto>>> taskProducers;
     private final ExecutorService executor;
 
-    public DefaultJobManager(JobService jobService, JobStatsService jobStatsService, NotificationCenter notificationCenter,
-                             PartitionService partitionService, TaskProducerQueueFactory queueFactory, TasksQueueConfig queueConfig,
+    public DefaultJobManager(JobService jobService, JobStatsService jobStatsService, PartitionService partitionService,
+                             TaskProducerQueueFactory queueFactory, TasksQueueConfig queueConfig,
                              List<JobProcessor> jobProcessors) {
         this.jobService = jobService;
         this.jobStatsService = jobStatsService;
-        this.notificationCenter = notificationCenter;
         this.partitionService = partitionService;
         this.queueConfig = queueConfig;
         this.jobProcessors = jobProcessors.stream().collect(Collectors.toMap(JobProcessor::getType, Function.identity()));
@@ -105,10 +98,7 @@ public class DefaultJobManager implements JobManager {
             case COMPLETED, FAILED -> {
                 executor.execute(() -> {
                     try {
-                        if (status == JobStatus.COMPLETED) {
-                            getJobProcessor(job.getType()).onJobCompleted(job);
-                        }
-                        sendJobFinishedNotification(job);
+                        getJobProcessor(job.getType()).onJobFinished(job);
                     } catch (Throwable e) {
                         log.error("Failed to process job update: {}", job, e);
                     }
@@ -201,22 +191,6 @@ public class DefaultJobManager implements JobManager {
                 log.warn("Failed to submit task: {}", task, t);
             }
         });
-    }
-
-    private void sendJobFinishedNotification(Job job) {
-        NotificationTemplate template = DefaultNotifications.DefaultNotification.builder()
-                .name("Job finished")
-                .subject("${type} task ${status}")
-                .text("${description} ${status}: ${result}")
-                .build().toTemplate();
-        GeneralNotificationInfo info = new GeneralNotificationInfo(Map.of(
-                "type", job.getType().getTitle(),
-                "description", job.getDescription(),
-                "status", job.getStatus().name().toLowerCase(),
-                "result", job.getResult().getDescription()
-        ));
-        // todo: button to see details (forward to jobs page)
-        notificationCenter.sendGeneralWebNotification(job.getTenantId(), new TenantAdministratorsFilter(), template, info);
     }
 
     private JobProcessor getJobProcessor(JobType jobType) {

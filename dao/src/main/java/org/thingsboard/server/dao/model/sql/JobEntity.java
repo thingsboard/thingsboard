@@ -25,6 +25,8 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.job.JobConfiguration;
@@ -54,8 +56,12 @@ public class JobEntity extends BaseSqlEntity<Job> {
     @Column(name = ModelConstants.JOB_KEY_PROPERTY, nullable = false)
     private String key;
 
-    @Column(name = ModelConstants.JOB_DESCRIPTION_PROPERTY, nullable = false)
-    private String description;
+    @Column(name = ModelConstants.JOB_ENTITY_ID_PROPERTY, nullable = false)
+    private UUID entityId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.JOB_ENTITY_TYPE_PROPERTY, nullable = false)
+    private EntityType entityType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.JOB_STATUS_PROPERTY, nullable = false)
@@ -74,7 +80,8 @@ public class JobEntity extends BaseSqlEntity<Job> {
         this.tenantId = getTenantUuid(job.getTenantId());
         this.type = job.getType();
         this.key = job.getKey();
-        this.description = job.getDescription();
+        this.entityId = job.getEntityId().getId();
+        this.entityType = job.getEntityId().getEntityType();
         this.status = job.getStatus();
         this.configuration = toJson(job.getConfiguration());
         this.result = toJson(job.getResult());
@@ -88,7 +95,7 @@ public class JobEntity extends BaseSqlEntity<Job> {
         job.setTenantId(getTenantId(tenantId));
         job.setType(type);
         job.setKey(key);
-        job.setDescription(description);
+        job.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         job.setStatus(status);
         job.setConfiguration(fromJson(configuration, JobConfiguration.class));
         job.setResult(fromJson(result, JobResult.class));

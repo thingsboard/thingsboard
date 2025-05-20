@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.job.Job;
 
 public interface JobManager {
 
-    Job submitJob(Job job);
+    Job submitJob(Job job); // TODO: rate limits
 
     void cancelJob(TenantId tenantId, JobId jobId);
 

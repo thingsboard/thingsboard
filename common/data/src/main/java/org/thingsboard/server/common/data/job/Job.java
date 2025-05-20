@@ -24,10 +24,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -42,8 +45,8 @@ public class Job extends BaseData<JobId> implements HasTenantId {
     private JobType type;
     @NotBlank
     private String key;
-    @NotBlank
-    private String description;
+    @NotNull
+    private EntityId entityId;
     @NotNull
     private JobStatus status;
     @NotNull
@@ -52,12 +55,16 @@ public class Job extends BaseData<JobId> implements HasTenantId {
     @NotNull
     private JobResult result;
 
+    public static final Set<EntityType> SUPPORTED_ENTITY_TYPES = Set.of(
+            EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE
+    );
+
     @Builder(toBuilder = true)
-    public Job(TenantId tenantId, JobType type, String key, String description, JobConfiguration configuration) {
+    public Job(TenantId tenantId, JobType type, String key, EntityId entityId, JobConfiguration configuration) {
         this.tenantId = tenantId;
         this.type = type;
         this.key = key;
-        this.description = description;
+        this.entityId = entityId;
         this.configuration = configuration;
         this.configuration.setTasksKey(UUID.randomUUID().toString());
         presetResult();

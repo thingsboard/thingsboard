@@ -18,14 +18,6 @@ package org.thingsboard.server.common.data.job;
 public class DummyJobResult extends JobResult {
 
     @Override
-    public String getDescription() {
-        if (getGeneralError() != null) {
-            return getGeneralError();
-        }
-        return getSuccessfulCount() + "/" + getTotalCount() + " successful, " + getFailedCount() + " failed";
-    }
-
-    @Override
     public JobType getJobType() {
         return JobType.DUMMY;
     }
