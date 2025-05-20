@@ -106,7 +106,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
 
         saveEdgeEventWithProvidedTime(timeBeforeStartTime, edgeId, deviceId, tenantId).get();
         saveEdgeEventWithProvidedTime(eventTime, edgeId, deviceId, tenantId).get();
-        saveEdgeEventWithProvidedTime(eventTime - 2, edgeId, deviceId, tenantId).get();
+        saveEdgeEventWithProvidedTime(eventTime + 2, edgeId, deviceId, tenantId).get();
         saveEdgeEventWithProvidedTime(eventTime + 1, edgeId, deviceId, tenantId).get();
         saveEdgeEventWithProvidedTime(timeAfterEndTime, edgeId, deviceId, tenantId).get();
 
@@ -116,7 +116,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(edgeEvents.getData());
         Assert.assertEquals(2, edgeEvents.getData().size());
         Assert.assertEquals(Uuids.startOf(eventTime), edgeEvents.getData().get(0).getUuidId());
-        Assert.assertEquals(Uuids.startOf(eventTime - 2), edgeEvents.getData().get(1).getUuidId());
+        Assert.assertEquals(Uuids.startOf(eventTime + 2), edgeEvents.getData().get(1).getUuidId());
         Assert.assertTrue(edgeEvents.hasNext());
         Assert.assertNotNull(pageLink.nextPageLink());
 

@@ -48,7 +48,7 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
                 0,
                 null,
                 null,
-                queueStartTs > 0 ? queueStartTs - MISORDERING_COMPENSATION_MILLIS : queueStartTs,
+                queueStartTs > 0 ? queueStartTs - MISORDERING_COMPENSATION_MILLIS : 0,
                 System.currentTimeMillis());
     }
 
