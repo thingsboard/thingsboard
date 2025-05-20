@@ -59,6 +59,8 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        super.init(ctx);
+
         var config = TbNodeUtils.convert(configuration, TbAiNodeConfiguration.class);
         String errorPrefix = "'" + ctx.getSelf().getName() + "' node configuration is invalid: ";
         try {
@@ -66,6 +68,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         } catch (DataValidationException e) {
             throw new TbNodeException(e, true);
         }
+
         systemMessage = SystemMessage.from(config.getSystemPrompt());
         userPromptTemplate = PromptTemplate.from("""
                 User-provided task or question: %s
@@ -114,6 +117,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
     @Override
     public void destroy() {
+        super.destroy();
         systemMessage = null;
         userPromptTemplate = null;
         chatModel = null;
