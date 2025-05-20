@@ -15,9 +15,12 @@
  */
 package org.thingsboard.rule.engine.ai;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.thingsboard.common.util.JsonSchemaUtils;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -36,15 +39,22 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @Length(min = 1, max = 1000)
     private String userPrompt;
 
+    private JsonNode jsonSchema;
+
+    @AssertTrue(message = "provided JSON Schema must conform to the Draft 2020-12 meta-schema")
+    public boolean isJsonSchemaValid() {
+        return jsonSchema == null || JsonSchemaUtils.isValidJsonSchema(jsonSchema);
+    }
+
     @Override
     public TbAiNodeConfiguration defaultConfiguration() {
         var configuration = new TbAiNodeConfiguration();
         configuration.setSystemPrompt("""
-            Take a deep breath and work on this step by step.
-            You are an industry-leading IoT domain expert with deep experience in telemetry data analysis.
-            Your task is to complete the user-provided task or answer a question.
-            You may use additional context information called "Rule engine message payload", "Rule engine message metadata" and "Rule engine message type".
-            Your response must be in JSON format.""");
+                Take a deep breath and work on this step by step.
+                You are an industry-leading IoT domain expert with deep experience in telemetry data analysis.
+                Your task is to complete the user-provided task or answer a question.
+                You may use additional context information called "Rule engine message payload", "Rule engine message metadata" and "Rule engine message type".
+                Your response must be in JSON format.""");
         configuration.setUserPrompt("Tell me a joke");
         return configuration;
     }
