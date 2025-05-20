@@ -19,9 +19,11 @@ import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
 
+import java.util.concurrent.Future;
+
 public interface JobManager {
 
-    Job submitJob(Job job); // TODO: rate limits
+    Future<Job> submitJob(Job job); // TODO: rate limits
 
     void cancelJob(TenantId tenantId, JobId jobId);
 

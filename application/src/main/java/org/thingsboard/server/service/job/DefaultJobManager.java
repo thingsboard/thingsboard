@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -77,9 +78,9 @@ public class DefaultJobManager implements JobManager {
     }
 
     @Override
-    public Job submitJob(Job job) {
+    public Future<Job> submitJob(Job job) {
         log.debug("Submitting job: {}", job);
-        return jobService.saveJob(job.getTenantId(), job);
+        return executor.submit(() -> jobService.saveJob(job.getTenantId(), job));
     }
 
     @Override

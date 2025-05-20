@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.job;
 
+import lombok.SneakyThrows;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -454,6 +455,7 @@ public class JobManagerTest extends AbstractControllerTest {
         return submitJob(configuration, "test-job");
     }
 
+    @SneakyThrows
     private Job submitJob(DummyJobConfiguration configuration, String key) {
         return jobManager.submitJob(Job.builder()
                 .tenantId(tenantId)
@@ -461,7 +463,7 @@ public class JobManagerTest extends AbstractControllerTest {
                 .key(key)
                 .entityId(jobEntity.getId())
                 .configuration(configuration)
-                .build());
+                .build()).get();
     }
 
     private List<DummyTaskFailure> getFailures(JobResult jobResult) {
