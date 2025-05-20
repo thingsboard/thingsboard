@@ -47,6 +47,7 @@ import org.springframework.web.filter.ShallowEtagHeaderFilter;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.auth.AuthExceptionHandler;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.jwt.JwtTokenAuthenticationProcessingFilter;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenAuthenticationProvider;
@@ -128,6 +129,9 @@ public class ThingsboardSecurityConfiguration {
 
     @Autowired
     private RateLimitProcessingFilter rateLimitProcessingFilter;
+
+    @Autowired
+    private AuthExceptionHandler authExceptionHandler;
 
     @Bean
     protected PayloadSizeFilter payloadSizeFilter() {
@@ -235,7 +239,8 @@ public class ThingsboardSecurityConfiguration {
                 .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(payloadSizeFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(authExceptionHandler, buildRestLoginProcessingFilter().getClass());
         if (oauth2Configuration != null) {
             http.oauth2Login(login -> login
                     .authorizationEndpoint(config -> config
