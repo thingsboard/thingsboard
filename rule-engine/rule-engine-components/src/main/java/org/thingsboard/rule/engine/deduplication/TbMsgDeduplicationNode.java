@@ -64,7 +64,7 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 @Slf4j
 public class TbMsgDeduplicationNode implements TbNode {
 
-    public static final int TB_MSG_DEDUPLICATION_RETRY_DELAY = 10;
+    public static final long TB_MSG_DEDUPLICATION_RETRY_DELAY = 10L;
 
     private TbMsgDeduplicationNodeConfiguration config;
 
@@ -217,16 +217,17 @@ public class TbMsgDeduplicationNode implements TbNode {
     }
 
     private void enqueueForTellNextWithRetry(TbContext ctx, TbMsg msg, int retryAttempt) {
-        if (config.getMaxRetries() > retryAttempt) {
+        if (retryAttempt <= config.getMaxRetries()) {
             ctx.enqueueForTellNext(msg, TbNodeConnectionType.SUCCESS,
-                    () -> {
-                        log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), msg.getOriginator(), retryAttempt);
-                    },
+                    () -> log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), msg.getOriginator(), retryAttempt),
                     throwable -> {
                         log.trace("[{}][{}][{}] Failed to enqueue deduplication output message due to: ", ctx.getSelfId(), msg.getOriginator(), retryAttempt, throwable);
-                        ctx.schedule(() -> {
-                            enqueueForTellNextWithRetry(ctx, msg, retryAttempt + 1);
-                        }, TB_MSG_DEDUPLICATION_RETRY_DELAY, TimeUnit.SECONDS);
+                        if (retryAttempt < config.getMaxRetries()) {
+                            ctx.schedule(() -> enqueueForTellNextWithRetry(ctx, msg, retryAttempt + 1), TB_MSG_DEDUPLICATION_RETRY_DELAY, TimeUnit.SECONDS);
+                        } else {
+                            log.trace("[{}][{}] Max retries [{}] exhausted. Dropping deduplication result message [{}]",
+                                    ctx.getSelfId(), msg.getOriginator(), config.getMaxRetries(), msg.getId());
+                        }
                     });
         }
     }
