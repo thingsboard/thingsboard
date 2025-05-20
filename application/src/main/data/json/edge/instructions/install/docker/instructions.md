@@ -12,14 +12,17 @@ Here you can find ThingsBoard Edge docker image:
 
 #### Step 2. Choose Queue and/or Database Services
 
-ThingsBoard Edge is able to use different messaging systems/brokers for storing the messages and communication between ThingsBoard services. 
+ThingsBoard Edge supports only Kafka or in-memory queue (since v4.0) for message storage and communication between ThingsBoard services.
+
+ThingsBoard Edge supports SQL and hybrid database approaches.
+In this guide we will use SQL only.
+For hybrid details please follow official installation instructions from the ThingsBoard documentation site.
+
 How to choose the right queue implementation?
 
 In Memory queue implementation is built-in and default. It is useful for development(PoC) environments and is not suitable for production deployments or any sort of cluster deployments.
 
 Kafka is recommended for production deployments. This queue is used on the most of ThingsBoard production environments now.
-
-Hybrid implementation combines PostgreSQL and Cassandra databases with Kafka queue service. It is recommended if you plan to manage 1M+ devices in production or handle high data ingestion rate (more than 5000 msg/sec).
 
 Create a docker compose file for the ThingsBoard Edge service:
 
@@ -54,7 +57,7 @@ services:
       - tb-edge-logs:/var/log/tb-edge
   postgres:
     restart: always
-    image: "postgres:15"
+    image: "postgres:16"
     ports:
       - "5432"
     environment:
