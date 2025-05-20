@@ -22,10 +22,6 @@ public record LimitedApiEntry(long capacity, long durationSeconds) {
         return new LimitedApiEntry(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
     }
 
-    public double rps() {
-        return (double) capacity / durationSeconds;
-    }
-
     @Override
     public String toString() {
         return capacity + ":" + durationSeconds;

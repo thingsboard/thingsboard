@@ -94,6 +94,13 @@ public class RateLimitServiceTest {
             testRateLimits(limitedApi, max, tenantId);
         }
 
+        for (LimitedApi limitedApi : List.of(
+                LimitedApi.CASSANDRA_READ_QUERIES_MONOLITH,
+                LimitedApi.CASSANDRA_WRITE_QUERIES_MONOLITH
+        )) {
+            testRateLimits(limitedApi, max * 2, tenantId);
+        }
+
         CustomerId customerId = new CustomerId(UUID.randomUUID());
         testRateLimits(LimitedApi.REST_REQUESTS_PER_CUSTOMER, max, customerId);
 
