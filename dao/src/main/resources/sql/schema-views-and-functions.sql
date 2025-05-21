@@ -89,7 +89,8 @@ SELECT ee.id
 FROM edge ee
         JOIN attribute_kv ON ee.id = attribute_kv.entity_id
         JOIN key_dictionary ON attribute_kv.attribute_key = key_dictionary.key_id
-WHERE attribute_kv.bool_v = true AND key_dictionary.key = 'active';
+WHERE attribute_kv.bool_v = true AND key_dictionary.key = 'active'
+ORDER BY ee.id;
 
 CREATE OR REPLACE FUNCTION create_or_update_active_alarm(
                                         t_id uuid, c_id uuid, a_id uuid, a_created_ts bigint,

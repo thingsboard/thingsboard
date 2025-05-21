@@ -44,12 +44,10 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "WHERE d.id = :edgeId")
     EdgeInfoEntity findEdgeInfoById(@Param("edgeId") UUID edgeId);
 
-    @Query(value = "SELECT * " +
-            "FROM edge_active_attribute_view edge_active " +
-            "WHERE (:textSearch IS NULL OR edge_active.name ILIKE CONCAT('%', :textSearch, '%')) " +
-            "ORDER BY edge_active.id", nativeQuery = true)
-    Page<EdgeEntity> findActiveEdges(@Param("textSearch") String textSearch,
-                                 Pageable pageable);
+    @Query(value = "SELECT * FROM edge_active_attribute_view edge_active",
+            countQuery = "SELECT count(*) FROM edge_active_attribute_view",
+            nativeQuery = true)
+    Page<EdgeEntity> findActiveEdges(Pageable pageable);
 
     @Query("SELECT d.id FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true)")
@@ -166,4 +164,5 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.EdgeFields(e.id, e.createdTime, e.tenantId, e.customerId," +
             "e.name, e.version, e.type, e.label, e.additionalInfo) FROM EdgeEntity e WHERE e.id > :id ORDER BY e.id")
     List<EdgeFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
 }
