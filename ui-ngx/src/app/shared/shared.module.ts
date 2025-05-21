@@ -227,6 +227,7 @@ import { JsFuncModulesComponent } from '@shared/components/js-func-modules.compo
 import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.component';
 import { EntityKeyAutocompleteComponent } from '@shared/components/entity/entity-key-autocomplete.component';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
+import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -439,6 +440,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HexInputComponent,
     ScadaSymbolInputComponent,
     EntityKeyAutocompleteComponent,
+    MqttVersionSelectComponent,
   ],
   imports: [
     CommonModule,
@@ -702,6 +704,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetButtonComponent,
     ScadaSymbolInputComponent,
     EntityKeyAutocompleteComponent,
+    MqttVersionSelectComponent,
   ]
 })
 export class SharedModule { }
