@@ -209,12 +209,12 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         validateOtaPackage(tenantId, deviceProfile, deviceProfile.getId());
     }
 
-    private void validateRuleChain(TenantId tenantId, TenantId deviceTenantId, RuleChainId ruleChainId) {
+    private void validateRuleChain(TenantId tenantId, TenantId deviceProfileTenantId, RuleChainId ruleChainId) {
         RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
         if (ruleChain == null) {
             throw new DataValidationException("Can't assign non-existent rule chain!");
         }
-        if (!ruleChain.getTenantId().equals(deviceTenantId)) {
+        if (!ruleChain.getTenantId().equals(deviceProfileTenantId)) {
             throw new DataValidationException("Can't assign rule chain from different tenant!");
         }
     }
