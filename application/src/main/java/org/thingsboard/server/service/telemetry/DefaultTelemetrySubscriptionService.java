@@ -177,8 +177,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         if (strategy.sendWsUpdate()) {
             addWsCallback(resultFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         }
-        if (strategy.saveLatest()) {
-            copyLatestToEntityViews(tenantId, entityId, request.getEntries());
+        if (strategy.saveLatest() && entityId.getEntityType().isOneOf(EntityType.DEVICE, EntityType.ASSET)) {
+            addMainCallback(resultFuture, __ -> copyLatestToEntityViews(tenantId, entityId, request.getEntries()));
         }
         return resultFuture;
     }
@@ -333,58 +333,56 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private void copyLatestToEntityViews(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
-        if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
-            Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
-                    new FutureCallback<>() {
-                        @Override
-                        public void onSuccess(@Nullable List<EntityView> result) {
-                            if (result != null && !result.isEmpty()) {
-                                Map<String, List<TsKvEntry>> tsMap = new HashMap<>();
-                                for (TsKvEntry entry : ts) {
-                                    tsMap.computeIfAbsent(entry.getKey(), s -> new ArrayList<>()).add(entry);
+        Futures.addCallback(tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
+                new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable List<EntityView> result) {
+                        if (result != null && !result.isEmpty()) {
+                            Map<String, List<TsKvEntry>> tsMap = new HashMap<>();
+                            for (TsKvEntry entry : ts) {
+                                tsMap.computeIfAbsent(entry.getKey(), s -> new ArrayList<>()).add(entry);
+                            }
+                            for (EntityView entityView : result) {
+                                List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
+                                        entityView.getKeys().getTimeseries() : new ArrayList<>(tsMap.keySet());
+                                List<TsKvEntry> entityViewLatest = new ArrayList<>();
+                                long startTs = entityView.getStartTimeMs();
+                                long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
+                                for (String key : keys) {
+                                    List<TsKvEntry> entries = tsMap.get(key);
+                                    if (entries != null) {
+                                        Optional<TsKvEntry> tsKvEntry = entries.stream()
+                                                .filter(entry -> entry.getTs() > startTs && entry.getTs() <= endTs)
+                                                .max(comparingLong(TsKvEntry::getTs));
+                                        tsKvEntry.ifPresent(entityViewLatest::add);
+                                    }
                                 }
-                                for (EntityView entityView : result) {
-                                    List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
-                                            entityView.getKeys().getTimeseries() : new ArrayList<>(tsMap.keySet());
-                                    List<TsKvEntry> entityViewLatest = new ArrayList<>();
-                                    long startTs = entityView.getStartTimeMs();
-                                    long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
-                                    for (String key : keys) {
-                                        List<TsKvEntry> entries = tsMap.get(key);
-                                        if (entries != null) {
-                                            Optional<TsKvEntry> tsKvEntry = entries.stream()
-                                                    .filter(entry -> entry.getTs() > startTs && entry.getTs() <= endTs)
-                                                    .max(comparingLong(TsKvEntry::getTs));
-                                            tsKvEntry.ifPresent(entityViewLatest::add);
-                                        }
-                                    }
-                                    if (!entityViewLatest.isEmpty()) {
-                                        saveTimeseries(TimeseriesSaveRequest.builder()
-                                                .tenantId(tenantId)
-                                                .entityId(entityView.getId())
-                                                .entries(entityViewLatest)
-                                                .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
-                                                .callback(new FutureCallback<>() {
-                                                    @Override
-                                                    public void onSuccess(@Nullable Void tmp) {}
+                                if (!entityViewLatest.isEmpty()) {
+                                    saveTimeseries(TimeseriesSaveRequest.builder()
+                                            .tenantId(tenantId)
+                                            .entityId(entityView.getId())
+                                            .entries(entityViewLatest)
+                                            .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
+                                            .callback(new FutureCallback<>() {
+                                                @Override
+                                                public void onSuccess(@Nullable Void tmp) {}
 
-                                                    @Override
-                                                    public void onFailure(Throwable t) {
-                                                        log.error("[{}][{}] Failed to save entity view latest timeseries: {}", tenantId, entityView.getId(), entityViewLatest, t);
-                                                    }
-                                                })
-                                                .build());
-                                    }
+                                                @Override
+                                                public void onFailure(Throwable t) {
+                                                    log.error("[{}][{}] Failed to save entity view latest timeseries: {}", tenantId, entityView.getId(), entityViewLatest, t);
+                                                }
+                                            })
+                                            .build());
                                 }
                             }
                         }
+                    }
 
-                        @Override
-                        public void onFailure(Throwable t) {
-                            log.error("Error while finding entity views by tenantId and entityId", t);
-                        }
-                    }, MoreExecutors.directExecutor());
-        }
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Error while finding entity views by tenantId and entityId", t);
+                    }
+                }, MoreExecutors.directExecutor());
     }
 
     private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {

@@ -105,6 +105,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.LATEST_TELEMETRY_SCOPE;
+
 /**
  * Created by ashvayka on 27.03.18.
  */
@@ -667,24 +669,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 Lock subLock = new ReentrantLock();
-                TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
-                        .serviceId(serviceId)
-                        .sessionId(sessionId)
-                        .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
-                        .tenantId(sessionRef.getSecurityCtx().getTenantId())
-                        .entityId(entityId)
-                        .updateProcessor((subscription, update) -> {
-                            subLock.lock();
-                            try {
-                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
-                            } finally {
-                                subLock.unlock();
-                            }
-                        })
-                        .queryTs(queryTs)
-                        .allKeys(true)
-                        .keyStates(subState)
-                        .build();
+                TbTimeSeriesSubscription sub = getTsSubscription(subState, subLock, sessionId, sessionRef, cmd, entityId, queryTs, true);
 
                 subLock.lock();
                 try {
@@ -712,6 +697,28 @@ public class DefaultWebSocketService implements WebSocketService {
                 on(r -> Futures.addCallback(tsService.findAllLatest(sessionRef.getSecurityCtx().getTenantId(), entityId), callback, executor), callback::onFailure));
     }
 
+    private TbTimeSeriesSubscription getTsSubscription(Map<String, Long> subState, Lock subLock, String sessionId, WebSocketSessionRef sessionRef, TimeseriesSubscriptionCmd cmd, EntityId entityId, long queryTs, boolean allKeys) {
+        return TbTimeSeriesSubscription.builder()
+                .serviceId(serviceId)
+                .sessionId(sessionId)
+                .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
+                .tenantId(sessionRef.getSecurityCtx().getTenantId())
+                .entityId(entityId)
+                .updateProcessor((subscription, update) -> {
+                    subLock.lock();
+                    try {
+                        sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
+                    } finally {
+                        subLock.unlock();
+                    }
+                })
+                .queryTs(queryTs)
+                .allKeys(allKeys)
+                .keyStates(subState)
+                .latestValues(LATEST_TELEMETRY_SCOPE.equals(cmd.getScope()))
+                .build();
+    }
+
     private FutureCallback<List<TsKvEntry>> getSubscriptionCallback(final WebSocketSessionRef sessionRef, final TimeseriesSubscriptionCmd cmd,
                                                                     final String sessionId, final EntityId entityId, final long queryTs, final long startTs, final List<String> keys) {
         return new FutureCallback<>() {
@@ -722,24 +729,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 Lock subLock = new ReentrantLock();
-                TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
-                        .serviceId(serviceId)
-                        .sessionId(sessionId)
-                        .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
-                        .tenantId(sessionRef.getSecurityCtx().getTenantId())
-                        .entityId(entityId)
-                        .updateProcessor((subscription, update) -> {
-                            subLock.lock();
-                            try {
-                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
-                            } finally {
-                                subLock.unlock();
-                            }
-                        })
-                        .queryTs(queryTs)
-                        .allKeys(false)
-                        .keyStates(subState)
-                        .build();
+                TbTimeSeriesSubscription sub = getTsSubscription(subState, subLock, sessionId, sessionRef, cmd, entityId, queryTs, false);
 
                 subLock.lock();
                 try {

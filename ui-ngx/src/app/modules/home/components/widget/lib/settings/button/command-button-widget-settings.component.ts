@@ -54,7 +54,7 @@ export class CommandButtonWidgetSettingsComponent extends WidgetSettingsComponen
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...commandButtonDefaultSettings};
+    return commandButtonDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

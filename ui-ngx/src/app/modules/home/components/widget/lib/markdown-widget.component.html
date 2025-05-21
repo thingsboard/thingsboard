@@ -19,4 +19,4 @@
              [additionalStyles]="additionalStyles"
              [containerClass]="markdownClass"
              [applyDefaultMarkdownStyle]="applyDefaultMarkdownStyle"
-             [context]="{ ctx: ctx }" lineNumbers fallbackToPlainMarkdown (click)="markdownClick($event)"></tb-markdown>
+             [context]="{ ctx: ctx, data: data }" lineNumbers fallbackToPlainMarkdown (click)="markdownClick($event)"></tb-markdown>

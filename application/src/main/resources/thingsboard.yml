@@ -208,7 +208,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.0}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.1}"
 
 # Database telemetry parameters
 database:
@@ -644,6 +644,9 @@ cache:
     mobileSecretKey:
       timeToLiveInMinutes: "${CACHE_MOBILE_SECRET_KEY_TTL:2}" # QR secret key cache TTL
       maxSize: "${CACHE_MOBILE_SECRET_KEY_MAX_SIZE:10000}" # 0 means the cache is disabled
+    trendzSettings:
+      timeToLiveInMinutes: "${CACHE_SPECS_TRENDZ_SETTINGS_TTL:1440}" # Trendz settings cache TTL
+      maxSize: "${CACHE_SPECS_TRENDZ_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -1419,6 +1422,11 @@ device:
       host: "${DEVICE_CONNECTIVITY_COAPS_HOST:}"
       # Port of coap transport service. If empty, the default port for coaps will be used.
       port: "${DEVICE_CONNECTIVITY_COAPS_PORT:5684}"
+      # Path to the COAP CA root certificate file
+      pem_cert_file: "${DEVICE_CONNECTIVITY_COAPS_CA_ROOT_CERT:cafile.pem}"
+    gateway:
+      # The docker tag for thingsboard/tb-gateway image used in docker-compose file for gateway launch
+      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:3.7-stable}"
 
 # Edges parameters
 edges:
@@ -1585,11 +1593,24 @@ queue:
     #      tb_rule_engine.sq:
     #        - key: max.poll.records
     #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
-      tb_edge_event.notifications:
-        # Example of specific consumer properties value per topic for edge event
+      tb_edge:
+        # Properties for consumers targeting edge service update topics.
         - key: max.poll.records
-          # Example of specific consumer properties value per topic for edge event
-          value: "${TB_QUEUE_KAFKA_EDGE_EVENT_MAX_POLL_RECORDS:50}"
+          # Define the maximum number of records that can be polled from tb_edge topics per request.
+          value: "${TB_QUEUE_KAFKA_EDGE_EVENTS_MAX_POLL_RECORDS:10}"
+      tb_edge.notifications:
+        # Properties for consumers targeting high-priority edge notifications.
+        # These notifications include RPC calls, lifecycle events, and new queue messages,
+        # requiring minimal latency and swift processing.
+        - key: max.poll.records
+          # Define the maximum number of records that can be polled from tb_edge.notifications.SERVICE_ID topics.
+          value: "${TB_QUEUE_KAFKA_EDGE_HP_EVENTS_MAX_POLL_RECORDS:10}"
+      tb_edge_event.notifications:
+        # Properties for consumers targeting downlinks meant for specific edge topics.
+        # Topic names are dynamically constructed using tenant and edge identifiers.
+        - key: max.poll.records
+          # Define the maximum number of records that can be polled from tb_edge_event.notifications.TENANT_ID.EDGE_ID topics.
+          value: "${TB_QUEUE_KAFKA_EDGE_NOTIFICATIONS_MAX_POLL_RECORDS:10}"
       tb_housekeeper:
         # Consumer properties for Housekeeper tasks topic
         - key: max.poll.records
@@ -1610,6 +1631,12 @@ queue:
         - key: max.poll.records
           # Max poll records for edqs.state topic
           value: "${TB_QUEUE_KAFKA_EDQS_STATE_MAX_POLL_RECORDS:512}"
+    # If you override any default Kafka topic name using environment variables, you must also specify the related consumer properties
+    # for the new topic in `consumer-properties-per-topic-inline`. Otherwise, the topic will not inherit its expected configuration (e.g., max.poll.records, timeouts, etc).
+    # Each entry sets a single property for a specific topic. To define multiple properties for a topic, repeat the topic key.
+    # Format: "topic1:key=value;topic1:key=value;topic2:key=value"
+    # Example: tb_core_updated:max.poll.records=10;tb_core_updated:bootstrap.servers=kafka1:9092,kafka2:9092;tb_edge_updated:auto.offset.reset=latest
+    consumer-properties-per-topic-inline: "${TB_QUEUE_KAFKA_CONSUMER_PROPERTIES_PER_TOPIC_INLINE:}"
     other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
     other: # DEPRECATED. In this section, you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
     #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
@@ -1643,12 +1670,12 @@ queue:
       calculated-field: "${TB_QUEUE_KAFKA_CF_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for Calculated Field State topics
       calculated-field-state: "${TB_QUEUE_KAFKA_CF_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:104857600000;partitions:1;min.insync.replicas:1;cleanup.policy:compact}"
-      # Kafka properties for EDQS events topics. Partitions number must be the same as queue.edqs.partitions
-      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:-1;partitions:12;min.insync.replicas:1}"
-      # Kafka properties for EDQS requests topic (default: 3 minutes retention). Partitions number must be the same as queue.edqs.partitions
-      edqs-requests: "${TB_QUEUE_KAFKA_EDQS_REQUESTS_TOPIC_PROPERTIES:retention.ms:180000;segment.bytes:52428800;retention.bytes:1048576000;partitions:12;min.insync.replicas:1}"
-      # Kafka properties for EDQS state topic (infinite retention, compaction). Partitions number must be the same as queue.edqs.partitions
-      edqs-state: "${TB_QUEUE_KAFKA_EDQS_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:-1;partitions:12;min.insync.replicas:1;cleanup.policy:compact}"
+      # Kafka properties for EDQS events topics
+      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:86400000;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for EDQS requests topic (default: 3 minutes retention)
+      edqs-requests: "${TB_QUEUE_KAFKA_EDQS_REQUESTS_TOPIC_PROPERTIES:retention.ms:180000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for EDQS state topic (infinite retention, compaction)
+      edqs-state: "${TB_QUEUE_KAFKA_EDQS_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1;cleanup.policy:compact}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1746,19 +1773,27 @@ queue:
     partitions: "${TB_EDQS_PARTITIONS:12}"
     # EDQS partitioning strategy: tenant (partition is resolved by tenant id) or none (no specific strategy, resolving by message key)
     partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}"
+    # EDQS events topic
+    events_topic: "${TB_EDQS_EVENTS_TOPIC:edqs.events}"
+    # EDQS state topic
+    state_topic: "${TB_EDQS_STATE_TOPIC:edqs.state}"
     # EDQS requests topic
     requests_topic: "${TB_EDQS_REQUESTS_TOPIC:edqs.requests}"
     # EDQS responses topic
     responses_topic: "${TB_EDQS_RESPONSES_TOPIC:edqs.responses}"
     # Poll interval for EDQS topics
-    poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:125}"
+    poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:25}"
     # Maximum amount of pending requests to EDQS
     max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
     # Maximum timeout for requests to EDQS
     max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:20000}"
+    # Strings longer than this threshold will be compressed
+    string_compression_length_threshold: "${TB_EDQS_STRING_COMPRESSION_LENGTH_THRESHOLD:512}"
     stats:
       # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
+      # Threshold for slow queries to log, in milliseconds
+      slow_query_threshold: "${TB_EDQS_SLOW_QUERY_THRESHOLD_MS:3000}"
   vc:
     # Default topic name
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
@@ -1822,17 +1857,23 @@ queue:
     pool_size: "${TB_QUEUE_CF_POOL_SIZE:8}"
     # RocksDB path for storing CF states
     rocks_db_path: "${TB_QUEUE_CF_ROCKS_DB_PATH:${user.home}/.rocksdb/cf_states}"
+    # The fetch size specifies how many rows will be fetched from the database per request for initial fetching
+    init_fetch_pack_size: "${TB_QUEUE_CF_FETCH_PACK_SIZE:50000}"
+    # The fetch size specifies how many rows will be fetched from the database per request for per-tenant fetching
+    init_tenant_fetch_pack_size: "${TB_QUEUE_CF_TENANT_FETCH_PACK_SIZE:1000}"
   transport:
     # For high-priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
     # Interval in milliseconds to poll messages
     poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
   edge:
-    # Default topic name
+    # Topic name to notify edge service on entity updates, assignment, etc.
     topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
-    # For high-priority notifications that require minimum latency and processing time
+    # Topic prefix for high-priority edge notifications (rpc, lifecycle, new messages in queue) that require minimum latency and processing time.
+    # Each tb-core has its own topic: PREFIX.SERVICE_ID
     notifications_topic: "${TB_QUEUE_EDGE_NOTIFICATIONS_TOPIC:tb_edge.notifications}"
-    # For edge events messages
+    # Topic prefix for downlinks to be pushed to specific edge.
+    # Every edge has its own unique topic: PREFIX.TENANT_ID.EDGE_ID
     event_notifications_topic: "${TB_QUEUE_EDGE_EVENT_NOTIFICATIONS_TOPIC:tb_edge_event.notifications}"
     # Amount of partitions used by Edge services
     partitions: "${TB_QUEUE_EDGE_PARTITIONS:10}"
@@ -1920,3 +1961,27 @@ mobileApp:
   googlePlayLink: "${TB_MOBILE_APP_GOOGLE_PLAY_LINK:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}"
   # Link to App Store for Thingsboard Live mobile application
   appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"
+
+mqtt:
+  # MQTT client configuration parameters
+  client:
+    # Parameters that control the retransmission mechanism.
+    # This mechanism only applies to the handling of MQTT Publish, Subscribe, Unsubscribe and Pubrel messages.
+    # With the updated default settings:
+    #   - After sending the message, wait approximately 5000 ms (± jitter) for the 1st attempt.
+    #   - The 2nd attempt will occur after roughly 5000 * 2 = 10,000 ms (± jitter).
+    #   - The 3rd attempt will occur after roughly 5000 * 4 = 20,000 ms (± jitter).
+    #   - The 4th "attempt" will not actually perform a retransmission.
+    #     Instead, the system will detect that the maximum number of attempts has been reached and drop the pending message.
+    retransmission:
+      # Maximum number of retransmission attempts allowed.
+      # If the attempt count exceeds this value, retransmissions will stop and the pending message will be dropped.
+      max_attempts: "${TB_MQTT_CLIENT_RETRANSMISSION_MAX_ATTEMPTS:3}"
+      # Base delay (in milliseconds) before the first retransmission attempt, measured from the moment the message is sent.
+      # Subsequent delays are calculated using exponential backoff.
+      # This base delay is also used as the reference value for applying jitter.
+      initial_delay_millis: "${TB_MQTT_CLIENT_RETRANSMISSION_INITIAL_DELAY_MILLIS:5000}"
+      # Jitter factor applied to the calculated retransmission delay.
+      # The actual delay is randomized within a range defined by multiplying the base delay by a factor between (1 - jitter_factor) and (1 + jitter_factor).
+      # For example, a jitter_factor of 0.15 means the actual delay may vary by up to ±15% of the base delay.
+      jitter_factor: "${TB_MQTT_CLIENT_RETRANSMISSION_JITTER_FACTOR:0.15}"

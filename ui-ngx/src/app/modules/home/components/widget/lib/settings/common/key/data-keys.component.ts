@@ -170,6 +170,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   simpleDataKeysLabel = false;
 
   @Input()
+  @coerceBoolean()
+  supportsUnitConversion = false;
+
+  @Input()
   aliasController: IAliasController;
 
   @Input()
@@ -565,14 +569,20 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ColorPickerPanelComponent, ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
-        {
+      const colorPickerPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: ColorPickerPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+        context: {
           color: key.color,
           colorCancelButton: true
         },
-        {},
-        {}, {}, false, () => {}, {padding: '12px 4px 12px 12px'});
+        showCloseButton: false,
+        popoverContentStyle: {padding: '12px 4px 12px 12px'},
+        isModal: true
+      });
       colorPickerPopover.tbComponentRef.instance.popover = colorPickerPopover;
       colorPickerPopover.tbComponentRef.instance.colorSelected.subscribe((color) => {
         colorPickerPopover.hide();
@@ -604,7 +614,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
           hideDataKeyLabel: this.hideDataKeyLabel,
           hideDataKeyColor: this.hideDataKeyColor,
           hideDataKeyUnits: this.hideDataKeyUnits,
-          hideDataKeyDecimals: this.hideDataKeyDecimals
+          hideDataKeyDecimals: this.hideDataKeyDecimals,
+          supportsUnitConversion: this.supportsUnitConversion
         }
       }).afterClosed().subscribe((updatedDataKey) => {
         if (updatedDataKey) {

@@ -24,6 +24,7 @@ import { isDefined, isNumber } from '@core/utils';
 import { CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import tinycolor from 'tinycolor2';
 import { ColorProcessor, gradientColor } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 interface KnobSettings {
@@ -165,7 +166,8 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       donutStartAngle: 3 / 4 * Math.PI,
       donutEndAngle: 9 / 4 * Math.PI,
       animation: false,
-      barColorProcessor: ColorProcessor.fromSettings(gradientColor('rgba(0, 0, 0, 0)', levelColors, this.minValue, this.maxValue), this.ctx)
+      barColorProcessor: ColorProcessor.fromSettings(gradientColor('rgba(0, 0, 0, 0)', levelColors, this.minValue, this.maxValue), this.ctx),
+      valueFormat: null
     };
 
     this.knob.on('click', (e) => {
@@ -406,7 +408,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
   }
 
   private formatValue(value: any): string {
-    return this.ctx.utils.formatValue(value, this.ctx.decimals, this.ctx.units, true);
+    return this.ctx.utils.formatValue(value, this.ctx.decimals, getSourceTbUnitSymbol(this.ctx.units), true);
   }
 
   private rpcRequestValue() {

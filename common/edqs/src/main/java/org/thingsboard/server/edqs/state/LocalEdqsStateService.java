@@ -29,7 +29,6 @@ import org.thingsboard.server.edqs.util.EdqsRocksDb;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
-import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.edqs.InMemoryEdqsComponent;
 
 import java.util.Set;
@@ -61,14 +60,14 @@ public class LocalEdqsStateService implements EdqsStateService {
                 try {
                     ToEdqsMsg edqsMsg = ToEdqsMsg.parseFrom(value);
                     log.trace("[{}] Restored msg from RocksDB: {}", key, edqsMsg);
-                    processor.process(edqsMsg, EdqsQueue.STATE);
+                    processor.process(edqsMsg, false);
                 } catch (Exception e) {
                     log.error("[{}] Failed to restore value", key, e);
                 }
             });
             log.info("Restore completed");
         }
-        eventConsumer.update(withTopic(partitions, EdqsQueue.EVENTS.getTopic()));
+        eventConsumer.update(withTopic(partitions, eventConsumer.getTopic()));
         this.partitions = partitions;
     }
 

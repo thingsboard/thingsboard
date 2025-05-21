@@ -42,20 +42,8 @@ function additionalComposeQueueArgs() {
         confluent)
         ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.confluent.yml"
         ;;
-        aws-sqs)
-        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.aws-sqs.yml"
-        ;;
-        pubsub)
-        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.pubsub.yml"
-        ;;
-        rabbitmq)
-        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.rabbitmq.yml"
-        ;;
-        service-bus)
-        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.service-bus.yml"
-        ;;
         *)
-        echo "Unknown Queue service TB_QUEUE_TYPE value specified in the .env file: '${TB_QUEUE_TYPE}'. Should be either 'kafka' or 'confluent' or 'aws-sqs' or 'pubsub' or 'rabbitmq' or 'service-bus'." >&2
+        echo "Unknown Queue service TB_QUEUE_TYPE value specified in the .env file: '${TB_QUEUE_TYPE}'. Should be either 'kafka' or 'confluent'." >&2
         exit 1
     esac
     echo $ADDITIONAL_COMPOSE_QUEUE_ARGS
@@ -134,7 +122,7 @@ function additionalComposeEdqsArgs() {
     if [ "$EDQS_ENABLED" = true ]
     then
       ADDITIONAL_COMPOSE_EDQS_ARGS="-f docker-compose.edqs.yml"
-      echo ADDITIONAL_COMPOSE_EDQS_ARGS
+      echo $ADDITIONAL_COMPOSE_EDQS_ARGS
     else
       echo ""
     fi

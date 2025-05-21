@@ -247,6 +247,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       defaultItemCols: 8,
       defaultItemRows: 6,
       displayGrid: this.displayGrid,
+      useTransformPositioning: false,
       resizable: {
         enabled: this.isEdit && !this.isEditingWidget,
         delayStart: 50,

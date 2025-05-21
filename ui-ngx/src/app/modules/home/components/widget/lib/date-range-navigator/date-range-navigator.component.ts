@@ -126,7 +126,7 @@ export class DateRangeNavigatorWidgetComponent extends PageComponent implements 
       $event.stopPropagation();
     }
     this.datePickerSelect.close();
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
     config.hasBackdrop = true;
