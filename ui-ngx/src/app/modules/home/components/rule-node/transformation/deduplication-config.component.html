@@ -25,7 +25,7 @@
     <mat-error *ngIf="deduplicationConfigForm.get('interval').hasError('min')">
       {{'rule-node-config.interval-min-error' | translate}}
     </mat-error>
-    <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+    <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
               color="primary"
               matTooltip="{{ 'rule-node-config.interval-hint' | translate }}">help</mat-icon>
   </mat-form-field>
@@ -73,7 +73,7 @@
             <mat-error *ngIf="deduplicationConfigForm.get('maxPendingMsgs').hasError('min')">
               {{'rule-node-config.max-pending-msgs-min-error' | translate}}
             </mat-error>
-            <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+            <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
                       color="primary"
                       matTooltip="{{ 'rule-node-config.max-pending-msgs-hint' | translate }}">help</mat-icon>
           </mat-form-field>
@@ -89,7 +89,7 @@
             <mat-error *ngIf="deduplicationConfigForm.get('maxRetries').hasError('min')">
               {{'rule-node-config.max-retries-min-error' | translate}}
             </mat-error>
-            <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+            <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
                       color="primary"
                       matTooltip="{{ 'rule-node-config.max-retries-hint' | translate }}">help</mat-icon>
           </mat-form-field>
