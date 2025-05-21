@@ -16,6 +16,15 @@
 
 FROM thingsboard/openjdk17:bookworm-slim
 
+LABEL org.opencontainers.image.title="${docker.name}" \
+      org.opencontainers.image.description="${description}" \
+      org.opencontainers.image.url="https://www.thingsboard.io" \
+      org.opencontainers.image.source="https://github.com/thingsboard/thingsboard" \
+      org.opencontainers.image.version="${project.version}" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.created="${maven.build.timestamp}" \
+      org.opencontainers.image.vendor="The ThingsBoard Authors"
+
 COPY start-tb-monitoring.sh ${pkg.name}.deb /tmp/
 
 RUN chmod a+x /tmp/*.sh \
