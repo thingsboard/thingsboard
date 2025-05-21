@@ -270,7 +270,10 @@ public class CalculatedFieldController extends BaseController {
         for (EntityId referencedEntityId : referencedEntityIds) {
             EntityType entityType = referencedEntityId.getEntityType();
             switch (entityType) {
-                case TENANT, CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
+                case TENANT -> {
+                    return;
+                }
+                case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
                 default ->
                         throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
             }

@@ -1129,6 +1129,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
 
   const scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
   const scadaSymbolAnimation = `<a href="${scadaSymbolAnimationLink}" target="_blank">ScadaSymbolAnimation</a>`;
+  const connectorScadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevConnectorAnimation;
+  const connectorScadaSymbolAnimation = `<a href="${connectorScadaSymbolAnimationLink}" target="_blank">ConnectorScadaSymbolAnimation</a>`;
 
   const properties: TbEditorCompletion = {
     meta: 'object',
@@ -1227,6 +1229,68 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
                 description: 'SVG element',
                 type: 'Element'
               },
+            ]
+          },
+          connectorAnimate: {
+            meta: 'function',
+            description: 'Finishes any previous connector animation and starts a new connector animation for the SVG element along the specified path.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              },
+              {
+                name: 'path',
+                description: 'Path defining the animation trajectory',
+                type: 'string'
+              },
+              {
+                name: 'reversedPath',
+                description: 'Path for the reversed animation trajectory',
+                type: 'string'
+              }
+            ],
+            return: {
+              description: `Instance of ${connectorScadaSymbolAnimation} class with API to setup and control the connector animation.`,
+              type: connectorScadaSymbolAnimation
+            }
+          },
+          connectorAnimation: {
+            meta: 'function',
+            description: 'Gets the current connector animation applied to the SVG element.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
+            ],
+            return: {
+              description: `Instance of ${connectorScadaSymbolAnimation} class with API to setup and control the connector animation, or undefined if no animation is applied.`,
+              type: 'ConnectorScadaSymbolAnimation | undefined'
+            }
+          },
+          resetConnectorAnimation: {
+            meta: 'function',
+            description: 'Stops the connector animation if any and restores the SVG element to its initial state, removes the connector animation instance.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
+            ]
+          },
+          finishConnectorAnimation: {
+            meta: 'function',
+            description: 'Finishes the connector animation if any, updates the SVG element state according to the end animation values, removes the connector animation instance.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
             ]
           },
           generateElementId: {

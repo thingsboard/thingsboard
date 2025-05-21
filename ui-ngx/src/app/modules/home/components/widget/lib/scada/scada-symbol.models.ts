@@ -83,6 +83,10 @@ export interface ScadaSymbolApi {
   cssAnimation: (element: Element) => ScadaSymbolAnimation | undefined;
   resetCssAnimation: (element: Element) => void;
   finishCssAnimation: (element: Element) => void;
+  connectorAnimation:(element: Element) => ConnectorScadaSymbolAnimation | undefined;
+  connectorAnimate:(element: Element, path: string, reversedPath: string) => ConnectorScadaSymbolAnimation;
+  resetConnectorAnimation: (element: Element) => void;
+  finishConnectorAnimation: (element: Element) => void;
   disable: (element: Element | Element[]) => void;
   enable: (element: Element | Element[]) => void;
   callAction: (event: Event, behaviorId: string, value?: any, observer?: Partial<Observer<void>>) => void;
@@ -185,6 +189,8 @@ const svgPartsRegex = /(<svg.*?>)(.*)<\/svg>/gms;
 const tbNamespaceRegex = /<svg.*(xmlns:tb="https:\/\/thingsboard.io\/svg").*>/gms;
 
 const tbTagRegex = /tb:tag="([^"]*)"/gms;
+
+const syncTime = Date.now();
 
 const generateElementId = () => {
   const id = guid();
@@ -485,6 +491,7 @@ export class ScadaSymbolObject {
   private settings: ScadaSymbolObjectSettings;
   private context: ScadaSymbolContext;
   private cssAnimations: CssScadaSymbolAnimations;
+  private connectorAnimations: ScadaSymbolFlowConnectorAnimations;
 
   private svgShape: Svg;
   private box: Box;
@@ -604,6 +611,7 @@ export class ScadaSymbolObject {
 
   private init() {
     this.cssAnimations = new CssScadaSymbolAnimations(this.svgShape, this.raf);
+    this.connectorAnimations = new ScadaSymbolFlowConnectorAnimations();
     this.context = {
       api: {
         generateElementId: () => generateElementId(),
@@ -615,6 +623,10 @@ export class ScadaSymbolObject {
         cssAnimation: this.cssAnimation.bind(this),
         resetCssAnimation: this.resetCssAnimation.bind(this),
         finishCssAnimation: this.finishCssAnimation.bind(this),
+        connectorAnimation: this.connectorAnimation.bind(this),
+        connectorAnimate: this.connectorAnimate.bind(this),
+        resetConnectorAnimation: this.resetConnectorAnimation.bind(this),
+        finishConnectorAnimation: this.finishConnectorAnimation.bind(this),
         disable: this.disableElement.bind(this),
         enable: this.enableElement.bind(this),
         callAction: this.callAction.bind(this),
@@ -959,6 +971,22 @@ export class ScadaSymbolObject {
     this.cssAnimations.finishAnimation(element);
   }
 
+  private connectorAnimate(element: Element, path: string, reversedPath: string): ConnectorScadaSymbolAnimation {
+    return this.connectorAnimations.animate(element, path, reversedPath);
+  }
+
+  private connectorAnimation(element: Element): ConnectorScadaSymbolAnimation | undefined {
+    return this.connectorAnimations.animation(element);
+  }
+
+  private resetConnectorAnimation(element: Element) {
+    this.connectorAnimations.resetAnimation(element);
+  }
+
+  private finishConnectorAnimation(element: Element) {
+    this.connectorAnimations.finishAnimation(element);
+  }
+
   private disableElement(e: Element | Element[]) {
     this.elements(e).forEach(element => {
       element.attr({'pointer-events': 'none'});
@@ -1108,6 +1136,20 @@ interface ScadaSymbolAnimation {
 
 }
 
+const scadaSymbolConnectorFlowAnimationId = 'scadaSymbolConnectorFlowAnimation';
+
+type StrokeLineCap = 'butt' | 'round '| 'square';
+
+interface ConnectorScadaSymbolAnimation {
+  play(): void;
+  stop(): void;
+  finish(): void;
+
+  flowAppearance(width: number, color: string, lineCap: StrokeLineCap, dashWidth: number, dashGap: number): ConnectorScadaSymbolAnimation;
+  duration(speed: number): ConnectorScadaSymbolAnimation;
+  direction(direction: boolean): ConnectorScadaSymbolAnimation;
+}
+
 class CssScadaSymbolAnimations {
   constructor(private svgShape: Svg,
               private raf: RafService) {}
@@ -1156,6 +1198,132 @@ class CssScadaSymbolAnimations {
     } else {
       return new CssScadaSymbolAnimation(this.svgShape, this.raf, element, duration);
     }
+  }
+}
+
+class ScadaSymbolFlowConnectorAnimations {
+  constructor() {}
+
+  public animate(element: Element, path = '', reversedPath = ''): ConnectorScadaSymbolAnimation {
+    this.checkOldAnimation(element);
+    return this.setupAnimation(element, this.createAnimation(element, path, reversedPath));
+  }
+
+  public animation(element: Element): ConnectorScadaSymbolAnimation | undefined {
+    return element.remember(scadaSymbolConnectorFlowAnimationId);
+  }
+
+  public resetAnimation(element: Element) {
+    const animation: ConnectorScadaSymbolAnimation = element.remember(scadaSymbolConnectorFlowAnimationId);
+    if (animation) {
+      animation.stop();
+      element.remember(scadaSymbolConnectorFlowAnimationId, null);
+    }
+  }
+
+  public finishAnimation(element: Element) {
+    const animation: ConnectorScadaSymbolAnimation = element.remember(scadaSymbolConnectorFlowAnimationId);
+    if (animation) {
+      animation.finish();
+      element.remember(scadaSymbolConnectorFlowAnimationId, null);
+    }
+  }
+
+  private setupAnimation(element: Element, animation: ConnectorScadaSymbolAnimation): ConnectorScadaSymbolAnimation {
+    element.remember(scadaSymbolConnectorFlowAnimationId, animation);
+    return animation;
+  }
+
+  private checkOldAnimation(element: Element) {
+    const previousAnimation: ConnectorScadaSymbolAnimation = element.remember(scadaSymbolConnectorFlowAnimationId);
+    if (previousAnimation) {
+      previousAnimation.finish();
+    }
+  }
+
+  private createAnimation(element: Element, path: string, reversedPath: string): ConnectorScadaSymbolAnimation {
+    return new FlowConnectorAnimation(element, path, reversedPath);
+  }
+}
+
+class FlowConnectorAnimation implements ConnectorScadaSymbolAnimation {
+
+  private readonly _path: string;
+  private readonly _reversedPath: string;
+  private readonly _animation: Element;
+
+  private _duration: number = 1;
+  private _lineColor: string = '#C8DFF7';
+  private _lineWidth: number = 4;
+  private _strokeLineCap: StrokeLineCap = 'butt';
+  private _dashWidth: number = 10;
+  private _dashGap: number = 10;
+  private _direction: boolean = true;
+
+  constructor(private element: Element,
+              path: string,
+              pathReversed: string) {
+    this._path = path;
+    this._reversedPath = pathReversed;
+
+    const dashArray = `${this._dashWidth} ${this._dashGap}`;
+    const values = `${this._dashWidth + this._dashGap};0`;
+
+    this._animation = SVG(
+      `<path d="${this._path}" stroke-dasharray="${dashArray}" stroke-linecap="${this._strokeLineCap}" fill="none" stroke="${this._lineColor}" stroke-width="${this._lineWidth}">` +
+      `<animate attributeName="stroke-dashoffset" values="${values}" dur="${this._duration}s" begin="indefinite" calcMode="linear" repeatCount="indefinite"></animate></path>`
+    );
+  }
+
+  public play() {
+    if (!this.element.node.childElementCount) {
+      this.element.add(this._animation);
+    }
+    const animateElement = this.element.node.getElementsByTagName('animate')[0];
+    const offset = ((Date.now() - syncTime) % 1000) * -1;
+    (animateElement as SVGAnimationElement).beginElementAt(offset);
+  }
+
+  public stop() {
+    const animateElement = this.element.node.getElementsByTagName('animate')[0];
+    (animateElement as SVGAnimationElement)?.endElement();
+  }
+
+  public finish() {
+    this.element.findOne('path')?.remove();
+  }
+
+  public flowAppearance(width: number, color: string, linecap: StrokeLineCap, dashWidth: number, dashGap: number): this {
+    const totalLength = (this._animation.node as SVGPathElement).getTotalLength();
+    let offset = 0;
+    if ((totalLength % 100) !== 0) {
+      const clientWidth = totalLength < 100 ? 100 : this.element.node.ownerSVGElement.clientWidth;
+      const clientWidthDash = clientWidth  / (dashWidth + dashGap);
+      const totalLengthDash = totalLength / clientWidthDash;
+      offset = ((dashWidth + dashGap) - totalLengthDash) / 2;
+    }
+    this._lineColor = color;
+    this._lineWidth = width;
+    this._strokeLineCap = linecap;
+    this._dashWidth = dashWidth - offset;
+    this._dashGap = dashGap - offset;
+    const dashArray = `${this._dashWidth} ${this._dashGap}`;
+    const values = `${this._dashWidth + (this._dashGap || this._dashWidth)};0`;
+    this._animation.stroke({width, color, linecap, dasharray: dashArray});
+    this._animation.findOne('animate').attr('values', values);
+    return this;
+  }
+
+  public duration(speed: number): this {
+    this._duration = speed;
+    this._animation.findOne('animate').attr('dur', `${speed}s`);
+    return this;
+  }
+
+  public direction(direction: boolean): this {
+    this._direction = direction;
+    this._animation.attr('d', direction ? this._path : this._reversedPath);
+    return this;
   }
 }
 
