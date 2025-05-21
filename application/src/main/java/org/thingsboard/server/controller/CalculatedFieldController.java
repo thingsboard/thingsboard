@@ -277,7 +277,7 @@ public class CalculatedFieldController extends BaseController {
                 lastUpdateTimestamp = Math.max(lastUpdateTimestamp, maxTs);
             }
         }
-        return lastUpdateTimestamp;
+        return lastUpdateTimestamp == -1 ? System.currentTimeMillis() : lastUpdateTimestamp;
     }
 
     private <E extends HasId<I> & HasTenantId, I extends EntityId> void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig, SecurityUser user) throws ThingsboardException {
