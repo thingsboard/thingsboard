@@ -18,7 +18,6 @@ package org.thingsboard.server.edqs.processor;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
@@ -29,7 +28,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEvent;
@@ -54,7 +52,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.EdqsEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.TbQueueHandler;
-import org.thingsboard.server.queue.TbQueueResponseTemplate;
+import org.thingsboard.server.queue.common.PartitionedQueueResponseTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.discovery.QueueKey;
@@ -62,15 +60,14 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.edqs.EdqsComponent;
 import org.thingsboard.server.queue.edqs.EdqsConfig;
 import org.thingsboard.server.queue.edqs.EdqsConfig.EdqsPartitioningStrategy;
+import org.thingsboard.server.queue.edqs.EdqsExecutors;
 import org.thingsboard.server.queue.edqs.EdqsQueueFactory;
-import org.thingsboard.server.queue.util.AfterStartUp;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -87,20 +84,16 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
     private final EdqsConverter converter;
     private final EdqsRepository repository;
     private final EdqsConfig config;
+    private final EdqsExecutors edqsExecutors;
     private final EdqsPartitionService partitionService;
     private final ConfigurableApplicationContext applicationContext;
     private final EdqsStateService stateService;
 
     private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer;
-    private TbQueueResponseTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> responseTemplate;
-
-    private ExecutorService consumersExecutor;
-    private ExecutorService taskExecutor;
-    private ScheduledExecutorService scheduler;
+    private PartitionedQueueResponseTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> responseTemplate;
     private ListeningExecutorService requestExecutor;
 
     private final VersionsStore versionsStore = new VersionsStore();
-
     private final AtomicInteger counter = new AtomicInteger();
 
     @Getter
@@ -108,10 +101,6 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
 
     @PostConstruct
     private void init() {
-        consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("edqs-consumer"));
-        taskExecutor = ThingsBoardExecutors.newWorkStealingPool(4, "edqs-consumer-task-executor");
-        scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edqs-scheduler");
-        requestExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(12, "edqs-requests"));
         errorHandler = error -> {
             if (error instanceof OutOfMemoryError) {
                 log.error("OOM detected, shutting down");
@@ -120,6 +109,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
                         .execute(applicationContext::close);
             }
         };
+        requestExecutor = edqsExecutors.getRequestExecutor();
 
         eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>create()
                 .queueKey(new QueueKey(ServiceType.EDQS, config.getEventsTopic()))
@@ -141,19 +131,14 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
                 })
                 .consumerCreator((config, tpi) -> queueFactory.createEdqsEventsConsumer())
                 .queueAdmin(queueFactory.getEdqsQueueAdmin())
-                .consumerExecutor(consumersExecutor)
-                .taskExecutor(taskExecutor)
-                .scheduler(scheduler)
+                .consumerExecutor(edqsExecutors.getConsumersExecutor())
+                .taskExecutor(edqsExecutors.getConsumerTaskExecutor())
+                .scheduler(edqsExecutors.getScheduler())
                 .uncaughtErrorHandler(errorHandler)
                 .build();
-        stateService.init(eventConsumer);
+        responseTemplate = queueFactory.createEdqsResponseTemplate(this);
 
-        responseTemplate = queueFactory.createEdqsResponseTemplate();
-    }
-
-    @AfterStartUp(order = 1)
-    public void start() {
-        responseTemplate.launch(this);
+        stateService.init(eventConsumer, List.of(responseTemplate.getRequestConsumer()));
     }
 
     @EventListener
@@ -163,10 +148,8 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         }
         try {
             Set<TopicPartitionInfo> newPartitions = event.getNewPartitions().get(new QueueKey(ServiceType.EDQS));
-
             stateService.process(withTopic(newPartitions, config.getStateTopic()));
-            // eventsConsumer's partitions are updated by stateService
-            responseTemplate.subscribe(withTopic(newPartitions, config.getRequestsTopic())); // TODO: we subscribe to partitions before we are ready. implement consumer-per-partition version for request template
+            // partitions for event and request consumers are updated by stateService
 
             Set<TopicPartitionInfo> oldPartitions = event.getOldPartitions().get(new QueueKey(ServiceType.EDQS));
             if (CollectionsUtil.isNotEmpty(oldPartitions)) {
@@ -290,11 +273,6 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         eventConsumer.awaitStop();
         responseTemplate.stop();
         stateService.stop();
-
-        consumersExecutor.shutdownNow();
-        taskExecutor.shutdownNow();
-        scheduler.shutdownNow();
-        requestExecutor.shutdownNow();
     }
 
 }

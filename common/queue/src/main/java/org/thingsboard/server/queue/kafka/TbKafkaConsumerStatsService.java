@@ -93,8 +93,7 @@ public class TbKafkaConsumerStatsService {
                         log.info("[{}] Topic partitions with lag: [{}].", groupId, builder.toString());
                     }
                 } catch (Exception e) {
-                    log.warn("[{}] Failed to get consumer group stats. Reason - {}.", groupId, e.getMessage());
-                    log.trace("Detailed error: ", e);
+                    log.warn("[{}] Failed to get consumer group stats", groupId, e);
                 }
             }
 

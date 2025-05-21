@@ -36,7 +36,7 @@ public class VersionsStore {
                 isNew.set(true);
                 return version;
             } else {
-                log.info("[{}] Version {} is outdated, the latest is {}", key, version, prevVersion);
+                log.debug("[{}] Version {} is outdated, the latest is {}", key, version, prevVersion);
                 return prevVersion;
             }
         });
