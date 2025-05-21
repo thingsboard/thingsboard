@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.ai;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import dev.langchain4j.data.message.SystemMessage;
@@ -22,6 +23,8 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
+import dev.langchain4j.model.chat.request.ResponseFormatType;
+import dev.langchain4j.model.chat.request.json.JsonSchema;
 import dev.langchain4j.model.input.PromptTemplate;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.common.util.JacksonUtil;
@@ -55,6 +58,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
     private SystemMessage systemMessage;
     private PromptTemplate userPromptTemplate;
+    private ResponseFormat responseFormat;
     private ChatModel chatModel;
 
     @Override
@@ -69,6 +73,11 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             throw new TbNodeException(e, true);
         }
 
+        responseFormat = ResponseFormat.builder()
+                .type(config.getResponseFormatType())
+                .jsonSchema(getJsonSchema(config.getResponseFormatType(), config.getJsonSchema()))
+                .build();
+
         systemMessage = SystemMessage.from(config.getSystemPrompt());
         userPromptTemplate = PromptTemplate.from("""
                 User-provided task or question: %s
@@ -78,6 +87,13 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 .formatted(config.getUserPrompt())
         );
         chatModel = ctx.getAiService().configureChatModel(ctx.getTenantId(), config.getAiSettingsId());
+    }
+
+    private static JsonSchema getJsonSchema(ResponseFormatType responseFormatType, JsonNode jsonSchema) {
+        if (responseFormatType == ResponseFormatType.TEXT) {
+            return null;
+        }
+        return responseFormatType == ResponseFormatType.JSON && jsonSchema != null ? Langchain4jJsonSchemaAdapter.fromJsonNode(jsonSchema) : null;
     }
 
     @Override
@@ -93,12 +109,15 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
         var chatRequest = ChatRequest.builder()
                 .messages(List.of(systemMessage, userMessage))
-                .responseFormat(ResponseFormat.JSON)
+                .responseFormat(responseFormat)
                 .build();
 
         addCallback(sendChatRequest(ctx, chatRequest), new FutureCallback<>() {
             @Override
             public void onSuccess(String response) {
+                if (!isValidJson(response)) {
+                    response = wrapInJsonObject(response);
+                }
                 tellSuccess(ctx, ackedMsg.transform()
                         .data(response)
                         .build());
@@ -115,11 +134,24 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         return ctx.getExternalCallExecutor().submit(() -> chatModel.chat(chatRequest).aiMessage().text());
     }
 
+    private static boolean isValidJson(String jsonString) {
+        try {
+            return JacksonUtil.toJsonNode(jsonString) != null;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private static String wrapInJsonObject(String response) {
+        return JacksonUtil.newObjectNode().put("response", response).toString();
+    }
+
     @Override
     public void destroy() {
         super.destroy();
         systemMessage = null;
         userPromptTemplate = null;
+        responseFormat = null;
         chatModel = null;
     }
 

@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import dev.langchain4j.model.chat.request.ResponseFormatType;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -39,6 +40,9 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @Length(min = 1, max = 1000)
     private String userPrompt;
 
+    @NotNull
+    private ResponseFormatType responseFormatType;
+
     private JsonNode jsonSchema;
 
     @AssertTrue(message = "provided JSON Schema must conform to the Draft 2020-12 meta-schema")
@@ -51,6 +55,7 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
         var configuration = new TbAiNodeConfiguration();
         configuration.setSystemPrompt("You are helpful assistant. Your response must be in JSON format.");
         configuration.setUserPrompt("Tell me a joke.");
+        configuration.setResponseFormatType(ResponseFormatType.JSON);
         return configuration;
     }
 
