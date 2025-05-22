@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai;
+package org.thingsboard.server.common.data.ai.provider;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -22,19 +22,19 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Schema(
-        name = "MistralAi",
-        description = "Configuration properties for the Mistral AI"
+        name = "OpenAiProviderConfig",
+        description = "Configuration for the OpenAI provider"
 )
-public class MistralAiConfig extends AiConfig {
+public final class OpenAiProviderConfig extends AiProviderConfig {
 
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
             description = "Name of the AI provider",
-            example = "MISTRAL_AI",
-            allowableValues = "MISTRAL_AI",
+            example = "OPENAI",
+            allowableValues = "OPENAI",
             type = "string"
     )
-    private AiProvider provider = AiProvider.MISTRAL_AI;
+    private AiProvider provider = AiProvider.OPENAI;
 
 }

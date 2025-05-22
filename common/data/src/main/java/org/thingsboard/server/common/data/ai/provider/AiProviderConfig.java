@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai;
+package org.thingsboard.server.common.data.ai.provider;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -30,17 +30,16 @@ import lombok.NoArgsConstructor;
         visible = true
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = OpenAiConfig.class, name = "OPENAI"),
-        @JsonSubTypes.Type(value = GoogleAiGeminiConfig.class, name = "GOOGLE_AI_GEMINI"),
-        @JsonSubTypes.Type(value = MistralAiConfig.class, name = "MISTRAL_AI")
+        @JsonSubTypes.Type(value = OpenAiProviderConfig.class, name = "OPENAI"),
+        @JsonSubTypes.Type(value = GoogleAiGeminiProviderConfig.class, name = "GOOGLE_AI_GEMINI"),
+        @JsonSubTypes.Type(value = MistralAiProviderConfig.class, name = "MISTRAL_AI")
 })
-public abstract class AiConfig {
+public abstract class AiProviderConfig {
 
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "API key for authenticating with the AI provider",
-            example = "sk-********************************"
+            description = "API key for authenticating with the AI provider"
     )
     private String apiKey;
 

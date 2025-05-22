@@ -13,28 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai;
+package org.thingsboard.server.common.data.ai.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 @Schema(
-        name = "OpenAiConfig",
-        description = "Configuration properties for the OpenAI"
+        name = "GoogleAiGeminiChatModelConfig",
+        description = "Configuration for Google AI Gemini chat models"
 )
-public class OpenAiConfig extends AiConfig {
+public final class GoogleAiGeminiChatModelConfig extends AiModelConfig {
 
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Name of the AI provider",
-            example = "OPENAI",
-            allowableValues = "OPENAI",
-            type = "string"
+            description = "Identifier of the AI model",
+            allowableValues = "gemini-2.0-flash",
+            example = "gemini-2.0-flash"
     )
-    private AiProvider provider = AiProvider.OPENAI;
+    public String getModel() {
+        return super.getModel();
+    }
+
+    @Schema(
+            accessMode = Schema.AccessMode.READ_WRITE,
+            description = "Sampling temperature to control randomness: 0.0 (most deterministic) to 1.0 (most creative)",
+            example = "0.7"
+    )
+    private Double temperature;
 
 }

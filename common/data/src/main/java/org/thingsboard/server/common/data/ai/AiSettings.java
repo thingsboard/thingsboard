@@ -24,6 +24,9 @@ import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.ai.model.AiModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
+import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -76,17 +79,27 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Identifier of the AI model to use",
+            description = "Configuration specific to the AI provider"
+    )
+    AiProviderConfig providerConfig;
+
+    @Schema(
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            accessMode = Schema.AccessMode.READ_WRITE,
+            description = "Identifier of the AI model",
             example = "gpt-4o-mini"
     )
     String model;
 
     @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Settings specific to the selected AI provider and model"
+            description = """
+                    Optional configuration specific to the AI model.
+                    If provided, it must be one of the known AiModelConfig subtypes and any settings
+                    you specify will override the model’s defaults; if omitted, the model will run with its built-in defaults."""
     )
-    AiConfig configuration;
+    AiModelConfig modelConfig;
 
     public AiSettings() {}
 

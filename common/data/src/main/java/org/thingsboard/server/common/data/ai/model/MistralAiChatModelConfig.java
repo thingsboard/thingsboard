@@ -13,28 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai;
+package org.thingsboard.server.common.data.ai.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 @Schema(
-        name = "GoogleAiGemini",
-        description = "Configuration properties for the Google AI Gemini"
+        name = "MistralAiChatModelConfig",
+        description = "Configuration for Mistral AI chat models"
 )
-public class GoogleAiGeminiConfig extends AiConfig {
+public final class MistralAiChatModelConfig extends AiModelConfig {
 
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Name of the AI provider",
-            example = "GOOGLE_AI_GEMINI",
-            allowableValues = "GOOGLE_AI_GEMINI",
-            type = "string"
+            description = "Identifier of the AI model",
+            allowableValues = "mistral-medium-latest",
+            example = "mistral-medium-latest"
     )
-    private AiProvider provider = AiProvider.GOOGLE_AI_GEMINI;
+    public String getModel() {
+        return super.getModel();
+    }
+
+    @Schema(
+            accessMode = Schema.AccessMode.READ_WRITE,
+            description = "Sampling temperature to control randomness: 0.0 (most deterministic) to 1.0 (most creative)",
+            example = "0.7"
+    )
+    private Double temperature;
 
 }

@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineAiService;
 import org.thingsboard.server.common.data.ai.AiSettings;
+import org.thingsboard.server.common.data.ai.model.MistralAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.ai.AiSettingsService;
@@ -45,18 +47,39 @@ class AiServiceImpl implements RuleEngineAiService {
         var aiSettings = aiSettingsOpt.get();
 
         return switch (aiSettings.getProvider()) {
-            case OPENAI -> OpenAiChatModel.builder()
-                    .apiKey(aiSettings.getConfiguration().getApiKey())
-                    .modelName(aiSettings.getModel())
-                    .build();
-            case MISTRAL_AI -> MistralAiChatModel.builder()
-                    .apiKey(aiSettings.getConfiguration().getApiKey())
-                    .modelName(aiSettings.getModel())
-                    .build();
-            case GOOGLE_AI_GEMINI -> GoogleAiGeminiChatModel.builder()
-                    .apiKey(aiSettings.getConfiguration().getApiKey())
-                    .modelName(aiSettings.getModel())
-                    .build();
+            case OPENAI -> {
+                var modelBuilder = OpenAiChatModel.builder()
+                        .apiKey(aiSettings.getProviderConfig().getApiKey())
+                        .modelName(aiSettings.getModel());
+
+                if (aiSettings.getModelConfig() instanceof OpenAiChatModelConfig config) {
+                    modelBuilder.temperature(config.getTemperature());
+                }
+
+                yield modelBuilder.build();
+            }
+            case MISTRAL_AI -> {
+                var modelBuilder = MistralAiChatModel.builder()
+                        .apiKey(aiSettings.getProviderConfig().getApiKey())
+                        .modelName(aiSettings.getModel());
+
+                if (aiSettings.getModelConfig() instanceof MistralAiChatModelConfig config) {
+                    modelBuilder.temperature(config.getTemperature());
+                }
+
+                yield modelBuilder.build();
+            }
+            case GOOGLE_AI_GEMINI -> {
+                var modelBuilder = GoogleAiGeminiChatModel.builder()
+                        .apiKey(aiSettings.getProviderConfig().getApiKey())
+                        .modelName(aiSettings.getModel());
+
+                if (aiSettings.getModelConfig() instanceof OpenAiChatModelConfig config) {
+                    modelBuilder.temperature(config.getTemperature());
+                }
+
+                yield modelBuilder.build();
+            }
         };
     }
 

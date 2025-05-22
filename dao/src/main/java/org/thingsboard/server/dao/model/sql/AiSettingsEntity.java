@@ -26,9 +26,10 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.proxy.HibernateProxy;
-import org.thingsboard.server.common.data.ai.AiConfig;
-import org.thingsboard.server.common.data.ai.AiProvider;
 import org.thingsboard.server.common.data.ai.AiSettings;
+import org.thingsboard.server.common.data.ai.model.AiModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
+import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseVersionedEntity;
@@ -54,12 +55,16 @@ public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
     @Column(name = ModelConstants.AI_SETTINGS_PROVIDER_COLUMN_NAME, nullable = false)
     private AiProvider provider;
 
+    @Type(JsonBinaryType.class)
+    @Column(name = ModelConstants.AI_SETTINGS_PROVIDER_CONFIG_COLUMN_NAME, nullable = false, columnDefinition = "JSONB")
+    private AiProviderConfig providerConfig;
+
     @Column(name = ModelConstants.AI_SETTINGS_MODEL_COLUMN_NAME, nullable = false)
     private String model;
 
     @Type(JsonBinaryType.class)
-    @Column(name = ModelConstants.AI_SETTINGS_CONFIGURATION_COLUMN_NAME, nullable = false, columnDefinition = "JSONB")
-    private AiConfig configuration;
+    @Column(name = ModelConstants.AI_SETTINGS_MODEL_CONFIG_COLUMN_NAME, columnDefinition = "JSONB")
+    private AiModelConfig modelConfig;
 
     public AiSettingsEntity() {}
 
@@ -68,8 +73,9 @@ public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
         tenantId = getTenantUuid(aiSettings.getTenantId());
         name = aiSettings.getName();
         provider = aiSettings.getProvider();
+        providerConfig = aiSettings.getProviderConfig();
         model = aiSettings.getModel();
-        configuration = aiSettings.getConfiguration();
+        modelConfig = aiSettings.getModelConfig();
     }
 
     @Override
@@ -80,8 +86,9 @@ public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
         settings.setTenantId(TenantId.fromUUID(tenantId));
         settings.setName(name);
         settings.setProvider(provider);
+        settings.setProviderConfig(providerConfig);
         settings.setModel(model);
-        settings.setConfiguration(configuration);
+        settings.setModelConfig(modelConfig);
         return settings;
     }
 
