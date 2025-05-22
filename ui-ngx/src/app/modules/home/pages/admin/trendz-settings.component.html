@@ -37,6 +37,12 @@
             <mat-form-field class="tb-trendz-url mat-block flex-1" subscriptSizing="dynamic">
               <mat-label translate>admin.trendz-url</mat-label>
               <input matInput formControlName="trendzUrl">
+              <mat-error *ngIf="trendzSettingsForm.get('trendzUrl').hasError('required')">
+                {{ 'admin.trendz-url-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="trendzSettingsForm.get('trendzUrl').hasError('pattern')">
+                {{ 'mobile.invalid-url-format' | translate }}
+              </mat-error>
             </mat-form-field>
             <mat-form-field class="tb-trendz-api-key mat-block flex-1" subscriptSizing="dynamic">
               <mat-label translate>admin.trendz-api-key</mat-label>
