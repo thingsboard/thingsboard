@@ -51,6 +51,7 @@ export enum EntityType {
   MOBILE_APP_BUNDLE = 'MOBILE_APP_BUNDLE',
   MOBILE_APP = 'MOBILE_APP',
   CALCULATED_FIELD = 'CALCULATED_FIELD',
+  AI_SETTINGS = 'AI_SETTINGS',
 }
 
 export enum AliasEntityType {
@@ -490,6 +491,13 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         noEntities: 'calculated-fields.no-found',
         search: 'action.search',
         selectedEntities: 'calculated-fields.selected-fields'
+      }
+    ],
+    [
+      EntityType.AI_SETTINGS,
+      {
+        type: 'entity.type-ai-settings',
+        typePlural: 'entity.type-ai-settings'
       }
     ]
   ]

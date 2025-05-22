@@ -846,22 +846,23 @@ audit-log:
   # Allowed values: OFF (disable), W (log write operations), RW (log read and write operations)
   logging-level:
     mask:
-      "device": "${AUDIT_LOG_MASK_DEVICE:W}" # Device logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "asset": "${AUDIT_LOG_MASK_ASSET:W}" # Asset logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}" # Dashboard logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "widget_type": "${AUDIT_LOG_MASK_WIDGET_TYPE:W}" # Widget type logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}" # Widget bundles logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}" # Customer logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "user": "${AUDIT_LOG_MASK_USER:W}" # User logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}" # Rule chain logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "alarm": "${AUDIT_LOG_MASK_ALARM:W}" # Alarm logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}" # Entity view logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}" # Device profile logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}" # Asset profile logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "edge": "${AUDIT_LOG_MASK_EDGE:W}" # Edge logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
+      "device": "${AUDIT_LOG_MASK_DEVICE:W}" # Device logging levels.
+      "asset": "${AUDIT_LOG_MASK_ASSET:W}" # Asset logging levels.
+      "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}" # Dashboard logging levels.
+      "widget_type": "${AUDIT_LOG_MASK_WIDGET_TYPE:W}" # Widget type logging levels.
+      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}" # Widget bundles logging levels.
+      "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}" # Customer logging levels.
+      "user": "${AUDIT_LOG_MASK_USER:W}" # User logging levels.
+      "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}" # Rule chain logging levels.
+      "alarm": "${AUDIT_LOG_MASK_ALARM:W}" # Alarm logging levels.
+      "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}" # Entity view logging levels.
+      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}" # Device profile logging levels.
+      "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}" # Asset profile logging levels.
+      "edge": "${AUDIT_LOG_MASK_EDGE:W}" # Edge logging levels.
+      "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels.
+      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels.
+      "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels.
+      "ai_settings": "${AUDIT_LOG_MASK_AI_SETTINGS:W}" # AI settings logging levels.
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"

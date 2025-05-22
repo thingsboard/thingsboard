@@ -63,9 +63,10 @@ public class AiSettingsController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping
     public AiSettings saveAiSettings(@RequestBody AiSettings aiSettings) throws ThingsboardException {
-        aiSettings.setTenantId(getTenantId());
+        var user = getCurrentUser();
+        aiSettings.setTenantId(user.getTenantId());
         checkEntity(aiSettings.getId(), aiSettings, Resource.AI_SETTINGS);
-        return aiSettingsService.save(aiSettings);
+        return tbAiSettingsService.save(aiSettings, user);
     }
 
     @ApiOperation(
@@ -143,7 +144,7 @@ public class AiSettingsController extends BaseController {
             return false;
         }
         accessControlService.checkPermission(user, Resource.AI_SETTINGS, Operation.DELETE, aiSettingsId, aiSettingsOpt.get());
-        return aiSettingsService.deleteByTenantIdAndId(user.getTenantId(), aiSettingsId);
+        return tbAiSettingsService.delete(aiSettingsOpt.get(), user);
     }
 
 }

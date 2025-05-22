@@ -177,6 +177,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
+import org.thingsboard.server.service.entitiy.ai.TbAiSettingsService;
 import org.thingsboard.server.service.entitiy.user.TbUserSettingsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -378,6 +379,9 @@ public abstract class BaseController {
 
     @Autowired
     protected AiSettingsService aiSettingsService;
+
+    @Autowired
+    protected TbAiSettingsService tbAiSettingsService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
