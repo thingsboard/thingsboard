@@ -255,6 +255,30 @@ public class TestRestClient {
                 .as(JsonNode.class);
     }
 
+    public JsonNode getAttributesByScope(String accessToken, AttributeScope scope, String keys) {
+        RequestSpecification requestSpecification = given().spec(requestSpec);
+        if (!isEmpty(keys)) {
+            requestSpecification.queryParam("keys", keys);
+        }
+        String url = "/api/v1/{accessToken}/attributes";
+        switch (scope) {
+            case CLIENT_SCOPE:
+                url += "/client";
+                break;
+            case SHARED_SCOPE:
+                url += "/shared";
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported scope: " + scope);
+        }
+        return requestSpecification
+                .get(url, accessToken)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
     public JsonNode getAttributes(EntityId entityId, AttributeScope scope, String keys) {
         return given().spec(requestSpec)
                 .get("/api/plugins/telemetry/{entityType}/{entityId}/values/attributes/{scope}?keys={keys}", entityId.getEntityType(), entityId.getId(), scope, keys)
