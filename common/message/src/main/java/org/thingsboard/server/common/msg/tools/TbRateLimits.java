@@ -18,7 +18,6 @@ package org.thingsboard.server.common.msg.tools;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.BandwidthBuilder;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import io.github.bucket4j.local.LocalBucket;
 import io.github.bucket4j.local.LocalBucketBuilder;
 import lombok.Getter;

@@ -21,8 +21,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -61,6 +63,29 @@ public class LimitedApiUtil {
         return merged.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey()) // optional: sort by duration
                 .map(e -> e.getValue() + ":" + e.getKey())
+                .collect(Collectors.joining(","));
+    }
+
+    public static boolean isValid(String configStr) {
+        List<LimitedApiEntry> limitedApiEntries = parseConfig(configStr);
+        Set<Long> distinctDurations = new HashSet<>();
+        for (LimitedApiEntry entry : limitedApiEntries) {
+            if (!distinctDurations.add(entry.durationSeconds())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Deprecated(forRemoval = true, since = "4.0.2")
+    public static String deduplicateByDuration(String configStr) {
+        if (configStr == null) {
+            return null;
+        }
+        Set<Long> distinctDurations = new HashSet<>();
+        return parseConfig(configStr).stream()
+                .filter(entry -> distinctDurations.add(entry.durationSeconds()))
+                .map(LimitedApiEntry::toString)
                 .collect(Collectors.joining(","));
     }
 

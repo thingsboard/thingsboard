@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
+import org.thingsboard.server.common.data.validation.RateLimit;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.Collection;
@@ -103,6 +104,7 @@ public class ConstraintValidator {
         ConstraintMapping constraintMapping = new DefaultConstraintMapping(null);
         constraintMapping.constraintDefinition(NoXss.class).validatedBy(NoXssValidator.class);
         constraintMapping.constraintDefinition(Length.class).validatedBy(StringLengthValidator.class);
+        constraintMapping.constraintDefinition(RateLimit.class).validatedBy(RateLimitValidator.class);
         return constraintMapping;
     }
 

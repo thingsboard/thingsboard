@@ -31,7 +31,7 @@ public enum LimitedApi {
     REST_REQUESTS_PER_CUSTOMER(DefaultTenantProfileConfiguration::getCustomerServerRestLimitsConfiguration, "REST API requests per customer", false),
     WS_UPDATES_PER_SESSION(DefaultTenantProfileConfiguration::getWsUpdatesPerSessionRateLimit, "WS updates per session", true),
     CASSANDRA_WRITE_QUERIES_CORE(DefaultTenantProfileConfiguration::getCassandraReadQueryTenantCoreRateLimits, "Rest API and WS telemetry read queries", true),
-    CASSANDRA_READ_QUERIES_CORE(DefaultTenantProfileConfiguration::getCassandraWriteQueryTenantCoreRateLimits, "Rest API and WS telemetry write queries", true),
+    CASSANDRA_READ_QUERIES_CORE(DefaultTenantProfileConfiguration::getCassandraWriteQueryTenantCoreRateLimits, "Rest API write queries", true),
     CASSANDRA_WRITE_QUERIES_RULE_ENGINE(DefaultTenantProfileConfiguration::getCassandraReadQueryTenantRuleEngineRateLimits, "Rule Engine telemetry read queries", true),
     CASSANDRA_READ_QUERIES_RULE_ENGINE(DefaultTenantProfileConfiguration::getCassandraWriteQueryTenantRuleEngineRateLimits, "Rule Engine telemetry write queries", true),
     CASSANDRA_READ_QUERIES_MONOLITH(
@@ -57,28 +57,31 @@ public enum LimitedApi {
     WS_SUBSCRIPTIONS("WS subscriptions", false),
     CALCULATED_FIELD_DEBUG_EVENTS("calculated field debug events", true);
 
-    private Function<DefaultTenantProfileConfiguration, String> configExtractor;
+    private final Function<DefaultTenantProfileConfiguration, String> configExtractor;
     @Getter
     private final boolean perTenant;
     @Getter
-    private boolean refillRateLimitIntervally;
+    private final boolean refillRateLimitIntervally;
     @Getter
-    private String label;
+    private final String label;
 
     LimitedApi(Function<DefaultTenantProfileConfiguration, String> configExtractor, String label, boolean perTenant) {
-        this.configExtractor = configExtractor;
-        this.label = label;
-        this.perTenant = perTenant;
+        this(configExtractor, label, perTenant, false);
     }
 
     LimitedApi(boolean perTenant, boolean refillRateLimitIntervally) {
-        this.perTenant = perTenant;
-        this.refillRateLimitIntervally = refillRateLimitIntervally;
+        this(null, null, perTenant, refillRateLimitIntervally);
     }
 
     LimitedApi(String label, boolean perTenant) {
+        this(null, label, perTenant, false);
+    }
+
+    LimitedApi(Function<DefaultTenantProfileConfiguration, String> configExtractor, String label, boolean perTenant, boolean refillRateLimitIntervally) {
+        this.configExtractor = configExtractor;
         this.label = label;
         this.perTenant = perTenant;
+        this.refillRateLimitIntervally = refillRateLimitIntervally;
     }
 
     public String getLimitConfig(DefaultTenantProfileConfiguration profileConfiguration) {
