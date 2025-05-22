@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.Optional;
 
@@ -37,8 +38,11 @@ class AiSettingsServiceImpl implements AiSettingsService {
 
     private final AiSettingsDao aiSettingsDao;
 
+    private final DataValidator<AiSettings> aiSettingsValidator;
+
     @Override
     public AiSettings save(AiSettings aiSettings) {
+        aiSettingsValidator.validate(aiSettings, AiSettings::getTenantId);
         try {
             return aiSettingsDao.saveAndFlush(aiSettings.getTenantId(), aiSettings);
         } catch (Exception e) {

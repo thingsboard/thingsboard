@@ -36,6 +36,8 @@ import lombok.NoArgsConstructor;
 })
 public abstract class AiProviderConfig {
 
+    public abstract AiProvider getProvider();
+
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
