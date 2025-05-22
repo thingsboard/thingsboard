@@ -96,7 +96,7 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
             accessMode = Schema.AccessMode.READ_WRITE,
             description = """
                     Optional configuration specific to the AI model.
-                    If provided, it must be one of the known AiModelConfig subtypes and any settings
+                    If provided, it must be one of the known `AiModelConfig` subtypes and any settings
                     you specify will override the model’s defaults; if omitted, the model will run with its built-in defaults."""
     )
     AiModelConfig modelConfig;
