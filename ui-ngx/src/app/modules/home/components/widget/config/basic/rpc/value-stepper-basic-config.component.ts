@@ -31,6 +31,7 @@ import {
   valueStepperTypeTranslations,
   ValueStepperWidgetSettings
 } from '@home/components/widget/lib/rpc/value-stepper-widget.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 type ButtonAppearanceType = 'left' | 'right';
 
@@ -218,7 +219,7 @@ export class ValueStepperBasicConfigComponent extends BasicWidgetConfigComponent
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.valueStepperWidgetConfigForm.get('appearance').get('valueUnits').value;
+    const units: string = getSourceTbUnitSymbol(this.valueStepperWidgetConfigForm.get('appearance').get('valueUnits').value);
     const decimals: number = this.valueStepperWidgetConfigForm.get('appearance').get('valueDecimals').value;
     return formatValue(48, decimals, units, false);
   }

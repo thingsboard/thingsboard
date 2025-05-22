@@ -134,19 +134,29 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         }
     }
 
-    @Override
-    public ListenableFuture<UUID> eval(TenantId tenantId, ScriptType scriptType, String scriptBody, String... argNames) {
+    public String validate(TenantId tenantId, String scriptBody) {
         if (isExecEnabled(tenantId)) {
             if (scriptBodySizeExceeded(scriptBody)) {
-                return error(format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize()));
+                return format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize());
             }
-            UUID scriptId = UUID.randomUUID();
-            requestsCounter.increment();
-            return withTimeoutAndStatsCallback(scriptId, null,
-                    doEvalScript(tenantId, scriptType, scriptBody, scriptId, argNames), evalCallback, getMaxEvalRequestsTimeout());
         } else {
-            return error("Script Execution is disabled due to API limits!");
+            return "Script Execution is disabled due to API limits!";
         }
+
+        return null;
+    }
+
+    @Override
+    public ListenableFuture<UUID> eval(TenantId tenantId, ScriptType scriptType, String scriptBody, String... argNames) {
+        String validationError = validate(tenantId, scriptBody);
+        if (validationError != null) {
+            return error(validationError);
+        }
+
+        UUID scriptId = UUID.randomUUID();
+        requestsCounter.increment();
+        return withTimeoutAndStatsCallback(scriptId, null,
+                doEvalScript(tenantId, scriptType, scriptBody, scriptId, argNames), evalCallback, getMaxEvalRequestsTimeout());
     }
 
     @Override
@@ -269,7 +279,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         }
     }
 
-    private boolean scriptBodySizeExceeded(String scriptBody) {
+    public boolean scriptBodySizeExceeded(String scriptBody) {
         if (getMaxScriptBodySize() <= 0) return false;
         return scriptBody.length() > getMaxScriptBodySize();
     }
@@ -297,7 +307,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         return result != null && result.length() > getMaxResultSize();
     }
 
-    private <T> ListenableFuture<T> error(String message) {
+    public <T> ListenableFuture<T> error(String message) {
         return Futures.immediateFailedFuture(new RuntimeException(message));
     }
 

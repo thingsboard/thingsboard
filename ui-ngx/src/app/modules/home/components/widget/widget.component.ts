@@ -105,6 +105,7 @@ import { ExceptionData } from '@shared/models/error.models';
 import { WidgetComponentService } from './widget-component.service';
 import { Timewindow } from '@shared/models/time/time.models';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
+import { UnitService } from '@core/services/unit.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
@@ -216,6 +217,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
               private dashboardUtils: DashboardUtilsService,
               private mobileService: MobileService,
               private raf: RafService,
+              private unitService: UnitService,
               private ngZone: NgZone,
               private cd: ChangeDetectorRef,
               private http: HttpClient) {
@@ -341,6 +343,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     this.subscriptionContext.utils = this.utils;
     this.subscriptionContext.dashboardUtils = this.dashboardUtils;
     this.subscriptionContext.raf = this.raf;
+    this.subscriptionContext.unitService = this.unitService;
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
     this.subscriptionContext.getServerTimeDiff = this.dashboardService.getServerTimeDiff.bind(this.dashboardService);
 

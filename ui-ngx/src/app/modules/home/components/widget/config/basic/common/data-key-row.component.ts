@@ -225,6 +225,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.hasAdditionalLatestDataKeys && this.keyRowFormGroup.get('latest').value === true;
   }
 
+  get supportsUnitConversion(): boolean {
+    return this.widgetConfigComponent.modelValue?.typeParameters?.supportsUnitConversion ?? false;
+  }
+
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
@@ -337,7 +341,8 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
           hideDataKeyLabel: this.hideDataKeyLabel,
           hideDataKeyColor: this.hideDataKeyColor,
           hideDataKeyUnits: this.hideDataKeyUnits || !this.displayUnitsOrDigits,
-          hideDataKeyDecimals: this.hideDataKeyDecimals || !this.displayUnitsOrDigits
+          hideDataKeyDecimals: this.hideDataKeyDecimals || !this.displayUnitsOrDigits,
+          supportsUnitConversion: this.supportsUnitConversion
         }
       }).afterClosed().subscribe((updatedDataKey) => {
       if (updatedDataKey) {

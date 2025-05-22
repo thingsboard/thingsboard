@@ -3,11 +3,11 @@
   "description": "Cross connector",
   "widgetSizeX": 1,
   "widgetSizeY": 1,
-  "stateRenderFunction": "const {\n    flowAnimationWidth: lineWidth,\n    flowAnimationColor: lineColor,\n    flowStyleDash: dashWidth,\n    flowStyleGap: dashGap,\n    flowDashCap: dashCap\n} = ctx.properties;\n\nconst leftLine = \"M0 100H100\";\nconst topLine = \"M100 97L100 0\";\nconst rightLine = \"M100 100H200\";\nconst bottomLine = \"M 100,200 V 103\";\n\nprepareFlowAnimation('left', leftLine);\nprepareFlowAnimation('top', topLine);\nprepareFlowAnimation('right', rightLine);\nprepareFlowAnimation('bottom', bottomLine);\n\nfunction prepareFlowAnimation(prefix, line) {\n    const flowAnimation = ctx.values[prefix + 'Flow'];\n    const flowDirection = ctx.values[prefix + 'FlowDirection'];\n    const flowAnimationSpeed = ctx.values[prefix + 'FlowAnimationSpeed'];\n\n    const animation = ctx.tags[prefix + 'Line'][0];\n    const offset = Date.now() % 1000;\n    const duration = 1 / flowAnimationSpeed;\n    \n    const prevFlowAnimation = animation.remember('flowAnimation');\n    const prevFlowDirection = animation.remember('flowDirection');\n    const prevFlowDuration = animation.remember('flowDuration');\n    \n    if (flowAnimation && flowAnimation !== prevFlowAnimation) {\n        animation.remember('flowAnimation', flowAnimation);\n        animation.remember('flowDuration', duration);\n        animation.remember('flowDirection', flowDirection);\n        animateFlow(animation, offset, flowDirection, duration, line);\n    } else if (flowAnimation && flowDirection !== prevFlowDirection) {\n        animation.remember('flowDirection', flowDirection);\n        animateFlow(animation, offset, flowDirection, duration, line);\n    } else if (flowAnimation && duration !== prevFlowDuration) {\n        animation.remember('flowDuration', duration);\n        animation.findOne('animate').attr('dur', `${duration}s`) ;\n    } else if (!flowAnimation && prevFlowAnimation) {\n        animation.remember('flowAnimation', null);\n        animation.clear();\n    }\n}\n\nfunction animateFlow(group, offset, flowDirection, duration, line) {\n    group.clear();\n    const dashArray = `${dashWidth}${dashGap ? ` ${dashGap}` : ''}`;\n    const value = flowDirection ? `${dashWidth + (dashGap || dashWidth)}` : `-${dashWidth + (dashGap || dashWidth)}`;\n\n    group.add(`<path style=\"stroke-dasharray: ${dashArray}; stroke-linecap: ${dashCap}; stroke-dashoffset: 0;\" d=\"${line}\" stroke-miterlimit=\"10\" fill=\"none\" stroke=\"${lineColor}\" stroke-width=\"${lineWidth}\"><animate attributeName=\"stroke-dashoffset\" values=\"${value};0\" dur=\"${duration}s\" begin=\"-${offset}ms\" calcMode=\"linear\" repeatCount=\"indefinite\" /></path>`);\n}",
+  "stateRenderFunction": "const {\n    flowAnimationWidth: lineWidth,\n    flowAnimationColor: lineColor,\n    flowStyleDash: dashWidth,\n    flowStyleGap: dashGap,\n    flowDashCap: dashCap\n} = ctx.properties;\n\nconst leftLine = \"M0 100H100\";\nconst leftLineReversed = \"M 100,100 H 0\";\nconst topLine = \"M100 97L100 0\";\nconst topLineReversed = \"M 100,0 V 97\";\nconst rightLine = \"M100 100H200\";\nconst rightLineReversed = \"M 200,100 H 100\";\nconst bottomLine = \"M 100,200 V 103\";\nconst bottomLineReversed = \"M 100,103 V 200\";\n\nprepareFlowAnimation('left', leftLine, leftLineReversed);\nprepareFlowAnimation('top', topLine, topLineReversed);\nprepareFlowAnimation('right', rightLine, rightLineReversed);\nprepareFlowAnimation('bottom', bottomLine, bottomLineReversed);\n\nfunction prepareFlowAnimation(prefix, line, reversedLine) {\n    const flowAnimation = ctx.values[prefix + 'Flow'];\n    const flowDirection = ctx.values[prefix + 'FlowDirection'];\n    const flowAnimationSpeed = ctx.values[prefix + 'FlowAnimationSpeed'];\n\n    const animation = ctx.tags[prefix + 'Line'][0];\n    const duration = 1 / flowAnimationSpeed;\n        \n    let animateFlow = ctx.api.connectorAnimation(animation);\n    \n    if (flowAnimation) {\n        if (!animateFlow) {\n            animateFlow = ctx.api.connectorAnimate(animation, line, reversedLine).flowAppearance(lineWidth, lineColor, dashCap, dashWidth, dashGap).duration(duration).direction(flowDirection).play();\n        } else {\n            animateFlow.duration(duration).direction(flowDirection).play();\n        }\n    } else {\n        if (animateFlow) {\n            animateFlow.finish();\n        }\n    }\n}",
   "tags": [
     {
       "tag": "line",
-      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nif (ctx.properties.mainLine) {\n    element.attr({'stroke-width': ctx.properties.mainLineSize});\n} else {\n    element.attr({'stroke-width': ctx.properties.secondaryLineSize});\n}",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nelement.attr({'stroke-width': ctx.properties.mainLineSize});",
       "actions": null
     },
     {
@@ -58,8 +58,8 @@
     },
     {
       "id": "leftFlowDirection",
-      "name": "{i18n:scada.symbol.animation-direction}",
-      "hint": "{i18n:scada.symbol.animation-direction-hint}",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
       "group": "{i18n:scada.symbol.left-connector}",
       "type": "value",
       "valueType": "BOOLEAN",
@@ -174,8 +174,8 @@
     },
     {
       "id": "topFlowDirection",
-      "name": "{i18n:scada.symbol.animation-direction}",
-      "hint": "{i18n:scada.symbol.animation-direction-hint}",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
       "group": "{i18n:scada.symbol.top-connector}",
       "type": "value",
       "valueType": "BOOLEAN",
@@ -290,8 +290,8 @@
     },
     {
       "id": "rightFlowDirection",
-      "name": "{i18n:scada.symbol.flow-direction}",
-      "hint": "{i18n:scada.symbol.flow-direction-hint}",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
       "group": "{i18n:scada.symbol.right-connector}",
       "type": "value",
       "valueType": "BOOLEAN",
@@ -406,8 +406,8 @@
     },
     {
       "id": "bottomFlowDirection",
-      "name": "{i18n:scada.symbol.animation-direction}",
-      "hint": "{i18n:scada.symbol.animation-direction-hint}",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
       "group": "{i18n:scada.symbol.bottom-connector}",
       "type": "value",
       "valueType": "BOOLEAN",
@@ -484,14 +484,6 @@
   ],
   "properties": [
     {
-      "id": "mainLine",
-      "name": "{i18n:scada.symbol.main-line}",
-      "type": "switch",
-      "default": true,
-      "disabled": false,
-      "visible": true
-    },
-    {
       "id": "mainLineSize",
       "name": "{i18n:scada.symbol.line}",
       "type": "number",
@@ -500,29 +492,15 @@
       "subLabel": "Main",
       "divider": true,
       "fieldSuffix": "px",
+      "condition": "return model.mainLine;",
       "min": 0,
       "max": 99,
       "step": 1,
-      "disabled": false,
-      "visible": true
-    },
-    {
-      "id": "secondaryLineSize",
-      "name": "{i18n:scada.symbol.line}",
-      "type": "number",
-      "default": 2,
-      "required": true,
-      "subLabel": "Secondary",
-      "fieldSuffix": "px",
-      "min": 0,
-      "max": 99,
-      "step": 1,
-      "disabled": false,
-      "visible": true
+      "disabled": false
     },
     {
       "id": "lineColor",
-      "name": "{i18n:scada.symbol.line-color}",
+      "name": "{i18n:scada.symbol.line}",
       "type": "color",
       "default": "#1A1A1A",
       "disabled": false,
@@ -530,11 +508,11 @@
     },
     {
       "id": "flowAnimationWidth",
-      "name": "{i18n:scada.symbol.flow}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "number",
       "default": 4,
-      "subLabel": "Width",
+      "divider": false,
       "fieldSuffix": "px",
       "min": 1,
       "step": 1,
@@ -543,8 +521,8 @@
     },
     {
       "id": "flowAnimationColor",
-      "name": "{i18n:scada.symbol.flow}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "color",
       "default": "#C8DFF7",
       "disabled": false,
@@ -552,13 +530,14 @@
     },
     {
       "id": "flowStyleDash",
-      "name": "{i18n:scada.symbol.flow-style}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line-style}",
+      "hint": "{i18n:scada.symbol.flow-style-hint}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "number",
       "default": 10,
       "required": true,
       "subLabel": "{i18n:scada.symbol.dash}",
-      "divider": true,
+      "divider": false,
       "fieldSuffix": "px",
       "min": 0,
       "step": 1,
@@ -567,13 +546,14 @@
     },
     {
       "id": "flowStyleGap",
-      "name": "{i18n:scada.symbol.flow-style}",
-      "group": "{i18n:scada.symbol.animation}",
+      "name": "{i18n:scada.symbol.flow-line-style}",
+      "hint": "{i18n:scada.symbol.flow-style-hint}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "number",
       "default": 10,
       "subLabel": "{i18n:scada.symbol.gap}",
       "fieldSuffix": "px",
-      "min": 1,
+      "min": 0,
       "step": 1,
       "disabled": false,
       "visible": true
@@ -581,7 +561,7 @@
     {
       "id": "flowDashCap",
       "name": "{i18n:scada.symbol.flow-dash-cap}",
-      "group": "{i18n:scada.symbol.animation}",
+      "group": "{i18n:scada.symbol.flow}",
       "type": "select",
       "default": "butt",
       "items": [
