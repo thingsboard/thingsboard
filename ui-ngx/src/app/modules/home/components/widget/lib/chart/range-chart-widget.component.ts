@@ -67,6 +67,9 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   @Input()
   ctx: WidgetContext;
 
+  @Input()
+  widgetTitlePanel: TemplateRef<any>;
+
   showLegend: boolean;
   legendClass: string;
 
