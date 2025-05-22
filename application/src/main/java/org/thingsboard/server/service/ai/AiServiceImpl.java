@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineAiService;
 import org.thingsboard.server.common.data.ai.AiSettings;
+import org.thingsboard.server.common.data.ai.model.GoogleAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.MistralAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.id.AiSettingsId;
@@ -74,7 +75,7 @@ class AiServiceImpl implements RuleEngineAiService {
                         .apiKey(aiSettings.getProviderConfig().getApiKey())
                         .modelName(aiSettings.getModel());
 
-                if (aiSettings.getModelConfig() instanceof OpenAiChatModelConfig config) {
+                if (aiSettings.getModelConfig() instanceof GoogleAiGeminiChatModelConfig config) {
                     modelBuilder.temperature(config.getTemperature());
                 }
 
