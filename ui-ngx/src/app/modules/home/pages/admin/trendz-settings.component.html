@@ -31,13 +31,17 @@
       <form [formGroup]="trendzSettingsForm" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">
           <section class="tb-trendz-section flex flex-col gt-sm:flex-row">
+            <mat-checkbox class="flex flex-1" formControlName="isTrendzEnabled">
+              {{ 'admin.trendz-enable' | translate }}
+            </mat-checkbox>
             <mat-form-field class="tb-trendz-url mat-block flex-1" subscriptSizing="dynamic">
               <mat-label translate>admin.trendz-url</mat-label>
               <input matInput formControlName="trendzUrl">
             </mat-form-field>
-            <mat-checkbox class="flex flex-1" formControlName="isTrendzEnabled">
-              {{ 'admin.trendz-enable' | translate }}
-            </mat-checkbox>
+            <mat-form-field class="tb-trendz-api-key mat-block flex-1" subscriptSizing="dynamic">
+              <mat-label translate>admin.trendz-api-key</mat-label>
+              <input matInput formControlName="apiKey">
+            </mat-form-field>
           </section>
           <div class="flex w-full flex-row flex-wrap items-center justify-end">
             <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || trendzSettingsForm.invalid || !trendzSettingsForm.dirty" type="submit">
