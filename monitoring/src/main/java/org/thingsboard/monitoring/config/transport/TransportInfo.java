@@ -20,16 +20,15 @@ import lombok.Data;
 @Data
 public class TransportInfo {
 
-    private final TransportType transportType;
-    private final String baseUrl;
-    private final String queue;
+    private final TransportType type;
+    private final TransportMonitoringTarget target;
 
     @Override
     public String toString() {
-        if (queue.equals("Main")) {
-            return String.format("*%s* (%s)", transportType.getName(), baseUrl);
+        if (target.getQueue().equals("Main")) {
+            return String.format("*%s* (%s)", type.getName(), target.getBaseUrl());
         } else {
-            return String.format("*%s* (%s) _%s_", transportType.getName(), baseUrl, queue);
+            return String.format("*%s* (%s) _%s_", type.getName(), target.getBaseUrl(), target.getQueue());
         }
     }
 

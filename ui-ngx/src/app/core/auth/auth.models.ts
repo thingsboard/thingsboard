@@ -16,6 +16,7 @@
 
 import { AuthUser, User } from '@shared/models/user.model';
 import { UserSettings } from '@shared/models/user-settings.models';
+import { TrendzSettings } from '@shared/models/trendz-settings.models';
 
 export interface SysParamsState {
   userTokenAccessEnabled: boolean;
@@ -32,6 +33,7 @@ export interface SysParamsState {
   maxArgumentsPerCF: number;
   ruleChainDebugPerTenantLimitsConfiguration?: string;
   calculatedFieldDebugPerTenantLimitsConfiguration?: string;
+  trendzSettings: TrendzSettings;
 }
 
 export interface SysParams extends SysParamsState {

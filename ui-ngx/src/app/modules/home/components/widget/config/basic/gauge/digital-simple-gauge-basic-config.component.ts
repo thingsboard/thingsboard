@@ -42,6 +42,7 @@ import {
   DigitalGaugeType
 } from '@home/components/widget/lib/digital-gauge.models';
 import { ColorSettings, ColorType } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-digital-simple-gauge-basic-config',
@@ -266,6 +267,6 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
   }
 
   private _valuePreviewFn(units: boolean): string {
-    return formatValue(22, 0, units ? this.simpleGaugeWidgetConfigForm.get('units').value : null, true);
+    return formatValue(22, 0, units ? getSourceTbUnitSymbol(this.simpleGaugeWidgetConfigForm.get('units').value) : null, true);
   }
 }

@@ -380,6 +380,12 @@ public class TbUtils {
                 double.class, double.class, String.class)));
         parserConfig.addImport("isInsideCircle", new MethodStub(TbUtils.class.getMethod("isInsideCircle",
                 double.class, double.class, String.class)));
+        parserConfig.addImport("isMap", new MethodStub(TbUtils.class.getMethod("isMap",
+                Object.class)));
+        parserConfig.addImport("isList", new MethodStub(TbUtils.class.getMethod("isList",
+                Object.class)));
+        parserConfig.addImport("isArray", new MethodStub(TbUtils.class.getMethod("isArray",
+                Object.class)));
     }
 
     public static String btoa(String input) {
@@ -1460,6 +1466,19 @@ public class TbUtils {
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
         Coordinates perimeterCoordinates = new Coordinates(centerLatitude, centerLongitude);
         return range > GeoUtil.distance(entityCoordinates, perimeterCoordinates, rangeUnit);
+    }
+
+    public static boolean isMap(Object obj) {
+        return obj instanceof Map;
+
+    }
+
+    public static boolean isList(Object obj) {
+        return obj instanceof List;
+    }
+
+    public static boolean isArray(Object obj) {
+        return obj != null && obj.getClass().isArray();
     }
 
     private static byte isValidIntegerToByte(Integer val) {

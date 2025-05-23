@@ -251,7 +251,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         mainConsumer.update(event.getCorePartitions());
         usageStatsConsumer.subscribe(event.getCorePartitions()
                 .stream()
-                .map(tpi -> tpi.newByTopic(usageStatsConsumer.getConsumer().getTopic()))
+                .map(tpi -> tpi.withTopic(usageStatsConsumer.getConsumer().getTopic()))
                 .collect(Collectors.toSet()));
     }
 
@@ -552,19 +552,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     proto.getScope(), KvProtoUtil.toAttributeKvList(proto.getDataList()), callback);
         } else if (msg.hasAttrDelete()) {
             TbAttributeDeleteProto proto = msg.getAttrDelete();
-            if (proto.hasNotifyDevice()) {
-                // handles old messages with deprecated 'notifyDevice'
-                subscriptionManagerService.onAttributesDelete(
-                        toTenantId(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
-                        TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
-                        proto.getScope(), proto.getKeysList(), proto.getNotifyDevice(), callback);
-            } else {
-                // handles new messages without 'notifyDevice'
-                subscriptionManagerService.onAttributesDelete(
-                        toTenantId(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
-                        TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
-                        proto.getScope(), proto.getKeysList(), callback);
-            }
+            subscriptionManagerService.onAttributesDelete(
+                    toTenantId(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
+                    TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
+                    proto.getScope(), proto.getKeysList(), callback);
         } else if (msg.hasTsDelete()) {
             TbTimeSeriesDeleteProto proto = msg.getTsDelete();
             subscriptionManagerService.onTimeSeriesDelete(
