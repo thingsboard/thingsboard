@@ -35,13 +35,15 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     protected Map<String, ArgumentEntry> arguments;
     protected boolean sizeExceedsLimit;
 
+    protected long lastUpdateTimestamp = -1;
+
     public BaseCalculatedFieldState(List<String> requiredArguments) {
         this.requiredArguments = requiredArguments;
         this.arguments = new HashMap<>();
     }
 
     public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false);
+        this(new ArrayList<>(), new HashMap<>(), false, -1);
     }
 
     @Override
@@ -59,14 +61,21 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             checkArgumentSize(key, newEntry, ctx);
 
             ArgumentEntry existingEntry = arguments.get(key);
+            boolean entryUpdated;
 
             if (existingEntry == null || newEntry.isForceResetPrevious()) {
                 validateNewEntry(newEntry);
                 arguments.put(key, newEntry);
-                stateUpdated = true;
+                entryUpdated = true;
             } else {
-                stateUpdated = existingEntry.updateEntry(newEntry);
+                entryUpdated = existingEntry.updateEntry(newEntry);
             }
+
+            if (entryUpdated) {
+                stateUpdated = true;
+                updateLastUpdateTimestamp(newEntry);
+            }
+
         }
 
         return stateUpdated;
@@ -99,5 +108,14 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     protected abstract void validateNewEntry(ArgumentEntry newEntry);
+
+    private void updateLastUpdateTimestamp(ArgumentEntry entry) {
+        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            this.lastUpdateTimestamp = singleValueArgumentEntry.getTs();
+        } else if (entry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
+            Map.Entry<Long, Double> lastEntry = tsRollingArgumentEntry.getTsRecords().lastEntry();
+            this.lastUpdateTimestamp = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
+        }
+    }
 
 }
