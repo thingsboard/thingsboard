@@ -16,14 +16,16 @@
 package org.thingsboard.server.common.msg.tools;
 
 import org.awaitility.pollinterval.FixedPollInterval;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
-public class RateLimitsTest {
+public class TbRateLimitsTest {
 
     @Test
     public void testRateLimits_greedyRefill() {
@@ -81,6 +83,43 @@ public class RateLimitsTest {
                     }
                     assertThat(rateLimits.tryConsume()).as("new token is available").isFalse();
                 });
+    }
+
+    @Test
+    @DisplayName("TbRateLimits should construct with single rate limit")
+    void testSingleLimitConstructor() {
+        TbRateLimits limits = new TbRateLimits("10:1", false);
+        assertThat(limits.getConfiguration()).isEqualTo("10:1");
+    }
+
+    @Test
+    @DisplayName("TbRateLimits should construct with multiple rate limits")
+    void testMultipleLimitConstructor() {
+        String config = "10:1,100:10";
+        TbRateLimits limits = new TbRateLimits(config, false);
+        assertThat(limits.getConfiguration()).isEqualTo(config);
+    }
+
+    @Test
+    @DisplayName("TbRateLimits should throw IllegalArgumentException on empty string")
+    void testEmptyConfigThrows() {
+        assertThatThrownBy(() -> new TbRateLimits("", false))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Failed to parse rate limits configuration: ");
+    }
+
+    @Test
+    @DisplayName("TbRateLimits should throw NumberFormatException on malformed value")
+    void testMalformedConfigThrows() {
+        assertThatThrownBy(() -> new TbRateLimits("not_a_number:second", false))
+                .isInstanceOf(NumberFormatException.class);
+    }
+
+    @Test
+    @DisplayName("TbRateLimits should throw ArrayIndexOutOfBoundsException on missing colon")
+    void testColonMissingThrows() {
+        assertThatThrownBy(() -> new TbRateLimits("100", false))
+                .isInstanceOf(ArrayIndexOutOfBoundsException.class);
     }
 
 }

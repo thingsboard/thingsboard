@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.dao.service;
 
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.limit.LimitedApiUtil;
+import org.thingsboard.server.common.data.validation.RateLimit;
 
-import java.util.Set;
-import java.util.UUID;
+@Slf4j
+public class RateLimitValidator implements ConstraintValidator<RateLimit, String>  {
 
-public interface TbServiceInfoProvider {
-
-    String getServiceId();
-
-    String getServiceType();
-
-    ServiceInfo getServiceInfo();
-
-    boolean isMonolith();
-
-    boolean isService(ServiceType serviceType);
-
-    ServiceInfo generateNewServiceInfoWithCurrentSystemInfo();
-
-    Set<UUID> getAssignedTenantProfiles();
+    @Override
+    public boolean isValid(String value, ConstraintValidatorContext constraintValidatorContext) {
+        return value == null || LimitedApiUtil.isValid(value);
+    }
 
 }

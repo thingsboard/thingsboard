@@ -52,7 +52,7 @@ public class RateLimitServiceTest {
     public void beforeEach() {
         tenantProfileCache = Mockito.mock(DefaultTbTenantProfileCache.class);
         rateLimitService = new DefaultRateLimitService(tenantProfileCache, mock(NotificationRuleProcessor.class), 60, 100);
-        tenantId = new TenantId(UUID.randomUUID());
+        tenantId = TenantId.fromUUID(UUID.randomUUID());
     }
 
     @Test
@@ -67,7 +67,10 @@ public class RateLimitServiceTest {
         profileConfiguration.setTenantServerRestLimitsConfiguration(rateLimit);
         profileConfiguration.setCustomerServerRestLimitsConfiguration(rateLimit);
         profileConfiguration.setWsUpdatesPerSessionRateLimit(rateLimit);
-        profileConfiguration.setCassandraQueryTenantRateLimitsConfiguration(rateLimit);
+        profileConfiguration.setCassandraReadQueryTenantCoreRateLimits(rateLimit);
+        profileConfiguration.setCassandraWriteQueryTenantCoreRateLimits(rateLimit);
+        profileConfiguration.setCassandraReadQueryTenantRuleEngineRateLimits(rateLimit);
+        profileConfiguration.setCassandraWriteQueryTenantRuleEngineRateLimits(rateLimit);
         profileConfiguration.setEdgeEventRateLimits(rateLimit);
         profileConfiguration.setEdgeEventRateLimitsPerEdge(rateLimit);
         profileConfiguration.setEdgeUplinkMessagesRateLimits(rateLimit);
@@ -79,13 +82,23 @@ public class RateLimitServiceTest {
                 LimitedApi.ENTITY_IMPORT,
                 LimitedApi.NOTIFICATION_REQUESTS,
                 LimitedApi.REST_REQUESTS_PER_CUSTOMER,
-                LimitedApi.CASSANDRA_QUERIES,
+                LimitedApi.CASSANDRA_READ_QUERIES_CORE,
+                LimitedApi.CASSANDRA_WRITE_QUERIES_CORE,
+                LimitedApi.CASSANDRA_READ_QUERIES_RULE_ENGINE,
+                LimitedApi.CASSANDRA_WRITE_QUERIES_RULE_ENGINE,
                 LimitedApi.EDGE_EVENTS,
                 LimitedApi.EDGE_EVENTS_PER_EDGE,
                 LimitedApi.EDGE_UPLINK_MESSAGES,
                 LimitedApi.EDGE_UPLINK_MESSAGES_PER_EDGE
         )) {
             testRateLimits(limitedApi, max, tenantId);
+        }
+
+        for (LimitedApi limitedApi : List.of(
+                LimitedApi.CASSANDRA_READ_QUERIES_MONOLITH,
+                LimitedApi.CASSANDRA_WRITE_QUERIES_MONOLITH
+        )) {
+            testRateLimits(limitedApi, max * 2, tenantId);
         }
 
         CustomerId customerId = new CustomerId(UUID.randomUUID());

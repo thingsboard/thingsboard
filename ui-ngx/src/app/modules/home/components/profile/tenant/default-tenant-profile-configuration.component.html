@@ -693,11 +693,19 @@
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
-          <tb-rate-limits class="flex-1" formControlName="wsUpdatesPerSessionRateLimit"
-                          [type]="rateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT">
+          <tb-rate-limits class="flex-1" formControlName="cassandraWriteQueryTenantCoreRateLimits"
+                          [type]="rateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_CORE_RATE_LIMITS">
           </tb-rate-limits>
-          <tb-rate-limits class="flex-1" formControlName="cassandraQueryTenantRateLimitsConfiguration"
-                          [type]="rateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION">
+          <tb-rate-limits class="flex-1" formControlName="cassandraReadQueryTenantCoreRateLimits"
+                          [type]="rateLimitsType.CASSANDRA_READ_QUERY_TENANT_CORE_RATE_LIMITS">
+          </tb-rate-limits>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <tb-rate-limits class="flex-1" formControlName="cassandraWriteQueryTenantRuleEngineRateLimits"
+                          [type]="rateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS">
+          </tb-rate-limits>
+          <tb-rate-limits class="flex-1" formControlName="cassandraReadQueryTenantRuleEngineRateLimits"
+                          [type]="rateLimitsType.CASSANDRA_READ_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS">
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
@@ -725,8 +733,8 @@
           </tb-rate-limits>
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
-          <tb-rate-limits class="flex-1" formControlName="calculatedFieldDebugEventsRateLimit"
-                          [type]="rateLimitsType.CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT">
+          <tb-rate-limits class="flex-1" formControlName="wsUpdatesPerSessionRateLimit"
+                          [type]="rateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT">
           </tb-rate-limits>
           <div class="flex-1"></div>
         </div>
