@@ -251,7 +251,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         mainConsumer.update(event.getCorePartitions());
         usageStatsConsumer.subscribe(event.getCorePartitions()
                 .stream()
-                .map(tpi -> tpi.newByTopic(usageStatsConsumer.getConsumer().getTopic()))
+                .map(tpi -> tpi.withTopic(usageStatsConsumer.getConsumer().getTopic()))
                 .collect(Collectors.toSet()));
     }
 
