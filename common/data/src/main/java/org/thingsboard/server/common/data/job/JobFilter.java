@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs;
+package org.thingsboard.server.common.data.job;
 
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfo;
-import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
+import lombok.Builder;
+import lombok.Data;
 
-@Service
-public class DummyTenantRoutingInfoService implements TenantRoutingInfoService {
-    @Override
-    public TenantRoutingInfo getRoutingInfo(TenantId tenantId) {
-        return null;
-    }
+import java.util.List;
+import java.util.UUID;
+
+@Data
+@Builder
+public class JobFilter {
+
+    private final List<JobType> types;
+    private final List<JobStatus> statuses;
+    private final List<UUID> entities;
+    private final Long startTime;
+    private final Long endTime;
 
 }

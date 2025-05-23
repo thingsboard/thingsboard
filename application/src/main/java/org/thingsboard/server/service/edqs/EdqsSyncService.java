@@ -95,7 +95,7 @@ public abstract class EdqsSyncService {
         syncLatestTimeseries();
 
         counters.clear();
-        log.info("Finishing synchronizing data to EDQS in {} ms", (System.currentTimeMillis() - startTs));
+        log.info("Finished synchronizing data to EDQS in {} ms", (System.currentTimeMillis() - startTs));
     }
 
     private void process(TenantId tenantId, ObjectType type, EdqsObject object) {

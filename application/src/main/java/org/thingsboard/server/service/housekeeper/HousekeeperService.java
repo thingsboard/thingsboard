@@ -165,6 +165,7 @@ public class HousekeeperService {
     private void stop() {
         consumer.stop();
         consumerExecutor.shutdownNow();
+        taskExecutor.shutdownNow();
         log.info("Stopped Housekeeper service");
     }
 

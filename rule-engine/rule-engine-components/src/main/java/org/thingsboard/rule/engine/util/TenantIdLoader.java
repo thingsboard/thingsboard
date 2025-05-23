@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -174,6 +175,9 @@ public class TenantIdLoader {
                 } else {
                     tenantEntity = null;
                 }
+                break;
+            case JOB:
+                tenantEntity = ctx.getJobService().findJobById(ctxTenantId, new JobId(id));
                 break;
             default:
                 throw new RuntimeException("Unexpected entity type: " + entityId.getEntityType());
