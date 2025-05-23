@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.AiSettingsEntity;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface AiSettingsRepository extends JpaRepository<AiSettingsEntity, UUID> {
@@ -40,11 +41,16 @@ public interface AiSettingsRepository extends JpaRepository<AiSettingsEntity, UU
     long countByTenantId(UUID tenantId);
 
     @Transactional
-    void deleteByTenantId(UUID tenantId);
+    @Modifying
+    @Query("DELETE FROM AiSettingsEntity ai WHERE ai.id IN (:ids)")
+    int deleteByIdIn(@Param("ids") Set<UUID> ids);
+
+    @Transactional
+    int deleteByTenantId(UUID tenantId);
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM AiSettingsEntity ai WHERE ai.tenantId = :tenantId AND ai.id = :id")
-    int deleteByTenantIdAndId(@Param("tenantId") UUID tenantId, @Param("id") UUID id);
+    @Query("DELETE FROM AiSettingsEntity ai WHERE ai.tenantId = :tenantId AND ai.id IN (:ids)")
+    int deleteByTenantIdAndIdIn(@Param("tenantId") UUID tenantId, @Param("ids") Set<UUID> ids);
 
 }

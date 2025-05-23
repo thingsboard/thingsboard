@@ -16,7 +16,9 @@
 package org.thingsboard.server.dao.ai;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiSettings;
 import org.thingsboard.server.common.data.id.AiSettingsId;
@@ -25,8 +27,11 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;
@@ -36,19 +41,33 @@ import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 @RequiredArgsConstructor
 class AiSettingsServiceImpl implements AiSettingsService {
 
-    private final AiSettingsDao aiSettingsDao;
-
+    private final ApplicationEventPublisher eventPublisher;
     private final DataValidator<AiSettings> aiSettingsValidator;
+
+    private final AiSettingsDao aiSettingsDao;
 
     @Override
     public AiSettings save(AiSettings aiSettings) {
-        aiSettingsValidator.validate(aiSettings, AiSettings::getTenantId);
+        AiSettings oldSettings = aiSettingsValidator.validate(aiSettings, AiSettings::getTenantId);
+
+        AiSettings savedSettings;
         try {
-            return aiSettingsDao.saveAndFlush(aiSettings.getTenantId(), aiSettings);
+            savedSettings = aiSettingsDao.saveAndFlush(aiSettings.getTenantId(), aiSettings);
         } catch (Exception e) {
             checkConstraintViolation(e, "ai_settings_name_unq_key", "AI settings record with such name already exists!");
             throw e;
         }
+
+        eventPublisher.publishEvent(SaveEntityEvent.builder()
+                .tenantId(savedSettings.getTenantId())
+                .entity(savedSettings)
+                .oldEntity(oldSettings)
+                .entityId(savedSettings.getId())
+                .created(oldSettings == null)
+                .broadcastEvent(true)
+                .build());
+
+        return savedSettings;
     }
 
     @Override
@@ -69,7 +88,15 @@ class AiSettingsServiceImpl implements AiSettingsService {
 
     @Override
     public boolean deleteByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId) {
-        return aiSettingsDao.deleteByTenantIdAndId(tenantId, aiSettingsId);
+        Optional<AiSettings> aiSettingsOpt = aiSettingsDao.findByTenantIdAndId(tenantId, aiSettingsId);
+        if (aiSettingsOpt.isEmpty()) {
+            return false;
+        }
+        boolean deleted = aiSettingsDao.deleteByTenantIdAndId(tenantId, aiSettingsId);
+        if (deleted) {
+            publishDeleteEvent(aiSettingsOpt.get());
+        }
+        return deleted;
     }
 
     @Override
@@ -84,12 +111,23 @@ class AiSettingsServiceImpl implements AiSettingsService {
 
     @Override
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        aiSettingsDao.removeById(tenantId, id.getId());
+        deleteByTenantIdAndId(tenantId, new AiSettingsId(id.getId()));
     }
 
     @Override
+    @Transactional
     public void deleteByTenantId(TenantId tenantId) {
+        List<AiSettings> deletedSettings = aiSettingsDao.findAllByTenantId(tenantId, new PageLink(Integer.MAX_VALUE)).getData();
         aiSettingsDao.deleteByTenantId(tenantId);
+        deletedSettings.forEach(this::publishDeleteEvent);
+    }
+
+    private void publishDeleteEvent(AiSettings settings) {
+        eventPublisher.publishEvent(DeleteEntityEvent.builder()
+                .tenantId(settings.getTenantId())
+                .entityId(settings.getId())
+                .entity(settings)
+                .build());
     }
 
     @Override

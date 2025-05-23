@@ -32,6 +32,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @SqlDao
@@ -59,13 +60,18 @@ class JpaAiSettingsDao extends JpaAbstractDao<AiSettingsEntity, AiSettings> impl
     }
 
     @Override
-    public void deleteByTenantId(TenantId tenantId) {
-        aiSettingsRepository.deleteByTenantId(tenantId.getId());
+    public boolean deleteById(TenantId tenantId, AiSettingsId aiSettingsId) {
+        return aiSettingsRepository.deleteByIdIn(Set.of(aiSettingsId.getId())) > 0;
+    }
+
+    @Override
+    public int deleteByTenantId(TenantId tenantId) {
+        return aiSettingsRepository.deleteByTenantId(tenantId.getId());
     }
 
     @Override
     public boolean deleteByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId) {
-        return aiSettingsRepository.deleteByTenantIdAndId(tenantId.getId(), aiSettingsId.getId()) > 0;
+        return aiSettingsRepository.deleteByTenantIdAndIdIn(tenantId.getId(), Set.of(aiSettingsId.getId())) > 0;
     }
 
     @Override

@@ -27,7 +27,9 @@ public interface AiSettingsDao extends Dao<AiSettings>, TenantEntityDao<AiSettin
 
     Optional<AiSettings> findByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId);
 
-    void deleteByTenantId(TenantId tenantId);
+    boolean deleteById(TenantId tenantId, AiSettingsId aiSettingsId);
+
+    int deleteByTenantId(TenantId tenantId);
 
     boolean deleteByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId);
 
