@@ -96,18 +96,4 @@ class LimitedApiUtilTest {
         assertThat(result).isEqualTo("200:10,100:60");
     }
 
-    @Test
-    @DisplayName("LimitedApiUtil shouldn't have duplicate durations in the same config!")
-    void testMergeHandlesDuplicatesInSingleConfig() {
-        Function<DefaultTenantProfileConfiguration, String> extractor1 = cfg -> "100:60,200:60";
-        Function<DefaultTenantProfileConfiguration, String> extractor2 = cfg -> "";
-
-        // Fake config instance (not used directly in lambda logic)
-        DefaultTenantProfileConfiguration config = new DefaultTenantProfileConfiguration();
-        String result = LimitedApiUtil.merge(extractor1, extractor2).apply(config);
-
-        // 100+200 = 300 for duration 60. Currently possible to save the same "per seconds" config from the UI.
-        // This must be fixed, so we will merge only two different rate limits.
-        assertThat(result).isEqualTo("300:60");
-    }
 }

@@ -142,14 +142,14 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @RateLimit(fieldName = "WS updates per session")
     private String wsUpdatesPerSessionRateLimit;
 
-    @RateLimit(fieldName = "Rest API and WS telemetry read queries")
+    @RateLimit(fieldName = "Rest API and WS telemetry Cassandra read queries")
     private String cassandraReadQueryTenantCoreRateLimits;
-    @RateLimit(fieldName = "Rest API write queries")
+    @RateLimit(fieldName = "Rest API Cassandra write queries")
     private String cassandraWriteQueryTenantCoreRateLimits;
 
-    @RateLimit(fieldName = "Rule Engine telemetry read queries")
+    @RateLimit(fieldName = "Rule Engine telemetry Cassandra read queries")
     private String cassandraReadQueryTenantRuleEngineRateLimits;
-    @RateLimit(fieldName = "Rule Engine telemetry write queries")
+    @RateLimit(fieldName = "Rule Engine telemetry Cassandra write queries")
     private String cassandraWriteQueryTenantRuleEngineRateLimits;
 
     @RateLimit(fieldName = "Edge events")
@@ -236,7 +236,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
         return maxRuleNodeExecutionsPerMessage;
     }
 
-    @Deprecated(forRemoval = true, since = "4.0.2")
+    @Deprecated(forRemoval = true, since = "4.1")
     public void deduplicateRateLimitsConfigs() {
         this.transportTenantMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportTenantMsgRateLimit);
         this.transportTenantTelemetryMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportTenantTelemetryMsgRateLimit);
