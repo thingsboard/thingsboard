@@ -15,11 +15,13 @@
 ///
 
 export interface TrendzSettings {
+  enabled: boolean,
   baseUrl: string,
-  enabled: boolean
+  apiKey: string
 }
 
 export const initialTrendzSettings: TrendzSettings = {
+  enabled: false,
   baseUrl: null,
-  enabled: false
+  apiKey: null
 }

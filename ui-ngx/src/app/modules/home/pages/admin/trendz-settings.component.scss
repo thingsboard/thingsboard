@@ -33,4 +33,14 @@
         padding-bottom: 12px;
       }
   }
+
+  .tb-trendz-api-key {
+      @media #{$mat-gt-sm} {
+        padding-right: 12px;
+      }
+
+      @media #{$mat-lt-md} {
+        padding-bottom: 12px;
+      }
+  }
 }

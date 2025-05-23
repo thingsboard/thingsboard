@@ -549,6 +549,8 @@
         "trendz": "Trendz",
         "trendz-settings": "Trendz settings",
         "trendz-url": "Trendz URL",
+        "trendz-url-required": "Trendz URL is required",
+        "trendz-api-key": "Trendz API key",
         "trendz-enable": "Enable Trendz"
       },
     "alarm": {

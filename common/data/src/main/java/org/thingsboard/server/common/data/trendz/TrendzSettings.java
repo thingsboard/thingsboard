@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.common.data.trendz;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TrendzSettings {
 
     private boolean enabled;
     private String baseUrl;
-
+    private String apiKey;
 }
