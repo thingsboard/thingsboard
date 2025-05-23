@@ -118,6 +118,9 @@ class AiSettingsServiceImpl implements AiSettingsService {
     @Transactional
     public void deleteByTenantId(TenantId tenantId) {
         List<AiSettings> deletedSettings = aiSettingsDao.findAllByTenantId(tenantId, new PageLink(Integer.MAX_VALUE)).getData();
+        if (deletedSettings.isEmpty()) {
+            return;
+        }
         aiSettingsDao.deleteByTenantId(tenantId);
         deletedSettings.forEach(this::publishDeleteEvent);
     }
