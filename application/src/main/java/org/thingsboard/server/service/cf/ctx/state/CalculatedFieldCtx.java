@@ -181,6 +181,10 @@ public class CalculatedFieldCtx {
     }
 
     private boolean matchesAttributes(Map<ReferencedEntityKey, String> argMap, List<AttributeKvEntry> values, AttributeScope scope) {
+        if (argMap.isEmpty() || values.isEmpty()) {
+            return false;
+        }
+
         for (AttributeKvEntry attrKv : values) {
             ReferencedEntityKey attrKey = new ReferencedEntityKey(attrKv.getKey(), ArgumentType.ATTRIBUTE, scope);
             if (argMap.containsKey(attrKey)) {
@@ -191,13 +195,14 @@ public class CalculatedFieldCtx {
     }
 
     private boolean matchesTimeSeries(Map<ReferencedEntityKey, String> argMap, List<TsKvEntry> values) {
+        if (argMap.isEmpty() || values.isEmpty()) {
+            return false;
+        }
+
         for (TsKvEntry tsKv : values) {
-            ReferencedEntityKey latestKey = new ReferencedEntityKey(tsKv.getKey(), ArgumentType.TS_LATEST, null);
-            if (argMap.containsKey(latestKey)) {
-                return true;
-            }
-            ReferencedEntityKey rollingKey = new ReferencedEntityKey(tsKv.getKey(), ArgumentType.TS_ROLLING, null);
-            if (argMap.containsKey(rollingKey)) {
+            String key = tsKv.getKey();
+            if (argMap.containsKey(new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null)) ||
+                    argMap.containsKey(new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null))) {
                 return true;
             }
         }
@@ -213,6 +218,10 @@ public class CalculatedFieldCtx {
     }
 
     private boolean matchesAttributesKeys(Map<ReferencedEntityKey, String> argMap, List<String> keys, AttributeScope scope) {
+        if (argMap.isEmpty() || keys.isEmpty()) {
+            return false;
+        }
+
         for (String key : keys) {
             ReferencedEntityKey attrKey = new ReferencedEntityKey(key, ArgumentType.ATTRIBUTE, scope);
             if (argMap.containsKey(attrKey)) {
@@ -223,13 +232,13 @@ public class CalculatedFieldCtx {
     }
 
     private boolean matchesTimeSeriesKeys(Map<ReferencedEntityKey, String> argMap, List<String> keys) {
+        if (argMap.isEmpty() || keys.isEmpty()) {
+            return false;
+        }
+
         for (String key : keys) {
-            ReferencedEntityKey latestKey = new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null);
-            if (argMap.containsKey(latestKey)) {
-                return true;
-            }
-            ReferencedEntityKey rollingKey = new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null);
-            if (argMap.containsKey(rollingKey)) {
+            if (argMap.containsKey(new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null)) ||
+                    argMap.containsKey(new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null))) {
                 return true;
             }
         }

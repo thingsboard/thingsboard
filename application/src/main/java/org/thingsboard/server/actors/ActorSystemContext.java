@@ -318,7 +318,6 @@ public class ActorSystemContext {
     @Getter
     private TbEntityViewService tbEntityViewService;
 
-    @Lazy
     @Autowired
     @Getter
     private TelemetrySubscriptionService tsSubService;
@@ -537,17 +536,14 @@ public class ActorSystemContext {
     @Getter
     private EntityService entityService;
 
-    @Lazy
     @Autowired(required = false)
     @Getter
     private CalculatedFieldProcessingService calculatedFieldProcessingService;
 
-    @Lazy
     @Autowired(required = false)
     @Getter
     private CalculatedFieldStateService calculatedFieldStateService;
 
-    @Lazy
     @Autowired(required = false)
     @Getter
     private CalculatedFieldQueueService calculatedFieldQueueService;

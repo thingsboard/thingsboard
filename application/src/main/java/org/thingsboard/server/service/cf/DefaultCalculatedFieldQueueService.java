@@ -133,7 +133,8 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         }
         boolean send = checkEntityForCalculatedFields(tenantId, entityId, mainEntityFilter, linkedEntityFilter);
         if (send) {
-            clusterService.pushMsgToCalculatedFields(tenantId, entityId, msg.get(), wrap(callback));
+            ToCalculatedFieldMsg calculatedFieldMsg = msg.get();
+            clusterService.pushMsgToCalculatedFields(tenantId, entityId, calculatedFieldMsg, wrap(callback));
         } else {
             if (callback != null) {
                 callback.onSuccess(null);
@@ -142,20 +143,35 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
     }
 
     private boolean checkEntityForCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter, Predicate<CalculatedFieldCtx> linkedEntityFilter) {
-        boolean send = false;
-        if (supportedReferencedEntities.contains(entityId.getEntityType())) {
-            send = calculatedFieldCache.getCalculatedFieldCtxsByEntityId(entityId).stream().anyMatch(filter);
-            if (!send) {
-                send = calculatedFieldCache.getCalculatedFieldCtxsByEntityId(getProfileId(tenantId, entityId)).stream().anyMatch(filter);
-            }
-            if (!send) {
-                send = calculatedFieldCache.getCalculatedFieldLinksByEntityId(entityId).stream()
-                        .map(CalculatedFieldLink::getCalculatedFieldId)
-                        .map(calculatedFieldCache::getCalculatedFieldCtx)
-                        .anyMatch(linkedEntityFilter);
+        if (!supportedReferencedEntities.contains(entityId.getEntityType())) {
+            return false;
+        }
+        List<CalculatedFieldCtx> entityCfs = calculatedFieldCache.getCalculatedFieldCtxsByEntityId(entityId);
+        for (CalculatedFieldCtx ctx : entityCfs) {
+            if (filter.test(ctx)) {
+                return true;
             }
         }
-        return send;
+
+        EntityId profileId = getProfileId(tenantId, entityId);
+        if (profileId != null) {
+            List<CalculatedFieldCtx> profileCfs = calculatedFieldCache.getCalculatedFieldCtxsByEntityId(profileId);
+            for (CalculatedFieldCtx ctx : profileCfs) {
+                if (filter.test(ctx)) {
+                    return true;
+                }
+            }
+        }
+
+        List<CalculatedFieldLink> links = calculatedFieldCache.getCalculatedFieldLinksByEntityId(entityId);
+        for (CalculatedFieldLink link : links) {
+            CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(link.getCalculatedFieldId());
+            if (ctx != null && linkedEntityFilter.test(ctx)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private EntityId getProfileId(TenantId tenantId, EntityId entityId) {

@@ -18,8 +18,11 @@ package org.thingsboard.server.service.cf;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -49,14 +52,14 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
-    private static final Integer UNKNOWN_PARTITION = -1;
-
-    private final Lock calculatedFieldFetchLock = new ReentrantLock();
+    private final ConcurrentReferenceHashMap<CalculatedFieldId, Lock> calculatedFieldFetchLocks = new ConcurrentReferenceHashMap<>();
 
     private final CalculatedFieldService calculatedFieldService;
     private final TbelInvokeService tbelInvokeService;
-    private final ActorSystemContext actorSystemContext;
     private final ApiLimitService apiLimitService;
+    @Autowired
+    @Lazy
+    private ActorSystemContext actorSystemContext;
 
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedField>> entityIdCalculatedFields = new ConcurrentHashMap<>();
@@ -98,19 +101,20 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
     @Override
     public List<CalculatedField> getCalculatedFieldsByEntityId(EntityId entityId) {
-        return entityIdCalculatedFields.getOrDefault(entityId, new CopyOnWriteArrayList<>());
+        return entityIdCalculatedFields.getOrDefault(entityId, Collections.emptyList());
     }
 
     @Override
     public List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(EntityId entityId) {
-        return entityIdCalculatedFieldLinks.getOrDefault(entityId, new CopyOnWriteArrayList<>());
+        return entityIdCalculatedFieldLinks.getOrDefault(entityId, Collections.emptyList());
     }
 
     @Override
     public CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId) {
         CalculatedFieldCtx ctx = calculatedFieldsCtx.get(calculatedFieldId);
         if (ctx == null) {
-            calculatedFieldFetchLock.lock();
+            Lock lock = getFetchLock(calculatedFieldId);
+            lock.lock();
             try {
                 ctx = calculatedFieldsCtx.get(calculatedFieldId);
                 if (ctx == null) {
@@ -122,11 +126,15 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                     }
                 }
             } finally {
-                calculatedFieldFetchLock.unlock();
+                lock.unlock();
             }
         }
         log.trace("[{}] Found calculated field ctx in cache: {}", calculatedFieldId, ctx);
         return ctx;
+    }
+
+    private Lock getFetchLock(CalculatedFieldId id) {
+        return calculatedFieldFetchLocks.computeIfAbsent(id, __ -> new ReentrantLock());
     }
 
     @Override
@@ -141,7 +149,8 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
     @Override
     public void addCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        calculatedFieldFetchLock.lock();
+        Lock lock = getFetchLock(calculatedFieldId);
+        lock.lock();
         try {
             CalculatedField calculatedField = calculatedFieldService.findById(tenantId, calculatedFieldId);
             if (calculatedField == null) {
@@ -163,7 +172,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                                 .add(configuration.buildCalculatedFieldLink(tenantId, referencedEntityId, calculatedFieldId));
                     });
         } finally {
-            calculatedFieldFetchLock.unlock();
+            lock.unlock();
         }
     }
 
