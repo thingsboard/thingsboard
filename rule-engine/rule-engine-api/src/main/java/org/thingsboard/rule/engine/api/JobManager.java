@@ -15,15 +15,14 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
 
-import java.util.concurrent.Future;
-
 public interface JobManager {
 
-    Future<Job> submitJob(Job job); // TODO: rate limits
+    ListenableFuture<Job> submitJob(Job job); // TODO: rate limits
 
     void cancelJob(TenantId tenantId, JobId jobId);
 

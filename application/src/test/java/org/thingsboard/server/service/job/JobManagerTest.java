@@ -248,6 +248,8 @@ public class JobManagerTest extends AbstractControllerTest {
                 assertThat(job.getStatus()).isEqualTo(JobStatus.COMPLETED);
                 assertThat(job.getResult().getSuccessfulCount()).isEqualTo(tasksCount);
                 assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
+                assertThat(job.getEntityId()).isEqualTo(jobEntity.getId());
+                assertThat(job.getEntityName()).isEqualTo(jobEntity.getName());
             }
         });
 

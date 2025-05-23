@@ -47,6 +47,7 @@ public class Job extends BaseData<JobId> implements HasTenantId {
     private String key;
     @NotNull
     private EntityId entityId;
+    private String entityName; // read-only
     @NotNull
     private JobStatus status;
     @NotNull

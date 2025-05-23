@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.job;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -49,7 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -78,9 +79,9 @@ public class DefaultJobManager implements JobManager {
     }
 
     @Override
-    public Future<Job> submitJob(Job job) {
+    public ListenableFuture<Job> submitJob(Job job) {
         log.debug("Submitting job: {}", job);
-        return executor.submit(() -> jobService.saveJob(job.getTenantId(), job));
+        return Futures.submit(() -> jobService.saveJob(job.getTenantId(), job), executor);
     }
 
     @Override
