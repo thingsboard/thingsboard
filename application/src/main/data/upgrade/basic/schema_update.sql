@@ -36,6 +36,9 @@ SET profile_data = jsonb_set(
                                     profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration'
                             )
                         END,
-                    '{}'::jsonb)
+                    '{}'::jsonb
             )
-                   );
+            )
+                   )
+WHERE profile_data -> 'configuration' ? 'cassandraQueryTenantRateLimitsConfiguration';
+
