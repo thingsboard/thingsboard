@@ -141,6 +141,9 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     }
 
     private LimitedApi getMyLimitedApi() {
+        if (serviceInfoProvider == null) {
+            return getBufferedRateExecutorType().getMonolithLimitedApi();
+        }
         if (serviceInfoProvider.isMonolith()) {
             return getBufferedRateExecutorType().getMonolithLimitedApi();
         }

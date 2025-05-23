@@ -52,7 +52,7 @@ public class CassandraBufferedRateReadExecutor extends AbstractBufferedRateExecu
             @Autowired StatsFactory statsFactory,
             @Autowired EntityService entityService,
             @Autowired RateLimitService rateLimitService,
-            @Autowired TbServiceInfoProvider serviceInfoProvider) {
+            @Autowired(required = false) TbServiceInfoProvider serviceInfoProvider) {
         super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, printQueriesFreq, statsFactory,
                 entityService, rateLimitService, serviceInfoProvider, printTenantNames);
     }
