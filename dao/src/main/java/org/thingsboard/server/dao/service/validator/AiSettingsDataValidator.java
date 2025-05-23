@@ -44,7 +44,7 @@ class AiSettingsDataValidator extends DataValidator<AiSettings> {
     protected AiSettings validateUpdate(TenantId tenantId, AiSettings aiSettings) {
         Optional<AiSettings> old = aiSettingsDao.findByTenantIdAndId(tenantId, aiSettings.getId());
         if (old.isEmpty()) {
-            throw new DataValidationException("Can't update non existing AI settings!");
+            throw new DataValidationException("Cannot update non-existent AI settings!");
         }
         return old.get();
     }
