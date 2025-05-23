@@ -41,7 +41,7 @@ export class TrendzSettingsComponent extends PageComponent implements OnInit, Ha
     this.trendzSettingsForm = this.fb.group({
       isTrendzEnabled: [false],
       trendzUrl: [null, [Validators.pattern(/^(https?:\/\/)[^\s/$.?#].[^\s]*$/i)]],
-      apiKey: [null]
+      apiKey: [null, [Validators.pattern(/^\S+$/)]]
     });
 
     this.trendzSettingsService.getTrendzSettings().subscribe((trendzSettings) => {
@@ -82,7 +82,7 @@ export class TrendzSettingsComponent extends PageComponent implements OnInit, Ha
   save(): void {
     const isTrendzEnabled =   this.trendzSettingsForm.get('isTrendzEnabled').value;
     const trendzUrl = this.trendzSettingsForm.get('trendzUrl').value;
-    const apiKey = this.trendzSettingsForm.get('apiKey').value;
+    const apiKey = this.trendzSettingsForm.get('apiKey').value.trim();
 
     const trendzSettings: TrendzSettings = {
       enabled: isTrendzEnabled,

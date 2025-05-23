@@ -47,6 +47,9 @@
             <mat-form-field class="tb-trendz-api-key mat-block flex-1" subscriptSizing="dynamic">
               <mat-label translate>admin.trendz-api-key</mat-label>
               <input matInput formControlName="apiKey">
+              <mat-error *ngIf="trendzSettingsForm.get('apiKey').hasError('pattern')">
+                {{ 'widgets.persistent-table.white-space-error' | translate }}
+              </mat-error>
             </mat-form-field>
           </section>
           <div class="flex w-full flex-row flex-wrap items-center justify-end">
