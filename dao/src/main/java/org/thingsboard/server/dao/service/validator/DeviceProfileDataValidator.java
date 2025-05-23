@@ -189,11 +189,11 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         }
 
         if (deviceProfile.getDefaultRuleChainId() != null) {
-            validateRuleChain(tenantId, deviceProfile.getTenantId(), deviceProfile.getDefaultRuleChainId());
+            validateRuleChain(tenantId, deviceProfile.getDefaultRuleChainId());
         }
 
         if (deviceProfile.getDefaultEdgeRuleChainId() != null) {
-            validateRuleChain(tenantId, deviceProfile.getTenantId(), deviceProfile.getDefaultEdgeRuleChainId());
+            validateRuleChain(tenantId, deviceProfile.getDefaultEdgeRuleChainId());
         }
 
         if (deviceProfile.getDefaultDashboardId() != null) {
@@ -209,12 +209,12 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         validateOtaPackage(tenantId, deviceProfile, deviceProfile.getId());
     }
 
-    private void validateRuleChain(TenantId tenantId, TenantId deviceProfileTenantId, RuleChainId ruleChainId) {
+    private void validateRuleChain(TenantId tenantId, RuleChainId ruleChainId) {
         RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
         if (ruleChain == null) {
             throw new DataValidationException("Can't assign non-existent rule chain!");
         }
-        if (!ruleChain.getTenantId().equals(deviceProfileTenantId)) {
+        if (!ruleChain.getTenantId().equals(tenantId)) {
             throw new DataValidationException("Can't assign rule chain from different tenant!");
         }
     }
