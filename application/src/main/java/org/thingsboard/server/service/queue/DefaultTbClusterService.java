@@ -584,16 +584,18 @@ public class DefaultTbClusterService implements TbClusterService {
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
         Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
         EntityType entityType = msg.getEntityId().getEntityType();
-        if (entityType.equals(EntityType.TENANT)
-                || entityType.equals(EntityType.TENANT_PROFILE)
-                || entityType.equals(EntityType.DEVICE_PROFILE)
-                || (entityType.equals(EntityType.ASSET) && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
-                || entityType.equals(EntityType.ASSET_PROFILE)
-                || entityType.equals(EntityType.API_USAGE_STATE)
-                || (entityType.equals(EntityType.DEVICE) && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
-                || entityType.equals(EntityType.ENTITY_VIEW)
-                || entityType.equals(EntityType.NOTIFICATION_RULE)
-                || entityType.equals(EntityType.CALCULATED_FIELD)
+        if (entityType.isOneOf(
+                EntityType.TENANT,
+                EntityType.API_USAGE_STATE,
+                EntityType.ENTITY_VIEW,
+                EntityType.NOTIFICATION_RULE,
+                EntityType.CALCULATED_FIELD,
+                EntityType.AI_SETTINGS,
+                EntityType.TENANT_PROFILE,
+                EntityType.DEVICE_PROFILE,
+                EntityType.ASSET_PROFILE)
+                || (entityType == EntityType.ASSET && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
+                || (entityType == EntityType.DEVICE && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
         ) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
