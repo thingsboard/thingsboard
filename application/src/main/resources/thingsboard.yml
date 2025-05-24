@@ -19,7 +19,7 @@ server:
   # Server bind-address
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
-  port: "${HTTP_BIND_PORT:80}"
+  port: "${HTTP_BIND_PORT:8080}"
   # Server forward headers strategy. Required for SWAGGER UI when reverse proxy is used
   forward_headers_strategy: "${HTTP_FORWARD_HEADERS_STRATEGY:framework}"
   # Server SSL configuration
@@ -806,6 +806,10 @@ spring:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
     # Database connection URL
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+
+
+
+
     # Database user name
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     # Database user password
@@ -1985,3 +1989,9 @@ mqtt:
       # The actual delay is randomized within a range defined by multiplying the base delay by a factor between (1 - jitter_factor) and (1 + jitter_factor).
       # For example, a jitter_factor of 0.15 means the actual delay may vary by up to ±15% of the base delay.
       jitter_factor: "${TB_MQTT_CLIENT_RETRANSMISSION_JITTER_FACTOR:0.15}"
+
+thingsboard:
+  api:
+    base-url: http://localhost:8080
+    username: tenant@thingsboard.org
+    password: tenant
