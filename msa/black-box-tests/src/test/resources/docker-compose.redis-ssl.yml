@@ -21,15 +21,15 @@ services:
 # The latest version of Redis compatible with ThingsBoard is 7.2
   redis:
     restart: always
-    image: bitnami/redis:7.2
+    image: bitnami/valkey:8.0
     environment:
       # ALLOW_EMPTY_PASSWORD is recommended only for development.
       - 'ALLOW_EMPTY_PASSWORD=yes'
-      - 'REDIS_TLS_ENABLED=yes'
-      - 'REDIS_TLS_CERT_FILE=/redis/certs/redis.crt'
-      - 'REDIS_TLS_KEY_FILE=/redis/certs/redis.key'
-      - 'REDIS_TLS_CA_FILE=/redis/certs/redisCA.crt'
-      - 'REDIS_TLS_AUTH_CLIENTS=no'
+      - 'VALKEY_TLS_ENABLED=yes'
+      - 'VALKEY_TLS_CERT_FILE=/redis/certs/redis.crt'
+      - 'VALKEY_TLS_KEY_FILE=/redis/certs/redis.key'
+      - 'VALKEY_TLS_CA_FILE=/redis/certs/redisCA.crt'
+      - 'VALKEY_TLS_AUTH_CLIENTS=no'
     ports:
       - '6379:6379'
     volumes:
