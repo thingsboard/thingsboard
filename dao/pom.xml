@@ -61,7 +61,7 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
-            <artifactId>queue</artifactId>
+            <artifactId>service-info-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.networknt</groupId>
