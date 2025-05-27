@@ -17,16 +17,20 @@
 -->
 <div class="tb-entity-list-select flex flex-row" [formGroup]="entityListSelectFormGroup">
   <tb-entity-type-select
+    [inlineField]="inlineField"
+    [class.flex-1]="inlineField && !modelValue.entityType"
     style="min-width: 100px; padding-right: 8px;"
     *ngIf="displayEntityTypeSelect"
     [showLabel]="true"
     [required]="required"
     [useAliasEntityTypes]="useAliasEntityTypes"
     [allowedEntityTypes]="allowedEntityTypes"
+    [filterAllowedEntityTypes]="filterAllowedEntityTypes"
     formControlName="entityType">
   </tb-entity-type-select>
   <tb-entity-list
     class="flex-1"
+    [inlineField]="inlineField"
     [class.tb-not-empty]="modelValue.ids?.length > 0"
     *ngIf="modelValue.entityType"
     [required]="required"
