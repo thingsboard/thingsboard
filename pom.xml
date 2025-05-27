@@ -966,7 +966,7 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
-                <artifactId>service-info-api</artifactId>
+                <artifactId>discovery-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

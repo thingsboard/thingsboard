@@ -62,7 +62,7 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
-            <artifactId>service-info-api</artifactId>
+            <artifactId>discovery-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>

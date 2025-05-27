@@ -24,7 +24,7 @@
         <artifactId>common</artifactId>
     </parent>
     <groupId>org.thingsboard.common</groupId>
-    <artifactId>service-info-api</artifactId>
+    <artifactId>discovery-api</artifactId>
     <packaging>jar</packaging>
 
     <name>Thingsboard Server Service Info Provider API</name>

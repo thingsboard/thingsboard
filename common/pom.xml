@@ -50,7 +50,7 @@
         <module>version-control</module>
         <module>script</module>
         <module>edqs</module>
-        <module>service-info-api</module>
+        <module>discovery-api</module>
     </modules>
 
 </project>
