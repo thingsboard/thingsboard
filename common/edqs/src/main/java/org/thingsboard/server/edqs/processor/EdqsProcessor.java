@@ -150,7 +150,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         }
         try {
             Set<TopicPartitionInfo> newPartitions = event.getNewPartitions().get(new QueueKey(ServiceType.EDQS));
-            stateService.process(withTopic(newPartitions, config.getStateTopic()));
+            stateService.process(withTopic(newPartitions, topicService.buildTopicName(config.getStateTopic())));
             // partitions for event and request consumers are updated by stateService
 
             Set<TopicPartitionInfo> oldPartitions = event.getOldPartitions().get(new QueueKey(ServiceType.EDQS));
