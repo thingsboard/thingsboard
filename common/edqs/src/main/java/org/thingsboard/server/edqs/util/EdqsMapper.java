@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edqs;
+package org.thingsboard.server.edqs.util;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.edqs.EdqsObject;
+import org.thingsboard.server.common.data.edqs.EdqsObjectKey;
 
-public interface EdqsObject {
+public interface EdqsMapper {
 
-    @JsonIgnore
-    String stringKey();
+    <T extends EdqsObject> byte[] serialize(T value);
 
-    @JsonIgnore
-    Long version();
+    EdqsObject deserialize(ObjectType type, byte[] bytes, boolean onlyKey);
 
-    @JsonIgnore
-    ObjectType type();
+    <T extends EdqsObject> EdqsObjectKey getKey(T object);
 
 }

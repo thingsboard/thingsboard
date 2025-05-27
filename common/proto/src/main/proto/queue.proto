@@ -1833,7 +1833,6 @@ message FromEdqsMsg {
 }
 
 message EdqsEventMsg {
-  string key = 1;
   string objectType = 2;
   bytes data = 3;
   string eventType = 4;

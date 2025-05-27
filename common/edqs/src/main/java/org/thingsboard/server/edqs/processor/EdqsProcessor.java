@@ -45,7 +45,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.edqs.repo.EdqsRepository;
 import org.thingsboard.server.edqs.state.EdqsPartitionService;
 import org.thingsboard.server.edqs.state.EdqsStateService;
-import org.thingsboard.server.edqs.util.EdqsConverter;
+import org.thingsboard.server.edqs.util.EdqsMapper;
 import org.thingsboard.server.edqs.util.VersionsStore;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.EdqsEventMsg;
@@ -81,7 +81,7 @@ import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTop
 public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> {
 
     private final EdqsQueueFactory queueFactory;
-    private final EdqsConverter converter;
+    private final EdqsMapper mapper;
     private final EdqsRepository repository;
     private final EdqsConfig config;
     private final EdqsExecutors edqsExecutors;
@@ -92,8 +92,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
     private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer;
     private PartitionedQueueResponseTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> responseTemplate;
     private ListeningExecutorService requestExecutor;
-
-    private final VersionsStore versionsStore = new VersionsStore();
+    private VersionsStore versionsStore;
     private final AtomicInteger counter = new AtomicInteger();
 
     @Getter
@@ -110,6 +109,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             }
         };
         requestExecutor = edqsExecutors.getRequestExecutor();
+        versionsStore = new VersionsStore(config.getVersionsCacheTtl());
 
         eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>create()
                 .queueKey(new QueueKey(ServiceType.EDQS, config.getEventsTopic()))
@@ -224,22 +224,20 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             TenantId tenantId = getTenantId(edqsMsg);
             ObjectType objectType = ObjectType.valueOf(eventMsg.getObjectType());
             EdqsEventType eventType = EdqsEventType.valueOf(eventMsg.getEventType());
-            String key = eventMsg.getKey();
             Long version = eventMsg.hasVersion() ? eventMsg.getVersion() : null;
+            EdqsObject object = mapper.deserialize(objectType, eventMsg.getData().toByteArray(), false);
 
             if (version != null) {
-                if (!versionsStore.isNew(key, version)) {
+                if (!versionsStore.isNew(mapper.getKey(object), version)) {
                     return;
                 }
             } else if (!ObjectType.unversionedTypes.contains(objectType)) {
-                log.warn("[{}] {} {} doesn't have version", tenantId, objectType, key);
+                log.warn("[{}] {} doesn't have version: {}", tenantId, objectType, object);
             }
             if (backup) {
-                stateService.save(tenantId, objectType, key, eventType, edqsMsg);
+                stateService.save(tenantId, objectType, object.stringKey(), eventType, edqsMsg);
             }
 
-            EdqsObject object = converter.deserialize(objectType, eventMsg.getData().toByteArray());
-            log.debug("[{}] Processing event [{}] [{}] [{}] [{}]", tenantId, objectType, eventType, key, version);
             int count = counter.incrementAndGet();
             if (count % 100000 == 0) {
                 log.info("Processed {} events", count);
@@ -251,6 +249,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
                     .eventType(eventType)
                     .object(object)
                     .build();
+            log.debug("Processing event: {}", event);
             repository.processEvent(event);
         }
     }

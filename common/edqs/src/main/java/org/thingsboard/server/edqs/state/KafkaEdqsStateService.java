@@ -22,11 +22,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
+import org.thingsboard.server.common.data.edqs.EdqsObject;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.edqs.processor.EdqsProcessor;
 import org.thingsboard.server.edqs.processor.EdqsProducer;
+import org.thingsboard.server.edqs.util.EdqsMapper;
 import org.thingsboard.server.edqs.util.VersionsStore;
 import org.thingsboard.server.gen.transport.TransportProtos.EdqsEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
@@ -63,6 +65,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private final KafkaEdqsQueueFactory queueFactory;
     private final DiscoveryService discoveryService;
     private final EdqsExecutors edqsExecutors;
+    private final EdqsMapper mapper;
     @Autowired
     @Lazy
     private EdqsProcessor edqsProcessor;
@@ -71,8 +74,8 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private KafkaQueueStateService<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<ToEdqsMsg>> queueStateService;
     private QueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventsToBackupConsumer;
     private EdqsProducer stateProducer;
+    private VersionsStore versionsStore;
 
-    private final VersionsStore versionsStore = new VersionsStore();
     private final AtomicInteger stateReadCount = new AtomicInteger();
     private final AtomicInteger eventsReadCount = new AtomicInteger();
 
@@ -80,6 +83,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
 
     @Override
     public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer, List<PartitionedQueueConsumerManager<?>> otherConsumers) {
+        versionsStore = new VersionsStore(config.getVersionsCacheTtl());
         TbKafkaAdmin queueAdmin = queueFactory.getEdqsQueueAdmin();
         stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>create()
                 .queueKey(new QueueKey(ServiceType.EDQS, config.getStateTopic()))
@@ -122,22 +126,25 @@ public class KafkaEdqsStateService implements EdqsStateService {
 
                             if (msg.hasEventMsg()) {
                                 EdqsEventMsg eventMsg = msg.getEventMsg();
-                                String key = eventMsg.getKey();
-                                int count = eventsReadCount.incrementAndGet();
-                                if (count % 100000 == 0) {
-                                    log.info("[events-to-backup] Processed {} msgs", count);
-                                }
+                                ObjectType objectType = ObjectType.valueOf(eventMsg.getObjectType());
+                                EdqsObject object = mapper.deserialize(objectType, eventMsg.getData().toByteArray(), true);
+
                                 if (eventMsg.hasVersion()) {
-                                    if (!versionsStore.isNew(key, eventMsg.getVersion())) {
+                                    if (!versionsStore.isNew(mapper.getKey(object), eventMsg.getVersion())) {
                                         continue;
                                     }
                                 }
 
                                 TenantId tenantId = getTenantId(msg);
-                                ObjectType objectType = ObjectType.valueOf(eventMsg.getObjectType());
                                 EdqsEventType eventType = EdqsEventType.valueOf(eventMsg.getEventType());
+                                String key = object.stringKey();
                                 log.trace("[{}] Saving to backup [{}] [{}] [{}]", tenantId, objectType, eventType, key);
-                                stateProducer.send(tenantId, objectType, key, msg);
+                                stateProducer.send(tenantId, objectType, object.stringKey(), msg);
+
+                                int count = eventsReadCount.incrementAndGet();
+                                if (count % 100000 == 0) {
+                                    log.info("[events-to-backup] Processed {} msgs", count);
+                                }
                             }
                         } catch (Throwable t) {
                             log.error("Failed to process message: {}", queueMsg, t);
