@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityListFilter;
+import org.thingsboard.server.common.data.query.EntityNameFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
@@ -61,6 +62,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
+import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_NAME;
 import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_TYPE;
 import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -253,6 +255,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             validateRelationQuery((RelationsQueryFilter) query.getEntityFilter());
         } else if (query.getEntityFilter().getType().equals(ENTITY_TYPE)) {
             validateEntityTypeQuery((EntityTypeFilter) query.getEntityFilter());
+        } else if (query.getEntityFilter().getType().equals(ENTITY_NAME)) {
+            validateEntityNameQuery((EntityNameFilter) query.getEntityFilter());
         }
     }
 
@@ -262,6 +266,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     private static void validateEntityTypeQuery(EntityTypeFilter filter) {
+        if (filter.getEntityType() == null) {
+            throw new IncorrectParameterException("Entity type is required");
+        }
+    }
+
+    private static void validateEntityNameQuery(EntityNameFilter filter) {
         if (filter.getEntityType() == null) {
             throw new IncorrectParameterException("Entity type is required");
         }

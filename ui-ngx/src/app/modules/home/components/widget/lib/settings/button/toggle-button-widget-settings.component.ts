@@ -55,7 +55,7 @@ export class ToggleButtonWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...toggleButtonDefaultSettings};
+    return toggleButtonDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

@@ -528,7 +528,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                 sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
                 log.debug("[{}][{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg);
             } else {
-                log.error("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg.getErrorMsg());
+                log.debug("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg.getErrorMsg());
                 DownlinkMsg downlinkMsg = sessionState.getPendingMsgsMap().get(msg.getDownlinkMsgId());
                 // if NOT timeseries or attributes failures - ack failed downlink
                 if (downlinkMsg.getEntityDataCount() == 0) {
@@ -712,7 +712,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     private long findStartSeqIdFromOldestEventIfAny() {
         long startSeqId = 0L;
         try {
-            TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("createdTime"), null, null);
+            TimePageLink pageLink = new TimePageLink(1, 0, null, null, null, null);
             PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), null, null, pageLink);
             if (!edgeEvents.getData().isEmpty()) {
                 startSeqId = edgeEvents.getData().get(0).getSeqId() - 1;

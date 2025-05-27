@@ -104,6 +104,7 @@ export class DynamicFormPropertyPanelComponent implements OnInit {
       {
         id: [this.property.id, [Validators.required]],
         name: [this.property.name, [Validators.required]],
+        hint: [this.property.hint, []],
         group: [this.property.group, []],
         type: [this.property.type, [Validators.required]],
         arrayItemType: [this.property.arrayItemType, [Validators.required]],

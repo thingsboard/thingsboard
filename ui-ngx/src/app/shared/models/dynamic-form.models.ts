@@ -87,6 +87,7 @@ export type PropertyConditionFunction = (property: FormProperty, model: any) => 
 export interface FormPropertyBase {
   id: string;
   name: string;
+  hint?: string;
   group?: string;
   type: FormPropertyType;
   default: any;
@@ -181,14 +182,14 @@ export const cleanupFormProperty = (property: FormProperty): FormProperty => {
   if (property.type !== FormPropertyType.textarea) {
     delete property.rows;
   }
-  if (property.type !== FormPropertyType.fieldset) {
-    delete property.properties;
-  } else if (property.properties?.length) {
-    property.properties = cleanupFormProperties(property.properties);
-  }
   if (property.type !== FormPropertyType.array) {
     delete property.arrayItemName;
     delete property.arrayItemType;
+  }
+  if (property.type !== FormPropertyType.fieldset && property.arrayItemType !== FormPropertyType.fieldset) {
+    delete property.properties;
+  } else if (property.properties?.length) {
+    property.properties = cleanupFormProperties(property.properties);
   }
   if (property.type !== FormPropertyType.select) {
     delete property.multiple;
@@ -237,6 +238,7 @@ export interface FormPropertyContainerBase {
 }
 
 export interface FormPropertyRow extends FormPropertyContainerBase {
+  hint?: string;
   properties?: FormProperty[];
   switch?: FormProperty;
   rowClass?: string;
@@ -362,6 +364,7 @@ const toPropertyContainers = (properties: FormProperty[],
       if (!propertyRow) {
         propertyRow = {
           label: property.name,
+          hint: property.hint,
           type: FormPropertyContainerType.row,
           properties: [],
           rowClass: property.rowClass,

@@ -100,6 +100,7 @@ public class TenantActor extends RuleChainManagerActor {
                                     () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
                                     () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
                                     () -> true);
+                            cfActor.tellWithHighPriority(new CalculatedFieldCacheInitMsg(tenantId));
                         } catch (Exception e) {
                             log.info("[{}] Failed to init CF Actor.", tenantId, e);
                         }
@@ -130,6 +131,7 @@ public class TenantActor extends RuleChainManagerActor {
         log.info("[{}] Stopping tenant actor.", tenantId);
         if (cfActor != null) {
             ctx.stop(cfActor.getActorId());
+            cfActor = null;
         }
     }
 
@@ -283,7 +285,6 @@ public class TenantActor extends RuleChainManagerActor {
                         log.info("[{}] Failed to init CF Actor.", tenantId, e);
                     }
                 }
-                cfActor.tellWithHighPriority(msg);
                 if (!ruleChainsInitialized) {
                     log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
                     initRuleChains();
@@ -291,6 +292,7 @@ public class TenantActor extends RuleChainManagerActor {
             } else {
                 if (cfActor != null) {
                     ctx.stop(cfActor.getActorId());
+                    cfActor = null;
                 }
                 if (ruleChainsInitialized) {
                     log.info("Tenant {} is no longer managed by this service, stopping rule chains", tenantId);

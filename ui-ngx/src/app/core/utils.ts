@@ -137,6 +137,14 @@ export function isLiteralObject(value: any) {
   return (!!value) && (value.constructor === Object);
 }
 
+export const isDate = (obj: any): boolean => {
+  return Object.prototype.toString.call(obj) === "[object Date]";
+}
+
+export const isFile = (obj: any): boolean => {
+  return Object.prototype.toString.call(obj) === "[object File]";
+}
+
 export const formatValue = (value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined => {
   if (isDefinedAndNotNull(value) && isNumeric(value) &&
     (isDefinedAndNotNull(dec) || isNotEmptyStr(units) || Number(value).toString() === value)) {
@@ -180,7 +188,7 @@ export function deleteNullProperties(obj: any) {
       delete obj[propName];
     } else if (isObject(obj[propName])) {
       deleteNullProperties(obj[propName]);
-    } else if (obj[propName] instanceof Array) {
+    } else if (Array.isArray(obj[propName])) {
       (obj[propName] as any[]).forEach((elem) => {
         deleteNullProperties(elem);
       });
@@ -335,13 +343,11 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
   if (isObservable(target)) {
     return target;
   }
-  if (target instanceof Date) {
-    return new Date(target.getTime()) as any;
+  if (isDate(target)) {
+    return new Date((target as Date).getTime()) as T;
   }
-  if (target instanceof Array) {
-    const cp = [] as any[];
-    (target as any[]).forEach((v) => { cp.push(v); });
-    return cp.map((n: any) => deepClone<any>(n)) as any;
+  if (Array.isArray(target)) {
+    return (target as any[]).map((item) => deepClone(item)) as any;
   }
   if (typeof target === 'object') {
     const cp = {...(target as { [key: string]: any })} as { [key: string]: any };
@@ -752,7 +758,7 @@ export function sortObjectKeys<T>(obj: T): T {
 }
 
 export function deepTrim<T>(obj: T): T {
-  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null || obj instanceof File) {
+  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null || isFile(obj)) {
     return obj;
   }
   return Object.keys(obj).reduce((acc, curr) => {
