@@ -55,6 +55,7 @@ import org.thingsboard.server.queue.TbQueueHandler;
 import org.thingsboard.server.queue.common.PartitionedQueueResponseTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
+import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -87,6 +88,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
     private final EdqsConfig config;
     private final EdqsExecutors edqsExecutors;
     private final EdqsPartitionService partitionService;
+    private final DiscoveryService discoveryService;
     private final TopicService topicService;
     private final ConfigurableApplicationContext applicationContext;
     private final EdqsStateService stateService;
@@ -106,6 +108,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             if (error instanceof OutOfMemoryError) {
                 log.error("OOM detected, shutting down");
                 repository.clear();
+                discoveryService.setReady(false);
                 Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edqs-shutdown"))
                         .execute(applicationContext::close);
             }
