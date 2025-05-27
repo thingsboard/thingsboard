@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -242,4 +243,21 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 attributeType,
                 attributeKey);
     }
+
+
+    @Override
+    public Optional<UUID> findDeviceIdByMacId(String key, String macId) {
+        String sql = "SELECT entity_id FROM key_dictionary " +
+                "JOIN attribute_kv ON key_id = attribute_key " +
+                "WHERE key = ? AND str_v = ?";
+
+        try {
+            UUID deviceId = jdbcTemplate.queryForObject(sql, UUID.class, key, macId);
+            return Optional.of(deviceId);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+
 }

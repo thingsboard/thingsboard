@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2025 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,44 +21,48 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.dao.attributes.AttributesDao;
+import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DatabaseException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.model.sql.CustomerEntity;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.logging.Logger;
 
 @Service
 @Slf4j
 public class DeviceRegistrationService {
 
+    private static final long TOKEN_EXPIRY_SECONDS = 3600;
+    private final RestTemplate restTemplate;
+    private final AttributesDao attributesDao;
+    private final CustomerDao customerDao;
+    private final DeviceDao deviceDao;
     @Value("${thingsboard.api.base-url}")
     private String baseUrl;
-
     @Value("${thingsboard.api.username}")
     private String username;
-
     @Value("${thingsboard.api.password}")
     private String password;
-
-    private static final long TOKEN_EXPIRY_SECONDS = 3600;
-
     private String cachedToken;
     private Instant tokenExpiryTime;
 
-    private final RestTemplate restTemplate;
-
     @Autowired
-    public DeviceRegistrationService(RestTemplate restTemplate) {
+    public DeviceRegistrationService(RestTemplate restTemplate, AttributesDao attributesDao, CustomerDao customerDao, DeviceDao deviceDao) {
         this.restTemplate = restTemplate;
+        this.attributesDao = attributesDao;
+        this.customerDao = customerDao;
+        this.deviceDao = deviceDao;
     }
 
     // Thread-safe token getter with caching
@@ -104,93 +108,44 @@ public class DeviceRegistrationService {
         return headers;
     }
 
-    public boolean isValidMac(String macId) {
-        return findDeviceByMac(macId).isPresent();
-    }
-
     @SuppressWarnings("unchecked")
-    public Optional<Map<String, Object>> findDeviceByMac(String macId) {
-        HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
-
-        int page = 0;
-        int pageSize = 100;
-
+    public UUID findDeviceByMac(String macId) {
         try {
-            while (true) {
-                String listDevicesUrl = baseUrl + "/api/tenant/devices?pageSize=" + pageSize + "&page=" + page;
-                ResponseEntity<Map> response = restTemplate.exchange(listDevicesUrl, HttpMethod.GET, entity, Map.class);
-
-                List<Map<String, Object>> devices = (List<Map<String, Object>>) response.getBody().get("data");
-
-                if (devices == null || devices.isEmpty()) {
-                    break;
-                }
-
-                for (Map<String, Object> device : devices) {
-                    String deviceId = (String) ((Map<String, Object>) device.get("id")).get("id");
-                    if (hasMatchingAttribute(deviceId, "DEVICE", "Mac_id", macId)) {
-                        return Optional.of(device);
-                    }
-                }
-
-                page++; // Next page
+            HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
+            Optional<UUID> deviceUUID = attributesDao.findDeviceIdByMacId("Mac_id", macId);
+            if (deviceUUID.isPresent()) {
+                return deviceUUID.get();
             }
         } catch (Exception e) {
             throw new DataValidationException("Failed to find device by MAC: " + e.getMessage(), e);
         }
-
-        return Optional.empty();
+        return null;
     }
 
-    public Optional<Map<String, Object>> findCustomerByEmail(String email) {
-        HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
-        int page = 0;
-        int pageSize = 100;
-
+    public Device findDeviceById(String deviceId) {
         try {
-            while (true) {
-                String url = baseUrl + "/api/customers?pageSize=" + pageSize + "&page=" + page;
-                ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
-                List<Map<String, Object>> customers = (List<Map<String, Object>>) response.getBody().get("data");
-
-                if (customers == null || customers.isEmpty()) {
-                    break;
-                }
-
-                for (Map<String, Object> customer : customers) {
-                    if (email.equalsIgnoreCase((String) customer.get("title"))) {
-                        return Optional.of(customer);
-                    }
-
-                    String customerId = (String) ((Map<String, Object>) customer.get("id")).get("id");
-                    if (hasMatchingAttribute(customerId, "CUSTOMER", "email", email)) {
-                        return Optional.of(customer);
-                    }
-                }
-
-                page++;
+            HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
+            Optional<Device> deviceOptional = deviceDao.findDeviceById(deviceId);
+            if (deviceOptional.isPresent()) {
+                return deviceOptional.get();
             }
         } catch (Exception e) {
-            throw new DataValidationException("Failed to find customer by email: " + e.getMessage(), e);
+            throw new DataValidationException("Failed to find device by Device Id: " + e.getMessage(), e);
         }
-
-        return Optional.empty();
+        return null;
     }
 
-    @SuppressWarnings("unchecked")
-    private boolean hasMatchingAttribute(String entityId, String entityType, String key, String expectedValue) {
-        String attrUrl = baseUrl + "/api/plugins/telemetry/" + entityType + "/" + entityId + "/values/attributes/SERVER_SCOPE";
-        HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
-
-        ResponseEntity<List> response = restTemplate.exchange(attrUrl, HttpMethod.GET, entity, List.class);
-        List<Map<String, Object>> attributes = response.getBody();
-
-        for (Map<String, Object> attr : attributes) {
-            if (key.equalsIgnoreCase((String) attr.get("key")) && expectedValue.equalsIgnoreCase((String) attr.get("value"))) {
-                return true;
+    public Customer findCustomerByEmail(String email) {
+        try {
+            HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
+            Optional<Customer> customerOptional = customerDao.findCustomerByEmail(email);
+            if (customerOptional.isPresent()) {
+                return customerOptional.get();
             }
+        } catch (Exception e) {
+            throw new DataValidationException("Failed to find Customer by Email: " + e.getMessage(), e);
         }
-        return false;
+        return null;
     }
 
     public Customer createCustomer(String email) {
@@ -225,13 +180,15 @@ public class DeviceRegistrationService {
         HttpEntity<Void> assignEntity = new HttpEntity<>(getHeaders());
 
         try {
+            // Step 1: Assign the device
             restTemplate.exchange(assignUrl, HttpMethod.POST, assignEntity, Void.class);
             log.info("Device '{}' assigned to customer '{}'.", deviceId, customerId);
 
+            // Step 2: Rename device
             renameDevice(deviceId, deviceName);
-            log.info("Call to updateDeviceName");
+            log.info("Device renamed to '{}'", deviceName);
 
-            // Step 2: Create user associated with customer
+            // Step 3: Try to create a user
             String userUrl = baseUrl + "/api/user";
             Map<String, Object> userPayload = new HashMap<>();
             userPayload.put("email", userEmail);
@@ -239,58 +196,26 @@ public class DeviceRegistrationService {
             userPayload.put("customerId", Map.of("entityType", "CUSTOMER", "id", customerId));
 
             HttpEntity<Map<String, Object>> userRequest = new HttpEntity<>(userPayload, getHeaders());
+
             ResponseEntity<Map> userResponse = restTemplate.postForEntity(userUrl, userRequest, Map.class);
 
             if (userResponse.getStatusCode().is2xxSuccessful()) {
-                return "Customer and user created successfully.";
+                log.info("User '{}' created and assigned to customer '{}'", userEmail, customerId);
+                return "Device assigned and user created successfully.";
             } else {
-                return "Customer created, but failed to create user.";
+                return "Device assigned, but user creation failed.";
             }
 
+        } catch (HttpClientErrorException.Conflict e) {
+            // Email already exists
+            log.warn("User with email '{}' already exists.", userEmail);
+            return "Device assigned, but user already exists.";
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new IncorrectParameterException("Error assigning device: " + e.getStatusCode() + " - " + e.getResponseBodyAsString(), e);
+            throw new IncorrectParameterException("Error during assignment: " + e.getStatusCode() + " - " + e.getResponseBodyAsString(), e);
         } catch (Exception e) {
-            throw new RuntimeException("Unexpected error while assigning device: " + e.getMessage(), e);
+            throw new RuntimeException("Unexpected error: " + e.getMessage(), e);
         }
     }
-//
-//    public String createCustomerAndUser(String customerName, String userEmail) {
-//        try {
-//            // Step 1: Create customer
-//            String customerUrl = baseUrl + "/api/customer";
-//            Map<String, String> customerPayload = Map.of("title", customerName);
-//            HttpEntity<Map<String, String>> customerRequest = new HttpEntity<>(customerPayload, headers);
-//
-//            ResponseEntity<Map> customerResponse = restTemplate.postForEntity(customerUrl, customerRequest, Map.class);
-//            Map<String, Object> customerData = customerResponse.getBody();
-//            if (customerData == null || !customerData.containsKey("id")) {
-//                return "Failed to create customer.";
-//            }
-//
-//            String customerId = ((Map<String, String>) customerData.get("id")).get("id");
-//
-//            // Step 2: Create user associated with customer
-//            String userUrl = baseUrl + "/api/user";
-//            Map<String, Object> userPayload = new HashMap<>();
-//            userPayload.put("email", userEmail);
-//            userPayload.put("authority", "CUSTOMER_USER");
-//            userPayload.put("customerId", Map.of("entityType", "CUSTOMER", "id", customerId));
-//
-//            HttpEntity<Map<String, Object>> userRequest = new HttpEntity<>(userPayload, headers);
-//            ResponseEntity<Map> userResponse = restTemplate.postForEntity(userUrl, userRequest, Map.class);
-//
-//            if (userResponse.getStatusCode().is2xxSuccessful()) {
-//                return "Customer and user created successfully.";
-//            } else {
-//                return "Customer created, but failed to create user.";
-//            }
-//
-//        } catch (HttpClientErrorException | HttpServerErrorException ex) {
-//            return "API error: " + ex.getStatusCode() + " - " + ex.getResponseBodyAsString();
-//        } catch (Exception ex) {
-//            return "Unexpected error: " + ex.getMessage();
-//        }
-//    }
 
 
     public void renameDevice(String deviceId, String newName) {

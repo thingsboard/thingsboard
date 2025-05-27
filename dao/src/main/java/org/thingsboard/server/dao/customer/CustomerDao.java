@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
+import org.thingsboard.server.dao.model.sql.CustomerEntity;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -78,4 +79,5 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao<Customer>, E
      */
     PageData<Customer> findCustomersWithTheSameTitle(PageLink pageLink);
 
+    Optional<Customer> findCustomerByEmail(String mail);
 }

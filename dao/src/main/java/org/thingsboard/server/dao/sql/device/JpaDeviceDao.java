@@ -323,4 +323,10 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
         return EntityType.DEVICE;
     }
 
+    @Override
+    public Optional<Device> findDeviceById(String deviceId){
+        UUID uuid = UUID.fromString(deviceId);
+        return deviceRepository.findDeviceById(uuid);
+    }
+
 }
