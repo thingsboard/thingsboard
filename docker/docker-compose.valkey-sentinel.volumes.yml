@@ -31,10 +31,10 @@ services:
 volumes:
   valkey-sentinel-data-primary:
     external:
-      name: ${VALKEY_SENTINEL_DATA_VOLUME_MASTER}
+      name: ${VALKEY_SENTINEL_DATA_VOLUME_PRIMARY}
   valkey-sentinel-data-replica:
     external:
-      name: ${VALKEY_SENTINEL_DATA_VOLUME_SLAVE}
+      name: ${VALKEY_SENTINEL_DATA_VOLUME_REPLICA}
   valkey-sentinel-data-sentinel:
     external:
       name: ${VALKEY_SENTINEL_DATA_VOLUME_SENTINEL}
