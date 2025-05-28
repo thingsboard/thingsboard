@@ -103,7 +103,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private EdqsApiService edqsApiService;
 
     @Autowired
-    private Optional<EdqsStatsService> edqsStatsService;
+    private EdqsStatsService edqsStatsService;
 
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
@@ -123,7 +123,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         } else {
             result = entityQueryDao.countEntitiesByQuery(tenantId, customerId, query);
         }
-        edqsStatsService.ifPresent(statsService -> statsService.reportEntityCountQuery(tenantId, query, System.nanoTime() - startNs));
+        edqsStatsService.reportEntityCountQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }
 
@@ -157,7 +157,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                 }
             }
         }
-        edqsStatsService.ifPresent(statsService -> statsService.reportEntityDataQuery(tenantId, query, System.nanoTime() - startNs));
+        edqsStatsService.reportEntityDataQuery(tenantId, query, System.nanoTime() - startNs);
         return result;
     }
 

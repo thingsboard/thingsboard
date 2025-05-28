@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -34,10 +35,14 @@ import org.thingsboard.server.common.data.job.task.TaskResult;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.job.JobStatus.CANCELLED;
 import static org.thingsboard.server.common.data.job.JobStatus.COMPLETED;
@@ -52,6 +57,7 @@ import static org.thingsboard.server.common.data.job.JobStatus.RUNNING;
 public class DefaultJobService extends AbstractEntityService implements JobService {
 
     private final JobDao jobDao;
+    private final EntityService entityService;
 
     @Transactional
     @Override
@@ -190,7 +196,19 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
     @Override
     public PageData<Job> findJobsByFilter(TenantId tenantId, JobFilter filter, PageLink pageLink) {
-        return jobDao.findByTenantIdAndFilter(tenantId, filter, pageLink);
+        PageData<Job> jobs = jobDao.findByTenantIdAndFilter(tenantId, filter, pageLink);
+
+        Set<EntityId> entityIds = jobs.getData().stream()
+                .map(Job::getEntityId)
+                .collect(Collectors.toSet());
+        Map<EntityId, EntityInfo> entityInfos = entityService.fetchEntityInfos(tenantId, null, entityIds);
+        jobs.getData().forEach(job -> {
+            EntityInfo entityInfo = entityInfos.get(job.getEntityId());
+            if (entityInfo != null) {
+                job.setEntityName(entityInfo.getName());
+            }
+        });
+        return jobs;
     }
 
     @Override

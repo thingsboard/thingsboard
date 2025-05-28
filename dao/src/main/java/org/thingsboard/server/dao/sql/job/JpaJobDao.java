@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.JobId;
@@ -33,17 +32,13 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.job.JobDao;
 import org.thingsboard.server.dao.model.sql.JobEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @SqlDao
@@ -51,29 +46,16 @@ import java.util.stream.Collectors;
 public class JpaJobDao extends JpaAbstractDao<JobEntity, Job> implements JobDao {
 
     private final JobRepository jobRepository;
-    private final EntityService entityService;
 
     @Override
     public PageData<Job> findByTenantIdAndFilter(TenantId tenantId, JobFilter filter, PageLink pageLink) {
-        PageData<Job> jobs = DaoUtil.toPageData(jobRepository.findByTenantIdAndTypesAndStatusesAndEntitiesAndTimeAndSearchText(tenantId.getId(),
+        return DaoUtil.toPageData(jobRepository.findByTenantIdAndTypesAndStatusesAndEntitiesAndTimeAndSearchText(tenantId.getId(),
                 CollectionsUtil.isEmpty(filter.getTypes()) ? null : filter.getTypes(),
                 CollectionsUtil.isEmpty(filter.getStatuses()) ? null : filter.getStatuses(),
                 CollectionsUtil.isEmpty(filter.getEntities()) ? null : filter.getEntities(),
                 filter.getStartTime() != null ? filter.getStartTime() : 0,
                 filter.getEndTime() != null ? filter.getEndTime() : 0,
                 Strings.emptyToNull(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
-
-        Set<EntityId> entityIds = jobs.getData().stream()
-                .map(Job::getEntityId)
-                .collect(Collectors.toSet());
-        Map<EntityId, EntityInfo> entityInfos = entityService.fetchEntityInfos(tenantId, null, entityIds);
-        jobs.getData().forEach(job -> {
-            EntityInfo entityInfo = entityInfos.get(job.getEntityId());
-            if (entityInfo != null) {
-                job.setEntityName(entityInfo.getName());
-            }
-        });
-        return jobs;
     }
 
     @Override
