@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.edqs;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,16 +33,18 @@ public class EdqsState {
     @Setter
     private EdqsApiMode apiMode;
 
-    public boolean setEdqsReady(boolean ready) {
+    public boolean updateEdqsReady(boolean ready) {
         boolean changed = BooleanUtils.toBooleanDefaultIfNull(this.edqsReady, false) != ready;
         this.edqsReady = ready;
         return changed;
     }
 
+    @JsonIgnore
     public boolean isApiReady() {
         return edqsReady && syncStatus == EdqsSyncStatus.FINISHED;
     }
 
+    @JsonIgnore
     public boolean isApiEnabled() {
         return apiMode != null && (apiMode == EdqsApiMode.ENABLED || apiMode == EdqsApiMode.AUTO_ENABLED);
     }
