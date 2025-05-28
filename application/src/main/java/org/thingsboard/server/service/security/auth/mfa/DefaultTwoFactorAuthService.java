@@ -68,6 +68,13 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     }
 
     @Override
+    public boolean isEnforceTwoFaEnabled(TenantId tenantId) {
+        return configManager.getPlatformTwoFaSettings(tenantId, true)
+                .map(PlatformTwoFaSettings::isEnforceTwoFa)
+                .orElse(false);
+    }
+
+    @Override
     public void checkProvider(TenantId tenantId, TwoFaProviderType providerType) throws ThingsboardException {
         getTwoFaProvider(providerType).check(tenantId);
     }
