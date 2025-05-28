@@ -17,8 +17,10 @@ package org.thingsboard.server.common.data.trendz;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class TrendzSettings {
+public class TrendzSettings implements Serializable {
 
     private boolean enabled;
     private String baseUrl;
