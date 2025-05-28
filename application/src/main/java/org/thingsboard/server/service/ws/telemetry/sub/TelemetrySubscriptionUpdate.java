@@ -16,12 +16,16 @@
 package org.thingsboard.server.service.ws.telemetry.sub;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.With;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -29,8 +33,13 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class TelemetrySubscriptionUpdate {
+
+    @Getter
+    @With
     private final int subscriptionId;
+    @Getter
     private int errorCode;
+    @Getter
     private String errorMsg;
     private Map<String, List<Object>> data;
 
@@ -66,11 +75,27 @@ public class TelemetrySubscriptionUpdate {
         this.errorMsg = errorMsg != null ? errorMsg : errorCode.getDefaultMsg();
     }
 
-    public int getSubscriptionId() {
-        return subscriptionId;
-    }
+    public Map<String, List<TsValue>> getData() {
+        if (data == null || data.isEmpty()) {
+            return Collections.emptyMap();
+        }
 
-    public Map<String, List<Object>> getData() {
+        Map<String, List<TsValue>> data = new HashMap<>();
+        this.data.forEach((key, entries) -> {
+            if (entries.isEmpty()) {
+                return;
+            }
+
+            List<TsValue> values = new ArrayList<>(entries.size());
+            entries.forEach(object -> {
+                if (!(object instanceof Object[] entry) || entry.length < 2) {
+                    return;
+                }
+                TsValue tsValue = new TsValue((Long) entry[0], (String) entry[1]);
+                values.add(tsValue);
+            });
+            data.put(key, values);
+        });
         return data;
     }
 
@@ -86,28 +111,17 @@ public class TelemetrySubscriptionUpdate {
         }
     }
 
-    public int getErrorCode() {
-        return errorCode;
-    }
-
-    public String getErrorMsg() {
-        return errorMsg;
-    }
-
-    public TelemetrySubscriptionUpdate copyWithNewSubscriptionId(int subscriptionId){
-        return new TelemetrySubscriptionUpdate(subscriptionId, errorCode, errorMsg, data);
-    }
-
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder("TelemetrySubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data=");
         data.forEach((k, v) -> {
             result.append(k).append("=[");
-            for(Object a : v){
-                result.append(Arrays.toString((Object[])a)).append("|");
+            for (Object a : v) {
+                result.append(Arrays.toString((Object[]) a)).append("|");
             }
             result.append("]");
         });
         return result.toString();
     }
+
 }

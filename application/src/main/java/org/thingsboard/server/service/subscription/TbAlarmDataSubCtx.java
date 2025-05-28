@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
@@ -191,9 +190,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         EntityId entityId = subToEntityIdMap.get(subscriptionUpdate.getSubscriptionId());
         if (entityId != null) {
             Map<String, TsValue> latestUpdate = new HashMap<>();
-            subscriptionUpdate.getData().forEach((k, v) -> {
-                Object[] data = (Object[]) v.get(0);
-                latestUpdate.put(k, new TsValue((Long) data[0], (String) data[1]));
+            subscriptionUpdate.getData().forEach((key, values) -> {
+                latestUpdate.put(key, getLatest(values));
             });
             EntityData entityData = entitiesMap.get(entityId);
             entityData.getLatest().computeIfAbsent(keyType, tmp -> new HashMap<>()).putAll(latestUpdate);
