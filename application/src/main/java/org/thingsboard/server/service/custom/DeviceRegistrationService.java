@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2025 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,6 +59,7 @@ public class DeviceRegistrationService {
     private String password;
     private String cachedToken;
     private Instant tokenExpiryTime;
+    private static final String MAC_ID = "Mac_id";
 
     @Autowired
     public DeviceRegistrationService(RestTemplate restTemplate, AttributesDao attributesDao, CustomerDao customerDao, DeviceDao deviceDao) {
@@ -68,12 +69,32 @@ public class DeviceRegistrationService {
         this.deviceDao = deviceDao;
     }
 
+    public static String getStartDate() {
+        LocalDate today = LocalDate.now();  // Get today's date
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // Define format
+        return today.format(formatter); // Return formatted date
+    }
+
+    // Optional: Get start date with custom offset (e.g., backdated or future)
+    public static String getStartDateWithOffset(int daysOffset) {
+        LocalDate date = LocalDate.now().plusDays(daysOffset);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return date.format(formatter);
+    }
+
     // Thread-safe token getter with caching
     private synchronized String loginAndGetToken() {
         if (cachedToken != null && tokenExpiryTime != null && Instant.now().isBefore(tokenExpiryTime)) {
             return cachedToken;
         }
         return fetchNewToken();
+    }
+
+    private HttpHeaders getHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(loginAndGetToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
     }
 
     // Separate method for fetching token from ThingsBoard
@@ -104,18 +125,10 @@ public class DeviceRegistrationService {
         }
     }
 
-    private HttpHeaders getHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(loginAndGetToken());
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return headers;
-    }
-
     @SuppressWarnings("unchecked")
     public UUID findDeviceByMacAndType(String macId, String deviceType) {
         try {
-            HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
-            Optional<UUID> deviceUUID = attributesDao.findDeviceIdByMacId("Mac_id", macId, deviceType);
+            Optional<UUID> deviceUUID = attributesDao.findDeviceIdByMacId(MAC_ID, macId, deviceType);
             if (deviceUUID.isPresent()) {
                 return deviceUUID.get();
             }
@@ -127,7 +140,6 @@ public class DeviceRegistrationService {
 
     public Device findDeviceById(String deviceId) {
         try {
-            HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
             Optional<DeviceEntity> deviceOptional = deviceDao.findDeviceById(deviceId);
             if (deviceOptional.isPresent()) {
                 return deviceOptional.get().toData();
@@ -140,7 +152,6 @@ public class DeviceRegistrationService {
 
     public Customer findCustomerByEmail(String email) {
         try {
-            HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
             CustomerEntity customer = customerDao.findCustomerByEmail(email);
             if (customer != null) {
                 return customer.toData();
@@ -153,7 +164,6 @@ public class DeviceRegistrationService {
 
     public Customer findCustomerById(String id) {
         try {
-            HttpEntity<Void> entity = new HttpEntity<>(getHeaders());
             CustomerEntity customer = customerDao.findCustomerById(id);
             if (customer != null) {
                 return customer.toData();
@@ -249,7 +259,6 @@ public class DeviceRegistrationService {
         }
     }
 
-
     public void renameDevice(String deviceId, String newName) {
         // 1) GET the existing device
         String getUrl = baseUrl + "/api/device/" + deviceId;
@@ -276,7 +285,6 @@ public class DeviceRegistrationService {
                 Void.class
         );
     }
-
 
     public String getDeviceAccessToken(String deviceId) {
         String url = baseUrl + "/api/device/" + deviceId + "/credentials";
@@ -340,21 +348,6 @@ public class DeviceRegistrationService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to update other devices: " + e.getMessage());
         }
-    }
-
-
-
-    public static String getStartDate() {
-        LocalDate today = LocalDate.now();  // Get today's date
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // Define format
-        return today.format(formatter); // Return formatted date
-    }
-
-    // Optional: Get start date with custom offset (e.g., backdated or future)
-    public static String getStartDateWithOffset(int daysOffset) {
-        LocalDate date = LocalDate.now().plusDays(daysOffset);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        return date.format(formatter);
     }
 
 }

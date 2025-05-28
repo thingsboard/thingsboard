@@ -39,7 +39,8 @@ import java.util.UUID;
 @Slf4j
 public class DeviceRegistrationController extends BaseController {
 
-    UUID NULL_UUID = UUID.fromString("13814000-1dd2-11b2-8080-808080808080");
+    private static final UUID NULL_UUID = UUID.fromString("13814000-1dd2-11b2-8080-808080808080");
+
     @Autowired
     private DeviceRegistrationService deviceRegistrationService;
 
@@ -54,7 +55,7 @@ public class DeviceRegistrationController extends BaseController {
 
             UUID deviceUUID = deviceRegistrationService.findDeviceByMacAndType(macId, request.getDeviceType());
             Device device = deviceUUID != null ? deviceRegistrationService.findDeviceById(deviceUUID.toString()) : null;
-            if (deviceUUID == null || !device.getType().equals(request.getDeviceType())) {
+            if (deviceUUID == null || (device != null && !device.getType().equals(request.getDeviceType()))) {
                 response.put("status", HttpStatus.BAD_REQUEST.value());
                 response.put("message", "No matching device found for the given MAC ID and device type.");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
@@ -63,9 +64,10 @@ public class DeviceRegistrationController extends BaseController {
             String deviceId = deviceUUID.toString();
             Customer customerMailOpt = deviceRegistrationService.findCustomerByEmail(request.getEmail());
             Customer customerDeviceOpt = deviceRegistrationService.findCustomerById(device.getCustomerId().getId().toString());
+            String token = deviceRegistrationService.getDeviceAccessToken(deviceId);
             if (customerMailOpt != null) {
                 if (device.getCustomerId() != null) {
-                    String token = deviceRegistrationService.getDeviceAccessToken(deviceId);
+
                     if (customerDeviceOpt != null && customerDeviceOpt.getEmail().equals(request.getEmail())) {
                         response.put("status", HttpStatus.valueOf(202));
                         response.put("message", "Device is already assigned to this customer.");
@@ -83,8 +85,6 @@ public class DeviceRegistrationController extends BaseController {
             } else if (device.getCustomerId().getId().equals(NULL_UUID)) {
                 Customer newCustomer = deviceRegistrationService.createCustomer(request.getEmail());
                 deviceRegistrationService.assignDeviceToCustomer(deviceId, newCustomer.getId().toString(), request.getDeviceName(), request.getEmail(), true);
-                String token = deviceRegistrationService.getDeviceAccessToken(deviceId);
-
                 response.put("status", HttpStatus.valueOf(200));
                 response.put("message", "New customer created and device assigned successfully.");
                 response.put("accessToken", token);
