@@ -17,82 +17,82 @@
 version: '3.0'
 
 services:
-# Redis standalone
-# The latest version of Redis compatible with ThingsBoard is 7.2
-  redis:
+# Valkey standalone
+# The latest version of Valkey compatible with ThingsBoard is 8.0
+  valkey:
     restart: always
-    image: bitnami/redis:7.2
+    image: bitnami/valkey:8.0
     environment:
       # ALLOW_EMPTY_PASSWORD is recommended only for development.
       ALLOW_EMPTY_PASSWORD: "yes"
     ports:
       - '6379:6379'
     volumes:
-      - ./tb-node/redis-data:/bitnami/redis/data
+      - ./tb-node/valkey-data:/bitnami/valkey/data
 
-# ThingsBoard setup to use redis-standalone
+# ThingsBoard setup to use valkey-standalone
   tb-core1:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-core2:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-rule-engine1:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-rule-engine2:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-mqtt-transport1:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-mqtt-transport2:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-http-transport1:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-http-transport2:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-coap-transport:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-lwm2m-transport:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-snmp-transport:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-vc-executor1:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey
   tb-vc-executor2:
     env_file:
-      - cache-redis.env
+      - cache-valkey.env
     depends_on:
-      - redis
+      - valkey

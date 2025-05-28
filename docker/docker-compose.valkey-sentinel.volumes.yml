@@ -17,11 +17,24 @@
 version: '3.0'
 
 services:
-  redis:
+  # Valkey sentinel
+  valkey-primary:
     volumes:
-      - redis-data:/bitnami/redis/data
+      - valkey-sentinel-data-primary:/bitnami/valkey/data
+  valkey-replica:
+    volumes:
+      - valkey-sentinel-data-replica:/bitnami/valkey/data
+  valkey-sentinel:
+    volumes:
+      - valkey-sentinel-data-sentinel:/bitnami/valkey/data
 
 volumes:
-  redis-data:
+  valkey-sentinel-data-primary:
     external:
-      name: ${REDIS_DATA_VOLUME}
+      name: ${VALKEY_SENTINEL_DATA_VOLUME_PRIMARY}
+  valkey-sentinel-data-replica:
+    external:
+      name: ${VALKEY_SENTINEL_DATA_VOLUME_REPLICA}
+  valkey-sentinel-data-sentinel:
+    external:
+      name: ${VALKEY_SENTINEL_DATA_VOLUME_SENTINEL}
