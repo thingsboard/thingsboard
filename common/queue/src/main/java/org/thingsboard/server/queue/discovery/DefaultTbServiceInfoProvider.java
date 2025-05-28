@@ -79,6 +79,8 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     private List<JobType> taskTypes;
     private ServiceInfo serviceInfo;
 
+    private boolean ready = true;
+
     @PostConstruct
     public void init() {
         if (StringUtils.isEmpty(serviceId)) {
@@ -98,6 +100,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
             assignedTenantProfiles = Collections.emptySet();
         }
         if (serviceTypes.contains(ServiceType.EDQS)) {
+            ready = false;
             if (StringUtils.isBlank(edqsConfig.getLabel())) {
                 edqsConfig.setLabel(serviceId);
             }
@@ -148,8 +151,16 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         if (edqsConfig != null) {
             builder.setLabel(edqsConfig.getLabel());
         }
+        builder.setReady(ready);
         builder.addAllTaskTypes(taskTypes.stream().map(JobType::name).toList());
         return serviceInfo = builder.build();
+    }
+
+    @Override
+    public boolean setReady(boolean ready) {
+        boolean changed = this.ready != ready;
+        this.ready = ready;
+        return changed;
     }
 
     private TransportProtos.SystemInfoProto getCurrentSystemInfoProto() {

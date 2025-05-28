@@ -167,7 +167,7 @@ public class HashPartitionService implements PartitionService {
 
     @Override
     public String getTopic(QueueKey queueKey) {
-        return partitionTopicsMap.get(queueKey);
+        return topicService.buildTopicName(partitionTopicsMap.get(queueKey));
     }
 
     private void doInitRuleEnginePartitions() {
