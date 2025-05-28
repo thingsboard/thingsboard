@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.edqs.EdqsState;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -738,13 +739,13 @@ public class TestRestClient {
                 .as(Long.class);
     }
 
-    public Boolean isEdqsApiEnabled() {
+    public EdqsState getEdqsState() {
         return given().spec(requestSpec)
-                .get("/api/edqs/enabled")
+                .get("/api/edqs/state")
                 .then()
                 .statusCode(HTTP_OK)
                 .extract()
-                .as(Boolean.class);
+                .as(EdqsState.class);
     }
 
     public void assignDeviceToCustomer(CustomerId customerId, DeviceId id) {

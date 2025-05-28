@@ -60,7 +60,8 @@ import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.stats.DummyEdqsStatsService;
-import org.thingsboard.server.edqs.util.EdqsConverter;
+import org.thingsboard.server.edqs.util.DefaultEdqsMapper;
+import org.thingsboard.server.edqs.util.EdqsMapper;
 
 import java.util.Collections;
 import java.util.List;
@@ -79,7 +80,7 @@ public abstract class AbstractEDQTest {
     @Autowired
     protected DefaultEdqsRepository repository;
     @Autowired
-    protected EdqsConverter edqsConverter;
+    protected EdqsMapper edqsMapper;
     @MockBean
     private DummyEdqsStatsService edqsStatsService;
 
@@ -244,12 +245,12 @@ public abstract class AbstractEDQTest {
     }
 
     protected void addOrUpdate(EntityType entityType, Object entity) {
-        addOrUpdate(EdqsConverter.toEntity(entityType, entity));
+        addOrUpdate(DefaultEdqsMapper.toEntity(entityType, entity));
     }
 
     protected void addOrUpdate(EdqsObject edqsObject) {
-        byte[] serialized = edqsConverter.serialize(edqsObject.type(), edqsObject);
-        edqsObject = edqsConverter.deserialize(edqsObject.type(), serialized);
+        byte[] serialized = edqsMapper.serialize(edqsObject);
+        edqsObject = edqsMapper.deserialize(edqsObject.type(), serialized, false);
         repository.get(tenantId).addOrUpdate(edqsObject);
     }
 
