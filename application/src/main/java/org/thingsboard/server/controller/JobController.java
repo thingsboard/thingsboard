@@ -59,7 +59,6 @@ public class JobController extends BaseController {
     @GetMapping("/job/{id}")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public Job getJobById(@PathVariable UUID id) throws ThingsboardException {
-        // todo check permissions
         return jobService.findJobById(getTenantId(), new JobId(id));
     }
 
@@ -80,7 +79,6 @@ public class JobController extends BaseController {
                                  @RequestParam(required = false) List<UUID> entities,
                                  @RequestParam(required = false) Long startTime,
                                  @RequestParam(required = false) Long endTime) throws ThingsboardException {
-        // todo check permissions
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         JobFilter filter = JobFilter.builder()
                 .types(types)
@@ -95,21 +93,18 @@ public class JobController extends BaseController {
     @PostMapping("/job/{id}/cancel")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public void cancelJob(@PathVariable UUID id) throws ThingsboardException {
-        // todo check permissions
         jobManager.cancelJob(getTenantId(), new JobId(id));
     }
 
     @PostMapping("/job/{id}/reprocess")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public void reprocessJob(@PathVariable UUID id) throws ThingsboardException {
-        // todo check permissions
         jobManager.reprocessJob(getTenantId(), new JobId(id));
     }
 
     @DeleteMapping("/job/{id}")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public void deleteJob(@PathVariable UUID id) throws ThingsboardException {
-        // todo check permissions
         jobService.deleteJob(getTenantId(), new JobId(id));
     }
 
