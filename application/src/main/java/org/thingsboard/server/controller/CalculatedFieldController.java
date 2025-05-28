@@ -36,6 +36,8 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfCtx;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
+import org.thingsboard.script.api.tbel.TbelCfTsDoubleVal;
+import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
@@ -240,9 +242,8 @@ public class CalculatedFieldController extends BaseController {
                     ctxAndArgNames.toArray(String[]::new)
             );
 
-
             Object[] args = new Object[ctxAndArgNames.size()];
-            args[0] = new TbelCfCtx(arguments);
+            args[0] = new TbelCfCtx(arguments, getLastUpdateTimestamp(arguments));
             for (int i = 1; i < ctxAndArgNames.size(); i++) {
                 var arg = arguments.get(ctxAndArgNames.get(i));
                 if (arg instanceof TbelCfSingleValueArg svArg) {
@@ -263,6 +264,20 @@ public class CalculatedFieldController extends BaseController {
         result.put("output", output);
         result.put("error", errorText);
         return result;
+    }
+
+    private long getLastUpdateTimestamp(Map<String, TbelCfArg> arguments) {
+        long lastUpdateTimestamp = -1;
+        for (TbelCfArg entry : arguments.values()) {
+            if (entry instanceof TbelCfSingleValueArg singleValueArg) {
+                long ts = singleValueArg.getTs();
+                lastUpdateTimestamp = Math.max(lastUpdateTimestamp, ts);
+            } else if (entry instanceof TbelCfTsRollingArg tsRollingArg) {
+                long maxTs = tsRollingArg.getValues().stream().mapToLong(TbelCfTsDoubleVal::getTs).max().orElse(-1);
+                lastUpdateTimestamp = Math.max(lastUpdateTimestamp, maxTs);
+            }
+        }
+        return lastUpdateTimestamp == -1 ? System.currentTimeMillis() : lastUpdateTimestamp;
     }
 
     private <E extends HasId<I> & HasTenantId, I extends EntityId> void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig, SecurityUser user) throws ThingsboardException {

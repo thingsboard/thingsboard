@@ -62,11 +62,13 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -409,6 +411,80 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         Assertions.assertEquals(msgWithLatestTsInSecondPack.getData(), actualMsg.getData());
         Assertions.assertEquals(msgWithLatestTsInSecondPack.getMetaData(), actualMsg.getMetaData());
         Assertions.assertEquals(msgWithLatestTsInSecondPack.getType(), actualMsg.getType());
+    }
+
+    @Test
+    public void given_maxRetriesIsZero_when_enqueueFails_then_noRetriesIsScheduled() throws TbNodeException, ExecutionException, InterruptedException {
+        int wantedNumberOfTellSelfInvocation = 1;
+        int msgCount = 1;
+        awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
+        invokeTellSelf(wantedNumberOfTellSelfInvocation);
+
+        // Given
+        when(ctx.getQueueName()).thenReturn(DataConstants.MAIN_QUEUE_NAME);
+        config.setInterval(deduplicationInterval);
+        config.setStrategy(DeduplicationStrategy.FIRST);
+        config.setMaxPendingMsgs(msgCount);
+        config.setMaxRetries(0);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        long currentTimeMillis = System.currentTimeMillis();
+
+        doAnswer(invocation -> {
+            Consumer<Throwable> failureCallback = invocation.getArgument(3);
+            failureCallback.accept(new RuntimeException("Simulated failure"));
+            return null;
+        }).when(ctx).enqueueForTellNext(any(), eq(TbNodeConnectionType.SUCCESS), any(), any());
+
+        TbMsg msg = createMsg(deviceId, currentTimeMillis + 1);
+        node.onMsg(ctx, msg);
+
+        awaitTellSelfLatch.await();
+
+        verify(ctx).enqueueForTellNext(any(), eq(TbNodeConnectionType.SUCCESS), any(), any());
+        verify(ctx, never()).schedule(any(), anyLong(), any());
+    }
+
+    @Test
+    public void given_maxRetriesIsSetToOne_when_enqueueFails_then_onlyOneRetryIsScheduled() throws TbNodeException, ExecutionException, InterruptedException {
+        int wantedNumberOfTellSelfInvocation = 1;
+        int msgCount = 1;
+        awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
+        invokeTellSelf(wantedNumberOfTellSelfInvocation);
+
+        when(ctx.getQueueName()).thenReturn(DataConstants.MAIN_QUEUE_NAME);
+        config.setInterval(deduplicationInterval);
+        config.setStrategy(DeduplicationStrategy.FIRST);
+        config.setMaxPendingMsgs(msgCount);
+        config.setMaxRetries(1);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        long currentTimeMillis = System.currentTimeMillis();
+
+        doAnswer(invocation -> {
+            Consumer<Throwable> failureCallback = invocation.getArgument(3);
+            failureCallback.accept(new RuntimeException("Simulated failure"));
+            return null;
+        }).when(ctx).enqueueForTellNext(any(), eq(TbNodeConnectionType.SUCCESS), any(), any());
+
+        TbMsg msg = createMsg(deviceId, currentTimeMillis + 1);
+        node.onMsg(ctx, msg);
+
+        awaitTellSelfLatch.await();
+
+        ArgumentCaptor<Runnable> retryRunnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(ctx).schedule(retryRunnableCaptor.capture(), eq(TbMsgDeduplicationNode.TB_MSG_DEDUPLICATION_RETRY_DELAY), eq(TimeUnit.SECONDS));
+
+        retryRunnableCaptor.getValue().run();
+
+        // Verify total enqueue attempts (initial + retry)
+        verify(ctx, times(2)).enqueueForTellNext(any(), eq(TbNodeConnectionType.SUCCESS), any(), any());
+        // No more retries scheduled after reaching maxRetries
+        verify(ctx).schedule(any(), eq(TbMsgDeduplicationNode.TB_MSG_DEDUPLICATION_RETRY_DELAY), eq(TimeUnit.SECONDS));
     }
 
     // Rule nodes upgrade

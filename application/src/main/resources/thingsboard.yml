@@ -668,7 +668,7 @@ cache:
 # Spring data parameters
 spring.data.redis.repositories.enabled: false # Disable this because it is not required.
 
-# Redis configuration parameters
+# Redis/Valkey configuration parameters
 redis:
   # standalone or cluster or sentinel
   connection:
@@ -1764,6 +1764,8 @@ queue:
       supported: "${TB_EDQS_API_SUPPORTED:false}"
       # Whether to auto-enable EDQS API (if queue.edqs.api.supported is true) when sync of data to Kafka is finished 
       auto_enable: "${TB_EDQS_API_AUTO_ENABLE:true}"
+    # Interval in milliseconds to check for ready EDQS servers
+    readiness_check_interval: "${TB_EDQS_READINESS_CHECK_INTERVAL_MS:60000}"
     # Mode of EDQS: local (for monolith) or remote (with separate EDQS microservices)
     mode: "${TB_EDQS_MODE:local}"
     local:
@@ -1787,6 +1789,10 @@ queue:
     max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
     # Maximum timeout for requests to EDQS
     max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:20000}"
+    # Thread pool size for EDQS requests executor
+    request_executor_size: "${TB_EDQS_REQUEST_EXECUTOR_SIZE:50}"
+    # Time to live for EDQS versions cache in minutes. Must be bigger than the time taken for the sync process.
+    versions_cache_ttl: "${TB_EDQS_VERSIONS_CACHE_TTL_MINUTES:60}"
     # Strings longer than this threshold will be compressed
     string_compression_length_threshold: "${TB_EDQS_STRING_COMPRESSION_LENGTH_THRESHOLD:512}"
     stats:

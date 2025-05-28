@@ -36,22 +36,7 @@ public class DummyEdqsApiService implements EdqsApiService {
     }
 
     @Override
-    public boolean isEnabled() {
-        return false;
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        log.warn("Got request to enable EDQS API, but it isn't supported", new RuntimeException("stacktrace"));
-    }
-
-    @Override
     public boolean isSupported() {
-        return false;
-    }
-
-    @Override
-    public boolean isAutoEnable() {
         return false;
     }
 
