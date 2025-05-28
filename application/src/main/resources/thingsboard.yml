@@ -1631,6 +1631,11 @@ queue:
         - key: max.poll.records
           # Max poll records for edqs.state topic
           value: "${TB_QUEUE_KAFKA_EDQS_STATE_MAX_POLL_RECORDS:512}"
+      tasks:
+        # Key-value properties for Kafka consumer for tasks topics
+        - key: max.poll.records
+          # Max poll records for tasks topics
+          value: "${TB_QUEUE_KAFKA_TASKS_MAX_POLL_RECORDS:1}"
     # If you override any default Kafka topic name using environment variables, you must also specify the related consumer properties
     # for the new topic in `consumer-properties-per-topic-inline`. Otherwise, the topic will not inherit its expected configuration (e.g., max.poll.records, timeouts, etc).
     # Each entry sets a single property for a specific topic. To define multiple properties for a topic, repeat the topic key.
@@ -1676,6 +1681,8 @@ queue:
       edqs-requests: "${TB_QUEUE_KAFKA_EDQS_REQUESTS_TOPIC_PROPERTIES:retention.ms:180000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for EDQS state topic (infinite retention, compaction)
       edqs-state: "${TB_QUEUE_KAFKA_EDQS_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1;cleanup.policy:compact}"
+      # Kafka properties for tasks topics
+      tasks: "${TB_QUEUE_KAFKA_TASKS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1896,6 +1903,23 @@ queue:
       enabled: "${TB_QUEUE_EDGE_STATS_ENABLED:true}"
       # Statistics printing interval for Edge services
       print-interval-ms: "${TB_QUEUE_EDGE_STATS_PRINT_INTERVAL_MS:60000}"
+  tasks:
+    # Poll interval in milliseconds for tasks topics
+    poll_interval: "${TB_QUEUE_TASKS_POLL_INTERVAL_MS:500}"
+    # Partitions count for tasks queues
+    partitions: "${TB_QUEUE_TASKS_PARTITIONS:12}"
+    # Custom partitions count for tasks queues per type. Format: 'TYPE1:24;TYPE2:36', e.g. 'CF_REPROCESSING:24;TENANT_EXPORT:6'
+    partitions_per_type: "${TB_QUEUE_TASKS_PARTITIONS_PER_TYPE:}"
+    # Tasks partitioning strategy: 'tenant' or 'entity'. By default, using 'tenant' - tasks of a specific tenant are processed in the same partition.
+    # In a single-tenant environment, use 'entity' strategy to distribute the tasks among multiple partitions.
+    partitioning_strategy: "${TB_QUEUE_TASKS_PARTITIONING_STRATEGY:tenant}"
+    stats:
+      # Name for the tasks stats topic
+      topic: "${TB_QUEUE_TASKS_STATS_TOPIC:jobs.stats}"
+      # Poll interval in milliseconds for tasks stats topic
+      poll_interval: "${TB_QUEUE_TASKS_STATS_POLL_INTERVAL_MS:500}"
+      # Interval in milliseconds to process job stats
+      processing_interval: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:1000}"
 
 # Event configuration parameters
 event:

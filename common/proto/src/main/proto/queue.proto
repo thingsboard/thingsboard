@@ -63,6 +63,7 @@ enum EntityTypeProto {
   MOBILE_APP_BUNDLE     = 38;
   CALCULATED_FIELD      = 39;
   CALCULATED_FIELD_LINK = 40;
+  JOB                   = 41;
 }
 
 enum ApiUsageRecordKeyProto {
@@ -90,6 +91,7 @@ message ServiceInfo {
   repeated string assignedTenantProfiles = 11;
   string label = 12;
   bool ready = 13;
+  repeated string taskTypes = 14;
 }
 
 message SystemInfoProto {
@@ -1263,6 +1265,7 @@ message ComponentLifecycleMsgProto {
   int64 oldProfileIdLSB = 10;
   int64 profileIdMSB = 11;
   int64 profileIdLSB = 12;
+  optional string info = 13;
 }
 
 message EdgeEventMsgProto {
@@ -1848,5 +1851,22 @@ message EdqsRequestMsg {
 }
 
 message EdqsResponseMsg {
+  string value = 1;
+}
+
+message TaskProto {
+  string value = 1;
+}
+
+message JobStatsMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 jobIdMSB = 3;
+  int64 jobIdLSB = 4;
+  optional TaskResultProto taskResult = 5;
+  optional int32 totalTasksCount = 6;
+}
+
+message TaskResultProto {
   string value = 1;
 }

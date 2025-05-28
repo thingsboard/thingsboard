@@ -948,3 +948,16 @@ CREATE TABLE IF NOT EXISTS cf_debug_event (
     e_result varchar,
     e_error varchar
 ) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS job (
+    id uuid NOT NULL CONSTRAINT job_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    type varchar NOT NULL,
+    key varchar NOT NULL,
+    entity_id uuid NOT NULL,
+    entity_type varchar NOT NULL,
+    status varchar NOT NULL,
+    configuration varchar NOT NULL,
+    result varchar
+);

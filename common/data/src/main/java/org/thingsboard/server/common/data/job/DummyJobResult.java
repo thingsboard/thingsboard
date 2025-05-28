@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs;
+package org.thingsboard.server.common.data.job;
 
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.queue.discovery.QueueRoutingInfo;
-import org.thingsboard.server.queue.discovery.QueueRoutingInfoService;
-
-import java.util.Collections;
-import java.util.List;
-
-@Service
-public class DummyQueueRoutingInfoService implements QueueRoutingInfoService {
+public class DummyJobResult extends JobResult {
 
     @Override
-    public List<QueueRoutingInfo> getAllQueuesRoutingInfo() {
-        return Collections.emptyList();
+    public JobType getJobType() {
+        return JobType.DUMMY;
     }
 
 }

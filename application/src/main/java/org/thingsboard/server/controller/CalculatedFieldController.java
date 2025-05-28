@@ -98,7 +98,8 @@ public class CalculatedFieldController extends BaseController {
 
     public static final int TIMEOUT = 20;
 
-    private static final String TEST_SCRIPT_EXPRESSION = "Execute the Script expression and return the result. The format of request: \n\n"
+    private static final String TEST_SCRIPT_EXPRESSION =
+            "Execute the Script expression and return the result. The format of request: \n\n"
             + MARKDOWN_CODE_BLOCK_START
             + "{\n" +
             "  \"expression\": \"var temp = 0; foreach(element: temperature.values) {temp += element.value;} var avgTemperature = temp / temperature.values.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity.value; return {\\\"adjustedTemperature\\\": adjustedTemperature};\",\n" +
