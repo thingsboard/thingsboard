@@ -120,7 +120,7 @@ public class ProtoUtils {
                 .setEntityType(toProto(msg.getEntityId().getEntityType()))
                 .setEntityIdMSB(msg.getEntityId().getId().getMostSignificantBits())
                 .setEntityIdLSB(msg.getEntityId().getId().getLeastSignificantBits())
-                .setEvent(TransportProtos.ComponentLifecycleEvent.forNumber(msg.getEvent().getProtoNumber()));
+                .setEvent(toProto(msg.getEvent()));
         if (msg.getProfileId() != null) {
             builder.setProfileIdMSB(msg.getProfileId().getId().getMostSignificantBits());
             builder.setProfileIdLSB(msg.getProfileId().getId().getLeastSignificantBits());
@@ -147,7 +147,7 @@ public class ProtoUtils {
         var builder = ComponentLifecycleMsg.builder()
                 .tenantId(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())))
                 .entityId(entityId)
-                .event(ComponentLifecycleEvent.values()[proto.getEventValue()]);
+                .event(fromProto(proto.getEvent()));
         if (!StringUtils.isEmpty(proto.getName())) {
             builder.name(proto.getName());
         }
