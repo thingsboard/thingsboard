@@ -17,11 +17,11 @@
 version: '3.0'
 
 services:
-  redis:
+  valkey:
     volumes:
-      - redis-data:/bitnami/redis/data
+      - valkey-data:/bitnami/valkey/data
 
 volumes:
-  redis-data:
+  valkey-data:
     external:
-      name: ${REDIS_DATA_VOLUME}
+      name: ${VALKEY_DATA_VOLUME}

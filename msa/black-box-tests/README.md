@@ -18,19 +18,19 @@ As result, in REPOSITORY column, next images should be present:
         thingsboard/tb-web-ui
         thingsboard/tb-js-executor
 
-- Run the black box tests (without ui tests) in the [msa/black-box-tests](../black-box-tests) directory with Redis standalone:
+- Run the black box tests (without ui tests) in the [msa/black-box-tests](../black-box-tests) directory with Valkey standalone:
 
         mvn clean install -DblackBoxTests.skip=false
 
-- Run the black box tests (without ui tests) in the [msa/black-box-tests](../black-box-tests) directory with Redis standalone with TLS:
+- Run the black box tests (without ui tests) in the [msa/black-box-tests](../black-box-tests) directory with Valkey standalone with TLS:
 
         mvn clean install -DblackBoxTests.skip=false -DblackBoxTests.redisSsl=true
 
-- Run the black box tests in the [msa/black-box-tests](../black-box-tests) directory with Redis cluster:
+- Run the black box tests in the [msa/black-box-tests](../black-box-tests) directory with the Valkey cluster:
 
         mvn clean install -DblackBoxTests.skip=false -DblackBoxTests.redisCluster=true
 
-- Run the black box tests in the [msa/black-box-tests](../black-box-tests) directory with Redis sentinel:
+- Run the black box tests in the [msa/black-box-tests](../black-box-tests) directory with Valkey sentinel:
 
         mvn clean install -DblackBoxTests.skip=false -DblackBoxTests.redisSentinel=true
 
