@@ -38,6 +38,8 @@ import org.thingsboard.server.dao.model.sql.CustomerEntity;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -202,11 +204,17 @@ public class DeviceRegistrationService {
             renameDevice(deviceId, deviceName);
             log.info("Device renamed to '{}'", deviceName);
 
-            if(createUser)
-                return createUserForCustomer(deviceId, customerId, deviceName, userEmail);
-            else
-                return null;
+            String expiryDate = getStartDateWithOffset(60);
+            String createdDate = getStartDate();
 
+            if (createUser) {
+                createUserForCustomer(deviceId, customerId, deviceName, userEmail);
+            }
+            // Create both attributes on current device
+            addServerAttributesConditionally(deviceId, expiryDate, createdDate, true);
+            // Update only expiryDate on other devices
+            updateExpiryDateForOtherDevices(customerId, deviceId, expiryDate);
+            return "Device assigned successfully.";
         } catch (HttpClientErrorException.Conflict e) {
             // Email already exists
             log.warn("User with email '{}' already exists.", userEmail);
@@ -288,6 +296,65 @@ public class DeviceRegistrationService {
         } catch (Exception e) {
             throw new RuntimeException("Unexpected error while fetching device token: " + e.getMessage(), e);
         }
+    }
+
+    public void addServerAttributesConditionally(String deviceId,
+                                                 String expiryDate, String createdDate,
+                                                 boolean shouldUpdateCreatedDate) {
+        String url = baseUrl + "/api/plugins/telemetry/DEVICE/" + deviceId + "/attributes/SERVER_SCOPE";
+
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("expiryDate", expiryDate);
+        attributes.put("createdDate", createdDate); // Always include both now
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(attributes, getHeaders());
+
+        try {
+            restTemplate.postForEntity(url, request, Void.class);
+            System.out.println("Attributes updated for device: " + deviceId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update attributes for device " + deviceId + ": " + e.getMessage());
+        }
+    }
+
+    public void updateExpiryDateForOtherDevices(String customerId, String excludedDeviceId, String expiryDate) {
+        String url = baseUrl + "/api/customer/" + customerId + "/devices?pageSize=1000&page=0";
+
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(getHeaders()), Map.class);
+            List<Map<String, Object>> devices = (List<Map<String, Object>>) response.getBody().get("data");
+
+            for (Map<String, Object> device : devices) {
+                String deviceId = ((Map<String, Object>) device.get("id")).get("id").toString();
+                if (!deviceId.equals(excludedDeviceId)) {
+                    Map<String, Object> attributes = new HashMap<>();
+                    attributes.put("expiryDate", expiryDate);
+
+                    String deviceAttrUrl = baseUrl + "/api/plugins/telemetry/DEVICE/" + deviceId + "/attributes/SERVER_SCOPE";
+                    HttpEntity<Map<String, Object>> request = new HttpEntity<>(attributes, getHeaders());
+
+                    restTemplate.postForEntity(deviceAttrUrl, request, Void.class);
+                    System.out.println("Updated expiryDate for other device: " + deviceId);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update other devices: " + e.getMessage());
+        }
+    }
+
+
+
+    public static String getStartDate() {
+        LocalDate today = LocalDate.now();  // Get today's date
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // Define format
+        return today.format(formatter); // Return formatted date
+    }
+
+    // Optional: Get start date with custom offset (e.g., backdated or future)
+    public static String getStartDateWithOffset(int daysOffset) {
+        LocalDate date = LocalDate.now().plusDays(daysOffset);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return date.format(formatter);
     }
 
 }
