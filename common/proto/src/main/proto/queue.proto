@@ -87,6 +87,7 @@ message ServiceInfo {
   SystemInfoProto systemInfo = 10;
   repeated string assignedTenantProfiles = 11;
   string label = 12;
+  bool ready = 13;
 }
 
 message SystemInfoProto {
@@ -1832,7 +1833,6 @@ message FromEdqsMsg {
 }
 
 message EdqsEventMsg {
-  string key = 1;
   string objectType = 2;
   bytes data = 3;
   string eventType = 4;

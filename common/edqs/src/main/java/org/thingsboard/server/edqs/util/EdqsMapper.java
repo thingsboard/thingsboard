@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.edqs;
+package org.thingsboard.server.edqs.util;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.edqs.query.EdqsRequest;
-import org.thingsboard.server.common.data.edqs.query.EdqsResponse;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.edqs.EdqsObject;
+import org.thingsboard.server.common.data.edqs.EdqsObjectKey;
 
-public interface EdqsApiService {
+public interface EdqsMapper {
 
-    ListenableFuture<EdqsResponse> processRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request);
+    <T extends EdqsObject> byte[] serialize(T value);
 
-    boolean isSupported();
+    EdqsObject deserialize(ObjectType type, byte[] bytes, boolean onlyKey);
+
+    <T extends EdqsObject> EdqsObjectKey getKey(T object);
 
 }

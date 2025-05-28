@@ -51,7 +51,7 @@ public class Entity implements EdqsObject {
     }
 
     @Override
-    public String key() {
+    public String stringKey() {
         return "e_" + fields.getId().toString();
     }
 
@@ -64,5 +64,7 @@ public class Entity implements EdqsObject {
     public ObjectType type() {
         return ObjectType.fromEntityType(type);
     }
+
+    public record Key(UUID id) implements EdqsObjectKey {}
 
 }

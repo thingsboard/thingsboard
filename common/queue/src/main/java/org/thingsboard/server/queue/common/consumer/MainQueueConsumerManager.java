@@ -25,7 +25,6 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.UpdateConfigTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.UpdatePartitionsTask;
-import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.kafka.TbKafkaConsumerTemplate;
 
 import java.util.Collection;
@@ -50,7 +49,7 @@ import java.util.function.Function;
 public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
 
     @Getter
-    protected final QueueKey queueKey;
+    protected final Object queueKey;
     @Getter
     protected C config;
     protected final MsgPackProcessor<M, C> msgPackProcessor;
@@ -72,7 +71,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     protected volatile boolean stopped;
 
     @Builder
-    public MainQueueConsumerManager(QueueKey queueKey, C config,
+    public MainQueueConsumerManager(Object queueKey, C config,
                                     MsgPackProcessor<M, C> msgPackProcessor,
                                     BiFunction<C, TopicPartitionInfo, TbQueueConsumer<M>> consumerCreator,
                                     ExecutorService consumerExecutor,

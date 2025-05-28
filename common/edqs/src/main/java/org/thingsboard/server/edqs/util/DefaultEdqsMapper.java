@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +35,7 @@ import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.AttributeKv;
 import org.thingsboard.server.common.data.edqs.DataPoint;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
+import org.thingsboard.server.common.data.edqs.EdqsObjectKey;
 import org.thingsboard.server.common.data.edqs.Entity;
 import org.thingsboard.server.common.data.edqs.LatestTsKv;
 import org.thingsboard.server.common.data.edqs.fields.FieldsUtil;
@@ -52,6 +52,7 @@ import org.thingsboard.server.edqs.data.dp.DoubleDataPoint;
 import org.thingsboard.server.edqs.data.dp.JsonDataPoint;
 import org.thingsboard.server.edqs.data.dp.LongDataPoint;
 import org.thingsboard.server.edqs.data.dp.StringDataPoint;
+import org.thingsboard.server.edqs.repo.KeyDictionary;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DataPointProto;
 import org.xerial.snappy.Snappy;
@@ -65,19 +66,29 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EdqsConverter {
+public class DefaultEdqsMapper implements EdqsMapper {
 
     private final EdqsStatsService edqsStatsService;
 
     @Value("${queue.edqs.string_compression_length_threshold:512}")
     private int stringCompressionLengthThreshold;
 
-    private final Map<ObjectType, Converter<? extends EdqsObject>> converters = new HashMap<>();
-    private final Converter<Entity> defaultConverter = new JsonConverter<>(Entity.class);
+    private final Map<ObjectType, Mapper<? extends EdqsObject>> mappers = new HashMap<>();
+    private final Mapper<Entity> defaultMapper = new JsonMapper<>(Entity.class) {
+        @Override
+        public EdqsObjectKey getKey(Entity entity) {
+            return new Entity.Key(entity.getFields().getId());
+        }
+    };
 
     {
-        converters.put(ObjectType.RELATION, new JsonConverter<>(EntityRelation.class));
-        converters.put(ObjectType.ATTRIBUTE_KV, new Converter<AttributeKv>() {
+        mappers.put(ObjectType.RELATION, new JsonMapper<>(EntityRelation.class) {
+            @Override
+            public EdqsObjectKey getKey(EntityRelation relation) {
+                return new EntityRelation.Key(relation.getFrom().getId(), relation.getTo().getId(), relation.getTypeGroup(), relation.getType());
+            }
+        });
+        mappers.put(ObjectType.ATTRIBUTE_KV, new Mapper<AttributeKv>() {
             @Override
             public byte[] serialize(ObjectType type, AttributeKv attributeKv) {
                 var proto = TransportProtos.AttributeKvProto.newBuilder()
@@ -94,12 +105,12 @@ public class EdqsConverter {
             }
 
             @Override
-            public AttributeKv deserialize(ObjectType type, byte[] bytes) throws Exception {
+            public AttributeKv deserialize(ObjectType type, byte[] bytes, boolean onlyKey) throws Exception {
                 TransportProtos.AttributeKvProto proto = TransportProtos.AttributeKvProto.parseFrom(bytes);
                 EntityId entityId = EntityIdFactory.getByTypeAndUuid(ProtoUtils.fromProto(proto.getEntityType()),
                         new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
                 AttributeScope scope = AttributeScope.values()[proto.getScope().getNumber()];
-                DataPoint dataPoint = proto.hasDataPoint() ? fromDataPointProto(proto.getDataPoint()) : null;
+                DataPoint dataPoint = onlyKey || !proto.hasDataPoint() ? null : fromDataPointProto(proto.getDataPoint());
                 return AttributeKv.builder()
                         .entityId(entityId)
                         .scope(scope)
@@ -108,8 +119,13 @@ public class EdqsConverter {
                         .dataPoint(dataPoint)
                         .build();
             }
+
+            @Override
+            public EdqsObjectKey getKey(AttributeKv attributeKv) {
+                return new AttributeKv.Key(attributeKv.getEntityId().getId(), attributeKv.getScope(), KeyDictionary.get(attributeKv.getKey()));
+            }
         });
-        converters.put(ObjectType.LATEST_TS_KV, new Converter<LatestTsKv>() {
+        mappers.put(ObjectType.LATEST_TS_KV, new Mapper<LatestTsKv>() {
             @Override
             public byte[] serialize(ObjectType type, LatestTsKv latestTsKv) {
                 var proto = TransportProtos.LatestTsKvProto.newBuilder()
@@ -125,17 +141,22 @@ public class EdqsConverter {
             }
 
             @Override
-            public LatestTsKv deserialize(ObjectType type, byte[] bytes) throws Exception {
+            public LatestTsKv deserialize(ObjectType type, byte[] bytes, boolean onlyKey) throws Exception {
                 TransportProtos.LatestTsKvProto proto = TransportProtos.LatestTsKvProto.parseFrom(bytes);
                 EntityId entityId = EntityIdFactory.getByTypeAndUuid(ProtoUtils.fromProto(proto.getEntityType()),
                         new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
-                DataPoint dataPoint = proto.hasDataPoint() ? fromDataPointProto(proto.getDataPoint()) : null;
+                DataPoint dataPoint = onlyKey || !proto.hasDataPoint() ? null : fromDataPointProto(proto.getDataPoint());
                 return LatestTsKv.builder()
                         .entityId(entityId)
                         .key(proto.getKey())
                         .version(proto.getVersion())
                         .dataPoint(dataPoint)
                         .build();
+            }
+
+            @Override
+            public EdqsObjectKey getKey(LatestTsKv latestTsKv) {
+                return new LatestTsKv.Key(latestTsKv.getEntityId().getId(), KeyDictionary.get(latestTsKv.getKey()));
             }
         });
     }
@@ -223,30 +244,30 @@ public class EdqsConverter {
 
     @SuppressWarnings("unchecked")
     @SneakyThrows
-    public <T extends EdqsObject> byte[] serialize(ObjectType type, T value) {
-        Converter<T> converter = (Converter<T>) converters.get(type);
-        if (converter != null) {
-            return converter.serialize(type, value);
-        } else {
-            return defaultConverter.serialize(type, (Entity) value);
-        }
+    public <T extends EdqsObject> byte[] serialize(T value) {
+        ObjectType type = value.type();
+        Mapper<T> mapper = (Mapper<T>) mappers.getOrDefault(type, defaultMapper);
+        return mapper.serialize(type, value);
     }
 
     @SneakyThrows
-    public EdqsObject deserialize(ObjectType type, byte[] bytes) {
-        Converter<? extends EdqsObject> converter = converters.get(type);
-        if (converter != null) {
-            return converter.deserialize(type, bytes);
-        } else {
-            return defaultConverter.deserialize(type, bytes);
-        }
+    public EdqsObject deserialize(ObjectType type, byte[] bytes, boolean onlyKey) {
+        Mapper<? extends EdqsObject> mapper = mappers.getOrDefault(type, defaultMapper);
+        return mapper.deserialize(type, bytes, onlyKey);
+    }
+
+    @SuppressWarnings("unchecked")
+    @SneakyThrows
+    public <T extends EdqsObject> EdqsObjectKey getKey(T object) {
+        Mapper<T> mapper = (Mapper<T>) mappers.getOrDefault(object.type(), defaultMapper);
+        return mapper.getKey(object);
     }
 
     @RequiredArgsConstructor
-    private static class JsonConverter<T> implements Converter<T> {
+    private static abstract class JsonMapper<T> implements Mapper<T> {
 
         private static final SimpleModule module = new SimpleModule();
-        private static final ObjectMapper mapper = JsonMapper.builder()
+        private static final ObjectMapper mapper = com.fasterxml.jackson.databind.json.JsonMapper.builder()
                 .visibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
                 .visibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE)
                 .visibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE)
@@ -267,17 +288,19 @@ public class EdqsConverter {
 
         @SneakyThrows
         @Override
-        public T deserialize(ObjectType objectType, byte[] bytes) {
+        public T deserialize(ObjectType objectType, byte[] bytes, boolean onlyKey) {
             return mapper.readValue(bytes, this.type);
         }
 
     }
 
-    private interface Converter<T> {
+    private interface Mapper<T> {
 
         byte[] serialize(ObjectType type, T value) throws Exception;
 
-        T deserialize(ObjectType type, byte[] bytes) throws Exception;
+        T deserialize(ObjectType type, byte[] bytes, boolean onlyKey) throws Exception;
+
+        EdqsObjectKey getKey(T object);
 
     }
 

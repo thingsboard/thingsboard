@@ -18,6 +18,7 @@ package org.thingsboard.server.edqs.util;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.edqs.EdqsObjectKey;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,18 +26,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class VersionsStore {
 
-    private final Cache<String, Long> versions = Caffeine.newBuilder()
-            .expireAfterWrite(24, TimeUnit.HOURS)
-            .build();
+    private final Cache<EdqsObjectKey, Long> versions;
 
-    public boolean isNew(String key, Long version) {
+    public VersionsStore(int ttlMinutes) {
+        this.versions = Caffeine.newBuilder()
+                .expireAfterWrite(ttlMinutes, TimeUnit.MINUTES)
+                .build();
+    }
+
+    public boolean isNew(EdqsObjectKey key, Long version) {
         AtomicBoolean isNew = new AtomicBoolean(false);
         versions.asMap().compute(key, (k, prevVersion) -> {
             if (prevVersion == null || prevVersion <= version) {
                 isNew.set(true);
                 return version;
             } else {
-                log.info("[{}] Version {} is outdated, the latest is {}", key, version, prevVersion);
+                log.debug("[{}] Version {} is outdated, the latest is {}", key, version, prevVersion);
                 return prevVersion;
             }
         });
