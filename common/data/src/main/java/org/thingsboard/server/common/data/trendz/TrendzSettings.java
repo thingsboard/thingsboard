@@ -19,12 +19,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TrendzSettings {
+public class TrendzSettings implements Serializable {
 
     private boolean enabled;
     private String baseUrl;
     private String apiKey;
+
 }

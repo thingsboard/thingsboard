@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +66,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
                 args.add(arg);
             }
         }
-        args.set(0, new TbelCfCtx(arguments));
+        args.set(0, new TbelCfCtx(arguments, getLastUpdateTimestamp()));
         ListenableFuture<JsonNode> resultFuture = ctx.getCalculatedFieldScriptEngine().executeJsonAsync(args.toArray());
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,

@@ -712,7 +712,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     private long findStartSeqIdFromOldestEventIfAny() {
         long startSeqId = 0L;
         try {
-            TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("createdTime"), null, null);
+            TimePageLink pageLink = new TimePageLink(1, 0, null, null, null, null);
             PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), null, null, pageLink);
             if (!edgeEvents.getData().isEmpty()) {
                 startSeqId = edgeEvents.getData().get(0).getSeqId() - 1;
