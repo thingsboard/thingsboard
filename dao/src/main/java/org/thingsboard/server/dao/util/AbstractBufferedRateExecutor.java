@@ -88,12 +88,12 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final LimitedApi myLimitedApi;
 
     public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads,
-                                        int callbackThreads, long pollMs, int printQueriesFreq, BufferedRateExecutorType executorType,
-                                        EntityService entityService, RateLimitService rateLimitService, TbServiceInfoProvider serviceInfoProvider,
-                                        StatsFactory statsFactory, boolean printTenantNames) {
+                                        int callbackThreads, long pollMs, int printQueriesFreq, BufferedRateExecutorType executorType, TbServiceInfoProvider serviceInfoProvider,
+                                        RateLimitService rateLimitService, StatsFactory statsFactory, EntityService entityService, boolean printTenantNames) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
         this.bufferName = executorType.getDisplayName();
+        this.myLimitedApi = resolveLimitedApi(serviceInfoProvider, executorType);
         this.concurrencyLimit = concurrencyLimit;
         this.printQueriesFreq = printQueriesFreq;
         this.queue = new LinkedBlockingDeque<>(queueLimit);
@@ -106,7 +106,6 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
         this.entityService = entityService;
         this.rateLimitService = rateLimitService;
-        this.myLimitedApi = resolveLimitedApi(serviceInfoProvider, executorType);
         this.printTenantNames = printTenantNames;
 
         for (int i = 0; i < dispatcherThreads; i++) {

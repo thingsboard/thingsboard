@@ -54,7 +54,7 @@ public class CassandraBufferedRateReadExecutor extends AbstractBufferedRateExecu
             @Autowired RateLimitService rateLimitService,
             @Autowired(required = false) TbServiceInfoProvider serviceInfoProvider) {
         super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, printQueriesFreq,
-                BufferedRateExecutorType.READ, entityService, rateLimitService, serviceInfoProvider, statsFactory, printTenantNames);
+                BufferedRateExecutorType.READ, serviceInfoProvider, rateLimitService, statsFactory, entityService, printTenantNames);
     }
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
