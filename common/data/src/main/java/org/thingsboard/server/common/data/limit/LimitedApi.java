@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import java.util.Optional;
 import java.util.function.Function;
 
+@Getter
 public enum LimitedApi {
 
     ENTITY_EXPORT(DefaultTenantProfileConfiguration::getTenantEntityExportRateLimit, "entity version creation", true),
@@ -35,11 +36,11 @@ public enum LimitedApi {
     CASSANDRA_WRITE_QUERIES_RULE_ENGINE(DefaultTenantProfileConfiguration::getCassandraWriteQueryTenantRuleEngineRateLimits, "Rule Engine telemetry Cassandra write queries", true),
     CASSANDRA_READ_QUERIES_RULE_ENGINE(DefaultTenantProfileConfiguration::getCassandraReadQueryTenantRuleEngineRateLimits, "Rule Engine telemetry Cassandra read queries", true),
     CASSANDRA_READ_QUERIES_MONOLITH(
-            LimitedApiUtil.merge(
+            RateLimitUtil.merge(
                     DefaultTenantProfileConfiguration::getCassandraReadQueryTenantCoreRateLimits,
                     DefaultTenantProfileConfiguration::getCassandraReadQueryTenantRuleEngineRateLimits), "Telemetry read queries", true),
     CASSANDRA_WRITE_QUERIES_MONOLITH(
-            LimitedApiUtil.merge(
+            RateLimitUtil.merge(
                     DefaultTenantProfileConfiguration::getCassandraWriteQueryTenantCoreRateLimits,
                     DefaultTenantProfileConfiguration::getCassandraWriteQueryTenantRuleEngineRateLimits), "Telemetry write queries", true),
     EDGE_EVENTS(DefaultTenantProfileConfiguration::getEdgeEventRateLimits, "Edge events", true),
@@ -58,11 +59,8 @@ public enum LimitedApi {
     CALCULATED_FIELD_DEBUG_EVENTS("calculated field debug events", true);
 
     private final Function<DefaultTenantProfileConfiguration, String> configExtractor;
-    @Getter
     private final boolean perTenant;
-    @Getter
     private final boolean refillRateLimitIntervally;
-    @Getter
     private final String label;
 
     LimitedApi(Function<DefaultTenantProfileConfiguration, String> configExtractor, String label, boolean perTenant) {

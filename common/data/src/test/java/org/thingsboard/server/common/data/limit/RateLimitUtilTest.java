@@ -24,12 +24,12 @@ import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class LimitedApiUtilTest {
+class RateLimitUtilTest {
 
     @Test
     @DisplayName("LimitedApiUtil should parse single entry correctly")
     void testParseSingleEntry() {
-        List<LimitedApiEntry> entries = LimitedApiUtil.parseConfig("100:60");
+        List<RateLimitEntry> entries = RateLimitUtil.parseConfig("100:60");
 
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).capacity()).isEqualTo(100);
@@ -39,7 +39,7 @@ class LimitedApiUtilTest {
     @Test
     @DisplayName("LimitedApiUtil should parse multiple entries correctly")
     void testParseMultipleEntries() {
-        List<LimitedApiEntry> entries = LimitedApiUtil.parseConfig("100:60,200:30");
+        List<RateLimitEntry> entries = RateLimitUtil.parseConfig("100:60,200:30");
 
         assertThat(entries).hasSize(2);
         assertThat(entries.get(0).capacity()).isEqualTo(100);
@@ -51,8 +51,8 @@ class LimitedApiUtilTest {
     @Test
     @DisplayName("LimitedApiUtil should return empty list for null or empty config")
     void testParseEmptyConfig() {
-        assertThat(LimitedApiUtil.parseConfig(null)).isEmpty();
-        assertThat(LimitedApiUtil.parseConfig("")).isEmpty();
+        assertThat(RateLimitUtil.parseConfig(null)).isEmpty();
+        assertThat(RateLimitUtil.parseConfig("")).isEmpty();
     }
 
     @Test
@@ -64,7 +64,7 @@ class LimitedApiUtilTest {
         // Fake config instance (not used directly in lambda logic)
         DefaultTenantProfileConfiguration config = new DefaultTenantProfileConfiguration();
 
-        String result = LimitedApiUtil.merge(extractor1, extractor2).apply(config);
+        String result = RateLimitUtil.merge(extractor1, extractor2).apply(config);
 
         // Should be: 300:60 (100+200), 50:30, 25:10
         assertThat(result).isEqualTo("25:10,50:30,300:60");
@@ -78,7 +78,7 @@ class LimitedApiUtilTest {
 
         // Fake config instance (not used directly in lambda logic)
         DefaultTenantProfileConfiguration config = new DefaultTenantProfileConfiguration();
-        String result = LimitedApiUtil.merge(extractor1, extractor2).apply(config);
+        String result = RateLimitUtil.merge(extractor1, extractor2).apply(config);
 
         assertThat(result).isEqualTo("100:60");
     }
@@ -91,7 +91,7 @@ class LimitedApiUtilTest {
 
         // Fake config instance (not used directly in lambda logic)
         DefaultTenantProfileConfiguration config = new DefaultTenantProfileConfiguration();
-        String result = LimitedApiUtil.merge(extractor1, extractor2).apply(config);
+        String result = RateLimitUtil.merge(extractor1, extractor2).apply(config);
 
         assertThat(result).isEqualTo("200:10,100:60");
     }

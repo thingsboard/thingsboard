@@ -53,8 +53,8 @@ public class CassandraBufferedRateWriteExecutor extends AbstractBufferedRateExec
             @Autowired EntityService entityService,
             @Autowired RateLimitService rateLimitService,
             @Autowired(required = false) TbServiceInfoProvider serviceInfoProvider) {
-        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, printQueriesFreq, statsFactory,
-                entityService, rateLimitService, serviceInfoProvider, printTenantNames);
+        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, printQueriesFreq,
+                BufferedRateExecutorType.WRITE, entityService, rateLimitService, serviceInfoProvider, statsFactory, printTenantNames);
     }
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
@@ -66,11 +66,6 @@ public class CassandraBufferedRateWriteExecutor extends AbstractBufferedRateExec
     @PreDestroy
     public void stop() {
         super.stop();
-    }
-
-    @Override
-    protected BufferedRateExecutorType getBufferedRateExecutorType() {
-        return BufferedRateExecutorType.WRITE;
     }
 
     @Override

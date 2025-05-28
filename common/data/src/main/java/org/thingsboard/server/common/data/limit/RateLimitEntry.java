@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.common.data.limit;
 
-public record LimitedApiEntry(long capacity, long durationSeconds) {
+public record RateLimitEntry(long capacity, long durationSeconds) {
 
-    public static LimitedApiEntry parse(String s) {
+    public static RateLimitEntry parse(String s) {
         String[] parts = s.split(":");
-        return new LimitedApiEntry(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
+        return new RateLimitEntry(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
     }
 
     @Override

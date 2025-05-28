@@ -28,14 +28,14 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class LimitedApiUtil {
+public class RateLimitUtil {
 
-    public static List<LimitedApiEntry> parseConfig(String config) {
+    public static List<RateLimitEntry> parseConfig(String config) {
         if (config == null || config.isEmpty()) {
             return Collections.emptyList();
         }
         return Arrays.stream(config.split(","))
-                .map(LimitedApiEntry::parse)
+                .map(RateLimitEntry::parse)
                 .toList();
     }
 
@@ -45,18 +45,18 @@ public class LimitedApiUtil {
         return config -> {
             String config1 = configExtractor1.apply(config);
             String config2 = configExtractor2.apply(config);
-            return LimitedApiUtil.mergeStrConfigs(config1, config2); // merges the configs
+            return RateLimitUtil.mergeStrConfigs(config1, config2); // merges the configs
         };
     }
 
     private static String mergeStrConfigs(String firstConfig, String secondConfig) {
-        List<LimitedApiEntry> all = new ArrayList<>();
+        List<RateLimitEntry> all = new ArrayList<>();
         all.addAll(parseConfig(firstConfig));
         all.addAll(parseConfig(secondConfig));
 
         Map<Long, Long> merged = new HashMap<>();
 
-        for (LimitedApiEntry entry : all) {
+        for (RateLimitEntry entry : all) {
             merged.merge(entry.durationSeconds(), entry.capacity(), Long::sum);
         }
 
@@ -67,9 +67,9 @@ public class LimitedApiUtil {
     }
 
     public static boolean isValid(String configStr) {
-        List<LimitedApiEntry> limitedApiEntries = parseConfig(configStr);
+        List<RateLimitEntry> limitedApiEntries = parseConfig(configStr);
         Set<Long> distinctDurations = new HashSet<>();
-        for (LimitedApiEntry entry : limitedApiEntries) {
+        for (RateLimitEntry entry : limitedApiEntries) {
             if (!distinctDurations.add(entry.durationSeconds())) {
                 return false;
             }
@@ -85,7 +85,7 @@ public class LimitedApiUtil {
         Set<Long> distinctDurations = new HashSet<>();
         return parseConfig(configStr).stream()
                 .filter(entry -> distinctDurations.add(entry.durationSeconds()))
-                .map(LimitedApiEntry::toString)
+                .map(RateLimitEntry::toString)
                 .collect(Collectors.joining(","));
     }
 

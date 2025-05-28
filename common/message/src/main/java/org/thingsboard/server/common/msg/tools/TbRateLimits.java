@@ -21,8 +21,8 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.local.LocalBucket;
 import io.github.bucket4j.local.LocalBucketBuilder;
 import lombok.Getter;
-import org.thingsboard.server.common.data.limit.LimitedApiEntry;
-import org.thingsboard.server.common.data.limit.LimitedApiUtil;
+import org.thingsboard.server.common.data.limit.RateLimitEntry;
+import org.thingsboard.server.common.data.limit.RateLimitUtil;
 
 import java.time.Duration;
 import java.util.List;
@@ -41,12 +41,12 @@ public class TbRateLimits {
     }
 
     public TbRateLimits(String limitsConfiguration, boolean refillIntervally) {
-        List<LimitedApiEntry> limitedApiEntries = LimitedApiUtil.parseConfig(limitsConfiguration);
+        List<RateLimitEntry> limitedApiEntries = RateLimitUtil.parseConfig(limitsConfiguration);
         if (limitedApiEntries.isEmpty()) {
             throw new IllegalArgumentException("Failed to parse rate limits configuration: " + limitsConfiguration);
         }
         LocalBucketBuilder localBucket = Bucket.builder();
-        for (LimitedApiEntry entry : limitedApiEntries) {
+        for (RateLimitEntry entry : limitedApiEntries) {
             BandwidthBuilder.BandwidthBuilderRefillStage bandwidthBuilder = Bandwidth.builder().capacity(entry.capacity());
             Bandwidth bandwidth = refillIntervally ?
                     bandwidthBuilder.refillIntervally(entry.capacity(), Duration.ofSeconds(entry.durationSeconds())).build() :

@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfileType;
-import org.thingsboard.server.common.data.limit.LimitedApiUtil;
+import org.thingsboard.server.common.data.limit.RateLimitUtil;
 import org.thingsboard.server.common.data.validation.RateLimit;
 
 import java.io.Serial;
@@ -238,41 +238,41 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     @Deprecated(forRemoval = true, since = "4.1")
     public void deduplicateRateLimitsConfigs() {
-        this.transportTenantMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportTenantMsgRateLimit);
-        this.transportTenantTelemetryMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportTenantTelemetryMsgRateLimit);
-        this.transportTenantTelemetryDataPointsRateLimit = LimitedApiUtil.deduplicateByDuration(transportTenantTelemetryDataPointsRateLimit);
+        this.transportTenantMsgRateLimit = RateLimitUtil.deduplicateByDuration(transportTenantMsgRateLimit);
+        this.transportTenantTelemetryMsgRateLimit = RateLimitUtil.deduplicateByDuration(transportTenantTelemetryMsgRateLimit);
+        this.transportTenantTelemetryDataPointsRateLimit = RateLimitUtil.deduplicateByDuration(transportTenantTelemetryDataPointsRateLimit);
 
-        this.transportDeviceMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportDeviceMsgRateLimit);
-        this.transportDeviceTelemetryMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportDeviceTelemetryMsgRateLimit);
-        this.transportDeviceTelemetryDataPointsRateLimit = LimitedApiUtil.deduplicateByDuration(transportDeviceTelemetryDataPointsRateLimit);
+        this.transportDeviceMsgRateLimit = RateLimitUtil.deduplicateByDuration(transportDeviceMsgRateLimit);
+        this.transportDeviceTelemetryMsgRateLimit = RateLimitUtil.deduplicateByDuration(transportDeviceTelemetryMsgRateLimit);
+        this.transportDeviceTelemetryDataPointsRateLimit = RateLimitUtil.deduplicateByDuration(transportDeviceTelemetryDataPointsRateLimit);
 
-        this.transportGatewayMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportGatewayMsgRateLimit);
-        this.transportGatewayTelemetryMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportGatewayTelemetryMsgRateLimit);
-        this.transportGatewayTelemetryDataPointsRateLimit = LimitedApiUtil.deduplicateByDuration(transportGatewayTelemetryDataPointsRateLimit);
+        this.transportGatewayMsgRateLimit = RateLimitUtil.deduplicateByDuration(transportGatewayMsgRateLimit);
+        this.transportGatewayTelemetryMsgRateLimit = RateLimitUtil.deduplicateByDuration(transportGatewayTelemetryMsgRateLimit);
+        this.transportGatewayTelemetryDataPointsRateLimit = RateLimitUtil.deduplicateByDuration(transportGatewayTelemetryDataPointsRateLimit);
 
-        this.transportGatewayDeviceMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportGatewayDeviceMsgRateLimit);
-        this.transportGatewayDeviceTelemetryMsgRateLimit = LimitedApiUtil.deduplicateByDuration(transportGatewayDeviceTelemetryMsgRateLimit);
-        this.transportGatewayDeviceTelemetryDataPointsRateLimit = LimitedApiUtil.deduplicateByDuration(transportGatewayDeviceTelemetryDataPointsRateLimit);
+        this.transportGatewayDeviceMsgRateLimit = RateLimitUtil.deduplicateByDuration(transportGatewayDeviceMsgRateLimit);
+        this.transportGatewayDeviceTelemetryMsgRateLimit = RateLimitUtil.deduplicateByDuration(transportGatewayDeviceTelemetryMsgRateLimit);
+        this.transportGatewayDeviceTelemetryDataPointsRateLimit = RateLimitUtil.deduplicateByDuration(transportGatewayDeviceTelemetryDataPointsRateLimit);
 
-        this.tenantEntityExportRateLimit = LimitedApiUtil.deduplicateByDuration(tenantEntityExportRateLimit);
-        this.tenantEntityImportRateLimit = LimitedApiUtil.deduplicateByDuration(tenantEntityImportRateLimit);
-        this.tenantNotificationRequestsRateLimit = LimitedApiUtil.deduplicateByDuration(tenantNotificationRequestsRateLimit);
-        this.tenantNotificationRequestsPerRuleRateLimit = LimitedApiUtil.deduplicateByDuration(tenantNotificationRequestsPerRuleRateLimit);
+        this.tenantEntityExportRateLimit = RateLimitUtil.deduplicateByDuration(tenantEntityExportRateLimit);
+        this.tenantEntityImportRateLimit = RateLimitUtil.deduplicateByDuration(tenantEntityImportRateLimit);
+        this.tenantNotificationRequestsRateLimit = RateLimitUtil.deduplicateByDuration(tenantNotificationRequestsRateLimit);
+        this.tenantNotificationRequestsPerRuleRateLimit = RateLimitUtil.deduplicateByDuration(tenantNotificationRequestsPerRuleRateLimit);
 
-        this.cassandraReadQueryTenantCoreRateLimits = LimitedApiUtil.deduplicateByDuration(cassandraReadQueryTenantCoreRateLimits);
-        this.cassandraWriteQueryTenantCoreRateLimits = LimitedApiUtil.deduplicateByDuration(cassandraWriteQueryTenantCoreRateLimits);
-        this.cassandraReadQueryTenantRuleEngineRateLimits = LimitedApiUtil.deduplicateByDuration(cassandraReadQueryTenantRuleEngineRateLimits);
-        this.cassandraWriteQueryTenantRuleEngineRateLimits = LimitedApiUtil.deduplicateByDuration(cassandraWriteQueryTenantRuleEngineRateLimits);
+        this.cassandraReadQueryTenantCoreRateLimits = RateLimitUtil.deduplicateByDuration(cassandraReadQueryTenantCoreRateLimits);
+        this.cassandraWriteQueryTenantCoreRateLimits = RateLimitUtil.deduplicateByDuration(cassandraWriteQueryTenantCoreRateLimits);
+        this.cassandraReadQueryTenantRuleEngineRateLimits = RateLimitUtil.deduplicateByDuration(cassandraReadQueryTenantRuleEngineRateLimits);
+        this.cassandraWriteQueryTenantRuleEngineRateLimits = RateLimitUtil.deduplicateByDuration(cassandraWriteQueryTenantRuleEngineRateLimits);
 
-        this.edgeEventRateLimits = LimitedApiUtil.deduplicateByDuration(edgeEventRateLimits);
-        this.edgeEventRateLimitsPerEdge = LimitedApiUtil.deduplicateByDuration(edgeEventRateLimitsPerEdge);
-        this.edgeUplinkMessagesRateLimits = LimitedApiUtil.deduplicateByDuration(edgeUplinkMessagesRateLimits);
-        this.edgeUplinkMessagesRateLimitsPerEdge = LimitedApiUtil.deduplicateByDuration(edgeUplinkMessagesRateLimitsPerEdge);
+        this.edgeEventRateLimits = RateLimitUtil.deduplicateByDuration(edgeEventRateLimits);
+        this.edgeEventRateLimitsPerEdge = RateLimitUtil.deduplicateByDuration(edgeEventRateLimitsPerEdge);
+        this.edgeUplinkMessagesRateLimits = RateLimitUtil.deduplicateByDuration(edgeUplinkMessagesRateLimits);
+        this.edgeUplinkMessagesRateLimitsPerEdge = RateLimitUtil.deduplicateByDuration(edgeUplinkMessagesRateLimitsPerEdge);
 
-        this.wsUpdatesPerSessionRateLimit = LimitedApiUtil.deduplicateByDuration(wsUpdatesPerSessionRateLimit);
+        this.wsUpdatesPerSessionRateLimit = RateLimitUtil.deduplicateByDuration(wsUpdatesPerSessionRateLimit);
 
-        this.tenantServerRestLimitsConfiguration = LimitedApiUtil.deduplicateByDuration(tenantServerRestLimitsConfiguration);
-        this.customerServerRestLimitsConfiguration = LimitedApiUtil.deduplicateByDuration(customerServerRestLimitsConfiguration);
+        this.tenantServerRestLimitsConfiguration = RateLimitUtil.deduplicateByDuration(tenantServerRestLimitsConfiguration);
+        this.customerServerRestLimitsConfiguration = RateLimitUtil.deduplicateByDuration(customerServerRestLimitsConfiguration);
     }
 
 }
