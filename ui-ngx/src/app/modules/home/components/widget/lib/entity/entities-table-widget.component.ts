@@ -42,7 +42,7 @@ import {
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isNumber, isObject, isUndefined } from '@core/utils';
+import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -75,6 +75,8 @@ import {
   getHeaderTitle,
   getRowStyleInfo,
   getTableCellButtonActions,
+  isValidPageStepCount,
+  isValidPageStepIncrement,
   noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
@@ -107,6 +109,7 @@ import { AggregationType } from '@shared/models/time/time.models';
 import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
+import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -311,10 +314,10 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'entity, ctx');
 
     const pageSize = this.settings.defaultPageSize;
-    let pageStepIncrement = this.settings.pageStepIncrement;
-    let pageStepCount = this.settings.pageStepCount;
+    let pageStepIncrement = isValidPageStepIncrement(this.settings.pageStepIncrement) ? this.settings.pageStepIncrement : null;
+    let pageStepCount = isValidPageStepCount(this.settings.pageStepCount) ? this.settings.pageStepCount : null;
 
-    if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
+    if (Number.isInteger(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
 
@@ -475,14 +478,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
         this.stylesInfo[dataKey.def] = getCellStyleInfo(this.ctx, keySettings, 'value, entity, ctx');
         const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, entity, ctx');
-        const contentInfo: CellContentInfo = {
+        const decimals = (dataKey.decimals || dataKey.decimals === 0) ? dataKey.decimals : this.ctx.widgetConfig.decimals;
+        const units = dataKey.units || this.ctx.widgetConfig.units;
+        const valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units, decimals, showZeroDecimals: true});
+        this.contentsInfo[dataKey.def] = {
           contentFunction: contentFunctionInfo,
-          units: dataKey.units,
-          decimals: dataKey.decimals
+          valueFormat
         };
-        this.contentsInfo[dataKey.def] = contentInfo;
-        this.contentsInfo[dataKey.def].units = dataKey.units;
-        this.contentsInfo[dataKey.def].decimals = dataKey.decimals;
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
         this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings, this.ctx);
         this.columnSelectionAvailability[dataKey.def] = getColumnSelectionAvailability(keySettings);
@@ -513,7 +515,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig({
       panelClass: 'tb-panel-container',
       backdropClass: 'cdk-overlay-transparent-backdrop',
@@ -629,7 +631,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   public rowStyle(entity: EntityData, row: number): Observable<any> {
     let style$: Observable<any>;
-    let res = this.rowStyleCache[row];
+    const res = this.rowStyleCache[row];
     if (!res) {
       style$ = this.rowStylesInfo.pipe(
         map(styleInfo => {
@@ -667,7 +669,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     let style$: Observable<any>;
     const col = this.columns.indexOf(key);
     const index = row * this.columns.length + col;
-    let res = this.cellStyleCache[index];
+    const res = this.cellStyleCache[index];
     if (!res) {
       if (entity && key) {
         style$ = this.stylesInfo[key.def].pipe(
@@ -717,7 +719,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     let content$: Observable<SafeHtml>;
     const col = this.columns.indexOf(key);
     const index = row * this.columns.length + col;
-    let res = this.cellContentCache[index];
+    const res = this.cellContentCache[index];
     if (isUndefined(res)) {
       const contentInfo = this.contentsInfo[key.def];
       content$ = contentInfo.contentFunction.pipe(
@@ -766,9 +768,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
         }
       }
-      const decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : this.ctx.widgetConfig.decimals;
-      const units = contentInfo.units || this.ctx.widgetConfig.units;
-      return this.ctx.utils.formatValue(value, decimals, units, true);
+      return contentInfo.valueFormat.format(value);
     } else {
       return '';
     }

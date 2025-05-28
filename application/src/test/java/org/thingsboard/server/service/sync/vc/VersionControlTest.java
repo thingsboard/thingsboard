@@ -40,6 +40,9 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -113,6 +116,8 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.controller.TbResourceControllerTest.TEST_DATA;
+import static org.thingsboard.server.controller.TbResourceControllerTest.JS_TEST_FILE_NAME;
 
 @DaoSqlTest
 public class VersionControlTest extends AbstractControllerTest {
@@ -621,6 +626,7 @@ public class VersionControlTest extends AbstractControllerTest {
             assertThat(importedField.getName()).isEqualTo(deviceCalculatedField.getName());
             assertThat(importedField.getType()).isEqualTo(deviceCalculatedField.getType());
             assertThat(importedField.getId()).isNotEqualTo(deviceCalculatedField.getId());
+            assertThat(importedField.getConfiguration().getArguments().get("T").getRefEntityId()).isEqualTo(importedAsset.getId());
         });
 
         List<CalculatedField> importedAssetCalculatedFields = findCalculatedFieldsByEntityId(importedAsset.getId());
@@ -629,6 +635,7 @@ public class VersionControlTest extends AbstractControllerTest {
             assertThat(importedField.getName()).isEqualTo(assetCalculatedField.getName());
             assertThat(importedField.getType()).isEqualTo(assetCalculatedField.getType());
             assertThat(importedField.getId()).isNotEqualTo(assetCalculatedField.getId());
+            assertThat(importedField.getConfiguration().getArguments().get("T").getRefEntityId()).isEqualTo(importedDevice.getId());
         });
     }
 
@@ -644,6 +651,26 @@ public class VersionControlTest extends AbstractControllerTest {
         assertThat(importedCalculatedField.getName()).isEqualTo(calculatedField.getName());
         assertThat(importedCalculatedField.getConfiguration()).isEqualTo(calculatedField.getConfiguration());
         assertThat(importedCalculatedField.getType()).isEqualTo(calculatedField.getType());
+    }
+
+    @Test
+    public void testResourceVc_sameTenant() throws Exception {
+        TbResourceInfo resourceInfo = createResource("Test resource");
+        String versionId = createVersion("resources", EntityType.TB_RESOURCE);
+
+        TbResource resource = findResource(resourceInfo.getName());
+
+        loadVersion(versionId, EntityType.TB_RESOURCE);
+        TbResource importedResource = findResource(resource.getName());
+        checkImportedEntity(tenantId1, resource, tenantId1, importedResource);
+        checkImportedResourceData(resource, importedResource);
+    }
+
+    protected void checkImportedResourceData(TbResource resource, TbResource importedResource) {
+        assertThat(importedResource.getName()).isEqualTo(resource.getName());
+        assertThat(importedResource.getData()).isEqualTo(resource.getData());
+        assertThat(importedResource.getResourceKey()).isEqualTo(resource.getResourceKey());
+        assertThat(importedResource.getResourceType()).isEqualTo(resource.getResourceType());
     }
 
     private <E extends ExportableEntity<?> & HasTenantId> void checkImportedEntity(TenantId tenantId1, E initialEntity, TenantId tenantId2, E importedEntity) {
@@ -1124,6 +1151,24 @@ public class VersionControlTest extends AbstractControllerTest {
 
     private List<CalculatedField> findCalculatedFieldsByEntityId(EntityId entityId) throws Exception {
         return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields?", new TypeReference<PageData<CalculatedField>>() {}, new PageLink(100, 0)).getData();
+    }
+
+    private TbResourceInfo createResource(String name) {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JKS);
+        resource.setTitle(name);
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setEncodedData(TEST_DATA);
+
+        return saveTbResource(resource);
+    }
+
+    private TbResourceInfo saveTbResource(TbResource tbResource) {
+        return doPost("/api/resource", tbResource, TbResourceInfo.class);
+    }
+
+    private TbResource findResource(String name) throws Exception {
+        return doGetTypedWithPageLink("/api/resource?", new TypeReference<PageData<TbResource>>() {}, new PageLink(100, 0, name)).getData().get(0);
     }
 
 }

@@ -91,7 +91,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     @Override
     public void init() {
         queueAdmin.createTopicIfNotExists(responseTemplate.getTopic());
-        requestTemplate.init();
         responseTemplate.subscribe();
         executor.submit(this::mainLoop);
     }
@@ -263,7 +262,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         TopicPartitionInfo tpi = TopicPartitionInfo.builder()
                 .topic(requestTemplate.getDefaultTopic())
                 .partition(partition)
-                .useInternalPartition(partition != null)
                 .build();
         requestTemplate.send(tpi, request, new TbQueueCallback() {
             @Override

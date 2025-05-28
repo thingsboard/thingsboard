@@ -177,17 +177,20 @@ export class MarkerShapeSettingsComponent implements ControlValueAccessor, OnIni
           );
         });
       } else if (this.markerType === MarkerType.icon) {
-        const ctx: any = {
-          iconContainer: (this.modelValue as MarkerIconSettings).iconContainer,
-          icon: (this.modelValue as MarkerIconSettings).icon,
-          color: this.modelValue.color.color,
-          trip: this.trip
-        };
-        const markerIconShapesPopover = this.popoverService.displayPopover(trigger, this.renderer,
-          this.viewContainerRef, MarkerIconShapesComponent, 'left', true, null,
-          ctx,
-          {},
-          {}, {}, true);
+        const markerIconShapesPopover = this.popoverService.displayPopover({
+          trigger,
+          renderer: this.renderer,
+          componentType: MarkerIconShapesComponent,
+          hostView: this.viewContainerRef,
+          preferredPlacement: 'left',
+          context: {
+            iconContainer: (this.modelValue as MarkerIconSettings).iconContainer,
+            icon: (this.modelValue as MarkerIconSettings).icon,
+            color: this.modelValue.color.color,
+            trip: this.trip
+          },
+          isModal: true
+        });
         markerIconShapesPopover.tbComponentRef.instance.popover = markerIconShapesPopover;
         markerIconShapesPopover.tbComponentRef.instance.markerIconSelected.subscribe((iconInfo) => {
           markerIconShapesPopover.hide();

@@ -17,7 +17,7 @@ package org.thingsboard.server.edqs.data.dp;
 
 import lombok.Getter;
 import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.edqs.util.TbStringPool;
+import org.thingsboard.common.util.TbStringPool;
 
 public class JsonDataPoint extends AbstractDataPoint {
 

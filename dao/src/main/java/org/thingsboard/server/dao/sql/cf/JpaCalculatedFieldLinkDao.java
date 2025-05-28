@@ -55,6 +55,11 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     }
 
     @Override
+    public List<CalculatedFieldLink> findCalculatedFieldLinksByTenantId(TenantId tenantId) {
+        return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAllByTenantId(tenantId.getId()));
+    }
+
+    @Override
     public List<CalculatedFieldLink> findAll() {
         return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAll());
     }
@@ -63,6 +68,12 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     public PageData<CalculatedFieldLink> findAll(PageLink pageLink) {
         log.debug("Try to find calculated field links by pageLink [{}]", pageLink);
         return nativeCalculatedFieldRepository.findCalculatedFieldLinks(DaoUtil.toPageable(pageLink));
+    }
+
+    @Override
+    public PageData<CalculatedFieldLink> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.debug("Try to find calculated field links by tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        return DaoUtil.toPageData(calculatedFieldLinkRepository.findAllByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

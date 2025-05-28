@@ -551,11 +551,15 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void processEdgeNotification(EdgeId edgeId, ToEdgeNotificationMsg toEdgeNotificationMsg) {
-        var serviceIdOpt = Optional.ofNullable(edgeIdServiceIdCache.get(edgeId));
-        serviceIdOpt.ifPresentOrElse(
-                serviceId -> pushMsgToEdgeNotification(toEdgeNotificationMsg, serviceId.get()),
-                () -> broadcastEdgeNotification(edgeId, toEdgeNotificationMsg)
-        );
+        if (edgesEnabled) {
+            var serviceIdOpt = Optional.ofNullable(edgeIdServiceIdCache.get(edgeId));
+            serviceIdOpt.ifPresentOrElse(
+                    serviceId -> pushMsgToEdgeNotification(toEdgeNotificationMsg, serviceId.get()),
+                    () -> broadcastEdgeNotification(edgeId, toEdgeNotificationMsg)
+            );
+        } else {
+            log.trace("Edges disabled. Ignoring edge notification {} for edgeId: {}", toEdgeNotificationMsg, edgeId);
+        }
     }
 
     private void pushMsgToEdgeNotification(ToEdgeNotificationMsg toEdgeNotificationMsg, String serviceId) {
@@ -575,7 +579,8 @@ public class DefaultTbClusterService implements TbClusterService {
         }
     }
 
-    private void broadcast(ComponentLifecycleMsg msg) {
+    @Override
+    public void broadcast(ComponentLifecycleMsg msg) {
         ComponentLifecycleMsgProto componentLifecycleMsgProto = toProto(msg);
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
         Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
@@ -590,6 +595,7 @@ public class DefaultTbClusterService implements TbClusterService {
                 || entityType.equals(EntityType.ENTITY_VIEW)
                 || entityType.equals(EntityType.NOTIFICATION_RULE)
                 || entityType.equals(EntityType.CALCULATED_FIELD)
+                || entityType.equals(EntityType.JOB)
         ) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);

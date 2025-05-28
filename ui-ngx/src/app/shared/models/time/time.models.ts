@@ -1406,3 +1406,28 @@ export const calculateInterval = (startTime: number, endTime: number,
 
 export const getCurrentTimeForComparison = (timeForComparison: moment_.unitOfTime.DurationConstructor, tz?: string): moment_.Moment =>
   getCurrentTime(tz).subtract(1, timeForComparison);
+
+export const getTimePageLinkInterval = (timewindow: Timewindow): {startTime?: number; endTime?: number} => {
+  const interval: {startTime?: number; endTime?: number} = {};
+  switch (timewindow.history.historyType) {
+    case HistoryWindowType.LAST_INTERVAL:
+      const currentTime = Date.now();
+      interval.startTime = currentTime - timewindow.history.timewindowMs;
+      interval.endTime = currentTime;
+      break;
+    case HistoryWindowType.FIXED:
+      interval.startTime = timewindow.history.fixedTimewindow.startTimeMs;
+      interval.endTime = timewindow.history.fixedTimewindow.endTimeMs;
+      break;
+    case HistoryWindowType.INTERVAL:
+      const startEndTime = calculateIntervalStartEndTime(timewindow.history.quickInterval);
+      interval.startTime = startEndTime[0];
+      interval.endTime = startEndTime[1];
+      break;
+    case HistoryWindowType.FOR_ALL_TIME:
+      interval.startTime = null;
+      interval.endTime = null;
+      break;
+  }
+  return interval;
+}

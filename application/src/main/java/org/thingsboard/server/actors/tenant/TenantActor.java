@@ -28,6 +28,7 @@ import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.TbStringActorId;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldManagerActorCreator;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldStateRestoreMsg;
 import org.thingsboard.server.actors.device.DeviceActorCreator;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -49,6 +50,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
@@ -98,6 +100,7 @@ public class TenantActor extends RuleChainManagerActor {
                                     () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
                                     () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
                                     () -> true);
+                            cfActor.tellWithHighPriority(new CalculatedFieldCacheInitMsg(tenantId));
                         } catch (Exception e) {
                             log.info("[{}] Failed to init CF Actor.", tenantId, e);
                         }
@@ -126,6 +129,10 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     public void destroy(TbActorStopReason stopReason, Throwable cause) {
         log.info("[{}] Stopping tenant actor.", tenantId);
+        if (cfActor != null) {
+            ctx.stop(cfActor.getActorId());
+            cfActor = null;
+        }
     }
 
     @Override
@@ -172,6 +179,8 @@ public class TenantActor extends RuleChainManagerActor {
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
                 onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;
+            case CF_CACHE_INIT_MSG:
+            case CF_INIT_PROFILE_ENTITY_MSG:
             case CF_INIT_MSG:
             case CF_LINK_INIT_MSG:
             case CF_STATE_RESTORE_MSG:
@@ -190,7 +199,12 @@ public class TenantActor extends RuleChainManagerActor {
 
     private void onToCalculatedFieldSystemActorMsg(ToCalculatedFieldSystemMsg msg, boolean priority) {
         if (cfActor == null) {
-            log.warn("[{}] CF Actor is not initialized.", tenantId);
+            if (msg instanceof CalculatedFieldStateRestoreMsg) {
+                log.warn("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
+            } else {
+                log.debug("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
+            }
+            msg.getCallback().onSuccess();
             return;
         }
         if (priority) {
@@ -266,6 +280,7 @@ public class TenantActor extends RuleChainManagerActor {
                                 () -> DefaultActorService.CF_MANAGER_DISPATCHER_NAME,
                                 () -> new CalculatedFieldManagerActorCreator(systemContext, tenantId),
                                 () -> true);
+                        cfActor.tellWithHighPriority(new CalculatedFieldCacheInitMsg(tenantId));
                     } catch (Exception e) {
                         log.info("[{}] Failed to init CF Actor.", tenantId, e);
                     }
@@ -277,6 +292,7 @@ public class TenantActor extends RuleChainManagerActor {
             } else {
                 if (cfActor != null) {
                     ctx.stop(cfActor.getActorId());
+                    cfActor = null;
                 }
                 if (ruleChainsInitialized) {
                     log.info("Tenant {} is no longer managed by this service, stopping rule chains", tenantId);

@@ -64,11 +64,9 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.AggregationParams;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
-import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DataType;
@@ -78,7 +76,6 @@ import org.thingsboard.server.common.data.kv.IntervalType;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -92,6 +89,7 @@ import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.telemetry.AttributeData;
+import org.thingsboard.server.service.telemetry.TbTelemetryService;
 import org.thingsboard.server.service.telemetry.TsData;
 
 import java.util.ArrayList;
@@ -154,6 +152,9 @@ public class TelemetryController extends BaseController {
 
     @Autowired
     private AccessValidator accessValidator;
+
+    @Autowired
+    private TbTelemetryService tbTelemetryService;
 
     @Value("${transport.json.max_string_value_length:0}")
     private int maxStringValueLength;
@@ -313,30 +314,21 @@ public class TelemetryController extends BaseController {
             @Parameter(description = "A string value representing the timezone that will be used to calculate exact timestamps for 'WEEK', 'WEEK_ISO', 'MONTH' and 'QUARTER' interval types.")
             @RequestParam(name = "timeZone", required = false) String timeZone,
             @Parameter(description = "An integer value that represents a max number of time series data points to fetch." +
-                    " This parameter is used only in the case if 'agg' parameter is set to 'NONE'.", schema = @Schema(defaultValue = "100"))
+                                     " This parameter is used only in the case if 'agg' parameter is set to 'NONE'.", schema = @Schema(defaultValue = "100"))
             @RequestParam(name = "limit", defaultValue = "100") Integer limit,
             @Parameter(description = "A string value representing the aggregation function. " +
-                    "If the interval is not specified, 'agg' parameter will use 'NONE' value.",
+                                     "If the interval is not specified, 'agg' parameter will use 'NONE' value.",
                     schema = @Schema(allowableValues = {"MIN", "MAX", "AVG", "SUM", "COUNT", "NONE"}))
             @RequestParam(name = "agg", defaultValue = "NONE") String aggStr,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
             @Parameter(description = STRICT_DATA_TYPES_DESCRIPTION)
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
-        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
-                (result, tenantId, entityId) -> {
-                    AggregationParams params;
-                    Aggregation agg = Aggregation.valueOf(aggStr);
-                    if (Aggregation.NONE.equals(agg)) {
-                        params = AggregationParams.none();
-                    } else if (intervalType == null || IntervalType.MILLISECONDS.equals(intervalType)) {
-                        params = interval == 0L ? AggregationParams.none() : AggregationParams.milliseconds(agg, interval);
-                    } else {
-                        params = AggregationParams.calendar(agg, intervalType, timeZone);
-                    }
-                    List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, params, limit, orderBy)).collect(Collectors.toList());
-                    Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
-                });
+        DeferredResult<ResponseEntity> response = new DeferredResult<>();
+        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), toKeysList(keys), startTs, endTs,
+                        intervalType, interval, timeZone, limit, Aggregation.valueOf(aggStr), orderBy, useStrictDataTypes, getCurrentUser()),
+                getTsKvListCallback(response, useStrictDataTypes), MoreExecutors.directExecutor());
+        return response;
     }
 
     @ApiOperation(value = "Save device attributes (saveDeviceAttributes)",
@@ -345,12 +337,12 @@ public class TelemetryController extends BaseController {
                     + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = SAVE_ATTIRIBUTES_STATUS_OK +
-                    "Platform creates an audit log event about device attributes updates with action type 'ATTRIBUTES_UPDATED', " +
-                    "and also sends event msg to the rule engine with msg type 'ATTRIBUTES_UPDATED'."),
+                                                             "Platform creates an audit log event about device attributes updates with action type 'ATTRIBUTES_UPDATED', " +
+                                                             "and also sends event msg to the rule engine with msg type 'ATTRIBUTES_UPDATED'."),
             @ApiResponse(responseCode = "400", description = SAVE_ATTIRIBUTES_STATUS_BAD_REQUEST),
             @ApiResponse(responseCode = "401", description = "User is not authorized to save device attributes for selected device. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(responseCode = "500", description = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about device attributes updates with action type 'ATTRIBUTES_UPDATED' that includes an error stacktrace."),
+                                                             "Platform creates an audit log event about device attributes updates with action type 'ATTRIBUTES_UPDATED' that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.POST)
@@ -468,11 +460,11 @@ public class TelemetryController extends BaseController {
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Time series for the selected keys in the request was removed. " +
-                    "Platform creates an audit log event about entity time series removal with action type 'TIMESERIES_DELETED'."),
+                                                             "Platform creates an audit log event about entity time series removal with action type 'TIMESERIES_DELETED'."),
             @ApiResponse(responseCode = "400", description = "Platform returns a bad request in case if keys list is empty or start and end timestamp values is empty when deleteAllDataForKeys is set to false."),
             @ApiResponse(responseCode = "401", description = "User is not authorized to delete entity time series for selected entity. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(responseCode = "500", description = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about entity time series removal with action type 'TIMESERIES_DELETED' that includes an error stacktrace."),
+                                                             "Platform creates an audit log event about entity time series removal with action type 'TIMESERIES_DELETED' that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/delete", method = RequestMethod.DELETE)
@@ -549,11 +541,11 @@ public class TelemetryController extends BaseController {
                     "Referencing a non-existing Device Id will cause an error" + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Device attributes was removed for the selected keys in the request. " +
-                    "Platform creates an audit log event about device attributes removal with action type 'ATTRIBUTES_DELETED'."),
+                                                             "Platform creates an audit log event about device attributes removal with action type 'ATTRIBUTES_DELETED'."),
             @ApiResponse(responseCode = "400", description = "Platform returns a bad request in case if keys or scope are not specified."),
             @ApiResponse(responseCode = "401", description = "User is not authorized to delete device attributes for selected entity. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(responseCode = "500", description = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about device attributes removal with action type 'ATTRIBUTES_DELETED' that includes an error stacktrace."),
+                                                             "Platform creates an audit log event about device attributes removal with action type 'ATTRIBUTES_DELETED' that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.DELETE)
@@ -571,11 +563,11 @@ public class TelemetryController extends BaseController {
                     INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Entity attributes was removed for the selected keys in the request. " +
-                    "Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED'."),
+                                                             "Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED'."),
             @ApiResponse(responseCode = "400", description = "Platform returns a bad request in case if keys or scope are not specified."),
             @ApiResponse(responseCode = "401", description = "User is not authorized to delete entity attributes for selected entity. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(responseCode = "500", description = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED' that includes an error stacktrace."),
+                                                             "Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED' that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{scope}", method = RequestMethod.DELETE)

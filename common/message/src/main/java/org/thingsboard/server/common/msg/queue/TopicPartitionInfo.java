@@ -57,10 +57,6 @@ public class TopicPartitionInfo {
         this(topic, tenantId, partition, false, myPartition);
     }
 
-    public TopicPartitionInfo newByTopic(String topic) {
-        return new TopicPartitionInfo(topic, this.tenantId, this.partition, this.useInternalPartition, this.myPartition);
-    }
-
     public String getTopic() {
         return topic;
     }
@@ -90,9 +86,7 @@ public class TopicPartitionInfo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TopicPartitionInfo that = (TopicPartitionInfo) o;
-        return topic.equals(that.topic) &&
-                Objects.equals(tenantId, that.tenantId) &&
-                Objects.equals(partition, that.partition) &&
+        return Objects.equals(partition, that.partition) &&
                 fullTopicName.equals(that.fullTopicName);
     }
 

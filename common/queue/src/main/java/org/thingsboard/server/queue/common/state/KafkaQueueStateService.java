@@ -15,13 +15,19 @@
  */
 package org.thingsboard.server.queue.common.state;
 
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTopic;
 
@@ -29,14 +35,24 @@ import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTop
 public class KafkaQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> extends QueueStateService<E, S> {
 
     private final PartitionedQueueConsumerManager<S> stateConsumer;
+    private final Supplier<Map<String, Long>> eventsStartOffsetsProvider;
 
-    public KafkaQueueStateService(PartitionedQueueConsumerManager<E> eventConsumer, PartitionedQueueConsumerManager<S> stateConsumer) {
-        super(eventConsumer);
+    private final Set<TopicPartitionInfo> partitionsInProgress = ConcurrentHashMap.newKeySet();
+
+    @Builder
+    public KafkaQueueStateService(PartitionedQueueConsumerManager<E> eventConsumer,
+                                  PartitionedQueueConsumerManager<S> stateConsumer,
+                                  List<PartitionedQueueConsumerManager<?>> otherConsumers,
+                                  Supplier<Map<String, Long>> eventsStartOffsetsProvider) {
+        super(eventConsumer, otherConsumers != null ? otherConsumers : Collections.emptyList());
         this.stateConsumer = stateConsumer;
+        this.eventsStartOffsetsProvider = eventsStartOffsetsProvider;
     }
 
     @Override
-    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
+    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions, Runnable whenAllProcessed) {
+        Map<String, Long> eventsStartOffsets = eventsStartOffsetsProvider != null ? eventsStartOffsetsProvider.get() : null; // remembering the offsets before subscribing to states
+
         Set<TopicPartitionInfo> statePartitions = withTopic(partitions, stateConsumer.getTopic());
         partitionsInProgress.addAll(statePartitions);
         stateConsumer.addPartitions(statePartitions, statePartition -> {
@@ -47,16 +63,22 @@ public class KafkaQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> 
                 log.info("Finished partition {} (still in progress: {})", statePartition, partitionsInProgress);
                 if (partitionsInProgress.isEmpty()) {
                     log.info("All partitions processed");
+                    if (whenAllProcessed != null) {
+                        whenAllProcessed.run();
+                    }
                 }
 
                 TopicPartitionInfo eventPartition = statePartition.withTopic(eventConsumer.getTopic());
                 if (this.partitions.get(queueKey).contains(eventPartition)) {
-                    eventConsumer.addPartitions(Set.of(eventPartition));
+                    eventConsumer.addPartitions(Set.of(eventPartition), null, eventsStartOffsets != null ? eventsStartOffsets::get : null);
+                    for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
+                        consumer.addPartitions(Set.of(statePartition.withTopic(consumer.getTopic())));
+                    }
                 }
             } finally {
                 readLock.unlock();
             }
-        });
+        }, null);
     }
 
     @Override

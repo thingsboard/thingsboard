@@ -19,19 +19,22 @@ import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueHandler;
 import org.thingsboard.server.queue.TbQueueProducer;
-import org.thingsboard.server.queue.TbQueueResponseTemplate;
+import org.thingsboard.server.queue.common.PartitionedQueueResponseTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
 public interface EdqsQueueFactory {
 
-    TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgConsumer(EdqsQueue queue);
+    TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsEventsConsumer();
 
-    TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgConsumer(EdqsQueue queue, String group);
+    TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsEventsToBackupConsumer();
 
-    TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgProducer(EdqsQueue queue);
+    TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsStateConsumer();
 
-    TbQueueResponseTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> createEdqsResponseTemplate();
+    TbQueueProducer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsStateProducer();
+
+    PartitionedQueueResponseTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> createEdqsResponseTemplate(TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> handler);
 
     TbQueueAdmin getEdqsQueueAdmin();
 

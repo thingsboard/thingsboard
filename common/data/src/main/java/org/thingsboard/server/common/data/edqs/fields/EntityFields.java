@@ -29,9 +29,7 @@ public interface EntityFields {
 
     Logger log = LoggerFactory.getLogger(EntityFields.class);
 
-    default UUID getId() {
-        return null;
-    }
+    UUID getId();
 
     default UUID getTenantId() {
         return null;
@@ -147,6 +145,7 @@ public interface EntityFields {
 
     default String getAsString(String key) {
         return switch (key) {
+            case "id" -> getId().toString();
             case "createdTime" -> Long.toString(getCreatedTime());
             case "title" -> getName();
             case "type" -> getType();

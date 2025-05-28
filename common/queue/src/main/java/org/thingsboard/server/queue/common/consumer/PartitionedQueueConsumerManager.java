@@ -26,13 +26,13 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.AddPartitionsTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.DeletePartitionsTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.RemovePartitionsTask;
-import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Slf4j
 public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQueueConsumerManager<M, QueueConfig> {
@@ -43,8 +43,8 @@ public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQ
     private final String topic;
 
     @Builder(builderMethodName = "create") // not to conflict with super.builder()
-    public PartitionedQueueConsumerManager(QueueKey queueKey, String topic, long pollInterval, MsgPackProcessor<M, QueueConfig> msgPackProcessor,
-                                           BiFunction<QueueConfig, Integer, TbQueueConsumer<M>> consumerCreator, TbQueueAdmin queueAdmin,
+    public PartitionedQueueConsumerManager(Object queueKey, String topic, long pollInterval, MsgPackProcessor<M, QueueConfig> msgPackProcessor,
+                                           BiFunction<QueueConfig, TopicPartitionInfo, TbQueueConsumer<M>> consumerCreator, TbQueueAdmin queueAdmin,
                                            ExecutorService consumerExecutor, ScheduledExecutorService scheduler,
                                            ExecutorService taskExecutor, Consumer<Throwable> uncaughtErrorHandler) {
         super(queueKey, QueueConfig.of(true, pollInterval), msgPackProcessor, consumerCreator, consumerExecutor, scheduler, taskExecutor, uncaughtErrorHandler);
@@ -57,7 +57,7 @@ public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQ
     protected void processTask(TbQueueConsumerManagerTask task) {
         if (task instanceof AddPartitionsTask addPartitionsTask) {
             log.info("[{}] Added partitions: {}", queueKey, addPartitionsTask.partitions());
-            consumerWrapper.addPartitions(addPartitionsTask.partitions(), addPartitionsTask.onStop());
+            consumerWrapper.addPartitions(addPartitionsTask.partitions(), addPartitionsTask.onStop(), addPartitionsTask.startOffsetProvider());
         } else if (task instanceof RemovePartitionsTask removePartitionsTask) {
             log.info("[{}] Removed partitions: {}", queueKey, removePartitionsTask.partitions());
             consumerWrapper.removePartitions(removePartitionsTask.partitions());
@@ -76,11 +76,11 @@ public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQ
     }
 
     public void addPartitions(Set<TopicPartitionInfo> partitions) {
-        addPartitions(partitions, null);
+        addPartitions(partitions, null, null);
     }
 
-    public void addPartitions(Set<TopicPartitionInfo> partitions, Consumer<TopicPartitionInfo> onStop) {
-        addTask(new AddPartitionsTask(partitions, onStop));
+    public void addPartitions(Set<TopicPartitionInfo> partitions, Consumer<TopicPartitionInfo> onStop, Function<String, Long> startOffsetProvider) {
+        addTask(new AddPartitionsTask(partitions, onStop, startOffsetProvider));
     }
 
     public void removePartitions(Set<TopicPartitionInfo> partitions) {

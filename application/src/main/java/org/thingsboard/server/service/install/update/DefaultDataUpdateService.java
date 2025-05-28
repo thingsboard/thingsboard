@@ -25,20 +25,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
+import org.thingsboard.server.service.install.DbUpgradeExecutorService;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+
+import static org.thingsboard.server.dao.rule.BaseRuleChainService.TB_RULE_CHAIN_INPUT_NODE;
 
 @Service
 @Profile("install")
@@ -52,16 +61,47 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private RuleChainService ruleChainService;
 
     @Autowired
+    private RelationService relationService;
+
+    @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
 
     @Autowired
-    JpaExecutorService jpaExecutorService;
+    private DbUpgradeExecutorService executorService;
 
     @Override
     public void updateData() throws Exception {
         log.info("Updating data ...");
         //TODO: should be cleaned after each release
+        updateInputNodes();
         log.info("Data updated.");
+    }
+
+    private void updateInputNodes() {
+        log.info("Creating relations for input nodes...");
+        int n = 0;
+        var inputNodes = new PageDataIterable<>(pageLink -> ruleChainService.findAllRuleNodesByType(TB_RULE_CHAIN_INPUT_NODE, pageLink), 1024);
+        for (RuleNode inputNode : inputNodes) {
+            try {
+                RuleChainId targetRuleChainId = Optional.ofNullable(inputNode.getConfiguration().get("ruleChainId"))
+                        .filter(JsonNode::isTextual).map(JsonNode::asText).map(id -> new RuleChainId(UUID.fromString(id)))
+                        .orElse(null);
+                if (targetRuleChainId == null) {
+                    continue;
+                }
+
+                EntityRelation relation = new EntityRelation();
+                relation.setFrom(inputNode.getRuleChainId());
+                relation.setTo(targetRuleChainId);
+                relation.setType(EntityRelation.USES_TYPE);
+                relation.setTypeGroup(RelationTypeGroup.COMMON);
+                relationService.saveRelation(TenantId.SYS_TENANT_ID, relation);
+                n++;
+            } catch (Exception e) {
+                log.error("Failed to save relation for input node: {}", inputNode, e);
+            }
+        }
+        log.info("Created {} relations for input nodes", n);
     }
 
     @Override
@@ -107,7 +147,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     ruleNodeId, ruleNodeType, fromVersion, toVersion);
             try {
                 TbNodeUpgradeUtils.upgradeConfigurationAndVersion(ruleNode, ruleNodeClassInfo);
-                saveFutures.add(jpaExecutorService.submit(() -> {
+                saveFutures.add(executorService.submit(() -> {
                     ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
                     log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                             ruleNodeId, ruleNodeType, fromVersion, toVersion);

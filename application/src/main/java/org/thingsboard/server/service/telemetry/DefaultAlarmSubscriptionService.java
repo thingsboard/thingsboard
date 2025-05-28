@@ -115,7 +115,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId) {
+    public boolean deleteAlarm(TenantId tenantId, AlarmId alarmId) {
         AlarmApiCallResult result = alarmService.delAlarm(tenantId, alarmId);
         onAlarmDeleted(result);
         return result.isSuccessful();

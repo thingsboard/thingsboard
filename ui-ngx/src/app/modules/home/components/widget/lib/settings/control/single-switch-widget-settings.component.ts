@@ -61,7 +61,7 @@ export class SingleSwitchWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...singleSwitchDefaultSettings};
+    return singleSwitchDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

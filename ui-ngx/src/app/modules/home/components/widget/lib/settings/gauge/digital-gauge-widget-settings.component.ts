@@ -20,7 +20,8 @@ import {
   AbstractControl,
   UntypedFormArray,
   UntypedFormBuilder,
-  UntypedFormGroup, ValidationErrors,
+  UntypedFormGroup,
+  ValidationErrors,
   ValidatorFn,
   Validators
 } from '@angular/forms';
@@ -45,6 +46,7 @@ import {
   ValueSourceConfig,
   ValueSourceType
 } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-digital-gauge-widget-settings',
@@ -412,6 +414,6 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   private _valuePreviewFn(units: boolean): string {
-    return formatValue(22, 0, units ? this.widget.config.units : null, true);
+    return formatValue(22, 0, units ? getSourceTbUnitSymbol(this.widget.config.units) : null, true);
   }
 }

@@ -30,7 +30,7 @@
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
     <input matInput type="text"
-           (blur)="onTouched()"
+           (blur)="addOnBlur($event)"
            placeholder="{{ placeholder }}"
            style="max-width: 300px;min-width: 250px"
            #stringItemInput
@@ -40,8 +40,7 @@
            [matChipInputFor]="itemsChipList"
            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
            matAutocompleteOrigin
-           matChipInputAddOnBlur
-           (matChipInputTokenEnd)="addItem($event)"
+           (matChipInputTokenEnd)="addOnEnd($event)"
            [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="stringItemAutocomplete"
            [matAutocompleteDisabled]="!predefinedValues?.length">
@@ -49,12 +48,11 @@
   <mat-autocomplete #stringItemAutocomplete="matAutocomplete"
                     [displayWith]="displayValueFn"
                     class="tb-autocomplete">
-    <mat-option *ngFor="let value of filteredValues | async" [value]="value">
-      <span [innerHTML]="value.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredValues | async)?.length" [value]="null">
-      {{ 'common.not-found' | translate }}
-    </mat-option>
+    @for (value of filteredValues | async; track value.value) {
+      <mat-option [value]="value"><span [innerHTML]="value.name | highlight:searchText"></span></mat-option>
+    } @empty {
+      <mat-option [value]="null">{{ 'common.not-found' | translate }}</mat-option>
+    }
   </mat-autocomplete>
   <mat-hint [hidden]="!hint">
     {{ hint }}
