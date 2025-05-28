@@ -65,13 +65,14 @@ public class DeviceRegistrationController extends BaseController {
             Customer customerDeviceOpt = deviceRegistrationService.findCustomerById(device.getCustomerId().getId().toString());
             if (customerMailOpt != null) {
                 if (device.getCustomerId() != null) {
+                    String token = deviceRegistrationService.getDeviceAccessToken(deviceId);
                     if (customerDeviceOpt != null && customerDeviceOpt.getEmail().equals(request.getEmail())) {
                         response.put("status", HttpStatus.valueOf(202));
                         response.put("message", "Device is already assigned to this customer.");
+                        response.put("accessToken", token);
                         return new ResponseEntity<>(response, HttpStatus.valueOf(202));
                     } else if (device.getCustomerId().getId().equals(NULL_UUID) || (customerDeviceOpt != null && customerDeviceOpt.getEmail().equals(request.getEmail()))) {
                         deviceRegistrationService.assignDeviceToCustomer(deviceId, customerMailOpt.getId().toString(), request.getDeviceName(), request.getEmail(), false);
-                        String token = deviceRegistrationService.getDeviceAccessToken(deviceId);
                         response.put("status", HttpStatus.valueOf(201));
                         response.put("message", "Device successfully assigned to existing customer.");
                         response.put("accessToken", token);
