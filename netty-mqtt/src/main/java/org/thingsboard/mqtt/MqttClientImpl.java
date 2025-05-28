@@ -462,7 +462,7 @@ final class MqttClientImpl implements MqttClient {
             MqttMessage message = new MqttMessage(new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0));
             ChannelFuture channelFuture = this.sendAndFlushPacket(message);
             eventLoop.schedule(() -> {
-                if (!channelFuture.isDone()) {
+                if (channel.isOpen()) {
                     this.channel.close();
                 }
             }, 500, TimeUnit.MILLISECONDS);
