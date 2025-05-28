@@ -348,7 +348,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                         if (sub.isLatestValues()) {
                             for (TsKvEntry kv : data) {
                                 Long stateTs = keyStates.get(kv.getKey());
-                                if (stateTs == null || kv.getTs() > stateTs) {
+                                if (stateTs == null || kv.getTs() >= stateTs) {
                                     if (updateData == null) {
                                         updateData = new ArrayList<>();
                                     }
@@ -362,7 +362,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                         for (TsKvEntry kv : data) {
                             Long stateTs = keyStates.get(kv.getKey());
                             if (stateTs != null) {
-                                if (!sub.isLatestValues() || kv.getTs() > stateTs) {
+                                if (!sub.isLatestValues() || kv.getTs() >= stateTs) {
                                     if (updateData == null) {
                                         updateData = new ArrayList<>();
                                     }
