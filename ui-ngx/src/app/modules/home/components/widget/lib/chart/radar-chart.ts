@@ -31,6 +31,7 @@ import { ComponentStyle } from '@shared/models/widget-settings.models';
 import { AreaStyleOption, SeriesLabelOption } from 'echarts/types/src/util/types';
 import { RadarIndicatorOption } from 'echarts/types/src/coord/radar/RadarModel';
 import { DataKey } from '@shared/models/widget.models';
+import { LatestChartDataItem } from '@home/components/widget/lib/chart/latest-chart.models';
 
 export class TbRadarChart extends TbLatestChart<RadarChartSettings> {
 
@@ -141,7 +142,7 @@ export class TbRadarChart extends TbLatestChart<RadarChartSettings> {
       if (dataItem.enabled && dataItem.hasValue) {
         indicator.push({
           name: dataItem.dataKey.label,
-          color: dataItem.dataKey.color
+          color: dataItem.dataKey.color,
         });
         value.push(dataItem.value);
       }
@@ -149,8 +150,19 @@ export class TbRadarChart extends TbLatestChart<RadarChartSettings> {
     if (!indicator.length) {
       indicator.push({});
     }
+    if (this.settings.normalizeAxes && indicator.length > 1) {
+      const maxDataItem = this.findMaxDataItem(this.dataItems);
+      indicator.map(value => value.max = maxDataItem.value);
+    }
     this.latestChartOption.radar[0].indicator = indicator;
     this.latestChartOption.series[0].data[0].value = value;
+  }
+
+  private findMaxDataItem(array: LatestChartDataItem[]) {
+    if (!array || array.length === 0) return null;
+    return array.reduce((maxObj, currentObj) => {
+      return currentObj.value > maxObj.value ? currentObj : maxObj;
+    }, array[0]);
   }
 
   protected forceRedrawOnResize(): boolean {

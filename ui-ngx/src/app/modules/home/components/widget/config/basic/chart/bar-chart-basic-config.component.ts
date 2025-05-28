@@ -29,6 +29,7 @@ import {
 import {
   LatestChartBasicConfigComponent
 } from '@home/components/widget/config/basic/chart/latest-chart-basic-config.component';
+import { chartFillTypes } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
   selector: 'tb-bar-chart-basic-config',
@@ -77,4 +78,6 @@ export class BarChartBasicConfigComponent extends LatestChartBasicConfigComponen
     this.widgetConfig.config.settings.axisTickLabelFont = config.axisTickLabelFont;
     this.widgetConfig.config.settings.axisTickLabelColor = config.axisTickLabelColor;
   }
+
+  protected readonly chartFillTypes = chartFillTypes;
 }
