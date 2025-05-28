@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2025 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,15 +22,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.controller.BaseController;
-import org.thingsboard.server.dao.model.sql.CustomerEntity;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.custom.DeviceRegistrationService;
 import org.thingsboard.server.service.custom.DeviceRequest;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -40,6 +39,7 @@ import java.util.UUID;
 @Slf4j
 public class DeviceRegistrationController extends BaseController {
 
+    UUID NULL_UUID = UUID.fromString("13814000-1dd2-11b2-8080-808080808080");
     @Autowired
     private DeviceRegistrationService deviceRegistrationService;
 
@@ -51,41 +51,47 @@ public class DeviceRegistrationController extends BaseController {
         Map<String, Object> response = new LinkedHashMap<>();
 
         try {
-            UUID deviceUUID = deviceRegistrationService.findDeviceByMac(macId);
-            String deviceId = deviceUUID != null ? deviceUUID.toString() : null;
-            if (deviceId == null) {
+
+            UUID deviceUUID = deviceRegistrationService.findDeviceByMacAndType(macId, request.getDeviceType());
+            Device device = deviceUUID != null ? deviceRegistrationService.findDeviceById(deviceUUID.toString()) : null;
+            if (deviceUUID == null || !device.getType().equals(request.getDeviceType())) {
                 response.put("status", HttpStatus.BAD_REQUEST.value());
-                response.put("message", "Device not recognized");
+                response.put("message", "No matching device found for the given MAC ID and device type.");
                 return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
             }
 
-            Customer customerOpt = deviceRegistrationService.findCustomerByEmail(request.getEmail());
-
-            if (customerOpt != null) {
-
-                if (customerOpt.getExternalId() != null && !customerOpt.getExternalId().toString().equals("NULL_UUID")) {
-                    response.put("status", HttpStatus.CONFLICT.value());
-                    response.put("message", "Device is already registered with a customer");
-                    return new ResponseEntity<>(response, HttpStatus.valueOf(420));
+            String deviceId = deviceUUID.toString();
+            Customer customerMailOpt = deviceRegistrationService.findCustomerByEmail(request.getEmail());
+            Customer customerDeviceOpt = deviceRegistrationService.findCustomerById(device.getCustomerId().getId().toString());
+            if (customerMailOpt != null) {
+                if (device.getCustomerId() != null) {
+                    if (customerDeviceOpt != null && customerDeviceOpt.getEmail().equals(request.getEmail())) {
+                        response.put("status", HttpStatus.valueOf(202));
+                        response.put("message", "Device is already assigned to this customer.");
+                        return new ResponseEntity<>(response, HttpStatus.valueOf(202));
+                    } else if (device.getCustomerId().getId().equals(NULL_UUID) || (customerDeviceOpt != null && customerDeviceOpt.getEmail().equals(request.getEmail()))) {
+                        deviceRegistrationService.assignDeviceToCustomer(deviceId, customerMailOpt.getId().toString(), request.getDeviceName(), request.getEmail(), false);
+                        String token = deviceRegistrationService.getDeviceAccessToken(deviceId);
+                        response.put("status", HttpStatus.valueOf(201));
+                        response.put("message", "Device successfully assigned to existing customer.");
+                        response.put("accessToken", token);
+                        return new ResponseEntity<>(response, HttpStatus.valueOf(201));
+                    }
                 }
 
-                deviceRegistrationService.assignDeviceToCustomer(deviceId, String.valueOf(customerOpt.getId()), request.getDeviceName(), request.getEmail());
-                String token = deviceRegistrationService.getDeviceAccessToken(deviceId);
-
-                response.put("status", HttpStatus.CREATED.value());
-                response.put("message", "Device assigned to existing customer");
-                response.put("accessToken", token);
-                return new ResponseEntity<>(response, HttpStatus.CREATED);
-
-            } else {
+            } else if (device.getCustomerId().getId().equals(NULL_UUID)) {
                 Customer newCustomer = deviceRegistrationService.createCustomer(request.getEmail());
-                deviceRegistrationService.assignDeviceToCustomer(deviceId, newCustomer.getId().toString(), request.getDeviceName(), request.getEmail());
+                deviceRegistrationService.assignDeviceToCustomer(deviceId, newCustomer.getId().toString(), request.getDeviceName(), request.getEmail(), true);
                 String token = deviceRegistrationService.getDeviceAccessToken(deviceId);
 
-                response.put("status", HttpStatus.CREATED.value());
-                response.put("message", "Device assigned to new customer");
+                response.put("status", HttpStatus.valueOf(200));
+                response.put("message", "New customer created and device assigned successfully.");
                 response.put("accessToken", token);
-                return new ResponseEntity<>(response, HttpStatus.CREATED);
+                return new ResponseEntity<>(response, HttpStatus.valueOf(200));
+            } else {
+                response.put("status", HttpStatus.valueOf(420));
+                response.put("message", "Device appears to be already assigned to another customer.");
+                return new ResponseEntity<>(response, HttpStatus.valueOf(420));
             }
 
         } catch (Exception e) {
@@ -94,5 +100,9 @@ public class DeviceRegistrationController extends BaseController {
             response.put("message", "An error occurred during device registration");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        response.put("message", "No matching rules.");
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

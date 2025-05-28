@@ -246,10 +246,10 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
 
     @Override
-    public Optional<UUID> findDeviceIdByMacId(String key, String macId) {
+    public Optional<UUID> findDeviceIdByMacId(String key, String macId, String deviceType) {
         String sql = "SELECT entity_id FROM key_dictionary " +
-                "JOIN attribute_kv ON key_id = attribute_key " +
-                "WHERE key = ? AND str_v = ?";
+                "JOIN attribute_kv ON key_id = attribute_key  " +
+                "WHERE key = ? AND str_v = ? ";
 
         try {
             UUID deviceId = jdbcTemplate.queryForObject(sql, UUID.class, key, macId);

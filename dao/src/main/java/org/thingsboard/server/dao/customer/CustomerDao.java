@@ -79,5 +79,7 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao<Customer>, E
      */
     PageData<Customer> findCustomersWithTheSameTitle(PageLink pageLink);
 
-    Optional<Customer> findCustomerByEmail(String mail);
+    CustomerEntity findCustomerByEmail(String mail);
+
+    CustomerEntity findCustomerById(String id);
 }

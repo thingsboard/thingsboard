@@ -21,11 +21,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.edqs.fields.CustomerFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
+import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.CustomerEntity;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -62,4 +65,11 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
             "c.title, c.version, c.additionalInfo, c.country, c.state, c.city, c.address, c.address2, c.zip, c.phone, c.email) " +
             "FROM CustomerEntity c WHERE c.id > :id ORDER BY c.id")
     List<CustomerFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+
+    @Query(value = "SELECT * FROM customer WHERE email = :email", nativeQuery = true)
+    CustomerEntity findCustomerByEmail(@Param("email") String email);
+
+    @Query(value = "SELECT * FROM customer WHERE id = :id", nativeQuery = true)
+    CustomerEntity findCustomerById(@Param("id") UUID id);
 }

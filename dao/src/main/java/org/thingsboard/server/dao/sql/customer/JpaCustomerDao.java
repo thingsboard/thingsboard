@@ -123,8 +123,12 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     }
 
     @Override
-    public Optional<Customer> findCustomerByEmail(String mail) {
-        return customerRepository.findByEmail(mail)
-                .map(CustomerEntity::toData); // ✅ Converts Entity to POJO
+    public CustomerEntity findCustomerByEmail(String mail) {
+        return customerRepository.findCustomerByEmail(mail);
+    }
+
+    @Override
+    public CustomerEntity findCustomerById(String id) {
+        return customerRepository.findCustomerById(UUID.fromString(id));
     }
 }

@@ -58,6 +58,6 @@ public interface AttributesDao {
 
     List<Pair<AttributeScope, String>> removeAllByEntityId(TenantId tenantId, EntityId entityId);
 
-    Optional<UUID> findDeviceIdByMacId(String key, String macId);
+    Optional<UUID> findDeviceIdByMacId(String key, String macId, String deviceType);
 
 }

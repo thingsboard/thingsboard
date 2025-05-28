@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.edqs.fields.DeviceFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
@@ -28,6 +29,7 @@ import org.thingsboard.server.dao.model.sql.DeviceEntity;
 import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, ExportableEntityRepository<DeviceEntity> {
@@ -209,4 +211,5 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
             "d.name, d.version, d.type, d.label, d.deviceProfileId, d.additionalInfo) FROM DeviceEntity d WHERE d.id > :id ORDER BY d.id")
     List<DeviceFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
+    Optional<DeviceEntity> findDeviceById(UUID uuid);
 }

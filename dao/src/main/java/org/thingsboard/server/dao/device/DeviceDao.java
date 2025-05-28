@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
+import org.thingsboard.server.dao.model.sql.DeviceEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -235,5 +236,5 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao<Device>, Exporta
 
     PageData<DeviceInfo> findDeviceInfosByFilter(DeviceInfoFilter filter, PageLink pageLink);
 
-    Optional<Device> findDeviceById(String deviceId);
+    Optional<DeviceEntity> findDeviceById(String deviceId);
 }
