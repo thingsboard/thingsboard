@@ -121,7 +121,6 @@ public class ContainerTestSuite {
                     new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid-test-extras.yml" : "docker-compose.postgres-test-extras.yml")),
                     new File(targetDir + "docker-compose.postgres.volumes.yml"),
                     new File(targetDir + "docker-compose.kafka.yml"),
-                    new File(targetDir + "docker-compose." + QUEUE_TYPE + ".yml"),
                     new File(targetDir + resolveValkeyComposeFile()),
                     new File(targetDir + resolveValkeyComposeVolumesFile()),
                     new File(targetDir + ("docker-selenium.yml"))
