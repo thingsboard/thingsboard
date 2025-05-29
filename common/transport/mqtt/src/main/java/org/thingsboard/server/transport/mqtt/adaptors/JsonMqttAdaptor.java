@@ -38,10 +38,10 @@ import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionConte
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
 
@@ -185,9 +185,15 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
             if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
+                result.setAddClient(true);
             }
             if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
+                result.setAddShared(true);
+            }
+            if (clientKeys == null && sharedKeys == null) {
+                result.setAddClient(true);
+                result.setAddShared(true);
             }
             return result.build();
         } catch (RuntimeException e) {
@@ -255,7 +261,10 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     private Set<String> toStringSet(JsonElement requestBody, String name) {
         JsonElement element = requestBody.getAsJsonObject().get(name);
         if (element != null) {
-            return new HashSet<>(Arrays.asList(element.getAsString().split(",")));
+            return Arrays.stream(element.getAsString().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
         } else {
             return null;
         }

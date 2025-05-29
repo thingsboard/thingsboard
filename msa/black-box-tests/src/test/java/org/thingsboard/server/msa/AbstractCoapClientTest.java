@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.session.FeatureType;
 
 public abstract class AbstractCoapClientTest extends AbstractContainerTest{
 
-    private static final String COAP_BASE_URL = "coap://localhost:5683/api/v1/";
+    protected static final String COAP_BASE_URL = "coap://localhost:5683/api/v1/";
     private static final long CLIENT_REQUEST_TIMEOUT = 60000L;
 
 
