@@ -130,11 +130,7 @@ export class TimeSeriesChartTooltip {
         this.renderer.appendChild(tooltipItemsElement, this.constructTooltipDateElement(items[0].param, interval));
       }
       for (const item of items) {
-        if (this.settings.tooltipHideZeroFalse) {
-          if (item.param.value[1]) {
-            this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
-          }
-        } else {
+        if (!this.settings.tooltipHideZeroFalse || item.param.value[1]) {
           this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
         }
       }
