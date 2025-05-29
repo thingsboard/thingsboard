@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -53,7 +55,8 @@ public class LatestTsKv implements EdqsObject {
         this.version = version != null ? version : 0L;
     }
 
-    public String key() {
+    @Override
+    public String stringKey() {
         return "l_" + entityId + "_" + key;
     }
 
@@ -66,5 +69,7 @@ public class LatestTsKv implements EdqsObject {
     public ObjectType type() {
         return ObjectType.LATEST_TS_KV;
     }
+
+    public record Key(UUID entityId, int key) implements EdqsObjectKey {}
 
 }
