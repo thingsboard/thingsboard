@@ -5,7 +5,6 @@ ThingsBoard is an open-source IoT platform for data collection, processing, visu
 
 <img src="./img/logo.png?raw=true" width="100" height="100">
 
-[**LinkedIn**](https://linkedin.com/company/thingsboard) | [**YouTube**](https://www.youtube.com/thingsboard) | [**Blog**](https://thingsboard.io/blog/)
 
 ## Documentation
 
