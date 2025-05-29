@@ -188,6 +188,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       tooltipDateFont: [settings.tooltipDateFont, []],
       tooltipDateColor: [settings.tooltipDateColor, []],
       tooltipDateInterval: [settings.tooltipDateInterval, []],
+      tooltipHideZeroFalse: [settings.tooltipHideZeroFalse ,[]],
 
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
@@ -264,6 +265,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.settings.tooltipDateFont = config.tooltipDateFont;
     this.widgetConfig.config.settings.tooltipDateColor = config.tooltipDateColor;
     this.widgetConfig.config.settings.tooltipDateInterval = config.tooltipDateInterval;
+    this.widgetConfig.config.settings.tooltipHideZeroFalse = config.tooltipHideZeroFalse;
     this.widgetConfig.config.settings.tooltipBackgroundColor = config.tooltipBackgroundColor;
     this.widgetConfig.config.settings.tooltipBackgroundBlur = config.tooltipBackgroundBlur;
 
@@ -357,6 +359,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       this.timeSeriesChartWidgetConfigForm.get('tooltipValueFont').enable();
       this.timeSeriesChartWidgetConfigForm.get('tooltipValueColor').enable();
       this.timeSeriesChartWidgetConfigForm.get('tooltipShowDate').enable({emitEvent: false});
+      this.timeSeriesChartWidgetConfigForm.get('tooltipHideZeroFalse').enable({emitEvent: false});
       this.timeSeriesChartWidgetConfigForm.get('tooltipBackgroundColor').enable();
       this.timeSeriesChartWidgetConfigForm.get('tooltipBackgroundBlur').enable();
       if (tooltipShowDate) {
@@ -381,6 +384,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       this.timeSeriesChartWidgetConfigForm.get('tooltipDateFont').disable();
       this.timeSeriesChartWidgetConfigForm.get('tooltipDateColor').disable();
       this.timeSeriesChartWidgetConfigForm.get('tooltipDateInterval').disable();
+      this.timeSeriesChartWidgetConfigForm.get('tooltipHideZeroFalse').disable();
       this.timeSeriesChartWidgetConfigForm.get('tooltipBackgroundColor').disable();
       this.timeSeriesChartWidgetConfigForm.get('tooltipBackgroundBlur').disable();
     }
