@@ -456,16 +456,25 @@ final class MqttClientImpl implements MqttClient {
 
     @Override
     public void disconnect() {
+        if (disconnected) {
+            return;
+        }
+
         log.trace("[{}] Disconnecting from server", channel != null ? channel.id() : "UNKNOWN");
-        disconnected = true;
         if (this.channel != null) {
             MqttMessage message = new MqttMessage(new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0));
-            ChannelFuture channelFuture = this.sendAndFlushPacket(message);
+
+            sendAndFlushPacket(message).addListener((ChannelFutureListener) future -> {
+                future.channel().close();
+                disconnected = true;
+            });
+
             eventLoop.schedule(() -> {
                 if (channel.isOpen()) {
                     this.channel.close();
+                    disconnected = true;
                 }
-            }, 500, TimeUnit.MILLISECONDS);
+            }, 1, TimeUnit.SECONDS);
         }
     }
 
