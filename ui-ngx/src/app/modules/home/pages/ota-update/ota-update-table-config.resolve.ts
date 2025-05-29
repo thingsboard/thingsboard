@@ -36,8 +36,6 @@ import { PageLink } from '@shared/models/page/page-link';
 import { OtaUpdateComponent } from '@home/pages/ota-update/ota-update.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 
 @Injectable()
 export class OtaUpdateTableConfigResolve  {
@@ -47,7 +45,6 @@ export class OtaUpdateTableConfigResolve  {
 
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
-              private store: Store<AppState>,
               private otaPackageService: OtaPackageService,
               private router: Router,
               private fileSize: FileSizePipe) {
@@ -68,7 +65,9 @@ export class OtaUpdateTableConfigResolve  {
       }),
       new EntityTableColumn<OtaPackageInfo>('url', 'ota-update.direct-url', '20%', entity => {
           return entity.url ? (entity.url.length > 20 ? `${entity.url.slice(0, 20)}…` : entity.url) : '';
-        }, () => ({}), true, () => ({}), () => undefined, false,
+        }, () => ({
+          'text-wrap': 'nowrap'
+        }), true, () => ({}), () => undefined, false,
         {
           name: this.translate.instant('ota-update.copy-direct-url'),
           icon: 'content_paste',
@@ -78,7 +77,7 @@ export class OtaUpdateTableConfigResolve  {
             color: 'rgba(0,0,0,.87)'
           },
           isEnabled: (otaPackage) => !!otaPackage.url,
-          onAction: ($event, entity) => entity.url,
+          onAction: (_$event, entity) => entity.url,
           type: CellActionDescriptorType.COPY_BUTTON
         }),
       new EntityTableColumn<OtaPackageInfo>('fileName', 'ota-update.file-name', '20%'),
@@ -86,20 +85,22 @@ export class OtaUpdateTableConfigResolve  {
         return entity.dataSize ? this.fileSize.transform(entity.dataSize) : '';
       }),
       new EntityTableColumn<OtaPackageInfo>('checksum', 'ota-update.checksum', '220px', entity => {
-        return entity.checksum ? this.checksumText(entity) : '';
-      }, () => ({}), true, () => ({}), () => undefined, false,
-      {
-        name: this.translate.instant('ota-update.copy-checksum'),
-        icon: 'content_paste',
-        style: {
-          padding: '4px',
-          'font-size': '16px',
-          color: 'rgba(0,0,0,.87)'
-        },
-        isEnabled: (otaPackage) => !!otaPackage.checksum,
-        onAction: ($event, entity) => entity.checksum,
-        type: CellActionDescriptorType.COPY_BUTTON
-      })
+          return entity.checksum ? this.checksumText(entity) : '';
+        }, () => ({
+          'text-wrap': 'nowrap'
+        }), true, () => ({}), () => undefined, false,
+        {
+          name: this.translate.instant('ota-update.copy-checksum'),
+          icon: 'content_paste',
+          style: {
+            padding: '4px',
+            'font-size': '16px',
+            color: 'rgba(0,0,0,.87)'
+          },
+          isEnabled: (otaPackage) => !!otaPackage.checksum,
+          onAction: (_$event, entity) => entity.checksum,
+          type: CellActionDescriptorType.COPY_BUTTON
+        })
     );
 
     this.config.cellActionDescriptors.push(
@@ -149,7 +150,7 @@ export class OtaUpdateTableConfigResolve  {
     }
   }
 
-  checksumText(entity): string {
+  checksumText(entity: OtaPackageInfo): string {
     let text = `${ChecksumAlgorithmTranslationMap.get(entity.checksumAlgorithm)}: ${entity.checksum}`;
     if (text.length > 20) {
       text = `${text.slice(0, 20)}…`;
