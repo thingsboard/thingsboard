@@ -158,7 +158,7 @@ export class TbRadarChart extends TbLatestChart<RadarChartSettings> {
     this.latestChartOption.series[0].data[0].value = value;
   }
 
-  private findMaxDataItem(array: LatestChartDataItem[]) {
+  private findMaxDataItem(array: LatestChartDataItem[]): LatestChartDataItem {
     if (!array || array.length === 0) return null;
     return array.reduce((maxObj, currentObj) => {
       return currentObj.value > maxObj.value ? currentObj : maxObj;
