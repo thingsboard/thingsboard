@@ -75,6 +75,7 @@ export class RadarChartBasicConfigComponent extends LatestChartBasicConfigCompon
     latestChartWidgetConfigForm.addControl('labelColor', this.fb.control(settings.labelColor, []));
     latestChartWidgetConfigForm.addControl('fillAreaSettings', this.fb.control(settings.fillAreaSettings, []));
 
+    latestChartWidgetConfigForm.addControl('normalizeAxes', this.fb.control(settings.normalizeAxes, []));
     latestChartWidgetConfigForm.addControl('axisShowLabel', this.fb.control(settings.axisShowLabel, []));
     latestChartWidgetConfigForm.addControl('axisLabelFont', this.fb.control(settings.axisLabelFont, []));
     latestChartWidgetConfigForm.addControl('axisShowTickLabels', this.fb.control(settings.axisShowTickLabels, []));
@@ -97,6 +98,7 @@ export class RadarChartBasicConfigComponent extends LatestChartBasicConfigCompon
     this.widgetConfig.config.settings.labelColor = config.labelColor;
     this.widgetConfig.config.settings.fillAreaSettings = config.fillAreaSettings;
 
+    this.widgetConfig.config.settings.normalizeAxes = config.normalizeAxes;
     this.widgetConfig.config.settings.axisShowLabel = config.axisShowLabel;
     this.widgetConfig.config.settings.axisLabelFont = config.axisLabelFont;
     this.widgetConfig.config.settings.axisShowTickLabels = config.axisShowTickLabels;

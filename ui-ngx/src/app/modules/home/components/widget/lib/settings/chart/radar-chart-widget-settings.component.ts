@@ -65,6 +65,7 @@ export class RadarChartWidgetSettingsComponent extends LatestChartWidgetSettings
     latestChartWidgetSettingsForm.addControl('labelColor', this.fb.control(settings.labelColor, []));
     latestChartWidgetSettingsForm.addControl('fillAreaSettings', this.fb.control(settings.fillAreaSettings, []));
 
+    latestChartWidgetSettingsForm.addControl('normalizeAxes', this.fb.control(settings.normalizeAxes, []));
     latestChartWidgetSettingsForm.addControl('axisShowLabel', this.fb.control(settings.axisShowLabel, []));
     latestChartWidgetSettingsForm.addControl('axisLabelFont', this.fb.control(settings.axisLabelFont, []));
     latestChartWidgetSettingsForm.addControl('axisShowTickLabels', this.fb.control(settings.axisShowTickLabels, []));
