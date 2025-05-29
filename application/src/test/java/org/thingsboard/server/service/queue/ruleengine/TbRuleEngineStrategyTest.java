@@ -238,7 +238,7 @@ public class TbRuleEngineStrategyTest {
                 .map(this::toProto)
                 .toList();
 
-        consumerManager.processMsgs(protoMsgs, consumer, queue);
+        consumerManager.processMsgs(protoMsgs, consumer, queueKey, queue);
 
         processingData.forEach(data -> {
             verify(actorContext, times(data.attempts)).tell(argThat(msg ->
