@@ -31,15 +31,13 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+@Getter
 @AllArgsConstructor
 public class TelemetrySubscriptionUpdate {
 
-    @Getter
     @With
     private final int subscriptionId;
-    @Getter
     private int errorCode;
-    @Getter
     private String errorMsg;
     private Map<String, List<Object>> data;
 
@@ -75,7 +73,7 @@ public class TelemetrySubscriptionUpdate {
         this.errorMsg = errorMsg != null ? errorMsg : errorCode.getDefaultMsg();
     }
 
-    public Map<String, List<TsValue>> getData() {
+    public Map<String, List<TsValue>> getValues() {
         if (data == null || data.isEmpty()) {
             return Collections.emptyMap();
         }

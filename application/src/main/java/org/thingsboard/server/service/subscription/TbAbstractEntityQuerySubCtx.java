@@ -155,7 +155,7 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
     private void dynamicValueSubUpdate(String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate,
                                        Map<String, DynamicValueKeySub> dynamicValueKeySubMap) {
         Map<String, TsValue> latestUpdate = new HashMap<>();
-        subscriptionUpdate.getData().forEach((key, values) -> {
+        subscriptionUpdate.getValues().forEach((key, values) -> {
             latestUpdate.put(key, getLatest(values));
         });
 

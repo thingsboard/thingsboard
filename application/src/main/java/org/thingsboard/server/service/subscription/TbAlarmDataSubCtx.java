@@ -190,7 +190,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         EntityId entityId = subToEntityIdMap.get(subscriptionUpdate.getSubscriptionId());
         if (entityId != null) {
             Map<String, TsValue> latestUpdate = new HashMap<>();
-            subscriptionUpdate.getData().forEach((key, values) -> {
+            subscriptionUpdate.getValues().forEach((key, values) -> {
                 latestUpdate.put(key, getLatest(values));
             });
             EntityData entityData = entitiesMap.get(entityId);

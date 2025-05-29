@@ -93,7 +93,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
     private void sendLatestWsMsg(EntityId entityId, String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
         Map<String, TsValue> latestUpdate = new HashMap<>();
-        subscriptionUpdate.getData().forEach((key, values) -> {
+        subscriptionUpdate.getValues().forEach((key, values) -> {
             latestUpdate.put(key, getLatest(values));
         });
         EntityData entityData = getDataForEntity(entityId);
@@ -129,7 +129,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
     private void sendTsWsMsg(EntityId entityId, String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
         Map<String, List<TsValue>> tsUpdate = new HashMap<>();
-        subscriptionUpdate.getData().forEach((key, values) -> {
+        subscriptionUpdate.getValues().forEach((key, values) -> {
             tsUpdate.put(key, new ArrayList<>(values));
         });
         Map<String, TsValue> latestCtxValues = getLatestTsValuesForEntity(entityId);
