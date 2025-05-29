@@ -167,7 +167,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private defaultPageSize;
   private defaultSortOrder = 'entityName';
 
-  private contentsInfo: {[key: string]: CellContentInfo} = {};
+  private contentsInfo: {[key: string]: WithOptional<CellContentInfo, 'valueFormat'>} = {};
   private stylesInfo: {[key: string]: Observable<CellStyleInfo>} = {};
   private columnWidth: {[key: string]: string} = {};
   private columnDefaultVisibility: {[key: string]: boolean} = {};
@@ -760,7 +760,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return content$;
   }
 
-  private defaultContent(key: EntityColumn, contentInfo: CellContentInfo, value: any): any {
+  private defaultContent(key: EntityColumn, contentInfo: WithOptional<CellContentInfo, 'valueFormat'>, value: any): any {
     if (isDefined(value)) {
       const entityField = entityFields[key.name];
       if (entityField) {
@@ -768,7 +768,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
         }
       }
-      return contentInfo.valueFormat.format(value);
+      return contentInfo.valueFormat?.format(value) ?? value;
     } else {
       return '';
     }

@@ -107,7 +107,7 @@ export interface CellContentFunctionInfo {
 
 export interface CellContentInfo {
   contentFunction: Observable<CellContentFunctionInfo>;
-  valueFormat?: ValueFormatProcessor
+  valueFormat: ValueFormatProcessor
 }
 
 export type CellStyleFunction = (...args: any[]) => any;

@@ -907,8 +907,6 @@ export abstract class ValueFormatProcessor {
 
 export class SimpleValueFormatProcessor extends ValueFormatProcessor {
 
-  private readonly isDefinedUnit: boolean;
-
   constructor(protected settings: ValueFormatSettings) {
     super(settings);
     this.unitSymbol = !settings.ignoreUnitSymbol && isNotEmptyStr(settings.units) ? (settings.units as string) : null;
@@ -917,7 +915,7 @@ export class SimpleValueFormatProcessor extends ValueFormatProcessor {
   }
 
   format(value: any): string {
-    if (isDefinedAndNotNull(value) && isNumeric(value) && (this.isDefinedDecimals || this.isDefinedUnit || Number(value).toString() === value)) {
+    if (isDefinedAndNotNull(value) && isNumeric(value) && (this.isDefinedDecimals || this.unitSymbol || Number(value).toString() === value)) {
       return this.formatValue(Number(value));
     }
     return value ?? '';
