@@ -1,4 +1,4 @@
-#### Resource usage shortage notification templatization
+#### Resources shortage notification templatization
 
 <div class="divider"></div>
 <br/>
@@ -9,16 +9,14 @@ See the available types and parameters below:
 
 Available template parameters:
 
-* `cpuThreshold` - the CPU shortage threshold;
-* `ramThreshold` - the RAM shortage threshold;
-* `storageThreshold` - the Storage shortage threshold;
+* `resource` - the shortage threshold;
 
-Parameter names must be wrapped using `${...}`. For example: `${entityType}`.
+Parameter names must be wrapped using `${...}`. For example: `${resource}`.
 You may also modify the value of the parameter with one of the suffixes:
 
-* `upperCase`, for example - `${entityType:upperCase}`
-* `lowerCase`, for example - `${entityType:lowerCase}`
-* `capitalize`, for example - `${entityType:capitalize}`
+* `upperCase`, for example - `${resource:upperCase}`
+* `lowerCase`, for example - `${resource:lowerCase}`
+* `capitalize`, for example - `${resource:capitalize}`
 
 <div class="divider"></div>
 
