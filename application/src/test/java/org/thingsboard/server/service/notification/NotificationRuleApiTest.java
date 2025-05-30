@@ -817,7 +817,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .cpuThreshold(1f)
                 .storageThreshold(1f)
                 .build();
-        createNotificationRule(triggerConfig, "Test", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
+        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());it a
         loginTenantAdmin();
 
         assertThat(getMyNotifications(false, 100)).size().isZero();
