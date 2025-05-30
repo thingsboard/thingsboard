@@ -34,9 +34,10 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -52,13 +53,13 @@ import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public abstract class AbstractOAuth2ClientMapper {
+
     private static final int DASHBOARDS_REQUEST_LIMIT = 10;
 
     @Autowired
@@ -174,16 +175,16 @@ public abstract class AbstractOAuth2ClientMapper {
     }
 
     private TenantId getTenantId(String tenantName) throws Exception {
-        List<Tenant> tenants = tenantService.findTenants(new PageLink(1, 0, tenantName)).getData();
-        Tenant tenant;
-        if (tenants == null || tenants.isEmpty()) {
-            tenant = new Tenant();
-            tenant.setTitle(tenantName);
-            tenant = tbTenantService.save(tenant);
-        } else {
-            tenant = tenants.get(0);
+        PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
+        for (Tenant tenant : tenantIterator) {
+            if (tenant.getTitle().equals(tenantName)) {
+                return tenant.getId();
+            }
         }
-        return tenant.getTenantId();
+        Tenant tenant = new Tenant();
+        tenant.setTitle(tenantName);
+        tenant = tbTenantService.save(tenant);
+        return tenant.getId();
     }
 
     private CustomerId getCustomerId(TenantId tenantId, String customerName) {
@@ -220,4 +221,5 @@ public abstract class AbstractOAuth2ClientMapper {
         } while (dashboardsPage.hasNext());
         return Optional.empty();
     }
+
 }
