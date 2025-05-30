@@ -60,6 +60,6 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
             "t.additionalInfo, t.country, t.state, t.city, t.address, t.address2, t.zip, t.phone, t.email, t.region) FROM TenantEntity t WHERE t.id > :id ORDER BY t.id")
     List<TenantFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
-    TenantEntity findTenantByTitle(String name);
+    TenantEntity findFirstByTitle(String name);
 
 }
