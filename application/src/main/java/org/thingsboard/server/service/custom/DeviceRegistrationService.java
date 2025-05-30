@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2025 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.custom;
 
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -201,32 +202,30 @@ public class DeviceRegistrationService {
         }
     }
 
-    public String assignDeviceToCustomer(String deviceId, String customerId, String deviceName, String userEmail, boolean createUser) {
-        String assignUrl = baseUrl + "/api/customer/" + customerId + "/device/" + deviceId;
-        HttpEntity<Void> assignEntity = new HttpEntity<>(getHeaders());
-
+    public String assignDeviceToCustomer(String deviceId, String customerId, String desiredDeviceName, String userEmail, boolean createUser) {
         try {
-            // Step 1: Assign the device
+            // Step 1: Rename the device to a unique name under the customer BEFORE assignment
+            renameDevice(deviceId, desiredDeviceName, customerId);
+            log.info("Device renamed to '{}'", desiredDeviceName);
+
+            // Step 2: Assign the device to the customer
+            String assignUrl = baseUrl + "/api/customer/" + customerId + "/device/" + deviceId;
+            HttpEntity<Void> assignEntity = new HttpEntity<>(getHeaders());
             restTemplate.exchange(assignUrl, HttpMethod.POST, assignEntity, Void.class);
             log.info("Device '{}' assigned to customer '{}'.", deviceId, customerId);
-
-            // Step 2: Rename device
-            renameDevice(deviceId, deviceName);
-            log.info("Device renamed to '{}'", deviceName);
 
             String expiryDate = getStartDateWithOffset(60);
             String createdDate = getStartDate();
 
             if (createUser) {
-                createUserForCustomer(deviceId, customerId, deviceName, userEmail);
+                createUserForCustomer(deviceId, customerId, desiredDeviceName, userEmail);
             }
-            // Create both attributes on current device
+
             addServerAttributesConditionally(deviceId, expiryDate, createdDate, true);
-            // Update only expiryDate on other devices
             updateExpiryDateForOtherDevices(customerId, deviceId, expiryDate);
+
             return "Device assigned successfully.";
         } catch (HttpClientErrorException.Conflict e) {
-            // Email already exists
             log.warn("User with email '{}' already exists.", userEmail);
             return "Device assigned, but user already exists.";
         } catch (HttpClientErrorException | HttpServerErrorException e) {
@@ -235,6 +234,7 @@ public class DeviceRegistrationService {
             throw new RuntimeException("Unexpected error: " + e.getMessage(), e);
         }
     }
+
 
     public String createUserForCustomer(String deviceId, String customerId, String deviceName, String userEmail) {
         try {
@@ -255,12 +255,12 @@ public class DeviceRegistrationService {
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create user: " + e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    public void renameDevice(String deviceId, String newName) {
-        // 1) GET the existing device
+    public void renameDevice(String deviceId, String newName, String customerId) {
+        // 1) Get the existing device
         String getUrl = baseUrl + "/api/device/" + deviceId;
         Device device = restTemplate.exchange(
                 getUrl,
@@ -273,10 +273,16 @@ public class DeviceRegistrationService {
             throw new IncorrectParameterException("Device not found: " + deviceId);
         }
 
-        // 2) change the name
-        device.setName(newName);
+        // 2) Generate a unique name under the same customer
+        String finalName = newName;
+        int counter = 1;
+        while (isDeviceNameExistsUnderCustomer(customerId, finalName)) {
+            finalName = newName + "_" + counter++;
+        }
 
-        // 3) POST the modified object back to /api/device
+        // 3) Rename and update the device
+        device.setName(finalName);
+
         String saveUrl = baseUrl + "/api/device";
         restTemplate.exchange(
                 saveUrl,
@@ -285,6 +291,31 @@ public class DeviceRegistrationService {
                 Void.class
         );
     }
+
+    private boolean isDeviceNameExistsUnderCustomer(String customerId, String deviceName) {
+        String url = baseUrl + "/api/customer/" + customerId + "/devices?pageSize=100&page=0";
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(getHeaders()),
+                String.class
+        );
+        if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+            return false;
+        }
+        JSONObject json = new JSONObject(response.getBody());
+        if (!json.has("data")) return false;
+        JSONArray dataArray = json.getJSONArray("data");
+        for (int i = 0; i < dataArray.length(); i++) {
+            JSONObject deviceObj = dataArray.getJSONObject(i);
+            String existingName = deviceObj.optString("name", "");
+            if (existingName.equalsIgnoreCase(deviceName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public String getDeviceAccessToken(String deviceId) {
         String url = baseUrl + "/api/device/" + deviceId + "/credentials";
@@ -347,6 +378,22 @@ public class DeviceRegistrationService {
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to update other devices: " + e.getMessage());
+        }
+    }
+
+    public String unassignCustomerFromDevice(String deviceId) {
+        String url = baseUrl + "/api/customer/device/" + deviceId;
+        HttpEntity<String> entity = new HttpEntity<>(getHeaders());
+        ResponseEntity<Void> response = restTemplate.exchange(
+                url,
+                HttpMethod.DELETE,
+                entity,
+                Void.class
+        );
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return "Device unassigned from customer successfully.";
+        } else {
+            return "Failed to unassign device. Status: " + response.getStatusCode();
         }
     }
 

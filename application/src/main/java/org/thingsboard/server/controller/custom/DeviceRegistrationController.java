@@ -35,7 +35,6 @@ import java.util.UUID;
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-@RequiredArgsConstructor
 @Slf4j
 public class DeviceRegistrationController extends BaseController {
 
@@ -50,60 +49,61 @@ public class DeviceRegistrationController extends BaseController {
             @RequestBody DeviceRequest request) {
 
         Map<String, Object> response = new LinkedHashMap<>();
+        String deviceId = null;
 
         try {
-
             UUID deviceUUID = deviceRegistrationService.findDeviceByMacAndType(macId, request.getDeviceType());
-            Device device = deviceUUID != null ? deviceRegistrationService.findDeviceById(deviceUUID.toString()) : null;
-            if (deviceUUID == null || (device != null && !device.getType().equals(request.getDeviceType()))) {
-                response.put("status", HttpStatus.BAD_REQUEST.value());
-                response.put("message", "No matching device found for the given MAC ID and device type.");
-                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            Device device = (deviceUUID != null) ? deviceRegistrationService.findDeviceById(deviceUUID.toString()) : null;
+
+            if (device == null || !request.getDeviceType().equals(device.getType())) {
+                return buildResponse(400, "No matching device found for the given MAC ID and device type.");
             }
 
-            String deviceId = deviceUUID.toString();
-            Customer customerMailOpt = deviceRegistrationService.findCustomerByEmail(request.getEmail());
-            Customer customerDeviceOpt = deviceRegistrationService.findCustomerById(device.getCustomerId().getId().toString());
-            String token = deviceRegistrationService.getDeviceAccessToken(deviceId);
-            if (customerMailOpt != null) {
-                if (device.getCustomerId() != null) {
+            Customer requestCustomer = deviceRegistrationService.findCustomerByEmail(request.getEmail());
+            Customer currentCustomer = deviceRegistrationService.findCustomerById(device.getCustomerId().getId().toString());
+            String token = deviceRegistrationService.getDeviceAccessToken(deviceUUID.toString());
+            deviceId = deviceUUID.toString();
+            if (requestCustomer != null) {
+                boolean isAssigned = device.getCustomerId() != null && currentCustomer != null;
+                boolean isSameCustomer = isAssigned && currentCustomer.getEmail().equals(request.getEmail());
 
-                    if (customerDeviceOpt != null && customerDeviceOpt.getEmail().equals(request.getEmail())) {
-                        response.put("status", HttpStatus.valueOf(202));
-                        response.put("message", "Device is already assigned to this customer.");
-                        response.put("accessToken", token);
-                        return new ResponseEntity<>(response, HttpStatus.valueOf(202));
-                    } else if (device.getCustomerId().getId().equals(NULL_UUID) || (customerDeviceOpt != null && customerDeviceOpt.getEmail().equals(request.getEmail()))) {
-                        deviceRegistrationService.assignDeviceToCustomer(deviceId, customerMailOpt.getId().toString(), request.getDeviceName(), request.getEmail(), false);
-                        response.put("status", HttpStatus.valueOf(201));
-                        response.put("message", "Device successfully assigned to existing customer.");
-                        response.put("accessToken", token);
-                        return new ResponseEntity<>(response, HttpStatus.valueOf(201));
-                    }
+                if (isSameCustomer) {
+                    return buildResponse(202, "Device is already assigned to this customer.", token);
+                } else if (device.getCustomerId().getId().equals(NULL_UUID)) {
+                    deviceRegistrationService.assignDeviceToCustomer(deviceId, requestCustomer.getId().toString(), request.getDeviceName(), request.getEmail(), false);
+                    return buildResponse(201, "Device assigned to existing customer.", token);
+                } else {
+                    return buildResponse(420, "Device is already assigned to another customer.");
                 }
-
             } else if (device.getCustomerId().getId().equals(NULL_UUID)) {
                 Customer newCustomer = deviceRegistrationService.createCustomer(request.getEmail());
                 deviceRegistrationService.assignDeviceToCustomer(deviceId, newCustomer.getId().toString(), request.getDeviceName(), request.getEmail(), true);
-                response.put("status", HttpStatus.valueOf(200));
-                response.put("message", "New customer created and device assigned successfully.");
-                response.put("accessToken", token);
-                return new ResponseEntity<>(response, HttpStatus.valueOf(200));
+                return buildResponse(200, "New customer created and device assigned.", token);
             } else {
-                response.put("status", HttpStatus.valueOf(420));
-                response.put("message", "Device appears to be already assigned to another customer.");
-                return new ResponseEntity<>(response, HttpStatus.valueOf(420));
+                return buildResponse(420, "Device is already assigned to another customer.");
             }
 
         } catch (Exception e) {
             log.error("Error during device registration: {}", e.getMessage(), e);
-            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.put("message", "An error occurred during device registration");
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+            if (deviceId != null) {
+                deviceRegistrationService.unassignCustomerFromDevice(deviceId);
+            }
+            return buildResponse(500, "Internal error: " + e.getMessage());
         }
-
-        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("message", "No matching rules.");
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    private ResponseEntity<Map<String, Object>> buildResponse(int statusCode, String message) {
+        return buildResponse(statusCode, message, null);
+    }
+
+    private ResponseEntity<Map<String, Object>> buildResponse(int statusCode, String message, String token) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", statusCode);
+        body.put("message", message);
+        if (token != null) {
+            body.put("accessToken", token);
+        }
+        return ResponseEntity.status(statusCode).body(body);
+    }
+
 }
