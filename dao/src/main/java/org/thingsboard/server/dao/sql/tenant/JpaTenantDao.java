@@ -95,7 +95,7 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
 
     @Override
     public Tenant findTenantByName(TenantId tenantId, String name) {
-        return DaoUtil.getData(tenantRepository.findTenantByTitle(name));
+        return DaoUtil.getData(tenantRepository.findFirstByTitle(name));
     }
 
     @Override
