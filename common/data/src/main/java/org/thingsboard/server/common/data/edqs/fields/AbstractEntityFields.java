@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.edqs.fields;
 
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.UUID;
 
@@ -36,7 +36,7 @@ public class AbstractEntityFields implements EntityFields {
         this.id = id;
         this.createdTime = createdTime;
         this.tenantId = tenantId;
-        this.customerId = (customerId != null && customerId != CustomerId.NULL_UUID) ? customerId : null;
+        this.customerId = checkId(customerId);
         this.name = name;
         this.version = version;
     }
@@ -60,6 +60,10 @@ public class AbstractEntityFields implements EntityFields {
 
     public AbstractEntityFields(UUID id, long createdTime, UUID tenantId) {
         this(id, createdTime, tenantId, null, null, null);
+    }
+
+    protected UUID checkId(UUID id) {
+        return id != null && !id.equals(EntityId.NULL_UUID) ? id : null;
     }
 
 }
