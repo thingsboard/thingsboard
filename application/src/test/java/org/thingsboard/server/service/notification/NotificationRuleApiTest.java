@@ -817,7 +817,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .cpuThreshold(1f)
                 .storageThreshold(1f)
                 .build();
-        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());it a
+        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
         loginTenantAdmin();
 
         assertThat(getMyNotifications(false, 100)).size().isZero();
@@ -833,7 +833,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
         assertThat(notification.getText()).isEqualTo("RAM shortage");
 
-        // deduplication is 5 minute, no new message is exp
+        // deduplication is 1 minute, no new message is exp
         notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
                 .resource(Resource.RAM)
                 .usage(5L)
