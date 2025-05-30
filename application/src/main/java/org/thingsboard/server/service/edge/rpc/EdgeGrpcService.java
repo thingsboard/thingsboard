@@ -405,6 +405,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeId edgeId = session.getEdge().getId();
         TenantId tenantId = session.getEdge().getTenantId();
 
+        destroyKafkaSessionIfDisconnectedAndConsumerActive(tenantId, edgeId, session);
+
         cancelScheduleEdgeEventsCheck(edgeId);
 
         if (sessions.containsKey(edgeId)) {
@@ -459,13 +461,32 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void processEdgeEventMigrationIfNeeded(EdgeGrpcSession session, EdgeId edgeId) throws Exception {
         boolean isMigrationProcessed = edgeEventsMigrationProcessed.getOrDefault(edgeId, Boolean.FALSE);
         if (!isMigrationProcessed) {
+            log.info("Starting edge event migration for edge [{}]", edgeId.getId());
             Boolean eventsExist = session.migrateEdgeEvents().get();
             if (Boolean.TRUE.equals(eventsExist)) {
+                log.info("Migration still in progress for edge [{}]", edgeId.getId());
                 sessionNewEvents.put(edgeId, true);
                 scheduleEdgeEventsCheck(session);
             } else if (Boolean.FALSE.equals(eventsExist)) {
+                log.info("Migration completed for edge [{}]", edgeId.getId());
                 edgeEventsMigrationProcessed.put(edgeId, true);
             }
+        }
+    }
+
+    private void destroyKafkaSessionIfDisconnectedAndConsumerActive(TenantId tenantId, EdgeId edgeId, EdgeGrpcSession session) {
+        try {
+            if (session instanceof KafkaEdgeGrpcSession kafkaSession) {
+                if (!kafkaSession.isConnected()
+                        && kafkaSession.getConsumer() != null
+                        && kafkaSession.getConsumer().getConsumer() != null
+                        && !kafkaSession.getConsumer().getConsumer().isStopped()) {
+                    sessions.remove(edgeId);
+                    kafkaSession.destroy();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[{}] Failed to destroy kafka session for edge [{}]", tenantId, edgeId, e);
         }
     }
 
