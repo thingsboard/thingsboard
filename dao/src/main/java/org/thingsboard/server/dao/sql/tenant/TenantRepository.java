@@ -48,7 +48,7 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
             "LEFT JOIN TenantProfileEntity p on p.id = t.tenantProfileId " +
             "WHERE (:textSearch IS NULL OR ilike(t.title, CONCAT('%', :textSearch, '%')) = true)")
     Page<TenantInfoEntity> findTenantInfosNextPage(@Param("textSearch") String textSearch,
-                                                          Pageable pageable);
+                                                   Pageable pageable);
 
     @Query("SELECT t.id FROM TenantEntity t")
     Page<UUID> findTenantsIds(Pageable pageable);
@@ -59,4 +59,7 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.TenantFields(t.id, t.createdTime, t.title, t.version," +
             "t.additionalInfo, t.country, t.state, t.city, t.address, t.address2, t.zip, t.phone, t.email, t.region) FROM TenantEntity t WHERE t.id > :id ORDER BY t.id")
     List<TenantFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    TenantEntity findTenantByTitle(String name);
+
 }
