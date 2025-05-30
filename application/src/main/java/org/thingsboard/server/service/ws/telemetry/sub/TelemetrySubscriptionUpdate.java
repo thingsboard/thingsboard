@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.ws.telemetry.sub;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.With;
@@ -73,6 +74,7 @@ public class TelemetrySubscriptionUpdate {
         this.errorMsg = errorMsg != null ? errorMsg : errorCode.getDefaultMsg();
     }
 
+    @JsonIgnore
     public Map<String, List<TsValue>> getValues() {
         if (data == null || data.isEmpty()) {
             return Collections.emptyMap();
