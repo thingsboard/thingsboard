@@ -9,7 +9,8 @@ See the available types and parameters below:
 
 Available template parameters:
 
-* `resource` - the shortage threshold;
+* `resource` - the resource name;
+* `usage` - the resource usage value;
 
 Parameter names must be wrapped using `${...}`. For example: `${resource}`.
 You may also modify the value of the parameter with one of the suffixes:

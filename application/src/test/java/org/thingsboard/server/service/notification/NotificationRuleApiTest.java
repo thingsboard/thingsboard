@@ -94,6 +94,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -137,7 +138,7 @@ import static org.thingsboard.server.common.data.notification.rule.trigger.confi
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @SpyBean
-    private AlarmSubscriptionService alarmSubscriptionService;;
+    private AlarmSubscriptionService alarmSubscriptionService;
     @Autowired
     private DefaultSystemInfoService systemInfoService;
     @Autowired
@@ -261,7 +262,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             assertThat(info.getAlarmStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
 
-        clients.values().forEach(wsClient -> wsClient.registerWaitForUpdate());
+        clients.values().forEach(TbTestWebSocketClient::registerWaitForUpdate);
         alarmSubscriptionService.acknowledgeAlarm(tenantId, alarm.getId(), System.currentTimeMillis());
         AlarmStatus expectedStatus = AlarmStatus.ACTIVE_ACK;
         AlarmSeverity expectedSeverity = AlarmSeverity.CRITICAL;
@@ -645,7 +646,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         rule = saveNotificationRule(rule);
 
         NotificationRuleInfo ruleInfo = findNotificationRules().getData().get(0);
-        assertThat(ruleInfo.getId()).isEqualTo(ruleInfo.getId());
+        assertThat(ruleInfo.getId()).isEqualTo(rule.getId());
         assertThat(ruleInfo.getTemplateName()).isEqualTo(template.getName());
         assertThat(ruleInfo.getDeliveryMethods()).containsOnly(deliveryMethods);
     }
@@ -795,16 +796,17 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .cpuThreshold(1f)
                 .storageThreshold(1f)
                 .build();
-        createNotificationRule(triggerConfig, "Test", "Test", createNotificationTarget(tenantAdminUserId).getId());
+        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
         loginTenantAdmin();
 
         Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
         method.setAccessible(true);
         method.invoke(systemInfoService);
 
-        TimeUnit.SECONDS.sleep(5);
-
-        assertThat(getMyNotifications(false, 100)).size().isOne();
+        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        Notification notification = getMyNotifications(false, 100).get(0);
+        assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
+        assertThat(notification.getText()).isEqualTo("RAM shortage");
     }
 
     @Test
@@ -815,7 +817,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .cpuThreshold(1f)
                 .storageThreshold(1f)
                 .build();
-        createNotificationRule(triggerConfig, "Test", "Test", createNotificationTarget(tenantAdminUserId).getId());
+        createNotificationRule(triggerConfig, "Test", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
         loginTenantAdmin();
 
         assertThat(getMyNotifications(false, 100)).size().isZero();
@@ -826,8 +828,10 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                     .build());
             TimeUnit.MILLISECONDS.sleep(300);
         }
-        TimeUnit.SECONDS.sleep(5);
-        assertThat(getMyNotifications(false, 100)).size().isOne();
+        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        Notification notification = getMyNotifications(false, 100).get(0);
+        assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
+        assertThat(notification.getText()).isEqualTo("RAM shortage");
 
         // deduplication is 5 minute, no new message is exp
         notificationRuleProcessor.process(ResourcesShortageTrigger.builder()

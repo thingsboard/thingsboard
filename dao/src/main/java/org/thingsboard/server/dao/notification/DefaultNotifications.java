@@ -383,7 +383,7 @@ public class DefaultNotifications {
             .rule(DefaultRule.builder()
                     .name("Resources shortage")
                     .triggerConfig(ResourcesShortageNotificationRuleTriggerConfig.builder().cpuThreshold(0.8f).storageThreshold(0.8f).ramThreshold(0.8f).build())
-                    .description("Send notification to system admins when resources shortage is running low")
+                    .description("Send notification to system admins on resource shortage")
                     .build())
             .color(RED_COLOR)
             .build();

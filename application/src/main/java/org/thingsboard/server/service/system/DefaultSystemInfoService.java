@@ -95,7 +95,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private final DomainService domainService;
     private final MailService mailService;
     private final SmsService smsService;
-    private final NotificationRuleProcessor notificationRule;
+    private final NotificationRuleProcessor notificationRuleProcessor;
     private volatile ScheduledExecutorService scheduler;
 
     @Value("${metrics.system_info.persist_frequency:60}")
@@ -185,9 +185,9 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         long ts = System.currentTimeMillis();
         List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfo());
         clusterSystemData.forEach(data -> {
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(data.getCpuUsage()).build());
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(data.getMemoryUsage()).build());
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(data.getDiscUsage()).build());
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(data.getCpuUsage()).build());
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(data.getMemoryUsage()).build());
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(data.getDiscUsage()).build());
         });
         BasicTsKvEntry clusterDataKv = new BasicTsKvEntry(ts, new JsonDataEntry("clusterSystemData", JacksonUtil.toString(clusterSystemData)));
         doSave(Arrays.asList(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", true)), clusterDataKv));
@@ -200,17 +200,17 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         getCpuUsage().ifPresent(v -> {
             long value = (long) v;
             tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuUsage", value)));
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(value).build());
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(value).build());
         });
         getMemoryUsage().ifPresent(v -> {
             long value = (long) v;
             tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", value)));
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(value).build());
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(value).build());
         });
         getDiscSpaceUsage().ifPresent(v -> {
             long value = (long) v;
             tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("discUsage", value)));
-            notificationRule.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(value).build());
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(value).build());
         });
 
         getCpuCount().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuCount", (long) v))));
