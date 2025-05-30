@@ -35,8 +35,8 @@ import org.thingsboard.server.common.data.job.JobStatus;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
 import java.util.UUID;
@@ -53,13 +53,13 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERT
 @Slf4j
 public class JobController extends BaseController {
 
-    private final JobService jobService;
     private final JobManager jobManager;
 
     @GetMapping("/job/{id}")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public Job getJobById(@PathVariable UUID id) throws ThingsboardException {
-        return jobService.findJobById(getTenantId(), new JobId(id));
+        JobId jobId = new JobId(id);
+        return checkJobId(jobId, Operation.READ);
     }
 
     @GetMapping("/jobs")
@@ -93,19 +93,25 @@ public class JobController extends BaseController {
     @PostMapping("/job/{id}/cancel")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public void cancelJob(@PathVariable UUID id) throws ThingsboardException {
-        jobManager.cancelJob(getTenantId(), new JobId(id));
+        JobId jobId = new JobId(id);
+        checkJobId(jobId, Operation.WRITE);
+        jobManager.cancelJob(getTenantId(), jobId);
     }
 
     @PostMapping("/job/{id}/reprocess")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public void reprocessJob(@PathVariable UUID id) throws ThingsboardException {
-        jobManager.reprocessJob(getTenantId(), new JobId(id));
+        JobId jobId = new JobId(id);
+        checkJobId(jobId, Operation.WRITE);
+        jobManager.reprocessJob(getTenantId(), jobId);
     }
 
     @DeleteMapping("/job/{id}")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     public void deleteJob(@PathVariable UUID id) throws ThingsboardException {
-        jobService.deleteJob(getTenantId(), new JobId(id));
+        JobId jobId = new JobId(id);
+        checkJobId(jobId, Operation.DELETE);
+        jobService.deleteJob(getTenantId(), jobId);
     }
 
 }

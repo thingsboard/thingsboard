@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.service.job.task;
 
-import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.DummyTask;
 import org.thingsboard.server.common.data.job.task.DummyTaskResult;
+import org.thingsboard.server.common.data.job.task.Task;
 import org.thingsboard.server.queue.task.TaskProcessor;
 
-@RequiredArgsConstructor
+import java.util.Map;
+import java.util.concurrent.Future;
+
 public class DummyTaskProcessor extends TaskProcessor<DummyTask, DummyTaskResult> {
 
     @Override
@@ -40,8 +43,12 @@ public class DummyTaskProcessor extends TaskProcessor<DummyTask, DummyTaskResult
     }
 
     @Override
-    public long getTaskProcessingTimeout() {
-        return 2000;
+    public long getProcessingTimeout(DummyTask task) {
+        return task.getProcessingTimeoutMs() > 0 ? task.getProcessingTimeoutMs() : 2000;
+    }
+
+    public Map<Object, Pair<Task<DummyTaskResult>, Future<DummyTaskResult>>> getCurrentTasks() {
+        return currentTasks;
     }
 
     @Override

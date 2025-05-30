@@ -120,7 +120,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
                 .queueKey(new QueueKey(ServiceType.EDQS, config.getEventsTopic()))
                 .topic(topicService.buildTopicName(config.getEventsTopic()))
                 .pollInterval(config.getPollInterval())
-                .msgPackProcessor((msgs, consumer, config) -> {
+                .msgPackProcessor((msgs, consumer, consumerKey, config) -> {
                     for (TbProtoQueueMsg<ToEdqsMsg> queueMsg : msgs) {
                         if (consumer.isStopped()) {
                             return;

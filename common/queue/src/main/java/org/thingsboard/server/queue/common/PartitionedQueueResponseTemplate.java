@@ -74,7 +74,7 @@ public class PartitionedQueueResponseTemplate<Request extends TbQueueMsg, Respon
                 .queueKey(key + "-requests")
                 .topic(requestsTopic)
                 .pollInterval(pollInterval)
-                .msgPackProcessor((requests, consumer, config) -> processRequests(requests, consumer))
+                .msgPackProcessor((requests, consumer, consumerKey, config) -> processRequests(requests, consumer))
                 .consumerCreator((config, tpi) -> consumerCreator.apply(tpi))
                 .consumerExecutor(consumerExecutor)
                 .scheduler(scheduler)
