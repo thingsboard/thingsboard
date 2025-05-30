@@ -207,6 +207,12 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     }
 
     @Override
+    public Tenant findTenantByName(String name) {
+        log.trace("Executing findTenantByName [{}]", name);
+        return tenantDao.findTenantByName(TenantId.SYS_TENANT_ID, name);
+    }
+
+    @Override
     public void deleteTenants() {
         log.trace("Executing deleteTenants");
         tenantsRemover.removeEntities(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID);
