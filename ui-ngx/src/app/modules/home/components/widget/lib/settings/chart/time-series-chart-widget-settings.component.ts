@@ -163,6 +163,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       tooltipDateFont: [settings.tooltipDateFont, []],
       tooltipDateColor: [settings.tooltipDateColor, []],
       tooltipDateInterval: [settings.tooltipDateInterval, []],
+      tooltipStackedShowTotal: [settings.tooltipStackedShowTotal, []],
 
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
@@ -178,7 +179,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['comparisonEnabled', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['comparisonEnabled', 'showLegend', 'showTooltip', 'tooltipShowDate', 'stack'];
   }
 
   protected updateValidators(emitEvent: boolean) {
@@ -186,6 +187,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
     const showLegend: boolean = this.timeSeriesChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.timeSeriesChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').value;
+    const stack: boolean = this.timeSeriesChartWidgetSettingsForm.get('stack').value;
 
     if (comparisonEnabled) {
       this.timeSeriesChartWidgetSettingsForm.get('timeForComparison').enable();
@@ -223,6 +225,10 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueFormatter').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').enable({emitEvent: false});
+      if (stack)
+        this.timeSeriesChartWidgetSettingsForm.get('tooltipStackedShowTotal').enable();
+      else
+        this.timeSeriesChartWidgetSettingsForm.get('tooltipStackedShowTotal').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundBlur').enable();
       if (tooltipShowDate) {
@@ -248,6 +254,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('tooltipDateFont').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipDateColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipDateInterval').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipStackedShowTotal').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
     }
