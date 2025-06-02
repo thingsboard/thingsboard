@@ -17,8 +17,8 @@
 import { TranslateService } from '@ngx-translate/core';
 
 export interface RateLimits {
-  value: string;
-  time: string;
+  value: number;
+  time: number;
 }
 
 export enum RateLimitsType {
@@ -113,11 +113,11 @@ export function stringToRateLimitsArray(rateLimits: string): Array<RateLimits> {
   const result: Array<RateLimits> = [];
   if (rateLimits?.length > 0) {
     const rateLimitsArrays = rateLimits.split(',');
-    for (let i = 0; i < rateLimitsArrays.length; i++) {
-      const [value, time] = rateLimitsArrays[i].split(':');
+    for (const limit of rateLimitsArrays) {
+      const [value, time] = limit.split(':');
       const rateLimitControl = {
-        value,
-        time
+        value: Number(value),
+        time: Number(time)
       };
       result.push(rateLimitControl);
     }
@@ -128,7 +128,7 @@ export function stringToRateLimitsArray(rateLimits: string): Array<RateLimits> {
 export function rateLimitsArrayToString(rateLimits: Array<RateLimits>): string {
   let result = '';
   for (let i = 0; i < rateLimits.length; i++) {
-    result = result.concat(rateLimits[i].value, ':', rateLimits[i].time);
+    result = result.concat(rateLimits[i].value.toString(), ':', rateLimits[i].time.toString());
     if ((rateLimits.length > 1) && (i !== rateLimits.length - 1)) {
       result = result.concat(',');
     }
@@ -143,8 +143,8 @@ export function rateLimitsArrayToHtml(translate: TranslateService, rateLimitsArr
   });
   let result: string;
   if (rateLimitsHtml.length > 1) {
-    const butLessThanText = translate.instant('tenant-profile.rate-limits.but-less-than');
-    result = rateLimitsHtml.join(' <span class="disabled">' + butLessThanText + '</span> ');
+    const andAlsoText = translate.instant('tenant-profile.rate-limits.and-also-less-than');
+    result = rateLimitsHtml.join(` <span class="disabled">${andAlsoText}</span> `);
   } else {
     result = rateLimitsHtml[0];
   }

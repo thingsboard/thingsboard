@@ -5131,7 +5131,6 @@
             "add-limit": "Add limit",
             "advanced-settings": "Advanced settings",
             "edit-limit": "Edit limit",
-            "but-less-than": "but less than",
             "edit-transport-tenant-msg-title": "Edit transport tenant messages rate limits",
             "edit-transport-tenant-telemetry-msg-title": "Edit transport tenant telemetry messages rate limits",
             "edit-transport-tenant-telemetry-data-points-title": "Edit transport tenant telemetry data points rate limits",

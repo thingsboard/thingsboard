@@ -5640,7 +5640,6 @@
       "add-limit": "Tilføj begrænsning",
       "advanced-settings": "Avancerede indstillinger",
       "edit-limit": "Rediger begrænsning",
-      "but-less-than": "men mindre end",
       "calculated-field-debug-event-rate-limit": "Fejlfindingshændelser for beregnede felter",
       "edit-calculated-field-debug-event-rate-limit": "Rediger hastighedsgrænser for fejlfindingshændelser for beregnede felter",
       "edit-transport-tenant-msg-title": "Rediger grænse for transportlejers beskeder",

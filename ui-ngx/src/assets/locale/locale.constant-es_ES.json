@@ -5640,7 +5640,6 @@
       "add-limit": "Agregar límite",
       "advanced-settings": "Configuraciones avanzadas",
       "edit-limit": "Editar límite",
-      "but-less-than": "pero menor que",
       "calculated-field-debug-event-rate-limit": "Eventos de depuración de campo calculado",
       "edit-calculated-field-debug-event-rate-limit": "Editar límites de eventos de depuración de campo calculado",
       "edit-transport-tenant-msg-title": "Editar límites de velocidad de mensajes de transporte del inquilino",
