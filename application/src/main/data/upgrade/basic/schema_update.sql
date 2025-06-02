@@ -14,6 +14,8 @@
 -- limitations under the License.
 --
 
+-- UPDATE TENANT PROFILE CASSANDRA RATE LIMITS START
+
 UPDATE tenant_profile
 SET profile_data = jsonb_set(
         profile_data,
@@ -42,3 +44,18 @@ SET profile_data = jsonb_set(
                    )
 WHERE profile_data -> 'configuration' ? 'cassandraQueryTenantRateLimitsConfiguration';
 
+-- UPDATE TENANT PROFILE CASSANDRA RATE LIMITS END
+
+-- UPDATE NOTIFICATION RULE CASSANDRA RATE LIMITS START
+
+UPDATE notification_rule
+SET trigger_config = REGEXP_REPLACE(
+        trigger_config,
+        '"CASSANDRA_QUERIES"',
+        '"CASSANDRA_WRITE_QUERIES_CORE","CASSANDRA_READ_QUERIES_CORE","CASSANDRA_WRITE_QUERIES_RULE_ENGINE","CASSANDRA_READ_QUERIES_RULE_ENGINE","CASSANDRA_WRITE_QUERIES_MONOLITH","CASSANDRA_READ_QUERIES_MONOLITH"',
+        'g'
+                     )
+WHERE trigger_type = 'RATE_LIMITS'
+  AND trigger_config LIKE '%"CASSANDRA_QUERIES"%';
+
+-- UPDATE NOTIFICATION RULE CASSANDRA RATE LIMITS END
