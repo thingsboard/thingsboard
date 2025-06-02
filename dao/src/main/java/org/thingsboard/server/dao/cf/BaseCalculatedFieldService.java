@@ -57,7 +57,18 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
 
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
-        CalculatedField oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
+        return doSave(calculatedField, true);
+    }
+
+    @Override
+    public CalculatedField save(CalculatedField calculatedField, boolean doValidate) {
+        return doSave(calculatedField, doValidate);
+    }
+
+    private CalculatedField doSave(CalculatedField calculatedField, boolean doValidate) {
+        if (doValidate) {
+            calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
+        }
         try {
             TenantId tenantId = calculatedField.getTenantId();
             log.trace("Executing save calculated field, [{}]", calculatedField);
@@ -65,7 +76,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
             CalculatedField savedCalculatedField = calculatedFieldDao.save(tenantId, calculatedField);
             createOrUpdateCalculatedFieldLink(tenantId, savedCalculatedField);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCalculatedField.getTenantId()).entityId(savedCalculatedField.getId())
-                    .entity(savedCalculatedField).oldEntity(oldCalculatedField).created(calculatedField.getId() == null).build());
+                    .entity(savedCalculatedField).oldEntity(calculatedField).created(calculatedField.getId() == null).build());
             return savedCalculatedField;
         } catch (Exception e) {
             checkConstraintViolation(e,
@@ -81,6 +92,14 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);
         return calculatedFieldDao.findById(tenantId, calculatedFieldId.getId());
+    }
+
+    @Override
+    public CalculatedField findByTenantIdAndName(TenantId tenantId, String name) {
+        log.trace("Executing findByTenantIdAndName [{}], calculatedFieldName[{}]", tenantId, name);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+
+        return calculatedFieldDao.findByTenantIdAndName(tenantId, name).orElse(null);
     }
 
     @Override

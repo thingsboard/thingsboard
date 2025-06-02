@@ -124,6 +124,14 @@ enum UpdateMsgType {
   // use 6 as a next number
 }
 
+message CalculatedFieldUpdateMsg{
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string entity = 4;
+}
+
+
 message EntityDataProto {
   int64 entityIdMSB = 1;
   int64 entityIdLSB = 2;
@@ -423,6 +431,7 @@ message UplinkMsg {
   repeated AlarmCommentUpdateMsg alarmCommentUpdateMsg = 22;
   repeated RuleChainUpdateMsg ruleChainUpdateMsg = 23;
   repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 24;
+  repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 25;
 }
 
 message UplinkResponseMsg {
@@ -472,4 +481,5 @@ message DownlinkMsg {
   repeated NotificationTargetUpdateMsg notificationTargetUpdateMsg = 32;
   repeated NotificationTemplateUpdateMsg notificationTemplateUpdateMsg = 33;
   repeated OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg = 34;
+  repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 35;
 }

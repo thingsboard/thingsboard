@@ -23,6 +23,7 @@ import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.rpc.fetch.AdminSettingsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.AssetProfilesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.AssetsEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.CalculatedFieldsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.CustomerEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.CustomerUsersEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.DashboardsEdgeEventFetcher;
@@ -80,6 +81,7 @@ public class EdgeSyncCursor {
         fetchers.add(new DevicesEdgeEventFetcher(ctx.getDeviceService()));
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));
         fetchers.add(new EntityViewsEdgeEventFetcher(ctx.getEntityViewService()));
+        fetchers.add(new CalculatedFieldsEdgeEventFetcher(ctx.getCalculatedFieldService()));
         if (fullSync) {
             fetchers.add(new NotificationTemplateEdgeEventFetcher(ctx.getNotificationTemplateService()));
             fetchers.add(new NotificationTargetEdgeEventFetcher(ctx.getNotificationTargetService()));
@@ -107,4 +109,5 @@ public class EdgeSyncCursor {
         currentIdx++;
         return edgeEventFetcher;
     }
+
 }
