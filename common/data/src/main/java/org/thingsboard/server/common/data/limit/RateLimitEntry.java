@@ -13,28 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.discovery;
+package org.thingsboard.server.common.data.limit;
 
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
+public record RateLimitEntry(long capacity, long durationSeconds) {
 
-import java.util.Set;
-import java.util.UUID;
+    public static RateLimitEntry parse(String s) {
+        String[] parts = s.split(":");
+        return new RateLimitEntry(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
+    }
 
-public interface TbServiceInfoProvider {
-
-    String getServiceId();
-
-    String getServiceType();
-
-    ServiceInfo getServiceInfo();
-
-    boolean isService(ServiceType serviceType);
-
-    ServiceInfo generateNewServiceInfoWithCurrentSystemInfo();
-
-    Set<UUID> getAssignedTenantProfiles();
-
-    boolean setReady(boolean ready);
+    @Override
+    public String toString() {
+        return capacity + ":" + durationSeconds;
+    }
 
 }
