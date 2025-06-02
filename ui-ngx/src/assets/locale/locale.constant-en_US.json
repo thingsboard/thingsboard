@@ -8874,7 +8874,11 @@
             "radar-axis": "Radar axis",
             "axis-label": "Axis label",
             "ticks-label": "Ticks label",
-            "radar-chart-style": "Radar chart style"
+            "radar-chart-style": "Radar chart style",
+            "max-axes-scaling": "Max axes scaling",
+            "max-axes-scaling-hint": "Choose whether each radar axis has its own maximum value (Separate) or shares the highest value across all axes based on the widget dataset (Common).",
+            "separate": "Separate",
+            "common": "Common"
         },
         "time-series-chart": {
             "chart": "Chart",
