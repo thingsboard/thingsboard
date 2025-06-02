@@ -265,6 +265,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public void updateEdge(TenantId tenantId, Edge edge) {
+        if (edge == null) {
+            log.warn("[{}] Edge is null - edge is removed and outdated notification is in process!", tenantId);
+            return;
+        }
         EdgeGrpcSession session = sessions.get(edge.getId());
         if (session != null && session.isConnected()) {
             log.debug("[{}] Updating configuration for edge [{}] [{}]", tenantId, edge.getName(), edge.getId());
