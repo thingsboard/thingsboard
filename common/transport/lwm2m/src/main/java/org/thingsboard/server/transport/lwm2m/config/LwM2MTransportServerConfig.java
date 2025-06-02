@@ -34,7 +34,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')  && '${transport.lwm2m.enabled:false}'=='true'")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
 @ConfigurationProperties(prefix = "transport.lwm2m")
 public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
 

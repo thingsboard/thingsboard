@@ -37,7 +37,8 @@ public enum NotificationType {
     RATE_LIMITS,
     EDGE_CONNECTION,
     EDGE_COMMUNICATION_FAILURE,
-    TASK_PROCESSING_FAILURE;
+    TASK_PROCESSING_FAILURE,
+    RESOURCES_SHORTAGE;
 
     @Getter
     private boolean system; // for future use and compatibility with PE

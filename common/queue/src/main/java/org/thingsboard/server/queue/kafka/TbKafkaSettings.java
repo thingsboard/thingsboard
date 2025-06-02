@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,7 +37,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -138,14 +140,25 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.other-inline:}")
     private String otherInline;
 
+    @Value("${queue.kafka.consumer-properties-per-topic-inline:}")
+    private String consumerPropertiesPerTopicInline;
+
     @Deprecated
     @Setter
     private List<TbProperty> other;
 
     @Setter
-    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
+    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = new HashMap<>();
 
     private volatile AdminClient adminClient;
+
+    @PostConstruct
+    public void initInlineTopicProperties() {
+        Map<String, List<TbProperty>> inlineProps = parseTopicPropertyList(consumerPropertiesPerTopicInline);
+        if (!inlineProps.isEmpty()) {
+            consumerPropertiesPerTopic.putAll(inlineProps);
+        }
+    }
 
     public Properties toConsumerProps(String topic) {
         Properties props = toProps();
@@ -243,6 +256,27 @@ public class TbKafkaSettings {
         props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(AdminClientConfig.RETRIES_CONFIG, retries);
         return props;
+    }
+
+    private Map<String, List<TbProperty>> parseTopicPropertyList(String inlineProperties) {
+        Map<String, List<String>> grouped = PropertyUtils.getGroupedProps(inlineProperties);
+        Map<String, List<TbProperty>> result = new HashMap<>();
+
+        grouped.forEach((topic, entries) -> {
+            Map<String, String> merged = new LinkedHashMap<>();
+            for (String entry : entries) {
+                String[] kv = entry.split("=", 2);
+                if (kv.length == 2) {
+                    merged.put(kv[0].trim(), kv[1].trim());
+                }
+            }
+            List<TbProperty> props = merged.entrySet().stream()
+                    .map(e -> new TbProperty(e.getKey(), e.getValue()))
+                    .toList();
+            result.put(topic, props);
+        });
+
+        return result;
     }
 
     @PreDestroy

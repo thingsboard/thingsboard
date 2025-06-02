@@ -133,7 +133,8 @@ export class DynamicFormPropertyPanelComponent implements OnInit {
         allowClear: [this.property.allowClear || true, []],
         dateTimeType: [this.property.dateTimeType || 'datetime', []],
         htmlContent: [this.property.htmlContent || '', []],
-        htmlClassList: [this.property.htmlClassList || [], []]
+        htmlClassList: [this.property.htmlClassList || [], []],
+        supportsUnitConversion: [this.property.supportsUnitConversion ?? false]
       }
     );
     if (this.disabled) {

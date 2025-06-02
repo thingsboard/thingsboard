@@ -34,12 +34,14 @@ import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,6 +66,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     private final long maxWaitTime;
     private final long pollMs;
+    private final String  bufferName;
     private final BlockingQueue<AsyncTaskContext<T, V>> queue;
     private final ExecutorService dispatcherExecutor;
     private final ExecutorService callbackExecutor;
@@ -82,19 +85,23 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     private final boolean printTenantNames;
     private final Map<TenantId, String> tenantNamesCache = new HashMap<>();
 
+    private final LimitedApi myLimitedApi;
+
     public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads,
-                                        int callbackThreads, long pollMs, int printQueriesFreq, StatsFactory statsFactory,
-                                        EntityService entityService, RateLimitService rateLimitService, boolean printTenantNames) {
+                                        int callbackThreads, long pollMs, int printQueriesFreq, BufferedRateExecutorType executorType, TbServiceInfoProvider serviceInfoProvider,
+                                        RateLimitService rateLimitService, StatsFactory statsFactory, EntityService entityService, boolean printTenantNames) {
         this.maxWaitTime = maxWaitTime;
         this.pollMs = pollMs;
+        this.bufferName = executorType.getDisplayName();
+        this.myLimitedApi = resolveLimitedApi(serviceInfoProvider, executorType);
         this.concurrencyLimit = concurrencyLimit;
         this.printQueriesFreq = printQueriesFreq;
         this.queue = new LinkedBlockingDeque<>(queueLimit);
-        this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-" + getBufferName() + "-dispatcher"));
-        this.callbackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreads, "nosql-" + getBufferName() + "-callback");
-        this.timeoutExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("nosql-" + getBufferName() + "-timeout");
+        this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-" + bufferName + "-dispatcher"));
+        this.callbackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreads, "nosql-" + bufferName + "-callback");
+        this.timeoutExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("nosql-" + bufferName + "-timeout");
         this.stats = new BufferedRateExecutorStats(statsFactory);
-        String concurrencyLevelKey = StatsType.RATE_EXECUTOR.getName() + "." + CONCURRENCY_LEVEL + getBufferName(); //metric name may change with buffer name suffix
+        String concurrencyLevelKey = StatsType.RATE_EXECUTOR.getName() + "." + CONCURRENCY_LEVEL + bufferName; //metric name may change with buffer name suffix
         this.concurrencyLevel = statsFactory.createGauge(concurrencyLevelKey, new AtomicInteger(0));
 
         this.entityService = entityService;
@@ -114,14 +121,14 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         boolean perTenantLimitReached = false;
         TenantId tenantId = task.getTenantId();
         if (tenantId != null && !tenantId.isSysTenantId()) {
-            if (!rateLimitService.checkRateLimit(LimitedApi.CASSANDRA_QUERIES, tenantId, tenantId, true)) {
+            if (!rateLimitService.checkRateLimit(myLimitedApi, tenantId, tenantId, true)) {
                 stats.incrementRateLimitedTenant(tenantId);
                 stats.getTotalRateLimited().increment();
                 settableFuture.setException(new TenantRateLimitException());
                 perTenantLimitReached = true;
             }
         } else if (tenantId == null) {
-            log.info("[{}] Invalid task received: {}", getBufferName(), task);
+            log.info("[{}] Invalid task received: {}", bufferName, task);
         }
 
         if (!perTenantLimitReached) {
@@ -134,6 +141,16 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             }
         }
         return result;
+    }
+
+    private LimitedApi resolveLimitedApi(TbServiceInfoProvider serviceInfoProvider, BufferedRateExecutorType executorType) {
+        if (serviceInfoProvider == null || serviceInfoProvider.isMonolith()) {
+            return executorType.getMonolithLimitedApi();
+        }
+        if (serviceInfoProvider.isService(ServiceType.TB_RULE_ENGINE)) {
+            return executorType.getRuleEngineLimitedApi();
+        }
+        return executorType.getCoreLimitedApi();
     }
 
     public void stop() {
@@ -154,10 +171,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     protected abstract ListenableFuture<V> execute(AsyncTaskContext<T, V> taskCtx);
 
-    public abstract String getBufferName();
-
     private void dispatch() {
-        log.info("[{}] Buffered rate executor thread started", getBufferName());
+        log.info("[{}] Buffered rate executor thread started", bufferName);
         while (!Thread.interrupted()) {
             int curLvl = concurrencyLevel.get();
             AsyncTaskContext<T, V> taskCtx = null;
@@ -169,7 +184,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                         if (printQueriesIdx.incrementAndGet() >= printQueriesFreq) {
                             printQueriesIdx.set(0);
                             String query = queryToString(finalTaskCtx);
-                            log.info("[{}][{}] Cassandra query: {}", getBufferName(), taskCtx.getId(), query);
+                            log.info("[{}][{}] Cassandra query: {}", bufferName, taskCtx.getId(), query);
                         }
                     }
                     logTask("Processing", finalTaskCtx);
@@ -222,7 +237,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                 }
             }
         }
-        log.info("[{}] Buffered rate executor thread stopped", getBufferName());
+        log.info("[{}] Buffered rate executor thread stopped", bufferName);
     }
 
     private void logTask(String action, AsyncTaskContext<T, V> taskCtx) {
@@ -298,7 +313,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             statsBuilder.append(CONCURRENCY_LEVEL).append(" = [").append(concurrencyLevel.get()).append("] ");
 
             stats.getStatsCounters().forEach(StatsCounter::clear);
-            log.info("[{}] Permits {}", getBufferName(), statsBuilder);
+            log.info("[{}] Permits {}", bufferName, statsBuilder);
         }
 
         stats.getRateLimitedTenants().entrySet().stream()
@@ -314,13 +329,13 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                             try {
                                 return entityService.fetchEntityName(TenantId.SYS_TENANT_ID, tenantId).orElse(defaultName);
                             } catch (Exception e) {
-                                log.error("[{}][{}] Failed to get tenant name", getBufferName(), tenantId, e);
+                                log.error("[{}][{}] Failed to get tenant name", bufferName, tenantId, e);
                                 return defaultName;
                             }
                         });
-                        log.info("[{}][{}][{}] Rate limited requests: {}", getBufferName(), tenantId, name, rateLimitedRequests);
+                        log.info("[{}][{}][{}] Rate limited requests: {}", bufferName, tenantId, name, rateLimitedRequests);
                     } else {
-                        log.info("[{}][{}] Rate limited requests: {}", getBufferName(), tenantId, rateLimitedRequests);
+                        log.info("[{}][{}] Rate limited requests: {}", bufferName, tenantId, rateLimitedRequests);
                     }
                 });
     }

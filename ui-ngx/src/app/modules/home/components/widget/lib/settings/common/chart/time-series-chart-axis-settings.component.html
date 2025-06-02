@@ -58,6 +58,7 @@
         <div *ngIf="axisType === 'yAxis' && !hideUnits" class="tb-form-row space-between">
           <div translate>widget-config.units-short</div>
           <tb-unit-input
+            supportsUnitConversion
             formControlName="units">
           </tb-unit-input>
         </div>
