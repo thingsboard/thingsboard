@@ -5640,7 +5640,6 @@
       "add-limit": "Aggiungi limite",
       "advanced-settings": "Impostazioni avanzate",
       "edit-limit": "Modifica limite",
-      "but-less-than": "ma inferiore a",
       "calculated-field-debug-event-rate-limit": "Eventi di debug del campo calcolato",
       "edit-calculated-field-debug-event-rate-limit": "Modifica i limiti di eventi di debug del campo calcolato",
       "edit-transport-tenant-msg-title": "Modifica i limiti di messaggi di trasporto del tenant",

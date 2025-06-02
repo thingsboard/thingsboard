@@ -5164,7 +5164,6 @@
             "add-limit": "Limiet toevoegen",
             "advanced-settings": "Geavanceerde instellingen",
             "edit-limit": "Limiet bewerken",
-            "but-less-than": "maar minder dan",
             "edit-transport-tenant-msg-title": "Snelheidslimieten voor berichten van transporttenants bewerken",
             "edit-transport-tenant-telemetry-msg-title": "Snelheidslimieten voor telemetrie berichten van transporttenants bewerken",
             "edit-transport-tenant-telemetry-data-points-title": "Snelheidslimieten voor telemetrie gegevenspunten van transporttenants bewerken",
