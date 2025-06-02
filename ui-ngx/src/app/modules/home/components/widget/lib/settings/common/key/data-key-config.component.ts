@@ -153,6 +153,10 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   @coerceBoolean()
   hideDataKeyDecimals = false;
 
+  @Input()
+  @coerceBoolean()
+  supportsUnitConversion = false;
+
   @ViewChild('keyInput') keyInput: ElementRef;
 
   @ViewChild('funcBodyEdit', {static: false}) funcBodyEdit: JsFuncComponent;

@@ -21,12 +21,19 @@ import {
   DigitalGaugeSettings
 } from '@home/components/widget/lib/digital-gauge.models';
 import tinycolor from 'tinycolor2';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { ColorProcessor, createValueSubscription, ValueSourceType } from '@shared/models/widget-settings.models';
+import {
+  ColorProcessor,
+  createValueSubscription,
+  ValueFormatProcessor,
+  ValueSourceType
+} from '@shared/models/widget-settings.models';
+import { UnitService } from '@core/services/unit.service';
+import { isNotEmptyTbUnits } from '@shared/models/unit.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 // @dynamic
@@ -68,11 +75,11 @@ export class TbCanvasDigitalGauge {
     this.localSettings.tickWidth = settings.tickWidth || 4;
     this.localSettings.colorTicks = settings.colorTicks || '#666';
 
-    this.localSettings.decimals = isDefined(dataKey.decimals) ? dataKey.decimals :
+    this.localSettings.decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
       (isDefinedAndNotNull(settings.decimals) ? settings.decimals : ctx.decimals);
 
-    this.localSettings.units = dataKey.units && dataKey.units.length ? dataKey.units :
-      (isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units);
+    this.localSettings.units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units :
+      (isNotEmptyTbUnits(settings.units) ? settings.units : ctx.units);
 
     this.localSettings.hideValue = settings.showValue !== true;
     this.localSettings.hideMinMax = settings.showMinMax !== true;
@@ -116,6 +123,10 @@ export class TbCanvasDigitalGauge {
     });
 
     this.barColorProcessor = ColorProcessor.fromSettings(settings.barColor, this.ctx);
+    this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {
+      units: this.localSettings.units,
+      ignoreUnitSymbol: true
+    });
 
     const gaugeData: CanvasDigitalGaugeOptions = {
       renderTo: gaugeElement,
@@ -124,6 +135,7 @@ export class TbCanvasDigitalGauge {
       gaugeColor: this.localSettings.gaugeColor,
 
       barColorProcessor: this.barColorProcessor,
+      valueFormat: this.valueFormat,
 
       colorTicks: this.localSettings.colorTicks,
       tickWidth: this.localSettings.tickWidth,
@@ -161,7 +173,7 @@ export class TbCanvasDigitalGauge {
       dashThickness: this.localSettings.dashThickness,
       roundedLineCap: this.localSettings.roundedLineCap,
 
-      symbol: this.localSettings.units,
+      symbol: this.ctx.$injector.get(UnitService).getTargetUnitSymbol(this.localSettings.units),
       unitTitle: this.localSettings.unitTitle,
       showUnitTitle: this.localSettings.showUnitTitle,
       showTimestamp: this.localSettings.showTimestamp,
@@ -190,6 +202,7 @@ export class TbCanvasDigitalGauge {
   private ticksSourcesSubscription: IWidgetSubscription;
 
   private readonly barColorProcessor: ColorProcessor;
+  private readonly valueFormat: ValueFormatProcessor;
 
   private gauge: CanvasDigitalGauge;
 

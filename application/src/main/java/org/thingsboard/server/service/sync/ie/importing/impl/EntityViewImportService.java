@@ -55,7 +55,7 @@ public class EntityViewImportService extends BaseEntityImportService<EntityViewI
     }
 
     @Override
-    protected EntityView saveOrUpdate(EntitiesImportCtx ctx, EntityView entityView, EntityExportData<EntityView> exportData, IdProvider idProvider) {
+    protected EntityView saveOrUpdate(EntitiesImportCtx ctx, EntityView entityView, EntityExportData<EntityView> exportData, IdProvider idProvider, CompareResult compareResult) {
         return entityViewService.saveEntityView(entityView);
     }
 

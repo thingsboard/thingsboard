@@ -17,31 +17,33 @@
 -->
 <section class="tb-rate-limits-form" [formGroup]="rateLimitsListFormGroup">
   <div class="flex-1" [formGroup]="rateLimit" *ngFor="let rateLimit of rateLimitsFormArray.controls; let $index = index">
-    <div class="tb-rate-limits-operation" *ngIf="$index > 0 && rateLimitsFormArray.controls.length > 1" translate>
-      tenant-profile.rate-limits.but-less-than
-    </div>
+    @if($index > 0) {
+      <div class="tb-rate-limits-operation" translate>tenant-profile.rate-limits.and-also-less-than</div>
+    }
     <div class="flex flex-1 flex-row gap-2">
-      <mat-form-field hideRequiredMarker appearance="fill" class="mat-block flex-1">
+      <mat-form-field hideRequiredMarker appearance="fill" class="mat-block flex-1" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.rate-limits.number-of-messages</mat-label>
         <input matInput placeholder="{{ 'tenant-profile.rate-limits.number-of-messages' | translate }}"
                type="number" min="1" step="1" formControlName="value" required>
-        <mat-error *ngIf="rateLimit.get('value').hasError('required')">
-          {{ 'tenant-profile.rate-limits.number-of-messages-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="rateLimit.get('value').hasError('min')">
-          {{ 'tenant-profile.rate-limits.number-of-messages-min' | translate }}
-        </mat-error>
+        <mat-hint></mat-hint>
+        @if (rateLimit.get('value').hasError('required')) {
+          <mat-error translate>tenant-profile.rate-limits.number-of-messages-required</mat-error>
+        } @else if(rateLimit.get('value').hasError('min')) {
+          <mat-error translate>tenant-profile.rate-limits.number-of-messages-min</mat-error>
+        }
       </mat-form-field>
-      <mat-form-field hideRequiredMarker appearance="fill" class="mat-block flex-1">
+      <mat-form-field hideRequiredMarker appearance="fill" class="mat-block flex-1" subscriptSizing="dynamic">
         <mat-label translate>tenant-profile.rate-limits.per-seconds</mat-label>
         <input matInput placeholder="{{ 'tenant-profile.rate-limits.per-seconds' | translate }}"
                type="number" min="1" step="1" formControlName="time" required>
-        <mat-error *ngIf="rateLimit.get('time').hasError('required')">
-          {{ 'tenant-profile.rate-limits.per-seconds-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="rateLimit.get('time').hasError('min')">
-          {{ 'tenant-profile.rate-limits.per-seconds-min' | translate }}
-        </mat-error>
+        <mat-hint></mat-hint>
+        @if (rateLimit.get('time').hasError('required')) {
+          <mat-error translate>tenant-profile.rate-limits.per-seconds-required</mat-error>
+        } @else if (rateLimit.get('time').hasError('min')) {
+          <mat-error translate>tenant-profile.rate-limits.per-seconds-min</mat-error>
+        } @else if (rateLimit.get('time').hasError('duplicateTime')) {
+          <mat-error translate>tenant-profile.rate-limits.per-seconds-duplicate</mat-error>
+        }
       </mat-form-field>
       <button mat-icon-button type="button" color="primary"
               class="tb-rate-limits-button"

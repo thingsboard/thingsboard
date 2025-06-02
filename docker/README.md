@@ -19,11 +19,11 @@ In order to set database type change the value of `DATABASE` variable in `.env` 
 
 In order to set cache type change the value of `CACHE` variable in `.env` file to one of the following:
 
-- `redis` - use Redis standalone cache (1 node - 1 master);
-- `redis-cluster` - use Redis cluster cache (6 nodes - 3 masters, 3 slaves);
-- `redis-sentinel` - use Redis sentinel cache (3 nodes - 1 master, 1 slave, 1 sentinel)
+- `valkey` - use Valkey standalone cache (1 node - 1 primary);
+- `valkey-cluster` - use Valkey cluster cache (6 nodes - 3 primaries, 3 replicas);
+- `valkey-sentinel` - use Valkey sentinel cache (3 nodes - 1 primary, 1 replica, 1 sentinel)
 
-**NOTE**: According to the cache type corresponding docker service will be deployed (see `docker-compose.redis.yml`, `docker-compose.redis-cluster.yml`, `docker-compose.redis-sentinel.yml` for details).
+**NOTE**: According to the cache type corresponding docker service will be deployed (see `docker-compose.valkey.yml`, `docker-compose.valkey-cluster.yml`, `docker-compose.valkey-sentinel.yml` for details).
 
 Execute the following command to create log folders for the services and chown of these folders to the docker container users. 
 To be able to change user, **chown** command is used, which requires sudo permissions (script will request password for a sudo access): 

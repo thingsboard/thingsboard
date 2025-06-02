@@ -55,9 +55,4 @@ public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
                 updateInfo.getCurrentVersion(), updateInfo.getLatestVersion());
     }
 
-    @Override
-    public long getDefaultDeduplicationDuration() {
-        return 0;
-    }
-
 }

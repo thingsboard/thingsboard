@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters(
-        //All the same tests using redis instead of caffeine.
+        //All the same tests using ValKey instead of caffeine.
         {
                 "org.thingsboard.server.dao.service.*ServiceSqlTest",
         }
