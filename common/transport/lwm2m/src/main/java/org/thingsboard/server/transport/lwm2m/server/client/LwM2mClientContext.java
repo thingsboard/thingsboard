@@ -40,9 +40,6 @@ public interface LwM2mClientContext {
 
     Collection<LwM2mClient> getLwM2mClients();
 
-    //TODO: replace UUID with DeviceProfileId
-    Lwm2mDeviceProfileTransportConfiguration getProfile(UUID profileUuId);
-
     Lwm2mDeviceProfileTransportConfiguration getProfile(Registration registration);
 
     Lwm2mDeviceProfileTransportConfiguration profileUpdate(DeviceProfile deviceProfile);

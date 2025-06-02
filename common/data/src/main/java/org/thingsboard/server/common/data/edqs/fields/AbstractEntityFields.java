@@ -63,7 +63,12 @@ public class AbstractEntityFields implements EntityFields {
     }
 
     protected UUID checkId(UUID id) {
-        return id != null && !id.equals(EntityId.NULL_UUID) ? id : null;
+        return id == null || id.equals(EntityId.NULL_UUID) ? null : id;
+    }
+
+    @Override
+    public UUID getCustomerId() {
+        return checkId(customerId);
     }
 
 }
