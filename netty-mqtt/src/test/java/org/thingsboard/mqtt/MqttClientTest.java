@@ -123,22 +123,12 @@ class MqttClientTest {
     void testDisconnectFromBroker() {
         // GIVEN
         var clientConfig = new MqttClientConfig();
-        clientConfig.setOwnerId("Test[ConnectToBroker]");
-        clientConfig.setClientId("connect");
+        clientConfig.setOwnerId("Test[Disconnect]");
+        clientConfig.setClientId("disconnect");
 
         client = MqttClient.create(clientConfig, null, handlerExecutor);
 
-        // WHEN
-        Promise<MqttConnectResult> connectFuture = client.connect(broker.getHost(), broker.getMqttPort());
-
-        // THEN
-        assertThat(connectFuture).isNotNull();
-
-        Awaitility.await("waiting for client to connect")
-                .atMost(Duration.ofSeconds(10L))
-                .until(connectFuture::isDone);
-
-        assertThat(connectFuture.isSuccess()).isTrue();
+        connect(broker.getHost(), broker.getMqttPort());
 
         // WHEN
         client.disconnect();
