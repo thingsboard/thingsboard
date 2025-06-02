@@ -73,7 +73,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                 .queueKey(queueKey)
                 .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
-                .msgPackProcessor((msgs, consumer, config) -> {
+                .msgPackProcessor((msgs, consumer, consumerKey, config) -> {
                     for (TbProtoQueueMsg<CalculatedFieldStateProto> msg : msgs) {
                         try {
                             if (msg.getValue() != null) {

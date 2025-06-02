@@ -27,6 +27,7 @@ import {
   batteryLevelLayouts,
   batteryLevelLayoutTranslations
 } from '@home/components/widget/lib/indicator/battery-level-widget.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-battery-level-widget-settings',
@@ -122,7 +123,7 @@ export class BatteryLevelWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units: string = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, true);
   }

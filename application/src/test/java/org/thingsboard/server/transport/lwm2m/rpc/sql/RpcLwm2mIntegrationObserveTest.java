@@ -20,11 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.LwM2m.Version;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.server.registration.Registration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.server.client.ResourceUpdateResult;
 
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.junit.Assert.assertEquals;
@@ -80,7 +80,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
 
         int cntUpdate = 3;
         verify(defaultUplinkMsgHandlerTest, timeout(10000).atLeast(cntUpdate))
-                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
+                .updateAttrTelemetry(Mockito.any(ResourceUpdateResult.class), eq(null));
     }
 
     /**
@@ -95,7 +95,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
 
         int cntUpdate = 3;
         verify(defaultUplinkMsgHandlerTest, timeout(10000).atLeast(cntUpdate))
-                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
+                .updateAttrTelemetry(Mockito.any(ResourceUpdateResult.class), eq(null));
     }
 
     /**
@@ -328,7 +328,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
 
         int cntUpdate = 10;
         verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(cntUpdate))
-                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
+                .updateAttrTelemetry(Mockito.any(ResourceUpdateResult.class), eq(null));
     }
 
     private void sendRpcObserveWithWithTwoResource(String expectedId_1, String expectedId_2) throws Exception {

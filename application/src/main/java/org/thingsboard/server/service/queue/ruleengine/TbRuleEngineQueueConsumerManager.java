@@ -30,6 +30,7 @@ import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -126,6 +127,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     @Override
     protected void processMsgs(List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs,
                                TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer,
+                               Object consumerKey,
                                Queue queue) throws Exception {
         TbRuleEngineSubmitStrategy submitStrategy = getSubmitStrategy(queue);
         TbRuleEngineProcessingStrategy ackStrategy = getProcessingStrategy(queue);
@@ -178,7 +180,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 new TbMsgPackCallback(id, tenantId, packCtx, stats.getTimer(tenantId, SUCCESSFUL_STATUS), stats.getTimer(tenantId, FAILED_STATUS)) :
                 new TbMsgPackCallback(id, tenantId, packCtx);
         try {
-            if (!toRuleEngineMsg.getTbMsg().isEmpty()) {
+            if (!toRuleEngineMsg.getTbMsg().isEmpty() || toRuleEngineMsg.hasTbMsgProto()) {
                 forwardToRuleEngineActor(config.getName(), tenantId, toRuleEngineMsg, callback);
             } else {
                 callback.onSuccess();
@@ -189,7 +191,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     }
 
     private void forwardToRuleEngineActor(String queueName, TenantId tenantId, ToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
-        TbMsg tbMsg = TbMsg.fromBytes(queueName, toRuleEngineMsg.getTbMsg().toByteArray(), callback);
+        TbMsg tbMsg = ProtoUtils.fromTbMsgProto(queueName, toRuleEngineMsg, callback);
         QueueToRuleEngineMsg msg;
         ProtocolStringList relationTypesList = toRuleEngineMsg.getRelationTypesList();
         Set<String> relationTypes;
@@ -207,7 +209,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         log.info("[{}] {} to process [{}] messages", queueKey, prefix, map.size());
         for (Map.Entry<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> pending : map.entrySet()) {
             ToRuleEngineMsg tmp = pending.getValue().getValue();
-            TbMsg tmpMsg = TbMsg.fromBytes(config.getName(), tmp.getTbMsg().toByteArray(), TbMsgCallback.EMPTY);
+            TbMsg tmpMsg = ProtoUtils.fromTbMsgProto(config.getName(), tmp, TbMsgCallback.EMPTY);
             RuleNodeInfo ruleNodeInfo = ctx.getLastVisitedRuleNode(pending.getKey());
             if (printAll) {
                 log.trace("[{}][{}] {} to process message: {}, Last Rule Node: {}", queueKey, TenantId.fromUUID(new UUID(tmp.getTenantIdMSB(), tmp.getTenantIdLSB())), prefix, tmpMsg, ruleNodeInfo);
@@ -236,7 +238,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                     }
                     for (TbProtoQueueMsg<ToRuleEngineMsg> msg : msgs) {
                         try {
-                            MsgProtos.TbMsgProto tbMsgProto = MsgProtos.TbMsgProto.parseFrom(msg.getValue().getTbMsg().toByteArray());
+                            MsgProtos.TbMsgProto tbMsgProto = ProtoUtils.getTbMsgProto(msg.getValue());
                             EntityId originator = EntityIdFactory.getByTypeAndUuid(tbMsgProto.getEntityType(), new UUID(tbMsgProto.getEntityIdMSB(), tbMsgProto.getEntityIdLSB()));
 
                             TopicPartitionInfo tpi = ctx.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, config.getName(), TenantId.SYS_TENANT_ID, originator);

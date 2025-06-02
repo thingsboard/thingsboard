@@ -77,8 +77,9 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
     }
 
     @Test
-    public void testEdqsState() {
-        assertThat(edqsService.getState().getApiMode()).isEqualTo(EdqsApiMode.AUTO_ENABLED);
+    public void testEdqsState() throws Exception {
+        loginSysAdmin();
+        assertThat(getEdqsState().getApiMode()).isEqualTo(EdqsApiMode.AUTO_ENABLED);
 
         // notifying EDQS is not ready: API should be auto-disabled
         discoveryService.setReady(false);
@@ -129,8 +130,12 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
 
     private void verifyState(ThrowingConsumer<EdqsState> assertion) {
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
-            assertThat(edqsService.getState()).satisfies(assertion);
+            assertThat(getEdqsState()).satisfies(assertion);
         });
+    }
+
+    private EdqsState getEdqsState() throws Exception {
+        return doGet("/api/edqs/state", EdqsState.class);
     }
 
 }
