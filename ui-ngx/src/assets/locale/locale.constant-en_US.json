@@ -7961,6 +7961,18 @@
             "fill-area-opacity": "Fill area opacity",
             "range-chart-style": "Range chart style"
         },
+        "knob": {
+            "behavior": "Behavior",
+            "initial-value": "Initial value",
+            "initial-value-hint": "Action to get the initial value of the knob.",
+            "on-value-change": "On value change",
+            "on-value-change-hint": "Action triggered when the knob value is changed.",
+            "range": "Range",
+            "min": "min",
+            "max": "max",
+            "value": "Value",
+            "fallback-initial-value": "Fallback initial value"
+        },
         "rpc": {
             "value-settings": "Value settings",
             "initial-value": "Initial value",
@@ -8017,9 +8029,7 @@
             "led-status-value-timeseries": "Device time series containing led status value",
             "check-status-method": "RPC check device status method",
             "parse-led-status-value-function": "Parse led status value function",
-            "knob-title": "Knob title",
-            "min-value": "Minimum value",
-            "max-value": "Maximum value"
+            "knob-title": "Knob title"
         },
         "maps": {
             "map-type": {
