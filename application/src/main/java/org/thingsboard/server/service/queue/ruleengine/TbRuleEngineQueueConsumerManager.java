@@ -127,6 +127,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     @Override
     protected void processMsgs(List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs,
                                TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer,
+                               Object consumerKey,
                                Queue queue) throws Exception {
         TbRuleEngineSubmitStrategy submitStrategy = getSubmitStrategy(queue);
         TbRuleEngineProcessingStrategy ackStrategy = getProcessingStrategy(queue);

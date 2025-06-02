@@ -173,6 +173,32 @@ public class JobManagerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testCancelJob_whileTaskRunning() throws Exception {
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(1)
+                .taskProcessingTimeMs(TimeUnit.HOURS.toMillis(1))
+                .taskProcessingTimeoutMs(TimeUnit.HOURS.toMillis(1))
+                .build()).getId();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(taskProcessor.getCurrentTasks()).isNotEmpty();
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.RUNNING);
+            assertThat(job.getResult().getTotalCount()).isEqualTo(1);
+            assertThat(job.getResult().getCompletedCount()).isZero();
+        });
+
+        cancelJob(jobId);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.CANCELLED);
+            assertThat(job.getResult().getTotalCount()).isEqualTo(1);
+            assertThat(job.getResult().getDiscardedCount()).isEqualTo(1);
+            assertThat(job.getResult().getFailedCount()).isZero();
+        });
+    }
+
+    @Test
     public void testCancelJob_simulateTaskProcessorRestart() throws Exception {
         int tasksCount = 10;
         JobId jobId = submitJob(DummyJobConfiguration.builder()
