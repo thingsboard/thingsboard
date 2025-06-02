@@ -15,10 +15,11 @@
  */
 package org.thingsboard.server.dao.ai;
 
+import com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiSettings;
 import org.thingsboard.server.common.data.id.AiSettingsId;
@@ -27,26 +28,33 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.CachedVersionedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
 @RequiredArgsConstructor
-class AiSettingsServiceImpl implements AiSettingsService {
+class AiSettingsServiceImpl extends CachedVersionedEntityService<AiSettingsCacheKey, AiSettings, AiSettingsCacheEvictEvent> implements AiSettingsService {
 
-    private final ApplicationEventPublisher eventPublisher;
     private final DataValidator<AiSettings> aiSettingsValidator;
 
     private final AiSettingsDao aiSettingsDao;
 
     @Override
+    @TransactionalEventListener
+    public void handleEvictEvent(AiSettingsCacheEvictEvent event) {
+        cache.evict(event.keys());
+    }
+
+    @Override
+    @Transactional
     public AiSettings save(AiSettings aiSettings) {
         AiSettings oldSettings = aiSettingsValidator.validate(aiSettings, AiSettings::getTenantId);
 
@@ -58,14 +66,21 @@ class AiSettingsServiceImpl implements AiSettingsService {
             throw e;
         }
 
+        boolean created = oldSettings == null;
+        boolean updated = oldSettings != null;
+
         eventPublisher.publishEvent(SaveEntityEvent.builder()
                 .tenantId(savedSettings.getTenantId())
                 .entity(savedSettings)
                 .oldEntity(oldSettings)
                 .entityId(savedSettings.getId())
-                .created(oldSettings == null)
+                .created(created)
                 .broadcastEvent(true)
                 .build());
+
+        if (updated) {
+            publishEvictEvent(AiSettingsCacheEvictEvent.of(savedSettings.getTenantId(), savedSettings.getId()));
+        }
 
         return savedSettings;
     }
@@ -83,25 +98,20 @@ class AiSettingsServiceImpl implements AiSettingsService {
 
     @Override
     public Optional<AiSettings> findAiSettingsByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId) {
-        return aiSettingsDao.findByTenantIdAndId(tenantId, aiSettingsId);
+        var cacheKey = AiSettingsCacheKey.of(tenantId, aiSettingsId);
+        return Optional.ofNullable(cache.get(cacheKey, () -> aiSettingsDao.findByTenantIdAndId(tenantId, aiSettingsId).orElse(null)));
     }
 
     @Override
+    @Transactional
     public boolean deleteByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId) {
-        Optional<AiSettings> aiSettingsOpt = aiSettingsDao.findByTenantIdAndId(tenantId, aiSettingsId);
-        if (aiSettingsOpt.isEmpty()) {
-            return false;
-        }
-        boolean deleted = aiSettingsDao.deleteByTenantIdAndId(tenantId, aiSettingsId);
-        if (deleted) {
-            publishDeleteEvent(aiSettingsOpt.get());
-        }
-        return deleted;
+        return deleteByTenantIdAndIdInternal(tenantId, aiSettingsId);
     }
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(aiSettingsDao.findById(tenantId, entityId.getId()));
+        return findAiSettingsByTenantIdAndId(tenantId, (AiSettingsId) entityId)
+                .map(aiSettings -> aiSettings); // necessary to cast to HasId<?>
     }
 
     @Override
@@ -110,8 +120,22 @@ class AiSettingsServiceImpl implements AiSettingsService {
     }
 
     @Override
+    @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        deleteByTenantIdAndId(tenantId, new AiSettingsId(id.getId()));
+        deleteByTenantIdAndIdInternal(tenantId, new AiSettingsId(id.getId()));
+    }
+
+    private boolean deleteByTenantIdAndIdInternal(TenantId tenantId, AiSettingsId aiSettingsId) {
+        Optional<AiSettings> aiSettingsOpt = aiSettingsDao.findByTenantIdAndId(tenantId, aiSettingsId);
+        if (aiSettingsOpt.isEmpty()) {
+            return false;
+        }
+        boolean deleted = aiSettingsDao.deleteByTenantIdAndId(tenantId, aiSettingsId);
+        if (deleted) {
+            publishDeleteEvent(aiSettingsOpt.get());
+            publishEvictEvent(AiSettingsCacheEvictEvent.of(tenantId, aiSettingsId));
+        }
+        return deleted;
     }
 
     @Override
@@ -121,8 +145,16 @@ class AiSettingsServiceImpl implements AiSettingsService {
         if (deletedSettings.isEmpty()) {
             return;
         }
+
         aiSettingsDao.deleteByTenantId(tenantId);
-        deletedSettings.forEach(this::publishDeleteEvent);
+
+        Set<AiSettingsCacheKey> cacheKeys = Sets.newHashSetWithExpectedSize(deletedSettings.size());
+        deletedSettings.forEach(settings -> {
+            publishDeleteEvent(settings);
+            cacheKeys.add(AiSettingsCacheKey.of(settings.getTenantId(), settings.getId()));
+        });
+
+        publishEvictEvent(new AiSettingsCacheEvictEvent(cacheKeys));
     }
 
     private void publishDeleteEvent(AiSettings settings) {

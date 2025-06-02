@@ -647,6 +647,9 @@ cache:
     trendzSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_TRENDZ_SETTINGS_TTL:1440}" # Trendz settings cache TTL
       maxSize: "${CACHE_SPECS_TRENDZ_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    aiSettings:
+      timeToLiveInMinutes: "${CACHE_SPECS_AI_SETTINGS_TTL:1440}" # AI settings cache TTL
+      maxSize: "${CACHE_SPECS_AI_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
