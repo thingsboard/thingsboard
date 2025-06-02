@@ -96,25 +96,30 @@ export const knobWidgetDefaultSettings: KnobSettings = {
 export const prepareKnobSettings = (settings: KnobSettings): KnobSettings => {
   if (isDefinedAndNotNull(settings.getValueMethod)) {
     settings.initialState.executeRpc.method = settings.getValueMethod;
+    delete settings.getValueMethod;
   }
 
   if (isDefinedAndNotNull(settings.setValueMethod)) {
     settings.valueChange.executeRpc.method = settings.setValueMethod;
+    delete settings.setValueMethod;
   }
 
   if (isDefinedAndNotNull(settings.requestPersistent)) {
     settings.initialState.executeRpc.requestPersistent = settings.requestPersistent;
     settings.valueChange.executeRpc.requestPersistent = settings.requestPersistent;
+    delete settings.requestPersistent;
   }
 
   if (isDefinedAndNotNull(settings.persistentPollingInterval)) {
     settings.initialState.executeRpc.persistentPollingInterval = settings.persistentPollingInterval;
     settings.valueChange.executeRpc.persistentPollingInterval = settings.persistentPollingInterval;
+    delete settings.persistentPollingInterval;
   }
 
   if (isDefinedAndNotNull(settings.requestTimeout)) {
     settings.initialState.executeRpc.requestTimeout = settings.requestTimeout;
     settings.valueChange.executeRpc.requestTimeout = settings.requestTimeout;
+    delete settings.requestTimeout;
   }
   return settings;
 }
