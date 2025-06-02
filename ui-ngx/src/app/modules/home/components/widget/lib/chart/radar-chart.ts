@@ -23,9 +23,10 @@ import { TranslateService } from '@ngx-translate/core';
 import {
   ChartFillType,
   createChartTextStyle,
-  createLinearOpacityGradient, createRadialOpacityGradient, toAnimationOption
+  createRadialOpacityGradient,
+  toAnimationOption
 } from '@home/components/widget/lib/chart/chart.models';
-import { formatValue, isDefinedAndNotNull, isEqual } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { ComponentStyle } from '@shared/models/widget-settings.models';
 import { AreaStyleOption, SeriesLabelOption } from 'echarts/types/src/util/types';
 import { RadarIndicatorOption } from 'echarts/types/src/coord/radar/RadarModel';
@@ -72,7 +73,7 @@ export class TbRadarChart extends TbLatestChart<RadarChartSettings> {
         fontWeight: axisTickLabelStyle.fontWeight,
         fontFamily: axisTickLabelStyle.fontFamily,
         fontSize: axisTickLabelStyle.fontSize,
-        formatter: (value: any) => formatValue(value, this.decimals, this.units, false)
+        formatter: (value: any) => this.valueFormatter.format(value)
       }
     }];
 
@@ -87,7 +88,7 @@ export class TbRadarChart extends TbLatestChart<RadarChartSettings> {
       formatter: (params) => {
         let result = '';
         if (isDefinedAndNotNull(params.value)) {
-          result = formatValue(params.value, this.decimals, this.units, false);
+          result = this.valueFormatter.format(params.value);
         }
         return `{value|${result}}`;
       },

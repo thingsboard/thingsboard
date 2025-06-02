@@ -15,8 +15,13 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entityListFormGroup" class="mat-block" [class.tb-chip-list]="!labelText" [appearance]="appearance" [subscriptSizing]="subscriptSizing">
-  <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
+<mat-form-field [formGroup]="entityListFormGroup" class="mat-block"
+                [appearance]="inlineField ? 'outline' : appearance"
+                [class.tb-chip-list]="!labelText && !inlineField"
+                [class.tb-chips]="inlineField"
+                [class.flex]="inlineField"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+  <mat-label *ngIf="!inlineField && labelText">{{ labelText }}</mat-label>  <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
   <mat-chip-grid #chipList formControlName="entities">
     <mat-chip-row
       *ngFor="let entity of entities"
@@ -48,16 +53,16 @@
         </div>
         <ng-template #searchNotEmpty>
           <span>
-          {{ translate.get('entity.no-entities-matching', {entity: searchText}) | async }}
+          {{ 'entity.no-entities-matching' | translate: {entity: searchText} }}
           </span>
         </ng-template>
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-hint *ngIf="hint">
+  <mat-hint *ngIf="!inlineField && hint">
     {{ hint }}
   </mat-hint>
-  <mat-error *ngIf="entityListFormGroup.get('entities').hasError('required')">
+  <mat-error *ngIf="!inlineField && entityListFormGroup.get('entities').hasError('required')">
     {{ requiredText }}
   </mat-error>
   <div matSuffix>

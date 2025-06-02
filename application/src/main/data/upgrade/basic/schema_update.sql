@@ -14,82 +14,48 @@
 -- limitations under the License.
 --
 
--- UPDATE SAVE TIME SERIES NODES START
-
-UPDATE rule_node
-SET configuration = (
-    (configuration::jsonb - 'skipLatestPersistence')
-        || jsonb_build_object(
-            'processingSettings', jsonb_build_object(
-                    'type',       'ADVANCED',
-                    'timeseries',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
-                    'latest',           jsonb_build_object('type', 'SKIP'),
-                    'webSockets',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
-                    'calculatedFields', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
-                                  )
-           )
-    )::text,
-    configuration_version = 1
-WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
-  AND configuration_version = 0
-  AND configuration::jsonb ->> 'skipLatestPersistence' = 'true';
-
-UPDATE rule_node
-SET configuration = (
-    (configuration::jsonb - 'skipLatestPersistence')
-        || jsonb_build_object(
-            'processingSettings', jsonb_build_object(
-                    'type', 'ON_EVERY_MESSAGE'
-                                  )
-           )
-    )::text,
-    configuration_version = 1
-WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
-  AND configuration_version = 0
-  AND (configuration::jsonb ->> 'skipLatestPersistence' != 'true' OR configuration::jsonb ->> 'skipLatestPersistence' IS NULL);
-
--- UPDATE SAVE TIME SERIES NODES END
-
--- UPDATE SAVE ATTRIBUTES NODES START
-
-UPDATE rule_node
-SET configuration = (
-    configuration::jsonb
-        || jsonb_build_object(
-            'processingSettings', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
-           )
-    )::text,
-    configuration_version = 3
-WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode'
-  AND configuration_version = 2;
-
--- UPDATE SAVE ATTRIBUTES NODES END
-
-ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS version BIGINT DEFAULT 1;
-
--- UPDATE TENANT PROFILE CALCULATED FIELD LIMITS START
+-- UPDATE TENANT PROFILE CASSANDRA RATE LIMITS START
 
 UPDATE tenant_profile
-SET profile_data = profile_data
-    || jsonb_build_object(
-                           'configuration', profile_data->'configuration' || jsonb_build_object(
-                    'maxCalculatedFieldsPerEntity', COALESCE(profile_data->'configuration'->>'maxCalculatedFieldsPerEntity', '5')::bigint,
-                    'maxArgumentsPerCF', COALESCE(profile_data->'configuration'->>'maxArgumentsPerCF', '10')::bigint,
-                    'maxDataPointsPerRollingArg', COALESCE(profile_data->'configuration'->>'maxDataPointsPerRollingArg', '1000')::bigint,
-                    'maxStateSizeInKBytes', COALESCE(profile_data->'configuration'->>'maxStateSizeInKBytes', '32')::bigint,
-                    'maxSingleValueArgumentSizeInKBytes', COALESCE(profile_data->'configuration'->>'maxSingleValueArgumentSizeInKBytes', '2')::bigint
-                                                                             )
-       )
-WHERE profile_data->'configuration'->>'maxCalculatedFieldsPerEntity' IS NULL;
+SET profile_data = jsonb_set(
+        profile_data,
+        '{configuration}',
+        (
+            (profile_data -> 'configuration') - 'cassandraQueryTenantRateLimitsConfiguration'
+                ||
+            COALESCE(
+                    CASE
+                        WHEN profile_data -> 'configuration' ->
+                             'cassandraQueryTenantRateLimitsConfiguration' IS NOT NULL THEN
+                            jsonb_build_object(
+                                    'cassandraReadQueryTenantCoreRateLimits',
+                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration',
+                                    'cassandraWriteQueryTenantCoreRateLimits',
+                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration',
+                                    'cassandraReadQueryTenantRuleEngineRateLimits',
+                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration',
+                                    'cassandraWriteQueryTenantRuleEngineRateLimits',
+                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration'
+                            )
+                        END,
+                    '{}'::jsonb
+            )
+            )
+                   )
+WHERE profile_data -> 'configuration' ? 'cassandraQueryTenantRateLimitsConfiguration';
 
--- UPDATE TENANT PROFILE CALCULATED FIELD LIMITS END
+-- UPDATE TENANT PROFILE CASSANDRA RATE LIMITS END
 
--- UPDATE TENANT PROFILE DEBUG DURATION START
+-- UPDATE NOTIFICATION RULE CASSANDRA RATE LIMITS START
 
-UPDATE tenant_profile
-SET profile_data = jsonb_set(profile_data, '{configuration,maxDebugModeDurationMinutes}', '15', true)
-WHERE
-    profile_data->'configuration' ? 'maxDebugModeDurationMinutes' = false
-    OR (profile_data->'configuration'->>'maxDebugModeDurationMinutes')::int = 0;
+UPDATE notification_rule
+SET trigger_config = REGEXP_REPLACE(
+        trigger_config,
+        '"CASSANDRA_QUERIES"',
+        '"CASSANDRA_WRITE_QUERIES_CORE","CASSANDRA_READ_QUERIES_CORE","CASSANDRA_WRITE_QUERIES_RULE_ENGINE","CASSANDRA_READ_QUERIES_RULE_ENGINE","CASSANDRA_WRITE_QUERIES_MONOLITH","CASSANDRA_READ_QUERIES_MONOLITH"',
+        'g'
+                     )
+WHERE trigger_type = 'RATE_LIMITS'
+  AND trigger_config LIKE '%"CASSANDRA_QUERIES"%';
 
--- UPDATE TENANT PROFILE DEBUG DURATION END
+-- UPDATE NOTIFICATION RULE CASSANDRA RATE LIMITS END

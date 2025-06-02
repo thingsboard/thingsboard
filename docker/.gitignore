@@ -6,15 +6,15 @@ tb-node/postgres/**
 tb-node/cassandra/**
 tb-transports/*/log
 tb-vc-executor/log/**
-tb-node/redis-cluster-data-0/**
-tb-node/redis-cluster-data-1/**
-tb-node/redis-cluster-data-2/**
-tb-node/redis-cluster-data-3/**
-tb-node/redis-cluster-data-4/**
-tb-node/redis-cluster-data-5/**
-tb-node/redis-sentinel-data-master/**
-tb-node/redis-sentinel-data-slave/**
-tb-node/redis-sentinel-data-sentinel/**
-tb-node/redis-data/**
+tb-node/valkey-cluster-data-0/**
+tb-node/valkey-cluster-data-1/**
+tb-node/valkey-cluster-data-2/**
+tb-node/valkey-cluster-data-3/**
+tb-node/valkey-cluster-data-4/**
+tb-node/valkey-cluster-data-5/**
+tb-node/valkey-sentinel-data-primary/**
+tb-node/valkey-sentinel-data-replica/**
+tb-node/valkey-sentinel-data-sentinel/**
+tb-node/valkey-data/**
 
 !.env
