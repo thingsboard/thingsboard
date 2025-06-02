@@ -30,6 +30,8 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
@@ -39,6 +41,7 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -68,8 +71,12 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
                     return handleUnsupportedMsgType(calculatedFieldUpdateMsg.getMsgType());
             }
         } catch (DataValidationException e) {
-            log.warn("[{}] Failed to process CalculatedFieldUpdateMsg from Edge [{}]", tenantId, calculatedFieldUpdateMsg, e);
-            return Futures.immediateFailedFuture(e);
+            if (e.getMessage().contains("limit reached")) {
+                log.warn("[{}] Number of allowed calculatedField violated {}", tenantId, calculatedFieldUpdateMsg, e);
+                return Futures.immediateFuture(null);
+            } else {
+                return Futures.immediateFailedFuture(e);
+            }
         } finally {
             edgeSynchronizationManager.getEdgeId().remove();
         }
@@ -81,7 +88,7 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
                 CalculatedField calculatedField = edgeCtx.getCalculatedFieldService().findById(edgeEvent.getTenantId(), calculatedFieldId);
-                if (calculatedField != null) {
+                if (calculatedField != null && isEntityAssignedToEdge(edgeEvent, calculatedField)) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = EdgeMsgConstructorUtils.constructCalculatedFieldUpdatedMsg(msgType, calculatedField);
                     return DownlinkMsg.newBuilder()
@@ -99,6 +106,19 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
             }
         }
         return null;
+    }
+
+    private boolean isEntityAssignedToEdge(EdgeEvent edgeEvent, CalculatedField calculatedField) {
+        switch (calculatedField.getEntityId().getEntityType()) {
+            case ASSET, DEVICE -> {
+                List<EntityRelation> relations =
+                        edgeCtx.getRelationService().findByTo(edgeEvent.getTenantId(), calculatedField.getEntityId(), RelationTypeGroup.EDGE);
+                return !relations.isEmpty();
+            }
+            default -> {
+                return true;
+            }
+        }
     }
 
     @Override
