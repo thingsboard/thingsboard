@@ -5878,6 +5878,7 @@
         "date": "Date",
         "show-date-time-interval": "Show date time interval",
         "show-date-time-interval-hint": "Show date time interval according to the data aggregation.",
+        "hide-zero-false-tooltip-values": "Hide zero/false values",
         "background-color": "Background color",
         "background-blur": "Background blur"
     },
