@@ -565,7 +565,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     protected Device saveDeviceOnCloudAndVerifyDeliveryToEdge() throws Exception {
         // create device and assign to edge
         Device savedDevice = saveDevice(StringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
-        edgeImitator.expectMessageAmount(2); // device and device profile messages
+        edgeImitator.expectMessageAmount(3); // device and device profile messages and device credentials
         doPost("/api/edge/" + edge.getUuidId()
                 + "/device/" + savedDevice.getUuidId(), Device.class);
         Assert.assertTrue(edgeImitator.waitForMessages());

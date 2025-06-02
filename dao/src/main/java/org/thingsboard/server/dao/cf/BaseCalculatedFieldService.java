@@ -57,18 +57,23 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
 
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
-        return doSave(calculatedField, true);
+        CalculatedField oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
+
+        return doSave(calculatedField, oldCalculatedField);
     }
 
     @Override
     public CalculatedField save(CalculatedField calculatedField, boolean doValidate) {
-        return doSave(calculatedField, doValidate);
+        CalculatedField oldCalculatedField = null;
+
+        if (doValidate) {
+            oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
+        }
+
+        return doSave(calculatedField, oldCalculatedField);
     }
 
-    private CalculatedField doSave(CalculatedField calculatedField, boolean doValidate) {
-        if (doValidate) {
-            calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
-        }
+    private CalculatedField doSave(CalculatedField calculatedField, CalculatedField oldCalculatedField) {
         try {
             TenantId tenantId = calculatedField.getTenantId();
             log.trace("Executing save calculated field, [{}]", calculatedField);
@@ -76,7 +81,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
             CalculatedField savedCalculatedField = calculatedFieldDao.save(tenantId, calculatedField);
             createOrUpdateCalculatedFieldLink(tenantId, savedCalculatedField);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCalculatedField.getTenantId()).entityId(savedCalculatedField.getId())
-                    .entity(savedCalculatedField).oldEntity(calculatedField).created(calculatedField.getId() == null).build());
+                    .entity(savedCalculatedField).oldEntity(oldCalculatedField).created(calculatedField.getId() == null).build());
             return savedCalculatedField;
         } catch (Exception e) {
             checkConstraintViolation(e,
