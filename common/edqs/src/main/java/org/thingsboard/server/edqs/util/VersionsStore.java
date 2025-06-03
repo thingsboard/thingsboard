@@ -54,11 +54,15 @@ public class VersionsStore {
 
     private void startCleanupTask() {
         cleaner.scheduleAtFixedRate(() -> {
-            long now = System.currentTimeMillis();
-            for (Map.Entry<EdqsObjectKey, TimedValue> entry : versions.entrySet()) {
-                if (now - entry.getValue().lastUpdated > expirationMillis) {
-                    versions.remove(entry.getKey(), entry.getValue());
+            try {
+                long now = System.currentTimeMillis();
+                for (Map.Entry<EdqsObjectKey, TimedValue> entry : versions.entrySet()) {
+                    if (now - entry.getValue().lastUpdated > expirationMillis) {
+                        versions.remove(entry.getKey(), entry.getValue());
+                    }
                 }
+            } catch (Exception e) {
+                log.error("Cleanup task failed", e);
             }
         }, expirationMillis, expirationMillis, TimeUnit.MILLISECONDS);
     }
