@@ -33,6 +33,7 @@
                                     [formControl]="thresholdControl"
                                     [hideYAxis]="hideYAxis"
                                     [yAxisIds]="yAxisIds"
+                                    [supportsUnitConversion]="supportsUnitConversion"
                                     (thresholdRemoved)="removeThreshold($index)">
         </tb-time-series-chart-threshold-row>
         <mat-divider *ngIf="!$last"></mat-divider>

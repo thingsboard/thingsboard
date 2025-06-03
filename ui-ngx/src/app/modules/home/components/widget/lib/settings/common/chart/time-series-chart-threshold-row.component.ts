@@ -106,6 +106,10 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
   @coerceBoolean()
   hideYAxis = false;
 
+  @Input()
+  @coerceBoolean()
+  supportsUnitConversion = false;
+
   @Output()
   thresholdRemoved = new EventEmitter();
 
