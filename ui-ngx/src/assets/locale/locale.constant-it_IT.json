@@ -7686,7 +7686,7 @@
     },
     "label-widget": {
       "label-pattern": "Modello",
-      "label-pattern-hint": "Suggerimento: ad esempio, 'Testo <code><span style=\"color: #000;\">$&#123;</span>keyName<span style=\"color: #000;\">&#125;</span></code> unità.' oppure <code><span style=\"color: #000;\">$&#123;</span>#&lt;indice chiave&gt;<span style=\"color: #000;\">&#125;</span></code> unità'",
+      "label-pattern-hint": "Suggerimento: ad esempio, 'Testo <code><span style=\"color: #000;\">$&#123;</span>keyName<span style=\"color: #000;\">&#125;</span></code> unità.' oppure <code><span style=\"color: #000;\">$&#123;</span>#&lt;key index&gt;<span style=\"color: #000;\">&#125;</span></code> unità'",
       "label-pattern-required": "Il pattern è obbligatorio",
       "label-position": "Posizione (percentuale rispetto allo sfondo)",
       "x-pos": "X",
