@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class VersionsStore {
 
-    private final ConcurrentMap<EdqsObjectKey, TimedValue<Long>> versions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdqsObjectKey, TimedValue> versions = new ConcurrentHashMap<>();
     private final long expirationMillis;
     private final ScheduledExecutorService cleaner = Executors.newSingleThreadScheduledExecutor();
 
@@ -43,7 +43,7 @@ public class VersionsStore {
         versions.compute(key, (k, prevVersion) -> {
             if (prevVersion == null || prevVersion.value <= version) {
                 isNew.set(true);
-                return new TimedValue<>(version);
+                return new TimedValue(version);
             } else {
                 log.debug("[{}] Version {} is outdated, the latest is {}", key, version, prevVersion);
                 return prevVersion;
@@ -55,7 +55,7 @@ public class VersionsStore {
     private void startCleanupTask() {
         cleaner.scheduleAtFixedRate(() -> {
             long now = System.currentTimeMillis();
-            for (Map.Entry<EdqsObjectKey, TimedValue<Long>> entry : versions.entrySet()) {
+            for (Map.Entry<EdqsObjectKey, TimedValue> entry : versions.entrySet()) {
                 if (now - entry.getValue().lastUpdated > expirationMillis) {
                     versions.remove(entry.getKey(), entry.getValue());
                 }
@@ -67,11 +67,11 @@ public class VersionsStore {
         cleaner.shutdown();
     }
 
-    private static class TimedValue<V> {
+    private static class TimedValue {
         private final long lastUpdated;
-        private final V value;
+        private final long value;
 
-        public TimedValue(V value) {
+        public TimedValue(long value) {
             this.value = value;
             this.lastUpdated = System.currentTimeMillis();
         }
