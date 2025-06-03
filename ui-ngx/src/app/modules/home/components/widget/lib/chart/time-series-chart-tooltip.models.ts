@@ -39,6 +39,7 @@ export interface TimeSeriesChartTooltipWidgetSettings {
   tooltipValueFormatter?: string | TimeSeriesChartTooltipValueFormatFunction;
   tooltipShowDate: boolean;
   tooltipDateInterval?: boolean;
+  tooltipHideZeroFalse?: boolean;
   tooltipDateFormat: DateFormatSettings;
   tooltipDateFont: Font;
   tooltipDateColor: string;
@@ -131,10 +132,12 @@ export class TimeSeriesChartTooltip {
       }
       let total = 0, isStacked = false;
       for (const item of items) {
-        this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
-        if (item.dataItem?.barRenderContext?.barStackIndex !== undefined && !isNaN(Number(item.param.value[1]))) {
-          isStacked = true;
-          total += Number(item.param.value[1]);
+        if (!this.settings.tooltipHideZeroFalse || item.param.value[1]) {
+          this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
+          if (item.dataItem?.barRenderContext?.barStackIndex !== undefined && !isNaN(Number(item.param.value[1]))) {
+            isStacked = true;
+            total += Number(item.param.value[1]);
+          }
         }
       }
       if (isStacked && this.settings.tooltipStackedShowTotal)

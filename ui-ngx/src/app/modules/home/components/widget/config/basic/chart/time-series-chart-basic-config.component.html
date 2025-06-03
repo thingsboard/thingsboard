@@ -104,6 +104,7 @@
   </tb-time-series-chart-states-panel>
   <tb-time-series-chart-y-axes-panel
     formControlName="yAxes"
+    [supportsUnitConversion]="widgetConfig.typeParameters.supportsUnitConversion"
     (axisRemoved)="yAxisRemoved($event)">
   </tb-time-series-chart-y-axes-panel>
   <tb-time-series-chart-thresholds-panel
@@ -112,7 +113,8 @@
     [dataKeyCallbacks]="callbacks"
     [datasource]="datasource"
     [widgetConfig]="widgetConfig?.config"
-    [yAxisIds]="yAxisIds">
+    [yAxisIds]="yAxisIds"
+    [supportsUnitConversion]="widgetConfig.typeParameters.supportsUnitConversion">
   </tb-time-series-chart-thresholds-panel>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
@@ -309,6 +311,11 @@
             <div tb-hint-tooltip-icon="{{'tooltip.show-date-time-interval-hint' | translate}}">
               {{ 'tooltip.show-date-time-interval' | translate }}
             </div>
+          </mat-slide-toggle>
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="tooltipHideZeroFalse">
+              {{ 'tooltip.hide-zero-false-tooltip-values' | translate }}
           </mat-slide-toggle>
         </div>
         <div class="tb-form-row space-between">
