@@ -27,9 +27,6 @@
         <div #knobTopPointer class="top-pointer"></div>
       </div>
       <div class="top"></div>
-      <div #knobErrorContainer class="error-container flex flex-row items-center justify-center" [style.background]="error?.length ? 'rgba(255,255,255,0.25)' : 'none'">
-        <span #knobError class="knob-error" [innerHTML]="error"></span>
-      </div>
       <div #knobTitleContainer class="title-container flex flex-row items-center justify-center">
         <span #knobTitle class="knob-title">{{ title }}</span>
       </div>

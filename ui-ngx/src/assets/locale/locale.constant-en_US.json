@@ -5883,6 +5883,7 @@
         "date": "Date",
         "show-date-time-interval": "Show date time interval",
         "show-date-time-interval-hint": "Show date time interval according to the data aggregation.",
+        "hide-zero-false-tooltip-values": "Hide zero/false values",
         "background-color": "Background color",
         "background-blur": "Background blur"
     },
@@ -5942,7 +5943,7 @@
           "energy-density": "Energy density",
           "force": "Force",
           "frequency": "Frequency",
-          "fuel-efficiency": "fuel efficiency",
+          "fuel-efficiency": "Fuel efficiency",
           "heat-capacity": "Heat capacity",
           "illuminance": "Illuminance",
           "inductance": "Inductance",
@@ -6198,8 +6199,8 @@
         "volt": "Volt",
         "kilovolt": "Kilovolt",
         "megavolt": "Megavolt",
-        "dbmV": "dBmV",
-        "dbm": "dBm",
+        "dbmV": "Decibel volt",
+        "dbm": "Decibel-milliwatts",
         "volt-meter": "Volt-Meter",
         "kilovolt-meter": "Kilovolt-Meter",
         "megavolt-meter": "Megavolt-Meter",
@@ -6234,7 +6235,7 @@
         "millimole": "Millimole",
         "kilomole": "Kilomole",
         "mole-per-cubic-meter": "Mole per Cubic Meter",
-        "rssi": "RSSI",
+        "rssi": "Received signal strength indicator",
         "ppm": "Parts Per Million",
         "ppb": "Parts Per Billion",
         "micrograms-per-cubic-meter": "Micrograms per Cubic Meter",
@@ -6416,9 +6417,9 @@
         "radian-per-second": "Radian per second",
         "radian-per-second-squared": "Radian per second squared",
         "revolutions-per-minute-per-second": "Angular acceleration",
-        "deg-per-second": "deg/s",
+        "deg-per-second": "Degrees per second",
         "rotation-per-minute": "Rotation per minute",
-        "degrees-brix": "Degrees Brix",
+        "degrees-brix": "Degrees brix",
         "katal": "Katal",
         "katal-per-cubic-metre": "Katal per Cubic Metre",
         "paris-inch": "Paris inch"
@@ -7965,6 +7966,18 @@
             "fill-area-opacity": "Fill area opacity",
             "range-chart-style": "Range chart style"
         },
+        "knob": {
+            "behavior": "Behavior",
+            "initial-value": "Initial value",
+            "initial-value-hint": "Action to get the initial value of the knob.",
+            "on-value-change": "On value change",
+            "on-value-change-hint": "Action triggered when the knob value is changed.",
+            "range": "Range",
+            "min": "min",
+            "max": "max",
+            "value": "Value",
+            "fallback-initial-value": "Fallback initial value"
+        },
         "rpc": {
             "value-settings": "Value settings",
             "initial-value": "Initial value",
@@ -8021,9 +8034,7 @@
             "led-status-value-timeseries": "Device time series containing led status value",
             "check-status-method": "RPC check device status method",
             "parse-led-status-value-function": "Parse led status value function",
-            "knob-title": "Knob title",
-            "min-value": "Minimum value",
-            "max-value": "Maximum value"
+            "knob-title": "Knob title"
         },
         "maps": {
             "map-type": {
@@ -8878,7 +8889,11 @@
             "radar-axis": "Radar axis",
             "axis-label": "Axis label",
             "ticks-label": "Ticks label",
-            "radar-chart-style": "Radar chart style"
+            "radar-chart-style": "Radar chart style",
+            "max-axes-scaling": "Max axes scaling",
+            "max-axes-scaling-hint": "Choose whether each radar axis has its own maximum value (Separate) or shares the highest value across all axes based on the widget dataset (Common).",
+            "separate": "Separate",
+            "common": "Common"
         },
         "time-series-chart": {
             "chart": "Chart",
@@ -9408,6 +9423,8 @@
             "lt_LT": "lietuvių (Lietuva)",
             "lv_LV": "latviešu (Latvija)",
             "nl_BE": "Nederlands (België)",
+            "nl_NL": "Nederlands (Nederland)",
+            "no_NO": "norsk (Norge)",
             "pl_PL": "polski (Polska)",
             "pt_BR": "português (Brasil)",
             "ro_RO": "română (România)",
