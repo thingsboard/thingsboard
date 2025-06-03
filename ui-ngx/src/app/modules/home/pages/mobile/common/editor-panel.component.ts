@@ -47,10 +47,10 @@ export class EditorPanelComponent implements OnInit {
   tinyMceOptions: Partial<EditorOptions> = {
     base_url: '/assets/tinymce',
     suffix: '.min',
-    plugins: ['link', 'table', 'image', 'imagetools', 'lists'],
+    plugins: ['link', 'table', 'image', 'imagetools', 'lists', 'fullscreen'],
     menubar: 'edit insert view format',
     toolbar: ['fontfamily fontsize | bold italic underline strikethrough forecolor backcolor',
-      'alignleft aligncenter alignright alignjustify | bullist | link table image'],
+      'alignleft aligncenter alignright alignjustify | bullist | link table image | fullscreen'],
     toolbar_mode: 'sliding',
     height: 400,
     autofocus: false,
