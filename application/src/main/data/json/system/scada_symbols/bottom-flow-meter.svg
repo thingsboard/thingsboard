@@ -57,7 +57,7 @@
     },
     {
       "tag": "value",
-      "stateRenderFunction": "var value = ctx.api.formatValue(ctx.values.value, ctx.properties.valueDecimals, '', false);\nctx.api.text(element, value);\n",
+      "stateRenderFunction": "let value;\nlet valueProcessor;\nif (!ctx.properties.valueUnits || ctx.properties.valueUnits?.length) {\n    value = ctx.api.formatValue(ctx.values.value, ctx.properties.valueDecimals, '', false);\n} else {\n    let valueProcessor = element.remember('valueProcessor');\n    if (!valueProcessor) {\n        valueProcessor = ctx.api.formatValueByUnits(ctx.service.unitService, {\n            units: ctx.properties.valueUnits,\n            decimals: ctx.properties.valueDecimals,\n            ignoreUnitSymbol: true\n        });\n        element.remember('valueProcessor', valueProcessor);\n    }\n    value = valueProcessor.format(ctx.values.value);\n}\nctx.api.text(element, value);\n",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.callAction(event, 'displayClick');"
@@ -66,7 +66,7 @@
     },
     {
       "tag": "valueUnits",
-      "stateRenderFunction": "var units = ctx.properties.valueUnits;\nctx.api.text(element, units || '');\n",
+      "stateRenderFunction": "var units = ctx.service.unitService.getTargetUnitSymbol(ctx.properties.valueUnits);\nctx.api.text(element, units || '');\n",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.callAction(event, 'displayClick');"
@@ -464,6 +464,7 @@
       "type": "units",
       "default": "m³/hr",
       "fieldClass": "medium-width",
+      "supportsUnitConversion": true,
       "disabled": false,
       "visible": true
     },

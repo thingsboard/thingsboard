@@ -58,7 +58,13 @@ import {
 import { BehaviorSubject, forkJoin, Observable, Observer, of, Subject } from 'rxjs';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { ColorProcessor, constantColor, Font } from '@shared/models/widget-settings.models';
+import {
+  ColorProcessor,
+  constantColor,
+  Font,
+  ValueFormatProcessor,
+  ValueFormatSettings
+} from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
@@ -72,10 +78,13 @@ import {
   FormProperty,
   FormPropertyType
 } from '@shared/models/dynamic-form.models';
+import { UnitService } from '@core/services/unit.service';
+import { Injector } from '@angular/core';
 
 export interface ScadaSymbolApi {
   generateElementId: () => string;
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
+  formatValueByUnits: (unitServiceOrInjector: Injector | UnitService, settings: ValueFormatSettings) => ValueFormatProcessor;
   text: (element: Element | Element[], text: string) => void;
   font: (element: Element | Element[], font: Font, color: string) => void;
   icon: (element: Element | Element[], icon: string, size?: number, color?: string, center?: boolean) => void;
@@ -93,12 +102,17 @@ export interface ScadaSymbolApi {
   setValue: (valueId: string, value: any) => void;
 }
 
+export interface ScadaSymbolServices {
+  unitService: UnitService;
+}
+
 export interface ScadaSymbolContext {
   api: ScadaSymbolApi;
   tags: {[id: string]: Element[]};
   values: {[id: string]: any};
   properties: {[id: string]: any};
   svg: Svg;
+  service: ScadaSymbolServices;
 }
 
 export type ScadaSymbolStateRenderFunction = (ctx: ScadaSymbolContext, svg: Svg) => void;
@@ -616,6 +630,7 @@ export class ScadaSymbolObject {
       api: {
         generateElementId: () => generateElementId(),
         formatValue,
+        formatValueByUnits: ValueFormatProcessor.fromSettings.bind(this),
         text: this.setElementText.bind(this),
         font: this.setElementFont.bind(this),
         icon: this.setElementIcon.bind(this),
@@ -635,7 +650,10 @@ export class ScadaSymbolObject {
       tags: {},
       properties: {},
       values: {},
-      svg: this.svgShape
+      svg: this.svgShape,
+      service: {
+        unitService: this.ctx.$injector.get(UnitService)
+      }
     };
     const taggedElements = this.svgShape.find(`[tb\\:tag]`);
     for (const element of taggedElements) {

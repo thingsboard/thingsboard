@@ -72,7 +72,7 @@
     },
     {
       "tag": "value-text",
-      "stateRenderFunction": "var valueTextFont = ctx.properties.valueTextFont;\nvar valueTextColor = ctx.properties.valueTextColor;\nvar units = ctx.properties.valueUnits ? ctx.properties.units : null;\nvar currentVolume = ctx.values.temperature;\nvar decimals = Math.floor(ctx.properties.temperatureStep) === ctx.properties.temperatureStep;\nvar valueText = ctx.api.formatValue(currentVolume, decimals ? 0 : 1, units, !decimals);\nctx.api.font(element, valueTextFont, valueTextColor);\nctx.api.text(element, valueText);",
+      "stateRenderFunction": "const valueTextFont = ctx.properties.valueTextFont;\nconst valueTextColor = ctx.properties.valueTextColor;\nconst unit = ctx.properties.valueUnits ? ctx.properties.units : null;\nconst currentVolume = ctx.values.temperature;\nconst decimals = Math.floor(ctx.properties.temperatureStep) === ctx.properties.temperatureStep;\n\nlet valueText;\nlet valueProcessor;\nif (!unit || unit?.length) {\n    valueText = ctx.api.formatValue(currentVolume, decimals ? 0 : 1, unit, !decimals);\n} else {\n    let valueProcessor = element.remember('valueProcessor');\n    if (!valueProcessor) {\n        valueProcessor = ctx.api.formatValueByUnits(ctx.service.unitService, {\n            units: unit,\n            decimals: decimals ? 0 : 1,\n            ignoreUnitSymbol: !decimals\n        });\n        element.remember('valueProcessor', valueProcessor);\n    }\n    valueText = valueProcessor.format(currentVolume);\n}\n\nctx.api.font(element, valueTextFont, valueTextColor);\nctx.api.text(element, valueText);",
       "actions": null
     }
   ],
@@ -432,12 +432,8 @@
       "required": true,
       "subLabel": "Min",
       "divider": true,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
       "rowClass": "column-xs",
-      "fieldClass": "",
       "min": 0,
-      "max": null,
       "step": 1
     },
     {
@@ -447,13 +443,7 @@
       "default": 45,
       "required": true,
       "subLabel": "Max",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
       "min": 0,
-      "max": null,
       "step": 1
     },
     {
@@ -462,31 +452,13 @@
       "type": "number",
       "default": 1,
       "required": true,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
       "step": 0.5
     },
     {
       "id": "valueTextColor",
       "name": "{i18n:scada.symbol.value-text}",
       "type": "color",
-      "default": "#000000C2",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "default": "#000000C2"
     },
     {
       "id": "valueTextFont",
@@ -498,193 +470,78 @@
         "family": "Roboto",
         "weight": "500",
         "style": "normal"
-      },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      }
     },
     {
       "id": "valueUnits",
       "name": "{i18n:scada.symbol.value-units}",
       "type": "switch",
-      "default": false,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "default": false
     },
     {
       "id": "units",
       "name": "{i18n:scada.symbol.value-units}",
       "type": "units",
       "default": "°C",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "supportsUnitConversion": true
     },
     {
       "id": "valueBoxBackground",
       "name": "{i18n:scada.symbol.value-box-background}",
       "type": "color",
-      "default": "#FFFFFF",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "default": "#FFFFFF"
     },
     {
       "id": "powerButtonBackground",
       "name": "{i18n:scada.symbol.power-button-background}",
       "type": "color",
       "default": "#1ABB48",
-      "required": null,
       "subLabel": "Enabled",
       "divider": true,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "column-xs",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "rowClass": "column-xs"
     },
     {
       "id": "disabledPowerButtonBackground",
       "name": "{i18n:scada.symbol.power-button-background}",
       "type": "color",
       "default": "#FFFFFF",
-      "required": null,
-      "subLabel": "Disabled",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "subLabel": "Disabled"
     },
     {
       "id": "runningColor",
       "name": "{i18n:scada.symbol.running-color}",
       "type": "color",
-      "default": "#1C943E",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "default": "#1C943E"
     },
     {
       "id": "stoppedColor",
       "name": "{i18n:scada.symbol.stopped-color}",
       "type": "color",
-      "default": "#696969",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "default": "#696969"
     },
     {
       "id": "warningColor",
       "name": "{i18n:scada.symbol.warning-color}",
       "type": "color",
-      "default": "#FAA405",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "default": "#FAA405"
     },
     {
       "id": "criticalColor",
       "name": "{i18n:scada.symbol.critical-color}",
       "type": "color",
-      "default": "#D12730",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "default": "#D12730"
     },
     {
       "id": "heatPumpColor",
       "name": "{i18n:scada.symbol.heat-pump-color}",
       "type": "color",
-      "default": "#E5E5E5",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "default": "#E5E5E5"
     },
     {
       "id": "pipeColor",
       "name": "{i18n:scada.symbol.pipe-color}",
       "type": "color",
-      "default": "#FFFFFF",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "default": "#FFFFFF"
     }
   ]
 }]]></tb:metadata>
