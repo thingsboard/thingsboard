@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,6 +35,7 @@ public class QueueValidator extends DataValidator<Queue> {
     @Autowired
     private QueueDao queueDao;
 
+    @Lazy
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
 

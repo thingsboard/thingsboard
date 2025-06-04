@@ -50,6 +50,7 @@ export interface RadarChartWidgetSettings extends LatestChartWidgetSettings {
   labelFont: Font;
   labelColor: string;
   fillAreaSettings: ChartFillSettings;
+  normalizeAxes: boolean;
   axisShowLabel: boolean;
   axisLabelFont: Font;
   axisShowTickLabels: boolean;
@@ -88,6 +89,7 @@ export const radarChartWidgetDefaultSettings: RadarChartWidgetSettings = {
       end: 20
     }
   },
+  normalizeAxes: false,
   axisShowLabel: true,
   axisLabelFont: {
     family: 'Roboto',
@@ -123,6 +125,7 @@ export const radarChartWidgetRadarChartSettings = (settings: RadarChartWidgetSet
   labelFont: settings.labelFont,
   labelColor: settings.labelColor,
   fillAreaSettings: settings.fillAreaSettings,
+  normalizeAxes: settings.normalizeAxes,
   axisShowLabel: settings.axisShowLabel,
   axisLabelFont: settings.axisLabelFont,
   axisShowTickLabels: settings.axisShowTickLabels,

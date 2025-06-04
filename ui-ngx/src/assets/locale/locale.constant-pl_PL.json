@@ -5148,7 +5148,6 @@
             "add-limit": "Dodaj limit",
             "advanced-settings": "Zaawansowane ustawienia",
             "edit-limit": "Edytuj limit",
-            "but-less-than": "ale mniej niż",
             "edit-transport-tenant-msg-title": "Edytuj limity szybkości wiadomości tenanta transportu",
             "edit-transport-tenant-telemetry-msg-title": "Edytuj limity szybkości komunikatów telemetrycznych Tenanta transportu",
             "edit-transport-tenant-telemetry-data-points-title": "Edytuj limity szybkości punktów danych telemetrycznych Tenanta transportu",

@@ -35,7 +35,7 @@ public class EntityNameQueryProcessor extends AbstractSimpleQueryProcessor<Entit
 
     @Override
     protected boolean matches(EntityData ed) {
-        return ed.getFields() != null && (pattern == null || pattern.matcher(ed.getFields().getName()).matches());
+        return super.matches(ed) && (pattern == null || pattern.matcher(ed.getFields().getName()).matches());
     }
 
 }

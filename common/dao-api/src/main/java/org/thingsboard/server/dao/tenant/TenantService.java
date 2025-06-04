@@ -49,7 +49,10 @@ public interface TenantService extends EntityDaoService {
 
     List<TenantId> findTenantIdsByTenantProfileId(TenantProfileId tenantProfileId);
 
+    Tenant findTenantByName(String name);
+
     void deleteTenants();
 
     PageData<TenantId> findTenantsIds(PageLink pageLink);
+
 }

@@ -115,6 +115,13 @@ class ProtoUtilsTest {
     }
 
     @Test
+    void protoComponentLifecycleEventSerialization() {
+        for (ComponentLifecycleEvent event : ComponentLifecycleEvent.values()) {
+            assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(event))).isEqualTo(event);
+        }
+    }
+
+    @Test
     void protoEdgeHighPrioritySerialization() {
         EdgeHighPriorityMsg msg = new EdgeHighPriorityMsg(tenantId, EdgeUtils.constructEdgeEvent(tenantId, edgeId,
                 EdgeEventType.DEVICE, EdgeEventActionType.ADDED, deviceId, JacksonUtil.newObjectNode()));
