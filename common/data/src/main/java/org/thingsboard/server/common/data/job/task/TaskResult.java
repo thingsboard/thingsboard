@@ -20,16 +20,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 import org.thingsboard.server.common.data.job.JobType;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
 @JsonSubTypes({
@@ -40,6 +36,12 @@ public abstract class TaskResult {
     private String key;
     private boolean success;
     private boolean discarded;
+    private long finishTs;
+
+    protected TaskResult(boolean success, boolean discarded) {
+        this.success = success;
+        this.discarded = discarded;
+    }
 
     @JsonIgnore
     public abstract JobType getJobType();
