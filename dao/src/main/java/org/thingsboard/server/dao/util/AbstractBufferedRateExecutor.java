@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cache.limits.RateLimitService;
+import org.thingsboard.server.common.data.exception.RateLimitExceededException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -66,7 +67,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     private final long maxWaitTime;
     private final long pollMs;
-    private final String  bufferName;
+    private final String bufferName;
     private final BlockingQueue<AsyncTaskContext<T, V>> queue;
     private final ExecutorService dispatcherExecutor;
     private final ExecutorService callbackExecutor;
@@ -124,7 +125,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
             if (!rateLimitService.checkRateLimit(myLimitedApi, tenantId, tenantId, true)) {
                 stats.incrementRateLimitedTenant(tenantId);
                 stats.getTotalRateLimited().increment();
-                settableFuture.setException(new TenantRateLimitException());
+                settableFuture.setException(new RateLimitExceededException(myLimitedApi));
                 perTenantLimitReached = true;
             }
         } else if (tenantId == null) {
@@ -299,9 +300,9 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                 .count();
 
         if (queueSize > 0
-                || rateLimitedTenantsCount > 0
-                || concurrencyLevel.get() > 0
-                || stats.getStatsCounters().stream().anyMatch(counter -> counter.get() > 0)
+            || rateLimitedTenantsCount > 0
+            || concurrencyLevel.get() > 0
+            || stats.getStatsCounters().stream().anyMatch(counter -> counter.get() > 0)
         ) {
             StringBuilder statsBuilder = new StringBuilder();
 
