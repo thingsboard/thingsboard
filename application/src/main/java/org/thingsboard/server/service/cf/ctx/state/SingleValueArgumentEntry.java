@@ -25,6 +25,7 @@ import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.util.ProtoUtils;
@@ -92,12 +93,13 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
     @Override
     public TbelCfArg toTbelCfArg() {
-        Object value;
-        try {
-            value = JacksonUtil.readValue(kvEntryValue.getValueAsString(), new TypeReference<>() {
-            });
-        } catch (Exception e) {
-            value = kvEntryValue.getValue();
+        Object value = kvEntryValue.getValue();
+        if (kvEntryValue instanceof JsonDataEntry) {
+            try {
+                value = JacksonUtil.readValue(kvEntryValue.getValueAsString(), new TypeReference<>() {
+                });
+            } catch (Exception e) {
+            }
         }
         return new TbelCfSingleValueArg(ts, value);
     }
