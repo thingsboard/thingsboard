@@ -224,6 +224,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
         stateConsumer.awaitStop();
         eventsToBackupConsumer.stop();
         stateProducer.stop();
+        versionsStore.shutdown();
     }
 
 }
