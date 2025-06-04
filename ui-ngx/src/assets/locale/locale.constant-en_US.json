@@ -3963,6 +3963,7 @@
         "input-fields-support-templatization": "Input fields support templatization.",
         "link": "Link",
         "link-required": "Link is required",
+        "link-max-length": "Link should be less than or equal to {{ length }} characters",
         "link-type": {
             "dashboard": "Open dashboard",
             "link": "Open URL link"
