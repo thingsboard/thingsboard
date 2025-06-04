@@ -277,6 +277,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         eventConsumer.awaitStop();
         responseTemplate.stop();
         stateService.stop();
+        versionsStore.shutdown();
     }
 
 }
