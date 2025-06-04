@@ -18,7 +18,6 @@ package org.thingsboard.server.service.cf;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -57,9 +56,8 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final CalculatedFieldService calculatedFieldService;
     private final TbelInvokeService tbelInvokeService;
     private final ApiLimitService apiLimitService;
-    @Autowired
     @Lazy
-    private ActorSystemContext actorSystemContext;
+    private final ActorSystemContext actorSystemContext;
 
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedField>> entityIdCalculatedFields = new ConcurrentHashMap<>();
@@ -133,10 +131,6 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         return ctx;
     }
 
-    private Lock getFetchLock(CalculatedFieldId id) {
-        return calculatedFieldFetchLocks.computeIfAbsent(id, __ -> new ReentrantLock());
-    }
-
     @Override
     public List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId) {
         if (entityId == null) {
@@ -194,6 +188,10 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         log.debug("[{}] evict calculated field ctx from cache: {}", calculatedFieldId, oldCalculatedField);
         entityIdCalculatedFieldLinks.forEach((entityId, calculatedFieldLinks) -> calculatedFieldLinks.removeIf(link -> link.getCalculatedFieldId().equals(calculatedFieldId)));
         log.debug("[{}] evict calculated field links from cached links by entity id: {}", calculatedFieldId, oldCalculatedField);
+    }
+
+    private Lock getFetchLock(CalculatedFieldId id) {
+        return calculatedFieldFetchLocks.computeIfAbsent(id, __ -> new ReentrantLock());
     }
 
 }
