@@ -137,7 +137,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       buttonColor: [{ value: this.action.buttonColor ?? this.defaultIconColor, disabled: true}, []],
       buttonFillColor: [{ value: this.action.buttonFillColor ?? '#305680', disabled: true}, []],
       buttonBorderColor: [{ value: this.action.buttonBorderColor ?? '#0000001F', disabled: true}, []],
-      customButtonStyle: [this.action.customButtonStyle ?? {}, []],
+      customButtonStyle: [{ value: this.action.customButtonStyle ?? {}, disabled: true}, []],
       useShowWidgetActionFunction: [this.action.useShowWidgetActionFunction],
       showWidgetActionFunction: [this.action.showWidgetActionFunction || 'return true;'],
       widgetAction: [actionDescriptorToAction(toWidgetActionDescriptor(this.action)), Validators.required]
@@ -146,6 +146,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     if (this.widgetActionFormGroup.get('actionSourceId').value === 'headerButton') {
       this.widgetActionFormGroup.get('buttonType').enable({emitEvent: false});
       this.widgetActionFormGroup.get('buttonColor').enable({emitEvent: false});
+      this.widgetActionFormGroup.get('customButtonStyle').enable({emitEvent: false});
       this.widgetHeaderButtonValidators(true);
     }
     this.widgetActionFormGroup.get('actionSourceId').valueChanges.pipe(
