@@ -137,7 +137,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       buttonColor: [{ value: this.action.buttonColor ?? this.defaultIconColor, disabled: true}, []],
       buttonFillColor: [{ value: this.action.buttonFillColor ?? '#305680', disabled: true}, []],
       buttonBorderColor: [{ value: this.action.buttonBorderColor ?? '#0000001F', disabled: true}, []],
-      customButtonStyle: [{ value: this.action.customButtonStyle ?? {}, disabled: true}, []],
+      customButtonStyle: [this.action.customButtonStyle ?? {}, []],
       useShowWidgetActionFunction: [this.action.useShowWidgetActionFunction],
       showWidgetActionFunction: [this.action.showWidgetActionFunction || 'return true;'],
       widgetAction: [actionDescriptorToAction(toWidgetActionDescriptor(this.action)), Validators.required]
