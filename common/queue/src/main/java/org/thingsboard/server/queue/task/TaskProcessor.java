@@ -232,6 +232,8 @@ public abstract class TaskProcessor<T extends Task<R>, R extends TaskResult> {
     }
 
     private void reportTaskResult(T task, R result) {
+        result.setKey(task.getKey());
+        result.setFinishTs(System.currentTimeMillis());
         statsService.reportTaskResult(task.getTenantId(), task.getJobId(), result);
     }
 

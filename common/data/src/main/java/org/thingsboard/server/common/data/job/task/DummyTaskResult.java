@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.job.task;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -25,22 +26,25 @@ import org.thingsboard.server.common.data.job.JobType;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-@SuperBuilder
 @ToString(callSuper = true)
 public class DummyTaskResult extends TaskResult {
 
     private DummyTaskFailure failure;
 
+    @Builder
+    private DummyTaskResult(boolean success, boolean discarded, DummyTaskFailure failure) {
+        super(success, discarded);
+        this.failure = failure;
+    }
+
     public static DummyTaskResult success(DummyTask task) {
         return DummyTaskResult.builder()
-                .key(task.getKey())
                 .success(true)
                 .build();
     }
 
     public static DummyTaskResult failed(DummyTask task, Throwable error) {
         return DummyTaskResult.builder()
-                .key(task.getKey())
                 .failure(DummyTaskFailure.builder()
                         .error(error.getMessage())
                         .number(task.getNumber())
@@ -51,7 +55,6 @@ public class DummyTaskResult extends TaskResult {
 
     public static DummyTaskResult discarded(DummyTask task) {
         return DummyTaskResult.builder()
-                .key(task.getKey())
                 .discarded(true)
                 .build();
     }
