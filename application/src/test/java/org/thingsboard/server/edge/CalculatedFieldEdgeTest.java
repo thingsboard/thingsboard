@@ -38,6 +38,7 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,14 +58,16 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
         CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config);
 
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT + 4);
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        doPost("/api/edge/sync/" + edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        List<AbstractMessage> downlinkMsgs = edgeImitator.getDownlinkMsgs();
+        AbstractMessage latestMessage = downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg instanceof CalculatedFieldUpdateMsg).findFirst().get();
         Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
         CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
-        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
+        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
         Assert.assertEquals(savedCalculatedField.getUuidId().getMostSignificantBits(), calculatedFieldUpdateMsg.getIdMSB());
         Assert.assertEquals(savedCalculatedField.getUuidId().getLeastSignificantBits(), calculatedFieldUpdateMsg.getIdLSB());
         CalculatedField calculatedFieldFromMsg = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
@@ -75,11 +78,13 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(config, calculatedFieldFromMsg.getConfiguration());
 
         // update calculatedField
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT + 4);
         savedCalculatedField.setName(UPDATED_CF_NAME);
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
+        doPost("/api/edge/sync/" + edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
+        downlinkMsgs = edgeImitator.getDownlinkMsgs();
+        latestMessage = downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg instanceof CalculatedFieldUpdateMsg).findFirst().get();
         Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
         calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
         calculatedFieldFromMsg = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
@@ -139,8 +144,9 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
         CalculatedField calculatedField = createSimpleCalculatedField(savedDevice.getId(), config);
 
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT + 4);
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+        doPost("/api/edge/sync/" + edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         UUID uuid = Uuids.timeBased();
