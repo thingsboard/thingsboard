@@ -47,7 +47,7 @@ public enum EdgeEventType {
     TB_RESOURCE(true, EntityType.TB_RESOURCE),
     OAUTH2_CLIENT(true, EntityType.OAUTH2_CLIENT),
     DOMAIN(true, EntityType.DOMAIN),
-    CALCULATED_FIELD(true, EntityType.CALCULATED_FIELD);
+    CALCULATED_FIELD(false, EntityType.CALCULATED_FIELD);
 
     private final boolean allEdgesRelated;
 

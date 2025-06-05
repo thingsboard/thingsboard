@@ -16,17 +16,29 @@
 package org.thingsboard.server.service.edge.rpc.processor.calculated;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
 
 @Slf4j
 public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
@@ -74,6 +86,25 @@ public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
             throw e;
         }
         return Pair.of(isCreated, isNameUpdated);
+    }
+
+    protected ListenableFuture<Void> pushEventToAllRelatedEdges(TenantId tenantId, EntityId entityId, EdgeEventType type, EdgeEventActionType actionType, EdgeId sourceEdgeId) {
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
+        PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
+                new PageDataIterableByTenantIdEntityId<>(edgeCtx.getEdgeService()::findRelatedEdgeIdsByEntityId, tenantId, entityId, RELATED_EDGES_CACHE_ITEMS);
+        for (EdgeId relatedEdgeId : edgeIds) {
+            if (!relatedEdgeId.equals(sourceEdgeId)) {
+                futures.add(saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null));
+            }
+        }
+        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+    }
+
+    protected ListenableFuture<Void> pushEventToAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId, EdgeId sourceEdgeId) {
+        return switch (actionType) {
+            case ADDED, UPDATED, DELETED -> processActionForAllEdges(tenantId, type, actionType, entityId, null, sourceEdgeId);
+            default -> Futures.immediateFuture(null);
+        };
     }
 
 }

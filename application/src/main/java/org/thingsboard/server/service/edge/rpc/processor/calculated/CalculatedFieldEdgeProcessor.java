@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.calculated;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -22,26 +23,28 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -88,7 +91,7 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
                 CalculatedField calculatedField = edgeCtx.getCalculatedFieldService().findById(edgeEvent.getTenantId(), calculatedFieldId);
-                if (calculatedField != null && isEntityAssignedToEdge(edgeEvent, calculatedField)) {
+                if (calculatedField != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = EdgeMsgConstructorUtils.constructCalculatedFieldUpdatedMsg(msgType, calculatedField);
                     return DownlinkMsg.newBuilder()
@@ -108,24 +111,37 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
         return null;
     }
 
-    private boolean isEntityAssignedToEdge(EdgeEvent edgeEvent, CalculatedField calculatedField) {
-        switch (calculatedField.getEntityId().getEntityType()) {
-            case ASSET, DEVICE -> {
-                List<EntityRelation> relations =
-                        edgeCtx.getRelationService().findByTo(edgeEvent.getTenantId(), calculatedField.getEntityId(), RelationTypeGroup.EDGE);
-                return !relations.isEmpty();
-            }
-            default -> {
-                return true;
-            }
-        }
-    }
-
     @Override
     public EdgeEventType getEdgeEventType() {
         return EdgeEventType.CALCULATED_FIELD;
     }
 
+    @Override
+    public ListenableFuture<Void> processEntityNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
+        EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
+        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
+        EdgeId originatorEdgeId = safeGetEdgeId(edgeNotificationMsg.getOriginatorEdgeIdMSB(), edgeNotificationMsg.getOriginatorEdgeIdLSB());
+
+        switch (actionType) {
+            case UPDATED:
+            case ADDED:
+                EntityId bodyEntityId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), EntityId.class);
+                if (bodyEntityId != null &&
+                        (EntityType.DEVICE.equals(bodyEntityId.getEntityType()) || EntityType.ASSET.equals(bodyEntityId.getEntityType()))) {
+                    JsonNode body = JacksonUtil.toJsonNode(edgeNotificationMsg.getBody());
+                    EdgeId edgeId = safeGetEdgeId(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB());
+
+                    return edgeId != null ?
+                            saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body) :
+                            pushEventToAllRelatedEdges(tenantId, entityId, type, actionType, originatorEdgeId);
+                } else {
+                    return pushEventToAllEdges(tenantId, type, actionType, entityId, originatorEdgeId);
+                }
+            default:
+                return super.processEntityNotification(tenantId, edgeNotificationMsg);
+        }
+    }
 
     private void processCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId, CalculatedFieldUpdateMsg calculatedFieldUpdateMsg, Edge edge) {
         Pair<Boolean, Boolean> resultPair = super.saveOrUpdateCalculatedField(tenantId, calculatedFieldId, calculatedFieldUpdateMsg);
