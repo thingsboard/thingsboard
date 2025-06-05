@@ -38,12 +38,12 @@
     },
     {
       "tag": "units",
-      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.properties.units);\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.api.unitSymbol(ctx.properties.units));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
       "tag": "value",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.measured, 0, null, 0));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.measured, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false}));",
       "actions": null
     },
     {
@@ -353,6 +353,7 @@
       "name": "{i18n:scada.symbol.label}",
       "type": "text",
       "default": "T1",
+      "disableOnProperty": "showLabel",
       "fieldClass": "medium-width",
       "disabled": false,
       "visible": true
@@ -368,6 +369,7 @@
         "weight": "400",
         "style": "normal"
       },
+      "disableOnProperty": "showLabel",
       "disabled": false,
       "visible": true
     },
@@ -376,6 +378,7 @@
       "name": "{i18n:scada.symbol.label}",
       "type": "color",
       "default": "#000",
+      "disableOnProperty": "showLabel",
       "disabled": false,
       "visible": true
     },
@@ -392,6 +395,7 @@
       "name": "{i18n:scada.symbol.units}",
       "type": "units",
       "default": "kWh",
+      "supportsUnitConversion": true,
       "disabled": false,
       "visible": true
     },
@@ -406,6 +410,7 @@
         "weight": "500",
         "style": "normal"
       },
+      "disableOnProperty": "showUnits",
       "disabled": false,
       "visible": true
     },
@@ -414,6 +419,7 @@
       "name": "{i18n:scada.symbol.units}",
       "type": "color",
       "default": "#000",
+      "disableOnProperty": "showUnits",
       "disabled": false,
       "visible": true
     },

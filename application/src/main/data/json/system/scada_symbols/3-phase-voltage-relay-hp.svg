@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="400" height="400" fill="none" version="1.1" viewBox="0 0 400 400"><tb:metadata xmlns=""><![CDATA[{
   "title": "HP 3 phase voltage relay",
-  "description": "Three phase voltage relay with various states and inications.",
+  "description": "Three phase voltage relay with various states and indications.",
   "searchTags": [
     "energy",
     "power",
@@ -39,7 +39,7 @@
     },
     {
       "tag": "firstPhaseValue",
-      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.firstPhaseVoltage, 0, null, 0));\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.firstPhaseVoltage, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, id: 0}));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -49,7 +49,7 @@
     },
     {
       "tag": "secondPhaseValue",
-      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.secondPhaseVoltage, 0, null, 0));\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.secondPhaseVoltage, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, id: 1}));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -59,12 +59,12 @@
     },
     {
       "tag": "thirdPhaseValue",
-      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.thirdPhaseVoltage, 0, null, 0));\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.thirdPhaseVoltage, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, id: 2}));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
       "tag": "units",
-      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.properties.units);\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.api.unitSymbol(ctx.properties.units));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -488,6 +488,7 @@
       "name": "{i18n:scada.symbol.units}",
       "type": "units",
       "default": "V",
+      "supportsUnitConversion": true,
       "disabled": false,
       "visible": true
     },

@@ -38,7 +38,7 @@
     },
     {
       "tag": "night-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, 0, null, 0));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false, id: 1}));",
       "actions": null
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "tag": "off-peak-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.offPeakValueFont, ctx.properties.offPeakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.offPeakRate, 0, null, 0));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.offPeakValueFont, ctx.properties.offPeakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.offPeakRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false, id: 0}));",
       "actions": null
     },
     {
@@ -58,12 +58,12 @@
     },
     {
       "tag": "peak-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.peakValueFont, ctx.properties.peakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.peakRate, 0, null, 0));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.peakValueFont, ctx.properties.peakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.peakRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false, id: 2}));",
       "actions": null
     },
     {
       "tag": "units",
-      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.properties.units);\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.api.unitSymbol(ctx.properties.units));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -480,6 +480,7 @@
       "group": "{i18n:scada.symbol.off-peak-rate}",
       "type": "text",
       "default": "T1",
+      "disableOnProperty": "showOffPeakLabel",
       "fieldClass": "medium-width",
       "disabled": false,
       "visible": true
@@ -496,6 +497,7 @@
         "weight": "normal",
         "style": "normal"
       },
+      "disableOnProperty": "showOffPeakLabel",
       "disabled": false,
       "visible": true
     },
@@ -505,6 +507,7 @@
       "group": "{i18n:scada.symbol.off-peak-rate}",
       "type": "color",
       "default": "#000000",
+      "disableOnProperty": "showOffPeakLabel",
       "disabled": false,
       "visible": true
     },
@@ -556,6 +559,7 @@
       "group": "{i18n:scada.symbol.night-rate}",
       "type": "text",
       "default": "T2",
+      "disableOnProperty": "showNightLabel",
       "fieldClass": "medium-width",
       "disabled": false,
       "visible": true
@@ -572,6 +576,7 @@
         "weight": "normal",
         "style": "normal"
       },
+      "disableOnProperty": "showNightLabel",
       "disabled": false,
       "visible": true
     },
@@ -581,6 +586,7 @@
       "group": "{i18n:scada.symbol.night-rate}",
       "type": "color",
       "default": "#000",
+      "disableOnProperty": "showNightLabel",
       "disabled": false,
       "visible": true
     },
@@ -632,6 +638,7 @@
       "group": "{i18n:scada.symbol.peak-rate}",
       "type": "text",
       "default": "T3",
+      "disableOnProperty": "showPeakLabel",
       "fieldClass": "medium-width",
       "disabled": false,
       "visible": true
@@ -648,6 +655,7 @@
         "weight": "normal",
         "style": "normal"
       },
+      "disableOnProperty": "showPeakLabel",
       "disabled": false,
       "visible": true
     },
@@ -657,6 +665,7 @@
       "group": "{i18n:scada.symbol.peak-rate}",
       "type": "color",
       "default": "#000",
+      "disableOnProperty": "showPeakLabel",
       "disabled": false,
       "visible": true
     },
@@ -706,6 +715,7 @@
       "name": "{i18n:scada.symbol.units}",
       "type": "units",
       "default": "kWh",
+      "supportsUnitConversion": true,
       "disabled": false,
       "visible": true
     },
@@ -720,6 +730,7 @@
         "weight": "normal",
         "style": "normal"
       },
+      "disableOnProperty": "showUnits",
       "disabled": false,
       "visible": true
     },
@@ -728,6 +739,7 @@
       "name": "{i18n:scada.symbol.units}",
       "type": "color",
       "default": "#000",
+      "disableOnProperty": "showUnits",
       "disabled": false,
       "visible": true
     }
