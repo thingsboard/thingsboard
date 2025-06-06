@@ -17,9 +17,7 @@
 import { isFunction } from '@core/utils';
 import { FormattedData } from '@shared/models/widget.models';
 import { DateFormatProcessor, DateFormatSettings, Font } from '@shared/models/widget-settings.models';
-import {
-  TimeSeriesChartDataItem,
-} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { TimeSeriesChartDataItem } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { Renderer2, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
@@ -105,6 +103,9 @@ export class TimeSeriesChartTooltip {
     if (!tooltipParams.items.length && !tooltipParams.comparisonItems.length) {
       return null;
     }
+    if (this.settings.tooltipHideZeroFalse && !tooltipParams.items.some(value => value.param.value[1] && value.param.value[1] !== 'false')) {
+      return undefined;
+    }
 
     const tooltipElement: HTMLElement = this.renderer.createElement('div');
     this.renderer.setStyle(tooltipElement, 'display', 'flex');
@@ -132,7 +133,7 @@ export class TimeSeriesChartTooltip {
       }
       let total = 0, isStacked = false;
       for (const item of items) {
-        if (!this.settings.tooltipHideZeroFalse || item.param.value[1]) {
+        if (!this.settings.tooltipHideZeroFalse || (item.param.value[1] && item.param.value[1] !== 'false')) {
           this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
           if (item.dataItem?.barRenderContext?.barStackIndex !== undefined && !isNaN(Number(item.param.value[1]))) {
             isStacked = true;

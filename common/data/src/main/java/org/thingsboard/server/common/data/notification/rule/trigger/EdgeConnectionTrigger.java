@@ -23,11 +23,15 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
+import java.io.Serial;
 import java.util.concurrent.TimeUnit;
 
 @Data
 @Builder
 public class EdgeConnectionTrigger implements NotificationRuleTrigger {
+
+    @Serial
+    private static final long serialVersionUID = -261939829962721957L;
 
     private final TenantId tenantId;
     private final CustomerId customerId;
@@ -36,8 +40,8 @@ public class EdgeConnectionTrigger implements NotificationRuleTrigger {
     private final String edgeName;
 
     @Override
-    public boolean deduplicate() {
-        return true;
+    public DeduplicationStrategy getDeduplicationStrategy() {
+        return DeduplicationStrategy.ALL;
     }
 
     @Override
@@ -59,4 +63,5 @@ public class EdgeConnectionTrigger implements NotificationRuleTrigger {
     public EntityId getOriginatorEntityId() {
         return edgeId;
     }
+
 }
