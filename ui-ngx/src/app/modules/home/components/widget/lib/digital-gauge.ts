@@ -125,6 +125,7 @@ export class TbCanvasDigitalGauge {
     this.barColorProcessor = ColorProcessor.fromSettings(settings.barColor, this.ctx);
     this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {
       units: this.localSettings.units,
+      decimals: this.localSettings.decimals,
       ignoreUnitSymbol: true
     });
 
