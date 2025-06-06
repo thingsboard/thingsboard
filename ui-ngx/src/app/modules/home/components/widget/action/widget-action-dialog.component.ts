@@ -146,6 +146,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     if (this.widgetActionFormGroup.get('actionSourceId').value === 'headerButton') {
       this.widgetActionFormGroup.get('buttonType').enable({emitEvent: false});
       this.widgetActionFormGroup.get('buttonColor').enable({emitEvent: false});
+      this.widgetActionFormGroup.get('customButtonStyle').enable({emitEvent: false});
       this.widgetHeaderButtonValidators(true);
     }
     this.widgetActionFormGroup.get('actionSourceId').valueChanges.pipe(
