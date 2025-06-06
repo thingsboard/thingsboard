@@ -16,15 +16,23 @@
 @keyframes tbMoveFromTopFade {
   from {
     opacity: 0;
-
     transform: translate(0, -100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
   }
 }
 
 @keyframes tbMoveToTopFade {
+  from {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
   to {
     opacity: 0;
-
     transform: translate(0, -100%);
   }
 }
@@ -32,15 +40,23 @@
 @keyframes tbMoveFromBottomFade {
   from {
     opacity: 0;
-
     transform: translate(0, 100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
   }
 }
 
 @keyframes tbMoveToBottomFade {
+  from {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
   to {
     opacity: 0;
-
     transform: translate(0, 150%);
   }
 }

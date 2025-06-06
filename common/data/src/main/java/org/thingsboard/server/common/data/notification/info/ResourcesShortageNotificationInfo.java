@@ -30,12 +30,16 @@ public class ResourcesShortageNotificationInfo implements RuleOriginatedNotifica
 
     private String resource;
     private Long usage;
+    private String serviceId;
+    private String serviceType;
 
     @Override
     public Map<String, String> getTemplateData() {
         return Map.of(
                 "resource", resource,
-                "usage", String.valueOf(usage)
+                "usage", String.valueOf(usage),
+                "serviceId", serviceId,
+                "serviceType", serviceType
         );
     }
 
