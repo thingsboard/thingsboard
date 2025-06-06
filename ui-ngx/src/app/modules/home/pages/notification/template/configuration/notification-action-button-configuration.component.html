@@ -62,6 +62,12 @@
             *ngIf="actionButtonConfigForm.get('link').hasError('required')">
             {{ 'notification.link-required' | translate }}
           </mat-error>
+          <mat-error
+            *ngIf="actionButtonConfigForm.get('link').hasError('maxlength')">
+            {{ 'notification.link-max-length' | translate :
+                {length: actionButtonConfigForm.get('link').getError('maxlength').requiredLength}
+            }}
+          </mat-error>
         </mat-form-field>
         <ng-template #dashboardSelector>
           <tb-dashboard-autocomplete
