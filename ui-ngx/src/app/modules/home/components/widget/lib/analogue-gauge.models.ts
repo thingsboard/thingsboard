@@ -285,10 +285,10 @@ function getValueDec(ctx: WidgetContext, _settings: AnalogueGaugeSettings): numb
   if (ctx.data && ctx.data[0]) {
     dataKey = ctx.data[0].dataKey;
   }
-  if (dataKey && isDefined(dataKey.decimals)) {
+  if (dataKey && isDefinedAndNotNull(dataKey.decimals)) {
     return dataKey.decimals;
   } else {
-    return isDefinedAndNotNull(ctx.decimals) ? ctx.decimals : 0;
+    return ctx.decimals ?? 0;
   }
 }
 
@@ -300,6 +300,6 @@ function getUnits(ctx: WidgetContext, settings: AnalogueGaugeSettings): TbUnit {
   if (dataKey?.units) {
     return dataKey.units;
   } else {
-    return isDefinedAndNotNull(settings.units) ? settings.units : ctx.units;
+    return settings.units ?? ctx.units;
   }
 }
