@@ -190,8 +190,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
-    public void saveAttributesInternal(AttributesSaveRequest request) {
-        log.trace("Executing saveInternal [{}]", request);
+    public ListenableFuture<List<Long>> saveAttributesInternal(AttributesSaveRequest request) {
         TenantId tenantId = request.getTenantId();
         EntityId entityId = request.getEntityId();
         AttributesSaveRequest.Strategy strategy = request.getStrategy();
@@ -228,6 +227,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         if (strategy.sendWsUpdate()) {
             addWsCallback(resultFuture, success -> onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries()));
         }
+        return resultFuture;
     }
 
     private static boolean shouldSendSharedAttributesUpdatedNotification(AttributesSaveRequest request) {

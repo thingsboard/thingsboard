@@ -898,6 +898,8 @@ state:
   # Used only when state.persistToTelemetry is set to 'true' and Cassandra is used for timeseries data.
   # 0 means time-to-live mechanism is disabled.
   telemetryTtl: "${STATE_TELEMETRY_TTL:0}"
+  # Number of device records to fetch per batch when initializing device activity states
+  initFetchPackSize: "${TB_DEVICE_STATE_INIT_FETCH_PACK_SIZE:50000}"
   # Configuration properties for rule nodes related to device activity state
   rule:
     node:
