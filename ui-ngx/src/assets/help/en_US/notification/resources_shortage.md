@@ -9,8 +9,8 @@ See the available types and parameters below:
 
 Available template parameters:
 
-* `resource` - the resource name;
-* `usage` - the resource usage value;
+* `resource` - the resource name (e.g., "CPU", "RAM", "STORAGE");
+* `usage` - the current usage value of the resource;
 * `serviceId` - the service id (convenient in cluster setup);
 * `serviceType` - the service type (convenient in cluster setup);
 
