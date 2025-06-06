@@ -16,13 +16,16 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.util.ProtoUtils;
@@ -90,7 +93,15 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
     @Override
     public TbelCfArg toTbelCfArg() {
-        return new TbelCfSingleValueArg(ts, kvEntryValue.getValue());
+        Object value = kvEntryValue.getValue();
+        if (kvEntryValue instanceof JsonDataEntry) {
+            try {
+                value = JacksonUtil.readValue(kvEntryValue.getValueAsString(), new TypeReference<>() {
+                });
+            } catch (Exception e) {
+            }
+        }
+        return new TbelCfSingleValueArg(ts, value);
     }
 
     @Override

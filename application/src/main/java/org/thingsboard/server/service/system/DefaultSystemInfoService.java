@@ -185,9 +185,14 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         long ts = System.currentTimeMillis();
         List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfo());
         clusterSystemData.forEach(data -> {
-            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(data.getCpuUsage()).build());
-            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(data.getMemoryUsage()).build());
-            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(data.getDiscUsage()).build());
+            Arrays.stream(Resource.values()).forEach(resource -> {
+                notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
+                        .resource(resource)
+                        .serviceId(data.getServiceId())
+                        .serviceType(data.getServiceType())
+                        .usage(extractResourceUsage(data, resource))
+                        .build());
+            });
         });
         BasicTsKvEntry clusterDataKv = new BasicTsKvEntry(ts, new JsonDataEntry("clusterSystemData", JacksonUtil.toString(clusterSystemData)));
         doSave(Arrays.asList(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", true)), clusterDataKv));
@@ -200,17 +205,17 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         getCpuUsage().ifPresent(v -> {
             long value = (long) v;
             tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuUsage", value)));
-            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(value).build());
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(value).serviceId(serviceInfoProvider.getServiceId()).serviceType(serviceInfoProvider.getServiceType()).build());
         });
         getMemoryUsage().ifPresent(v -> {
             long value = (long) v;
             tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", value)));
-            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(value).build());
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(value).serviceId(serviceInfoProvider.getServiceId()).serviceType(serviceInfoProvider.getServiceType()).build());
         });
         getDiscSpaceUsage().ifPresent(v -> {
             long value = (long) v;
             tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("discUsage", value)));
-            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(value).build());
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(value).serviceId(serviceInfoProvider.getServiceId()).serviceType(serviceInfoProvider.getServiceType()).build());
         });
 
         getCpuCount().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuCount", (long) v))));
@@ -256,6 +261,14 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         infoData.setTotalDiscSpace(serviceInfo.getSystemInfo().getTotalDiscSpace());
 
         return infoData;
+    }
+
+    private Long extractResourceUsage(SystemInfoData info, Resource resource) {
+        return switch (resource) {
+            case CPU -> info.getCpuUsage();
+            case RAM -> info.getMemoryUsage();
+            case STORAGE -> info.getDiscUsage();
+        };
     }
 
     @PreDestroy
