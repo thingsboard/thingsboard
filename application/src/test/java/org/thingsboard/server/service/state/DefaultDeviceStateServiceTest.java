@@ -882,10 +882,8 @@ class DefaultDeviceStateServiceTest {
     }
 
     @Test
-    void givenInactiveDevice_whenActivityStatusChangesToActiveButFailedToSaveUpdatedActivityStatus_thenShouldNotUpdateCache() {
+    void givenInactiveDevice_whenActivityStatusChangesToActiveButFailedToSaveUpdatedActivityStatus_thenShouldNotUpdateCache2() {
         // GIVEN
-        doReturn(200L).when(service).getCurrentTimeMillis();
-
         var deviceState = DeviceState.builder()
                 .active(false)
                 .lastActivityTime(100L)
@@ -902,20 +900,21 @@ class DefaultDeviceStateServiceTest {
         service.deviceStates.put(deviceId, deviceStateData);
         service.getPartitionedEntities(tpi).add(deviceId);
 
-        when(telemetrySubscriptionService.saveAttributesInternal(any(AttributesSaveRequest.class)))
-                .thenAnswer(invocation -> {
-                    AttributesSaveRequest request = invocation.getArgument(0);
-                    AttributeKvEntry entry = request.getEntries().get(0);
-                    return entry.getKey().equals(ACTIVITY_STATE) ?
-                            Futures.immediateFailedFuture(new RuntimeException("failed to save")) :
-                            Futures.immediateFuture(generateRandomVersions(1));
-                });
+        // WHEN-THEN
 
-        // WHEN
-        service.onDeviceActivity(tenantId, deviceId, 220L);
+        // simulating short DB outage
+        given(telemetrySubscriptionService.saveAttributesInternal(any())).willReturn(Futures.immediateFailedFuture(new RuntimeException("failed to save")));
+        doReturn(200L).when(service).getCurrentTimeMillis();
+        service.onDeviceActivity(tenantId, deviceId, 180L);
+        assertThat(deviceState.isActive()).isFalse(); // still inactive
 
-        // THEN
-        assertThat(deviceState.isActive()).isFalse();
+        // 10 millis pass... and new activity message it received
+
+        // this time DB save is successful
+        when(telemetrySubscriptionService.saveAttributesInternal(any())).thenReturn(Futures.immediateFuture(generateRandomVersions(1)));
+        doReturn(210L).when(service).getCurrentTimeMillis();
+        service.onDeviceActivity(tenantId, deviceId, 190L);
+        assertThat(deviceState.isActive()).isTrue();
     }
 
     @Test
@@ -937,21 +936,21 @@ class DefaultDeviceStateServiceTest {
         service.deviceStates.put(deviceId, deviceStateData);
         service.getPartitionedEntities(tpi).add(deviceId);
 
-        when(telemetrySubscriptionService.saveAttributesInternal(any(AttributesSaveRequest.class)))
-                .thenAnswer(invocation -> {
-                    AttributesSaveRequest request = invocation.getArgument(0);
-                    AttributeKvEntry entry = request.getEntries().get(0);
-                    return entry.getKey().equals(ACTIVITY_STATE) ?
-                            Futures.immediateFailedFuture(new RuntimeException("failed to save")) :
-                            Futures.immediateFuture(generateRandomVersions(1));
-                });
+        // WHEN-THEN (assuming periodic activity states check is done every 100 millis)
 
-        // WHEN
+        // simulating short DB outage
+        given(telemetrySubscriptionService.saveAttributesInternal(any())).willReturn(Futures.immediateFailedFuture(new RuntimeException("failed to save")));
         doReturn(200L).when(service).getCurrentTimeMillis();
         service.checkStates();
+        assertThat(deviceState.isActive()).isTrue(); // still active
 
-        // THEN
-        assertThat(deviceState.isActive()).isTrue();
+        // waiting 100 millis... periodic activity states check is triggered again
+
+        // this time DB save is successful
+        when(telemetrySubscriptionService.saveAttributesInternal(any())).thenReturn(Futures.immediateFuture(generateRandomVersions(1)));
+        doReturn(300L).when(service).getCurrentTimeMillis();
+        service.checkStates();
+        assertThat(deviceState.isActive()).isFalse();
     }
 
     @Test

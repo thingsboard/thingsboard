@@ -340,7 +340,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             return;
         }
         log.trace("[{}][{}] On device inactivity: processing inactivity event with ts [{}].", tenantId.getId(), deviceId.getId(), lastInactivityTime);
-        reportInactivity(lastInactivityTime, deviceId, stateData);
+        reportInactivity(lastInactivityTime, stateData);
     }
 
     @Override
@@ -559,7 +559,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() <= state.getLastActivityTime())
                     && stateData.getDeviceCreationTime() + state.getInactivityTimeout() <= ts) {
                 if (partitionService.resolve(ServiceType.TB_CORE, stateData.getTenantId(), deviceId).isMyPartition()) {
-                    reportInactivity(ts, deviceId, stateData);
+                    reportInactivity(ts, stateData);
                 } else {
                     cleanupEntity(deviceId);
                 }
@@ -570,11 +570,22 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
     }
 
-    private void reportInactivity(long ts, DeviceId deviceId, DeviceStateData stateData) {
-        DeviceState state = stateData.getState();
-        state.setLastInactivityAlarmTime(ts);
-        save(stateData.getTenantId(), deviceId, INACTIVITY_ALARM_TIME, ts);
-        onDeviceActivityStatusChange(false, stateData);
+    private void reportInactivity(long ts, DeviceStateData stateData) {
+        var tenantId = stateData.getTenantId();
+        var deviceId = stateData.getDeviceId();
+
+        Futures.addCallback(save(stateData.getTenantId(), deviceId, INACTIVITY_ALARM_TIME, ts), new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void success) {
+                stateData.getState().setLastInactivityAlarmTime(ts);
+                onDeviceActivityStatusChange(false, stateData);
+            }
+
+            @Override
+            public void onFailure(@NonNull Throwable t) {
+                log.error("[{}][{}] Failed to update device last inactivity alarm time to '{}'. Device state data: {}", tenantId, deviceId, ts, stateData, t);
+            }
+        }, deviceStateCallbackExecutor);
     }
 
     private static boolean isActive(long ts, DeviceState state) {
