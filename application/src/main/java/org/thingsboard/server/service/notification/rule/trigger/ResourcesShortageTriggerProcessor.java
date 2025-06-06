@@ -39,7 +39,12 @@ public class ResourcesShortageTriggerProcessor implements NotificationRuleTrigge
 
     @Override
     public RuleOriginatedNotificationInfo constructNotificationInfo(ResourcesShortageTrigger trigger) {
-        return ResourcesShortageNotificationInfo.builder().resource(trigger.getResource().name()).usage(trigger.getUsage()).build();
+        return ResourcesShortageNotificationInfo.builder()
+                .resource(trigger.getResource().name())
+                .usage(trigger.getUsage())
+                .serviceId(trigger.getServiceId())
+                .serviceType(trigger.getServiceType())
+                .build();
     }
 
     @Override
