@@ -3442,6 +3442,7 @@
             "power-button-background": "Power button background",
             "value-box-background": "Value box background",
             "value-units": "Value units",
+            "enable-units-scale": "Enable units on scale",
             "filtration-mode": "Filtration mode",
             "filtration-mode-hint": "Integer value indication the current filtration mode.",
             "filtration-mode-update": "Filtration mode update state",
