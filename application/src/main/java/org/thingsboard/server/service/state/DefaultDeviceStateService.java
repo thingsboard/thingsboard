@@ -604,19 +604,27 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         var tenantId = stateData.getTenantId();
         var deviceId = stateData.getDeviceId();
 
-        Futures.whenAllSucceed(save(tenantId, deviceId, ACTIVITY_STATE, active)).run(() -> {
-            stateData.getState().setActive(active);
-            pushRuleEngineMessage(stateData, active ? TbMsgType.ACTIVITY_EVENT : TbMsgType.INACTIVITY_EVENT);
-            TbMsgMetaData metaData = stateData.getMetaData();
-            notificationRuleProcessor.process(DeviceActivityTrigger.builder()
-                    .tenantId(tenantId)
-                    .customerId(stateData.getCustomerId())
-                    .deviceId(deviceId)
-                    .active(active)
-                    .deviceName(metaData.getValue("deviceName"))
-                    .deviceType(metaData.getValue("deviceType"))
-                    .deviceLabel(metaData.getValue("deviceLabel"))
-                    .build());
+        Futures.addCallback(save(tenantId, deviceId, ACTIVITY_STATE, active), new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void success) {
+                stateData.getState().setActive(active);
+                pushRuleEngineMessage(stateData, active ? TbMsgType.ACTIVITY_EVENT : TbMsgType.INACTIVITY_EVENT);
+                TbMsgMetaData metaData = stateData.getMetaData();
+                notificationRuleProcessor.process(DeviceActivityTrigger.builder()
+                        .tenantId(tenantId)
+                        .customerId(stateData.getCustomerId())
+                        .deviceId(deviceId)
+                        .active(active)
+                        .deviceName(metaData.getValue("deviceName"))
+                        .deviceType(metaData.getValue("deviceType"))
+                        .deviceLabel(metaData.getValue("deviceLabel"))
+                        .build());
+            }
+
+            @Override
+            public void onFailure(@NonNull Throwable t) {
+                log.error("[{}][{}] Failed to change device activity status to '{}'. Device state data: {}", tenantId, deviceId, active, stateData, t);
+            }
         }, deviceStateCallbackExecutor);
     }
 
