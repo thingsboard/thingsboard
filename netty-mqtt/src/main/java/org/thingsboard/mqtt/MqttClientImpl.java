@@ -96,6 +96,8 @@ final class MqttClientImpl implements MqttClient {
 
     private final ListeningExecutor handlerExecutor;
 
+    private final static int DISCONNECT_FALLBACK_DELAY_SECS = 1;
+
     /**
      * Construct the MqttClientImpl with default config
      */
@@ -456,16 +458,25 @@ final class MqttClientImpl implements MqttClient {
 
     @Override
     public void disconnect() {
+        if (disconnected) {
+            return;
+        }
+
         log.trace("[{}] Disconnecting from server", channel != null ? channel.id() : "UNKNOWN");
-        disconnected = true;
         if (this.channel != null) {
             MqttMessage message = new MqttMessage(new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0));
-            ChannelFuture channelFuture = this.sendAndFlushPacket(message);
+
+            sendAndFlushPacket(message).addListener((ChannelFutureListener) future -> {
+                future.channel().close();
+                disconnected = true;
+            });
             eventLoop.schedule(() -> {
-                if (!channelFuture.isDone()) {
+                if (channel.isOpen()) {
+                    log.trace("[{}] Channel still open after {} second; forcing close now", channel.id(), DISCONNECT_FALLBACK_DELAY_SECS);
                     this.channel.close();
+                    disconnected = true;
                 }
-            }, 500, TimeUnit.MILLISECONDS);
+            }, DISCONNECT_FALLBACK_DELAY_SECS, TimeUnit.SECONDS);
         }
     }
 
