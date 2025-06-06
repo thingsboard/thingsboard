@@ -41,7 +41,13 @@ export class MqttVersionSelectComponent implements ControlValueAccessor {
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
-  mqttVersions = Object.values(MqttVersion);
+  @Input()
+  excludeVersions: MqttVersion[];
+
+  get mqttVersions(): MqttVersion[] {
+    return Object.values(MqttVersion).filter(v => !this.excludeVersions || !this.excludeVersions.includes(v));
+  }
+
   mqttVersionTranslation = MqttVersionTranslation;
   modelValue: MqttVersion;
 
