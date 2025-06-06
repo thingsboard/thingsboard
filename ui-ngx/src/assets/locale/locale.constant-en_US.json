@@ -4168,6 +4168,7 @@
       "checksum-copied-message": "Package checksum has been copied to clipboard",
       "change-firmware": "Change of the firmware may cause update of { count, plural, =1 {1 device} other {# devices} }.",
       "change-software": "Change of the software may cause update of { count, plural, =1 {1 device} other {# devices} }.",
+      "change-ota-setting-title": "Are you sure you want to change OTA settings?",
       "chose-compatible-device-profile": "The uploaded package will be available only for devices with the chosen profile.",
       "chose-firmware-distributed-device": "Choose firmware that will be distributed to the devices",
       "chose-software-distributed-device": "Choose software that will be distributed to the devices",
