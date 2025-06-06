@@ -185,12 +185,14 @@ public class CalculatedFieldCtx {
             return false;
         }
 
+        var lookupKey = new ReferencedEntityKey(null, ArgumentType.ATTRIBUTE, scope);
         for (AttributeKvEntry attrKv : values) {
-            ReferencedEntityKey attrKey = new ReferencedEntityKey(attrKv.getKey(), ArgumentType.ATTRIBUTE, scope);
-            if (argMap.containsKey(attrKey)) {
+            lookupKey.setKey(attrKv.getKey());
+            if (argMap.containsKey(lookupKey)) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -199,13 +201,21 @@ public class CalculatedFieldCtx {
             return false;
         }
 
+        var lookupKey = new ReferencedEntityKey(null, null, null);
         for (TsKvEntry tsKv : values) {
-            String key = tsKv.getKey();
-            if (argMap.containsKey(new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null)) ||
-                    argMap.containsKey(new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null))) {
+            lookupKey.setKey(tsKv.getKey());
+
+            lookupKey.setType(ArgumentType.TS_LATEST);
+            if (argMap.containsKey(lookupKey)) {
+                return true;
+            }
+
+            lookupKey.setType(ArgumentType.TS_ROLLING);
+            if (argMap.containsKey(lookupKey)) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -222,12 +232,14 @@ public class CalculatedFieldCtx {
             return false;
         }
 
+        var lookupKey = new ReferencedEntityKey(null, ArgumentType.ATTRIBUTE, scope);
         for (String key : keys) {
-            ReferencedEntityKey attrKey = new ReferencedEntityKey(key, ArgumentType.ATTRIBUTE, scope);
-            if (argMap.containsKey(attrKey)) {
+            lookupKey.setKey(key);
+            if (argMap.containsKey(lookupKey)) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -236,12 +248,21 @@ public class CalculatedFieldCtx {
             return false;
         }
 
+        var lookupKey = new ReferencedEntityKey(null, null, null);
         for (String key : keys) {
-            if (argMap.containsKey(new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null)) ||
-                    argMap.containsKey(new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null))) {
+            lookupKey.setKey(key);
+
+            lookupKey.setType(ArgumentType.TS_LATEST);
+            if (argMap.containsKey(lookupKey)) {
+                return true;
+            }
+
+            lookupKey.setType(ArgumentType.TS_ROLLING);
+            if (argMap.containsKey(lookupKey)) {
                 return true;
             }
         }
+
         return false;
     }
 
