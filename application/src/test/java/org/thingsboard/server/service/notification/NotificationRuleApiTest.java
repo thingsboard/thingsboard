@@ -825,6 +825,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
                     .resource(Resource.RAM)
                     .usage(15L)
+                    .serviceType("serviceType")
+                    .serviceId("serviceId")
                     .build());
             TimeUnit.MILLISECONDS.sleep(300);
         }
@@ -837,6 +839,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
                 .resource(Resource.RAM)
                 .usage(5L)
+                .serviceType("serviceType")
+                .serviceId("serviceId")
                 .build());
         await("").atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getMyNotifications(false, 100)).size().isOne());
     }

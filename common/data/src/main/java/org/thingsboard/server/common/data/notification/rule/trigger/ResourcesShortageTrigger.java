@@ -33,6 +33,8 @@ public class ResourcesShortageTrigger implements NotificationRuleTrigger {
 
     private Resource resource;
     private Long usage;
+    private String serviceId;
+    private String serviceType;
 
     @Override
     public TenantId getTenantId() {
@@ -45,13 +47,13 @@ public class ResourcesShortageTrigger implements NotificationRuleTrigger {
     }
 
     @Override
-    public boolean deduplicate() {
-        return true;
+    public DeduplicationStrategy getDeduplicationStrategy() {
+        return DeduplicationStrategy.ONLY_MATCHING;
     }
 
     @Override
     public String getDeduplicationKey() {
-        return resource.name();
+        return String.join(":", resource.name(), serviceId, serviceType);
     }
 
     @Override

@@ -11,6 +11,8 @@ Available template parameters:
 
 * `resource` - the resource name;
 * `usage` - the resource usage value;
+* `serviceId` - the service id (convenient in cluster);
+* `serviceType` - the service type (convenient in cluster);
 
 Parameter names must be wrapped using `${...}`. For example: `${resource}`.
 You may also modify the value of the parameter with one of the suffixes:
