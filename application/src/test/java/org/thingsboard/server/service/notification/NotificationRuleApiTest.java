@@ -846,6 +846,42 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
+    public void testNotificationsResourcesShortage_whenThresholdChangeToMatchingFilter_thenSendNotification() throws Exception {
+        loginSysAdmin();
+        ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .ramThreshold(1f)
+                .cpuThreshold(1f)
+                .storageThreshold(1f)
+                .build();
+        NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
+        loginTenantAdmin();
+
+        Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
+        method.setAccessible(true);
+        method.invoke(systemInfoService);
+
+        TimeUnit.SECONDS.sleep(5);
+        assertThat(getMyNotifications(false, 100)).size().isZero();
+
+        loginSysAdmin();
+        triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .ramThreshold(0.01f)
+                .cpuThreshold(1f)
+                .storageThreshold(1f)
+                .build();
+        rule.setTriggerConfig(triggerConfig);
+        saveNotificationRule(rule);
+        loginTenantAdmin();
+
+        method.invoke(systemInfoService);
+
+        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        Notification notification = getMyNotifications(false, 100).get(0);
+        assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
+        assertThat(notification.getText()).isEqualTo("RAM shortage");
+    }
+
+    @Test
     public void testNotificationRuleDisabling() throws Exception {
         EntityActionNotificationRuleTriggerConfig triggerConfig = new EntityActionNotificationRuleTriggerConfig();
         triggerConfig.setEntityTypes(Set.of(EntityType.DEVICE));
