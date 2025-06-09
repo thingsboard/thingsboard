@@ -35,6 +35,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
+import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -59,7 +60,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     private SystemMessage systemMessage;
     private PromptTemplate userPromptTemplate;
     private ResponseFormat responseFormat;
-    private ChatModel chatModel;
+    private AiSettingsId aiSettingsId;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -86,7 +87,8 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 Rule engine message type: {{msgType}}"""
                 .formatted(config.getUserPrompt())
         );
-        chatModel = ctx.getAiService().configureChatModel(ctx.getTenantId(), config.getAiSettingsId());
+
+        aiSettingsId = config.getAiSettingsId();
     }
 
     private static JsonSchema getJsonSchema(ResponseFormatType responseFormatType, JsonNode jsonSchema) {
@@ -112,7 +114,9 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 .responseFormat(responseFormat)
                 .build();
 
-        addCallback(sendChatRequest(ctx, chatRequest), new FutureCallback<>() {
+        ChatModel chatModel = ctx.getAiService().configureChatModel(ctx.getTenantId(), aiSettingsId);
+
+        addCallback(sendChatRequest(ctx, chatModel, chatRequest), new FutureCallback<>() {
             @Override
             public void onSuccess(String response) {
                 if (!isValidJsonObject(response)) {
@@ -130,7 +134,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         }, directExecutor());
     }
 
-    private ListenableFuture<String> sendChatRequest(TbContext ctx, ChatRequest chatRequest) {
+    private ListenableFuture<String> sendChatRequest(TbContext ctx, ChatModel chatModel, ChatRequest chatRequest) {
         return ctx.getExternalCallExecutor().submit(() -> chatModel.chat(chatRequest).aiMessage().text());
     }
 
@@ -153,7 +157,6 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         systemMessage = null;
         userPromptTemplate = null;
         responseFormat = null;
-        chatModel = null;
     }
 
 }
