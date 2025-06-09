@@ -43,7 +43,7 @@
     },
     {
       "tag": "value",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.measured, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.measured, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {

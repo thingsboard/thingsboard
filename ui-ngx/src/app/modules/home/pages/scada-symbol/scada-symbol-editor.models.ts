@@ -1313,7 +1313,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               },
               {
                 name: 'settingsOrDec',
-                description: 'Either a ValueFormatIdSettings object containing formatting settings or the number of decimal digits. ValueFormatIdSettings includes: decimals (number of decimal digits, optional), units (unit specification as string or TbUnitMapping, optional), showZeroDecimals (whether to keep zero decimal digits, optional), ignoreUnitSymbol (whether to exclude unit symbol from output, optional), and id (unique identifier for the processor, optional).',                type: 'ValueFormatIdSettings | number',
+                description: 'Either a ValueFormatSettings object containing formatting settings or the number of decimal digits. ValueFormatSettings includes: decimals (number of decimal digits, optional), units (unit specification as string or TbUnitMapping, optional), showZeroDecimals (whether to keep zero decimal digits, optional), ignoreUnitSymbol (whether to exclude unit symbol from output, optional).',
+                type: 'ValueFormatSettings | number',
                 optional: true
               },
               {

@@ -38,7 +38,7 @@
     },
     {
       "tag": "export-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.exportValueFont, ctx.properties.exportValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.exportRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false, id: 3}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.exportValueFont, ctx.properties.exportValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.exportRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "tag": "night-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false, id: 1}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -58,7 +58,7 @@
     },
     {
       "tag": "off-peak-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.offPeakValueFont, ctx.properties.offPeakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.offPeakRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false, id: 0}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.offPeakValueFont, ctx.properties.offPeakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.offPeakRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "tag": "peak-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.peakValueFont, ctx.properties.peakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.peakRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false, id: 2}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.peakValueFont, ctx.properties.peakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.peakRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {

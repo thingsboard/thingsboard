@@ -38,7 +38,7 @@
     },
     {
       "tag": "day-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.dayValueFont, ctx.properties.dayValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.dayRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false, id: 0}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.dayValueFont, ctx.properties.dayValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.dayRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "tag": "night-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true, showZeroDecimals: false, id: 1}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {

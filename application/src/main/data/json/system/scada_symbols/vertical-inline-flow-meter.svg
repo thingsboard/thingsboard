@@ -57,7 +57,7 @@
     },
     {
       "tag": "value",
-      "stateRenderFunction": "var value = ctx.api.formatValue(ctx.values.value, {units: ctx.properties.valueUnits, decimals: ctx.properties.valueDecimals, ignoreUnitSymbol: true, showZeroDecimals: false});\nctx.api.text(element, value);\n",
+      "stateRenderFunction": "var value = ctx.api.formatValue(ctx.values.value, {units: ctx.properties.valueUnits, decimals: ctx.properties.valueDecimals, ignoreUnitSymbol: true});\nctx.api.text(element, value);\n",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.callAction(event, 'displayClick');"

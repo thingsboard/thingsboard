@@ -78,7 +78,7 @@
     },
     {
       "tag": "value",
-      "stateRenderFunction": "if (ctx.properties.value) {\n    element.show();\n    ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.value, {units: ctx.properties.units, decimals: ctx.properties.valueDecimals, ignoreUnitSymbol: true, showZeroDecimals: false}));\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.properties.value) {\n    element.show();\n    ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.value, {units: ctx.properties.units, decimals: ctx.properties.valueDecimals, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {

@@ -51,7 +51,7 @@ import {
   isUndefined,
   isUndefinedOrNull,
   mergeDeep,
-  mergeDeepIgnoreArray,
+  mergeDeepIgnoreArray, objectHashCode,
   parseFunction
 } from '@core/utils';
 import { BehaviorSubject, forkJoin, Observable, Observer, of, Subject } from 'rxjs';
@@ -82,7 +82,7 @@ import { TbUnit } from '@shared/models/unit.models';
 export interface ScadaSymbolApi {
   generateElementId: () => string;
   formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined;
-  formatValue(value: any, settings: ValueFormatIdSettings): string;
+  formatValue(value: any, settings: ValueFormatSettings): string;
   text: (element: Element | Element[], text: string) => void;
   font: (element: Element | Element[], font: Font, color: string) => void;
   icon: (element: Element | Element[], icon: string, size?: number, color?: string, center?: boolean) => void;
@@ -182,10 +182,6 @@ export interface ScadaSymbolMetadata {
   tags: ScadaSymbolTag[];
   behavior: ScadaSymbolBehavior[];
   properties: FormProperty[];
-}
-
-interface ValueFormatIdSettings extends ValueFormatSettings {
-  id?: number;
 }
 
 export const emptyMetadata = (width?: number, height?: number): ScadaSymbolMetadata => ({
@@ -828,28 +824,28 @@ export class ScadaSymbolObject {
   }
 
   private unitSymbol(unit: TbUnit): string {
-    return this.ctx.$scope.$injector.get(this.ctx.servicesMap.get('unitService')).getTargetUnitSymbol(unit);
+    return this.ctx.unitService.getTargetUnitSymbol(unit);
   }
 
   private convertUnitValue(value: number, unit: TbUnit): number {
-    return this.ctx.$scope.$injector.get(this.ctx.servicesMap.get('unitService')).convertUnitValue(value, unit);
+    return this.ctx.unitService.convertUnitValue(value, unit);
   }
 
-  private formatValue(value: any, settings: ValueFormatIdSettings): string;
+  private formatValue(value: any, settings: ValueFormatSettings): string;
   private formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined;
-  private formatValue(value: any, settingsOrDec?: ValueFormatIdSettings | number, units?: string, showZeroDecimals?: boolean): string {
-    const id = (settingsOrDec as ValueFormatIdSettings)?.id || 0;
-    if (!this.valueProcessor[id]) {
-      let valueFormatSettings: ValueFormatSettings;
-      if (typeof settingsOrDec === 'object') {
-        valueFormatSettings = deepClone(settingsOrDec, ['id']);
-      } else {
-        valueFormatSettings = {
-          units,
-          decimals: settingsOrDec,
-          showZeroDecimals
-        }
+  private formatValue(value: any, settingsOrDec?: ValueFormatSettings | number, units?: string, showZeroDecimals?: boolean): string {
+    let valueFormatSettings: ValueFormatSettings;
+    if (typeof settingsOrDec === 'object') {
+      valueFormatSettings = deepClone(settingsOrDec);
+    } else {
+      valueFormatSettings = {
+        units,
+        decimals: settingsOrDec,
+        showZeroDecimals
       }
+    }
+    const id = objectHashCode(valueFormatSettings) + '';
+    if (!this.valueProcessor[id]) {
       this.valueProcessor[id] = ValueFormatProcessor.fromSettings(this.ctx.$injector, valueFormatSettings);
     }
     return this.valueProcessor[id].format(value);
