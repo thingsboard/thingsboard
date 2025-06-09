@@ -66,21 +66,16 @@ class AiSettingsServiceImpl extends CachedVersionedEntityService<AiSettingsCache
             throw e;
         }
 
-        boolean created = oldSettings == null;
-        boolean updated = oldSettings != null;
-
         eventPublisher.publishEvent(SaveEntityEvent.builder()
                 .tenantId(savedSettings.getTenantId())
                 .entity(savedSettings)
                 .oldEntity(oldSettings)
                 .entityId(savedSettings.getId())
-                .created(created)
+                .created(oldSettings == null)
                 .broadcastEvent(true)
                 .build());
 
-        if (updated) {
-            publishEvictEvent(AiSettingsCacheEvictEvent.of(savedSettings.getTenantId(), savedSettings.getId()));
-        }
+        publishEvictEvent(AiSettingsCacheEvictEvent.of(savedSettings.getTenantId(), savedSettings.getId()));
 
         return savedSettings;
     }

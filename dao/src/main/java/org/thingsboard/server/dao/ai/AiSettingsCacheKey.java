@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.ai;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -39,6 +40,7 @@ record AiSettingsCacheKey(UUID tenantId, UUID aiSettingsId) implements Versioned
         return true;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return tenantId + "_" + aiSettingsId;
