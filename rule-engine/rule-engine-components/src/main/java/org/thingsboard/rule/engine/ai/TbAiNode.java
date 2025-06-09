@@ -115,7 +115,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         addCallback(sendChatRequest(ctx, chatRequest), new FutureCallback<>() {
             @Override
             public void onSuccess(String response) {
-                if (!isValidJson(response)) {
+                if (!isValidJsonObject(response)) {
                     response = wrapInJsonObject(response);
                 }
                 tellSuccess(ctx, ackedMsg.transform()
@@ -134,9 +134,10 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         return ctx.getExternalCallExecutor().submit(() -> chatModel.chat(chatRequest).aiMessage().text());
     }
 
-    private static boolean isValidJson(String jsonString) {
+    private static boolean isValidJsonObject(String jsonString) {
         try {
-            return JacksonUtil.toJsonNode(jsonString) != null;
+            JsonNode result = JacksonUtil.toJsonNode(jsonString);
+            return result != null && result.isObject();
         } catch (IllegalArgumentException e) {
             return false;
         }
