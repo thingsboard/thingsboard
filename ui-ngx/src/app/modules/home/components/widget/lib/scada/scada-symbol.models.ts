@@ -51,7 +51,8 @@ import {
   isUndefined,
   isUndefinedOrNull,
   mergeDeep,
-  mergeDeepIgnoreArray, objectHashCode,
+  mergeDeepIgnoreArray,
+  objectHashCode,
   parseFunction
 } from '@core/utils';
 import { BehaviorSubject, forkJoin, Observable, Observer, of, Subject } from 'rxjs';
