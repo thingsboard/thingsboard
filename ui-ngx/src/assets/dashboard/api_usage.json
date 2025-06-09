@@ -7885,7 +7885,7 @@
                         },
                         "tooltipDateColor": "rgba(0, 0, 0, 0.76)",
                         "tooltipDateInterval": true,
-                        "tooltipHideZeroFalse": true,
+                        "tooltipHideZeroValues": true,
                         "tooltipBackgroundColor": "rgba(255, 255, 255, 0.76)",
                         "tooltipBackgroundBlur": 4,
                         "animation": {
@@ -8294,7 +8294,7 @@
                         },
                         "tooltipDateColor": "rgba(0, 0, 0, 0.76)",
                         "tooltipDateInterval": true,
-                        "tooltipHideZeroFalse": true,
+                        "tooltipHideZeroValues": true,
                         "tooltipBackgroundColor": "rgba(255, 255, 255, 0.76)",
                         "tooltipBackgroundBlur": 4,
                         "animation": {
