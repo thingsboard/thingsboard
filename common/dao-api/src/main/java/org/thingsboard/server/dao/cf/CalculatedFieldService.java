@@ -35,7 +35,7 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     CalculatedField findById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
-    CalculatedField findByTenantIdAndName(TenantId tenantId, String name);
+    CalculatedField findByEntityIdAndName(EntityId entityId, String name);
 
     List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId);
 

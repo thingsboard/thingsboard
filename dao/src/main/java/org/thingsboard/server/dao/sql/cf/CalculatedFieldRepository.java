@@ -28,7 +28,7 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
 
     boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
-    CalculatedFieldEntity findByTenantIdAndName(UUID tenantId, String name);
+    CalculatedFieldEntity findByEntityIdAndName(UUID entityId, String name);
 
     List<CalculatedFieldId> findCalculatedFieldIdsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
