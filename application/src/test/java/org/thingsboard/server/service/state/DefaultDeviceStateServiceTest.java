@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -911,7 +912,7 @@ class DefaultDeviceStateServiceTest {
         // 10 millis pass... and new activity message it received
 
         // this time DB save is successful
-        when(telemetrySubscriptionService.saveAttributesInternal(any())).thenReturn(Futures.immediateFuture(generateRandomVersions(1)));
+        when(telemetrySubscriptionService.saveAttributesInternal(any())).thenReturn(Futures.immediateFuture(AttributesSaveResult.of(generateRandomVersions(1))));
         doReturn(210L).when(service).getCurrentTimeMillis();
         service.onDeviceActivity(tenantId, deviceId, 190L);
         assertThat(deviceState.isActive()).isTrue();
@@ -947,7 +948,7 @@ class DefaultDeviceStateServiceTest {
         // waiting 100 millis... periodic activity states check is triggered again
 
         // this time DB save is successful
-        when(telemetrySubscriptionService.saveAttributesInternal(any())).thenReturn(Futures.immediateFuture(generateRandomVersions(1)));
+        when(telemetrySubscriptionService.saveAttributesInternal(any())).thenReturn(Futures.immediateFuture(AttributesSaveResult.of(generateRandomVersions(1))));
         doReturn(300L).when(service).getCurrentTimeMillis();
         service.checkStates();
         assertThat(deviceState.isActive()).isFalse();
