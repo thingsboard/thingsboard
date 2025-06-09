@@ -33,7 +33,10 @@ public interface AiSettingsRepository extends JpaRepository<AiSettingsEntity, UU
     @Query("SELECT ai " +
             "FROM AiSettingsEntity ai " +
             "WHERE ai.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL OR ilike(ai.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL " +
+            "OR ilike(ai.name, CONCAT('%', :textSearch, '%')) = true " +
+            "OR ilike(ai.provider, CONCAT('%', :textSearch, '%')) = true " +
+            "OR ilike(ai.model, CONCAT('%', :textSearch, '%')) = true)")
     Page<AiSettingsEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
 
     Optional<AiSettingsEntity> findByTenantIdAndId(UUID tenantId, UUID id);
