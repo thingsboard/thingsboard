@@ -31,7 +31,8 @@ import {
   DashboardLayoutsInfo,
   DashboardState,
   DashboardStateLayouts,
-  GridSettings, LayoutType,
+  GridSettings,
+  LayoutType,
   WidgetLayout
 } from '@shared/models/dashboard.models';
 import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
@@ -61,6 +62,7 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardPageLayout } from '@home/components/dashboard-page/dashboard-page.models';
 import { maxGridsterCol, maxGridsterRow } from '@home/models/dashboard-component.models';
+import { findWidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
 
 @Injectable({
   providedIn: 'root'
@@ -396,6 +398,14 @@ export class DashboardUtilsService {
       });
     });
     return datasources;
+  }
+
+  public getWidgetDatasources(widget: Widget): Datasource[] {
+    const widgetDefinition = findWidgetModelDefinition(widget);
+    if (widgetDefinition) {
+      return widgetDefinition.datasources(widget);
+    }
+    return this.validateAndUpdateDatasources(widget.config.datasources);
   }
 
   public createDefaultLayoutData(): DashboardLayout {
