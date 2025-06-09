@@ -43,7 +43,7 @@ record AiSettingsCacheKey(UUID tenantId, UUID aiSettingsId) implements Versioned
     @NonNull
     @Override
     public String toString() {
-        return tenantId + "_" + aiSettingsId;
+        return /* cache name */ "_" + tenantId + "_" + aiSettingsId;
     }
 
 }
