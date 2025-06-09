@@ -31,4 +31,10 @@
   .mat-expansion-panel-header-title {
     margin-right: 0;
   }
+
+  &::ng-deep {
+    .mat-content.mat-content-hide-toggle {
+      margin-right: 0;
+    }
+  }
 }

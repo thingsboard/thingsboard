@@ -825,6 +825,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
                     .resource(Resource.RAM)
                     .usage(15L)
+                    .serviceType("serviceType")
+                    .serviceId("serviceId")
                     .build());
             TimeUnit.MILLISECONDS.sleep(300);
         }
@@ -837,8 +839,46 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
                 .resource(Resource.RAM)
                 .usage(5L)
+                .serviceType("serviceType")
+                .serviceId("serviceId")
                 .build());
         await("").atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getMyNotifications(false, 100)).size().isOne());
+    }
+
+    @Test
+    public void testNotificationsResourcesShortage_whenThresholdChangeToMatchingFilter_thenSendNotification() throws Exception {
+        loginSysAdmin();
+        ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .ramThreshold(1f)
+                .cpuThreshold(1f)
+                .storageThreshold(1f)
+                .build();
+        NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
+        loginTenantAdmin();
+
+        Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
+        method.setAccessible(true);
+        method.invoke(systemInfoService);
+
+        TimeUnit.SECONDS.sleep(5);
+        assertThat(getMyNotifications(false, 100)).size().isZero();
+
+        loginSysAdmin();
+        triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .ramThreshold(0.01f)
+                .cpuThreshold(1f)
+                .storageThreshold(1f)
+                .build();
+        rule.setTriggerConfig(triggerConfig);
+        saveNotificationRule(rule);
+        loginTenantAdmin();
+
+        method.invoke(systemInfoService);
+
+        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        Notification notification = getMyNotifications(false, 100).get(0);
+        assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
+        assertThat(notification.getText()).isEqualTo("RAM shortage");
     }
 
     @Test

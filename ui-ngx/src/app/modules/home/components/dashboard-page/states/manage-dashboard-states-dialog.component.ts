@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Inject,
+  OnInit,
+  SecurityContext,
+  SkipSelf,
+  ViewChild
+} from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -42,6 +51,7 @@ import {
 } from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { Widget } from '@shared/models/widget.models';
+import { DomSanitizer } from '@angular/platform-browser';
 
 export interface ManageDashboardStatesDialogData {
   states: {[id: string]: DashboardState };
@@ -87,7 +97,8 @@ export class ManageDashboardStatesDialogComponent
               private translate: TranslateService,
               private dialogs: DialogService,
               private utils: UtilsService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private sanitizer: DomSanitizer) {
     super(store, router, dialogRef);
 
     this.states = this.data.states;
@@ -148,7 +159,8 @@ export class ManageDashboardStatesDialogComponent
     }
     const title = this.translate.instant('dashboard.delete-state-title');
     const content = this.translate.instant('dashboard.delete-state-text', {stateName: state.name});
-    this.dialogs.confirm(title, content, this.translate.instant('action.no'),
+    const safeContent = this.sanitizer.sanitize(SecurityContext.HTML, content);
+    this.dialogs.confirm(title, safeContent, this.translate.instant('action.no'),
       this.translate.instant('action.yes')).subscribe(
         (res) => {
           if (res) {

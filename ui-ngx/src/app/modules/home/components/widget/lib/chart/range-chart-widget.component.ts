@@ -32,7 +32,8 @@ import {
   ComponentStyle,
   getDataKey,
   overlayStyle,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
@@ -113,11 +114,17 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
     this.units = unitService.getTargetUnitSymbol(units);
     this.unitConvertor = unitService.geUnitConverter(units);
 
+    const valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {
+      units,
+      decimals: this.decimals,
+      ignoreUnitSymbol: true
+    });
+
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
     this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
-    this.rangeItems = toRangeItems(this.settings.rangeColors, this.unitConvertor);
+    this.rangeItems = toRangeItems(this.settings.rangeColors, valueFormat);
     this.visibleRangeItems = this.rangeItems.filter(item => item.visible);
 
     this.showLegend = this.settings.showLegend && !!this.rangeItems.length;
