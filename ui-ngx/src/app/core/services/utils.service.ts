@@ -51,7 +51,7 @@ import cssjs from '@core/css/css';
 import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
 import { defaultFormProperties, FormProperty } from '@shared/models/dynamic-form.models';
 
-const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
+const i18nRegExp = new RegExp(`{${i18nPrefix}:([^{}]+)}`, 'g');
 
 const predefinedFunctions: { [func: string]: string } = {
   Sin: 'return Math.round(1000*Math.sin(time/5000));',
@@ -209,21 +209,20 @@ export class UtilsService {
   }
 
   public customTranslation(translationValue: string, defaultValue: string = translationValue): string {
-    if (translationValue && isString(translationValue)) {
-      if (translationValue.includes(`{${i18nPrefix}`)) {
-        const matches = translationValue.match(i18nRegExp);
-        let result = translationValue;
-        for (const match of matches) {
-          const translationId = match.substring(6, match.length - 1);
-          result = result.replace(match, this.doTranslate(translationId, match));
-        }
-        return result;
-      } else {
-        return this.doTranslate(translationValue, defaultValue, customTranslationsPrefix);
-      }
-    } else {
+    if (!translationValue || !isString(translationValue)) {
       return translationValue;
     }
+    if (!translationValue.includes(`{${i18nPrefix}:`)) {
+      return this.doTranslate(translationValue, defaultValue, customTranslationsPrefix);
+    }
+    const matches = translationValue.matchAll(i18nRegExp);
+    let result = translationValue;
+    for (const [fullMatch, translationId] of matches) {
+      if (translationId) {
+        result = result.replace(fullMatch, this.doTranslate(translationId, fullMatch));
+      }
+    }
+    return result;
   }
 
   private doTranslate(translationValue: string, defaultValue: string, prefix?: string): string {

@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -459,6 +460,87 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").isNull()).isTrue();
+                });
+    }
+
+    @Test
+    public void testSimpleCalculatedFieldWhenPreserveMsgTsIsTrue() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        long ts = System.currentTimeMillis() - 300000L;
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("C to F");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
+        config.setArguments(Map.of("T", argument));
+        config.setExpression("(T * 9/5) + 32");
+
+        Output output = new Output();
+        output.setName("fahrenheitTemp");
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        config.setPreserveMsgTs(true);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
+                    assertThat(fahrenheitTemp).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("86.0");
+                });
+    }
+
+    @Test
+    public void testScriptCalculatedFieldWhenUsedMsgTsInScript() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        long ts = System.currentTimeMillis() - 300000L;
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SCRIPT);
+        calculatedField.setName("C to F");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        ScriptCalculatedFieldConfiguration config = new ScriptCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
+        config.setArguments(Map.of("T", argument));
+        config.setExpression("return {\"ts\": ctx.msgTs, \"values\": {\"fahrenheitTemp\": (T * 1.8) + 32}};");
+
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
+                    assertThat(fahrenheitTemp).isNotNull();
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("86.0");
                 });
     }
 

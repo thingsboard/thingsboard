@@ -140,7 +140,7 @@ public class DefaultEdqsService implements EdqsService {
                         .filter(serviceInfo -> serviceInfo.getServiceTypesList().contains(ServiceType.EDQS.name()))
                         .filter(ServiceInfo::getReady)
                         .toList();
-                boolean changed = state.setEdqsReady(!readyEdqsServers.isEmpty());
+                boolean changed = state.updateEdqsReady(!readyEdqsServers.isEmpty());
                 if (changed) {
                     broadcastEdqsReady(state.getEdqsReady());
                 }
@@ -236,7 +236,7 @@ public class DefaultEdqsService implements EdqsService {
     }
 
     private void onEdqsReady(boolean ready) {
-        state.setEdqsReady(ready);
+        state.updateEdqsReady(ready);
         checkState();
     }
 

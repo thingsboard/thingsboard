@@ -27,7 +27,7 @@
     </button>
   </div>
 
-  <div class="tb-timewindow-form-content tb-form-panel no-border">
+  <div class="tb-timewindow-form-content tb-form-panel no-border" [class.no-padding]="!panelMode">
     <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
       <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
         <div class="tb-flex space-between"
@@ -189,8 +189,8 @@
                  formControlName="timezone">
     </tb-timezone>
   </ng-template>
-  <mat-divider></mat-divider>
-  <div class="tb-panel-actions tb-flex flex-end no-gap">
+  <mat-divider *ngIf="panelMode"></mat-divider>
+  <div class="tb-panel-actions tb-flex flex-end no-gap" *ngIf="panelMode">
     <button type="button"
             mat-button
             [disabled]="(isLoading$ | async)"

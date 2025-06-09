@@ -19,7 +19,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import {
   CONTAINS_TYPE,
   EntityRelation,
@@ -33,6 +33,9 @@ import { JsonObjectEditComponent } from '@shared/components/json-object-edit.com
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export interface RelationDialogData {
   isAdd: boolean;
@@ -48,17 +51,21 @@ export interface RelationDialogData {
 })
 export class RelationDialogComponent extends DialogComponent<RelationDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
 
-  relationFormGroup: UntypedFormGroup;
+  relationFormGroup: FormGroup;
+
+  additionEntityTypes: {[key in string]: string} = {};
 
   isAdd: boolean;
   direction: EntitySearchDirection;
   entitySearchDirection = EntitySearchDirection;
 
-  additionalInfo: UntypedFormControl;
+  additionalInfo: FormControl;
 
   @ViewChild('additionalInfoEdit', {static: true}) additionalInfoEdit: JsonObjectEditComponent;
 
   submitted = false;
+
+  private authUser = getCurrentAuthUser(this.store);
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -66,7 +73,7 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
               private entityRelationService: EntityRelationService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<RelationDialogComponent, boolean>,
-              public fb: UntypedFormBuilder,
+              public fb: FormBuilder,
               private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
@@ -74,13 +81,17 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
   }
 
   ngOnInit(): void {
+    if (this.authUser.authority === Authority.TENANT_ADMIN) {
+      this.additionEntityTypes = {[EntityType.RULE_CHAIN]: null};
+    }
+
     this.relationFormGroup = this.fb.group({
       type: [this.isAdd ? CONTAINS_TYPE : this.data.relation.type, [Validators.required]],
       targetEntityIds: [this.isAdd ? null :
         [this.direction === EntitySearchDirection.FROM ? this.data.relation.to : this.data.relation.from],
         [Validators.required]]
     });
-    this.additionalInfo = new UntypedFormControl(this.data.relation.additionalInfo ? {...this.data.relation.additionalInfo} : null);
+    this.additionalInfo = new FormControl(this.data.relation.additionalInfo ? {...this.data.relation.additionalInfo} : null);
     if (!this.isAdd) {
       this.relationFormGroup.get('type').disable();
       this.relationFormGroup.get('targetEntityIds').disable();
@@ -94,7 +105,7 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
     );
   }
 
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

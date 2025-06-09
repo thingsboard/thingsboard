@@ -7,7 +7,7 @@
   "tags": [
     {
       "tag": "arrow",
-      "stateRenderFunction": "var arrow = ctx.values.arrow;\nif (arrow) {\n    element.show();\n    var arrowDirection = ctx.values.arrowDirection;\n    var direticon = element.remember('direticon');\n    var angle = arrowDirection ? 0 : 180;\n    if (!direticon) {\n        element.transform({rotate: angle});\n    } else {\n        ctx.api.transform({rotate: angle, originY: 100});\n        element.remember('direticon', false);\n    }\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "var arrow = ctx.values.arrow;\nif (arrow) {\n    element.show();\n    element.stroke(ctx.properties.lineColor).fill(ctx.properties.lineColor);\n    var arrowDirection = ctx.values.arrowDirection;\n    var direticon = element.remember('direticon');\n    var angle = arrowDirection ? 0 : 180;\n    if (!direticon) {\n        element.transform({rotate: angle});\n    } else {\n        ctx.api.transform({rotate: angle, originY: 100});\n        element.remember('direticon', false);\n    }\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
