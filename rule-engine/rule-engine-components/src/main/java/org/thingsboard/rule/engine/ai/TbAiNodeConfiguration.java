@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.ai;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
 import jakarta.validation.constraints.AssertTrue;
@@ -45,6 +46,7 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
 
     private JsonNode jsonSchema;
 
+    @JsonIgnore
     @AssertTrue(message = "provided JSON Schema must conform to the Draft 2020-12 meta-schema")
     public boolean isJsonSchemaValid() {
         return jsonSchema == null || JsonSchemaUtils.isValidJsonSchema(jsonSchema);
