@@ -1069,7 +1069,7 @@
         "delete-multiple-title": "Are you sure you want to delete { count, plural, =1 {1 calculated field} other {# calculated fields} }?",
         "delete-multiple-text": "Be careful, after the confirmation all selected calculated fields will be removed and all related data will become unrecoverable.",
         "test-with-this-message": "Test with this message",
-        "use-message-timestamp": "Use message timestamp",
+        "use-message-timestamp": "Use latest timestamp",
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
             "arguments-empty": "Arguments should not be empty.",
@@ -1086,7 +1086,7 @@
             "decimals-range": "Decimals by default should be a number between 0 and 15.",
             "expression": "Default expression demonstrates how to transform a temperature from Fahrenheit to Celsius.",
             "arguments-entity-not-found": "Argument target entity not found.",
-            "use-message-timestamp": "If enabled, the calculated value will be persisted using the timestamp of the telemetry that triggered the calculation, instead of the server time."
+            "use-message-timestamp": "If enabled, the calculated value will be persisted using the most recent timestamp from the arguments telemetry, instead of the server time."
         }
     },
     "confirm-on-exit": {
