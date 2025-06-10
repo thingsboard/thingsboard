@@ -199,6 +199,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -420,7 +421,7 @@ public abstract class BaseController {
         return handleException(exception, true);
     }
 
-    private ThingsboardException handleException(Exception exception, boolean logException) {
+    private ThingsboardException handleException(Throwable exception, boolean logException) {
         if (logException && logControllerErrorStackTrace) {
             try {
                 SecurityUser user = getCurrentUser();
@@ -431,6 +432,9 @@ public abstract class BaseController {
         }
 
         Throwable cause = exception.getCause();
+        if (exception instanceof ExecutionException) {
+            exception = cause;
+        }
         if (exception instanceof ThingsboardException) {
             return (ThingsboardException) exception;
         } else if (exception instanceof IllegalArgumentException || exception instanceof IncorrectParameterException
