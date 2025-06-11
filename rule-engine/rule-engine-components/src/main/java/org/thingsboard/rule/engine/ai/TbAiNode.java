@@ -95,6 +95,10 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         );
 
         timeoutSeconds = config.getTimeoutSeconds();
+
+        if (!aiSettingsExist(ctx, config.getAiSettingsId())) {
+            throw new TbNodeException("[" + ctx.getTenantId() + "] AI settings with ID: " + config.getAiSettingsId() + " were not found", true);
+        }
         aiSettingsId = config.getAiSettingsId();
     }
 
@@ -103,6 +107,10 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             return null;
         }
         return responseFormatType == ResponseFormatType.JSON && jsonSchema != null ? Langchain4jJsonSchemaAdapter.fromJsonNode(jsonSchema) : null;
+    }
+
+    private static boolean aiSettingsExist(TbContext ctx, AiSettingsId aiSettingsId) {
+        return ctx.getAiSettingsService().findAiSettingsByTenantIdAndId(ctx.getTenantId(), aiSettingsId).isPresent();
     }
 
     @Override
