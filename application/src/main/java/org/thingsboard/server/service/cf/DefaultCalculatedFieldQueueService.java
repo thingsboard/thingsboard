@@ -177,7 +177,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
 
         for (int i = 0; i < entries.size(); i++) {
             TsKvProto.Builder tsProtoBuilder = toTsKvProto(entries.get(i)).toBuilder();
-            if (result != null) {
+            if (versions != null && !versions.isEmpty() && versions.get(i) != null) {
                 tsProtoBuilder.setVersion(versions.get(i));
             }
             telemetryMsg.addTsData(tsProtoBuilder.build());
