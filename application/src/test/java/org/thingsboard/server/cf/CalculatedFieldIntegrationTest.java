@@ -464,7 +464,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     }
 
     @Test
-    public void testSimpleCalculatedFieldWhenPreserveMsgTsIsTrue() throws Exception {
+    public void testSimpleCalculatedFieldWhenUseLatestTsIsTrue() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         long ts = System.currentTimeMillis() - 300000L;
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));
@@ -489,7 +489,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         output.setType(OutputType.TIME_SERIES);
         config.setOutput(output);
 
-        config.setPreserveMsgTs(true);
+        config.setUseLatestTs(true);
 
         calculatedField.setConfiguration(config);
 
@@ -506,7 +506,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     }
 
     @Test
-    public void testSimpleCalculatedFieldWhenPreserveMsgTsIsTrueAndTelemetryBeforeLatest() throws Exception {
+    public void testSimpleCalculatedFieldWhenUseLatestTsIsTrueAndTelemetryBeforeLatest() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         long ts = System.currentTimeMillis();
 
@@ -539,7 +539,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         output.setType(OutputType.TIME_SERIES);
         config.setOutput(output);
 
-        config.setPreserveMsgTs(true);
+        config.setUseLatestTs(true);
 
         calculatedField.setConfiguration(config);
 
@@ -568,7 +568,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     }
 
     @Test
-    public void testScriptCalculatedFieldWhenUsedMsgTsInScript() throws Exception {
+    public void testScriptCalculatedFieldWhenUsedLatestTsInScript() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         long ts = System.currentTimeMillis() - 300000L;
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));

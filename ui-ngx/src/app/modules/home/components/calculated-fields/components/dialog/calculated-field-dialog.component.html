@@ -190,7 +190,7 @@
               </mat-form-field>
             </div>
             <div class="tb-form-row" [formGroup]="configFormGroup" *ngIf="outputFormGroup.get('type').value === OutputType.Timeseries">
-              <mat-slide-toggle class="mat-slide" formControlName="preserveMsgTs">
+              <mat-slide-toggle class="mat-slide" formControlName="useLatestTs">
                 <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.use-message-timestamp' | translate }}" translate>
                   calculated-fields.use-message-timestamp
                 </div>
