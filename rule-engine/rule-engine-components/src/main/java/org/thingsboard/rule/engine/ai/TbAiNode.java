@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
@@ -58,7 +59,8 @@ import static org.thingsboard.server.dao.service.ConstraintValidator.validateFie
         name = "AI",
         nodeDescription = "Interact with AI",
         nodeDetails = "This node makes requests to AI based on a prompt and a input message and returns a response in a form of output message",
-        configClazz = TbAiNodeConfiguration.class
+        configClazz = TbAiNodeConfiguration.class,
+        ruleChainTypes = RuleChainType.CORE
 )
 public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
