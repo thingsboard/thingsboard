@@ -431,7 +431,7 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
       if (isDefined(value.history.quickInterval)) {
         model.history.quickInterval = value.history.quickInterval;
       }
-      if (isDefined(value.history.fixedTimewindow)) {
+      if (isDefinedAndNotNull(value.history.fixedTimewindow)) {
         if (isDefined(value.history.fixedTimewindow.startTimeMs)) {
           model.history.fixedTimewindow.startTimeMs = value.history.fixedTimewindow.startTimeMs;
         }
