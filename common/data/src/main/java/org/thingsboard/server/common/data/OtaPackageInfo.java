@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -134,17 +132,6 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     @JsonIgnore
     public boolean hasUrl() {
         return StringUtils.isNotEmpty(url);
-    }
-
-    @JsonProperty("otaVersion")
-    @JsonAlias("version")
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    @JsonProperty("otaVersion")
-    public String getVersion() {
-        return version;
     }
 
     @Schema(description = "OTA Package description.", example = "Description for the OTA Package fw_1.0")

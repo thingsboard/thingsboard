@@ -19,11 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.sync.ie.OtaPackageExportData;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
@@ -31,7 +29,7 @@ import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class OtaPackageImportService extends BaseEntityImportService<OtaPackageId, OtaPackage, EntityExportData<OtaPackage>> {
+public class OtaPackageImportService extends BaseEntityImportService<OtaPackageId, OtaPackage, OtaPackageExportData> {
 
     private final OtaPackageService otaPackageService;
 
@@ -41,7 +39,7 @@ public class OtaPackageImportService extends BaseEntityImportService<OtaPackageI
     }
 
     @Override
-    protected OtaPackage prepare(EntitiesImportCtx ctx, OtaPackage otaPackage, OtaPackage oldOtaPackage, EntityExportData<OtaPackage> exportData, IdProvider idProvider) {
+    protected OtaPackage prepare(EntitiesImportCtx ctx, OtaPackage otaPackage, OtaPackage oldOtaPackage, OtaPackageExportData exportData, IdProvider idProvider) {
         otaPackage.setDeviceProfileId(idProvider.getInternalId(otaPackage.getDeviceProfileId()));
         return otaPackage;
     }
@@ -66,13 +64,8 @@ public class OtaPackageImportService extends BaseEntityImportService<OtaPackageI
     }
 
     @Override
-    protected OtaPackage saveOrUpdate(EntitiesImportCtx ctx, OtaPackage otaPackage, EntityExportData<OtaPackage> exportData, IdProvider idProvider, CompareResult compareResult) {
+    protected OtaPackage saveOrUpdate(EntitiesImportCtx ctx, OtaPackage otaPackage, OtaPackageExportData exportData, IdProvider idProvider, CompareResult compareResult) {
         return otaPackageService.saveOtaPackage(otaPackage);
-    }
-
-    @Override
-    protected void onEntitySaved(User user, OtaPackage savedOtaPackage, OtaPackage oldOtaPackage) throws ThingsboardException {
-        super.onEntitySaved(user, savedOtaPackage, oldOtaPackage);
     }
 
     @Override
