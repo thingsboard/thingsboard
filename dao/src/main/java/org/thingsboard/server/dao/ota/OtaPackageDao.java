@@ -27,6 +27,6 @@ public interface OtaPackageDao extends Dao<OtaPackage>, TenantEntityWithDataDao,
 
     Long sumDataSizeByTenantId(TenantId tenantId);
 
-    OtaPackage findOtaPackageByTenantIdAndTitle(TenantId tenantId, OtaPackageType type, String title);
+    OtaPackage findOtaPackageByTenantIdAndTitleAndVersion(TenantId tenantId, String title, String version);
 
 }

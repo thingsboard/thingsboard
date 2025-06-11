@@ -41,7 +41,7 @@ public interface OtaPackageService extends EntityDaoService {
 
     OtaPackageInfo findOtaPackageInfoById(TenantId tenantId, OtaPackageId otaPackageId);
 
-    OtaPackage findOtaPackageByTenantIdAndTitle(TenantId tenantId, OtaPackageType type, String title);
+    OtaPackage findOtaPackageByTenantIdAndTitleAndVersion(TenantId tenantId, String title, String version);
 
     ListenableFuture<OtaPackageInfo> findOtaPackageInfoByIdAsync(TenantId tenantId, OtaPackageId otaPackageId);
 

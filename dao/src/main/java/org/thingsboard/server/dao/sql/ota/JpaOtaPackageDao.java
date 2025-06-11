@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -51,8 +50,8 @@ public class JpaOtaPackageDao extends JpaAbstractDao<OtaPackageEntity, OtaPackag
 
     @Transactional
     @Override
-    public OtaPackage findOtaPackageByTenantIdAndTitle(TenantId tenantId, OtaPackageType type, String title) {
-        return DaoUtil.getData(otaPackageRepository.findByTenantIdAndTypeAndTitle(tenantId.getId(), type, title));
+    public OtaPackage findOtaPackageByTenantIdAndTitleAndVersion(TenantId tenantId, String title, String version) {
+        return DaoUtil.getData(otaPackageRepository.findByTenantIdAndTitleAndVersion(tenantId.getId(), title, version));
     }
 
     @Transactional

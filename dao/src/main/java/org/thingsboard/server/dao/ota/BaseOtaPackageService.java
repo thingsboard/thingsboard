@@ -165,9 +165,9 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
-    public OtaPackage findOtaPackageByTenantIdAndTitle(TenantId tenantId, OtaPackageType type, String title) {
-        log.trace("Executing findOtaPackageByTenantIdAndTitle [{}] [{}] [{}]", tenantId, type, title);
-        return otaPackageDao.findOtaPackageByTenantIdAndTitle(tenantId, type, title);
+    public OtaPackage findOtaPackageByTenantIdAndTitleAndVersion(TenantId tenantId, String title, String version) {
+        log.trace("Executing findOtaPackageByTenantIdAndTitle [{}] [{}] [{}]", tenantId, title, version);
+        return otaPackageDao.findOtaPackageByTenantIdAndTitleAndVersion(tenantId, title, version);
     }
 
     @Override

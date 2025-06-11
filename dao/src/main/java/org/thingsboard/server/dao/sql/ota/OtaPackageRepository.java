@@ -33,7 +33,7 @@ public interface OtaPackageRepository extends JpaRepository<OtaPackageEntity, UU
 
     Page<OtaPackageEntity> findByTenantId(UUID tenantId, Pageable pageable);
 
-    OtaPackageEntity findByTenantIdAndTypeAndTitle(UUID tenantId, OtaPackageType type, String title);
+    OtaPackageEntity findByTenantIdAndTitleAndVersion(UUID tenantId, String title, String version);
 
     @Query("SELECT externalId FROM OtaPackageEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
