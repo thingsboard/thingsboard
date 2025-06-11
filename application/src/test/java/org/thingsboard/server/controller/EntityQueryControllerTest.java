@@ -41,6 +41,9 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
+import org.thingsboard.server.common.data.query.AlarmData;
+import org.thingsboard.server.common.data.query.AlarmDataPageLink;
+import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
@@ -374,6 +377,151 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         Long filteredAssetAlamCount = doPostWithResponse("/api/alarmsQuery/count", filteredAssetAlarmQuery, Long.class);
         Assert.assertEquals(1, filteredAssetAlamCount.longValue());
+    }
+
+    @Test
+    public void testFindTenantAlarmsWithEntityFilter() throws Exception {
+        loginTenantAdmin();
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Device device = new Device();
+            device.setCustomerId(customerId);
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
+        }
+
+        List<Asset> assets = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Asset asset = new Asset();
+            asset.setCustomerId(customerId);
+            asset.setName("Asset" + i);
+            asset.setType("default");
+            asset.setLabel("testLabel" + (int) (Math.random() * 1000));
+            assets.add(doPost("/api/asset", asset, Asset.class));
+            Thread.sleep(1);
+        }
+
+        for (int i = 0; i < devices.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setOriginator(devices.get(i).getId());
+            alarm.setType("alarm" + i);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            doPost("/api/alarm", alarm, Alarm.class);
+            Thread.sleep(1);
+        }
+
+        List<String> assetAlarmTypes = new ArrayList<>();
+        for (int i = 0; i < assets.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setOriginator(assets.get(i).getId());
+            String type = "asset alarm" + i;
+            alarm.setType(type);
+            assetAlarmTypes.add(type);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            doPost("/api/alarm", alarm, Alarm.class);
+            Thread.sleep(1);
+        }
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(100);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "assignee")));
+
+        List<EntityKey> alarmFields = new ArrayList<>();
+        alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, "type"));
+
+        EntityTypeFilter assetTypeFilter = new EntityTypeFilter();
+        assetTypeFilter.setEntityType(EntityType.ASSET);
+        AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, alarmFields);
+
+        PageData<AlarmData>  alarmPageData = doPostWithTypedResponse("/api/alarmsQuery/find", assetAlarmQuery, new TypeReference<>() {
+        });
+        Assert.assertEquals(10, alarmPageData.getTotalElements());
+        List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(Alarm::getType).toList();
+        assertThat(retrievedAlarmTypes).containsExactlyInAnyOrderElementsOf(assetAlarmTypes);
+
+        KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
+        List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
+        AlarmDataQuery filteredAssetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, keyFilters, alarmFields);
+        PageData<AlarmData>  filteredAssetAlamData = doPostWithTypedResponse("/api/alarmsQuery/find", filteredAssetAlarmQuery, new TypeReference<>() {
+        });
+        Assert.assertEquals(1, filteredAssetAlamData.getTotalElements());
+    }
+
+    @Test
+    public void testFindCustomerAlarmsWithEntityFilter() throws Exception {
+        loginTenantAdmin();
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Device device = new Device();
+            device.setCustomerId(customerId);
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            devices.add(doPost("/api/device", device, Device.class));
+            Thread.sleep(1);
+        }
+
+        List<Asset> assets = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Asset asset = new Asset();
+            asset.setCustomerId(customerId);
+            asset.setName("Asset" + i);
+            asset.setType("default");
+            asset.setLabel("testLabel" + (int) (Math.random() * 1000));
+            assets.add(doPost("/api/asset", asset, Asset.class));
+            Thread.sleep(1);
+        }
+
+        loginCustomerUser();
+
+        for (int i = 0; i < devices.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setCustomerId(customerId);
+            alarm.setOriginator(devices.get(i).getId());
+            alarm.setType("alarm" + i);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            doPost("/api/alarm", alarm, Alarm.class);
+            Thread.sleep(1);
+        }
+
+        List<String> assetAlarmTypes = new ArrayList<>();
+        for (int i = 0; i < assets.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setCustomerId(customerId);
+            alarm.setOriginator(assets.get(i).getId());
+            String type = "asset alarm" + i;
+            alarm.setType(type);
+            assetAlarmTypes.add(type);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            doPost("/api/alarm", alarm, Alarm.class);
+            Thread.sleep(1);
+        }
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(100);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "assignee")));
+
+        EntityTypeFilter assetTypeFilter = new EntityTypeFilter();
+        assetTypeFilter.setEntityType(EntityType.ASSET);
+        AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, Collections.emptyList());
+
+        PageData<AlarmData>  alarmPageData = doPostWithTypedResponse("/api/alarmsQuery/find", assetAlarmQuery, new TypeReference<>() {
+        });
+        Assert.assertEquals(10, alarmPageData.getTotalElements());
+        List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(Alarm::getType).toList();
+        assertThat(retrievedAlarmTypes).containsExactlyInAnyOrderElementsOf(assetAlarmTypes);
+
+        KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
+        List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
+        AlarmDataQuery filteredAssetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, keyFilters, Collections.emptyList());
+        PageData<AlarmData>  filteredAssetAlamData = doPostWithTypedResponse("/api/alarmsQuery/find", filteredAssetAlarmQuery, new TypeReference<>() {
+        });
+        Assert.assertEquals(1, filteredAssetAlamData.getTotalElements());
     }
 
     private void testCountAlarmsByQuery(List<Alarm> alarms) throws Exception {
