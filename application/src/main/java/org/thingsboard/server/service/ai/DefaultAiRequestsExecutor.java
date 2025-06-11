@@ -1,0 +1,63 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.service.ai;
+
+import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AiRequestsExecutor;
+
+import java.time.Duration;
+
+@Lazy
+@Component
+@RequiredArgsConstructor
+class DefaultAiRequestsExecutor implements AiRequestsExecutor {
+
+    private final AiRequestsExecutorProperties properties;
+
+    private ListeningExecutorService executorService;
+
+    @PostConstruct
+    private void init() {
+        executorService = MoreExecutors.listeningDecorator(
+                ThingsBoardExecutors.newLimitedTasksExecutor(properties.getPoolSize(), properties.getMaxQueueSize(), properties.getPoolName())
+        );
+    }
+
+    @Override
+    public FluentFuture<ChatResponse> sendChatRequestAsync(ChatModel chatModel, ChatRequest chatRequest) {
+        return FluentFuture.from(executorService.submit(() -> chatModel.chat(chatRequest)));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (executorService != null) {
+            MoreExecutors.shutdownAndAwaitTermination(executorService, Duration.ofSeconds(properties.getTerminationTimeoutSeconds()));
+            executorService = null;
+        }
+    }
+
+}

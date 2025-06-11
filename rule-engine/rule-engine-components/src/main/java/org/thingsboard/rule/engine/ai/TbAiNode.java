@@ -26,6 +26,7 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
 import dev.langchain4j.model.chat.request.json.JsonSchema;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.input.PromptTemplate;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.common.util.JacksonUtil;
@@ -130,10 +131,11 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 .build();
 
         configureChatModelAsync(ctx)
-                .transform(chatModel -> sendChatRequest(chatModel, chatRequest), ctx.getExternalCallExecutor())
+                .transformAsync(chatModel -> ctx.getAiRequestsExecutor().sendChatRequestAsync(chatModel, chatRequest), directExecutor())
                 .addCallback(new FutureCallback<>() {
                     @Override
-                    public void onSuccess(String response) {
+                    public void onSuccess(ChatResponse chatResponse) {
+                        String response = chatResponse.aiMessage().text();
                         if (!isValidJsonObject(response)) {
                             response = wrapInJsonObject(response);
                         }
@@ -163,10 +165,6 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
             return ctx.getAiService().configureChatModel(providerConfig, modelConfig);
         }, ctx.getDbCallbackExecutor());
-    }
-
-    private String sendChatRequest(ChatModel chatModel, ChatRequest chatRequest) {
-        return chatModel.chat(chatRequest).aiMessage().text();
     }
 
     private static boolean isValidJsonObject(String jsonString) {

@@ -23,6 +23,7 @@ import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.AiRequestsExecutor;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.MqttClientSettings;
@@ -1022,6 +1023,11 @@ public class DefaultTbContext implements TbContext {
     @Override
     public AiSettingsService getAiSettingsService() {
         return mainCtx.getAiSettingsService();
+    }
+
+    @Override
+    public AiRequestsExecutor getAiRequestsExecutor() {
+        return mainCtx.getAiRequestsExecutor();
     }
 
     @Override
