@@ -54,7 +54,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -338,7 +337,7 @@ public class RepositoryUtils {
         return toSqlLikePattern(filter, ".*", "$");
     }
 
-    private static Pattern toSqlLikePattern(String value, String prefix, String suffix ) {
+    private static Pattern toSqlLikePattern(String value, String prefix, String suffix) {
         if (value.contains("%") || value.contains("_")) {
             String regexValue = value
                     .replace("_", ".")
@@ -351,9 +350,9 @@ public class RepositoryUtils {
             } else {
                 regex = (regexValue.startsWith(".*") ? "" : ".*") + regexValue + (regexValue.endsWith(".*") ? "" : ".*");
             }
-            return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            return Pattern.compile(regex);
         } else {
-            return Pattern.compile(prefix + Pattern.quote(value) + suffix, Pattern.CASE_INSENSITIVE);
+            return Pattern.compile(prefix + Pattern.quote(value) + suffix);
         }
     }
 
