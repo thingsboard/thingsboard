@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.ai;
 
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ import org.thingsboard.server.dao.entity.CachedVersionedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +47,7 @@ class AiSettingsServiceImpl extends CachedVersionedEntityService<AiSettingsCache
 
     private final DataValidator<AiSettings> aiSettingsValidator;
 
+    private final JpaExecutorService jpaExecutor;
     private final AiSettingsDao aiSettingsDao;
 
     @Override
@@ -95,6 +98,11 @@ class AiSettingsServiceImpl extends CachedVersionedEntityService<AiSettingsCache
     public Optional<AiSettings> findAiSettingsByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId) {
         var cacheKey = AiSettingsCacheKey.of(tenantId, aiSettingsId);
         return Optional.ofNullable(cache.get(cacheKey, () -> aiSettingsDao.findByTenantIdAndId(tenantId, aiSettingsId).orElse(null)));
+    }
+
+    @Override
+    public FluentFuture<Optional<AiSettings>> findAiSettingsByTenantIdAndIdAsync(TenantId tenantId, AiSettingsId aiSettingsId) {
+        return FluentFuture.from(jpaExecutor.submit(() -> findAiSettingsByTenantIdAndId(tenantId, aiSettingsId)));
     }
 
     @Override

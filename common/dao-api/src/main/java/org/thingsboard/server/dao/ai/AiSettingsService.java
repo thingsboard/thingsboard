@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.ai;
 
+import com.google.common.util.concurrent.FluentFuture;
 import org.thingsboard.server.common.data.ai.AiSettings;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,6 +34,8 @@ public interface AiSettingsService extends EntityDaoService {
     PageData<AiSettings> findAiSettingsByTenantId(TenantId tenantId, PageLink pageLink);
 
     Optional<AiSettings> findAiSettingsByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId);
+
+    FluentFuture<Optional<AiSettings>> findAiSettingsByTenantIdAndIdAsync(TenantId tenantId, AiSettingsId aiSettingsId);
 
     boolean deleteByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId);
 

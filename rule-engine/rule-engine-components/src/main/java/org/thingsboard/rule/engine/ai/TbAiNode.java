@@ -17,8 +17,8 @@ package org.thingsboard.rule.engine.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.ListenableFuture;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
@@ -36,7 +36,6 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
-import org.thingsboard.server.common.data.ai.AiSettings;
 import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.id.AiSettingsId;
@@ -47,9 +46,8 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 
-import static com.google.common.util.concurrent.Futures.addCallback;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static java.util.Objects.requireNonNullElse;
 import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
@@ -131,43 +129,44 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 .responseFormat(responseFormat)
                 .build();
 
-        ChatModel chatModel = configureChatModel(ctx);
+        configureChatModelAsync(ctx)
+                .transform(chatModel -> sendChatRequest(chatModel, chatRequest), ctx.getExternalCallExecutor())
+                .addCallback(new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(String response) {
+                        if (!isValidJsonObject(response)) {
+                            response = wrapInJsonObject(response);
+                        }
+                        tellSuccess(ctx, ackedMsg.transform()
+                                .data(response)
+                                .build());
+                    }
 
-        addCallback(sendChatRequest(ctx, chatModel, chatRequest), new FutureCallback<>() {
-            @Override
-            public void onSuccess(String response) {
-                if (!isValidJsonObject(response)) {
-                    response = wrapInJsonObject(response);
-                }
-                tellSuccess(ctx, ackedMsg.transform()
-                        .data(response)
-                        .build());
-            }
-
-            @Override
-            public void onFailure(@NonNull Throwable t) {
-                tellFailure(ctx, ackedMsg, t);
-            }
-        }, directExecutor());
+                    @Override
+                    public void onFailure(@NonNull Throwable t) {
+                        tellFailure(ctx, ackedMsg, t);
+                    }
+                }, directExecutor());
     }
 
-    private ChatModel configureChatModel(TbContext ctx) throws TbNodeException {
-        Optional<AiSettings> aiSettingsOpt = ctx.getAiSettingsService().findAiSettingsByTenantIdAndId(ctx.getTenantId(), aiSettingsId);
-        if (aiSettingsOpt.isEmpty()) {
-            throw new TbNodeException("AI settings with ID: " + aiSettingsId + " were not found", true);
-        }
+    private FluentFuture<ChatModel> configureChatModelAsync(TbContext ctx) {
+        return ctx.getAiSettingsService().findAiSettingsByTenantIdAndIdAsync(ctx.getTenantId(), aiSettingsId).transform(aiSettingsOpt -> {
+            if (aiSettingsOpt.isEmpty()) {
+                throw new NoSuchElementException("AI settings with ID: " + aiSettingsId + " were not found");
+            }
 
-        AiProviderConfig providerConfig = aiSettingsOpt.get().getProviderConfig();
-        AiModelConfig modelConfig = aiSettingsOpt.get().getModelConfig();
+            AiProviderConfig providerConfig = aiSettingsOpt.get().getProviderConfig();
+            AiModelConfig modelConfig = aiSettingsOpt.get().getModelConfig();
 
-        modelConfig.setTimeoutSeconds(timeoutSeconds);
-        modelConfig.setMaxRetries(0); // disable retries to respect timeout set in rule node config
+            modelConfig.setTimeoutSeconds(timeoutSeconds);
+            modelConfig.setMaxRetries(0); // disable retries to respect timeout set in rule node config
 
-        return ctx.getAiService().configureChatModel(providerConfig, modelConfig);
+            return ctx.getAiService().configureChatModel(providerConfig, modelConfig);
+        }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<String> sendChatRequest(TbContext ctx, ChatModel chatModel, ChatRequest chatRequest) {
-        return ctx.getExternalCallExecutor().submit(() -> chatModel.chat(chatRequest).aiMessage().text());
+    private String sendChatRequest(ChatModel chatModel, ChatRequest chatRequest) {
+        return chatModel.chat(chatRequest).aiMessage().text();
     }
 
     private static boolean isValidJsonObject(String jsonString) {
