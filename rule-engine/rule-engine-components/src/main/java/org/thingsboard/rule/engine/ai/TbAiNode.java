@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import dev.langchain4j.data.message.SystemMessage;
@@ -97,11 +98,11 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         aiSettingsId = config.getAiSettingsId();
     }
 
-    private static JsonSchema getJsonSchema(ResponseFormatType responseFormatType, JsonNode jsonSchema) {
+    private static JsonSchema getJsonSchema(ResponseFormatType responseFormatType, ObjectNode jsonSchema) {
         if (responseFormatType == ResponseFormatType.TEXT) {
             return null;
         }
-        return responseFormatType == ResponseFormatType.JSON && jsonSchema != null && !jsonSchema.isNull() ? Langchain4jJsonSchemaAdapter.fromJsonNode(jsonSchema) : null;
+        return responseFormatType == ResponseFormatType.JSON && jsonSchema != null ? Langchain4jJsonSchemaAdapter.fromJsonNode(jsonSchema) : null;
     }
 
     @Override

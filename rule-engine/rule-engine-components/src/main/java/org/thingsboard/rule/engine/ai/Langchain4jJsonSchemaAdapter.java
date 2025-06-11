@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.langchain4j.model.chat.request.json.JsonArraySchema;
 import dev.langchain4j.model.chat.request.json.JsonBooleanSchema;
 import dev.langchain4j.model.chat.request.json.JsonEnumSchema;
@@ -42,10 +43,10 @@ final class Langchain4jJsonSchemaAdapter {
     /**
      * Creates a Langchain4j {@link JsonSchema} from the given root JSON Schema node.
      *
-     * @param rootSchemaNode a valid JSON Schema as a Jackson {@link JsonNode}
+     * @param rootSchemaNode a valid JSON Schema as a Jackson {@link ObjectNode}
      * @return the corresponding Langchain4j {@link JsonSchema}
      */
-    public static JsonSchema fromJsonNode(JsonNode rootSchemaNode) {
+    public static JsonSchema fromJsonNode(ObjectNode rootSchemaNode) {
         return JsonSchema.builder()
                 .name(rootSchemaNode.get("title").textValue())
                 .rootElement(parse(rootSchemaNode))

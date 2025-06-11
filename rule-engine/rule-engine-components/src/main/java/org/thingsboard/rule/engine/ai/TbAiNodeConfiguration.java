@@ -16,7 +16,7 @@
 package org.thingsboard.rule.engine.ai;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
@@ -46,7 +46,7 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @NotNull
     private ResponseFormatType responseFormatType;
 
-    private JsonNode jsonSchema;
+    private ObjectNode jsonSchema;
 
     @Min(value = 1, message = "must be at least 1 second")
     @Max(value = 600, message = "cannot exceed 600 seconds (10 minutes)")
@@ -55,7 +55,7 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @JsonIgnore
     @AssertTrue(message = "provided JSON Schema must conform to the Draft 2020-12 meta-schema")
     public boolean isJsonSchemaValid() {
-        return jsonSchema == null || jsonSchema.isNull() || JsonSchemaUtils.isValidJsonSchema(jsonSchema);
+        return jsonSchema == null || JsonSchemaUtils.isValidJsonSchema(jsonSchema);
     }
 
     @Override
