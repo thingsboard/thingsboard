@@ -59,11 +59,6 @@ public class OtaPackageImportService extends BaseEntityImportService<OtaPackageI
     }
 
     @Override
-    protected void cleanupForComparison(OtaPackage otaPackage) {
-        super.cleanupForComparison(otaPackage);
-    }
-
-    @Override
     protected OtaPackage saveOrUpdate(EntitiesImportCtx ctx, OtaPackage otaPackage, OtaPackageExportData exportData, IdProvider idProvider, CompareResult compareResult) {
         return otaPackageService.saveOtaPackage(otaPackage);
     }
