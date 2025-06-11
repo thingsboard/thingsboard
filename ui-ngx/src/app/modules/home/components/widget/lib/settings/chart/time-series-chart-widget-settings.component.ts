@@ -163,7 +163,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       tooltipDateFont: [settings.tooltipDateFont, []],
       tooltipDateColor: [settings.tooltipDateColor, []],
       tooltipDateInterval: [settings.tooltipDateInterval, []],
-      tooltipHideZeroFalse: [settings.tooltipHideZeroFalse ,[]],
+      tooltipHideZeroValues: [settings.tooltipHideZeroValues ,[]],
 
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
@@ -224,7 +224,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueFormatter').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').enable({emitEvent: false});
-      this.timeSeriesChartWidgetSettingsForm.get('tooltipHideZeroFalse').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipHideZeroValues').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundBlur').enable();
       if (tooltipShowDate) {
@@ -250,7 +250,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('tooltipDateFont').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipDateColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipDateInterval').disable();
-      this.timeSeriesChartWidgetSettingsForm.get('tooltipHideZeroFalse').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipHideZeroValues').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
     }

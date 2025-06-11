@@ -3442,6 +3442,7 @@
             "power-button-background": "Power button background",
             "value-box-background": "Value box background",
             "value-units": "Value units",
+            "enable-units-scale": "Enable units on scale",
             "filtration-mode": "Filtration mode",
             "filtration-mode-hint": "Integer value indication the current filtration mode.",
             "filtration-mode-update": "Filtration mode update state",
@@ -5885,7 +5886,7 @@
         "date": "Date",
         "show-date-time-interval": "Show date time interval",
         "show-date-time-interval-hint": "Show date time interval according to the data aggregation.",
-        "hide-zero-false-tooltip-values": "Hide zero/false values",
+        "hide-zero-tooltip-values": "Hide zero values",
         "background-color": "Background color",
         "background-blur": "Background blur"
     },
