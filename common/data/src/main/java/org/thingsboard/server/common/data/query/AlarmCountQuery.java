@@ -45,4 +45,8 @@ public class AlarmCountQuery extends EntityCountQuery {
         super(entityFilter);
     }
 
+    public AlarmCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters) {
+        super(entityFilter, keyFilters);
+    }
+
 }
