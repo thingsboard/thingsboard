@@ -294,7 +294,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
           disabled: hideAggInterval
         }],
         fixedTimewindow: [{
-          value: isDefined(history?.fixedTimewindow) ? history.fixedTimewindow : null,
+          value: isDefined(history?.fixedTimewindow) && this.timewindow.selectedTab === TimewindowType.HISTORY
+            && history.historyType === HistoryWindowType.FIXED ? history.fixedTimewindow : null,
           disabled: history.hideInterval || history.hideFixedInterval
         }],
         quickInterval: [{
