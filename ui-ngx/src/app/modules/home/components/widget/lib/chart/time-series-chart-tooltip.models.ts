@@ -37,7 +37,7 @@ export interface TimeSeriesChartTooltipWidgetSettings {
   tooltipValueFormatter?: string | TimeSeriesChartTooltipValueFormatFunction;
   tooltipShowDate: boolean;
   tooltipDateInterval?: boolean;
-  tooltipHideZeroFalse?: boolean;
+  tooltipHideZeroValues?: boolean;
   tooltipDateFormat: DateFormatSettings;
   tooltipDateFont: Font;
   tooltipDateColor: string;
@@ -103,7 +103,7 @@ export class TimeSeriesChartTooltip {
     if (!tooltipParams.items.length && !tooltipParams.comparisonItems.length) {
       return null;
     }
-    if (this.settings.tooltipHideZeroFalse && !tooltipParams.items.some(value => value.param.value[1] && value.param.value[1] !== 'false')) {
+    if (this.settings.tooltipHideZeroValues && !tooltipParams.items.some(value => value.param.value[1] && value.param.value[1] !== 'false')) {
       return undefined;
     }
 
@@ -133,7 +133,7 @@ export class TimeSeriesChartTooltip {
       }
       let total = 0, isStacked = false;
       for (const item of items) {
-        if (!this.settings.tooltipHideZeroFalse || (item.param.value[1] && item.param.value[1] !== 'false')) {
+        if (!this.settings.tooltipHideZeroValues || (item.param.value[1] && item.param.value[1] !== 'false')) {
           this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
           if (item.dataItem?.barRenderContext?.barStackIndex !== undefined && !isNaN(Number(item.param.value[1]))) {
             isStacked = true;

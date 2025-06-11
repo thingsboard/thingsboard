@@ -41,7 +41,6 @@
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.implementationTitle>ThingsBoard Monitoring Service</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.monitoring.ThingsboardMonitoringApplication</pkg.mainClass>
-
     </properties>
 
     <dependencies>

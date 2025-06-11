@@ -17,14 +17,15 @@
 import { EntityAliases, EntityAliasInfo, getEntityAliasId } from '@shared/models/alias.models';
 import { FilterInfo, Filters, getFilterId } from '@shared/models/query/query.models';
 import { Dashboard } from '@shared/models/dashboard.models';
-import { DatasourceType, Widget } from '@shared/models/widget.models';
+import { Datasource, DatasourceType, Widget } from '@shared/models/widget.models';
 import {
   BaseMapSettings,
   MapDataLayerSettings,
   MapDataSourceSettings,
+  mapDataSourceSettingsToDatasource,
   MapType
 } from '@shared/models/widget/maps/map.models';
-import { WidgetExportDefinition } from '@shared/models/widget/widget-export.models';
+import { WidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
 
 interface AliasFilterPair {
   alias?: EntityAliasInfo,
@@ -45,7 +46,7 @@ interface MapDatasourcesInfo {
   additionalDataSources?: ExportDataSourceInfo;
 }
 
-export const MapExportDefinition: WidgetExportDefinition<MapDatasourcesInfo> = {
+export const MapModelDefinition: WidgetModelDefinition<MapDatasourcesInfo> = {
   testWidget(widget: Widget): boolean {
     if (widget?.config?.settings) {
       const settings = widget.config.settings;
@@ -103,6 +104,26 @@ export const MapExportDefinition: WidgetExportDefinition<MapDatasourcesInfo> = {
     if (info?.additionalDataSources) {
       updateMapDatasourceFromExportInfo(entityAliases, filters, settings.additionalDataSources, info.additionalDataSources);
     }
+  },
+  datasources(widget: Widget): Datasource[] {
+    const settings: BaseMapSettings = widget.config.settings as BaseMapSettings;
+    const datasources: Datasource[] = [];
+    if (settings.trips?.length) {
+      datasources.push(...getMapDataLayersDatasources(settings.trips));
+    }
+    if (settings.markers?.length) {
+      datasources.push(...getMapDataLayersDatasources(settings.markers));
+    }
+    if (settings.polygons?.length) {
+      datasources.push(...getMapDataLayersDatasources(settings.polygons));
+    }
+    if (settings.circles?.length) {
+      datasources.push(...getMapDataLayersDatasources(settings.circles));
+    }
+    if (settings.additionalDataSources?.length) {
+      datasources.push(...getMapDataLayersDatasources(settings.additionalDataSources));
+    }
+    return datasources;
   }
 };
 
@@ -189,3 +210,16 @@ const prepareAliasAndFilterPair = (dashboard: Dashboard, settings: MapDataSource
     return null;
   }
 }
+
+const getMapDataLayersDatasources = (settings: MapDataLayerSettings[] | MapDataSourceSettings[]): Datasource[] => {
+  const datasources: Datasource[] = [];
+  settings.forEach((dsSettings) => {
+    datasources.push(mapDataSourceSettingsToDatasource(dsSettings));
+    if ((dsSettings as MapDataLayerSettings).additionalDataSources?.length) {
+      (dsSettings as MapDataLayerSettings).additionalDataSources.forEach((ds) => {
+        datasources.push(mapDataSourceSettingsToDatasource(ds));
+      });
+    }
+  });
+  return datasources;
+};
