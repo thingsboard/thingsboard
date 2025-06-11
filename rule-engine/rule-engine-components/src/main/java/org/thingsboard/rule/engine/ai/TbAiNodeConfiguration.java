@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -46,10 +48,14 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
 
     private JsonNode jsonSchema;
 
+    @Min(value = 1, message = "must be at least 1 second")
+    @Max(value = 600, message = "cannot exceed 600 seconds (10 minutes)")
+    private int timeoutSeconds;
+
     @JsonIgnore
     @AssertTrue(message = "provided JSON Schema must conform to the Draft 2020-12 meta-schema")
     public boolean isJsonSchemaValid() {
-        return jsonSchema == null || JsonSchemaUtils.isValidJsonSchema(jsonSchema);
+        return jsonSchema == null || jsonSchema.isNull() || JsonSchemaUtils.isValidJsonSchema(jsonSchema);
     }
 
     @Override
@@ -58,6 +64,7 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
         configuration.setSystemPrompt("You are helpful assistant. Your response must be in JSON format.");
         configuration.setUserPrompt("Tell me a joke.");
         configuration.setResponseFormatType(ResponseFormatType.JSON);
+        configuration.setTimeoutSeconds(60);
         return configuration;
     }
 

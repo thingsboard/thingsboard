@@ -16,11 +16,15 @@
 package org.thingsboard.rule.engine.api;
 
 import dev.langchain4j.model.chat.ChatModel;
+import org.thingsboard.server.common.data.ai.model.AiModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 public interface RuleEngineAiService {
 
     ChatModel configureChatModel(TenantId tenantId, AiSettingsId aiSettingsId);
+
+    ChatModel configureChatModel(AiProviderConfig providerConfig, AiModelConfig modelConfig);
 
 }

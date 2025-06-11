@@ -23,13 +23,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineAiService;
 import org.thingsboard.server.common.data.ai.AiSettings;
+import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 import org.thingsboard.server.common.data.ai.model.GoogleAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.MistralAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.OpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.ai.AiSettingsService;
 
+import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -46,37 +49,53 @@ class AiServiceImpl implements RuleEngineAiService {
             throw new NoSuchElementException("AI settings with ID: " + aiSettingsId + " were not found");
         }
         var aiSettings = aiSettingsOpt.get();
+        return configureChatModel(aiSettings.getProviderConfig(), aiSettings.getModelConfig());
+    }
 
-        return switch (aiSettings.getProvider()) {
+    @Override
+    public ChatModel configureChatModel(AiProviderConfig providerConfig, AiModelConfig modelConfig) {
+        return switch (providerConfig.getProvider()) {
             case OPENAI -> {
                 var modelBuilder = OpenAiChatModel.builder()
-                        .apiKey(aiSettings.getProviderConfig().getApiKey())
-                        .modelName(aiSettings.getModel());
+                        .apiKey(providerConfig.getApiKey())
+                        .modelName(modelConfig.getModel());
 
-                if (aiSettings.getModelConfig() instanceof OpenAiChatModelConfig config) {
+                if (modelConfig instanceof OpenAiChatModelConfig config) {
                     modelBuilder.temperature(config.getTemperature());
+                    if (config.getTimeoutSeconds() != null) {
+                        modelBuilder.timeout(Duration.ofSeconds(config.getTimeoutSeconds()));
+                    }
+                    modelBuilder.maxRetries(config.getMaxRetries());
                 }
 
                 yield modelBuilder.build();
             }
             case MISTRAL_AI -> {
                 var modelBuilder = MistralAiChatModel.builder()
-                        .apiKey(aiSettings.getProviderConfig().getApiKey())
-                        .modelName(aiSettings.getModel());
+                        .apiKey(providerConfig.getApiKey())
+                        .modelName(modelConfig.getModel());
 
-                if (aiSettings.getModelConfig() instanceof MistralAiChatModelConfig config) {
+                if (modelConfig instanceof MistralAiChatModelConfig config) {
                     modelBuilder.temperature(config.getTemperature());
+                    if (config.getTimeoutSeconds() != null) {
+                        modelBuilder.timeout(Duration.ofSeconds(config.getTimeoutSeconds()));
+                    }
+                    modelBuilder.maxRetries(config.getMaxRetries());
                 }
 
                 yield modelBuilder.build();
             }
             case GOOGLE_AI_GEMINI -> {
                 var modelBuilder = GoogleAiGeminiChatModel.builder()
-                        .apiKey(aiSettings.getProviderConfig().getApiKey())
-                        .modelName(aiSettings.getModel());
+                        .apiKey(providerConfig.getApiKey())
+                        .modelName(modelConfig.getModel());
 
-                if (aiSettings.getModelConfig() instanceof GoogleAiGeminiChatModelConfig config) {
+                if (modelConfig instanceof GoogleAiGeminiChatModelConfig config) {
                     modelBuilder.temperature(config.getTemperature());
+                    if (config.getTimeoutSeconds() != null) {
+                        modelBuilder.timeout(Duration.ofSeconds(config.getTimeoutSeconds()));
+                    }
+                    modelBuilder.maxRetries(config.getMaxRetries());
                 }
 
                 yield modelBuilder.build();

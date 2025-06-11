@@ -44,4 +44,13 @@ public abstract class AiModelConfig {
     )
     private String model;
 
+    public abstract Integer getTimeoutSeconds();
+
+    public abstract void setTimeoutSeconds(Integer timeoutSeconds);
+
+    public abstract Integer getMaxRetries();
+
+    public abstract void setMaxRetries(Integer timeoutSeconds);
+
+
 }

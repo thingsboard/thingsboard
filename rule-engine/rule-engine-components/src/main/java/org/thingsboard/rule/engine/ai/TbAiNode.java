@@ -35,6 +35,9 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
+import org.thingsboard.server.common.data.ai.AiSettings;
+import org.thingsboard.server.common.data.ai.model.AiModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.id.AiSettingsId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -42,6 +45,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.google.common.util.concurrent.Futures.addCallback;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
@@ -60,6 +64,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     private SystemMessage systemMessage;
     private PromptTemplate userPromptTemplate;
     private ResponseFormat responseFormat;
+    private int timeoutSeconds;
     private AiSettingsId aiSettingsId;
 
     @Override
@@ -88,6 +93,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 .formatted(config.getUserPrompt())
         );
 
+        timeoutSeconds = config.getTimeoutSeconds();
         aiSettingsId = config.getAiSettingsId();
     }
 
@@ -95,11 +101,11 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         if (responseFormatType == ResponseFormatType.TEXT) {
             return null;
         }
-        return responseFormatType == ResponseFormatType.JSON && jsonSchema != null ? Langchain4jJsonSchemaAdapter.fromJsonNode(jsonSchema) : null;
+        return responseFormatType == ResponseFormatType.JSON && jsonSchema != null && !jsonSchema.isNull() ? Langchain4jJsonSchemaAdapter.fromJsonNode(jsonSchema) : null;
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
+    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         var ackedMsg = ackIfNeeded(ctx, msg);
 
         Map<String, Object> variables = Map.of(
@@ -114,7 +120,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 .responseFormat(responseFormat)
                 .build();
 
-        ChatModel chatModel = ctx.getAiService().configureChatModel(ctx.getTenantId(), aiSettingsId);
+        ChatModel chatModel = configureChatModel(ctx);
 
         addCallback(sendChatRequest(ctx, chatModel, chatRequest), new FutureCallback<>() {
             @Override
@@ -132,6 +138,21 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 tellFailure(ctx, ackedMsg, t);
             }
         }, directExecutor());
+    }
+
+    private ChatModel configureChatModel(TbContext ctx) throws TbNodeException {
+        Optional<AiSettings> aiSettingsOpt = ctx.getAiSettingsService().findAiSettingsByTenantIdAndId(ctx.getTenantId(), aiSettingsId);
+        if (aiSettingsOpt.isEmpty()) {
+            throw new TbNodeException("AI settings with ID: " + aiSettingsId + " were not found", true);
+        }
+
+        AiProviderConfig providerConfig = aiSettingsOpt.get().getProviderConfig();
+        AiModelConfig modelConfig = aiSettingsOpt.get().getModelConfig();
+
+        modelConfig.setTimeoutSeconds(timeoutSeconds);
+        modelConfig.setMaxRetries(0); // disable retries to respect timeout set in rule node config
+
+        return ctx.getAiService().configureChatModel(providerConfig, modelConfig);
     }
 
     private ListenableFuture<String> sendChatRequest(TbContext ctx, ChatModel chatModel, ChatRequest chatRequest) {
@@ -157,6 +178,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         systemMessage = null;
         userPromptTemplate = null;
         responseFormat = null;
+        aiSettingsId = null;
     }
 
 }

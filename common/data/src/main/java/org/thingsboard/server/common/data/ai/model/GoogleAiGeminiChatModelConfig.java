@@ -47,4 +47,16 @@ public final class GoogleAiGeminiChatModelConfig extends AiModelConfig {
     )
     private Double temperature;
 
+    @Schema(
+            accessMode = Schema.AccessMode.READ_WRITE,
+            description = "Timeout (in seconds) for establishing HTTP connection"
+    )
+    private Integer timeoutSeconds;
+
+    @Schema(
+            accessMode = Schema.AccessMode.READ_WRITE,
+            description = "Maximum number of times to retry an LLM call upon exception (except for non-retriable ones like authentication or invalid request errors)"
+    )
+    private Integer maxRetries;
+
 }
