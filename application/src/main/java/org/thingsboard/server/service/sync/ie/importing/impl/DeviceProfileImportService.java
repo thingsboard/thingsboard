@@ -45,8 +45,8 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultEdgeRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultEdgeRuleChainId()));
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
-        deviceProfile.setFirmwareId(getOldEntityField(old, DeviceProfile::getFirmwareId));
-        deviceProfile.setSoftwareId(getOldEntityField(old, DeviceProfile::getSoftwareId));
+        deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId()));
+        deviceProfile.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId()));
         return deviceProfile;
     }
 
@@ -73,8 +73,6 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     @Override
     protected void cleanupForComparison(DeviceProfile deviceProfile) {
         super.cleanupForComparison(deviceProfile);
-        deviceProfile.setFirmwareId(null);
-        deviceProfile.setSoftwareId(null);
     }
 
     @Override
