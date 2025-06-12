@@ -23,9 +23,15 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.AiRequestsExecutor;
 
@@ -37,6 +43,26 @@ import java.time.Duration;
 class DefaultAiRequestsExecutor implements AiRequestsExecutor {
 
     private final AiRequestsExecutorProperties properties;
+
+    @Data
+    @Validated
+    @Configuration
+    @ConfigurationProperties(prefix = "actors.rule.ai-requests-thread-pool")
+    private static class AiRequestsExecutorProperties {
+
+        @NotBlank(message = "Pool name must be not blank")
+        private String poolName = "ai-requests";
+
+        @Min(value = 1, message = "Pool size must be at least 1")
+        private int poolSize = 50;
+
+        @Min(value = 1, message = "Max queue size must be at least 1")
+        private int maxQueueSize = 10000;
+
+        @Min(value = 1, message = "Termination timeout must be at least 1 second")
+        private int terminationTimeoutSeconds = 60;
+
+    }
 
     private ListeningExecutorService executorService;
 
