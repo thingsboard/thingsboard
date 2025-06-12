@@ -45,8 +45,8 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultEdgeRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultEdgeRuleChainId()));
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
-        deviceProfile.setFirmwareId(getOldEntityField(old, DeviceProfile::getFirmwareId));
-        deviceProfile.setSoftwareId(getOldEntityField(old, DeviceProfile::getSoftwareId));
+        deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId(), false));
+        deviceProfile.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId(), false));
         return deviceProfile;
     }
 
@@ -55,6 +55,9 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         DeviceProfile saved = deviceProfileService.saveDeviceProfile(deviceProfile);
         if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
             importCalculatedFields(ctx, saved, exportData, idProvider);
+            saved.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId()));
+            saved.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId()));
+            saved = deviceProfileService.saveDeviceProfile(saved);
         }
         return saved;
     }
@@ -73,8 +76,6 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     @Override
     protected void cleanupForComparison(DeviceProfile deviceProfile) {
         super.cleanupForComparison(deviceProfile);
-        deviceProfile.setFirmwareId(null);
-        deviceProfile.setSoftwareId(null);
     }
 
     @Override

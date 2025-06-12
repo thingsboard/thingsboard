@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.ota;
+package org.thingsboard.server.common.data.sync.ie;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.id.OtaPackageId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.ExportableEntityDao;
-import org.thingsboard.server.dao.TenantEntityWithDataDao;
 
-public interface OtaPackageDao extends Dao<OtaPackage>, TenantEntityWithDataDao, ExportableEntityDao<OtaPackageId, OtaPackage> {
+@EqualsAndHashCode(callSuper = true)
+public class OtaPackageExportData extends EntityExportData<OtaPackage> {
 
-    Long sumDataSizeByTenantId(TenantId tenantId);
+    @JsonIgnoreProperties(value = {"tenantId", "createdTime"}, ignoreUnknown = true)
+    @Override
+    public OtaPackage getEntity() {
+        return super.getEntity();
+    }
 
-    OtaPackage findOtaPackageByTenantIdAndTitleAndVersion(TenantId tenantId, String title, String version);
+    @JsonIgnoreProperties(value = {"tenantId", "createdTime"}, ignoreUnknown = true)
+    @Override
+    public void setEntity(OtaPackage entity) {
+        super.setEntity(entity);
+    }
 
 }

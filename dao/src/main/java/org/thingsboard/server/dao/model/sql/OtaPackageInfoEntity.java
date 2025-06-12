@@ -100,6 +100,9 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
     @Column(name = ModelConstants.OTA_PACKAGE_ADDITIONAL_INFO_COLUMN)
     private JsonNode additionalInfo;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     @Transient
     private boolean hasData;
 
@@ -125,11 +128,12 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
         this.checksum = otaPackageInfo.getChecksum();
         this.dataSize = otaPackageInfo.getDataSize();
         this.additionalInfo = otaPackageInfo.getAdditionalInfo();
+        this.externalId = getUuid(otaPackageInfo.getExternalId());
     }
 
     public OtaPackageInfoEntity(UUID id, long createdTime, UUID tenantId, UUID deviceProfileId, OtaPackageType type, String title, String version, String tag,
                                 String url, String fileName, String contentType, ChecksumAlgorithm checksumAlgorithm, String checksum, Long dataSize,
-                                Object additionalInfo, boolean hasData) {
+                                Object additionalInfo, UUID externalId, boolean hasData) {
         this.id = id;
         this.createdTime = createdTime;
         this.tenantId = tenantId;
@@ -146,6 +150,7 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
         this.dataSize = dataSize;
         this.hasData = hasData;
         this.additionalInfo = JacksonUtil.convertValue(additionalInfo, JsonNode.class);
+        this.externalId = externalId;
     }
 
     @Override
@@ -168,6 +173,8 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
         otaPackageInfo.setDataSize(dataSize);
         otaPackageInfo.setAdditionalInfo(additionalInfo);
         otaPackageInfo.setHasData(hasData);
+        otaPackageInfo.setExternalId(getEntityId(externalId, OtaPackageId::new));
         return otaPackageInfo;
     }
+
 }
