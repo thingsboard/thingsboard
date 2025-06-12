@@ -107,7 +107,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
         if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
-            if (singleValueEntry.getTs() == this.ts) {
+            if (singleValueEntry.getTs() <= this.ts) {
                 return false;
             }
 
