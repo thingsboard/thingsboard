@@ -95,6 +95,13 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
         return name;
     }
 
+    public TenantProfileData getProfileData() {
+        if (profileData == null) {
+            profileData = createDefaultTenantProfileData();
+        }
+        return profileData;
+    }
+
     @JsonIgnore
     public Optional<DefaultTenantProfileConfiguration> getProfileConfiguration() {
         return Optional.ofNullable(getProfileData().getConfiguration())
@@ -110,7 +117,6 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
     public TenantProfileData createDefaultTenantProfileData() {
         TenantProfileData tpd = new TenantProfileData();
         tpd.setConfiguration(new DefaultTenantProfileConfiguration());
-        this.profileData = tpd;
         return tpd;
     }
 

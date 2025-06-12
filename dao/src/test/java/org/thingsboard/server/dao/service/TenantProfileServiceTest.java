@@ -350,6 +350,7 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
         mainQueueProcessingStrategy.setPauseBetweenRetries(3);
         mainQueueProcessingStrategy.setMaxPauseBetweenRetries(3);
         mainQueueConfiguration.setProcessingStrategy(mainQueueProcessingStrategy);
+        mainQueueConfiguration.setAdditionalInfo(NullNode.getInstance());
         TenantProfileData profileData = tenantProfile.getProfileData();
         profileData.setQueueConfiguration(Collections.singletonList(mainQueueConfiguration));
         tenantProfile.setProfileData(profileData);
