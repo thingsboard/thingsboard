@@ -58,18 +58,13 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
             try {
                 BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getKvEntryValue();
-                try {
-                    double value = switch (kvEntry.getDataType()) {
-                        case LONG -> kvEntry.getLongValue().map(Long::doubleValue).orElseThrow();
-                        case DOUBLE -> kvEntry.getDoubleValue().orElseThrow();
-                        case BOOLEAN -> kvEntry.getBooleanValue().map(b -> b ? 1.0 : 0.0).orElseThrow();
-                        case STRING -> Double.parseDouble(kvEntry.getValueAsString());
-                        case JSON -> Double.parseDouble(kvEntry.getValueAsString());
-                    };
-                    expr.setVariable(entry.getKey(), value);
-                } catch (Exception e) {
-                    throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.", e);
-                }
+                double value = switch (kvEntry.getDataType()) {
+                    case LONG -> kvEntry.getLongValue().map(Long::doubleValue).orElseThrow();
+                    case DOUBLE -> kvEntry.getDoubleValue().orElseThrow();
+                    case BOOLEAN -> kvEntry.getBooleanValue().map(b -> b ? 1.0 : 0.0).orElseThrow();
+                    case STRING, JSON -> Double.parseDouble(kvEntry.getValueAsString());
+                };
+                expr.setVariable(entry.getKey(), value);
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");
             }
