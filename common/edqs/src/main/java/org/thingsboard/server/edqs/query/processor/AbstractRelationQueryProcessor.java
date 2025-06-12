@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.edqs.query.processor;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.EntityFilter;
@@ -106,7 +107,7 @@ public abstract class AbstractRelationQueryProcessor<T extends EntityFilter> ext
 
     private Set<EntityData<?>> getEntitiesSet(RelationsRepo relations) {
         Set<EntityData<?>> result = new HashSet<>();
-        Set<UUID> processed = new HashSet<>();
+        Set<RelationSearchTask> processed = new HashSet<>();
         Queue<RelationSearchTask> tasks = new LinkedList<>();
         int maxLvl = getMaxLevel() == 0 ? MAXIMUM_QUERY_LEVEL : Math.max(1, getMaxLevel());
         for (UUID uuid : getRootEntities()) {
@@ -114,7 +115,7 @@ public abstract class AbstractRelationQueryProcessor<T extends EntityFilter> ext
         }
         while (!tasks.isEmpty()) {
             RelationSearchTask task = tasks.poll();
-            if (processed.add(task.entityId)) {
+            if (processed.add(task)) {
                 var entityLvl = task.lvl + 1;
                 Set<RelationInfo> entities = EntitySearchDirection.FROM.equals(getDirection()) ? relations.getFrom(task.entityId) : relations.getTo(task.entityId);
                 if (isFetchLastLevelOnly() && entities.isEmpty() && task.previous != null && check(task.previous)) {
@@ -157,6 +158,7 @@ public abstract class AbstractRelationQueryProcessor<T extends EntityFilter> ext
     protected abstract boolean check(RelationInfo relationInfo);
 
     @RequiredArgsConstructor
+    @EqualsAndHashCode
     private static class RelationSearchTask {
         private final UUID entityId;
         private final int lvl;
