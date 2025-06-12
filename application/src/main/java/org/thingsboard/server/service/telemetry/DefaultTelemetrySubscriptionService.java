@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -62,7 +63,6 @@ import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -191,17 +191,16 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
-    public void saveAttributesInternal(AttributesSaveRequest request) {
-        log.trace("Executing saveInternal [{}]", request);
+    public ListenableFuture<AttributesSaveResult> saveAttributesInternal(AttributesSaveRequest request) {
         TenantId tenantId = request.getTenantId();
         EntityId entityId = request.getEntityId();
         AttributesSaveRequest.Strategy strategy = request.getStrategy();
-        ListenableFuture<List<Long>> resultFuture;
+        ListenableFuture<AttributesSaveResult> resultFuture;
 
         if (strategy.saveAttributes()) {
             resultFuture = attrService.save(tenantId, entityId, request.getScope(), request.getEntries());
         } else {
-            resultFuture = Futures.immediateFuture(Collections.emptyList());
+            resultFuture = Futures.immediateFuture(AttributesSaveResult.EMPTY);
         }
 
         addMainCallback(resultFuture, result -> {
@@ -229,6 +228,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         if (strategy.sendWsUpdate()) {
             addWsCallback(resultFuture, success -> onAttributesUpdate(tenantId, entityId, request.getScope().name(), request.getEntries()));
         }
+        return resultFuture;
     }
 
     private static boolean shouldSendSharedAttributesUpdatedNotification(AttributesSaveRequest request) {

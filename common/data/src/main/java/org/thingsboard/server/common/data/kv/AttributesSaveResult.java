@@ -13,7 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.common.data.kv;
 
-public class TenantRateLimitException extends Exception {
+import java.util.Collections;
+import java.util.List;
+
+public record AttributesSaveResult(List<Long> versions) {
+
+    public static final AttributesSaveResult EMPTY = new AttributesSaveResult(Collections.emptyList());
+
+    public static AttributesSaveResult of(List<Long> versions) {
+        if (versions == null) {
+            return EMPTY;
+        }
+        return new AttributesSaveResult(versions);
+    }
+
 }

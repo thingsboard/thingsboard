@@ -484,7 +484,7 @@
             <span translate>notification.threshold</span>
             <div class="flex flex-1 flex-row items-center justify-start">
               <mat-slider class="flex-1" min="0" max="100" step="1" discrete [displayWith]="formatLabel">
-                <input matSliderThumb formControlName="threshold">
+                <input matSliderThumb formControlName="threshold" [value]="entitiesLimitTemplateForm.get('triggerConfig.threshold').value">
               </mat-slider>
               <mat-form-field class="limit-slider-value" subscriptSizing="dynamic">
                 <input matInput formControlName="threshold" type="number" step="1"
@@ -603,7 +603,7 @@
             <span translate>notification.cpu-threshold</span>
             <div class="flex flex-1 flex-row items-center justify-start">
               <mat-slider class="flex-1" min="0" max="100" step="1" discrete [displayWith]="formatLabel">
-                <input matSliderThumb formControlName="cpuThreshold">
+                <input matSliderThumb formControlName="cpuThreshold" [value]="resourceUsageShortageTemplateForm.get('triggerConfig.cpuThreshold').value">
               </mat-slider>
               <mat-form-field class="limit-slider-value" subscriptSizing="dynamic">
                 <input matInput formControlName="cpuThreshold" type="number" step="1"
@@ -618,7 +618,7 @@
             <span translate>notification.ram-threshold</span>
             <div class="flex flex-1 flex-row items-center justify-start">
               <mat-slider class="flex-1" min="0" max="100" step="1" discrete [displayWith]="formatLabel">
-                <input matSliderThumb formControlName="ramThreshold">
+                <input matSliderThumb formControlName="ramThreshold" [value]="resourceUsageShortageTemplateForm.get('triggerConfig.ramThreshold').value">
               </mat-slider>
               <mat-form-field class="limit-slider-value" subscriptSizing="dynamic">
                 <input matInput formControlName="ramThreshold" type="number" step="1"
@@ -633,7 +633,7 @@
             <span translate>notification.storage-threshold</span>
             <div class="flex flex-1 flex-row items-center justify-start">
               <mat-slider class="flex-1" min="0" max="100" step="1" discrete [displayWith]="formatLabel">
-                <input matSliderThumb formControlName="storageThreshold">
+                <input matSliderThumb formControlName="storageThreshold" [value]="resourceUsageShortageTemplateForm.get('triggerConfig.storageThreshold').value">
               </mat-slider>
               <mat-form-field class="limit-slider-value" subscriptSizing="dynamic">
                 <input matInput formControlName="storageThreshold" type="number" step="1"

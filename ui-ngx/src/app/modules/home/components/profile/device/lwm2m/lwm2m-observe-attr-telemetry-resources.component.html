@@ -49,7 +49,7 @@
         </mat-checkbox>
       </div>
       <div class="flex max-w-10% flex-full items-center justify-center">
-        <mat-checkbox class="max-w-10% flex-full" formControlName="observe" color="primary"
+        <mat-checkbox formControlName="observe" color="primary"
                       matTooltip="{{ 'device-profile.lwm2m.edit-observe-select'  | translate }}"
                       [matTooltipDisabled]="disabled || !isDisabledObserve($index)"
                       matTooltipPosition="above">

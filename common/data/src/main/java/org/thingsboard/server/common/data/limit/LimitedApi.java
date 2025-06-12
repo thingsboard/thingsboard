@@ -43,6 +43,7 @@ public enum LimitedApi {
             RateLimitUtil.merge(
                     DefaultTenantProfileConfiguration::getCassandraWriteQueryTenantCoreRateLimits,
                     DefaultTenantProfileConfiguration::getCassandraWriteQueryTenantRuleEngineRateLimits), "Monolith telemetry Cassandra write queries", true),
+    CASSANDRA_QUERIES(null, true), // left for backward compatibility with RateLimitsNotificationInfo
     EDGE_EVENTS(DefaultTenantProfileConfiguration::getEdgeEventRateLimits, "Edge events", true),
     EDGE_EVENTS_PER_EDGE(DefaultTenantProfileConfiguration::getEdgeEventRateLimitsPerEdge, "Edge events per edge", false),
     EDGE_UPLINK_MESSAGES(DefaultTenantProfileConfiguration::getEdgeUplinkMessagesRateLimits, "Edge uplink messages", true),

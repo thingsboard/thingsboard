@@ -69,7 +69,6 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
             job.setStatus(QUEUED);
         } else {
             job.setStatus(PENDING);
-            job.getResult().setStartTs(System.currentTimeMillis());
         }
         return saveJob(tenantId, job, true, null);
     }
@@ -125,6 +124,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
         }
 
         boolean publishEvent = false;
+        long lastFinishTs = 0;
         for (TaskResult taskResult : jobStats.getTaskResults()) {
             if (!taskResult.getKey().equals(job.getConfiguration().getTasksKey())) {
                 log.debug("Ignoring task result {} with outdated key {}", taskResult, job.getConfiguration().getTasksKey());
@@ -140,6 +140,9 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
                     publishEvent = true;
                 }
             }
+            if (taskResult.getFinishTs() > lastFinishTs) {
+                lastFinishTs = taskResult.getFinishTs();
+            }
         }
 
         if (job.getStatus() == RUNNING) {
@@ -153,7 +156,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
                     job.setStatus(COMPLETED);
                     publishEvent = true;
                 }
-                result.setFinishTs(System.currentTimeMillis());
+                result.setFinishTs(lastFinishTs);
                 job.getConfiguration().setToReprocess(null);
             }
         }
@@ -165,6 +168,9 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
         ConstraintValidator.validateFields(job);
         if (!Job.SUPPORTED_ENTITY_TYPES.contains(job.getEntityId().getEntityType())) {
             throw new IllegalArgumentException("Unsupported entity type " + job.getEntityId().getEntityType());
+        }
+        if (job.getStatus() == PENDING) {
+            job.getResult().setStartTs(System.currentTimeMillis());
         }
 
         job = jobDao.save(tenantId, job);
