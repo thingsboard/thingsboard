@@ -83,7 +83,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     @Schema(description = "Timestamp of the alarm assignment, in milliseconds", example = "1634115928465")
     private long assignTs;
     @Schema(description = "JSON object with alarm details")
-    private transient JsonNode details;
+    private JsonNode details;
     @Schema(description = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
     private boolean propagate;
     @Schema(description = "Propagation flag to specify if alarm should be propagated to the owner (tenant or customer) of alarm originator", example = "true")
@@ -91,8 +91,8 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     @Schema(description = "Propagation flag to specify if alarm should be propagated to the tenant entity", example = "true")
     private boolean propagateToTenant;
     @Schema(description = "JSON array of relation types that should be used for propagation. " +
-            "By default, 'propagateRelationTypes' array is empty which means that the alarm will be propagated based on any relation type to parent entities. " +
-            "This parameter should be used only in case when 'propagate' parameter is set to true, otherwise, 'propagateRelationTypes' array will be ignored.")
+                          "By default, 'propagateRelationTypes' array is empty which means that the alarm will be propagated based on any relation type to parent entities. " +
+                          "This parameter should be used only in case when 'propagate' parameter is set to true, otherwise, 'propagateRelationTypes' array will be ignored.")
     private List<String> propagateRelationTypes;
 
     public Alarm() {
@@ -134,9 +134,9 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     }
 
     @Schema(description = "JSON object with the alarm Id. " +
-            "Specify this field to update the alarm. " +
-            "Referencing non-existing alarm Id will cause error. " +
-            "Omit this field to create new alarm.")
+                          "Specify this field to update the alarm. " +
+                          "Referencing non-existing alarm Id will cause error. " +
+                          "Omit this field to create new alarm.")
     @Override
     public AlarmId getId() {
         return super.getId();
