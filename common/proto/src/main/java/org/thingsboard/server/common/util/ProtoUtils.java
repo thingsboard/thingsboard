@@ -39,9 +39,11 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -78,6 +80,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
@@ -829,8 +832,8 @@ public class ProtoUtils {
             builder.setExternalIdMSB(getMsb(device.getExternalId()))
                     .setExternalIdLSB(getLsb(device.getExternalId()));
         }
-        if (isNotNull(device.getDeviceDataBytes())) {
-            builder.setDeviceData(ByteString.copyFrom(device.getDeviceDataBytes()));
+        if (isNotNull(device.getDeviceData())) {
+            builder.setDeviceData(ByteString.copyFrom(JacksonUtil.writeValueAsBytes(device.getDeviceData())));
         }
         if (isNotNull(device.getVersion())) {
             builder.setVersion(device.getVersion());
@@ -864,7 +867,7 @@ public class ProtoUtils {
             device.setExternalId(getEntityId(proto.getExternalIdMSB(), proto.getExternalIdLSB(), DeviceId::new));
         }
         if (proto.hasDeviceData()) {
-            device.setDeviceDataBytes(proto.getDeviceData().toByteArray());
+            device.setDeviceData(JacksonUtil.fromBytes(proto.getDeviceData().toByteArray(), DeviceData.class));
         }
         if (proto.hasVersion()) {
             device.setVersion(proto.getVersion());
@@ -885,8 +888,8 @@ public class ProtoUtils {
                 .setTransportType(deviceProfile.getTransportType().name())
                 .setProvisionType(deviceProfile.getProvisionType().name());
 
-        if (isNotNull(deviceProfile.getProfileDataBytes())) {
-            builder.setDeviceProfileData(ByteString.copyFrom(deviceProfile.getProfileDataBytes()));
+        if (isNotNull(deviceProfile.getProfileData())) {
+            builder.setDeviceProfileData(ByteString.copyFrom(JacksonUtil.writeValueAsBytes(deviceProfile.getProfileData())));
         }
         if (isNotNull(deviceProfile.getDescription())) {
             builder.setDescription(deviceProfile.getDescription());
@@ -940,7 +943,7 @@ public class ProtoUtils {
         deviceProfile.setTransportType(DeviceTransportType.valueOf(proto.getTransportType()));
         deviceProfile.setProvisionType(DeviceProfileProvisionType.valueOf(proto.getProvisionType()));
         if (proto.hasDeviceProfileData()) {
-            deviceProfile.setProfileDataBytes(proto.getDeviceProfileData().toByteArray());
+            deviceProfile.setProfileData(JacksonUtil.fromBytes(proto.getDeviceProfileData().toByteArray(), DeviceProfileData.class));
         }
         if (proto.hasDescription()) {
             deviceProfile.setDescription(proto.getDescription());
@@ -1077,8 +1080,8 @@ public class ProtoUtils {
         if (isNotNull(tenantProfile.getDescription())) {
             builder.setDescription(tenantProfile.getDescription());
         }
-        if (isNotNull(tenantProfile.getProfileDataBytes())) {
-            builder.setProfileData(ByteString.copyFrom(tenantProfile.getProfileDataBytes()));
+        if (isNotNull(tenantProfile.getProfileData())) {
+            builder.setProfileData(ByteString.copyFrom(JacksonUtil.writeValueAsBytes(tenantProfile.getProfileData())));
         }
         return builder.build();
     }
@@ -1093,7 +1096,7 @@ public class ProtoUtils {
             tenantProfile.setDescription(proto.getDescription());
         }
         if (proto.hasProfileData()) {
-            tenantProfile.setProfileDataBytes(proto.getProfileData().toByteArray());
+            tenantProfile.setProfileData(JacksonUtil.fromBytes(proto.getProfileData().toByteArray(), TenantProfileData.class));
         }
         return tenantProfile;
     }

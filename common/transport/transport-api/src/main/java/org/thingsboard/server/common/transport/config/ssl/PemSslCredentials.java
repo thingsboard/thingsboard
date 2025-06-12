@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 public class PemSslCredentials extends AbstractSslCredentials {
 
     private static final String DEFAULT_KEY_ALIAS = "server";
@@ -72,7 +72,7 @@ public class PemSslCredentials extends AbstractSslCredentials {
         try (InputStream inStream = ResourceUtils.getInputStream(this, this.certFile)) {
             try (PEMParser pemParser = new PEMParser(new InputStreamReader(inStream))) {
                 Object object;
-                while((object = pemParser.readObject()) != null) {
+                while ((object = pemParser.readObject()) != null) {
                     if (object instanceof X509CertificateHolder) {
                         X509Certificate x509Cert = certConverter.getCertificate((X509CertificateHolder) object);
                         certificates.add(x509Cert);

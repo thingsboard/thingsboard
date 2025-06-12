@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -33,8 +31,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Optional;
 
 @Schema
@@ -57,10 +53,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
     @Length(fieldName = "label")
     private String label;
     private DeviceProfileId deviceProfileId;
-    private transient DeviceData deviceData;
-    @JsonIgnore
-    @Getter @Setter
-    private byte[] deviceDataBytes;
+    private DeviceData deviceData;
 
     private OtaPackageId firmwareId;
     private OtaPackageId softwareId;
@@ -110,9 +103,9 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
     }
 
     @Schema(description = "JSON object with the Device Id. " +
-            "Specify this field to update the Device. " +
-            "Referencing non-existing Device Id will cause error. " +
-            "Omit this field to create new Device." )
+                          "Specify this field to update the Device. " +
+                          "Referencing non-existing Device Id will cause error. " +
+                          "Omit this field to create new Device.")
     @Override
     public DeviceId getId() {
         return super.getId();
@@ -181,30 +174,11 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
 
     @Schema(description = "JSON object with content specific to type of transport in the device profile.")
     public DeviceData getDeviceData() {
-        if (deviceData != null) {
-            return deviceData;
-        } else {
-            if (deviceDataBytes != null) {
-                try {
-                    deviceData = mapper.readValue(new ByteArrayInputStream(deviceDataBytes), DeviceData.class);
-                } catch (IOException e) {
-                    log.warn("Can't deserialize device data: ", e);
-                    return null;
-                }
-                return deviceData;
-            } else {
-                return null;
-            }
-        }
+        return deviceData;
     }
 
     public void setDeviceData(DeviceData data) {
         this.deviceData = data;
-        try {
-            this.deviceDataBytes = data != null ? mapper.writeValueAsBytes(data) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("Can't serialize device data: ", e);
-        }
     }
 
     @Schema(description = "JSON object with Ota Package Id.")
@@ -225,7 +199,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         this.softwareId = softwareId;
     }
 
-    @Schema(description = "Additional parameters of the device",implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the device", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

@@ -15,14 +15,10 @@
  */
 package org.thingsboard.server.common.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -34,12 +30,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-
 @Schema
 @Data
-@ToString(exclude = {"image", "profileDataBytes"})
+@ToString(exclude = {"image"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId>, HasImage, HasDefaultOption, HasVersion {
@@ -65,23 +58,19 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     @Schema(description = "Provisioning strategy.")
     private DeviceProfileProvisionType provisionType;
     @Schema(description = "Reference to the rule chain. " +
-            "If present, the specified rule chain will be used to process all messages related to device, including telemetry, attribute updates, etc. " +
-            "Otherwise, the root rule chain will be used to process those messages.")
+                          "If present, the specified rule chain will be used to process all messages related to device, including telemetry, attribute updates, etc. " +
+                          "Otherwise, the root rule chain will be used to process those messages.")
     private RuleChainId defaultRuleChainId;
     @Schema(description = "Reference to the dashboard. Used in the mobile application to open the default dashboard when user navigates to device details.")
     private DashboardId defaultDashboardId;
 
     @NoXss
     @Schema(description = "Rule engine queue name. " +
-            "If present, the specified queue will be used to store all unprocessed messages related to device, including telemetry, attribute updates, etc. " +
-            "Otherwise, the 'Main' queue will be used to store those messages.")
+                          "If present, the specified queue will be used to store all unprocessed messages related to device, including telemetry, attribute updates, etc. " +
+                          "Otherwise, the 'Main' queue will be used to store those messages.")
     private String defaultQueueName;
     @Valid
-    private transient DeviceProfileData profileData;
-    @JsonIgnore
-    @Getter
-    @Setter
-    private byte[] profileDataBytes;
+    private DeviceProfileData profileData;
     @NoXss
     @Schema(description = "Unique provisioning key used by 'Device Provisioning' feature.")
     private String provisionDeviceKey;
@@ -92,8 +81,8 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     private OtaPackageId softwareId;
 
     @Schema(description = "Reference to the edge rule chain. " +
-            "If present, the specified edge rule chain will be used on the edge to process all messages related to device, including telemetry, attribute updates, etc. " +
-            "Otherwise, the edge root rule chain will be used to process those messages.")
+                          "If present, the specified edge rule chain will be used on the edge to process all messages related to device, including telemetry, attribute updates, etc. " +
+                          "Otherwise, the edge root rule chain will be used to process those messages.")
     private RuleChainId defaultEdgeRuleChainId;
 
     private DeviceProfileId externalId;
@@ -127,9 +116,9 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     }
 
     @Schema(description = "JSON object with the device profile Id. " +
-            "Specify this field to update the device profile. " +
-            "Referencing non-existing device profile Id will cause error. " +
-            "Omit this field to create new device profile.")
+                          "Specify this field to update the device profile. " +
+                          "Referencing non-existing device profile Id will cause error. " +
+                          "Omit this field to create new device profile.")
     @Override
     public DeviceProfileId getId() {
         return super.getId();
@@ -148,30 +137,7 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
 
     @Schema(description = "Complex JSON object that includes addition device profile configuration (transport, alarm rules, etc).")
     public DeviceProfileData getProfileData() {
-        if (profileData != null) {
-            return profileData;
-        } else {
-            if (profileDataBytes != null) {
-                try {
-                    profileData = mapper.readValue(new ByteArrayInputStream(profileDataBytes), DeviceProfileData.class);
-                } catch (IOException e) {
-                    log.warn("Can't deserialize device profile data: ", e);
-                    return null;
-                }
-                return profileData;
-            } else {
-                return null;
-            }
-        }
-    }
-
-    public void setProfileData(DeviceProfileData data) {
-        this.profileData = data;
-        try {
-            this.profileDataBytes = data != null ? mapper.writeValueAsBytes(data) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("Can't serialize device profile data: ", e);
-        }
+        return profileData;
     }
 
 }
