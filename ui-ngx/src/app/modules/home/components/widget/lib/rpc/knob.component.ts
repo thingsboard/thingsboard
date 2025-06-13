@@ -145,7 +145,7 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
 
     this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {
       units: this.ctx.units,
-      decimals: this.ctx.decimals,
+      decimals: this.ctx.decimals || 0,
       showZeroDecimals: true
     });
 
@@ -299,7 +299,7 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
   }
 
   private turn(ratio: number) {
-    this.newValue = Number((this.minValue + (this.maxValue - this.minValue) * ratio).toFixed(this.ctx.decimals));
+    this.newValue = Number((this.minValue + (this.maxValue - this.minValue) * ratio).toFixed(this.ctx.decimals || 0));
     if (this.canvasBar.value !== this.newValue) {
       this.canvasBar.value = this.newValue;
     }
