@@ -17,13 +17,11 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -31,13 +29,10 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Optional;
 
 @Schema
 @Data
-@ToString(exclude = {"profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 public class TenantProfile extends BaseData<TenantProfileId> implements HasName {
@@ -57,13 +52,11 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
     @JsonProperty("default")
     private boolean isDefault;
     @Schema(description = "If enabled, will push all messages related to this tenant and processed by the rule engine into separate queue. " +
-            "Useful for complex microservices deployments, to isolate processing of the data for specific tenants", example = "false")
+                          "Useful for complex microservices deployments, to isolate processing of the data for specific tenants", example = "false")
     private boolean isolatedTbRuleEngine;
     @Valid
     @Schema(description = "Complex JSON object that contains profile settings: queue configs, max devices, max assets, rate limits, etc.")
-    private transient TenantProfileData profileData;
-    @JsonIgnore
-    private byte[] profileDataBytes;
+    private TenantProfileData profileData;
 
     public TenantProfile() {
         super();
@@ -83,9 +76,9 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
     }
 
     @Schema(description = "JSON object with the tenant profile Id. " +
-            "Specify this field to update the tenant profile. " +
-            "Referencing non-existing tenant profile Id will cause error. " +
-            "Omit this field to create new tenant profile.")
+                          "Specify this field to update the tenant profile. " +
+                          "Referencing non-existing tenant profile Id will cause error. " +
+                          "Omit this field to create new tenant profile.")
     @Override
     public TenantProfileId getId() {
         return super.getId();
@@ -103,21 +96,10 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
     }
 
     public TenantProfileData getProfileData() {
-        if (profileData != null) {
-            return profileData;
-        } else {
-            if (profileDataBytes != null) {
-                try {
-                    profileData = mapper.readValue(new ByteArrayInputStream(profileDataBytes), TenantProfileData.class);
-                } catch (IOException e) {
-                    log.warn("Can't deserialize tenant profile data: ", e);
-                    return createDefaultTenantProfileData();
-                }
-                return profileData;
-            } else {
-                return createDefaultTenantProfileData();
-            }
+        if (profileData == null) {
+            profileData = createDefaultTenantProfileData();
         }
+        return profileData;
     }
 
     @JsonIgnore
@@ -135,17 +117,7 @@ public class TenantProfile extends BaseData<TenantProfileId> implements HasName 
     public TenantProfileData createDefaultTenantProfileData() {
         TenantProfileData tpd = new TenantProfileData();
         tpd.setConfiguration(new DefaultTenantProfileConfiguration());
-        this.profileData = tpd;
         return tpd;
-    }
-
-    public void setProfileData(TenantProfileData data) {
-        this.profileData = data;
-        try {
-            this.profileDataBytes = data != null ? mapper.writeValueAsBytes(data) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("Can't serialize tenant profile data: ", e);
-        }
     }
 
 }

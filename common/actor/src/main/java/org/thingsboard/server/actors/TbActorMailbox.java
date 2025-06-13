@@ -237,8 +237,14 @@ public final class TbActorMailbox implements TbActorCtx {
             try {
                 ready.set(NOT_READY);
                 actor.destroy(stopReason, cause);
-                highPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
-                normalPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
+                highPriorityMsgs.removeIf(msg -> {
+                    msg.onTbActorStopped(stopReason);
+                    return true;
+                });
+                normalPriorityMsgs.removeIf(msg -> {
+                    msg.onTbActorStopped(stopReason);
+                    return true;
+                });
             } catch (Throwable t) {
                 log.warn("[{}] Failed to destroy actor: ", selfId, t);
             }

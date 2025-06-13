@@ -36,4 +36,5 @@ public class TenantProfileQueueConfiguration implements Serializable {
     private SubmitStrategy submitStrategy;
     private ProcessingStrategy processingStrategy;
     private JsonNode additionalInfo;
+
 }

@@ -15,15 +15,12 @@
  */
 package org.thingsboard.server.common.data.relation;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
@@ -36,8 +33,7 @@ import java.util.UUID;
 
 @Slf4j
 @Schema
-@EqualsAndHashCode(exclude = "additionalInfoBytes")
-@ToString(exclude = {"additionalInfoBytes"})
+@EqualsAndHashCode
 public class EntityRelation implements HasVersion, Serializable, EdqsObject {
 
     private static final long serialVersionUID = 2807343040519543363L;
@@ -59,9 +55,7 @@ public class EntityRelation implements HasVersion, Serializable, EdqsObject {
     @Getter
     @Setter
     private Long version;
-    private transient JsonNode additionalInfo;
-    @JsonIgnore
-    private byte[] additionalInfoBytes;
+    private JsonNode additionalInfo;
 
     public EntityRelation() {
         super();
@@ -114,11 +108,11 @@ public class EntityRelation implements HasVersion, Serializable, EdqsObject {
 
     @Schema(description = "Additional parameters of the relation", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     public JsonNode getAdditionalInfo() {
-        return BaseDataWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
+        return additionalInfo;
     }
 
-    public void setAdditionalInfo(JsonNode addInfo) {
-        BaseDataWithAdditionalInfo.setJson(addInfo, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
+    public void setAdditionalInfo(JsonNode additionalInfo) {
+        this.additionalInfo = additionalInfo;
     }
 
     @Override

@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
  * @author Andrew Shvayka
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema
 public class EventInfo extends BaseData<EventId> {
 
@@ -37,8 +39,8 @@ public class EventInfo extends BaseData<EventId> {
     private String uid;
     @Schema(description = "JSON object with Entity Id for which event is created.", accessMode = Schema.AccessMode.READ_ONLY)
     private EntityId entityId;
-    @Schema(description = "Event body.",implementation = com.fasterxml.jackson.databind.JsonNode.class)
-    private transient JsonNode body;
+    @Schema(description = "Event body.", implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    private JsonNode body;
 
     public EventInfo() {
         super();
@@ -57,4 +59,5 @@ public class EventInfo extends BaseData<EventId> {
     public long getCreatedTime() {
         return super.getCreatedTime();
     }
+
 }

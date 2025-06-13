@@ -56,13 +56,10 @@ public class RuleChain extends BaseDataWithAdditionalInfo<RuleChainId> implement
     @Schema(description = "Reserved for future usage.")
     private boolean debugMode;
     @Schema(description = "Reserved for future usage. The actual list of rule nodes and their relations is stored in the database separately.")
-    private transient JsonNode configuration;
+    private JsonNode configuration;
 
     private RuleChainId externalId;
     private Long version;
-
-    @JsonIgnore
-    private byte[] configurationBytes;
 
     public RuleChain() {
         super();
@@ -90,9 +87,9 @@ public class RuleChain extends BaseDataWithAdditionalInfo<RuleChainId> implement
     }
 
     @Schema(description = "JSON object with the Rule Chain Id. " +
-            "Specify this field to update the Rule Chain. " +
-            "Referencing non-existing Rule Chain Id will cause error. " +
-            "Omit this field to create new rule chain.")
+                          "Specify this field to update the Rule Chain. " +
+                          "Referencing non-existing Rule Chain Id will cause error. " +
+                          "Omit this field to create new rule chain.")
     @Override
     public RuleChainId getId() {
         return super.getId();
@@ -102,14 +99,6 @@ public class RuleChain extends BaseDataWithAdditionalInfo<RuleChainId> implement
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
-    }
-
-    public JsonNode getConfiguration() {
-        return BaseDataWithAdditionalInfo.getJson(() -> configuration, () -> configurationBytes);
-    }
-
-    public void setConfiguration(JsonNode data) {
-        setJson(data, json -> this.configuration = json, bytes -> this.configurationBytes = bytes);
     }
 
     @JsonIgnore

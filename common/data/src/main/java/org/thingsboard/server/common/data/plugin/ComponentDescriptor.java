@@ -47,7 +47,7 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
     @Schema(description = "Full name of the Java class that implements the Rule Engine Node interface.", accessMode = Schema.AccessMode.READ_ONLY, example = "com.mycompany.CustomRuleNode")
     @Getter @Setter private String clazz;
     @Schema(description = "Complex JSON object that represents the Rule Node configuration.", accessMode = Schema.AccessMode.READ_ONLY)
-    @Getter @Setter private transient JsonNode configurationDescriptor;
+    @Getter @Setter private JsonNode configurationDescriptor;
     @Schema(description = "Rule node configuration version. By default, this value is 0. If the rule node is a versioned node, this value might be greater than 0.", accessMode = Schema.AccessMode.READ_ONLY)
     @Getter @Setter private int configurationVersion;
     @Length(fieldName = "actions")
@@ -78,9 +78,9 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
     }
 
     @Schema(description = "JSON object with the descriptor Id. " +
-            "Specify existing descriptor id to update the descriptor. " +
-            "Referencing non-existing descriptor Id will cause error. " +
-            "Omit this field to create new descriptor." )
+                          "Specify existing descriptor id to update the descriptor. " +
+                          "Referencing non-existing descriptor Id will cause error. " +
+                          "Omit this field to create new descriptor.")
     @Override
     public ComponentDescriptorId getId() {
         return super.getId();
