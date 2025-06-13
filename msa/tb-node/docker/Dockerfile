@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk17:bookworm-slim
+FROM sevlamat/openjdk17:bookworm-slim
 
 COPY logback.xml start-tb-node.sh ${pkg.name}.deb /tmp/
 
