@@ -103,7 +103,7 @@
         <jts.version>1.19.0</jts.version>
         <bouncycastle.version>1.78.1</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
-        <postgresql.driver.version>42.7.5</postgresql.driver.version>
+        <postgresql.driver.version>42.7.7</postgresql.driver.version>
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
