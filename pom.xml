@@ -158,7 +158,7 @@
         <allure-maven.version>2.12.0</allure-maven.version>
 
         <opensmpp.version>3.0.2</opensmpp.version>
-        <jgit.version>6.9.0.202403050737-r</jgit.version>
+        <jgit.version>6.10.1.202505221210-r</jgit.version>
         <exp4j.version>0.4.8</exp4j.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
 
