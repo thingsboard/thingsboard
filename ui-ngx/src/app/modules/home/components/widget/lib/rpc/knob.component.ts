@@ -57,6 +57,7 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
   maxValue: number;
   newValue = 0;
 
+  private decimals: number;
   private startDeg = -1;
   private currentDeg = 0;
   private rotation = 0;
@@ -143,9 +144,10 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
       actionLabel: this.ctx.translate.instant('widgets.slider.on-value-change')};
     this.valueSetter = this.createValueSetter(valueChangeSettings);
 
+    this.decimals = isDefined(this.ctx.decimals) ? this.ctx.decimals : 0;
     this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {
       units: this.ctx.units,
-      decimals: this.ctx.decimals,
+      decimals: this.decimals,
       showZeroDecimals: true
     });
 
@@ -299,7 +301,7 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
   }
 
   private turn(ratio: number) {
-    this.newValue = Number((this.minValue + (this.maxValue - this.minValue) * ratio).toFixed(this.ctx.decimals));
+    this.newValue = Number((this.minValue + (this.maxValue - this.minValue) * ratio).toFixed(this.decimals));
     if (this.canvasBar.value !== this.newValue) {
       this.canvasBar.value = this.newValue;
     }
