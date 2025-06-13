@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -581,10 +582,10 @@ public abstract class EdgeGrpcSession implements Closeable {
                 @Override
                 public void onSuccess(@Nullable Pair<Long, Long> newStartTsAndSeqId) {
                     if (newStartTsAndSeqId != null) {
-                        ListenableFuture<List<Long>> updateFuture = updateQueueStartTsAndSeqId(newStartTsAndSeqId);
+                        ListenableFuture<AttributesSaveResult> updateFuture = updateQueueStartTsAndSeqId(newStartTsAndSeqId);
                         Futures.addCallback(updateFuture, new FutureCallback<>() {
                             @Override
-                            public void onSuccess(@Nullable List<Long> list) {
+                            public void onSuccess(@Nullable AttributesSaveResult saveResult) {
                                 log.debug("[{}][{}] queue offset was updated [{}]", tenantId, edge.getId(), newStartTsAndSeqId);
                                 boolean newEventsAvailable;
                                 if (fetcher.isSeqIdNewCycleStarted()) {
@@ -645,8 +646,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                             log.trace("[{}][{}] entity message processed [{}]", tenantId, edge.getId(), downlinkMsg);
                         }
                     }
-                    case ATTRIBUTES_UPDATED, POST_ATTRIBUTES, ATTRIBUTES_DELETED, TIMESERIES_UPDATED ->
-                            downlinkMsg = ctx.getTelemetryProcessor().convertTelemetryEventToDownlink(edge, edgeEvent);
+                    case ATTRIBUTES_UPDATED, POST_ATTRIBUTES, ATTRIBUTES_DELETED, TIMESERIES_UPDATED -> downlinkMsg = ctx.getTelemetryProcessor().convertTelemetryEventToDownlink(edge, edgeEvent);
                     default -> log.warn("[{}][{}] Unsupported action type [{}]", tenantId, edge.getId(), edgeEvent.getAction());
                 }
             } catch (Exception e) {
@@ -722,13 +722,14 @@ public abstract class EdgeGrpcSession implements Closeable {
         return startSeqId;
     }
 
-    private ListenableFuture<List<Long>> updateQueueStartTsAndSeqId(Pair<Long, Long> pair) {
+    private ListenableFuture<AttributesSaveResult> updateQueueStartTsAndSeqId(Pair<Long, Long> pair) {
         newStartTs = pair.getFirst();
         newStartSeqId = pair.getSecond();
         log.trace("[{}] updateQueueStartTsAndSeqId [{}][{}][{}]", sessionId, edge.getId(), newStartTs, newStartSeqId);
-        List<AttributeKvEntry> attributes = Arrays.asList(
+        List<AttributeKvEntry> attributes = List.of(
                 new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_TS_ATTR_KEY, newStartTs), System.currentTimeMillis()),
-                new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_SEQ_ID_ATTR_KEY, newStartSeqId), System.currentTimeMillis()));
+                new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_SEQ_ID_ATTR_KEY, newStartSeqId), System.currentTimeMillis())
+        );
         return ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), AttributeScope.SERVER_SCOPE, attributes);
     }
 

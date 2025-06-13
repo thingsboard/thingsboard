@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.kv;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import java.util.Collections;
+import java.util.List;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+public record AttributesSaveResult(List<Long> versions) {
 
-    private boolean useLatestTs;
+    public static final AttributesSaveResult EMPTY = new AttributesSaveResult(Collections.emptyList());
 
-    @Override
-    public CalculatedFieldType getType() {
-        return CalculatedFieldType.SIMPLE;
+    public static AttributesSaveResult of(List<Long> versions) {
+        if (versions == null) {
+            return EMPTY;
+        }
+        return new AttributesSaveResult(versions);
     }
 
 }

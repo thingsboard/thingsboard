@@ -66,7 +66,7 @@ public class ResourceImportService extends BaseEntityImportService<TbResourceId,
     protected void cleanupForComparison(TbResource resource) {
         super.cleanupForComparison(resource);
         resource.setSearchText(null);
-        if (resource.getDescriptor().isNull()) {
+        if (resource.getDescriptor() != null && resource.getDescriptor().isNull()) {
             resource.setDescriptor(null);
         }
     }
