@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -99,7 +98,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 calculatedField.setDebugSettings(JacksonUtil.fromString(debugSettings, DebugSettings.class));
 
                 return calculatedField;
-            }).filter(Objects::nonNull).collect(Collectors.toList());
+            }).collect(Collectors.toList());
             return new PageData<>(data, totalPages, totalElements, hasNext);
         });
     }

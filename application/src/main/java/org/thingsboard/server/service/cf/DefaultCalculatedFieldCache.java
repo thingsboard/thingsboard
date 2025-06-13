@@ -72,8 +72,10 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     public void init() {
         PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFields, initFetchPackSize);
         cfs.forEach(cf -> {
-            calculatedFields.putIfAbsent(cf.getId(), cf);
-            actorSystemContext.tell(new CalculatedFieldInitMsg(cf.getTenantId(), cf));
+            if (cf != null) {
+                calculatedFields.putIfAbsent(cf.getId(), cf);
+                actorSystemContext.tell(new CalculatedFieldInitMsg(cf.getTenantId(), cf));
+            }
         });
         calculatedFields.values().forEach(cf -> {
             entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cf);
