@@ -47,7 +47,7 @@
         <spring-boot.version>3.2.12</spring-boot.version>
         <spring-data.version>3.2.12</spring-data.version>
         <spring-data-redis.version>3.2.12</spring-data-redis.version>
-        <spring.version>6.1.15</spring.version>
+        <spring.version>6.1.21</spring.version>
         <spring-redis.version>6.2.11</spring-redis.version>
         <spring-security.version>6.3.8</spring-security.version>
         <jedis.version>5.1.5</jedis.version>
@@ -1173,7 +1173,7 @@
             <!-- ...Vulnerability fix - transitive dependency from Spring Boot, remove after Spring Boot upgrade -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter</artifactId>
+                    <artifactId>spring-boot-starter</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
