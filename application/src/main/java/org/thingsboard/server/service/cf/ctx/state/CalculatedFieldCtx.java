@@ -185,10 +185,8 @@ public class CalculatedFieldCtx {
             return false;
         }
 
-        var lookupKey = new ReferencedEntityKey(null, ArgumentType.ATTRIBUTE, scope);
         for (AttributeKvEntry attrKv : values) {
-            lookupKey.setKey(attrKv.getKey());
-            if (argMap.containsKey(lookupKey)) {
+            if (argMap.containsKey(new ReferencedEntityKey(attrKv.getKey(), ArgumentType.ATTRIBUTE, scope))) {
                 return true;
             }
         }
@@ -201,17 +199,15 @@ public class CalculatedFieldCtx {
             return false;
         }
 
-        var lookupKey = new ReferencedEntityKey(null, null, null);
         for (TsKvEntry tsKv : values) {
-            lookupKey.setKey(tsKv.getKey());
 
-            lookupKey.setType(ArgumentType.TS_LATEST);
-            if (argMap.containsKey(lookupKey)) {
+            ReferencedEntityKey latestKey = new ReferencedEntityKey(tsKv.getKey(), ArgumentType.TS_LATEST, null);
+            if (argMap.containsKey(latestKey)) {
                 return true;
             }
 
-            lookupKey.setType(ArgumentType.TS_ROLLING);
-            if (argMap.containsKey(lookupKey)) {
+            ReferencedEntityKey rollingKey = new ReferencedEntityKey(tsKv.getKey(), ArgumentType.TS_ROLLING, null);
+            if (argMap.containsKey(rollingKey)) {
                 return true;
             }
         }
@@ -232,10 +228,9 @@ public class CalculatedFieldCtx {
             return false;
         }
 
-        var lookupKey = new ReferencedEntityKey(null, ArgumentType.ATTRIBUTE, scope);
         for (String key : keys) {
-            lookupKey.setKey(key);
-            if (argMap.containsKey(lookupKey)) {
+            ReferencedEntityKey attrKey = new ReferencedEntityKey(key, ArgumentType.ATTRIBUTE, scope);
+            if (argMap.containsKey(attrKey)) {
                 return true;
             }
         }
@@ -248,17 +243,15 @@ public class CalculatedFieldCtx {
             return false;
         }
 
-        var lookupKey = new ReferencedEntityKey(null, null, null);
         for (String key : keys) {
-            lookupKey.setKey(key);
 
-            lookupKey.setType(ArgumentType.TS_LATEST);
-            if (argMap.containsKey(lookupKey)) {
+            ReferencedEntityKey latestKey = new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null);
+            if (argMap.containsKey(latestKey)) {
                 return true;
             }
 
-            lookupKey.setType(ArgumentType.TS_ROLLING);
-            if (argMap.containsKey(lookupKey)) {
+            ReferencedEntityKey rollingKey = new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null);
+            if (argMap.containsKey(rollingKey)) {
                 return true;
             }
         }

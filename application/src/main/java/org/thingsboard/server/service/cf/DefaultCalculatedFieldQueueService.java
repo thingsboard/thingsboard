@@ -41,6 +41,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
@@ -200,11 +201,11 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         List<Long> versions = result != null ? result.getVersions() : Collections.emptyList();
 
         for (int i = 0; i < entries.size(); i++) {
-            TsKvEntry tsKvEntry = entries.get(i);
+            TsKvProto.Builder tsProtoBuilder = toTsKvProto(entries.get(i)).toBuilder();
             if (versions != null && !versions.isEmpty() && versions.get(i) != null) {
-                tsKvEntry.setVersion(versions.get(i));
+                tsProtoBuilder.setVersion(versions.get(i));
             }
-            telemetryMsg.addTsData(toTsKvProto(tsKvEntry));
+            telemetryMsg.addTsData(tsProtoBuilder.build());
         }
 
         return ToCalculatedFieldMsg.newBuilder().setTelemetryMsg(telemetryMsg).build();
