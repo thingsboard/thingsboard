@@ -30,7 +30,7 @@ import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { formatValue, isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { formatValue, isDefined, isUndefined } from '@core/utils';
 import { Component } from '@angular/core';
 import {
   convertLevelColorsSettingsToColorProcessor,
@@ -157,8 +157,8 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
     this.widgetConfig.config.settings.showValue = config.showValue;
     this.widgetConfig.config.units = config.units;
     this.widgetConfig.config.decimals = config.decimals;
-    if (isDefinedAndNotNull(this.widgetConfig.config.settings.decimals)) {
-      this.widgetConfig.config.settings.decimals = null;
+    if (isDefined(this.widgetConfig.config.settings.decimals)) {
+      delete this.widgetConfig.config.settings.decimals;
     }
     this.widgetConfig.config.settings.valueFont = config.valueFont;
     this.widgetConfig.config.settings.valueFont.color = config.valueColor;

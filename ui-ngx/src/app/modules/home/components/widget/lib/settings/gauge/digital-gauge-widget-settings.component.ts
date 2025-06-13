@@ -37,7 +37,7 @@ import {
   digitalGaugeLayoutTranslations,
   DigitalGaugeType
 } from '@home/components/widget/lib/digital-gauge.models';
-import { formatValue, isDefinedAndNotNull } from '@core/utils';
+import { formatValue, isDefined } from '@core/utils';
 import {
   ColorSettings,
   ColorType,
@@ -247,8 +247,8 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     settings.titleFont.color = this.digitalGaugeWidgetSettingsForm.get('titleColor').value;
     settings.labelFont.color = this.digitalGaugeWidgetSettingsForm.get('labelColor').value;
 
-    if (isDefinedAndNotNull(settings.decimals)) {
-      settings.decimals = null;
+    if (isDefined(settings.decimals)) {
+      delete settings.decimals;
     }
 
     return settings;
