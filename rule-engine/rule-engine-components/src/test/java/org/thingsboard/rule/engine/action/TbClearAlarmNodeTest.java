@@ -108,7 +108,7 @@ class TbClearAlarmNodeTest {
                 .severity(AlarmSeverity.WARNING)
                 .propagate(false)
                 .type("SomeType")
-                .details(null)
+                .details(JacksonUtil.newObjectNode().put("key", "value"))
                 .endTs(oldEndDate)
                 .build();
 
@@ -167,7 +167,7 @@ class TbClearAlarmNodeTest {
                 .severity(AlarmSeverity.WARNING)
                 .propagate(false)
                 .type("SomeType")
-                .details(null)
+                .details(JacksonUtil.newObjectNode().put("key", "value"))
                 .endTs(oldEndDate)
                 .build();
         expectedAlarm.setId(id);
