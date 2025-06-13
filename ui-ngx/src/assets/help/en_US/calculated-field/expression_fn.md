@@ -1,7 +1,7 @@
 ## Calculated Field TBEL Script Function
 
 The **calculate()** function is a user-defined script that enables custom calculations using [TBEL](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/tbel/) on telemetry and attribute data.
-It receives arguments configured in the calculated field setup, along with an additional `ctx` object that stores `msgTs` and provides access to all arguments.
+It receives arguments configured in the calculated field setup, along with an additional `ctx` object that stores `latestTs` and provides access to all arguments.
 
 ### Function Signature
 
@@ -216,14 +216,14 @@ The return format depends on the output type configured in the calculated field 
 
 ### Message timestamp
 
-The `ctx` object also includes property `msgTs`, which represents the timestamp of the incoming telemetry message that triggered the calculated field execution in milliseconds.
+The `ctx` object also includes property `latestTs`, which represents the latest timestamp of the arguments telemetry in milliseconds.
 
-You can use `ctx.msgTs` to set the timestamp of the resulting output explicitly when returning a time series object.
+You can use `ctx.latestTs` to set the timestamp of the resulting output explicitly when returning a time series object.
 
 ```javascript
 var temperatureC = (temperatureF - 32) / 1.8;
 return {
-  ts: ctx.msgTs,
+  ts: ctx.latestTs,
   values: {
     "temperatureC": toFixed(temperatureC, 2)
   }
