@@ -95,8 +95,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Value("${sql.ts.value_no_xss_validation:false}")
     private boolean valueNoXssValidation;
-    @Value("${sql.ts.thread_pool_size:12}")
-    private int threadPoolSize;
+    @Value("${sql.ts.callback_thread_pool_size:12}")
+    private int callbackThreadPoolSize;
 
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
@@ -117,7 +117,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @PostConstruct
     public void initExecutor() {
         super.initExecutor();
-        tsCallBackExecutor = ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "ts-service-ts-callback");
+        tsCallBackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreadPoolSize, "ts-service-ts-callback");
     }
 
     @Override

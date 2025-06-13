@@ -30,7 +30,9 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
+import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgHeaders;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
@@ -109,7 +111,16 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
         if (stateMsgProto == null) {
             putStateId(msg.getHeaders(), stateId);
         }
-        stateProducer.send(tpi, stateId.toKey(), msg, null);
+        stateProducer.send(tpi, stateId.toKey(), msg, new TbQueueCallback() {
+            @Override
+            public void onSuccess(TbQueueMsgMetadata metadata) {
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Failed to send state message: {}", stateId, t);
+            }
+        });
         callback.onSuccess();
     }
 
