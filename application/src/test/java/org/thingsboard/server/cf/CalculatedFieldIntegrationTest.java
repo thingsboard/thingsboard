@@ -555,7 +555,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
 
         long tsABeforeTsB = tsB - 300L;
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"b\":10}}", tsABeforeTsB)));
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"a\":10}}", tsABeforeTsB)));
 
         await().alias("update telemetry with ts less than latest -> save result with latest ts").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -563,7 +563,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     ObjectNode c = getLatestTelemetry(testDevice.getId(), "c");
                     assertThat(c).isNotNull();
                     assertThat(c.get("c").get(0).get("ts").asText()).isEqualTo(Long.toString(tsB));// also tsB, since this is the latest timestamp
-                    assertThat(c.get("c").get(0).get("value").asText()).isEqualTo("11.0");
+                    assertThat(c.get("c").get(0).get("value").asText()).isEqualTo("15.0");
                 });
     }
 
