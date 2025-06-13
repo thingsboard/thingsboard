@@ -42,7 +42,7 @@
         <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jaxb-runtime.version>4.0.5</jaxb-runtime.version>
-        <tomcat.version>10.1.40</tomcat.version> <!-- Vulnerability fix, Remove after update spring-boot to new version-->
+        <tomcat.version>10.1.42</tomcat.version> <!-- Vulnerability fix, Remove after update spring-boot to new version-->
         <net.minidev.json-smart>2.5.2</net.minidev.json-smart> <!-- Vulnerability fix, CVE-2024-57699, Remove after update spring-boot 3.2.12 to a newer version-->
         <spring-boot.version>3.2.12</spring-boot.version>
         <spring-data.version>3.2.12</spring-data.version>
