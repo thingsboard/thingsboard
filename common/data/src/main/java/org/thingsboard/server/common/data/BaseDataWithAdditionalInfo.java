@@ -46,11 +46,6 @@ public abstract class BaseDataWithAdditionalInfo<I extends UUIDBased> extends Ba
         this.additionalInfo = baseData.getAdditionalInfo();
     }
 
-    @Override
-    public JsonNode getAdditionalInfo() {
-        return nullNodeToNull(additionalInfo);
-    }
-
     public void setAdditionalInfoField(String field, JsonNode value) {
         JsonNode additionalInfo = getAdditionalInfo();
         if (!(additionalInfo instanceof ObjectNode)) {

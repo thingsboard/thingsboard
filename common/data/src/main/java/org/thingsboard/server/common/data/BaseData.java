@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.UUIDBased;
@@ -56,13 +55,6 @@ public abstract class BaseData<I extends UUIDBased> extends IdBased<I> implement
         int result = super.hashCode();
         result = prime * result + Long.hashCode(createdTime);
         return result;
-    }
-
-    public JsonNode nullNodeToNull(JsonNode node) {
-        if (node == null || node.isNull()) {
-            return null;
-        }
-        return node;
     }
 
     @SuppressWarnings("rawtypes")
