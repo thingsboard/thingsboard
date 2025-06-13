@@ -115,7 +115,7 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
       minMaxColor: [settings.minMaxFont?.color, []],
 
       showValue: [settings.showValue, []],
-      decimals: [configData.config.decimals || settings.decimals, []],
+      decimals: [isDefined(configData.config.decimals) ? configData.config.decimals : settings.decimals, []],
       units: [configData.config.units, []],
       valueFont: [settings.valueFont, []],
       valueColor: [settings.valueFont?.color, []],
