@@ -57,7 +57,7 @@ export class KnobControlWidgetSettingsComponent extends WidgetSettingsComponent 
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
     const knobSettings = prepareKnobSettings(deepClone(settings) as any) as WidgetSettings;
-    knobSettings.valueDecimals = this.widgetConfig?.config?.decimals ?? 2;
+    knobSettings.valueDecimals = this.widgetConfig?.config?.decimals;
     knobSettings.valueUnits = deepClone(this.widgetConfig?.config?.units);
     return super.prepareInputSettings(knobSettings);
   }
