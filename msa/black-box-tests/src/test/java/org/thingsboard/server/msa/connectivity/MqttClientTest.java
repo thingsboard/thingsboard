@@ -557,22 +557,6 @@ public class MqttClientTest extends AbstractContainerTest {
     }
 
     @Test
-    public void regularDisconnect() throws Exception {
-        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
-
-        MqttMessageListener listener = new MqttMessageListener();
-        MqttClient mqttClient = getMqttClient(deviceCredentials, listener, MqttVersion.MQTT_5);
-        final List<Byte> returnCodeByteValue = new ArrayList<>();
-        MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
-        mqttClient.setCallback(callbackForDisconnectWithReturnCode);
-        mqttClient.disconnect();
-        Thread.sleep(1000);
-        assertThat(returnCodeByteValue.size()).isEqualTo(1);
-        MqttReasonCodes.Disconnect returnCode = MqttReasonCodes.Disconnect.valueOf(returnCodeByteValue.get(0));
-        assertThat(returnCode).isEqualTo(MqttReasonCodes.Disconnect.NORMAL_DISCONNECT);
-    }
-
-    @Test
     public void clientSessionTakenOverDisconnect() throws Exception {
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 

@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -34,8 +35,10 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.service.install.DbUpgradeExecutorService;
@@ -69,13 +72,56 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private DbUpgradeExecutorService executorService;
 
+    @Autowired
+    private TenantProfileService tenantProfileService;
+
     @Override
     public void updateData() throws Exception {
         log.info("Updating data ...");
         //TODO: should be cleaned after each release
         updateInputNodes();
+        deduplicateRateLimitsPerSecondsConfigurations();
         log.info("Data updated.");
     }
+
+    private void deduplicateRateLimitsPerSecondsConfigurations() {
+        log.info("Starting update of tenant profiles...");
+
+        int totalProfiles = 0;
+        int updatedTenantProfiles = 0;
+        int skippedProfiles = 0;
+        int failedProfiles = 0;
+
+        var tenantProfiles = new PageDataIterable<>(
+                pageLink -> tenantProfileService.findTenantProfiles(TenantId.SYS_TENANT_ID, pageLink), 1024);
+
+        for (TenantProfile tenantProfile : tenantProfiles) {
+            totalProfiles++;
+            String profileName = tenantProfile.getName();
+            UUID profileId = tenantProfile.getId().getId();
+            try {
+                Optional<DefaultTenantProfileConfiguration> profileConfiguration = tenantProfile.getProfileConfiguration();
+                if (profileConfiguration.isEmpty()) {
+                    log.debug("[{}][{}] Skipping tenant profile with non-default configuration.", profileId, profileName);
+                    skippedProfiles++;
+                    continue;
+                }
+
+                DefaultTenantProfileConfiguration defaultTenantProfileConfiguration = profileConfiguration.get();
+                defaultTenantProfileConfiguration.deduplicateRateLimitsConfigs();
+                tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+                updatedTenantProfiles++;
+                log.debug("[{}][{}] Successfully updated tenant profile.", profileId, profileName);
+            } catch (Exception e) {
+                log.error("[{}][{}] Failed to updated tenant profile: ", profileId, profileName, e);
+                failedProfiles++;
+            }
+        }
+
+        log.info("Tenant profiles update completed. Total: {}, Updated: {}, Skipped: {}, Failed: {}",
+                totalProfiles, updatedTenantProfiles, skippedProfiles, failedProfiles);
+    }
+
 
     private void updateInputNodes() {
         log.info("Creating relations for input nodes...");

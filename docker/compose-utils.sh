@@ -64,19 +64,19 @@ function additionalComposeMonitoringArgs() {
 function additionalComposeCacheArgs() {
     source .env
     CACHE_COMPOSE_ARGS=""
-    CACHE="${CACHE:-redis}"
+    CACHE="${CACHE:-valkey}"
     case $CACHE in
-        redis)
-        CACHE_COMPOSE_ARGS="-f docker-compose.redis.yml"
+        valkey)
+        CACHE_COMPOSE_ARGS="-f docker-compose.valkey.yml"
         ;;
-        redis-cluster)
-        CACHE_COMPOSE_ARGS="-f docker-compose.redis-cluster.yml"
+        valkey-cluster)
+        CACHE_COMPOSE_ARGS="-f docker-compose.valkey-cluster.yml"
         ;;
-        redis-sentinel)
-        CACHE_COMPOSE_ARGS="-f docker-compose.redis-sentinel.yml"
+        valkey-sentinel)
+        CACHE_COMPOSE_ARGS="-f docker-compose.valkey-sentinel.yml"
         ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'valkey' or 'valkey-cluster' or 'valkey-sentinel'." >&2
         exit 1
     esac
     echo $CACHE_COMPOSE_ARGS
@@ -97,19 +97,19 @@ function additionalStartupServices() {
         exit 1
     esac
 
-    CACHE="${CACHE:-redis}"
+    CACHE="${CACHE:-valkey}"
     case $CACHE in
-        redis)
-        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis"
+        valkey)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES valkey"
         ;;
-        redis-cluster)
-        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5"
+        valkey-cluster)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES valkey-node-0 valkey-node-1 valkey-node-2 valkey-node-3 valkey-node-4 valkey-node-5"
         ;;
-        redis-sentinel)
-        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis-master redis-slave redis-sentinel"
+        valkey-sentinel)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES valkey-primary valkey-replica valkey-sentinel"
         ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'valkey' or 'valkey-cluster' or 'valkey-sentinel'." >&2
         exit 1
     esac
 
@@ -154,32 +154,32 @@ function permissionList() {
       "
     fi
 
-    CACHE="${CACHE:-redis}"
+    CACHE="${CACHE:-valkey}"
     case $CACHE in
-        redis)
+        valkey)
           PERMISSION_LIST="$PERMISSION_LIST
-          1001 1001 tb-node/redis-data
+          1001 1001 tb-node/valkey-data
           "
         ;;
-        redis-cluster)
+        valkey-cluster)
           PERMISSION_LIST="$PERMISSION_LIST
-          1001 1001 tb-node/redis-cluster-data-0
-          1001 1001 tb-node/redis-cluster-data-1
-          1001 1001 tb-node/redis-cluster-data-2
-          1001 1001 tb-node/redis-cluster-data-3
-          1001 1001 tb-node/redis-cluster-data-4
-          1001 1001 tb-node/redis-cluster-data-5
+          1001 1001 tb-node/valkey-cluster-data-0
+          1001 1001 tb-node/valkey-cluster-data-1
+          1001 1001 tb-node/valkey-cluster-data-2
+          1001 1001 tb-node/valkey-cluster-data-3
+          1001 1001 tb-node/valkey-cluster-data-4
+          1001 1001 tb-node/valkey-cluster-data-5
           "
         ;;
-        redis-sentinel)
+        valkey-sentinel)
           PERMISSION_LIST="$PERMISSION_LIST
-          1001 1001 tb-node/redis-sentinel-data-master
-          1001 1001 tb-node/redis-sentinel-data-slave
-          1001 1001 tb-node/redis-sentinel-data-sentinel
+          1001 1001 tb-node/valkey-sentinel-data-primary
+          1001 1001 tb-node/valkey-sentinel-data-replica
+          1001 1001 tb-node/valkey-sentinel-data-sentinel
           "
         ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'valkey' or 'valkey-cluster' or 'valkey-sentinel'." >&2
         exit 1
     esac
 

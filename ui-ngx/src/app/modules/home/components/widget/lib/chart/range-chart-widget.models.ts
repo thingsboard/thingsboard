@@ -22,6 +22,7 @@ import {
   Font,
   simpleDateFormat,
   sortedColorRange,
+  ValueFormatProcessor,
   ValueSourceType
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
@@ -291,21 +292,21 @@ export const rangeChartTimeSeriesKeySettings = (settings: RangeChartWidgetSettin
     }
   });
 
-export const toRangeItems = (colorRanges: Array<ColorRange>, convertValue: (x: number) => number): RangeItem[] => {
+export const toRangeItems = (colorRanges: Array<ColorRange>, valueFormat: ValueFormatProcessor): RangeItem[] => {
   const rangeItems: RangeItem[] = [];
   let counter = 0;
   const ranges = sortedColorRange(filterIncludingColorRanges(colorRanges)).filter(r => isNumber(r.from) || isNumber(r.to));
   for (let i = 0; i < ranges.length; i++) {
     const range = ranges[i];
     let from = range.from;
-    const to = isDefinedAndNotNull(range.to) ? convertValue(range.to) : range.to;
+    const to = isDefinedAndNotNull(range.to) ? Number(valueFormat.format(range.to)) : range.to;
     if (i > 0) {
       const prevRange = ranges[i - 1];
       if (isNumber(prevRange.to) && isNumber(from) && from < prevRange.to) {
         from = prevRange.to;
       }
     }
-    from = isDefinedAndNotNull(from) ? convertValue(from) : from;
+    from = isDefinedAndNotNull(from) ? Number(valueFormat.format(from)) : from;
     rangeItems.push(
       {
         index: counter++,

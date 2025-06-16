@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<button *ngIf="asButton && !strokedButton && !flatButton"
+<button *ngIf="asButton && panelMode && !strokedButton && !flatButton"
         [disabled]="timewindowDisabled"
         type="button"
         mat-raised-button color="primary"
@@ -23,7 +23,7 @@
   <mat-icon class="material-icons">query_builder</mat-icon>
   <span>{{displayValue()}}</span>
 </button>
-<button *ngIf="asButton && strokedButton"
+<button *ngIf="asButton && panelMode && strokedButton"
         [disabled]="timewindowDisabled"
         type="button"
         mat-stroked-button color="primary"
@@ -31,7 +31,7 @@
   <mat-icon class="material-icons">query_builder</mat-icon>
   <span>{{displayValue()}}</span>
 </button>
-<button *ngIf="asButton && flatButton"
+<button *ngIf="asButton && panelMode && flatButton"
         [disabled]="timewindowDisabled"
         type="button"
         mat-button
@@ -39,7 +39,7 @@
   <mat-icon class="material-icons">query_builder</mat-icon>
   <span>{{displayValue()}}</span>
 </button>
-<section *ngIf="!asButton"
+<section *ngIf="!asButton && panelMode"
          class="tb-timewindow"
          [class]="{'no-padding': noPadding}"
          matTooltip="{{ 'timewindow.edit' | translate }}"
@@ -55,3 +55,4 @@
   <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'right'"
            [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>
 </section>
+<ng-container #panelContainer></ng-container>

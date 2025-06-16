@@ -22,11 +22,15 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
+import java.io.Serial;
 import java.util.concurrent.TimeUnit;
 
 @Data
 @Builder
 public class RateLimitsTrigger implements NotificationRuleTrigger {
+
+    @Serial
+    private static final long serialVersionUID = -4423112145409424886L;
 
     private final TenantId tenantId;
     private final LimitedApi api;
@@ -45,8 +49,8 @@ public class RateLimitsTrigger implements NotificationRuleTrigger {
 
 
     @Override
-    public boolean deduplicate() {
-        return true;
+    public DeduplicationStrategy getDeduplicationStrategy() {
+        return DeduplicationStrategy.ALL;
     }
 
     @Override

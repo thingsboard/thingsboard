@@ -24,9 +24,12 @@ public class TbelCfCtx implements TbelCfObject {
 
     @Getter
     private final Map<String, TbelCfArg> args;
+    @Getter
+    private final long msgTs;
 
-    public TbelCfCtx(Map<String, TbelCfArg> args) {
+    public TbelCfCtx(Map<String, TbelCfArg> args, long lastUpdateTs) {
         this.args = Collections.unmodifiableMap(args);
+        this.msgTs = lastUpdateTs != -1 ? lastUpdateTs : System.currentTimeMillis();
     }
 
     @Override

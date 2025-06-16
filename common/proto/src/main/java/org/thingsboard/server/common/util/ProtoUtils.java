@@ -102,7 +102,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ApiUsageRecordKeyPro
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -114,14 +113,6 @@ import static org.thingsboard.server.common.data.DataConstants.GATEWAY_PARAMETER
 @Slf4j
 public class ProtoUtils {
 
-    private static final EntityType[] entityTypeByProtoNumber;
-
-    static {
-        int arraySize = Arrays.stream(EntityType.values()).mapToInt(EntityType::getProtoNumber).max().orElse(0);
-        entityTypeByProtoNumber = new EntityType[arraySize + 1];
-        Arrays.stream(EntityType.values()).forEach(entityType -> entityTypeByProtoNumber[entityType.getProtoNumber()] = entityType);
-    }
-
     public static TransportProtos.ComponentLifecycleMsgProto toProto(ComponentLifecycleMsg msg) {
         var builder = TransportProtos.ComponentLifecycleMsgProto.newBuilder()
                 .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
@@ -129,7 +120,7 @@ public class ProtoUtils {
                 .setEntityType(toProto(msg.getEntityId().getEntityType()))
                 .setEntityIdMSB(msg.getEntityId().getId().getMostSignificantBits())
                 .setEntityIdLSB(msg.getEntityId().getId().getLeastSignificantBits())
-                .setEvent(TransportProtos.ComponentLifecycleEvent.forNumber(msg.getEvent().ordinal()));
+                .setEvent(toProto(msg.getEvent()));
         if (msg.getProfileId() != null) {
             builder.setProfileIdMSB(msg.getProfileId().getId().getMostSignificantBits());
             builder.setProfileIdLSB(msg.getProfileId().getId().getLeastSignificantBits());
@@ -144,6 +135,9 @@ public class ProtoUtils {
         if (msg.getOldName() != null) {
             builder.setOldName(msg.getOldName());
         }
+        if (msg.getInfo() != null) {
+            builder.setInfo(JacksonUtil.toString(msg.getInfo()));
+        }
         return builder.build();
     }
 
@@ -156,7 +150,7 @@ public class ProtoUtils {
         var builder = ComponentLifecycleMsg.builder()
                 .tenantId(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())))
                 .entityId(entityId)
-                .event(ComponentLifecycleEvent.values()[proto.getEventValue()]);
+                .event(fromProto(proto.getEvent()));
         if (!StringUtils.isEmpty(proto.getName())) {
             builder.name(proto.getName());
         }
@@ -171,11 +165,22 @@ public class ProtoUtils {
             var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
             builder.oldProfileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB())));
         }
+        if (proto.hasInfo()) {
+            builder.info(JacksonUtil.toJsonNode(proto.getInfo()));
+        }
         return builder.build();
     }
 
     public static EntityType fromProto(TransportProtos.EntityTypeProto entityType) {
-        return entityTypeByProtoNumber[entityType.getNumber()];
+        return EntityType.forProtoNumber(entityType.getNumber());
+    }
+
+    public static TransportProtos.ComponentLifecycleEvent toProto(ComponentLifecycleEvent event) {
+        return TransportProtos.ComponentLifecycleEvent.forNumber(event.getProtoNumber());
+    }
+
+    public static ComponentLifecycleEvent fromProto(TransportProtos.ComponentLifecycleEvent eventProto) {
+        return ComponentLifecycleEvent.forProtoNumber(eventProto.getNumber());
     }
 
     public static TransportProtos.ToEdgeSyncRequestMsgProto toProto(ToEdgeSyncRequest request) {

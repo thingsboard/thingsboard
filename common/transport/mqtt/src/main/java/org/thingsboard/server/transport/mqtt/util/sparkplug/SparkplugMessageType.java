@@ -91,10 +91,14 @@ public enum SparkplugMessageType {
 		return STATE.equals(type) ? "sparkplugConnectionState" : type.name();
 	}
 	
+	public boolean isState() {
+		return this.equals(STATE);
+	}
+
 	public boolean isDeath() {
 		return this.equals(DDEATH) || this.equals(NDEATH);
 	}
-	
+
 	public boolean isCommand() {
 		return this.equals(DCMD) || this.equals(NCMD);
 	}
@@ -110,4 +114,19 @@ public enum SparkplugMessageType {
 	public boolean isRecord() {
 		return this.equals(DRECORD) || this.equals(NRECORD);
 	}
+	public boolean isSubscribe() {
+		return isCommand() || isData() || isRecord();
+	}
+
+	public boolean isNode() {
+		return this.equals(NBIRTH)
+				|| this.equals(NCMD) || this.equals(NDATA)
+				||this.equals(NDEATH) || this.equals(NRECORD);
+	}
+	public boolean isDevice() {
+		return this.equals(DBIRTH)
+				|| this.equals(DCMD) || this.equals(DDATA)
+				||this.equals(DDEATH) || this.equals(DRECORD);
+	}
+
 }

@@ -5640,7 +5640,6 @@
       "add-limit": "Agregar límite",
       "advanced-settings": "Configuraciones avanzadas",
       "edit-limit": "Editar límite",
-      "but-less-than": "pero menor que",
       "calculated-field-debug-event-rate-limit": "Eventos de depuración de campo calculado",
       "edit-calculated-field-debug-event-rate-limit": "Editar límites de eventos de depuración de campo calculado",
       "edit-transport-tenant-msg-title": "Editar límites de velocidad de mensajes de transporte del inquilino",
@@ -9192,33 +9191,6 @@
     "items-per-page-separator": "de"
   },
   "language": {
-    "language": "Language",
-    "locales": {
-      "ar_AE": "العربية (الإمارات العربية المتحدة)",
-      "ca_ES": "català (Espanya)",
-      "cs_CZ": "čeština (Česko)",
-      "da_DK": "dansk (Danmark)",
-      "de_DE": "Deutsch (Deutschland)",
-      "el_GR": "Ελληνικά (Ελλάδα)",
-      "en_US": "English (United States)",
-      "es_ES": "español (España)",
-      "fa_IR": "فارسی (ایران)",
-      "fr_FR": "français (France)",
-      "it_IT": "italiano (Italia)",
-      "ja_JP": "日本語 (日本)",
-      "ka_GE": "ქართული (საქართველო)",
-      "ko_KR": "한국어 (대한민국)",
-      "lt_LT": "lietuvių (Lietuva)",
-      "lv_LV": "latviešu (Latvija)",
-      "nl_BE": "Nederlands (België)",
-      "pl_PL": "polski (Polska)",
-      "pt_BR": "português (Brasil)",
-      "ro_RO": "română (România)",
-      "sl_SI": "slovenščina (Slovenija)",
-      "tr_TR": "Türkçe (Türkiye)",
-      "uk_UA": "українська (Україна)",
-      "zh_CN": "中文 (中国)",
-      "zh_TW": "中文 (台灣)"
-    }
+    "language": "Idioma"
   }
 }

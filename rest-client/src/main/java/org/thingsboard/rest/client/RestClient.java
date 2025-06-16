@@ -19,7 +19,9 @@ import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
+import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.concurrent.LazyInitializer;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -206,7 +208,9 @@ public class RestClient implements Closeable {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
     private static final long AVG_REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
-    private final ExecutorService service = ThingsBoardExecutors.newWorkStealingPool(10, getClass());
+    private final LazyInitializer<ExecutorService> executor = LazyInitializer.<ExecutorService>builder()
+            .setInitializer(() -> ThingsBoardExecutors.newWorkStealingPool(10, getClass()))
+            .get();
     protected final RestTemplate restTemplate;
     protected final RestTemplate loginRestTemplate;
     protected final String baseURL;
@@ -224,22 +228,30 @@ public class RestClient implements Closeable {
     }
 
     public RestClient(RestTemplate restTemplate, String baseURL) {
+        this(restTemplate, baseURL, null);
+    }
+
+    public RestClient(RestTemplate restTemplate, String baseURL, String accessToken) {
         this.restTemplate = restTemplate;
         this.loginRestTemplate = new RestTemplate(restTemplate.getRequestFactory());
         this.baseURL = baseURL;
         this.restTemplate.getInterceptors().add((request, bytes, execution) -> {
             HttpRequest wrapper = new HttpRequestWrapper(request);
-            long calculatedTs = System.currentTimeMillis() + clientServerTimeDiff + AVG_REQUEST_TIMEOUT;
-            if (calculatedTs > mainTokenExpTs) {
-                synchronized (RestClient.this) {
-                    if (calculatedTs > mainTokenExpTs) {
-                        if (calculatedTs < refreshTokenExpTs) {
-                            refreshToken();
-                        } else {
-                            doLogin();
+            if (accessToken == null) {
+                long calculatedTs = System.currentTimeMillis() + clientServerTimeDiff + AVG_REQUEST_TIMEOUT;
+                if (calculatedTs > mainTokenExpTs) {
+                    synchronized (RestClient.this) {
+                        if (calculatedTs > mainTokenExpTs) {
+                            if (calculatedTs < refreshTokenExpTs) {
+                                refreshToken();
+                            } else {
+                                doLogin();
+                            }
                         }
                     }
                 }
+            } else {
+                mainToken = accessToken;
             }
             wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + mainToken);
             return execution.execute(wrapper, bytes);
@@ -2404,7 +2416,7 @@ public class RestClient implements Closeable {
     }
 
     public Future<List<AttributeKvEntry>> getAttributeKvEntriesAsync(EntityId entityId, List<String> keys) {
-        return service.submit(() -> getAttributeKvEntries(entityId, keys));
+        return getExecutor().submit(() -> getAttributeKvEntries(entityId, keys));
     }
 
     public List<AttributeKvEntry> getAttributesByScope(EntityId entityId, String scope, List<String> keys) {
@@ -2977,7 +2989,7 @@ public class RestClient implements Closeable {
         addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypes?" + getUrlParams(pageLink) +
-                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
@@ -3065,7 +3077,7 @@ public class RestClient implements Closeable {
         addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypesInfos?widgetsBundleId={widgetsBundleId}&" + getUrlParams(pageLink) +
-                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
@@ -4191,7 +4203,14 @@ public class RestClient implements Closeable {
 
     @Override
     public void close() {
-        service.shutdown();
+        if (executor.isInitialized()) {
+            getExecutor().shutdown();
+        }
+    }
+
+    @SneakyThrows
+    private ExecutorService getExecutor() {
+        return executor.get();
     }
 
 }

@@ -251,11 +251,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         mainConsumer.update(event.getCorePartitions());
         usageStatsConsumer.subscribe(event.getCorePartitions()
                 .stream()
-                .map(tpi -> tpi.newByTopic(usageStatsConsumer.getConsumer().getTopic()))
+                .map(tpi -> tpi.withTopic(usageStatsConsumer.getConsumer().getTopic()))
                 .collect(Collectors.toSet()));
     }
 
-    private void processMsgs(List<TbProtoQueueMsg<ToCoreMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> consumer, QueueConfig config) throws Exception {
+    private void processMsgs(List<TbProtoQueueMsg<ToCoreMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToCoreMsg>> consumer, Object consumerKey, QueueConfig config) throws Exception {
         List<IdMsgPair<ToCoreMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
         ConcurrentMap<UUID, TbProtoQueueMsg<ToCoreMsg>> pendingMap = orderedMsgList.stream().collect(
                 Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
