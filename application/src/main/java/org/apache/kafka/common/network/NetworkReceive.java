@@ -103,13 +103,13 @@ public class NetworkReceive implements Receive {
                 if (maxSize != UNLIMITED && receiveSize > maxSize) {
                     throw new ThingsboardKafkaClientError("Invalid receive (size = " + receiveSize + " larger than " + maxSize + ")");
                 }
-                requestedBufferSize = receiveSize; //may be 0 for some payloads (SASL)
+                requestedBufferSize = receiveSize; // may be 0 for some payloads (SASL)
                 if (receiveSize == 0) {
                     buffer = EMPTY_BUFFER;
                 }
             }
         }
-        if (buffer == null && requestedBufferSize != -1) { //we know the size we want but havent been able to allocate it yet
+        if (buffer == null && requestedBufferSize != -1) { // we know the size we want but haven't been able to allocate it yet
             if (requestedBufferSize > TB_LOG_REQUESTED_BUFFER_SIZE) {
                 String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace()).map(StackTraceElement::toString).collect(Collectors.joining("|"));
                 log.error("Allocating buffer of size {} for source {}", requestedBufferSize, source);

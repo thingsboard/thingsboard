@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [formGroup]="ruleNodeConfigFormGroup">
+<div [formGroup]="ruleNodeConfigFormGroup" class="rule-node-config">
   <ng-container #definedConfigContent></ng-container>
   <div class="tb-rulenode-directive-error" *ngIf="definedDirectiveError">{{definedDirectiveError}}</div>
   <tb-json-object-edit *ngIf="!useDefinedDirective()" #jsonObjectEditComponent

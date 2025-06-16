@@ -26,14 +26,14 @@
                         [label]="'rule-node-config.data-keys' | translate"
                         [placeholder]="'rule-node-config.add-message-field' | translate"
                         formControlName="messageNames">
-    <mat-icon matSuffix color="primary" class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+    <mat-icon matSuffix color="primary" class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
               matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.field-name' | translate } }}">help</mat-icon>
   </tb-string-items-list>
   <tb-string-items-list editable subscriptSizing="dynamic"
                         [label]="'rule-node-config.metadata-keys' | translate"
                         [placeholder]="'rule-node-config.add-metadata-field' | translate"
                         formControlName="metadataNames">
-    <mat-icon matSuffix color="primary" class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+    <mat-icon matSuffix color="primary" class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
               matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.field-name' | translate } }}">help</mat-icon>
   </tb-string-items-list>
   <div tb-hint-tooltip-icon="{{ 'rule-node-config.check-all-keys-tooltip' | translate }}"

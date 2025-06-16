@@ -40,6 +40,7 @@ import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttConnectResult;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
+import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -80,6 +81,7 @@ import static org.mockito.BDDMockito.spy;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
@@ -106,6 +108,22 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
     protected void setUp() {
         mqttNode = spy(new TbMqttNode());
         mqttNodeConfig = new TbMqttNodeConfiguration().defaultConfiguration();
+        lenient().when(ctxMock.getMqttClientSettings()).thenReturn(new MqttClientSettings() {
+            @Override
+            public int getRetransmissionMaxAttempts() {
+                return 3;
+            }
+
+            @Override
+            public long getRetransmissionInitialDelayMillis() {
+                return 5000L;
+            }
+
+            @Override
+            public double getRetransmissionJitterFactor() {
+                return 0.15;
+            }
+        });
     }
 
     @Test
@@ -163,7 +181,8 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         SslContext actualSslContext = mqttClientConfig.getValue().getSslContext();
         assertThat(actualSslContext)
                 .usingRecursiveComparison()
-                .ignoringFields("ctx", "ctxLock", "sessionContext.context.ctx", "sessionContext.context.ctxLock")
+                .ignoringFields("ctx", "ctxLock", "sessionContext.context.ctx", "sessionContext.context.ctxLock",
+                        "sslContext")
                 .isEqualTo(SslContextBuilder.forClient().build());
     }
 

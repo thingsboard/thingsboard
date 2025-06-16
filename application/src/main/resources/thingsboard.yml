@@ -1755,6 +1755,8 @@ queue:
       supported: "${TB_EDQS_API_SUPPORTED:false}"
       # Whether to auto-enable EDQS API (if queue.edqs.api.supported is true) when sync of data to Kafka is finished 
       auto_enable: "${TB_EDQS_API_AUTO_ENABLE:true}"
+    # Interval in milliseconds to check for ready EDQS servers
+    readiness_check_interval: "${TB_EDQS_READINESS_CHECK_INTERVAL_MS:60000}"
     # Mode of EDQS: local (for monolith) or remote (with separate EDQS microservices)
     mode: "${TB_EDQS_MODE:local}"
     local:
@@ -1778,6 +1780,10 @@ queue:
     max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
     # Maximum timeout for requests to EDQS
     max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:20000}"
+    # Thread pool size for EDQS requests executor
+    request_executor_size: "${TB_EDQS_REQUEST_EXECUTOR_SIZE:50}"
+    # Time to live for EDQS versions cache in minutes. Must be bigger than the time taken for the sync process.
+    versions_cache_ttl: "${TB_EDQS_VERSIONS_CACHE_TTL_MINUTES:60}"
     # Strings longer than this threshold will be compressed
     string_compression_length_threshold: "${TB_EDQS_STRING_COMPRESSION_LENGTH_THRESHOLD:512}"
     stats:
@@ -1952,3 +1958,27 @@ mobileApp:
   googlePlayLink: "${TB_MOBILE_APP_GOOGLE_PLAY_LINK:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}"
   # Link to App Store for Thingsboard Live mobile application
   appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"
+
+mqtt:
+  # MQTT client configuration parameters
+  client:
+    # Parameters that control the retransmission mechanism.
+    # This mechanism only applies to the handling of MQTT Publish, Subscribe, Unsubscribe and Pubrel messages.
+    # With the updated default settings:
+    #   - After sending the message, wait approximately 5000 ms (± jitter) for the 1st attempt.
+    #   - The 2nd attempt will occur after roughly 5000 * 2 = 10,000 ms (± jitter).
+    #   - The 3rd attempt will occur after roughly 5000 * 4 = 20,000 ms (± jitter).
+    #   - The 4th "attempt" will not actually perform a retransmission.
+    #     Instead, the system will detect that the maximum number of attempts has been reached and drop the pending message.
+    retransmission:
+      # Maximum number of retransmission attempts allowed.
+      # If the attempt count exceeds this value, retransmissions will stop and the pending message will be dropped.
+      max_attempts: "${TB_MQTT_CLIENT_RETRANSMISSION_MAX_ATTEMPTS:3}"
+      # Base delay (in milliseconds) before the first retransmission attempt, measured from the moment the message is sent.
+      # Subsequent delays are calculated using exponential backoff.
+      # This base delay is also used as the reference value for applying jitter.
+      initial_delay_millis: "${TB_MQTT_CLIENT_RETRANSMISSION_INITIAL_DELAY_MILLIS:5000}"
+      # Jitter factor applied to the calculated retransmission delay.
+      # The actual delay is randomized within a range defined by multiplying the base delay by a factor between (1 - jitter_factor) and (1 + jitter_factor).
+      # For example, a jitter_factor of 0.15 means the actual delay may vary by up to ±15% of the base delay.
+      jitter_factor: "${TB_MQTT_CLIENT_RETRANSMISSION_JITTER_FACTOR:0.15}"
