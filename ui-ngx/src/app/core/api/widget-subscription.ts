@@ -1497,9 +1497,9 @@ export class WidgetSubscription implements IWidgetSubscription {
   private entityDataToDatasourceData(datasource: Datasource, data: Array<DataSetHolder>): Array<DatasourceData> {
     let datasourceDataArray: Array<DatasourceData> = [];
     datasourceDataArray = datasourceDataArray.concat(datasource.dataKeys.map((dataKey, keyIndex) => {
-      dataKey.hidden = !!dataKey.settings.hideDataByDefault;
-      dataKey.inLegend = dataKey.settings.showInLegend ||
-        (isUndefined(dataKey.settings.showInLegend) && !dataKey.settings.removeFromLegend);
+      dataKey.hidden = !!dataKey.settings?.hideDataByDefault;
+      dataKey.inLegend = dataKey.settings?.showInLegend ||
+        (isUndefined(dataKey.settings?.showInLegend) && !dataKey.settings?.removeFromLegend);
       dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
       const datasourceData: DatasourceData = {
         datasource,

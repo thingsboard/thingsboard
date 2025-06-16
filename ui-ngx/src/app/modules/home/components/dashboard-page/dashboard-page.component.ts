@@ -58,7 +58,7 @@ import {
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
-import { deepClone, guid, isDefined, isDefinedAndNotNull, isEqual, isNotEmptyStr } from '@app/core/utils';
+import { deepClean, deepClone, guid, isDefined, isDefinedAndNotNull, isEqual, isNotEmptyStr } from '@app/core/utils';
 import {
   DashboardContext,
   DashboardPageInitData,
@@ -1222,7 +1222,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.setEditMode(false, false);
     } else {
       let reInitDashboard = false;
-      this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
+      this.dashboard.configuration.timewindow = deepClean(this.dashboardCtx.dashboardTimewindow);
       this.dashboardService.saveDashboard(this.dashboard).pipe(
         catchError((err) => {
           if (err.status === HttpStatusCode.Conflict) {
@@ -1409,8 +1409,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   saveWidget() {
     this.editWidgetComponent.widgetFormGroup.markAsPristine();
-    const widget = deepClone(this.editingWidget);
-    const widgetLayout = deepClone(this.editingWidgetLayout);
+    const widget = deepClean(deepClone(this.editingWidget), {cleanKeys: ['_hash']});
+    const widgetLayout = deepClean(deepClone(this.editingWidgetLayout));
     const id = this.editingWidgetOriginal.id;
     this.dashboardConfiguration.widgets[id] = widget;
     this.editingWidgetOriginal = widget;
