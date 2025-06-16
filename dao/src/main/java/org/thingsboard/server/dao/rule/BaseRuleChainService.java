@@ -196,13 +196,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
         if (nodes != null) {
-            for (RuleNode node : nodes) {
+            for (int i = 0; i < nodes.size(); i++) {
+                RuleNode node = nodes.get(i);
                 setSingletonMode(node);
                 if (node.getId() != null) {
-                    ruleNodeIndexMap.put(node.getId(), nodes.indexOf(node));
-                } else {
-                    toAddOrUpdate.add(node);
+                    ruleNodeIndexMap.put(node.getId(), i);
                 }
+
+                toAddOrUpdate.add(node);
             }
         }
         RuleChainId ruleChainId = ruleChain.getId();
@@ -260,7 +261,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 firstRuleNodeId = nodes.get(ruleChainMetaData.getFirstNodeIndex()).getId();
             }
             if ((ruleChain.getFirstRuleNodeId() != null && !ruleChain.getFirstRuleNodeId().equals(firstRuleNodeId))
-                || (ruleChain.getFirstRuleNodeId() == null && firstRuleNodeId != null)) {
+                    || (ruleChain.getFirstRuleNodeId() == null && firstRuleNodeId != null)) {
                 ruleChain.setFirstRuleNodeId(firstRuleNodeId);
             }
             if (ruleChainMetaData.getConnections() != null) {
