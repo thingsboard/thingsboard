@@ -1456,20 +1456,18 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.datasources.forEach((datasource) => {
       datasource.dataKeys.forEach((dataKey) => {
         if (datasource.generated || datasource.isAdditional) {
-          dataKey._hash = Math.random();
           dataKey.color = this.ctx.utils.getMaterialColor(index);
         }
         index++;
       });
-      if (datasource.latestDataKeys) {
-        datasource.latestDataKeys.forEach((dataKey) => {
-          if (datasource.generated || datasource.isAdditional) {
-            dataKey._hash = Math.random();
-            // dataKey.color = this.ctx.utils.getMaterialColor(index);
-          }
-          // index++;
-        });
-      }
+      // if (datasource.latestDataKeys) {
+      //   datasource.latestDataKeys.forEach((dataKey) => {
+      //     if (datasource.generated || datasource.isAdditional) {
+      //       // dataKey.color = this.ctx.utils.getMaterialColor(index);
+      //     }
+      //     // index++;
+      //   });
+      // }
     });
     if (this.comparisonEnabled) {
       this.datasourcePages.forEach(datasourcePage => {
