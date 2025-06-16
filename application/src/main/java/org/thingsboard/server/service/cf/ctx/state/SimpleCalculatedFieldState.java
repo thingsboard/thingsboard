@@ -61,7 +61,8 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
                 double value = switch (kvEntry.getDataType()) {
                     case LONG -> kvEntry.getLongValue().map(Long::doubleValue).orElseThrow();
                     case DOUBLE -> kvEntry.getDoubleValue().orElseThrow();
-                    case BOOLEAN, STRING, JSON -> Double.parseDouble(kvEntry.getValueAsString());
+                    case BOOLEAN -> kvEntry.getBooleanValue().map(b -> b ? 1.0 : 0.0).orElseThrow();
+                    case STRING, JSON -> Double.parseDouble(kvEntry.getValueAsString());
                 };
                 expr.setVariable(entry.getKey(), value);
             } catch (NumberFormatException e) {
