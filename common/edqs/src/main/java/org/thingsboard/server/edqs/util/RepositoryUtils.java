@@ -54,7 +54,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -249,11 +248,11 @@ public class RepositoryUtils {
         }
         return switch (predicate.getOperation()) {
             case EQUAL -> value.equals(predicateValue);
-            case STARTS_WITH -> value.startsWith(predicateValue);
-            case ENDS_WITH -> value.endsWith(predicateValue);
+            case STARTS_WITH -> toStartsWithSqlLikePattern(predicateValue).matcher(value).matches();
+            case ENDS_WITH -> toEndsWithSqlLikePattern(predicateValue).matcher(value).matches();
             case NOT_EQUAL -> !value.equals(predicateValue);
-            case CONTAINS -> value.contains(predicateValue);
-            case NOT_CONTAINS -> !value.contains(predicateValue);
+            case CONTAINS -> toContainsSqlLikePattern(predicateValue).matcher(value).matches();
+            case NOT_CONTAINS -> !toContainsSqlLikePattern(predicateValue).matcher(value).matches();
             case IN -> equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
             case NOT_IN -> !equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
         };
@@ -304,6 +303,15 @@ public class RepositoryUtils {
             return true;
         } else if (filterPredicates.getOperation() == OR) {
             for (KeyFilterPredicate filterPredicate : filterPredicates.getPredicates()) {
+
+                // Emulate the SQL-like behavior of ThingsBoard's Entity Data Query service:
+                // for COMPLEX filters, return no results if filter value is empty
+                if (filterPredicate instanceof StringFilterPredicate stringFilterPredicate) {
+                    if (StringUtils.isEmpty(stringFilterPredicate.getValue().getValue())) {
+                        continue;
+                    }
+                }
+
                 if (simpleKeyFilter.check(value, filterPredicate)) {
                     return true;
                 }
@@ -314,23 +322,38 @@ public class RepositoryUtils {
         }
     }
 
-    public static Pattern toSqlLikePattern(String nameFilter) {
-        if (StringUtils.isNotBlank(nameFilter)) {
-            boolean percentSymbolOnStart = nameFilter.startsWith("%");
-            boolean percentSymbolOnEnd = nameFilter.endsWith("%");
-            if (percentSymbolOnStart) {
-                nameFilter = nameFilter.substring(1);
-            }
-            if (percentSymbolOnEnd) {
-                nameFilter = nameFilter.substring(0, nameFilter.length() - 1);
-            }
-            if (percentSymbolOnStart || percentSymbolOnEnd) {
-                return Pattern.compile((percentSymbolOnStart ? ".*" : "") + Pattern.quote(nameFilter) + (percentSymbolOnEnd ? ".*" : ""), Pattern.CASE_INSENSITIVE);
-            } else {
-                return Pattern.compile(Pattern.quote(nameFilter) + ".*", Pattern.CASE_INSENSITIVE);
-            }
+    public static Pattern toContainsSqlLikePattern(String filter) {
+        if (StringUtils.isNotBlank(filter)) {
+            return toSqlLikePattern(filter, ".*", ".*");
         }
         return null;
+    }
+
+    private static Pattern toStartsWithSqlLikePattern(String filter) {
+        return toSqlLikePattern(filter, "^", ".*");
+    }
+
+    private static Pattern toEndsWithSqlLikePattern(String filter) {
+        return toSqlLikePattern(filter, ".*", "$");
+    }
+
+    private static Pattern toSqlLikePattern(String value, String prefix, String suffix) {
+        if (value.contains("%") || value.contains("_")) {
+            String regexValue = value
+                    .replace("_", ".")
+                    .replace("%", ".*");
+            String regex;
+            if ("^".equals(prefix)) {
+                regex = "^" + regexValue + (regexValue.endsWith(".*") ? "" : ".*");
+            } else if ("$".equals(suffix)) {
+                regex = (regexValue.startsWith(".*") ? "" : ".*") + regexValue + "$";
+            } else {
+                regex = (regexValue.startsWith(".*") ? "" : ".*") + regexValue + (regexValue.endsWith(".*") ? "" : ".*");
+            }
+            return Pattern.compile(regex);
+        } else {
+            return Pattern.compile(prefix + Pattern.quote(value) + suffix);
+        }
     }
 
     @FunctionalInterface
