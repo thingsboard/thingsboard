@@ -1,0 +1,15 @@
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh './mvnw clean install -DskipTests'
+            }
+        }
+        stage('Deploy to QA') {
+            steps {
+                sh 'docker-compose -f docker-compose.qa.yml up -d --build'
+            }
+        }
+    }
+}
