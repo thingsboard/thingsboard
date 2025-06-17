@@ -513,7 +513,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         systemContext.getDeviceStateService().onDeviceDisconnect(tenantId, deviceId);
     }
 
-    private void handleGetAttributesRequest(SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
+    void handleGetAttributesRequest(SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
         log.trace("[{}][{}] Processing get attributes request: {}", deviceId, requestId, request);
         Futures.addCallback(getAttributesKvEntries(request), new FutureCallback<>() {
@@ -548,8 +548,21 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
 
-        clientAttributesFuture = getAttrs(request.getClientAttributeNamesList(), request.getAddClient(), AttributeScope.CLIENT_SCOPE);
-        sharedAttributesFuture = getAttrs(request.getSharedAttributeNamesList(), request.getAddShared(), AttributeScope.SHARED_SCOPE);
+        boolean onlyShared = request.getOnlyShared();
+
+        boolean addClient;
+        boolean addShared;
+
+        if (onlyShared) {
+            addClient = false;
+            addShared = true;
+        } else {
+            addClient = request.hasAddClient() ? request.getAddClient() : true;
+            addShared = request.hasAddShared() ? request.getAddShared() : true;
+        }
+
+        clientAttributesFuture = getAttrs(request.getClientAttributeNamesList(), addClient, AttributeScope.CLIENT_SCOPE);
+        sharedAttributesFuture = getAttrs(request.getSharedAttributeNamesList(), addShared, AttributeScope.SHARED_SCOPE);
 
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
     }

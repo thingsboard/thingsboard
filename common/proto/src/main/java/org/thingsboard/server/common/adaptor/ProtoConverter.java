@@ -93,6 +93,8 @@ public class ProtoConverter {
     public static TransportProtos.GetAttributeRequestMsg convertToGetAttributeRequestMessage(byte[] bytes, int requestId) throws InvalidProtocolBufferException, RuntimeException {
         TransportApiProtos.AttributesRequest proto = TransportApiProtos.AttributesRequest.parseFrom(bytes);
         TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
+        result.setAddClient(false);
+        result.setAddShared(false);
         result.setRequestId(requestId);
         String clientKeys = proto.getClientKeys();
         String sharedKeys = proto.getSharedKeys();

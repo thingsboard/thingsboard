@@ -54,13 +54,21 @@ public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
     public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(Collection<String> clientKeys, Collection<String> sharedKeys) throws AdaptorException {
         try {
             TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
+            result.setAddClient(false);
+            result.setAddShared(false);
             Random random = new Random();
             result.setRequestId(random.nextInt());
             if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
+                result.setAddClient(true);
             }
             if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
+                result.setAddShared(true);
+            }
+            if (clientKeys == null && sharedKeys == null) {
+                result.setAddClient(true);
+                result.setAddShared(true);
             }
             return result.build();
         } catch (RuntimeException e) {
