@@ -587,13 +587,15 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
-    public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) {
+    public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId, boolean shouldPublishEdgeEvent) {
         edge.setRootRuleChainId(ruleChainId);
         Edge savedEdge = saveEdge(edge);
         ObjectNode isRootBody = JacksonUtil.newObjectNode();
         isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
-        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edge.getId()).entityId(ruleChainId)
-                .body(JacksonUtil.toString(isRootBody)).actionType(ActionType.UPDATED).build());
+        if (shouldPublishEdgeEvent) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edge.getId()).entityId(ruleChainId)
+                    .body(JacksonUtil.toString(isRootBody)).actionType(ActionType.UPDATED).build());
+        }
         return savedEdge;
     }
 

@@ -93,7 +93,7 @@ public class RuleChainEdgeProcessor extends BaseRuleChainProcessor {
             Boolean isRoot = resultPair.getSecond();
             if (isRoot) {
                 edge = edgeCtx.getEdgeService().findEdgeById(tenantId, edge.getId());
-                edgeCtx.getEdgeService().setEdgeRootRuleChain(tenantId, edge, ruleChainId);
+                edgeCtx.getEdgeService().setEdgeRootRuleChain(tenantId, edge, ruleChainId, false);
             }
         } catch (Exception e) {
             log.error("Failed to save or update rule chain", e);

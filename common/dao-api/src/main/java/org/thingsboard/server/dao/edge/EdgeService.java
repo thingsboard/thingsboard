@@ -101,7 +101,7 @@ public interface EdgeService extends EntityDaoService {
 
     String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId, String tbRuleChainInputNodeClassName);
 
-    Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws Exception;
+    Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId, boolean shouldPublishEdgeEvent) throws Exception;
 
     ListenableFuture<Boolean> isEdgeActiveAsync(TenantId tenantId, EdgeId edgeId, String activityState);
 

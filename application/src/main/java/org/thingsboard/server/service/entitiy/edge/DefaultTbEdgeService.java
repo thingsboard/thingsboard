@@ -54,7 +54,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
 
             if (ActionType.ADDED.equals(actionType)) {
                 ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), edgeId);
-                savedEdge = edgeService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
+                savedEdge = edgeService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId(), true);
                 edgeService.assignDefaultRuleChainsToEdge(tenantId, edgeId);
             }
 
@@ -141,7 +141,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
         TenantId tenantId = edge.getTenantId();
         EdgeId edgeId = edge.getId();
         try {
-            Edge updatedEdge = edgeService.setEdgeRootRuleChain(tenantId, edge, ruleChainId);
+            Edge updatedEdge = edgeService.setEdgeRootRuleChain(tenantId, edge, ruleChainId, true);
             logEntityActionService.logEntityAction(tenantId, edgeId, edge, null, ActionType.UPDATED, user);
             return updatedEdge;
         } catch (Exception e) {
