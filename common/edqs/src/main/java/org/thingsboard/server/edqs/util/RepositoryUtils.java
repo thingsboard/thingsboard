@@ -324,14 +324,19 @@ public class RepositoryUtils {
 
     public static Pattern toEntityNameSqlLikePattern(String filter) {
         if (StringUtils.isNotBlank(filter)) {
-            return toSqlLikePattern(filter, "", ".*");
+            return toSqlLikePattern(filter, "", ".*", true);
         }
         return null;
     }
 
     private static Pattern toSqlLikePattern(String value, String prefix, String suffix) {
+        return toSqlLikePattern(value, prefix, suffix, false);
+    }
+
+    private static Pattern toSqlLikePattern(String value, String prefix, String suffix, boolean ignoreCase) {
+        String regexValue;
         if (value.contains("%") || value.contains("_")) {
-            String regexValue = value
+            regexValue = value
                     .replace("_", ".")
                     .replace("%", ".*");
             if ("^".equals(prefix)) {
@@ -339,10 +344,10 @@ public class RepositoryUtils {
             } else if ("$".equals(suffix)) {
                 regexValue = (regexValue.startsWith(".*") ? "" : ".*") + regexValue + "$";
             }
-            return Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE);
         } else {
-            return Pattern.compile(prefix + Pattern.quote(value) + suffix, Pattern.CASE_INSENSITIVE);
+            regexValue = prefix + Pattern.quote(value) + suffix;
         }
+        return ignoreCase ? Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE) : Pattern.compile(regexValue);
     }
 
     @FunctionalInterface
