@@ -276,6 +276,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     {
       provide: MAT_AUTOCOMPLETE_DEFAULT_OPTIONS,
       useValue: {
+        hasBackdrop: true,
+        backdropClass: 'cdk-overlay-transparent-backdrop',
         hideSingleSelectionIndicator: true
       }
     },
