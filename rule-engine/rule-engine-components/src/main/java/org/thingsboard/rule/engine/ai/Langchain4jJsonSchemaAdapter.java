@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Converts a Jackson {@link JsonNode} JSON Schema into a Langchain4j {@link JsonSchema} model.
+ * Converts a Jackson {@link ObjectNode} JSON Schema into a Langchain4j {@link JsonSchema} model.
  */
 final class Langchain4jJsonSchemaAdapter {
 
