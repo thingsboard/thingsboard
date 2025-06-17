@@ -1,0 +1,20 @@
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh './mvnw clean install -DskipTests'
+            }
+        }
+        stage('Approve Deployment') {
+            steps {
+                input "Deploy to PRODUCTION?"
+            }
+        }
+        stage('Deploy to Prod') {
+            steps {
+                sh 'docker-compose -f docker-compose.prod.yml up -d --build'
+            }
+        }
+    }
+}
