@@ -38,6 +38,8 @@ public class CoapAdaptorUtils {
         String scope = extractScope(uriPaths);
 
         TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
+        result.setAddClient(false);
+        result.setAddShared(false);
         if (scope == null) {
             processNotScopedRequest(queryParameters, result);
         } else {

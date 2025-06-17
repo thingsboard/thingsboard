@@ -201,9 +201,9 @@ public class CoapClientTest extends AbstractCoapClientTest {
     @Test
     public void testOnlyClientAttributes() throws Exception {
         JsonNode payload = prepareAndPostAttributes(createPayload().toString(), false);
-        JsonNode attributesResponse = getAttributes("boolKey,stringKey", "");
+        JsonNode attributesResponse = getAttributes("booleanKey,stringKey", "");
 
-        assertThat(attributesResponse.get("client").get("boolKey")).isEqualTo(payload.get("boolKey"));
+        assertThat(attributesResponse.get("client").get("booleanKey")).isEqualTo(payload.get("booleanKey"));
         assertThat(attributesResponse.get("client").get("stringKey")).isEqualTo(payload.get("stringKey"));
         assertThat(attributesResponse.has("shared")).isFalse();
     }
@@ -211,9 +211,9 @@ public class CoapClientTest extends AbstractCoapClientTest {
     @Test
     public void testOnlySharedAttributes() throws Exception {
         JsonNode payload = prepareAndPostAttributes(createPayload().toString(), true);
-        JsonNode attributesResponse = getAttributes("", "boolKey,stringKey");
+        JsonNode attributesResponse = getAttributes("", "booleanKey,stringKey");
 
-        assertThat(attributesResponse.get("shared").get("boolKey")).isEqualTo(payload.get("boolKey"));
+        assertThat(attributesResponse.get("shared").get("booleanKey")).isEqualTo(payload.get("booleanKey"));
         assertThat(attributesResponse.get("shared").get("stringKey")).isEqualTo(payload.get("stringKey"));
         assertThat(attributesResponse.has("client")).isFalse();
     }
@@ -221,14 +221,14 @@ public class CoapClientTest extends AbstractCoapClientTest {
     @Test
     public void testClientAttributesUsingSeparatedEndpoints() throws Exception {
         JsonNode payload = prepareAndPostAttributes(createPayload().toString(), false);
-        JsonNode attributesResponse = getAttributes(AttributeScope.CLIENT_SCOPE, "boolKey,stringKey");
+        JsonNode attributesResponse = getAttributes(AttributeScope.CLIENT_SCOPE, "booleanKey,stringKey");
 
-        assertThat(attributesResponse.get("client").get("boolKey")).isEqualTo(payload.get("boolKey"));
+        assertThat(attributesResponse.get("client").get("booleanKey")).isEqualTo(payload.get("booleanKey"));
         assertThat(attributesResponse.get("client").get("stringKey")).isEqualTo(payload.get("stringKey"));
         assertThat(attributesResponse.has("shared")).isFalse();
 
         JsonNode allAttributesResponse = getAttributes(AttributeScope.CLIENT_SCOPE, null);
-        assertThat(allAttributesResponse.get("client").get("boolKey")).isEqualTo(payload.get("boolKey"));
+        assertThat(allAttributesResponse.get("client").get("booleanKey")).isEqualTo(payload.get("booleanKey"));
         assertThat(allAttributesResponse.get("client").get("stringKey")).isEqualTo(payload.get("stringKey"));
         assertThat(allAttributesResponse.has("shared")).isFalse();
     }
@@ -236,14 +236,14 @@ public class CoapClientTest extends AbstractCoapClientTest {
     @Test
     public void testSharedAttributesUsingSeparatedEndpoints() throws Exception {
         JsonNode payload = prepareAndPostAttributes(createPayload().toString(), true);
-        JsonNode attributesResponse = getAttributes(AttributeScope.SHARED_SCOPE, "boolKey,stringKey");
+        JsonNode attributesResponse = getAttributes(AttributeScope.SHARED_SCOPE, "booleanKey,stringKey");
 
-        assertThat(attributesResponse.get("shared").get("boolKey")).isEqualTo(payload.get("boolKey"));
+        assertThat(attributesResponse.get("shared").get("booleanKey")).isEqualTo(payload.get("booleanKey"));
         assertThat(attributesResponse.get("shared").get("stringKey")).isEqualTo(payload.get("stringKey"));
         assertThat(attributesResponse.has("client")).isFalse();
 
         JsonNode allAttributesResponse = getAttributes(AttributeScope.SHARED_SCOPE, null);
-        assertThat(allAttributesResponse.get("shared").get("boolKey")).isEqualTo(payload.get("boolKey"));
+        assertThat(allAttributesResponse.get("shared").get("booleanKey")).isEqualTo(payload.get("booleanKey"));
         assertThat(allAttributesResponse.get("shared").get("stringKey")).isEqualTo(payload.get("stringKey"));
         assertThat(allAttributesResponse.has("client")).isFalse();
     }
