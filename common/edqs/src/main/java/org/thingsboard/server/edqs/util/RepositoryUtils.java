@@ -339,9 +339,9 @@ public class RepositoryUtils {
             } else if ("$".equals(suffix)) {
                 regexValue = (regexValue.startsWith(".*") ? "" : ".*") + regexValue + "$";
             }
-            return Pattern.compile(regexValue);
+            return Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE);
         } else {
-            return Pattern.compile(prefix + Pattern.quote(value) + suffix);
+            return Pattern.compile(prefix + Pattern.quote(value) + suffix, Pattern.CASE_INSENSITIVE);
         }
     }
 
