@@ -248,11 +248,11 @@ public class RepositoryUtils {
         }
         return switch (predicate.getOperation()) {
             case EQUAL -> value.equals(predicateValue);
-            case STARTS_WITH -> toStartsWithSqlLikePattern(predicateValue).matcher(value).matches();
-            case ENDS_WITH -> toEndsWithSqlLikePattern(predicateValue).matcher(value).matches();
+            case STARTS_WITH -> toSqlLikePattern(predicateValue, "^", ".*").matcher(value).matches();
+            case ENDS_WITH -> toSqlLikePattern(predicateValue, ".*", "$").matcher(value).matches();
             case NOT_EQUAL -> !value.equals(predicateValue);
-            case CONTAINS -> toContainsSqlLikePattern(predicateValue).matcher(value).matches();
-            case NOT_CONTAINS -> !toContainsSqlLikePattern(predicateValue).matcher(value).matches();
+            case CONTAINS -> toSqlLikePattern(predicateValue, ".*", ".*").matcher(value).matches();
+            case NOT_CONTAINS -> !toSqlLikePattern(predicateValue, ".*", ".*").matcher(value).matches();
             case IN -> equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
             case NOT_IN -> !equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
         };
@@ -322,19 +322,11 @@ public class RepositoryUtils {
         }
     }
 
-    public static Pattern toContainsSqlLikePattern(String filter) {
+    public static Pattern toEntityNameSqlLikePattern(String filter) {
         if (StringUtils.isNotBlank(filter)) {
-            return toSqlLikePattern(filter, ".*", ".*");
+            return toSqlLikePattern(filter, "", ".*");
         }
         return null;
-    }
-
-    private static Pattern toStartsWithSqlLikePattern(String filter) {
-        return toSqlLikePattern(filter, "^", ".*");
-    }
-
-    private static Pattern toEndsWithSqlLikePattern(String filter) {
-        return toSqlLikePattern(filter, ".*", "$");
     }
 
     private static Pattern toSqlLikePattern(String value, String prefix, String suffix) {
@@ -342,15 +334,12 @@ public class RepositoryUtils {
             String regexValue = value
                     .replace("_", ".")
                     .replace("%", ".*");
-            String regex;
             if ("^".equals(prefix)) {
-                regex = "^" + regexValue + (regexValue.endsWith(".*") ? "" : ".*");
+                regexValue = "^" + regexValue + (regexValue.endsWith(".*") ? "" : ".*");
             } else if ("$".equals(suffix)) {
-                regex = (regexValue.startsWith(".*") ? "" : ".*") + regexValue + "$";
-            } else {
-                regex = (regexValue.startsWith(".*") ? "" : ".*") + regexValue + (regexValue.endsWith(".*") ? "" : ".*");
+                regexValue = (regexValue.startsWith(".*") ? "" : ".*") + regexValue + "$";
             }
-            return Pattern.compile(regex);
+            return Pattern.compile(regexValue);
         } else {
             return Pattern.compile(prefix + Pattern.quote(value) + suffix);
         }
