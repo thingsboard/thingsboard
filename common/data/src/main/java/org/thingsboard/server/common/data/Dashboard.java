@@ -38,7 +38,7 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
 
     private static final long serialVersionUID = 872682138346187503L;
 
-    private transient JsonNode configuration;
+    private JsonNode configuration;
 
     @Getter
     @Setter
@@ -68,8 +68,8 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
     }
 
     @Schema(description = "JSON object with main configuration of the dashboard: layouts, widgets, aliases, etc. " +
-            "The JSON structure of the dashboard configuration is quite complex. " +
-            "The easiest way to learn it is to export existing dashboard to JSON."
+                          "The JSON structure of the dashboard configuration is quite complex. " +
+                          "The easiest way to learn it is to export existing dashboard to JSON."
             , implementation = com.fasterxml.jackson.databind.JsonNode.class)
     public JsonNode getConfiguration() {
         return configuration;
