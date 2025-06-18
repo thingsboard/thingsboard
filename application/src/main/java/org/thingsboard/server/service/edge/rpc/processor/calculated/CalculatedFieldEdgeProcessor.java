@@ -126,15 +126,15 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
         switch (actionType) {
             case UPDATED:
             case ADDED:
-                EntityId bodyEntityId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), EntityId.class);
-                if (bodyEntityId != null &&
-                        (EntityType.DEVICE.equals(bodyEntityId.getEntityType()) || EntityType.ASSET.equals(bodyEntityId.getEntityType()))) {
+                EntityId calculatedFieldOwnerId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), EntityId.class);
+                if (calculatedFieldOwnerId != null &&
+                        (EntityType.DEVICE.equals(calculatedFieldOwnerId.getEntityType()) || EntityType.ASSET.equals(calculatedFieldOwnerId.getEntityType()))) {
                     JsonNode body = JacksonUtil.toJsonNode(edgeNotificationMsg.getBody());
                     EdgeId edgeId = safeGetEdgeId(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB());
 
                     return edgeId != null ?
                             saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body) :
-                            pushEventToAllRelatedEdges(tenantId, entityId, type, actionType, originatorEdgeId);
+                            pushEventToAllRelatedEdges(tenantId, calculatedFieldOwnerId, entityId, type, actionType, originatorEdgeId);
                 } else {
                     return pushEventToAllEdges(tenantId, type, actionType, entityId, originatorEdgeId);
                 }

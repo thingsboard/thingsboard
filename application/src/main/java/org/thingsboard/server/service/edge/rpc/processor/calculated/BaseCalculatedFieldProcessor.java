@@ -88,10 +88,10 @@ public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
         return Pair.of(isCreated, isNameUpdated);
     }
 
-    protected ListenableFuture<Void> pushEventToAllRelatedEdges(TenantId tenantId, EntityId entityId, EdgeEventType type, EdgeEventActionType actionType, EdgeId sourceEdgeId) {
+    protected ListenableFuture<Void> pushEventToAllRelatedEdges(TenantId tenantId, EntityId calculatedFieldOwnerId, EntityId entityId, EdgeEventType type, EdgeEventActionType actionType, EdgeId sourceEdgeId) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
-                new PageDataIterableByTenantIdEntityId<>(edgeCtx.getEdgeService()::findRelatedEdgeIdsByEntityId, tenantId, entityId, RELATED_EDGES_CACHE_ITEMS);
+                new PageDataIterableByTenantIdEntityId<>(edgeCtx.getEdgeService()::findRelatedEdgeIdsByEntityId, tenantId, calculatedFieldOwnerId, RELATED_EDGES_CACHE_ITEMS);
         for (EdgeId relatedEdgeId : edgeIds) {
             if (!relatedEdgeId.equals(sourceEdgeId)) {
                 futures.add(saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null));
