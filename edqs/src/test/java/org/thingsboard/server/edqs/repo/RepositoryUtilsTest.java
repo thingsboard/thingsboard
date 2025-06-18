@@ -73,7 +73,7 @@ public class RepositoryUtilsTest {
                 Arguments.of("loranet 123", getNameFilter(StringOperation.NOT_IN, "loranet 123, loranet 126"), false),
 
                 // Basic CONTAINS
-                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "%loranet"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "%loranet"), false),
                 Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "loranet%"), true),
                 Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "%ranet%"), true),
                 Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "%123"), true),
