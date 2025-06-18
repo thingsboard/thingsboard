@@ -69,7 +69,9 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -193,6 +195,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         this.edgeEventProcessingExecutorService = ThingsBoardExecutors.newScheduledThreadPool(schedulerPoolSize, "edge-event-check-scheduler");
         this.sendDownlinkExecutorService = ThingsBoardExecutors.newScheduledThreadPool(sendSchedulerPoolSize, "edge-send-scheduler");
         this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service");
+        this.executorService.scheduleAtFixedRate(this::destroyKafkaSessionIfDisconnectedAndConsumerActive, 60, 60, TimeUnit.SECONDS);
         log.info("Edge RPC service initialized!");
     }
 
@@ -262,6 +265,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public void updateEdge(TenantId tenantId, Edge edge) {
+        if (edge == null) {
+            log.warn("[{}] Edge is null - edge is removed and outdated notification is in process!", tenantId);
+            return;
+        }
         EdgeGrpcSession session = sessions.get(edge.getId());
         if (session != null && session.isConnected()) {
             log.debug("[{}] Updating configuration for edge [{}] [{}]", tenantId, edge.getName(), edge.getId());
@@ -462,11 +469,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void processEdgeEventMigrationIfNeeded(EdgeGrpcSession session, EdgeId edgeId) throws Exception {
         boolean isMigrationProcessed = edgeEventsMigrationProcessed.getOrDefault(edgeId, Boolean.FALSE);
         if (!isMigrationProcessed) {
+            log.info("Starting edge event migration for edge [{}]", edgeId.getId());
             Boolean eventsExist = session.migrateEdgeEvents().get();
             if (Boolean.TRUE.equals(eventsExist)) {
+                log.info("Migration still in progress for edge [{}]", edgeId.getId());
                 sessionNewEvents.put(edgeId, true);
                 scheduleEdgeEventsCheck(session);
             } else if (Boolean.FALSE.equals(eventsExist)) {
+                log.info("Migration completed for edge [{}]", edgeId.getId());
                 edgeEventsMigrationProcessed.put(edgeId, true);
             }
         }
@@ -619,4 +629,27 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
+    private void destroyKafkaSessionIfDisconnectedAndConsumerActive() {
+        try {
+            List<EdgeId> toRemove = new ArrayList<>();
+            for (EdgeGrpcSession session : sessions.values()) {
+                if (session instanceof KafkaEdgeGrpcSession kafkaSession &&
+                        !kafkaSession.isConnected() &&
+                        kafkaSession.getConsumer() != null &&
+                        kafkaSession.getConsumer().getConsumer() != null &&
+                        !kafkaSession.getConsumer().getConsumer().isStopped()) {
+                    toRemove.add(kafkaSession.getEdge().getId());
+                }
+            }
+            for (EdgeId edgeId : toRemove) {
+                log.info("[{}] Destroying session for edge because edge is not connected", edgeId);
+                EdgeGrpcSession removed = sessions.remove(edgeId);
+                if (removed instanceof KafkaEdgeGrpcSession kafkaSession) {
+                    kafkaSession.destroy();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to cleanup kafka sessions", e);
+        }
+    }
 }

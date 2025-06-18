@@ -205,8 +205,8 @@ public class BaseTimeseriesService implements TimeseriesService {
         ListenableFuture<Integer> dpsFuture = saveTs ? Futures.transform(Futures.allAsList(tsFutures), SUM_ALL_INTEGERS, MoreExecutors.directExecutor()) : Futures.immediateFuture(0);
         ListenableFuture<List<Long>> versionsFuture = saveLatest ? Futures.allAsList(latestFutures) : Futures.immediateFuture(null);
         return Futures.whenAllComplete(dpsFuture, versionsFuture).call(() -> {
-            Integer dataPoints = Futures.getUnchecked(dpsFuture);
-            List<Long> versions = Futures.getUnchecked(versionsFuture);
+            Integer dataPoints = dpsFuture.get();
+            List<Long> versions = versionsFuture.get();
             return TimeseriesSaveResult.of(dataPoints, versions);
         }, MoreExecutors.directExecutor());
     }
@@ -298,13 +298,13 @@ public class BaseTimeseriesService implements TimeseriesService {
             long interval = query.getInterval();
             if (interval < 1) {
                 throw new IncorrectParameterException("Invalid TsKvQuery: 'interval' must be greater than 0, but got " + interval +
-                        ". Please check your query parameters and ensure 'endTs' is greater than 'startTs' or increase 'interval'.");
+                                                      ". Please check your query parameters and ensure 'endTs' is greater than 'startTs' or increase 'interval'.");
             }
             long step = Math.max(interval, 1000);
             long intervalCounts = (query.getEndTs() - query.getStartTs()) / step;
             if (intervalCounts > maxTsIntervals || intervalCounts < 0) {
                 throw new IncorrectParameterException("Incorrect TsKvQuery. Number of intervals is to high - " + intervalCounts + ". " +
-                        "Please increase 'interval' parameter for your query or reduce the time range of the query.");
+                                                      "Please increase 'interval' parameter for your query or reduce the time range of the query.");
             }
         }
     }

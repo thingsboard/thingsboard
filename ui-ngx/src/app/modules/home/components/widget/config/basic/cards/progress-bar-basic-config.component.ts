@@ -42,6 +42,7 @@ import {
   progressBarLayoutTranslations,
   ProgressBarWidgetSettings
 } from '@home/components/widget/lib/cards/progress-bar-widget.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-progress-bar-basic-config',
@@ -258,7 +259,7 @@ export class ProgressBarBasicConfigComponent extends BasicWidgetConfigComponent 
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units: string = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(78, decimals, units, true);
   }

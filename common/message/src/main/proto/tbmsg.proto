@@ -59,8 +59,8 @@ message TbMsgProto {
     string data = 14;
 
     int64 ts = 15;
-    // Will be removed in 3.4. Moved to processing context
-    int32 ruleNodeExecCounter = 16;
+
+    // ruleNodeExecCounter (16) was removed in 4.1
 
     int64 customerIdMSB = 17;
     int64 customerIdLSB = 18;

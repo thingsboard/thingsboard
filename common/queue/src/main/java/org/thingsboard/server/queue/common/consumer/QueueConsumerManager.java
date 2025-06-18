@@ -25,7 +25,11 @@ import org.thingsboard.server.queue.TbQueueMsg;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -39,6 +43,7 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
 
     @Getter
     private final TbQueueConsumer<M> consumer;
+    private Future<?> consumerTask;
     private volatile boolean stopped;
 
     @Builder
@@ -63,7 +68,7 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
 
     public void launch() {
         log.info("[{}] Launching consumer", name);
-        consumerExecutor.submit(() -> {
+        consumerTask = consumerExecutor.submit(() -> {
             if (threadPrefix != null) {
                 ThingsBoardThreadFactory.addThreadNamePrefix(threadPrefix);
             }
@@ -101,6 +106,13 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
         log.debug("[{}] Stopping consumer", name);
         stopped = true;
         consumer.unsubscribe();
+        try {
+            if (consumerTask != null) {
+                consumerTask.get(10, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            log.error("[{}] Failed to await consumer loop stop", name, e);
+        }
     }
 
     public interface MsgPackProcessor<M extends TbQueueMsg> {

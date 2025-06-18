@@ -72,6 +72,26 @@ u.first_name as assignee_first_name, u.last_name as assignee_last_name, u.email 
 FROM alarm a
 LEFT JOIN tb_user u ON u.id = a.assignee_id;
 
+DROP VIEW IF EXISTS edge_active_attribute_view CASCADE;
+CREATE OR REPLACE VIEW edge_active_attribute_view AS
+SELECT ee.id
+        , ee.created_time
+        , ee.additional_info
+        , ee.customer_id
+        , ee.root_rule_chain_id
+        , ee.type
+        , ee.name
+        , ee.label
+        , ee.routing_key
+        , ee.secret
+        , ee.tenant_id
+        , ee.version
+FROM edge ee
+        JOIN attribute_kv ON ee.id = attribute_kv.entity_id
+        JOIN key_dictionary ON attribute_kv.attribute_key = key_dictionary.key_id
+WHERE attribute_kv.bool_v = true AND key_dictionary.key = 'active'
+ORDER BY ee.id;
+
 CREATE OR REPLACE FUNCTION create_or_update_active_alarm(
                                         t_id uuid, c_id uuid, a_id uuid, a_created_ts bigint,
                                         a_o_id uuid, a_o_type integer, a_type varchar,
