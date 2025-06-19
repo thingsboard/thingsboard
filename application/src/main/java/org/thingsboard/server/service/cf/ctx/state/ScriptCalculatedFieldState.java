@@ -66,7 +66,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
                 args.add(arg);
             }
         }
-        args.set(0, new TbelCfCtx(arguments, getLastUpdateTimestamp()));
+        args.set(0, new TbelCfCtx(arguments, getLatestTimestamp()));
         ListenableFuture<JsonNode> resultFuture = ctx.getCalculatedFieldScriptEngine().executeJsonAsync(args.toArray());
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,
