@@ -25,6 +25,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.monitoring.service.BaseMonitoringService;
+import org.thingsboard.monitoring.service.MonitoringEntityService;
 
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,8 @@ public class ThingsboardMonitoringApplication {
 
     @Autowired
     private List<BaseMonitoringService<?, ?>> monitoringServices;
+    @Autowired
+    private MonitoringEntityService entityService;
 
     @Value("${monitoring.monitoring_rate_ms}")
     private int monitoringRateMs;
@@ -50,6 +53,9 @@ public class ThingsboardMonitoringApplication {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startMonitoring() {
+        entityService.checkEntities();
+        monitoringServices.forEach(BaseMonitoringService::init);
+
         ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("monitoring-executor");
         scheduler.scheduleWithFixedDelay(() -> {
             monitoringServices.forEach(monitoringService -> {

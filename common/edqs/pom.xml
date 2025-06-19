@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.0.0-RC</version>
+        <version>4.1.0-RC</version>
         <artifactId>common</artifactId>
     </parent>
     <groupId>org.thingsboard.common</groupId>
@@ -67,6 +67,10 @@
         <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>queue</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>discovery-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

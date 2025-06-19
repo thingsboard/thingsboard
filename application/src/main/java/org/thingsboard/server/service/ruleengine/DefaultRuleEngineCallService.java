@@ -73,7 +73,7 @@ public class DefaultRuleEngineCallService implements RuleEngineCallService {
         UUID requestId = new UUID(restApiCallResponseMsg.getRequestIdMSB(), restApiCallResponseMsg.getRequestIdLSB());
         Consumer<TbMsg> consumer = requests.remove(requestId);
         if (consumer != null) {
-            consumer.accept(TbMsg.fromBytes(null, restApiCallResponseMsg.getResponse().toByteArray(), TbMsgCallback.EMPTY));
+            consumer.accept(TbMsg.fromProto(null, restApiCallResponseMsg.getResponseProto(), restApiCallResponseMsg.getResponse(), TbMsgCallback.EMPTY));
         } else {
             log.trace("[{}] Unknown or stale rest api call response received", requestId);
         }

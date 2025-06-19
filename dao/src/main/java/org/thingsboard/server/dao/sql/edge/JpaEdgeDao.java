@@ -68,10 +68,7 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
 
     @Override
     public PageData<Edge> findActiveEdges(PageLink pageLink) {
-        return DaoUtil.toPageData(
-                edgeRepository.findActiveEdges(
-                        pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(edgeRepository.findActiveEdges(DaoUtil.toPageable(pageLink)));
     }
 
     @Override

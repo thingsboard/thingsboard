@@ -43,7 +43,7 @@ public abstract class AbstractEntityProfileQueryProcessor<T extends EntityFilter
                 entityProfileIds.add(dp.getId());
             }
         }
-        pattern = RepositoryUtils.toSqlLikePattern(getEntityNameFilter(filter));
+        pattern = RepositoryUtils.toEntityNameSqlLikePattern(getEntityNameFilter(filter));
     }
 
     protected abstract String getEntityNameFilter(T filter);

@@ -25,9 +25,9 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -37,19 +37,19 @@ import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTop
 public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
 
     protected final PartitionedQueueConsumerManager<E> eventConsumer;
+    protected final List<PartitionedQueueConsumerManager<?>> otherConsumers;
 
     @Getter
     protected final Map<QueueKey, Set<TopicPartitionInfo>> partitions = new HashMap<>();
-    protected final Set<TopicPartitionInfo> partitionsInProgress = ConcurrentHashMap.newKeySet();
-    protected boolean initialized;
 
     protected final ReadWriteLock partitionsLock = new ReentrantReadWriteLock();
 
-    protected QueueStateService(PartitionedQueueConsumerManager<E> eventConsumer) {
+    protected QueueStateService(PartitionedQueueConsumerManager<E> eventConsumer, List<PartitionedQueueConsumerManager<?>> otherConsumers) {
         this.eventConsumer = eventConsumer;
+        this.otherConsumers = otherConsumers;
     }
 
-    public void update(QueueKey queueKey, Set<TopicPartitionInfo> newPartitions) {
+    public void update(QueueKey queueKey, Set<TopicPartitionInfo> newPartitions, Runnable whenAllProcessed) {
         newPartitions = withTopic(newPartitions, eventConsumer.getTopic());
         var writeLock = partitionsLock.writeLock();
         writeLock.lock();
@@ -71,17 +71,29 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
         }
 
         if (!addedPartitions.isEmpty()) {
-            addPartitions(queueKey, addedPartitions);
+            addPartitions(queueKey, addedPartitions, whenAllProcessed);
+        } else {
+            if (whenAllProcessed != null) {
+                whenAllProcessed.run();
+            }
         }
-        initialized = true;
     }
 
-    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
+    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions, Runnable whenAllProcessed) {
+        if (whenAllProcessed != null) {
+            whenAllProcessed.run();
+        }
         eventConsumer.addPartitions(partitions);
+        for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
+            consumer.addPartitions(withTopic(partitions, consumer.getTopic()));
+        }
     }
 
     protected void removePartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
         eventConsumer.removePartitions(partitions);
+        for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
+            consumer.removePartitions(withTopic(partitions, consumer.getTopic()));
+        }
     }
 
     public void delete(Set<TopicPartitionInfo> partitions) {
@@ -100,10 +112,9 @@ public abstract class QueueStateService<E extends TbQueueMsg, S extends TbQueueM
 
     protected void deletePartitions(Set<TopicPartitionInfo> partitions) {
         eventConsumer.delete(withTopic(partitions, eventConsumer.getTopic()));
-    }
-
-    public Set<TopicPartitionInfo> getPartitionsInProgress() {
-        return initialized ? partitionsInProgress : null;
+        for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
+            consumer.removePartitions(withTopic(partitions, consumer.getTopic()));
+        }
     }
 
     public void stop() {

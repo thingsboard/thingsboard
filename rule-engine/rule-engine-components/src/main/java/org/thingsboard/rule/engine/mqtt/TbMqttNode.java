@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttConnectResult;
+import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -53,7 +55,7 @@ import java.util.concurrent.TimeoutException;
         type = ComponentType.EXTERNAL,
         name = "mqtt",
         configClazz = TbMqttNodeConfiguration.class,
-        version = 1,
+        version = 2,
         clusteringMode = ComponentClusteringMode.USER_PREFERENCE,
         nodeDescription = "Publish messages to the MQTT broker",
         nodeDetails = "Will publish message payload to the MQTT broker with QoS <b>AT_LEAST_ONCE</b>.",
@@ -125,6 +127,14 @@ public class TbMqttNode extends TbAbstractExternalNode {
             config.setClientId(getClientId(ctx));
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
+        config.setProtocolVersion(this.mqttNodeConfiguration.getProtocolVersion());
+
+        MqttClientSettings mqttClientSettings = ctx.getMqttClientSettings();
+        config.setRetransmissionConfig(new MqttClientConfig.RetransmissionConfig(
+                mqttClientSettings.getRetransmissionMaxAttempts(),
+                mqttClientSettings.getRetransmissionInitialDelayMillis(),
+                mqttClientSettings.getRetransmissionJitterFactor()
+        ));
 
         prepareMqttClientConfig(config);
         MqttClient client = getMqttClient(ctx, config);
@@ -193,10 +203,17 @@ public class TbMqttNode extends TbAbstractExternalNode {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put(parseToPlainText, false);
                 }
+            case 1:
+                String protocolVersion = "protocolVersion";
+                if (!oldConfiguration.has(protocolVersion)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(protocolVersion, MqttVersion.MQTT_3_1.name());
+                }
                 break;
             default:
                 break;
         }
         return new TbPair<>(hasChanges, oldConfiguration);
     }
+
 }

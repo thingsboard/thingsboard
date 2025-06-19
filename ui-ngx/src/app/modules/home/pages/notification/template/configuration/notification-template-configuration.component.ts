@@ -226,8 +226,8 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     switch (deliveryMethod) {
       case NotificationDeliveryMethod.WEB:
         deliveryMethodForm = this.fb.group({
-          subject: ['', Validators.required],
-          body: ['', Validators.required],
+          subject: ['', [Validators.required, Validators.maxLength(150)]],
+          body: ['', [Validators.required, Validators.maxLength(250)]],
           additionalConfig: this.fb.group({
             icon: this.fb.group({
               enabled: [false],
@@ -252,7 +252,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
         break;
       case NotificationDeliveryMethod.EMAIL:
         deliveryMethodForm = this.fb.group({
-          subject: ['', Validators.required],
+          subject: ['', [Validators.required, Validators.maxLength(250)]],
           body: ['', Validators.required]
         });
         break;

@@ -31,7 +31,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
+import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.notification.SlackService;
@@ -79,6 +81,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
@@ -317,7 +320,6 @@ public class ActorSystemContext {
     @Getter
     private TbEntityViewService tbEntityViewService;
 
-    @Lazy
     @Autowired
     @Getter
     private TelemetrySubscriptionService tsSubService;
@@ -450,12 +452,10 @@ public class ActorSystemContext {
     @Getter
     private ApiLimitService apiLimitService;
 
-    @Lazy
     @Autowired(required = false)
     @Getter
     private RateLimitService rateLimitService;
 
-    @Lazy
     @Autowired(required = false)
     @Getter
     private DebugModeRateLimitsConfig debugModeRateLimitsConfig;
@@ -536,20 +536,25 @@ public class ActorSystemContext {
     @Getter
     private EntityService entityService;
 
-    @Lazy
     @Autowired(required = false)
     @Getter
     private CalculatedFieldProcessingService calculatedFieldProcessingService;
 
-    @Lazy
     @Autowired(required = false)
     @Getter
     private CalculatedFieldStateService calculatedFieldStateService;
 
-    @Lazy
     @Autowired(required = false)
     @Getter
     private CalculatedFieldQueueService calculatedFieldQueueService;
+
+    @Autowired
+    @Getter
+    private JobService jobService;
+
+    @Autowired
+    @Getter
+    private JobManager jobManager;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
@@ -638,6 +643,10 @@ public class ActorSystemContext {
     @Value("${actors.calculated_fields.calculation_timeout:5}")
     @Getter
     private long cfCalculationResultTimeout;
+
+    @Autowired
+    @Getter
+    private MqttClientSettings mqttClientSettings;
 
     @Getter
     @Setter

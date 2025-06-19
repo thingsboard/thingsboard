@@ -190,11 +190,24 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public Boolean delete(Alarm alarm, User user) {
-        TenantId tenantId = alarm.getTenantId();
-        logEntityActionService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
-                ActionType.ALARM_DELETE, user, alarm.getId());
-        return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
+    public boolean delete(Alarm alarm, User user) {
+        var tenantId = alarm.getTenantId();
+        var alarmId = alarm.getId();
+        var alarmOriginator = alarm.getOriginator();
+
+        boolean deleted;
+        try {
+            deleted = alarmSubscriptionService.deleteAlarm(tenantId, alarmId);
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, emptyId(alarmOriginator.getEntityType()), ActionType.ALARM_DELETE, user, e, alarmId);
+            throw e;
+        }
+
+        if (deleted) {
+            logEntityActionService.logEntityAction(tenantId, alarmOriginator, alarm, alarm.getCustomerId(), ActionType.ALARM_DELETE, user, alarmId);
+        }
+
+        return deleted;
     }
 
     private static long getOrDefault(long ts) {

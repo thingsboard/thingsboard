@@ -37,17 +37,20 @@ import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { isNotEmptyStr, mergeDeepIgnoreArray } from '@core/utils';
+import { isNotEmptyStr, mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
+import { ComponentStyle, Font, TimewindowStyle, ValueFormatProcessor } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityInfoData, HasTenantId, HasVersion } from '@shared/models/entity.models';
-import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
+import {
+  DataKeysCallbacks,
+  DataKeySettingsFunction
+} from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { TbFunction } from '@shared/models/js-function.models';
 import { FormProperty, jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Device } from '@shared/models/device.models';
+import { TbUnit } from '@shared/models/unit.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -194,6 +197,7 @@ export interface WidgetTypeParameters {
   dataKeySettingsFunction?: DataKeySettingsFunction;
   displayRpcMessageToast?: boolean;
   targetDeviceOptional?: boolean;
+  supportsUnitConversion?: boolean;
   additionalWidgetActionTypes?: WidgetActionType[];
 }
 
@@ -329,6 +333,7 @@ export interface LegendConfig {
   showAvg: boolean;
   showTotal: boolean;
   showLatest: boolean;
+  valueFormat: ValueFormatProcessor;
 }
 
 export const defaultLegendConfig = (wType: widgetType): LegendConfig => ({
@@ -339,7 +344,8 @@ export const defaultLegendConfig = (wType: widgetType): LegendConfig => ({
   showMax: false,
   showAvg: wType === widgetType.timeseries,
   showTotal: false,
-  showLatest: false
+  showLatest: false,
+  valueFormat: null
 });
 
 export enum ComparisonResultType {
@@ -367,7 +373,7 @@ export interface KeyInfo {
   color?: string;
   funcBody?: TbFunction;
   postFuncBody?: TbFunction;
-  units?: string;
+  units?: TbUnit;
   decimals?: number;
 }
 
@@ -555,6 +561,7 @@ export interface DatasourceData extends DataSetHolder {
 export interface LegendKey {
   dataKey: DataKey;
   dataIndex: number;
+  valueFormat: ValueFormatProcessor;
 }
 
 export interface LegendKeyData {
@@ -896,7 +903,7 @@ export interface WidgetConfig {
   widgetStyle?: ComponentStyle;
   widgetCss?: string;
   titleStyle?: ComponentStyle;
-  units?: string;
+  units?: TbUnit;
   decimals?: number;
   noDataDisplayMessage?: string;
   pageSize?: number;
@@ -1000,9 +1007,9 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
 
   set settings(value: WidgetSettings) {
     if (!value) {
-      this.settingsValue = this.defaultSettings();
+      this.settingsValue = mergeDeep({}, this.defaultSettings());
     } else {
-      this.settingsValue = mergeDeepIgnoreArray(this.defaultSettings(), value);
+      this.settingsValue = mergeDeepIgnoreArray({}, this.defaultSettings(), value);
     }
     if (!this.settingsSet) {
       this.settingsSet = true;

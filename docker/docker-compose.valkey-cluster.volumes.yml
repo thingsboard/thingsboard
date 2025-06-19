@@ -1,0 +1,58 @@
+#
+# Copyright © 2016-2025 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+version: '3.0'
+
+services:
+  # Valkey cluster
+  valkey-node-0:
+    volumes:
+      - valkey-cluster-data-0:/bitnami/valkey/data
+  valkey-node-1:
+    volumes:
+      - valkey-cluster-data-1:/bitnami/valkey/data
+  valkey-node-2:
+    volumes:
+      - valkey-cluster-data-2:/bitnami/valkey/data
+  valkey-node-3:
+    volumes:
+      - valkey-cluster-data-3:/bitnami/valkey/data
+  valkey-node-4:
+    volumes:
+      - valkey-cluster-data-4:/bitnami/valkey/data
+  valkey-node-5:
+    volumes:
+      - valkey-cluster-data-5:/bitnami/valkey/data
+
+volumes:
+  valkey-cluster-data-0:
+    external:
+      name: ${VALKEY_CLUSTER_DATA_VOLUME_0}
+  valkey-cluster-data-1:
+    external:
+      name: ${VALKEY_CLUSTER_DATA_VOLUME_1}
+  valkey-cluster-data-2:
+    external:
+      name: ${VALKEY_CLUSTER_DATA_VOLUME_2}
+  valkey-cluster-data-3:
+    external:
+      name: ${VALKEY_CLUSTER_DATA_VOLUME_3}
+  valkey-cluster-data-4:
+    external:
+      name: ${VALKEY_CLUSTER_DATA_VOLUME_4}
+  valkey-cluster-data-5:
+    external:
+      name: ${VALKEY_CLUSTER_DATA_VOLUME_5}
