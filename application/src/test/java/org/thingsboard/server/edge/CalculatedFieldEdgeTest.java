@@ -38,7 +38,6 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,8 +61,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        List<AbstractMessage> downlinkMsgs = edgeImitator.getDownlinkMsgs();
-        AbstractMessage latestMessage = downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg instanceof CalculatedFieldUpdateMsg).findFirst().get();
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
         CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, calculatedFieldUpdateMsg.getMsgType());
@@ -80,8 +78,8 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         savedCalculatedField.setName(UPDATED_CF_NAME);
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
-        downlinkMsgs = edgeImitator.getDownlinkMsgs();
-        latestMessage = downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg instanceof CalculatedFieldUpdateMsg).findFirst().get();
+
+        latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
         calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
         calculatedFieldFromMsg = JacksonUtil.fromString(calculatedFieldUpdateMsg.getEntity(), CalculatedField.class, true);
@@ -94,6 +92,7 @@ public class CalculatedFieldEdgeTest extends AbstractEdgeTest {
         doDelete("/api/calculatedField/" + savedCalculatedField.getUuidId())
                 .andExpect(status().isOk());
         Assert.assertTrue(edgeImitator.waitForMessages());
+
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof CalculatedFieldUpdateMsg);
         calculatedFieldUpdateMsg = (CalculatedFieldUpdateMsg) latestMessage;
