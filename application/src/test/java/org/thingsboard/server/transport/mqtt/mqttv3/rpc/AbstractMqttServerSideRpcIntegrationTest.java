@@ -22,7 +22,6 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.nimbusds.jose.util.StandardCharset;
-import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -30,7 +29,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.DynamicProtoUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
@@ -433,11 +431,11 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
 
     }
 
-    protected byte[] processProtoMessageArrived(String requestTopic, MqttMessage mqttMessage) throws MqttException, InvalidProtocolBufferException {
+    protected byte[] processProtoMessageArrived(String requestTopic, MqttMessage mqttMessage) throws Exception {
         if (requestTopic.startsWith(BASE_DEVICE_API_TOPIC) || requestTopic.startsWith(BASE_DEVICE_API_TOPIC_V2)) {
             ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = getProtoTransportPayloadConfiguration();
-            ProtoFileElement rpcRequestProtoFileElement = DynamicProtoUtils.getProtoFileElement(protoTransportPayloadConfiguration.getDeviceRpcRequestProtoSchema());
-            DynamicSchema rpcRequestProtoSchema = DynamicProtoUtils.getDynamicSchema(rpcRequestProtoFileElement, ProtoTransportPayloadConfiguration.RPC_REQUEST_PROTO_SCHEMA);
+            String schema = protoTransportPayloadConfiguration.getDeviceRpcRequestProtoSchema();
+            DynamicSchema rpcRequestProtoSchema = DynamicSchema.parseFromProtoString(schema, ProtoTransportPayloadConfiguration.RPC_REQUEST_PROTO_SCHEMA);
 
             byte[] requestPayload = mqttMessage.getPayload();
             DynamicMessage.Builder rpcRequestMsg = rpcRequestProtoSchema.newMessageBuilder("RpcRequestMsg");
@@ -449,8 +447,8 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
                 for (Descriptors.FieldDescriptor fieldDescriptor : fields) {
                     assertTrue(dynamicMessage.hasField(fieldDescriptor));
                 }
-                ProtoFileElement rpcResponseProtoFileElement = DynamicProtoUtils.getProtoFileElement(protoTransportPayloadConfiguration.getDeviceRpcResponseProtoSchema());
-                DynamicSchema rpcResponseProtoSchema = DynamicProtoUtils.getDynamicSchema(rpcResponseProtoFileElement, ProtoTransportPayloadConfiguration.RPC_RESPONSE_PROTO_SCHEMA);
+                schema = protoTransportPayloadConfiguration.getDeviceRpcResponseProtoSchema();
+                DynamicSchema rpcResponseProtoSchema = DynamicSchema.parseFromProtoString(schema, ProtoTransportPayloadConfiguration.RPC_RESPONSE_PROTO_SCHEMA);
 
                 DynamicMessage.Builder rpcResponseBuilder = rpcResponseProtoSchema.newMessageBuilder("RpcResponseMsg");
                 Descriptors.Descriptor rpcResponseMsgDescriptor = rpcResponseBuilder.getDescriptorForType();
