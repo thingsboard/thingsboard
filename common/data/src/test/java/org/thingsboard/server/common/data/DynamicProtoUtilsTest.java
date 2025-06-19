@@ -18,16 +18,21 @@ package org.thingsboard.server.common.data;
 import com.github.os72.protobuf.dynamic.DynamicSchema;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
-import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,30 +40,30 @@ public class DynamicProtoUtilsTest {
 
     @Test
     public void testProtoSchemaWithMessageNestedTypes() throws Exception {
-        String schema = "syntax = \"proto3\";\n" +
-                "\n" +
-                "package testnested;\n" +
-                "\n" +
-                "message Outer {\n" +
-                "  message MiddleAA {\n" +
-                "    message Inner {\n" +
-                "      optional int64 ival = 1;\n" +
-                "      optional bool  booly = 2;\n" +
-                "    }\n" +
-                "    Inner inner = 1;\n" +
-                "  }\n" +
-                "  message MiddleBB {\n" +
-                "    message Inner {\n" +
-                "      optional int32 ival = 1;\n" +
-                "      optional bool  booly = 2;\n" +
-                "    }\n" +
-                "    Inner inner = 1;\n" +
-                "  }\n" +
-                "  MiddleAA middleAA = 1;\n" +
-                "  MiddleBB middleBB = 2;\n" +
-                "}";
-        ProtoFileElement protoFileElement = DynamicProtoUtils.getProtoFileElement(schema);
-        DynamicSchema dynamicSchema = DynamicProtoUtils.getDynamicSchema(protoFileElement, "test schema with nested types");
+        String schema = """
+                syntax = "proto3";
+                
+                package testnested;
+                
+                message Outer {
+                  message MiddleAA {
+                    message Inner {
+                      optional int64 ival = 1;
+                      optional bool  booly = 2;
+                    }
+                    Inner inner = 1;
+                  }
+                  message MiddleBB {
+                    message Inner {
+                      optional int32 ival = 1;
+                      optional bool  booly = 2;
+                    }
+                    Inner inner = 1;
+                  }
+                  MiddleAA middleAA = 1;
+                  MiddleBB middleBB = 2;
+                }""";
+        DynamicSchema dynamicSchema = DynamicSchema.parseFromProtoString(schema, "test schema with nested types");
         assertNotNull(dynamicSchema);
         Set<String> messageTypes = dynamicSchema.getMessageTypes();
         assertEquals(5, messageTypes.size());
@@ -102,41 +107,42 @@ public class DynamicProtoUtilsTest {
                 .setField(outerMsgBuilderDescriptor.findFieldByName("middleBB"), middleBBMsg)
                 .build();
 
-        assertEquals("{\n" +
-                "  \"middleAA\": {\n" +
-                "    \"inner\": {\n" +
-                "      \"ival\": \"1\",\n" +
-                "      \"booly\": true\n" +
-                "    }\n" +
-                "  },\n" +
-                "  \"middleBB\": {\n" +
-                "    \"inner\": {\n" +
-                "      \"ival\": 0,\n" +
-                "      \"booly\": false\n" +
-                "    }\n" +
-                "  }\n" +
-                "}", DynamicProtoUtils.dynamicMsgToJson(outerMsgBuilderDescriptor, outerMsg.toByteArray()));
+        assertEquals("""
+                {
+                  "middleAA": {
+                    "inner": {
+                      "ival": "1",
+                      "booly": true
+                    }
+                  },
+                  "middleBB": {
+                    "inner": {
+                      "ival": 0,
+                      "booly": false
+                    }
+                  }
+                }""", DynamicProtoUtils.dynamicMsgToJson(outerMsgBuilderDescriptor, outerMsg.toByteArray()));
     }
 
     @Test
     public void testProtoSchemaWithMessageOneOfs() throws Exception {
-        String schema = "syntax = \"proto3\";\n" +
-                "\n" +
-                "package testoneofs;\n" +
-                "\n" +
-                "message SubMessage {\n" +
-                "   repeated string name = 1;\n" +
-                "}\n" +
-                "\n" +
-                "message SampleMessage {\n" +
-                "  optional int32 id = 1;\n" +
-                "  oneof testOneOf {\n" +
-                "     string name = 4;\n" +
-                "     SubMessage subMessage = 9;\n" +
-                "  }\n" +
-                "}";
-        ProtoFileElement protoFileElement = DynamicProtoUtils.getProtoFileElement(schema);
-        DynamicSchema dynamicSchema = DynamicProtoUtils.getDynamicSchema(protoFileElement, "test schema with message oneOfs");
+        String schema = """
+                syntax = "proto3";
+                
+                package testoneofs;
+                
+                message SubMessage {
+                   repeated string name = 1;
+                }
+                
+                message SampleMessage {
+                  optional int32 id = 1;
+                  oneof testOneOf {
+                     string name = 4;
+                     SubMessage subMessage = 9;
+                  }
+                }""";
+        DynamicSchema dynamicSchema = DynamicSchema.parseFromProtoString(schema, "test schema with message oneOfs");
         assertNotNull(dynamicSchema);
         Set<String> messageTypes = dynamicSchema.getMessageTypes();
         assertEquals(2, messageTypes.size());
@@ -152,7 +158,10 @@ public class DynamicProtoUtilsTest {
         DynamicMessage sampleMsg = sampleMsgBuilder
                 .setField(sampleMsgDescriptor.findFieldByName("name"), "Bob")
                 .build();
-        assertEquals("{\n" + "  \"name\": \"Bob\"\n" + "}", DynamicProtoUtils.dynamicMsgToJson(sampleMsgDescriptor, sampleMsg.toByteArray()));
+        assertEquals("""
+                {
+                  "name": "Bob"
+                }""", DynamicProtoUtils.dynamicMsgToJson(sampleMsgDescriptor, sampleMsg.toByteArray()));
 
         DynamicMessage.Builder subMsgBuilder = dynamicSchema.newMessageBuilder("testoneofs.SubMessage");
         Descriptors.Descriptor subMsgDescriptor = subMsgBuilder.getDescriptorForType();
@@ -162,8 +171,80 @@ public class DynamicProtoUtilsTest {
                 .build();
 
         DynamicMessage sampleMsgWithOneOfSubMessage = sampleMsgBuilder.setField(sampleMsgDescriptor.findFieldByName("subMessage"), subMsg).build();
-        assertEquals("{\n" + "  \"subMessage\": {\n" + "    \"name\": [\"Alice\", \"John\"]\n" + "  }\n" + "}",
+        assertEquals("""
+                        {
+                          "subMessage": {
+                            "name": ["Alice", "John"]
+                          }
+                        }""",
                 DynamicProtoUtils.dynamicMsgToJson(sampleMsgDescriptor, sampleMsgWithOneOfSubMessage.toByteArray()));
+    }
+
+    private static Stream<Arguments> testCheckProtoFileSyntax() {
+        return Stream.of(
+                Arguments.of(
+                        "valid-schema.proto",
+                        """
+                        syntax = "proto3";
+                        message Test {
+                          string name = 1;
+                        }
+                        """,
+                        true
+                ),
+                Arguments.of(
+                        "valid-schema.proto",
+                        """
+                        syntax      =      "proto3";
+                        message Test {
+                          string name = 1;
+                        }
+                        """,
+                        true
+                ),
+                Arguments.of(
+                        "compact-schema.proto",
+                        """
+                        syntax="proto3";message Test{string name=1;}
+                        """,
+                        true
+                ),
+                Arguments.of(
+                        "missing-syntax.proto",
+                        """
+                        message Test {
+                          string name = 1;
+                        }
+                        """,
+                        false
+                ),
+                Arguments.of(
+                        "proto2-schema.proto",
+                        """
+                        syntax = "proto2";
+                        message Test {
+                          required string name = 1;
+                        }
+                        """,
+                        false
+                ),
+                Arguments.of(
+                        "null-schema.proto",
+                        null,
+                        false
+                )
+        );
+    }
+
+    @MethodSource
+    @ParameterizedTest
+    void testCheckProtoFileSyntax(String schemaName, String protoSchema, boolean shouldPass) {
+        if (shouldPass) {
+            assertDoesNotThrow(() -> DynamicProtoUtils.validateProtoSchema(protoSchema, schemaName, null));
+            return;
+        }
+        assertThrows(IllegalArgumentException.class,
+                () -> DynamicProtoUtils.validateProtoSchema(protoSchema, schemaName, null));
     }
 
 }
