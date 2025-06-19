@@ -52,12 +52,14 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
 
     @Override
     protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider, CompareResult compareResult) {
+        boolean toUpdate = ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds();
+        if (toUpdate) {
+            deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId()));
+            deviceProfile.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId()));
+        }
         DeviceProfile saved = deviceProfileService.saveDeviceProfile(deviceProfile);
-        if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
+        if (toUpdate) {
             importCalculatedFields(ctx, saved, exportData, idProvider);
-            saved.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId()));
-            saved.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId()));
-            saved = deviceProfileService.saveDeviceProfile(saved);
         }
         return saved;
     }

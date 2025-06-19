@@ -74,7 +74,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     @Override
     public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
         log.trace("Executing saveOtaPackageInfo [{}]", otaPackageInfo);
-        if (isUrl && (StringUtils.isEmpty(otaPackageInfo.getUrl()) || otaPackageInfo.getUrl().trim().isEmpty())) {
+        if (isUrl && (StringUtils.isEmpty(otaPackageInfo.getUrl()) || StringUtils.isBlank(otaPackageInfo.getUrl()))) {
             throw new DataValidationException("Ota package URL should be specified!");
         }
         otaPackageInfoValidator.validate(otaPackageInfo, OtaPackageInfo::getTenantId);
@@ -91,12 +91,10 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             if (otaPackageId != null) {
                 handleEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {
-                throw new DataValidationException("OtaPackage with such title and version already exists!");
-            } else {
-                throw t;
-            }
+            checkConstraintViolation(t,
+                    "ota_package_tenant_title_version_unq_key", "OtaPackage with such title and version already exists!",
+                    "ota_package_external_id_unq_key", "OtaPackage with such external id already exists!");
+            throw t;
         }
     }
 
@@ -117,12 +115,10 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             if (otaPackageId != null) {
                 handleEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {
-                throw new DataValidationException("OtaPackage with such title and version already exists!");
-            } else {
-                throw t;
-            }
+            checkConstraintViolation(t,
+                    "ota_package_tenant_title_version_unq_key", "OtaPackage with such title and version already exists!",
+                    "ota_package_external_id_unq_key", "OtaPackage with such external id already exists!");
+            throw t;
         }
     }
 
