@@ -74,7 +74,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     @Override
     public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
         log.trace("Executing saveOtaPackageInfo [{}]", otaPackageInfo);
-        if (isUrl && (StringUtils.isEmpty(otaPackageInfo.getUrl()) || StringUtils.isBlank(otaPackageInfo.getUrl()))) {
+        if (isUrl && StringUtils.isBlank(otaPackageInfo.getUrl())) {
             throw new DataValidationException("Ota package URL should be specified!");
         }
         otaPackageInfoValidator.validate(otaPackageInfo, OtaPackageInfo::getTenantId);
