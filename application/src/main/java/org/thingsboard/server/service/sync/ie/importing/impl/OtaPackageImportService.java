@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.OtaPackageExportData;
@@ -60,6 +61,10 @@ public class OtaPackageImportService extends BaseEntityImportService<OtaPackageI
 
     @Override
     protected OtaPackage saveOrUpdate(EntitiesImportCtx ctx, OtaPackage otaPackage, OtaPackageExportData exportData, IdProvider idProvider, CompareResult compareResult) {
+        if (otaPackage.hasUrl()) {
+            OtaPackageInfo info = new OtaPackageInfo(otaPackage);
+            return (OtaPackage) otaPackageService.saveOtaPackageInfo(info, info.hasUrl());
+        }
         return otaPackageService.saveOtaPackage(otaPackage);
     }
 
