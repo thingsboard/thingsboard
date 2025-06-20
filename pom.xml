@@ -134,7 +134,7 @@
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
         <json-path.version>2.9.0</json-path.version>
-        <langchain4j.version>1.0.1</langchain4j.version>
+        <langchain4j.version>1.1.0</langchain4j.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.2.1</awaitility.version>
         <dbunit.version>2.7.3</dbunit.version>
