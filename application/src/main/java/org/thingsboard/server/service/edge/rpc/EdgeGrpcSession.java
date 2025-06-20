@@ -452,14 +452,15 @@ public abstract class EdgeGrpcSession implements Closeable {
                     List<DownlinkMsg> copy = new ArrayList<>(sessionState.getPendingMsgsMap().values());
                     if (attempt > 1) {
                         String error = "Failed to deliver the batch";
-                        String failureMsg = String.format("{%s}: {%s}", error, copy);
+                        String failureMsg = String.format("{%s} (size: {%s})", error, copy.size());
                         if (attempt == 2) {
                             // Send a failure notification only on the second attempt.
                             // This ensures that failure alerts are sent just once to avoid redundant notifications.
                             ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId)
                                     .edgeId(edge.getId()).customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(error).build());
                         }
-                        log.warn("[{}][{}] {}, attempt: {}", tenantId, edge.getId(), failureMsg, attempt);
+                        log.warn("[{}][{}] {} on attempt {}", tenantId, edge.getId(), failureMsg, attempt);
+                        log.debug("[{}][{}] entities in failed batch: {}", tenantId, edge.getId(), copy);
                     }
                     log.trace("[{}][{}][{}] downlink msg(s) are going to be send.", tenantId, edge.getId(), copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
