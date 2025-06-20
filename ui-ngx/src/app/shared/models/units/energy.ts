@@ -33,7 +33,7 @@ export type EnergyMetricUnits =
   | 'GJ'
   | 'eV';
 
-export type EnergyImperialUnits = 'kcal' | 'cal' | 'Cal' | 'BTU' | 'ft·lb' | 'thm';
+export type EnergyImperialUnits = 'kcal' | 'cal' | 'Cal' | 'BTU' | 'MBtu' | 'MMBtu' | 'ft·lb' | 'thm';
 
 const METRIC: TbMeasureUnits<EnergyMetricUnits> = {
   ratio: 1 / 4.184,
@@ -117,7 +117,17 @@ const IMPERIAL: TbMeasureUnits<EnergyImperialUnits> = {
     BTU: {
       name: 'unit.british-thermal-unit',
       tags: ['heat', 'work done'],
-      to_anchor: 252.164401,
+      to_anchor: 252.1644007218,
+    },
+    MBtu: {
+      name: 'unit.thousand-british-thermal-unit',
+      tags: ['heat', 'work done'],
+      to_anchor: 252164.4007218,
+    },
+    MMBtu : {
+      name: 'unit.million-british-thermal-unit',
+      tags: ['heat', 'work done'],
+      to_anchor: 252164400.7218,
     },
     'ft·lb': {
       name: 'unit.foot-pound',

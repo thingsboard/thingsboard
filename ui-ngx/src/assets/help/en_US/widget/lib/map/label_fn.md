@@ -3,7 +3,7 @@
 <div class="divider"></div>
 <br/>
 
-*function (data, dsData): string*
+*function (data, dsData, ctx): string*
 
 A JavaScript function used to compute text or HTML code of the marker label.
 
