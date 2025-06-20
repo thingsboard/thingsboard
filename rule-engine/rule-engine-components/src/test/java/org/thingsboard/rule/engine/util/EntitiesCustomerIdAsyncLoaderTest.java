@@ -15,140 +15,179 @@
  */
 package org.thingsboard.rule.engine.util;
 
-import com.google.common.util.concurrent.Futures;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.user.UserService;
 
-import java.util.EnumSet;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-public class EntitiesCustomerIdAsyncLoaderTest {
+class EntitiesCustomerIdAsyncLoaderTest {
 
-    private static final EnumSet<EntityType> SUPPORTED_ENTITY_TYPES = EnumSet.of(
-            EntityType.CUSTOMER,
-            EntityType.USER,
-            EntityType.ASSET,
-            EntityType.DEVICE
-    );
-    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    ListeningExecutor dbExecutor = new TestDbCallbackExecutor();
+
     @Mock
-    private TbContext ctxMock;
+    TbContext ctxMock;
     @Mock
-    private UserService userServiceMock;
+    UserService userServiceMock;
     @Mock
-    private AssetService assetServiceMock;
+    AssetService assetServiceMock;
     @Mock
-    private DeviceService deviceServiceMock;
+    DeviceService deviceServiceMock;
+    @Mock
+    EntityViewService entityViewServiceMock;
+    @Mock
+    EdgeService edgeServiceMock;
+
+    TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
+    CustomerId customerId = new CustomerId(Uuids.timeBased());
 
     @Test
-    public void givenCustomerEntityType_whenFindEntityIdAsync_thenOK() throws ExecutionException, InterruptedException {
-        // GIVEN
-        var customer = new Customer(new CustomerId(UUID.randomUUID()));
-
-        // WHEN
-        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctxMock, customer.getId()).get();
+    void givenCustomerOriginator_thenReturnsOriginatorItself() throws ExecutionException, InterruptedException {
+        // GIVEN-WHEN
+        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctxMock, customerId).get();
 
         // THEN
-        assertEquals(customer.getId(), actualCustomerId);
+        assertThat(actualCustomerId).isEqualTo(customerId);
     }
 
     @Test
-    public void givenUserEntityType_whenFindEntityIdAsync_thenOK() throws ExecutionException, InterruptedException {
+    void testUserOriginator() throws ExecutionException, InterruptedException {
         // GIVEN
-        var user = new User(new UserId(UUID.randomUUID()));
-        var expectedCustomerId = new CustomerId(UUID.randomUUID());
-        user.setCustomerId(expectedCustomerId);
+        var user = new User(new UserId(Uuids.timeBased()));
+        user.setCustomerId(customerId);
 
-        when(ctxMock.getUserService()).thenReturn(userServiceMock);
-        doReturn(Futures.immediateFuture(user)).when(userServiceMock).findUserByIdAsync(any(), any());
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+        given(ctxMock.getTenantId()).willReturn(tenantId);
+        given(ctxMock.getUserService()).willReturn(userServiceMock);
+        given(userServiceMock.findUserByIdAsync(tenantId, user.getId())).willReturn(immediateFuture(user));
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
 
         // WHEN
-        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctxMock, user.getId()).get();
+        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctxMock, user.getId()).get();
 
         // THEN
-        assertEquals(expectedCustomerId, actualCustomerId);
+        assertThat(actualCustomerId).isEqualTo(customerId);
     }
 
     @Test
-    public void givenAssetEntityType_whenFindEntityIdAsync_thenOK() throws ExecutionException, InterruptedException {
+    void testAssetOriginator() throws ExecutionException, InterruptedException {
         // GIVEN
-        var asset = new Asset(new AssetId(UUID.randomUUID()));
-        var expectedCustomerId = new CustomerId(UUID.randomUUID());
-        asset.setCustomerId(expectedCustomerId);
+        var asset = new Asset(new AssetId(Uuids.timeBased()));
+        asset.setCustomerId(customerId);
 
-        when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
-        doReturn(Futures.immediateFuture(asset)).when(assetServiceMock).findAssetByIdAsync(any(), any());
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+        given(ctxMock.getTenantId()).willReturn(tenantId);
+        given(ctxMock.getAssetService()).willReturn(assetServiceMock);
+        given(assetServiceMock.findAssetByIdAsync(tenantId, asset.getId())).willReturn(immediateFuture(asset));
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
 
         // WHEN
-        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctxMock, asset.getId()).get();
+        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctxMock, asset.getId()).get();
 
         // THEN
-        assertEquals(expectedCustomerId, actualCustomerId);
+        assertThat(actualCustomerId).isEqualTo(customerId);
     }
 
     @Test
-    public void givenDeviceEntityType_whenFindEntityIdAsync_thenOK() throws ExecutionException, InterruptedException {
+    void testDeviceOriginator() throws ExecutionException, InterruptedException {
         // GIVEN
-        var device = new Device(new DeviceId(UUID.randomUUID()));
-        var expectedCustomerId = new CustomerId(UUID.randomUUID());
-        device.setCustomerId(expectedCustomerId);
+        var device = new Device(new DeviceId(Uuids.timeBased()));
+        device.setCustomerId(customerId);
 
-        when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
-        doReturn(device).when(deviceServiceMock).findDeviceById(any(), any());
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+        given(ctxMock.getTenantId()).willReturn(tenantId);
+        given(ctxMock.getDeviceService()).willReturn(deviceServiceMock);
+        given(deviceServiceMock.findDeviceById(tenantId, device.getId())).willReturn(device);
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
 
         // WHEN
-        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctxMock, device.getId()).get();
+        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctxMock, device.getId()).get();
 
         // THEN
-        assertEquals(expectedCustomerId, actualCustomerId);
+        assertThat(actualCustomerId).isEqualTo(customerId);
     }
 
     @Test
-    public void givenUnsupportedEntityTypes_whenFindEntityIdAsync_thenException() {
-        for (var entityType : EntityType.values()) {
-            if (!SUPPORTED_ENTITY_TYPES.contains(entityType)) {
-                var entityId = EntityIdFactory.getByTypeAndUuid(entityType, UUID.randomUUID());
+    void testEntityViewOriginator() throws ExecutionException, InterruptedException {
+        // GIVEN
+        var entityView = new EntityView(new EntityViewId(Uuids.timeBased()));
+        entityView.setCustomerId(customerId);
 
-                var expectedExceptionMsg = "org.thingsboard.rule.engine.api.TbNodeException: Unexpected originator EntityType: " + entityType;
+        given(ctxMock.getTenantId()).willReturn(tenantId);
+        given(ctxMock.getEntityViewService()).willReturn(entityViewServiceMock);
+        given(entityViewServiceMock.findEntityViewByIdAsync(tenantId, entityView.getId())).willReturn(immediateFuture(entityView));
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
 
-                var exception = assertThrows(ExecutionException.class,
-                        () -> EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctxMock, entityId).get());
+        // WHEN
+        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctxMock, entityView.getId()).get();
 
-                assertInstanceOf(TbNodeException.class, exception.getCause());
-                assertEquals(expectedExceptionMsg, exception.getMessage());
-            }
-        }
+        // THEN
+        assertThat(actualCustomerId).isEqualTo(customerId);
+    }
+
+    @Test
+    void testEdgeOriginator() throws ExecutionException, InterruptedException {
+        // GIVEN
+        var edge = new Edge(new EdgeId(Uuids.timeBased()));
+        edge.setCustomerId(customerId);
+
+        given(ctxMock.getTenantId()).willReturn(tenantId);
+        given(ctxMock.getEdgeService()).willReturn(edgeServiceMock);
+        given(edgeServiceMock.findEdgeByIdAsync(tenantId, edge.getId())).willReturn(immediateFuture(edge));
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+
+        // WHEN
+        var actualCustomerId = EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctxMock, edge.getId()).get();
+
+        // THEN
+        assertThat(actualCustomerId).isEqualTo(customerId);
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = EntityType.class,
+            names = {"CUSTOMER", "USER", "DEVICE", "ASSET", "ENTITY_VIEW", "EDGE"}, // supported entity types
+            mode = EnumSource.Mode.EXCLUDE
+    )
+    void givenEntityTypeThatHasNoCustomer_thenThrowsException(EntityType entityType) {
+        // GIVEN
+        var entityId = EntityIdFactory.getByTypeAndUuid(entityType, Uuids.timeBased());
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctxMock, entityId).get())
+                .isInstanceOf(ExecutionException.class)
+                .hasCauseInstanceOf(TbNodeException.class)
+                .hasMessage("org.thingsboard.rule.engine.api.TbNodeException: Unexpected originator EntityType: " + entityType);
     }
 
 }
