@@ -63,7 +63,7 @@ public class OtaPackageImportService extends BaseEntityImportService<OtaPackageI
     protected OtaPackage saveOrUpdate(EntitiesImportCtx ctx, OtaPackage otaPackage, OtaPackageExportData exportData, IdProvider idProvider, CompareResult compareResult) {
         if (otaPackage.hasUrl()) {
             OtaPackageInfo info = new OtaPackageInfo(otaPackage);
-            return (OtaPackage) otaPackageService.saveOtaPackageInfo(info, info.hasUrl());
+            return new OtaPackage(otaPackageService.saveOtaPackageInfo(info, info.hasUrl()));
         }
         return otaPackageService.saveOtaPackage(otaPackage);
     }
