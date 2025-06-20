@@ -22,6 +22,7 @@ import {
   azureIotHubCredentialsTypes,
   azureIotHubCredentialsTypeTranslations
 } from '@home/components/rule-node/rule-node-config.models';
+import { MqttVersion } from '@shared/models/mqtt.models';
 
 @Component({
   selector: 'tb-external-node-azure-iot-hub-config',
@@ -34,6 +35,7 @@ export class AzureIotHubConfigComponent extends RuleNodeConfigurationComponent {
 
   allAzureIotHubCredentialsTypes = azureIotHubCredentialsTypes;
   azureIotHubCredentialsTypeTranslationsMap = azureIotHubCredentialsTypeTranslations;
+  MqttVersion = MqttVersion;
 
   constructor(private fb: UntypedFormBuilder) {
     super();
