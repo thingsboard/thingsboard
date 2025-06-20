@@ -41,7 +41,8 @@ import java.util.Map;
         @Type(name = "DEVICE", value = DeviceExportData.class),
         @Type(name = "RULE_CHAIN", value = RuleChainExportData.class),
         @Type(name = "WIDGET_TYPE", value = WidgetTypeExportData.class),
-        @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundleExportData.class)
+        @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundleExportData.class),
+        @Type(name = "OTA_PACKAGE", value = OtaPackageExportData.class)
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data

@@ -48,9 +48,6 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityInfosToDto;
 
-/**
- * Created by Valerii Sosliuk on 5/19/2017.
- */
 @Component
 @SqlDao
 @Slf4j

@@ -38,6 +38,7 @@ import org.thingsboard.server.dao.util.mapping.JsonConverter;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_CHECKSUM_ALGORITHM_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_CHECKSUM_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_CONTENT_TYPE_COLUMN;
@@ -105,6 +106,9 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> {
     @Column(name = ModelConstants.OTA_PACKAGE_ADDITIONAL_INFO_COLUMN)
     private JsonNode additionalInfo;
 
+    @Column(name = EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public OtaPackageEntity() {
         super();
     }
@@ -128,6 +132,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> {
         this.data = otaPackage.getData().array();
         this.dataSize = otaPackage.getDataSize();
         this.additionalInfo = otaPackage.getAdditionalInfo();
+        this.externalId = getUuid(otaPackage.getExternalId());
     }
 
     @Override
@@ -153,6 +158,8 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> {
             otaPackage.setHasData(true);
         }
         otaPackage.setAdditionalInfo(additionalInfo);
+        otaPackage.setExternalId(getEntityId(externalId, OtaPackageId::new));
         return otaPackage;
     }
+
 }

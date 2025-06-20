@@ -23,6 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TbResourceId;
 
+import java.io.Serial;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -31,6 +32,7 @@ import java.util.Optional;
 @EqualsAndHashCode(callSuper = true)
 public class TbResource extends TbResourceInfo {
 
+    @Serial
     private static final long serialVersionUID = 7379609705527272306L;
 
     private byte[] data;
@@ -88,4 +90,5 @@ public class TbResource extends TbResourceInfo {
     public String toString() {
         return super.toString();
     }
+
 }

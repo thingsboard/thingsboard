@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.sync.vc.request.create;
+package org.thingsboard.server.common.data.sync.ie;
 
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.EqualsAndHashCode;
-
-import java.io.Serial;
+import org.thingsboard.server.common.data.OtaPackage;
 
 @EqualsAndHashCode(callSuper = true)
-@Data
-public class AutoVersionCreateConfig extends VersionCreateConfig {
+public class OtaPackageExportData extends EntityExportData<OtaPackage> {
 
-    @Serial
-    private static final long serialVersionUID = 8245450889383315551L;
+    @JsonIgnoreProperties(value = {"tenantId", "createdTime"}, ignoreUnknown = true)
+    @Override
+    public OtaPackage getEntity() {
+        return super.getEntity();
+    }
 
-    private String branch;
+    @JsonIgnoreProperties(value = {"tenantId", "createdTime"}, ignoreUnknown = true)
+    @Override
+    public void setEntity(OtaPackage entity) {
+        super.setEntity(entity);
+    }
 
 }

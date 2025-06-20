@@ -216,7 +216,9 @@ CREATE TABLE IF NOT EXISTS ota_package (
     data oid,
     data_size bigint,
     additional_info varchar,
-    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
+    external_id uuid,
+    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version),
+    CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS queue (
