@@ -2584,6 +2584,8 @@
         "type-tb-resources": "Resources",
         "list-of-tb-resources": "{ count, plural, =1 {One resource} other {List of # resources} }",
         "type-ota-package": "OTA package",
+        "type-ota-packages": "OTA packages",
+        "list-of-ota-packages": "{ count, plural, =1 {One OTA package} other {List of # OTA packages} }",
         "type-rpc": "RPC",
         "type-queue": "Queue",
         "type-queue-stats": "Queue statistics",
