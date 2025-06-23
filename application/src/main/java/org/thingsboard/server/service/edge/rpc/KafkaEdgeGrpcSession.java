@@ -135,19 +135,25 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
     }
 
     @Override
-    public void destroy() {
+    public boolean destroy() {
         try {
             if (consumer != null) {
                 consumer.stop();
             }
-        } finally {
-            consumer = null;
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to stop edge event consumer", tenantId, edge.getId(), e);
+            return false;
         }
+        consumer = null;
         try {
             if (consumerExecutor != null) {
                 consumerExecutor.shutdown();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to shutdown consumer executor", tenantId, edge.getId(), e);
+            return false;
+        }
+        return true;
     }
 
     @Override
