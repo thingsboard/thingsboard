@@ -18,23 +18,20 @@ package org.thingsboard.server.dao.model.sql;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.proxy.HibernateProxy;
-import org.thingsboard.server.common.data.ai.AiSettings;
-import org.thingsboard.server.common.data.ai.model.AiModelConfig;
-import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
-import org.thingsboard.server.common.data.id.AiSettingsId;
+import org.thingsboard.server.common.data.ai.AiModelSettings;
+import org.thingsboard.server.common.data.ai.model.AiModel;
+import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -42,53 +39,40 @@ import java.util.UUID;
 @Setter
 @ToString
 @Entity
-@Table(name = ModelConstants.AI_SETTINGS_TABLE_NAME)
-public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
+@Table(name = ModelConstants.AI_MODEL_SETTINGS_TABLE_NAME)
+public class AiModelSettingsEntity extends BaseVersionedEntity<AiModelSettings> {
 
-    @Column(name = ModelConstants.AI_SETTINGS_TENANT_ID_COLUMN_NAME, nullable = false, columnDefinition = "UUID")
+    public static final Map<String, String> COLUMN_MAP = Map.of(
+            "createdTime", "created_time"
+    );
+
+    @Column(name = ModelConstants.AI_MODEL_SETTINGS_TENANT_ID_COLUMN_NAME, nullable = false, columnDefinition = "UUID")
     private UUID tenantId;
 
-    @Column(name = ModelConstants.AI_SETTINGS_NAME_COLUMN_NAME, nullable = false)
+    @Column(name = ModelConstants.AI_MODEL_SETTINGS_NAME_COLUMN_NAME, nullable = false)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = ModelConstants.AI_SETTINGS_PROVIDER_COLUMN_NAME, nullable = false)
-    private AiProvider provider;
-
     @Type(JsonBinaryType.class)
-    @Column(name = ModelConstants.AI_SETTINGS_PROVIDER_CONFIG_COLUMN_NAME, nullable = false, columnDefinition = "JSONB")
-    private AiProviderConfig providerConfig;
+    @Column(name = ModelConstants.AI_MODEL_SETTINGS_CONFIGURATION_COLUMN_NAME, nullable = false, columnDefinition = "JSONB")
+    private AiModel<?> configuration;
 
-    @Column(name = ModelConstants.AI_SETTINGS_MODEL_COLUMN_NAME, nullable = false)
-    private String model;
+    public AiModelSettingsEntity() {}
 
-    @Type(JsonBinaryType.class)
-    @Column(name = ModelConstants.AI_SETTINGS_MODEL_CONFIG_COLUMN_NAME, columnDefinition = "JSONB")
-    private AiModelConfig modelConfig;
-
-    public AiSettingsEntity() {}
-
-    public AiSettingsEntity(AiSettings aiSettings) {
-        super(aiSettings);
-        tenantId = getTenantUuid(aiSettings.getTenantId());
-        name = aiSettings.getName();
-        provider = aiSettings.getProvider();
-        providerConfig = aiSettings.getProviderConfig();
-        model = aiSettings.getModel();
-        modelConfig = aiSettings.getModelConfig();
+    public AiModelSettingsEntity(AiModelSettings aiModelSettings) {
+        super(aiModelSettings);
+        tenantId = getTenantUuid(aiModelSettings.getTenantId());
+        name = aiModelSettings.getName();
+        configuration = aiModelSettings.getConfiguration();
     }
 
     @Override
-    public AiSettings toData() {
-        var settings = new AiSettings(new AiSettingsId(id));
+    public AiModelSettings toData() {
+        var settings = new AiModelSettings(new AiModelSettingsId(id));
         settings.setCreatedTime(createdTime);
         settings.setVersion(version);
         settings.setTenantId(TenantId.fromUUID(tenantId));
         settings.setName(name);
-        settings.setProvider(provider);
-        settings.setProviderConfig(providerConfig);
-        settings.setModel(model);
-        settings.setModelConfig(modelConfig);
+        settings.setConfiguration(configuration);
         return settings;
     }
 
@@ -99,7 +83,7 @@ public class AiSettingsEntity extends BaseVersionedEntity<AiSettings> {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        AiSettingsEntity that = (AiSettingsEntity) o;
+        AiModelSettingsEntity that = (AiModelSettingsEntity) o;
         return getId() != null && Objects.equals(getId(), that.getId());
     }
 

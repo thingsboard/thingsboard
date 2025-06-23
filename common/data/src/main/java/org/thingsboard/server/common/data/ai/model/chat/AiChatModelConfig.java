@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.ai;
+package org.thingsboard.server.common.data.ai.model.chat;
 
-import org.thingsboard.server.common.data.id.AiSettingsId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 
-import java.util.Set;
+public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extends AiModelConfig<C>
+        permits OpenAiChatModel.Config, GoogleAiGeminiChatModel.Config, MistralAiChatModel.Config {
 
-record AiSettingsCacheEvictEvent(Set<AiSettingsCacheKey> keys) {
+    Double temperature();
 
-    static AiSettingsCacheEvictEvent of(TenantId tenantId, AiSettingsId aiSettingsId) {
-        return new AiSettingsCacheEvictEvent(Set.of(AiSettingsCacheKey.of(tenantId, aiSettingsId)));
-    }
+    Integer timeoutSeconds();
+
+    Integer maxRetries();
+
+    C withTemperature(Double temperature);
+
+    C withTimeoutSeconds(Integer timeoutSeconds);
+
+    C withMaxRetries(Integer maxRetries);
 
 }

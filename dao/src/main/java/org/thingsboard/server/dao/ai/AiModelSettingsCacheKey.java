@@ -17,22 +17,22 @@ package org.thingsboard.server.dao.ai;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.server.cache.VersionedCacheKey;
-import org.thingsboard.server.common.data.id.AiSettingsId;
+import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
-record AiSettingsCacheKey(UUID tenantId, UUID aiSettingsId) implements VersionedCacheKey {
+record AiModelSettingsCacheKey(UUID tenantId, UUID settingsId) implements VersionedCacheKey {
 
-    AiSettingsCacheKey {
+    AiModelSettingsCacheKey {
         requireNonNull(tenantId);
-        requireNonNull(aiSettingsId);
+        requireNonNull(settingsId);
     }
 
-    static AiSettingsCacheKey of(TenantId tenantId, AiSettingsId aiSettingsId) {
-        return new AiSettingsCacheKey(tenantId.getId(), aiSettingsId.getId());
+    static AiModelSettingsCacheKey of(TenantId tenantId, AiModelSettingsId settingsId) {
+        return new AiModelSettingsCacheKey(tenantId.getId(), settingsId.getId());
     }
 
     @Override
@@ -43,7 +43,7 @@ record AiSettingsCacheKey(UUID tenantId, UUID aiSettingsId) implements Versioned
     @NonNull
     @Override
     public String toString() {
-        return /* cache name */ "_" + tenantId + "_" + aiSettingsId;
+        return /* cache name */ "_" + tenantId + "_" + settingsId;
     }
 
 }

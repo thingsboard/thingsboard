@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
-import org.thingsboard.server.common.data.ai.model.AiModelConfig;
-import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
-import org.thingsboard.server.common.data.id.AiSettingsId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ai.model.AiModel;
+import org.thingsboard.server.common.data.ai.model.AiModelType;
 
-public interface RuleEngineAiService {
+public sealed interface AiChatModel<C extends AiChatModelConfig<C>> extends AiModel<C>
+        permits OpenAiChatModel, GoogleAiGeminiChatModel, MistralAiChatModel {
 
-    ChatModel configureChatModel(TenantId tenantId, AiSettingsId aiSettingsId);
+    ChatModel configure(Langchain4jChatModelConfigurer configurer);
 
-    ChatModel configureChatModel(AiProviderConfig providerConfig, AiModelConfig modelConfig);
+    @Override
+    default AiModelType modelType() {
+        return AiModelType.CHAT;
+    }
+
+    @Override
+    C modelConfig();
+
+    @Override
+    AiChatModel<C> withModelConfig(C config);
 
 }

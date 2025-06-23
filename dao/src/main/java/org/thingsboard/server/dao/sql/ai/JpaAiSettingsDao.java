@@ -20,14 +20,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ai.AiSettings;
-import org.thingsboard.server.common.data.id.AiSettingsId;
+import org.thingsboard.server.common.data.ai.AiModelSettings;
+import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.ai.AiSettingsDao;
-import org.thingsboard.server.dao.model.sql.AiSettingsEntity;
+import org.thingsboard.server.dao.ai.AiModelSettingsDao;
+import org.thingsboard.server.dao.model.sql.AiModelSettingsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -38,55 +38,55 @@ import java.util.UUID;
 @SqlDao
 @Component
 @RequiredArgsConstructor
-class JpaAiSettingsDao extends JpaAbstractDao<AiSettingsEntity, AiSettings> implements AiSettingsDao {
+class JpaAiSettingsDao extends JpaAbstractDao<AiModelSettingsEntity, AiModelSettings> implements AiModelSettingsDao {
 
-    private final AiSettingsRepository aiSettingsRepository;
+    private final AiModelSettingsRepository aiModelSettingsRepository;
 
     @Override
-    public Optional<AiSettings> findByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId) {
-        return aiSettingsRepository.findByTenantIdAndId(tenantId.getId(), aiSettingsId.getId()).map(DaoUtil::getData);
+    public Optional<AiModelSettings> findByTenantIdAndId(TenantId tenantId, AiModelSettingsId settingsId) {
+        return aiModelSettingsRepository.findByTenantIdAndId(tenantId.getId(), settingsId.getId()).map(DaoUtil::getData);
     }
 
     @Override
-    public PageData<AiSettings> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(aiSettingsRepository.findByTenantId(
-                tenantId.getId(), StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), DaoUtil.toPageable(pageLink))
+    public PageData<AiModelSettings> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(aiModelSettingsRepository.findByTenantId(
+                tenantId.getId(), StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), DaoUtil.toPageable(pageLink, AiModelSettingsEntity.COLUMN_MAP))
         );
     }
 
     @Override
     public Long countByTenantId(TenantId tenantId) {
-        return aiSettingsRepository.countByTenantId(tenantId.getId());
+        return aiModelSettingsRepository.countByTenantId(tenantId.getId());
     }
 
     @Override
-    public boolean deleteById(TenantId tenantId, AiSettingsId aiSettingsId) {
-        return aiSettingsRepository.deleteByIdIn(Set.of(aiSettingsId.getId())) > 0;
+    public boolean deleteById(TenantId tenantId, AiModelSettingsId settingsId) {
+        return aiModelSettingsRepository.deleteByIdIn(Set.of(settingsId.getId())) > 0;
     }
 
     @Override
     public int deleteByTenantId(TenantId tenantId) {
-        return aiSettingsRepository.deleteByTenantId(tenantId.getId());
+        return aiModelSettingsRepository.deleteByTenantId(tenantId.getId());
     }
 
     @Override
-    public boolean deleteByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId) {
-        return aiSettingsRepository.deleteByTenantIdAndIdIn(tenantId.getId(), Set.of(aiSettingsId.getId())) > 0;
+    public boolean deleteByTenantIdAndId(TenantId tenantId, AiModelSettingsId settingsId) {
+        return aiModelSettingsRepository.deleteByTenantIdAndIdIn(tenantId.getId(), Set.of(settingsId.getId())) > 0;
     }
 
     @Override
     public EntityType getEntityType() {
-        return EntityType.AI_SETTINGS;
+        return EntityType.AI_MODEL_SETTINGS;
     }
 
     @Override
-    protected Class<AiSettingsEntity> getEntityClass() {
-        return AiSettingsEntity.class;
+    protected Class<AiModelSettingsEntity> getEntityClass() {
+        return AiModelSettingsEntity.class;
     }
 
     @Override
-    protected JpaRepository<AiSettingsEntity, UUID> getRepository() {
-        return aiSettingsRepository;
+    protected JpaRepository<AiModelSettingsEntity, UUID> getRepository() {
+        return aiModelSettingsRepository;
     }
 
 }

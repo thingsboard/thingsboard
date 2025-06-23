@@ -63,7 +63,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.ai.AiSettings;
+import org.thingsboard.server.common.data.ai.AiModelSettings;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -78,7 +78,7 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AiSettingsId;
+import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -131,7 +131,7 @@ import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.ai.AiSettingsService;
+import org.thingsboard.server.dao.ai.AiModelSettingsService;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -177,7 +177,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
-import org.thingsboard.server.service.entitiy.ai.TbAiSettingsService;
+import org.thingsboard.server.service.entitiy.ai.TbAiModelSettingsService;
 import org.thingsboard.server.service.entitiy.user.TbUserSettingsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -378,10 +378,10 @@ public abstract class BaseController {
     protected CalculatedFieldService calculatedFieldService;
 
     @Autowired
-    protected AiSettingsService aiSettingsService;
+    protected AiModelSettingsService aiModelSettingsService;
 
     @Autowired
-    protected TbAiSettingsService tbAiSettingsService;
+    protected TbAiModelSettingsService tbAiModelSettingsService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -691,8 +691,8 @@ public abstract class BaseController {
                 case CALCULATED_FIELD:
                     checkCalculatedFieldId(new CalculatedFieldId(entityId.getId()), operation);
                     return;
-                case AI_SETTINGS:
-                    checkAiSettingsId(new AiSettingsId(entityId.getId()), operation);
+                case AI_MODEL_SETTINGS:
+                    checkAiModelSettingsId(new AiModelSettingsId(entityId.getId()), operation);
                     return;
                 default:
                     checkEntityId(entityId, entitiesService::findEntityByTenantIdAndId, operation);
@@ -894,8 +894,8 @@ public abstract class BaseController {
         return checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, operation);
     }
 
-    AiSettings checkAiSettingsId(AiSettingsId aiSettingsId, Operation operation) throws ThingsboardException {
-        return checkEntityId(aiSettingsId, (tenantId, id) -> aiSettingsService.findAiSettingsByTenantIdAndId(tenantId, id).orElse(null), operation);
+    AiModelSettings checkAiModelSettingsId(AiModelSettingsId settingsId, Operation operation) throws ThingsboardException {
+        return checkEntityId(settingsId, (tenantId, id) -> aiModelSettingsService.findAiModelSettingsByTenantIdAndId(tenantId, id).orElse(null), operation);
     }
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {

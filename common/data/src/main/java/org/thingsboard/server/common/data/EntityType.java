@@ -64,10 +64,10 @@ public enum EntityType {
     MOBILE_APP_BUNDLE(38),
     CALCULATED_FIELD(39),
     CALCULATED_FIELD_LINK(40),
-    AI_SETTINGS(41, "ai_settings") {
+    AI_MODEL_SETTINGS(41, "ai_model_settings") {
         @Override
         public String getNormalName() {
-            return "AI settings";
+            return "AI model settings";
         }
     };
 

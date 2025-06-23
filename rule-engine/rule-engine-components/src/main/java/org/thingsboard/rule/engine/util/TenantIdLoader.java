@@ -19,7 +19,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.id.AiSettingsId;
+import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -176,8 +176,8 @@ public class TenantIdLoader {
                     tenantEntity = null;
                 }
                 break;
-            case AI_SETTINGS:
-                tenantEntity = ctx.getAiSettingsService().findAiSettingsById(ctxTenantId, new AiSettingsId(id)).orElse(null);
+            case AI_MODEL_SETTINGS:
+                tenantEntity = ctx.getAiModelSettingsService().findAiModelSettingsById(ctxTenantId, new AiModelSettingsId(id)).orElse(null);
                 break;
             default:
                 throw new RuntimeException("Unexpected entity type: " + entityId.getEntityType());

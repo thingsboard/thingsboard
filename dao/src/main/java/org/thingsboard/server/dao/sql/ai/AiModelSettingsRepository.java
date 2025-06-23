@@ -22,30 +22,32 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.model.sql.AiSettingsEntity;
+import org.thingsboard.server.dao.model.sql.AiModelSettingsEntity;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-public interface AiSettingsRepository extends JpaRepository<AiSettingsEntity, UUID> {
+interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity, UUID> {
 
-    @Query("SELECT ai " +
-            "FROM AiSettingsEntity ai " +
-            "WHERE ai.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL " +
-            "OR ilike(ai.name, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(ai.provider, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(ai.model, CONCAT('%', :textSearch, '%')) = true)")
-    Page<AiSettingsEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM ai_model_settings ai_model
+            WHERE ai_model.tenant_id = :tenantId
+              AND (:textSearch IS NULL
+                OR ai_model.name ILIKE '%' || :textSearch || '%'
+                OR (ai_model.configuration -> 'providerConfig' ->> 'provider') ILIKE '%' || :textSearch || '%'
+                OR (ai_model.configuration ->> 'modelId') ILIKE '%' || :textSearch || '%')
+            """)
+    Page<AiModelSettingsEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
 
-    Optional<AiSettingsEntity> findByTenantIdAndId(UUID tenantId, UUID id);
+    Optional<AiModelSettingsEntity> findByTenantIdAndId(UUID tenantId, UUID id);
 
     long countByTenantId(UUID tenantId);
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM AiSettingsEntity ai WHERE ai.id IN (:ids)")
+    @Query("DELETE FROM AiModelSettingsEntity ai_model WHERE ai_model.id IN (:ids)")
     int deleteByIdIn(@Param("ids") Set<UUID> ids);
 
     @Transactional
@@ -53,7 +55,7 @@ public interface AiSettingsRepository extends JpaRepository<AiSettingsEntity, UU
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM AiSettingsEntity ai WHERE ai.tenantId = :tenantId AND ai.id IN (:ids)")
+    @Query("DELETE FROM AiModelSettingsEntity ai_model WHERE ai_model.tenantId = :tenantId AND ai_model.id IN (:ids)")
     int deleteByTenantIdAndIdIn(@Param("tenantId") UUID tenantId, @Param("ids") Set<UUID> ids);
 
 }

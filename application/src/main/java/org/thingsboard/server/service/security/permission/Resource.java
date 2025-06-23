@@ -52,7 +52,7 @@ public enum Resource {
             EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE),
     MOBILE_APP_SETTINGS,
     CALCULATED_FIELD(EntityType.CALCULATED_FIELD),
-    AI_SETTINGS(EntityType.AI_SETTINGS);
+    AI_MODEL_SETTINGS(EntityType.AI_MODEL_SETTINGS);
 
     private final Set<EntityType> entityTypes;
 

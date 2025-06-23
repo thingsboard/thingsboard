@@ -15,42 +15,4 @@
  */
 package org.thingsboard.server.common.data.ai.model;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.EXISTING_PROPERTY,
-        property = "model",
-        visible = true
-)
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = OpenAiChatModelConfig.class, name = "gpt-4o"),
-        @JsonSubTypes.Type(value = OpenAiChatModelConfig.class, name = "gpt-4o-mini"),
-        @JsonSubTypes.Type(value = GoogleAiGeminiChatModelConfig.class, name = "gemini-2.0-flash"),
-        @JsonSubTypes.Type(value = MistralAiChatModelConfig.class, name = "mistral-medium-latest")
-})
-public abstract class AiModelConfig {
-
-    @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Identifier of the AI model"
-    )
-    private String model;
-
-    public abstract Integer getTimeoutSeconds();
-
-    public abstract void setTimeoutSeconds(Integer timeoutSeconds);
-
-    public abstract Integer getMaxRetries();
-
-    public abstract void setMaxRetries(Integer timeoutSeconds);
-
-
-}
+public interface AiModelConfig<C extends AiModelConfig<C>> {}

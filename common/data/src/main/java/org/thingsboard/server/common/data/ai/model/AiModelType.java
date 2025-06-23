@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai.provider;
+package org.thingsboard.server.common.data.ai.model;
 
-public record OpenAiProviderConfig(String apiKey) implements AiProviderConfig {
+public enum AiModelType {
 
-    @Override
-    public AiProvider provider() {
-        return AiProvider.OPENAI;
-    }
-
-    @Override
-    public String apiKey() {
-        return apiKey;
-    }
+    CHAT
 
 }

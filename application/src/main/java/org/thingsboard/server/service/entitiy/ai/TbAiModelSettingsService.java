@@ -16,12 +16,12 @@
 package org.thingsboard.server.service.entitiy.ai;
 
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.ai.AiSettings;
+import org.thingsboard.server.common.data.ai.AiModelSettings;
 
-public interface TbAiSettingsService {
+public interface TbAiModelSettingsService {
 
-    AiSettings save(AiSettings aiSettings, User user);
+    AiModelSettings save(AiModelSettings settings, User user);
 
-    boolean delete(AiSettings aiSettings, User user);
+    boolean delete(AiModelSettings settings, User user);
 
 }

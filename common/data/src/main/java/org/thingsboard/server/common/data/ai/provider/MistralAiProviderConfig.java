@@ -15,26 +15,16 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+public record MistralAiProviderConfig(String apiKey) implements AiProviderConfig {
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-@Schema(
-        name = "MistralAiProviderConfig",
-        description = "Configuration for the Mistral AI provider"
-)
-public final class MistralAiProviderConfig extends AiProviderConfig {
+    @Override
+    public AiProvider provider() {
+        return AiProvider.MISTRAL_AI;
+    }
 
-    @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Name of the AI provider",
-            example = "MISTRAL_AI",
-            allowableValues = "MISTRAL_AI",
-            type = "string"
-    )
-    private AiProvider provider = AiProvider.MISTRAL_AI;
+    @Override
+    public String apiKey() {
+        return apiKey;
+    }
 
 }

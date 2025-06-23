@@ -19,9 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.ai.AiSettings;
+import org.thingsboard.server.common.data.ai.AiModelSettings;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.dao.ai.AiSettingsService;
+import org.thingsboard.server.dao.ai.AiModelSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -30,22 +30,22 @@ import static java.util.Objects.requireNonNullElseGet;
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-class DefaultTbAiSettingsService extends AbstractTbEntityService implements TbAiSettingsService {
+class DefaultTbAiModelSettingsService extends AbstractTbEntityService implements TbAiModelSettingsService {
 
-    private final AiSettingsService aiSettingsService;
+    private final AiModelSettingsService aiModelSettingsService;
 
     @Override
-    public AiSettings save(AiSettings aiSettings, User user) {
-        var actionType = aiSettings.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+    public AiModelSettings save(AiModelSettings settings, User user) {
+        var actionType = settings.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
 
         var tenantId = user.getTenantId();
-        aiSettings.setTenantId(tenantId);
+        settings.setTenantId(tenantId);
 
-        AiSettings savedSettings;
+        AiModelSettings savedSettings;
         try {
-            savedSettings = aiSettingsService.save(aiSettings);
+            savedSettings = aiModelSettingsService.save(settings);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, requireNonNullElseGet(aiSettings.getId(), () -> emptyId(EntityType.AI_SETTINGS)), aiSettings, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, requireNonNullElseGet(settings.getId(), () -> emptyId(EntityType.AI_MODEL_SETTINGS)), settings, actionType, user, e);
             throw e;
         }
 
@@ -55,22 +55,22 @@ class DefaultTbAiSettingsService extends AbstractTbEntityService implements TbAi
     }
 
     @Override
-    public boolean delete(AiSettings aiSettings, User user) {
+    public boolean delete(AiModelSettings settings, User user) {
         var actionType = ActionType.DELETED;
 
         var tenantId = user.getTenantId();
-        var aiSettingsId = aiSettings.getId();
+        var settingsId = settings.getId();
 
         boolean deleted;
         try {
-            deleted = aiSettingsService.deleteByTenantIdAndId(tenantId, aiSettingsId);
+            deleted = aiModelSettingsService.deleteByTenantIdAndId(tenantId, settingsId);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, aiSettingsId, aiSettings, actionType, user, e, aiSettingsId.toString());
+            logEntityActionService.logEntityAction(tenantId, settingsId, settings, actionType, user, e, settingsId.toString());
             throw e;
         }
 
         if (deleted) {
-            logEntityActionService.logEntityAction(tenantId, aiSettingsId, aiSettings, actionType, user, aiSettingsId.toString());
+            logEntityActionService.logEntityAction(tenantId, settingsId, settings, actionType, user, settingsId.toString());
         }
 
         return deleted;

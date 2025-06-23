@@ -26,14 +26,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.common.util.JsonSchemaUtils;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.id.AiSettingsId;
+import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.validation.Length;
 
 @Data
 public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfiguration> {
 
     @NotNull
-    private AiSettingsId aiSettingsId;
+    private AiModelSettingsId aiModelSettingsId;
 
     @NotBlank
     @Length(min = 1, max = 1000)

@@ -40,7 +40,7 @@ import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.ai.AiSettings;
+import org.thingsboard.server.common.data.ai.AiModelSettings;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -69,7 +69,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.ai.AiSettingsService;
+import org.thingsboard.server.dao.ai.AiModelSettingsService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -164,7 +164,7 @@ public class TenantIdLoaderTest {
     @Mock
     private CalculatedFieldService calculatedFieldService;
     @Mock
-    private AiSettingsService aiSettingsService;
+    private AiModelSettingsService aiModelSettingsService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -424,11 +424,11 @@ public class TenantIdLoaderTest {
                 when(ctx.getCalculatedFieldService()).thenReturn(calculatedFieldService);
                 doReturn(calculatedFieldLink).when(calculatedFieldService).findCalculatedFieldLinkById(eq(tenantId), any());
                 break;
-            case AI_SETTINGS:
-                AiSettings aiSettings = new AiSettings();
-                aiSettings.setTenantId(tenantId);
-                when(ctx.getAiSettingsService()).thenReturn(aiSettingsService);
-                doReturn(Optional.of(aiSettings)).when(aiSettingsService).findAiSettingsById(eq(tenantId), any());
+            case AI_MODEL_SETTINGS:
+                AiModelSettings aiModelSettings = new AiModelSettings();
+                aiModelSettings.setTenantId(tenantId);
+                when(ctx.getAiModelSettingsService()).thenReturn(aiModelSettingsService);
+                doReturn(Optional.of(aiModelSettings)).when(aiModelSettingsService).findAiModelSettingsById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

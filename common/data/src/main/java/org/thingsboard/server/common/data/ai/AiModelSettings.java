@@ -24,10 +24,8 @@ import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
-import org.thingsboard.server.common.data.ai.model.AiModelConfig;
-import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
-import org.thingsboard.server.common.data.id.AiSettingsId;
+import org.thingsboard.server.common.data.ai.model.AiModel;
+import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serial;
@@ -36,7 +34,7 @@ import java.io.Serial;
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public final class AiSettings extends BaseData<AiSettingsId> implements HasTenantId, HasVersion, HasName {
+public final class AiModelSettings extends BaseData<AiModelSettingsId> implements HasTenantId, HasVersion, HasName {
 
     @Serial
     private static final long serialVersionUID = 9017108678716011604L;
@@ -44,7 +42,7 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_ONLY,
-            description = "JSON object representing the ID of the tenant associated with these AI settings",
+            description = "JSON object representing the ID of the tenant associated with these AI model settings",
             example = "e3c4b7d2-5678-4a9b-0c1d-2e3f4a5b6c7d"
     )
     TenantId tenantId;
@@ -52,7 +50,7 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_ONLY,
-            description = "Version of the AI settings; increments automatically whenever the settings are changed",
+            description = "Version of the AI model settings; increments automatically whenever the settings are changed",
             example = "7",
             defaultValue = "1"
     )
@@ -61,49 +59,21 @@ public final class AiSettings extends BaseData<AiSettingsId> implements HasTenan
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Human-readable name of the AI settings; must be unique within the scope of the tenant",
+            description = "Human-readable name of the AI model settings; must be unique within the scope of the tenant",
             example = "Default AI Settings"
     )
     String name;
 
     @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Name of the AI provider",
-            example = "OPENAI",
-            allowableValues = {"OPENAI", "GOOGLE_AI_GEMINI", "MISTRAL_AI"},
-            type = "string"
-    )
-    AiProvider provider;
-
-    @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Configuration specific to the AI provider"
-    )
-    AiProviderConfig providerConfig;
-
-    @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Identifier of the AI model",
-            example = "gpt-4o-mini"
-    )
-    String model;
-
-    @Schema(
             requiredMode = Schema.RequiredMode.NOT_REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = """
-                    Optional configuration specific to the AI model.
-                    If provided, it must be one of the known `AiModelConfig` subtypes and any settings
-                    you specify will override the model’s defaults; if omitted, the model will run with its built-in defaults."""
+            description = "Configuration of the AI model"
     )
-    AiModelConfig modelConfig;
+    AiModel<?> configuration;
 
-    public AiSettings() {}
+    public AiModelSettings() {}
 
-    public AiSettings(AiSettingsId id) {
+    public AiModelSettings(AiModelSettingsId id) {
         super(id);
     }
 

@@ -17,32 +17,22 @@ package org.thingsboard.server.common.data.ai.provider;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.EXISTING_PROPERTY,
-        property = "provider",
-        visible = true
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "provider"
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = OpenAiProviderConfig.class, name = "OPENAI"),
         @JsonSubTypes.Type(value = GoogleAiGeminiProviderConfig.class, name = "GOOGLE_AI_GEMINI"),
         @JsonSubTypes.Type(value = MistralAiProviderConfig.class, name = "MISTRAL_AI")
 })
-public abstract class AiProviderConfig {
+public sealed interface AiProviderConfig
+        permits OpenAiProviderConfig, GoogleAiGeminiProviderConfig, MistralAiProviderConfig {
 
-    public abstract AiProvider getProvider();
+    AiProvider provider();
 
-    @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            accessMode = Schema.AccessMode.READ_WRITE,
-            description = "API key for authenticating with the AI provider"
-    )
-    private String apiKey;
+    String apiKey();
 
 }

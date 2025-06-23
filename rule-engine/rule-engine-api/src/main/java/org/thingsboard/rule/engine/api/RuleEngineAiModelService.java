@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai.provider;
+package org.thingsboard.rule.engine.api;
 
-public record OpenAiProviderConfig(String apiKey) implements AiProviderConfig {
+import dev.langchain4j.model.chat.ChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.AiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 
-    @Override
-    public AiProvider provider() {
-        return AiProvider.OPENAI;
-    }
+public interface RuleEngineAiModelService {
 
-    @Override
-    public String apiKey() {
-        return apiKey;
-    }
+    <C extends AiChatModelConfig<C>> ChatModel configureChatModel(AiChatModel<C> chatModel);
 
 }

@@ -36,9 +36,11 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
-import org.thingsboard.server.common.data.ai.model.AiModelConfig;
-import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
-import org.thingsboard.server.common.data.id.AiSettingsId;
+import org.thingsboard.server.common.data.ai.AiModelSettings;
+import org.thingsboard.server.common.data.ai.model.AiModelType;
+import org.thingsboard.server.common.data.ai.model.chat.AiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
+import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -46,6 +48,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
@@ -64,7 +67,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     private String userPrompt;
     private ResponseFormat responseFormat;
     private int timeoutSeconds;
-    private AiSettingsId aiSettingsId;
+    private AiModelSettingsId modelSettingsId;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -86,11 +89,16 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         systemPrompt = config.getSystemPrompt();
         userPrompt = config.getUserPrompt();
         timeoutSeconds = config.getTimeoutSeconds();
+        modelSettingsId = config.getAiModelSettingsId();
 
-        if (!aiSettingsExist(ctx, config.getAiSettingsId())) {
-            throw new TbNodeException("[" + ctx.getTenantId() + "] AI settings with ID: " + config.getAiSettingsId() + " were not found", true);
+        Optional<AiModelSettings> modelSettings = ctx.getAiModelSettingsService().findAiModelSettingsByTenantIdAndId(ctx.getTenantId(), modelSettingsId);
+        if (modelSettings.isEmpty()) {
+            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] were not found", true);
         }
-        aiSettingsId = config.getAiSettingsId();
+        AiModelType modelType = modelSettings.get().getConfiguration().modelType();
+        if (modelType != AiModelType.CHAT) {
+            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] must be of type CHAT, but was " + modelType, true);
+        }
     }
 
     private static JsonSchema getJsonSchema(ResponseFormatType responseFormatType, ObjectNode jsonSchema) {
@@ -100,12 +108,8 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         return responseFormatType == ResponseFormatType.JSON && jsonSchema != null ? Langchain4jJsonSchemaAdapter.fromJsonNode(jsonSchema) : null;
     }
 
-    private static boolean aiSettingsExist(TbContext ctx, AiSettingsId aiSettingsId) {
-        return ctx.getAiSettingsService().findAiSettingsByTenantIdAndId(ctx.getTenantId(), aiSettingsId).isPresent();
-    }
-
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         var ackedMsg = ackIfNeeded(ctx, msg);
 
         var systemMessage = SystemMessage.from(TbNodeUtils.processPattern(systemPrompt, ackedMsg));
@@ -137,19 +141,25 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 }, directExecutor());
     }
 
-    private FluentFuture<ChatModel> configureChatModelAsync(TbContext ctx) {
-        return ctx.getAiSettingsService().findAiSettingsByTenantIdAndIdAsync(ctx.getTenantId(), aiSettingsId).transform(aiSettingsOpt -> {
-            if (aiSettingsOpt.isEmpty()) {
-                throw new NoSuchElementException("AI settings with ID: " + aiSettingsId + " were not found");
+    private <C extends AiChatModelConfig<C>> FluentFuture<ChatModel> configureChatModelAsync(TbContext ctx) {
+        return ctx.getAiModelSettingsService().findAiModelSettingsByTenantIdAndIdAsync(ctx.getTenantId(), modelSettingsId).transform(settingsOpt -> {
+            if (settingsOpt.isEmpty()) {
+                throw new NoSuchElementException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] were not found");
+            }
+            AiModelSettings settings = settingsOpt.get();
+            AiModelType modelType = settings.getConfiguration().modelType();
+            if (modelType != AiModelType.CHAT) {
+                throw new IllegalStateException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] must be of type CHAT, but was " + modelType);
             }
 
-            AiProviderConfig providerConfig = aiSettingsOpt.get().getProviderConfig();
-            AiModelConfig modelConfig = aiSettingsOpt.get().getModelConfig();
+            @SuppressWarnings("unchecked")
+            AiChatModel<C> chatModel = (AiChatModel<C>) settingsOpt.get().getConfiguration();
 
-            modelConfig.setTimeoutSeconds(timeoutSeconds);
-            modelConfig.setMaxRetries(0); // disable retries to respect timeout set in rule node config
+            chatModel = chatModel.withModelConfig(chatModel.modelConfig()
+                    .withTimeoutSeconds(timeoutSeconds)
+                    .withMaxRetries(0)); // disable retries to respect timeout set in rule node config
 
-            return ctx.getAiService().configureChatModel(providerConfig, modelConfig);
+            return ctx.getAiModelService().configureChatModel(chatModel);
         }, ctx.getDbCallbackExecutor());
     }
 
@@ -172,7 +182,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         systemPrompt = null;
         userPrompt = null;
         responseFormat = null;
-        aiSettingsId = null;
+        modelSettingsId = null;
     }
 
 }

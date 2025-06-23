@@ -15,22 +15,15 @@
  */
 package org.thingsboard.server.dao.ai;
 
-import org.thingsboard.server.common.data.ai.AiSettings;
-import org.thingsboard.server.common.data.id.AiSettingsId;
+import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.TenantEntityDao;
 
-import java.util.Optional;
+import java.util.Set;
 
-public interface AiSettingsDao extends Dao<AiSettings>, TenantEntityDao<AiSettings> {
+record AiModelSettingsCacheEvictEvent(Set<AiModelSettingsCacheKey> keys) {
 
-    Optional<AiSettings> findByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId);
-
-    boolean deleteById(TenantId tenantId, AiSettingsId aiSettingsId);
-
-    int deleteByTenantId(TenantId tenantId);
-
-    boolean deleteByTenantIdAndId(TenantId tenantId, AiSettingsId aiSettingsId);
+    static AiModelSettingsCacheEvictEvent of(TenantId tenantId, AiModelSettingsId settingsId) {
+        return new AiModelSettingsCacheEvictEvent(Set.of(AiModelSettingsCacheKey.of(tenantId, settingsId)));
+    }
 
 }

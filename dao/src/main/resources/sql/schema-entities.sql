@@ -949,15 +949,12 @@ CREATE TABLE IF NOT EXISTS cf_debug_event (
     e_error varchar
 ) PARTITION BY RANGE (ts);
 
-CREATE TABLE IF NOT EXISTS ai_settings (
+CREATE TABLE IF NOT EXISTS ai_model_settings (
     id              UUID          NOT NULL PRIMARY KEY,
     created_time    BIGINT        NOT NULL,
     tenant_id       UUID          NOT NULL,
     version         BIGINT        NOT NULL DEFAULT 1,
     name            VARCHAR(255)  NOT NULL,
-    provider        VARCHAR(255)  NOT NULL,
-    provider_config JSONB         NOT NULL,
-    model           VARCHAR(255)  NOT NULL,
-    model_config    JSONB,
-    CONSTRAINT ai_settings_name_unq_key UNIQUE (tenant_id, name)
+    configuration   JSONB         NOT NULL,
+    CONSTRAINT ai_model_settings_name_unq_key UNIQUE (tenant_id, name)
 );

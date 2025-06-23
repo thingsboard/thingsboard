@@ -15,26 +15,16 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+public record GoogleAiGeminiProviderConfig(String apiKey) implements AiProviderConfig {
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-@Schema(
-        name = "GoogleAiGeminiProviderConfig",
-        description = "Configuration for the Google AI Gemini provider"
-)
-public final class GoogleAiGeminiProviderConfig extends AiProviderConfig {
+    @Override
+    public AiProvider provider() {
+        return AiProvider.GOOGLE_AI_GEMINI;
+    }
 
-    @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Name of the AI provider",
-            example = "GOOGLE_AI_GEMINI",
-            allowableValues = "GOOGLE_AI_GEMINI",
-            type = "string"
-    )
-    private AiProvider provider = AiProvider.GOOGLE_AI_GEMINI;
+    @Override
+    public String apiKey() {
+        return apiKey;
+    }
 
 }

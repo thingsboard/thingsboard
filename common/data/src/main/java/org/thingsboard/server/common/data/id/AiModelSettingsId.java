@@ -23,29 +23,29 @@ import org.thingsboard.server.common.data.EntityType;
 import java.io.Serial;
 import java.util.UUID;
 
-public final class AiSettingsId extends UUIDBased implements EntityId {
+public final class AiModelSettingsId extends UUIDBased implements EntityId {
 
     @Serial
     private static final long serialVersionUID = 3021036138554389754L;
 
     @JsonCreator
-    public AiSettingsId(@JsonProperty("id") UUID id) {
+    public AiModelSettingsId(@JsonProperty("id") UUID id) {
         super(id);
     }
 
     @Override
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
-            description = "Entity type of the AI settings",
-            example = "AI_SETTINGS",
-            allowableValues = "AI_SETTINGS"
+            description = "Entity type of the AI model settings",
+            example = "AI_MODEL_SETTINGS",
+            allowableValues = "AI_MODEL_SETTINGS"
     )
     public EntityType getEntityType() {
-        return EntityType.AI_SETTINGS;
+        return EntityType.AI_MODEL_SETTINGS;
     }
 
-    public static AiSettingsId fromString(String uuid) {
-        return new AiSettingsId(UUID.fromString(uuid));
+    public static AiModelSettingsId fromString(String uuid) {
+        return new AiModelSettingsId(UUID.fromString(uuid));
     }
 
 }

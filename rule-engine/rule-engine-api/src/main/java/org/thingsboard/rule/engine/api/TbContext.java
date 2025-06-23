@@ -44,7 +44,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.ai.AiSettingsService;
+import org.thingsboard.server.dao.ai.AiModelSettingsService;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -418,9 +418,9 @@ public interface TbContext {
 
     AuditLogService getAuditLogService();
 
-    RuleEngineAiService getAiService();
+    RuleEngineAiModelService getAiModelService();
 
-    AiSettingsService getAiSettingsService();
+    AiModelSettingsService getAiModelSettingsService();
 
     AiRequestsExecutor getAiRequestsExecutor();
 
