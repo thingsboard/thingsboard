@@ -15,11 +15,16 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public enum AiProvider {
+public record AzureOpenAiProviderConfig(String apiKey) implements AiProviderConfig {
 
-    OPENAI,
-    AZURE_OPENAI,
-    GOOGLE_AI_GEMINI,
-    MISTRAL_AI
+    @Override
+    public AiProvider provider() {
+        return AiProvider.AZURE_OPENAI;
+    }
+
+    @Override
+    public String apiKey() {
+        return apiKey;
+    }
 
 }

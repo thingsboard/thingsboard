@@ -17,6 +17,7 @@ package org.thingsboard.server.service.ai;
 
 import dev.langchain4j.model.chat.ChatModel;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
@@ -33,6 +34,18 @@ public class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelC
         return dev.langchain4j.model.openai.OpenAiChatModel.builder()
                 .apiKey(chatModel.providerConfig().apiKey())
                 .modelName(chatModel.modelId())
+                .temperature(modelConfig.temperature())
+                .timeout(toDuration(modelConfig.timeoutSeconds()))
+                .maxRetries(modelConfig.maxRetries())
+                .build();
+    }
+
+    @Override
+    public ChatModel configureChatModel(AzureOpenAiChatModel chatModel) {
+        AzureOpenAiChatModel.Config modelConfig = chatModel.modelConfig();
+        return dev.langchain4j.model.azure.AzureOpenAiChatModel.builder()
+                .apiKey(chatModel.providerConfig().apiKey())
+                .deploymentName(chatModel.modelId())
                 .temperature(modelConfig.temperature())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
