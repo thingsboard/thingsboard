@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,11 +41,10 @@ import static org.testng.Assert.fail;
 
 @Slf4j
 public class ContainerTestSuite {
-    final static boolean IS_REDIS_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
-    final static boolean IS_REDIS_SENTINEL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSentinel"));
-    final static boolean IS_REDIS_SSL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSsl"));
+    final static boolean IS_VALKEY_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
+    final static boolean IS_VALKEY_SENTINEL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSentinel"));
+    final static boolean IS_VALKEY_SSL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSsl"));
     final static boolean IS_HYBRID_MODE = Boolean.parseBoolean(System.getProperty("blackBoxTests.hybridMode"));
-    final static String QUEUE_TYPE = System.getProperty("blackBoxTests.queue", "kafka");
     private static final String SOURCE_DIR = "./../../docker/";
     private static final String TB_CORE_LOG_REGEXP = ".*Starting polling for events.*";
     private static final String TRANSPORTS_LOG_REGEXP = ".*Going to recalculate partitions.*";
@@ -82,9 +80,9 @@ public class ContainerTestSuite {
     public void start() {
         installTb = new ThingsBoardDbInstaller();
         installTb.createVolumes();
-        log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_CLUSTER);
-        log.info("System property of blackBoxTests.redisSentinel is {}", IS_REDIS_SENTINEL);
-        log.info("System property of blackBoxTests.redisSsl is {}", IS_REDIS_SSL);
+        log.info("System property of blackBoxTests.redisCluster is {}", IS_VALKEY_CLUSTER);
+        log.info("System property of blackBoxTests.redisSentinel is {}", IS_VALKEY_SENTINEL);
+        log.info("System property of blackBoxTests.redisSsl is {}", IS_VALKEY_SSL);
         log.info("System property of blackBoxTests.hybridMode is {}", IS_HYBRID_MODE);
         boolean skipTailChildContainers = Boolean.parseBoolean(System.getProperty("blackBoxTests.skipTailChildContainers"));
         try {
@@ -107,10 +105,10 @@ public class ContainerTestSuite {
                 }
             }
 
-            if (IS_REDIS_SSL) {
-                addToFile(targetDir, "cache-redis.env",
+            if (IS_VALKEY_SSL) {
+                addToFile(targetDir, "cache-valkey.env",
                         Map.of("TB_REDIS_SSL_ENABLED", "true",
-                                "TB_REDIS_SSL_PEM_CERT", "/redis/certs/redisCA.crt"));
+                                "TB_REDIS_SSL_PEM_CERT", "/valkey/certs/valkeyCA.crt"));
             }
 
             List<File> composeFiles = new ArrayList<>(Arrays.asList(
@@ -122,44 +120,13 @@ public class ContainerTestSuite {
                     new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid.yml" : "docker-compose.postgres.yml")),
                     new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid-test-extras.yml" : "docker-compose.postgres-test-extras.yml")),
                     new File(targetDir + "docker-compose.postgres.volumes.yml"),
-                    new File(targetDir + "docker-compose." + QUEUE_TYPE + ".yml"),
-                    new File(targetDir + resolveRedisComposeFile()),
-                    new File(targetDir + resolveRedisComposeVolumesFile()),
+                    new File(targetDir + "docker-compose.kafka.yml"),
+                    new File(targetDir + resolveValkeyComposeFile()),
+                    new File(targetDir + resolveValkeyComposeVolumesFile()),
                     new File(targetDir + ("docker-selenium.yml"))
             ));
-
-            Map<String, String> queueEnv = new HashMap<>();
-            queueEnv.put("TB_QUEUE_TYPE", QUEUE_TYPE);
-            switch (QUEUE_TYPE) {
-                case "kafka":
-                    composeFiles.add(new File(targetDir + "docker-compose.kafka.yml"));
-                    break;
-                case "aws-sqs":
-                    replaceInFile(targetDir, "queue-aws-sqs.env",
-                            Map.of("YOUR_KEY", getSysProp("blackBoxTests.awsKey"),
-                                    "YOUR_SECRET", getSysProp("blackBoxTests.awsSecret"),
-                                    "YOUR_REGION", getSysProp("blackBoxTests.awsRegion")));
-                    break;
-                case "rabbitmq":
-                    composeFiles.add(new File(targetDir + "docker-compose.rabbitmq-server.yml"));
-                    replaceInFile(targetDir, "queue-rabbitmq.env",
-                            Map.of("localhost", "rabbitmq"));
-                    break;
-                case "service-bus":
-                    replaceInFile(targetDir, "queue-service-bus.env",
-                            Map.of("YOUR_NAMESPACE_NAME", getSysProp("blackBoxTests.serviceBusNamespace"),
-                                    "YOUR_SAS_KEY_NAME", getSysProp("blackBoxTests.serviceBusSASPolicy")));
-                    replaceInFile(targetDir, "queue-service-bus.env",
-                            Map.of("YOUR_SAS_KEY", getSysProp("blackBoxTests.serviceBusPrimaryKey")));
-                    break;
-                case "pubsub":
-                    replaceInFile(targetDir, "queue-pubsub.env",
-                            Map.of("YOUR_PROJECT_ID", getSysProp("blackBoxTests.pubSubProjectId"),
-                                    "YOUR_SERVICE_ACCOUNT", getSysProp("blackBoxTests.pubSubServiceAccount")));
-                    break;
-                default:
-                    throw new RuntimeException("Unsupported queue type: " + QUEUE_TYPE);
-            }
+            addToFile(targetDir, "queue-kafka.env", Map.of("TB_QUEUE_PREFIX", "test"));
+            addToFile(targetDir, "tb-edqs.env", Map.of("TB_QUEUE_PREFIX", "test"));
 
             if (IS_HYBRID_MODE) {
                 composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
@@ -171,7 +138,7 @@ public class ContainerTestSuite {
                     .withOptions("--compatibility")
                     .withTailChildContainers(!skipTailChildContainers)
                     .withEnv(installTb.getEnv())
-                    .withEnv(queueEnv)
+                    .withEnv("TB_QUEUE_TYPE", "kafka")
                     .withEnv("LOAD_BALANCER_NAME", "")
                     .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .withExposedService("broker", 1883)
@@ -198,30 +165,30 @@ public class ContainerTestSuite {
         }
     }
 
-    private static String resolveRedisComposeFile() {
-        if (IS_REDIS_CLUSTER) {
-            return "docker-compose.redis-cluster.yml";
+    private static String resolveValkeyComposeFile() {
+        if (IS_VALKEY_CLUSTER) {
+            return "docker-compose.valkey-cluster.yml";
         }
-        if (IS_REDIS_SENTINEL) {
-            return "docker-compose.redis-sentinel.yml";
+        if (IS_VALKEY_SENTINEL) {
+            return "docker-compose.valkey-sentinel.yml";
         }
-        if (IS_REDIS_SSL) {
-            return "docker-compose.redis-ssl.yml";
+        if (IS_VALKEY_SSL) {
+            return "docker-compose.valkey-ssl.yml";
         }
-        return "docker-compose.redis.yml";
+        return "docker-compose.valkey.yml";
     }
 
-    private static String resolveRedisComposeVolumesFile() {
-        if (IS_REDIS_CLUSTER) {
-            return "docker-compose.redis-cluster.volumes.yml";
+    private static String resolveValkeyComposeVolumesFile() {
+        if (IS_VALKEY_CLUSTER) {
+            return "docker-compose.valkey-cluster.volumes.yml";
         }
-        if (IS_REDIS_SENTINEL) {
-            return "docker-compose.redis-sentinel.volumes.yml";
+        if (IS_VALKEY_SENTINEL) {
+            return "docker-compose.valkey-sentinel.volumes.yml";
         }
-        if (IS_REDIS_SSL) {
-            return "docker-compose.redis-ssl.volumes.yml";
+        if (IS_VALKEY_SSL) {
+            return "docker-compose.valkey-ssl.volumes.yml";
         }
-        return "docker-compose.redis.volumes.yml";
+        return "docker-compose.valkey.volumes.yml";
     }
 
     public void stop() {

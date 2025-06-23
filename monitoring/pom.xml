@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.1.0-SNAPSHOT</version>
+        <version>4.2.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
 
@@ -41,9 +41,6 @@
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.implementationTitle>ThingsBoard Monitoring Service</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.monitoring.ThingsboardMonitoringApplication</pkg.mainClass>
-
-        <californium.version>2.6.1</californium.version>
-        <leshan.version>2.0.0-M4</leshan.version>
     </properties>
 
     <dependencies>

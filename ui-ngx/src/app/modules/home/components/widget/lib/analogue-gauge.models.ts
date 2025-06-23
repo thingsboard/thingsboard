@@ -22,6 +22,10 @@ import tinycolor from 'tinycolor2';
 import Highlight = CanvasGauges.Highlight;
 import BaseGauge = CanvasGauges.BaseGauge;
 import GenericOptions = CanvasGauges.GenericOptions;
+import { TbUnit } from '@shared/models/unit.models';
+import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
+import { UnitService } from '@core/services/unit.service';
+import { DataKey } from '@shared/models/widget.models';
 
 export type AnimationRule = 'linear' | 'quad' | 'quint' | 'cycle'
                             | 'bounce' | 'elastic' | 'dequad' | 'dequint'
@@ -30,6 +34,7 @@ export type AnimationRule = 'linear' | 'quad' | 'quint' | 'cycle'
 export type AnimationTarget = 'needle' | 'plate';
 
 export interface AnalogueGaugeSettings {
+  formatValue: ValueFormatProcessor,
   minValue: number;
   maxValue: number;
   unitTitle: string;
@@ -71,6 +76,7 @@ interface BaseGaugeModel extends BaseGauge {
 export abstract class TbBaseGauge<S, O extends GenericOptions> {
 
   private gauge: BaseGaugeModel;
+  protected formatValue: ValueFormatProcessor;
 
   protected constructor(protected ctx: WidgetContext, canvasId: string) {
     const gaugeElement = $('#' + canvasId, ctx.$container)[0];
@@ -88,7 +94,10 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
       const cellData = this.ctx.data[0];
       if (cellData.data.length > 0) {
         const tvPair = cellData.data[cellData.data.length - 1];
-        const value = parseFloat(tvPair[1]);
+        let value = parseFloat(tvPair[1]);
+        if (this.formatValue) {
+          value = parseFloat(this.formatValue.format(value));
+        }
         if (value !== this.gauge.value) {
           if (!this.gauge.options.animation) {
             this.gauge._value = value;
@@ -126,8 +135,13 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
 
   protected createGaugeOptions(gaugeElement: HTMLElement, settings: S): O {
 
-    const minValue = settings.minValue || 0;
-    const maxValue = settings.maxValue || 100;
+    const units = getUnits(this.ctx, settings);
+    const valueDec = getValueDec(this.ctx, settings);
+    this.formatValue = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units, decimals: valueDec, ignoreUnitSymbol: true});
+    const unitSymbols = this.ctx.$injector.get(UnitService).getTargetUnitSymbol(units);
+
+    const minValue = Number(this.formatValue.format(settings.minValue || 0));
+    const maxValue = Number(this.formatValue.format(settings.maxValue || 100));
 
     const dataKey = this.ctx.data[0].dataKey;
     const keyColor = settings.defaultColor || dataKey.color;
@@ -138,19 +152,29 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
 
     const valueInt = settings.valueInt || 3;
 
-    const valueDec = getValueDec(this.ctx, settings);
-
     step = parseFloat(parseFloat(step + '').toFixed(valueDec)) || 1;
 
     const majorTicks: number[] = [];
     const highlights: Highlight[] = [];
     let tick = minValue;
 
+    let hasCustomHighlights = false;
+    if (settings?.highlights?.length > 0) {
+      hasCustomHighlights = true;
+      settings.highlights.forEach((highlight: Highlight) => {
+        highlights.push({
+          from: Number(this.formatValue.format(highlight.from)),
+          to: Number(this.formatValue.format(highlight.to)),
+          color: highlight.color
+        });
+      })
+    }
+
     while (tick <= maxValue) {
       majorTicks.push(tick);
       let nextTick = tick + step;
       nextTick = parseFloat(parseFloat(nextTick + '').toFixed(valueDec));
-      if (tick < maxValue) {
+      if (tick < maxValue && !hasCustomHighlights) {
         const highlightColor = tinycolor(keyColor);
         const percent = (tick - minValue) / total;
         highlightColor.setAlpha(percent);
@@ -175,7 +199,7 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
       maxValue,
       majorTicks,
       minorTicks: settings.minorTicks || 2,
-      units: getUnits(this.ctx, settings),
+      units: unitSymbols,
       title: ((settings.showUnitTitle !== false) ?
         (settings.unitTitle && settings.unitTitle.length > 0 ?
           settings.unitTitle : dataKey.label) : ''),
@@ -197,7 +221,7 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
       valueBoxBorderRadius: 2.5,
 
       // highlights
-      highlights: (settings.highlights && settings.highlights.length > 0) ? settings.highlights : highlights,
+      highlights,
       highlightsWidth: (isDefined(settings.highlightsWidth) && settings.highlightsWidth !== null) ? settings.highlightsWidth : 15,
 
       // fonts
@@ -256,26 +280,26 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
 
 }
 
-function getValueDec(ctx: WidgetContext, settings: AnalogueGaugeSettings): number {
-  let dataKey;
+function getValueDec(ctx: WidgetContext, _settings: AnalogueGaugeSettings): number {
+  let dataKey: DataKey;
   if (ctx.data && ctx.data[0]) {
     dataKey = ctx.data[0].dataKey;
   }
-  if (dataKey && isDefined(dataKey.decimals)) {
+  if (dataKey && isDefinedAndNotNull(dataKey.decimals)) {
     return dataKey.decimals;
   } else {
-    return isDefinedAndNotNull(ctx.decimals) ? ctx.decimals : 0;
+    return ctx.decimals ?? 0;
   }
 }
 
-function getUnits(ctx: WidgetContext, settings: AnalogueGaugeSettings): string {
-  let dataKey;
+function getUnits(ctx: WidgetContext, settings: AnalogueGaugeSettings): TbUnit {
+  let dataKey: DataKey;
   if (ctx.data && ctx.data[0]) {
     dataKey = ctx.data[0].dataKey;
   }
-  if (dataKey && dataKey.units && dataKey.units.length) {
+  if (dataKey?.units) {
     return dataKey.units;
   } else {
-    return isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units;
+    return settings.units ?? ctx.units;
   }
 }

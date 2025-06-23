@@ -57,7 +57,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.OAUTH2_CONFIGURATION_TEMPLATE, new PermissionChecker.GenericPermissionChecker(Operation.READ));
         put(Resource.MOBILE_APP, tenantEntityPermissionChecker);
         put(Resource.MOBILE_APP_BUNDLE, tenantEntityPermissionChecker);
-        put(Resource.CALCULATED_FIELD, tenantEntityPermissionChecker);
+        put(Resource.JOB, tenantEntityPermissionChecker);
         put(Resource.AI_MODEL_SETTINGS, aiModelSettingsPermissionChecker);
     }
 

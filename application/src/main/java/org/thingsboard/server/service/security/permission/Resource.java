@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Set;
 
 public enum Resource {
+
     ADMIN_SETTINGS(),
     ALARM(EntityType.ALARM),
     DEVICE(EntityType.DEVICE),
@@ -51,7 +52,7 @@ public enum Resource {
     NOTIFICATION(EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_TEMPLATE,
             EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE),
     MOBILE_APP_SETTINGS,
-    CALCULATED_FIELD(EntityType.CALCULATED_FIELD),
+    JOB(EntityType.JOB),
     AI_MODEL_SETTINGS(EntityType.AI_MODEL_SETTINGS);
 
     private final Set<EntityType> entityTypes;
@@ -76,4 +77,5 @@ public enum Resource {
         }
         throw new IllegalArgumentException("Unknown EntityType: " + entityType.name());
     }
+
 }

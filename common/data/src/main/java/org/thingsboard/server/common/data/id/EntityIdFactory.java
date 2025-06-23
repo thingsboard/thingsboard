@@ -84,6 +84,7 @@ public class EntityIdFactory {
             case MOBILE_APP_BUNDLE -> new MobileAppBundleId(uuid);
             case CALCULATED_FIELD -> new CalculatedFieldId(uuid);
             case CALCULATED_FIELD_LINK -> new CalculatedFieldLinkId(uuid);
+            case JOB -> new JobId(uuid);
             case AI_MODEL_SETTINGS -> new AiModelSettingsId(uuid);
             default -> throw new IllegalArgumentException("EntityType " + type + " is not supported!");
         };

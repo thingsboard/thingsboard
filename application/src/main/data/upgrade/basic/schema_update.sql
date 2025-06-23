@@ -14,6 +14,54 @@
 -- limitations under the License.
 --
 
+-- UPDATE TENANT PROFILE CASSANDRA RATE LIMITS START
+
+UPDATE tenant_profile
+SET profile_data = jsonb_set(
+        profile_data,
+        '{configuration}',
+        (
+            (profile_data -> 'configuration') - 'cassandraQueryTenantRateLimitsConfiguration'
+                ||
+            COALESCE(
+                    CASE
+                        WHEN profile_data -> 'configuration' ->
+                             'cassandraQueryTenantRateLimitsConfiguration' IS NOT NULL THEN
+                            jsonb_build_object(
+                                    'cassandraReadQueryTenantCoreRateLimits',
+                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration',
+                                    'cassandraWriteQueryTenantCoreRateLimits',
+                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration',
+                                    'cassandraReadQueryTenantRuleEngineRateLimits',
+                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration',
+                                    'cassandraWriteQueryTenantRuleEngineRateLimits',
+                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration'
+                            )
+                        END,
+                    '{}'::jsonb
+            )
+            )
+                   )
+WHERE profile_data -> 'configuration' ? 'cassandraQueryTenantRateLimitsConfiguration';
+
+-- UPDATE TENANT PROFILE CASSANDRA RATE LIMITS END
+
+-- UPDATE NOTIFICATION RULE CASSANDRA RATE LIMITS START
+
+UPDATE notification_rule
+SET trigger_config = REGEXP_REPLACE(
+        trigger_config,
+        '"CASSANDRA_QUERIES"',
+        '"CASSANDRA_WRITE_QUERIES_CORE","CASSANDRA_READ_QUERIES_CORE","CASSANDRA_WRITE_QUERIES_RULE_ENGINE","CASSANDRA_READ_QUERIES_RULE_ENGINE","CASSANDRA_WRITE_QUERIES_MONOLITH","CASSANDRA_READ_QUERIES_MONOLITH"',
+        'g'
+                     )
+WHERE trigger_type = 'RATE_LIMITS'
+  AND trigger_config LIKE '%"CASSANDRA_QUERIES"%';
+
+-- UPDATE NOTIFICATION RULE CASSANDRA RATE LIMITS END
+
+-- CREATE AI MODEL SETTINGS TABLE START
+
 CREATE TABLE ai_model_settings (
     id              UUID          NOT NULL PRIMARY KEY,
     external_id     UUID,
@@ -25,3 +73,5 @@ CREATE TABLE ai_model_settings (
     CONSTRAINT ai_model_settings_name_unq_key        UNIQUE (tenant_id, name),
     CONSTRAINT ai_model_settings_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
+
+-- CREATE AI MODEL SETTINGS TABLE END

@@ -57,7 +57,7 @@
     },
     {
       "tag": "value",
-      "stateRenderFunction": "var value = ctx.api.formatValue(ctx.values.value, ctx.properties.valueDecimals, '', false);\nctx.api.text(element, value);\n",
+      "stateRenderFunction": "var value = ctx.api.formatValue(ctx.values.value, {units: ctx.properties.valueUnits, decimals: ctx.properties.valueDecimals, ignoreUnitSymbol: true});\nctx.api.text(element, value);\n",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.callAction(event, 'displayClick');"
@@ -66,7 +66,7 @@
     },
     {
       "tag": "valueUnits",
-      "stateRenderFunction": "var units = ctx.properties.valueUnits;\nctx.api.text(element, units || '');\n",
+      "stateRenderFunction": "var units = ctx.api.unitSymbol(ctx.properties.valueUnits);\nctx.api.text(element, units || '');\n",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.callAction(event, 'displayClick');"
@@ -464,6 +464,7 @@
       "type": "units",
       "default": "m³/hr",
       "fieldClass": "medium-width",
+      "supportsUnitConversion": true,
       "disabled": false,
       "visible": true
     },
