@@ -46,6 +46,7 @@ public class PlatformTwoFaSettings {
     @Min(value = 60)
     private Integer totalAllowedTimeForVerification;
 
+    private boolean enforceTwoFa;
 
     public Optional<TwoFaProviderConfig> getProviderConfig(TwoFaProviderType providerType) {
         return Optional.ofNullable(providers)

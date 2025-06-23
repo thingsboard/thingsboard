@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.service.security.auth.ForceMfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -48,16 +49,13 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
-        JwtPair tokenPair = new JwtPair();
+        JwtPair tokenPair;
 
         if (authentication instanceof MfaAuthenticationToken) {
-            int preVerificationTokenLifetime = twoFaConfigManager.getPlatformTwoFaSettings(securityUser.getTenantId(), true)
-                    .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())
-                            .filter(time -> time > 0))
-                    .orElse((int) TimeUnit.MINUTES.toSeconds(30));
-            tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
-            tokenPair.setRefreshToken(null);
-            tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);
+            tokenPair = createMfaTokenPair(securityUser, Authority.PRE_VERIFICATION_TOKEN);
+        }
+        else if (authentication instanceof ForceMfaAuthenticationToken) {
+            tokenPair = createMfaTokenPair(securityUser, Authority.ENFORCE_MFA_TOKEN);
         } else {
             tokenPair = tokenFactory.createTokenPair(securityUser);
         }
@@ -67,6 +65,18 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
         JacksonUtil.writeValue(response.getWriter(), tokenPair);
 
         clearAuthenticationAttributes(request);
+    }
+
+    public JwtPair createMfaTokenPair(SecurityUser securityUser, Authority scope) {
+        JwtPair tokenPair = new JwtPair();
+        int preVerificationTokenLifetime = twoFaConfigManager.getPlatformTwoFaSettings(securityUser.getTenantId(), true)
+                .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())
+                        .filter(time -> time > 0))
+                .orElse((int) TimeUnit.MINUTES.toSeconds(30));
+        tokenPair.setToken(tokenFactory.createMfaToken(securityUser, scope, preVerificationTokenLifetime).getToken());
+        tokenPair.setRefreshToken(null);
+        tokenPair.setScope(scope);
+        return tokenPair;
     }
 
     /**
