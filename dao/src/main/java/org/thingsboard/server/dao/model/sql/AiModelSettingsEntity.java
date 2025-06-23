@@ -56,6 +56,9 @@ public class AiModelSettingsEntity extends BaseVersionedEntity<AiModelSettings> 
     @Column(name = ModelConstants.AI_MODEL_SETTINGS_CONFIGURATION_COLUMN_NAME, nullable = false, columnDefinition = "JSONB")
     private AiModel<?> configuration;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY, columnDefinition = "UUID")
+    private UUID externalId;
+
     public AiModelSettingsEntity() {}
 
     public AiModelSettingsEntity(AiModelSettings aiModelSettings) {
@@ -63,6 +66,7 @@ public class AiModelSettingsEntity extends BaseVersionedEntity<AiModelSettings> 
         tenantId = getTenantUuid(aiModelSettings.getTenantId());
         name = aiModelSettings.getName();
         configuration = aiModelSettings.getConfiguration();
+        externalId = getUuid(aiModelSettings.getExternalId());
     }
 
     @Override
@@ -73,6 +77,7 @@ public class AiModelSettingsEntity extends BaseVersionedEntity<AiModelSettings> 
         settings.setTenantId(TenantId.fromUUID(tenantId));
         settings.setName(name);
         settings.setConfiguration(configuration);
+        settings.setExternalId(getEntityId(externalId, AiModelSettingsId::new));
         return settings;
     }
 

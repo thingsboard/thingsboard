@@ -38,7 +38,7 @@ import java.util.UUID;
 @SqlDao
 @Component
 @RequiredArgsConstructor
-class JpaAiSettingsDao extends JpaAbstractDao<AiModelSettingsEntity, AiModelSettings> implements AiModelSettingsDao {
+class JpaAiModelSettingsDao extends JpaAbstractDao<AiModelSettingsEntity, AiModelSettings> implements AiModelSettingsDao {
 
     private final AiModelSettingsRepository aiModelSettingsRepository;
 
@@ -48,10 +48,37 @@ class JpaAiSettingsDao extends JpaAbstractDao<AiModelSettingsEntity, AiModelSett
     }
 
     @Override
+    public AiModelSettings findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(aiModelSettingsRepository.findByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
+    public AiModelSettings findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(aiModelSettingsRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
     public PageData<AiModelSettings> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<AiModelSettings> findByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(aiModelSettingsRepository.findByTenantId(
-                tenantId.getId(), StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), DaoUtil.toPageable(pageLink, AiModelSettingsEntity.COLUMN_MAP))
+                tenantId, StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), DaoUtil.toPageable(pageLink, AiModelSettingsEntity.COLUMN_MAP))
         );
+    }
+
+    @Override
+    public PageData<AiModelSettingsId> findIdsByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(
+                aiModelSettingsRepository.findIdsByTenantId(tenantId, DaoUtil.toPageable(pageLink, AiModelSettingsEntity.COLUMN_MAP)).map(AiModelSettingsId::new)
+        );
+    }
+
+    @Override
+    public AiModelSettingsId getExternalIdByInternal(AiModelSettingsId internalId) {
+        return aiModelSettingsRepository.getExternalIdById(internalId.getId()).map(AiModelSettingsId::new).orElse(null);
     }
 
     @Override

@@ -22,13 +22,18 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AiModelSettingsEntity;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity, UUID> {
+interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity, UUID>, ExportableEntityRepository<AiModelSettingsEntity> {
+
+    Optional<AiModelSettingsEntity> findByTenantIdAndId(UUID tenantId, UUID id);
+
+    Optional<AiModelSettingsEntity> findByTenantIdAndName(UUID tenantId, String name);
 
     @Query(nativeQuery = true, value = """
             SELECT *
@@ -41,7 +46,11 @@ interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity,
             """)
     Page<AiModelSettingsEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
 
-    Optional<AiModelSettingsEntity> findByTenantIdAndId(UUID tenantId, UUID id);
+    @Query("SELECT ai_model.id FROM AiModelSettingsEntity ai_model WHERE ai_model.tenantId = :tenantId")
+    Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+
+    @Query("SELECT externalId FROM AiModelSettingsEntity WHERE id = :id")
+    Optional<UUID> getExternalIdById(@Param("id") UUID id);
 
     long countByTenantId(UUID tenantId);
 

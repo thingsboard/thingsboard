@@ -38,7 +38,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.thingsboard.server.controller.ControllerConstants.AI_SETTINGS_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.AI_MODEL_SETTINGS_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -99,7 +99,7 @@ public class AiModelSettingsController extends BaseController {
             @RequestParam int pageSize,
             @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @Parameter(description = AI_SETTINGS_TEXT_SEARCH_DESCRIPTION)
+            @Parameter(description = AI_MODEL_SETTINGS_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
             @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name"}))
             @RequestParam(required = false) String sortProperty,

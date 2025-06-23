@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.ai;
+package org.thingsboard.server.service.sync.ie.exporting.impl;
 
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiModelSettings;
 import org.thingsboard.server.common.data.id.AiModelSettingsId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.ExportableEntityDao;
-import org.thingsboard.server.dao.TenantEntityDao;
+import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Optional;
+import java.util.Set;
 
-public interface AiModelSettingsDao extends TenantEntityDao<AiModelSettings>, ExportableEntityDao<AiModelSettingsId, AiModelSettings> {
+@Service
+@TbCoreComponent
+class AiModelSettingsExportService extends BaseEntityExportService<AiModelSettingsId, AiModelSettings, EntityExportData<AiModelSettings>> {
 
-    Optional<AiModelSettings> findByTenantIdAndId(TenantId tenantId, AiModelSettingsId settingsId);
-
-    boolean deleteById(TenantId tenantId, AiModelSettingsId settingsId);
-
-    int deleteByTenantId(TenantId tenantId);
-
-    boolean deleteByTenantIdAndId(TenantId tenantId, AiModelSettingsId settingsId);
+    @Override
+    public Set<EntityType> getSupportedEntityTypes() {
+        return Set.of(EntityType.AI_MODEL_SETTINGS);
+    }
 
 }

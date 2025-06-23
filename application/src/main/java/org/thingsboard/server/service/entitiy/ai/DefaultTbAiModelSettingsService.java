@@ -44,6 +44,7 @@ class DefaultTbAiModelSettingsService extends AbstractTbEntityService implements
         AiModelSettings savedSettings;
         try {
             savedSettings = aiModelSettingsService.save(settings);
+            autoCommit(user, savedSettings.getId());
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, requireNonNullElseGet(settings.getId(), () -> emptyId(EntityType.AI_MODEL_SETTINGS)), settings, actionType, user, e);
             throw e;

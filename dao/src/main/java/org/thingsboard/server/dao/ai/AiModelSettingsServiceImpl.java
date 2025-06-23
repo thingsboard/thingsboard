@@ -65,7 +65,9 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
         try {
             savedSettings = aiModelSettingsDao.saveAndFlush(settings.getTenantId(), settings);
         } catch (Exception e) {
-            checkConstraintViolation(e, "ai_model_settings_name_unq_key", "AI model settings with such name already exist!");
+            checkConstraintViolation(e,
+                    "ai_model_settings_name_unq_key", "AI model settings with such name already exist!",
+                    "ai_model_settings_external_id_unq_key", "AI model settings with such external ID already exist!");
             throw e;
         }
 

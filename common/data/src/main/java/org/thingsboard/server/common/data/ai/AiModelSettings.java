@@ -21,7 +21,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.ai.model.AiModel;
@@ -34,7 +34,7 @@ import java.io.Serial;
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public final class AiModelSettings extends BaseData<AiModelSettingsId> implements HasTenantId, HasVersion, HasName {
+public final class AiModelSettings extends BaseData<AiModelSettingsId> implements HasTenantId, HasVersion, ExportableEntity<AiModelSettingsId> {
 
     @Serial
     private static final long serialVersionUID = 9017108678716011604L;
@@ -45,7 +45,7 @@ public final class AiModelSettings extends BaseData<AiModelSettingsId> implement
             description = "JSON object representing the ID of the tenant associated with these AI model settings",
             example = "e3c4b7d2-5678-4a9b-0c1d-2e3f4a5b6c7d"
     )
-    TenantId tenantId;
+    private TenantId tenantId;
 
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
@@ -54,27 +54,39 @@ public final class AiModelSettings extends BaseData<AiModelSettingsId> implement
             example = "7",
             defaultValue = "1"
     )
-    Long version;
+    private Long version;
 
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
             description = "Human-readable name of the AI model settings; must be unique within the scope of the tenant",
-            example = "Default AI Settings"
+            example = "Rule node assistant"
     )
-    String name;
+    private String name;
 
     @Schema(
             requiredMode = Schema.RequiredMode.NOT_REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
             description = "Configuration of the AI model"
     )
-    AiModel<?> configuration;
+    private AiModel<?> configuration;
+
+    private AiModelSettingsId externalId;
 
     public AiModelSettings() {}
 
     public AiModelSettings(AiModelSettingsId id) {
         super(id);
+    }
+
+    public AiModelSettings(AiModelSettings settings) {
+        super(settings.getId());
+        createdTime = settings.getCreatedTime();
+        tenantId = settings.getTenantId();
+        version = settings.getVersion();
+        name = settings.getName();
+        configuration = settings.getConfiguration();
+        externalId = settings.getExternalId() == null ? null : new AiModelSettingsId(settings.getExternalId().getId());
     }
 
 }
