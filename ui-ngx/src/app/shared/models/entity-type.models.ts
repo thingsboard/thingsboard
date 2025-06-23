@@ -496,8 +496,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.AI_SETTINGS,
       {
-        type: 'entity.type-ai-settings',
-        typePlural: 'entity.type-ai-settings'
+        type: 'entity.type-ai-model-settings',
+        typePlural: 'entity.type-ai-model-settings'
       }
     ]
   ]

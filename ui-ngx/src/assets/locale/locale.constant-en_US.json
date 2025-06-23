@@ -2535,7 +2535,7 @@
         "type-current-user-owner": "Current User Owner",
         "type-calculated-field": "Calculated field",
         "type-calculated-fields": "Calculated fields",
-        "type-ai-settings": "AI settings",
+        "type-ai-model-settings": "AI model settings",
         "type-widgets-bundle": "Widgets bundle",
         "type-widgets-bundles": "Widgets bundles",
         "list-of-widgets-bundles": "{ count, plural, =1 {One widgets bundle} other {List of # widget bundles} }",
