@@ -34,7 +34,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -67,9 +66,8 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
-    public Optional<CalculatedField> findByEntityIdAndName(EntityId entityId, String name) {
-        CalculatedField calculatedField = DaoUtil.getData(calculatedFieldRepository.findByEntityIdAndName(entityId.getId(), name));
-        return Optional.ofNullable(calculatedField);
+    public CalculatedField findByEntityIdAndName(EntityId entityId, String name) {
+        return DaoUtil.getData(calculatedFieldRepository.findByEntityIdAndName(entityId.getId(), name));
     }
 
     @Override

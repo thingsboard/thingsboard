@@ -334,6 +334,12 @@ message RelationRequestMsg {
   string entityType = 3;
 }
 
+message CalculatedFieldRequestMsg {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  string entityType = 3;
+}
+
 // DEPRECATED. FOR REMOVAL
 message UserCredentialsRequestMsg {
   option deprecated = true;
@@ -433,6 +439,7 @@ message UplinkMsg {
   repeated RuleChainUpdateMsg ruleChainUpdateMsg = 23;
   repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 24;
   repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 25;
+  repeated CalculatedFieldRequestMsg calculatedFieldRequestMsg = 26;
 }
 
 message UplinkResponseMsg {
