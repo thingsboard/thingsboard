@@ -29,18 +29,24 @@ import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
         visible = true
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4o"),
-        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4o-mini"),
-        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4.1"),
-        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4.1-mini"),
-        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4.1-nano"),
         @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "o4-mini"),
         // @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "o3-pro"), needs verification with Gov ID :)
         // @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "o3"),     needs verification with Gov ID :)
         @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "o3-mini"),
         // @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "o1-pro"), LC4j sends requests to v1/chat/completions, but o1-pro is only supported in v1/responses
         @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "o1"),
+        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4.1"),
+        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4.1-mini"),
+        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4.1-nano"),
+        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4o"),
+        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4o-mini"),
+        @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-2.5-pro"),
         @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-2.5-flash"),
+        @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-2.0-flash"),
+        @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-2.0-flash-lite"),
+        @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-1.5-pro"),
+        @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-1.5-flash"),
+        @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-1.5-flash-8b"),
         @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "mistral-medium-latest")
 })
 public interface AiModel<C extends AiModelConfig<C>> {
