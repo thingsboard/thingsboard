@@ -430,7 +430,7 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
 
         // verifying enforced users filter
         createDifferentTenant();
-        doGet("/api/user/" + user.getId()).andExpect(status().isOk());
+        doGet("/api/user/" + savedDifferentTenantUser.getId()).andExpect(status().isOk());
 
         twoFaSettings.setEnforceTwoFa(false);
         twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
