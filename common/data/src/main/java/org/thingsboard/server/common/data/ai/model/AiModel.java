@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
         visible = true
 )
 @JsonSubTypes({
+        // OpenAI models
         @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "o4-mini"),
         // @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "o3-pro"), needs verification with Gov ID :)
         // @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "o3"),     needs verification with Gov ID :)
@@ -40,6 +41,8 @@ import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
         @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4.1-nano"),
         @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4o"),
         @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "gpt-4o-mini"),
+
+        // Google AI Gemini models
         @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-2.5-pro"),
         @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-2.5-flash"),
         @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-2.0-flash"),
@@ -47,7 +50,17 @@ import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
         @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-1.5-pro"),
         @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-1.5-flash"),
         @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "gemini-1.5-flash-8b"),
-        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "mistral-medium-latest")
+
+        // Mistral AI models
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "magistral-medium-latest"),
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "magistral-small-latest"),
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "mistral-large-latest"),
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "mistral-medium-latest"),
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "mistral-small-latest"),
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "pixtral-large-latest"),
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "ministral-8b-latest"),
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "ministral-3b-latest"),
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "open-mistral-nemo")
 })
 public interface AiModel<C extends AiModelConfig<C>> {
 
