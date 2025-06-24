@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -62,8 +63,6 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -240,10 +239,11 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         return deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
     }
 
-    private ListenableFuture<List<Long>> saveProvisionStateAttribute(Device device) {
-        return attributesService.save(device.getTenantId(), device.getId(), AttributeScope.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(DEVICE_PROVISION_STATE, PROVISIONED_STATE),
-                        System.currentTimeMillis())));
+    private ListenableFuture<AttributesSaveResult> saveProvisionStateAttribute(Device device) {
+        return attributesService.save(
+                device.getTenantId(), device.getId(), AttributeScope.SERVER_SCOPE,
+                new BaseAttributeKvEntry(new StringDataEntry(DEVICE_PROVISION_STATE, PROVISIONED_STATE), System.currentTimeMillis())
+        );
     }
 
     private DeviceCredentials getDeviceCredentials(Device device) {

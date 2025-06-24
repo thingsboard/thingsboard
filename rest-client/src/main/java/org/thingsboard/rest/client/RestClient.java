@@ -102,6 +102,7 @@ import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -4073,6 +4074,19 @@ public class RestClient implements Closeable {
         return restTemplate.postForEntity(baseURL + "/api/calculatedField", calculatedField, CalculatedField.class).getBody();
     }
 
+    public Optional<CalculatedField> getCalculatedFieldById(CalculatedFieldId calculatedFieldId) {
+        try {
+            ResponseEntity<CalculatedField> calculatedField = restTemplate.getForEntity(baseURL + "/api/calculatedField/{calculatedFieldId}", CalculatedField.class, calculatedFieldId.getId());
+            return Optional.ofNullable(calculatedField.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
     public PageData<CalculatedField> getCalculatedFieldsByEntityId(EntityId entityId, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
@@ -4082,6 +4096,36 @@ public class RestClient implements Closeable {
                 new ParameterizedTypeReference<PageData<CalculatedField>>() {
                 }, params).getBody();
 
+    }
+
+    public void deleteCalculatedField(CalculatedFieldId calculatedFieldId) {
+        restTemplate.delete(baseURL + "/api/calculatedField/{calculatedFieldId}", calculatedFieldId.getId());
+    }
+
+    public Optional<JsonNode> getLatestCalculatedFieldDebugEvent(CalculatedFieldId calculatedFieldId) {
+        try {
+            ResponseEntity<JsonNode> jsonNode = restTemplate.getForEntity(baseURL + "/api/calculatedField/{calculatedFieldId}/debug", JsonNode.class, calculatedFieldId.getId());
+            return Optional.ofNullable(jsonNode.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<JsonNode> testCalculatedFieldScript(JsonNode inputParams) {
+        try {
+            ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/api/calculatedField/testScript", inputParams, JsonNode.class);
+            return Optional.ofNullable(jsonNode.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
     }
 
     private String getTimeUrlParams(TimePageLink pageLink) {

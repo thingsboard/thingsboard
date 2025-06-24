@@ -70,7 +70,45 @@ public class RepositoryUtilsTest {
                 Arguments.of("loranet 123", getNameFilter(StringOperation.IN, "loranet 123, loranet 124"), true),
                 Arguments.of("loranet 123", getNameFilter(StringOperation.IN, "loranet 125, loranet 126"), false),
                 Arguments.of("loranet 123", getNameFilter(StringOperation.NOT_IN, "loranet 125, loranet 126"), true),
-                Arguments.of("loranet 123", getNameFilter(StringOperation.NOT_IN, "loranet 123, loranet 126"), false)
+                Arguments.of("loranet 123", getNameFilter(StringOperation.NOT_IN, "loranet 123, loranet 126"), false),
+
+                // Basic CONTAINS
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "%loranet"), false),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "loranet%"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "%ranet%"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "%123"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "%loranx%"), false),
+
+                // Basic STARTS_WITH
+                Arguments.of("loranet 123", getNameFilter(StringOperation.STARTS_WITH, "loranet%"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.STARTS_WITH, "lora%"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.STARTS_WITH, "lorax%"), false),
+
+                // Basic ENDS_WITH
+                Arguments.of("loranet 123", getNameFilter(StringOperation.ENDS_WITH, "%123"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.ENDS_WITH, "%23"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.ENDS_WITH, "%124"), false),
+
+                // CONTAINS with _
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "loranet_123"), true), // '_' = ' '
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "loranet_12_"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "loran_t%"), true),
+
+                // STARTS_WITH with _
+                Arguments.of("loranet 123", getNameFilter(StringOperation.STARTS_WITH, "loranet_"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.STARTS_WITH, "lora__t%"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.STARTS_WITH, "lor_net%"), true),
+
+                // ENDS_WITH with _
+                Arguments.of("loranet 123", getNameFilter(StringOperation.ENDS_WITH, "_23"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.ENDS_WITH, "_2_"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.ENDS_WITH, "_3"), true),
+
+                // Mixed patterns
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "lora__t 1%"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "lora%net%3"), true),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "%o_anet%2_3"), false),
+                Arguments.of("loranet 123", getNameFilter(StringOperation.CONTAINS, "lora___ ___"), true)
         );
     }
 

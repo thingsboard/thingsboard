@@ -19,7 +19,18 @@ import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 export type PowerUnits = PowerMetricUnits | PowerImperialUnits;
 
 export type PowerMetricUnits = 'W' | 'μW' | 'mW' | 'kW' | 'MW' | 'GW' | 'PS';
-export type PowerImperialUnits = 'BTU/s' | 'ft-lb/s' | 'hp' | 'BTU/h';
+export type PowerImperialUnits =
+  | 'ft-lb/s'
+  | 'hp'
+  | 'BTU/s'
+  | 'BTU/h'
+  | 'BTU/d'
+  | 'MBtu/s'
+  | 'MBtu/h'
+  | 'MBtu/d'
+  | 'MMBtu/s'
+  | 'MMBtu/h'
+  | 'MMBtu/d';
 
 const METRIC: TbMeasureUnits<PowerMetricUnits> = {
   ratio: 0.737562149,
@@ -65,11 +76,6 @@ const METRIC: TbMeasureUnits<PowerMetricUnits> = {
 const IMPERIAL: TbMeasureUnits<PowerImperialUnits> = {
   ratio: 1 / 0.737562149,
   units: {
-    'BTU/s': {
-      name: 'unit.btu-per-second',
-      tags: ['heat transfer', 'thermal energy'],
-      to_anchor: 778.16937,
-    },
     'ft-lb/s': {
       name: 'unit.foot-pound-per-second',
       tags: ['mechanical power'],
@@ -80,10 +86,50 @@ const IMPERIAL: TbMeasureUnits<PowerImperialUnits> = {
       tags: ['performance', 'electricity'],
       to_anchor: 550,
     },
+    'BTU/s': {
+      name: 'unit.btu-per-second',
+      tags: ['heat transfer', 'thermal energy'],
+      to_anchor: 778.16937,
+    },
     'BTU/h': {
       name: 'unit.btu-per-hour',
       tags: ['heat transfer', 'thermal energy', 'HVAC'],
       to_anchor: 0.216158,
+    },
+    'BTU/d': {
+      name: 'unit.btu-per-day',
+      tags: ['heat transfer', 'thermal energy'],
+      to_anchor: 0.00900613,
+    },
+    'MBtu/s': {
+      name: 'unit.btu-per-second',
+      tags: ['heat transfer', 'thermal energy'],
+      to_anchor: 778169.37,
+    },
+    'MBtu/h': {
+      name: 'unit.btu-per-hour',
+      tags: ['heat transfer', 'thermal energy'],
+      to_anchor: 216.158,
+    },
+    'MBtu/d': {
+      name: 'unit.btu-per-day',
+      tags: ['heat transfer', 'thermal energy'],
+      to_anchor: 9.00613,
+    },
+    'MMBtu/s': {
+      name: 'unit.btu-per-second',
+      tags: ['heat transfer', 'thermal energy'],
+      to_anchor: 778169370,
+    },
+    'MMBtu/h': {
+      name: 'unit.btu-per-hour',
+      tags: ['heat transfer', 'thermal energy'],
+      to_anchor: 216158,
+    },
+    'MMBtu/d': {
+      name: 'unit.btu-per-day',
+      tags: ['heat transfer', 'thermal energy'],
+      to_anchor: 9006.13,
     },
   },
 };

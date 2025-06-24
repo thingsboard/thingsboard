@@ -464,7 +464,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     }
 
     @Test
-    public void testSimpleCalculatedFieldWhenPreserveMsgTsIsTrue() throws Exception {
+    public void testSimpleCalculatedFieldWhenUseLatestTsIsTrue() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         long ts = System.currentTimeMillis() - 300000L;
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));
@@ -489,7 +489,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         output.setType(OutputType.TIME_SERIES);
         config.setOutput(output);
 
-        config.setPreserveMsgTs(true);
+        config.setUseLatestTs(true);
 
         calculatedField.setConfiguration(config);
 
@@ -506,7 +506,69 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     }
 
     @Test
-    public void testScriptCalculatedFieldWhenUsedMsgTsInScript() throws Exception {
+    public void testSimpleCalculatedFieldWhenUseLatestTsIsTrueAndTelemetryBeforeLatest() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        long ts = System.currentTimeMillis();
+
+        long tsA = ts - 300000L;
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"a\":1}}", tsA)));
+
+        long tsB = ts - 300L;
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"b\":5}}", tsB)));
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("a + b");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument1 = new Argument();
+        ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        argument1.setRefEntityKey(refEntityKey1);
+        Argument argument2 = new Argument();
+        ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("b", ArgumentType.TS_LATEST, null);
+        argument2.setRefEntityKey(refEntityKey2);
+        config.setArguments(Map.of("a", argument1, "b", argument2));
+        config.setExpression("a + b");
+
+        Output output = new Output();
+        output.setName("c");
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        config.setUseLatestTs(true);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode c = getLatestTelemetry(testDevice.getId(), "c");
+                    assertThat(c).isNotNull();
+                    assertThat(c.get("c").get(0).get("ts").asText()).isEqualTo(Long.toString(tsB));
+                    assertThat(c.get("c").get(0).get("value").asText()).isEqualTo("6.0");
+                });
+
+        long tsABeforeTsB = tsB - 300L;
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"a\":10}}", tsABeforeTsB)));
+
+        await().alias("update telemetry with ts less than latest -> save result with latest ts").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode c = getLatestTelemetry(testDevice.getId(), "c");
+                    assertThat(c).isNotNull();
+                    assertThat(c.get("c").get(0).get("ts").asText()).isEqualTo(Long.toString(tsB));// also tsB, since this is the latest timestamp
+                    assertThat(c.get("c").get(0).get("value").asText()).isEqualTo("15.0");
+                });
+    }
+
+    @Test
+    public void testScriptCalculatedFieldWhenUsedLatestTsInScript() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         long ts = System.currentTimeMillis() - 300000L;
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));
@@ -524,7 +586,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
         argument.setRefEntityKey(refEntityKey);
         config.setArguments(Map.of("T", argument));
-        config.setExpression("return {\"ts\": ctx.msgTs, \"values\": {\"fahrenheitTemp\": (T * 1.8) + 32}};");
+        config.setExpression("return {\"ts\": ctx.latestTs, \"values\": {\"fahrenheitTemp\": (T * 1.8) + 32}};");
 
         Output output = new Output();
         output.setType(OutputType.TIME_SERIES);
