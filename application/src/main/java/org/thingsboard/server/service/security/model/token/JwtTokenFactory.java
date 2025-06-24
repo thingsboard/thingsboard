@@ -135,18 +135,15 @@ public class JwtTokenFactory {
             securityUser.setSessionId(claims.get(SESSION_ID, String.class));
         }
 
-        UserPrincipal principal;
+        boolean isPublic = false;
         if (authority != Authority.PRE_VERIFICATION_TOKEN && authority != Authority.MFA_CONFIGURATION_TOKEN) {
             securityUser.setFirstName(claims.get(FIRST_NAME, String.class));
             securityUser.setLastName(claims.get(LAST_NAME, String.class));
             securityUser.setEnabled(claims.get(ENABLED, Boolean.class));
-            boolean isPublic = claims.get(IS_PUBLIC, Boolean.class);
-            principal = new UserPrincipal(isPublic ? UserPrincipal.Type.PUBLIC_ID : UserPrincipal.Type.USER_NAME, subject);
-        } else {
-            principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, subject);
+            isPublic = claims.get(IS_PUBLIC, Boolean.class);
         }
+        UserPrincipal principal = new UserPrincipal(isPublic ? UserPrincipal.Type.PUBLIC_ID : UserPrincipal.Type.USER_NAME, subject);
         securityUser.setUserPrincipal(principal);
-
         return securityUser;
     }
 
