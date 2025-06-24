@@ -53,12 +53,8 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.asset.AssetProfileService;
-import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
-import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -113,14 +109,6 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Autowired
     private CalculatedFieldService calculatedFieldService;
-    @Autowired
-    private DeviceService deviceService;
-    @Autowired
-    private DeviceProfileService deviceProfileService;
-    @Autowired
-    private AssetService assetService;
-    @Autowired
-    private AssetProfileService assetProfileService;
 
     @Autowired
     private DbCallbackExecutorService dbCallbackExecutorService;
