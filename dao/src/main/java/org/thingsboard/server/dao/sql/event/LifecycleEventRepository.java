@@ -114,4 +114,5 @@ public interface LifecycleEventRepository extends EventRepository<LifecycleEvent
                       @Param("statusFilterEnabled") boolean statusFilterEnabled,
                       @Param("statusFilter") boolean statusFilter,
                       @Param("error") String error);
+
 }

@@ -13,7 +13,7 @@
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.boot.test" level="WARN"/>
     <logger name="org.apache.cassandra" level="WARN"/>
-    <logger name="org.testcontainers" level="INFO" />
+    <logger name="org.testcontainers" level="INFO"/>
     <logger name="org.eclipse.leshan" level="INFO"/>
     <logger name="org.thingsboard.server.controller.AbstractWebTest" level="INFO"/>
     <logger name="org.thingsboard.server.service.script" level="INFO"/>
@@ -29,9 +29,9 @@
     <logger name="org.eclipse.californium.core" level="INFO"/>
 
     <!--    To reduce logs -->
-    <logger name="org.apache.catalina.loader.WebappClassLoaderBase" level="ERROR" />
-    <logger name="org.thingsboard.server.service.queue.DefaultTbClusterService" level="ERROR" />
-    <logger name="org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService" level="ERROR" />
+    <logger name="org.apache.catalina.loader.WebappClassLoaderBase" level="ERROR"/>
+    <logger name="org.thingsboard.server.service.queue.DefaultTbClusterService" level="ERROR"/>
+    <logger name="org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService" level="ERROR"/>
 
     <!-- Coap client context debug for the test scope -->
     <!--    <logger name="org.thingsboard.server.transport.coap.client.DefaultCoapClientContext" level="TRACE" />-->

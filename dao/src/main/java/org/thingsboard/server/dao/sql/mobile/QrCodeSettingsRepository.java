@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.mobile;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,4 +35,7 @@ public interface QrCodeSettingsRepository extends JpaRepository<QrCodeSettingsEn
     @Modifying
     @Query("DELETE FROM QrCodeSettingsEntity r WHERE r.tenantId = :tenantId")
     void deleteByTenantId(@Param("tenantId") UUID tenantId);
+
+    Page<MobileAppSettingsEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
+
 }

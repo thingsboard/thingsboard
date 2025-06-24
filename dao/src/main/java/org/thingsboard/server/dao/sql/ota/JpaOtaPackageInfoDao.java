@@ -90,6 +90,12 @@ public class JpaOtaPackageInfoDao extends JpaAbstractDao<OtaPackageInfoEntity, O
     }
 
     @Override
+    public PageData<OtaPackageId> findOtaPackageIdsByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(otaPackageInfoRepository.findIdsByDeviceProfileId(deviceProfileId.getId(), DaoUtil.toPageable(pageLink)))
+                .mapData(OtaPackageId::new);
+    }
+
+    @Override
     public boolean isOtaPackageUsed(OtaPackageId otaPackageId, OtaPackageType otaPackageType, DeviceProfileId deviceProfileId) {
         return otaPackageInfoRepository.isOtaPackageUsed(otaPackageId.getId(), deviceProfileId.getId(), otaPackageType.name());
     }

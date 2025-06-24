@@ -54,4 +54,7 @@ public class CacheConstants {
     public static final String ALARM_TYPES_CACHE = "alarmTypes";
     public static final String QR_CODE_SETTINGS_CACHE = "qrCodeSettings";
     public static final String MOBILE_SECRET_KEY_CACHE = "mobileSecretKey";
+    public static final String TENANT_EXPORT_RESULT_CACHE = "tenantExportResults";
+    public static final String TENANT_IMPORT_RESULT_CACHE = "tenantImportResults";
+
 }

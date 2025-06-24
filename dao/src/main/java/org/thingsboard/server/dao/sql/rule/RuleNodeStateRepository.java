@@ -35,4 +35,9 @@ public interface RuleNodeStateRepository extends JpaRepository<RuleNodeStateEnti
     void removeByRuleNodeId(@Param("ruleNodeId") UUID ruleNodeId);
 
     void removeByRuleNodeIdAndEntityId(@Param("ruleNodeId") UUID ruleNodeId, @Param("entityId") UUID entityId);
+
+    @Query("SELECT s FROM RuleNodeStateEntity s WHERE s.ruleNodeId IN (SELECT n.id FROM RuleNodeEntity n " +
+            "WHERE n.ruleChainId IN (SELECT c.id FROM RuleChainEntity c WHERE c.tenantId = :tenantId))")
+    Page<RuleNodeStateEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+
 }

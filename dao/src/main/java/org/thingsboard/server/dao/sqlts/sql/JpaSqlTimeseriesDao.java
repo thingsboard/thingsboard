@@ -18,14 +18,17 @@ package org.thingsboard.server.dao.sqlts.sql;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.TsKv;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
@@ -167,4 +170,17 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
     private static long toMills(LocalDateTime time) {
         return time.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
+
+    @SneakyThrows
+    @Override
+    public TsKv save(TenantId tenantId, TsKv tsKv) {
+        save(tenantId, tsKv.getEntityId(), tsKv.getEntry(), tsKv.getTtl()).get(30, TimeUnit.SECONDS);
+        return tsKv;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.TS_KV;
+    }
+
 }

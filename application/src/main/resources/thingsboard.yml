@@ -1772,7 +1772,7 @@ queue:
     api:
       # Whether to forward entity data query requests to EDQS (otherwise use PostgreSQL implementation)
       supported: "${TB_EDQS_API_SUPPORTED:false}"
-      # Whether to auto-enable EDQS API (if queue.edqs.api.supported is true) when sync of data to Kafka is finished 
+      # Whether to auto-enable EDQS API (if queue.edqs.api.supported is true) when sync of data to Kafka is finished
       auto_enable: "${TB_EDQS_API_AUTO_ENABLE:true}"
     # Interval in milliseconds to check for ready EDQS servers
     readiness_check_interval: "${TB_EDQS_READINESS_CHECK_INTERVAL_MS:60000}"

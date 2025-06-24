@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -127,6 +128,11 @@ public class JpaAuditLogDao extends JpaPartitionedAbstractDao<AuditLogEntity, Au
     @Override
     protected JpaRepository<AuditLogEntity, UUID> getRepository() {
         return auditLogRepository;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.AUDIT_LOG;
     }
 
 }

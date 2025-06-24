@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -40,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
-public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseriesDao implements AggregationTimeseriesDao {
+public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseriesDao implements TimeseriesDao, AggregationTimeseriesDao {
 
     protected static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
 

@@ -28,12 +28,12 @@ import java.util.UUID;
 public interface AlarmCommentRepository extends JpaRepository<AlarmCommentEntity, UUID> {
 
     @Query(value = "SELECT new org.thingsboard.server.dao.model.sql.AlarmCommentInfoEntity(a, u.firstName, u.lastName, u.email) FROM AlarmCommentEntity a " +
-            "LEFT JOIN UserEntity u on u.id = a.userId " +
-            "WHERE a.alarmId = :alarmId ",
+                   "LEFT JOIN UserEntity u on u.id = a.userId " +
+                   "WHERE a.alarmId = :alarmId ",
             countQuery = "" +
-                    "SELECT count(a) " +
-                    "FROM AlarmCommentEntity a " +
-                    "WHERE a.alarmId = :alarmId ")
+                         "SELECT count(a) " +
+                         "FROM AlarmCommentEntity a " +
+                         "WHERE a.alarmId = :alarmId ")
     Page<AlarmCommentInfoEntity> findAllByAlarmId(@Param("alarmId") UUID alarmId,
                                                   Pageable pageable);
 

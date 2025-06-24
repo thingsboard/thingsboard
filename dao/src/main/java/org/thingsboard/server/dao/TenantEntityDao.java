@@ -19,7 +19,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
-public interface TenantEntityDao<T> {
+public interface TenantEntityDao<T> extends ObjectDao<T> {
 
     default Long countByTenantId(TenantId tenantId) {
         throw new UnsupportedOperationException();

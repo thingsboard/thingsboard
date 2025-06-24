@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edqs.fields.EntityFields;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -174,6 +175,11 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     @Override
     public EntityType getEntityType() {
         return EntityType.WIDGETS_BUNDLE;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.WIDGETS_BUNDLE;
     }
 
 }

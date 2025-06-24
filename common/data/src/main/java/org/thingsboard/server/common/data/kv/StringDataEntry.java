@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -24,7 +27,8 @@ public class StringDataEntry extends BasicKvEntry {
 
     private final String value;
 
-    public StringDataEntry(String key, String value) {
+    @JsonCreator
+    public StringDataEntry(@JsonProperty("key") String key, @JsonProperty("value") String value) {
         super(key);
         this.value = value;
     }

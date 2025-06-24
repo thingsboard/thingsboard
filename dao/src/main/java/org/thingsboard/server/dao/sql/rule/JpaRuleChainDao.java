@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edqs.fields.RuleChainFields;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -149,6 +150,11 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     @Override
     public EntityType getEntityType() {
         return EntityType.RULE_CHAIN;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.RULE_CHAIN;
     }
 
 }

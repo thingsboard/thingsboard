@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -293,4 +294,16 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     public List<EntityRelation> findRuleNodeToRuleChainRelations(RuleChainType ruleChainType, int limit) {
         return DaoUtil.convertDataList(relationRepository.findRuleNodeToRuleChainRelations(ruleChainType, PageRequest.of(0, limit)));
     }
+
+    @Override
+    public EntityRelation save(TenantId tenantId, EntityRelation relation) {
+        saveRelation(tenantId, relation);
+        return relation;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.RELATION;
+    }
+
 }

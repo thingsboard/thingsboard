@@ -20,6 +20,7 @@ import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.edqs.fields.TenantFields;
@@ -101,6 +102,11 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
     @Override
     public List<TenantFields> findNextBatch(UUID id, int batchSize) {
         return tenantRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.TENANT;
     }
 
 }

@@ -63,4 +63,7 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
     @Query("DELETE FROM RuleNodeEntity e where e.id in :ids")
     void deleteByIdIn(@Param("ids") List<UUID> ids);
 
+    @Query("SELECT n FROM RuleNodeEntity n WHERE n.ruleChainId IN (SELECT rc.id FROM RuleChainEntity rc WHERE rc.tenantId = :tenantId)")
+    Page<RuleNodeEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+
 }

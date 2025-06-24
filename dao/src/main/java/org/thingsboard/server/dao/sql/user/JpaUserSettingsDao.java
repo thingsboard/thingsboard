@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -71,6 +72,11 @@ public class JpaUserSettingsDao implements UserSettingsDao, TenantEntityDao<User
     @Override
     public PageData<UserSettings> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(userSettingsRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.USER_SETTINGS;
     }
 
 }

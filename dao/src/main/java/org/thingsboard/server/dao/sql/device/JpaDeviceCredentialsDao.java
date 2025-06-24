@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -73,6 +75,11 @@ public class JpaDeviceCredentialsDao extends JpaAbstractDao<DeviceCredentialsEnt
     @Override
     public PageData<DeviceCredentials> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(deviceCredentialsRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.DEVICE_CREDENTIALS;
     }
 
 }

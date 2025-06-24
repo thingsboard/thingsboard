@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.DeviceCredentialsEntity;
+import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 
 import java.util.UUID;
 
