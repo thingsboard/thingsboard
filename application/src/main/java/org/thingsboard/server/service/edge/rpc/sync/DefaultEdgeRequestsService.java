@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -32,7 +31,6 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -48,8 +46,6 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -82,15 +78,10 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -328,79 +319,8 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                 EntityType.valueOf(calculatedFieldRequestMsg.getEntityType()),
                 new UUID(calculatedFieldRequestMsg.getEntityIdMSB(), calculatedFieldRequestMsg.getEntityIdLSB()));
 
-        if (entityId.getEntityType() == EntityType.EDGE) {
-            log.trace("[{}] processAllCalculatedField [{}][{}]", tenantId, edge.getName(), calculatedFieldRequestMsg);
-            return syncAllCalculatedFieldForEdge(tenantId, edge, calculatedFieldRequestMsg);
-        } else {
-            log.trace("[{}] processCalculatedField [{}][{}] for entity [{}][{}]", tenantId, edge.getName(), calculatedFieldRequestMsg, entityId.getEntityType(), entityId.getId());
-            return saveCalculatedFieldsToEdge(tenantId, edge.getId(), entityId);
-        }
-    }
-
-    @NotNull
-    private ListenableFuture<Void> syncAllCalculatedFieldForEdge(TenantId tenantId, Edge edge, CalculatedFieldRequestMsg calculatedFieldRequestMsg) {
-        EdgeId edgeId = edge.getId();
-        ListenableFuture<List<EntityId>> deviceIdsFuture =
-                findAllEntityIdsAsync(pageLink -> deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
-        ListenableFuture<List<EntityId>> assetIdsFuture =
-                findAllEntityIdsAsync(pageLink -> assetService.findAssetsByTenantIdAndEdgeId(tenantId, edgeId, pageLink));
-        ListenableFuture<List<EntityId>> deviceProfileIdsFuture =
-                findAllEntityIdsAsync(pageLink -> deviceProfileService.findDeviceProfiles(tenantId, pageLink));
-        ListenableFuture<List<EntityId>> assetProfileIdsFuture =
-                findAllEntityIdsAsync(pageLink -> assetProfileService.findAssetProfiles(tenantId, pageLink));
-
-        ListenableFuture<List<EntityId>> allEntityIdFuture =
-                mergeEntityIdFutures(deviceIdsFuture, assetIdsFuture, deviceProfileIdsFuture, assetProfileIdsFuture);
-
-        return Futures.transformAsync(allEntityIdFuture, allIds -> {
-            log.trace("[{}][{}] Going to sync calculatedFields for [{}] entities", tenantId, edge.getName(), allIds.size());
-            List<ListenableFuture<Void>> saveFutures = allIds.stream()
-                    .map(id -> saveCalculatedFieldsToEdge(tenantId, edge.getId(), id))
-                    .collect(Collectors.toList());
-
-            return Futures.transform(
-                    Futures.allAsList(saveFutures),
-                    result -> null,
-                    dbCallbackExecutorService
-            );
-        }, dbCallbackExecutorService);
-    }
-
-    private <T extends ExportableEntity<? extends EntityId>> ListenableFuture<List<EntityId>> findAllEntityIdsAsync(Function<PageLink, PageData<T>> fetcher) {
-        return dbCallbackExecutorService.submit(() -> {
-            List<EntityId> result = new ArrayList<>();
-            PageLink pageLink = new PageLink(100);
-            PageData<T> pageData;
-            while (true) {
-                pageData = fetcher.apply(pageLink);
-
-                Optional.ofNullable(pageData)
-                        .map(PageData::getData)
-                        .ifPresent(dataList -> dataList.stream()
-                                .filter(Objects::nonNull)
-                                .map(ExportableEntity::getId)
-                                .forEach(result::add));
-
-                if (pageData == null || !pageData.hasNext()) {
-                    break;
-                }
-
-                pageLink = pageLink.nextPageLink();
-            }
-            return result;
-        });
-    }
-
-    @SafeVarargs
-    private ListenableFuture<List<EntityId>> mergeEntityIdFutures(ListenableFuture<List<EntityId>>... futures) {
-        return Futures.transform(
-                Futures.allAsList(Arrays.asList(futures)),
-                listsOfIds -> listsOfIds.stream()
-                        .filter(Objects::nonNull)
-                        .flatMap(Collection::stream)
-                        .collect(Collectors.toList()),
-                dbCallbackExecutorService
-        );
+        log.trace("[{}] processCalculatedField [{}][{}] for entity [{}][{}]", tenantId, edge.getName(), calculatedFieldRequestMsg, entityId.getEntityType(), entityId.getId());
+        return saveCalculatedFieldsToEdge(tenantId, edge.getId(), entityId);
     }
 
     private ListenableFuture<Void> saveCalculatedFieldsToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId) {

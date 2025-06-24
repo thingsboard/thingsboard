@@ -80,7 +80,7 @@ public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
                 calculatedField.setId(calculatedFieldId);
             }
 
-            edgeCtx.getCalculatedFieldService().save(calculatedField);
+            edgeCtx.getCalculatedFieldService().save(calculatedField, false);
         } catch (Exception e) {
             log.error("[{}] Failed to process calculatedField update msg [{}]", tenantId, calculatedFieldUpdateMsg, e);
             throw e;
