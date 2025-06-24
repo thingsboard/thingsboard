@@ -62,8 +62,8 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     private static final ThingsboardException TOO_MANY_REQUESTS_ERROR = new ThingsboardException("Too many requests", ThingsboardErrorCode.TOO_MANY_REQUESTS);
 
     @Override
-    public boolean isTwoFaEnabled(TenantId tenantId, UserId userId) {
-        return configManager.getAccountTwoFaSettings(tenantId, userId)
+    public boolean isTwoFaEnabled(TenantId tenantId, User user) {
+        return configManager.getAccountTwoFaSettings(tenantId, user)
                 .map(settings -> !settings.getConfigs().isEmpty())
                 .orElse(false);
     }
@@ -89,7 +89,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
 
     @Override
     public void prepareVerificationCode(SecurityUser user, TwoFaProviderType providerType, boolean checkLimits) throws Exception {
-        TwoFaAccountConfig accountConfig = configManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType)
+        TwoFaAccountConfig accountConfig = configManager.getTwoFaAccountConfig(user.getTenantId(), user, providerType)
                 .orElseThrow(() -> ACCOUNT_NOT_CONFIGURED_ERROR);
         prepareVerificationCode(user, accountConfig, checkLimits);
     }
@@ -118,7 +118,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
 
     @Override
     public boolean checkVerificationCode(SecurityUser user, TwoFaProviderType providerType, String verificationCode, boolean checkLimits) throws ThingsboardException {
-        TwoFaAccountConfig accountConfig = configManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType)
+        TwoFaAccountConfig accountConfig = configManager.getTwoFaAccountConfig(user.getTenantId(), user, providerType)
                 .orElseThrow(() -> ACCOUNT_NOT_CONFIGURED_ERROR);
         return checkVerificationCode(user, verificationCode, accountConfig, checkLimits);
     }

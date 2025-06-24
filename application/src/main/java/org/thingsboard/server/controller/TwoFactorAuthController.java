@@ -101,17 +101,17 @@ public class TwoFactorAuthController extends BaseController {
 
     @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
             "Get the list of 2FA provider infos available for user to use. Example:\n" +
-                    "```\n[\n" +
-                    "  {\n    \"type\": \"EMAIL\",\n    \"default\": true,\n    \"contact\": \"ab*****ko@gmail.com\"\n  },\n" +
-                    "  {\n    \"type\": \"TOTP\",\n    \"default\": false,\n    \"contact\": null\n  },\n" +
-                    "  {\n    \"type\": \"SMS\",\n    \"default\": false,\n    \"contact\": \"+38********12\"\n  }\n" +
-                    "]\n```")
+            "```\n[\n" +
+            "  {\n    \"type\": \"EMAIL\",\n    \"default\": true,\n    \"contact\": \"ab*****ko@gmail.com\"\n  },\n" +
+            "  {\n    \"type\": \"TOTP\",\n    \"default\": false,\n    \"contact\": null\n  },\n" +
+            "  {\n    \"type\": \"SMS\",\n    \"default\": false,\n    \"contact\": \"+38********12\"\n  }\n" +
+            "]\n```")
     @GetMapping("/providers")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
     public List<TwoFaProviderInfo> getAvailableTwoFaProviders() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         Optional<PlatformTwoFaSettings> platformTwoFaSettings = twoFaConfigManager.getPlatformTwoFaSettings(user.getTenantId(), true);
-        return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user.getId())
+        return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user)
                 .map(settings -> settings.getConfigs().values()).orElse(Collections.emptyList())
                 .stream().map(config -> {
                     String contact = null;
@@ -141,7 +141,7 @@ public class TwoFactorAuthController extends BaseController {
     @PreAuthorize("hasAuthority('MFA_CONFIGURATION_TOKEN')")
     public JwtPair authenticateByTwoFaConfigurationToken(HttpServletRequest servletRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        if (twoFactorAuthService.isTwoFaEnabled(user.getTenantId(), user.getId())) {
+        if (twoFactorAuthService.isTwoFaEnabled(user.getTenantId(), user)) {
             logLogInAction(servletRequest, user, null);
             return createTokenPair(user);
         } else {

@@ -69,7 +69,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings getAccountTwoFaSettings() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user.getId()).orElse(null);
+        return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user).orElse(null);
     }
 
     @ApiOperation(value = "Generate 2FA account config (generateTwoFaAccountConfig)",
@@ -141,7 +141,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig,
                                                                 @RequestParam(required = false) String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
-        if (twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig.getProviderType()).isPresent()) {
+        if (twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user, accountConfig.getProviderType()).isPresent()) {
             throw new IllegalArgumentException("2FA provider is already configured");
         }
 
@@ -152,7 +152,7 @@ public class TwoFactorAuthConfigController extends BaseController {
             verificationSuccess = true;
         }
         if (verificationSuccess) {
-            return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
+            return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user, accountConfig);
         } else {
             throw new IllegalArgumentException("Verification code is incorrect");
         }
@@ -160,38 +160,38 @@ public class TwoFactorAuthConfigController extends BaseController {
 
     @ApiOperation(value = "Update 2FA account config (updateTwoFaAccountConfig)", notes =
             "Update config for a given provider type. \n" +
-                    "Update request example:\n" +
-                    "```\n{\n  \"useByDefault\": true\n}\n```\n" +
-                    "Returns whole account's 2FA settings object.\n" +
-                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+            "Update request example:\n" +
+            "```\n{\n  \"useByDefault\": true\n}\n```\n" +
+            "Returns whole account's 2FA settings object.\n" +
+            ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PutMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings updateTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType,
                                                          @RequestBody TwoFaAccountConfigUpdateRequest updateRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
 
-        TwoFaAccountConfig accountConfig = twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType)
+        TwoFaAccountConfig accountConfig = twoFaConfigManager.getTwoFaAccountConfig(user.getTenantId(), user, providerType)
                 .orElseThrow(() -> new IllegalArgumentException("Config for " + providerType + " 2FA provider not found"));
         accountConfig.setUseByDefault(updateRequest.isUseByDefault());
-        return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user.getId(), accountConfig);
+        return twoFaConfigManager.saveTwoFaAccountConfig(user.getTenantId(), user, accountConfig);
     }
 
     @ApiOperation(value = "Delete 2FA account config (deleteTwoFaAccountConfig)", notes =
             "Delete 2FA config for a given 2FA provider type. \n" +
-                    "Returns whole account's 2FA settings object.\n" +
-                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+            "Returns whole account's 2FA settings object.\n" +
+            ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @DeleteMapping("/account/config")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public AccountTwoFaSettings deleteTwoFaAccountConfig(@RequestParam TwoFaProviderType providerType) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        return twoFaConfigManager.deleteTwoFaAccountConfig(user.getTenantId(), user.getId(), providerType);
+        return twoFaConfigManager.deleteTwoFaAccountConfig(user.getTenantId(), user, providerType);
     }
 
     @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
             "Get the list of provider types available for user to use (the ones configured by tenant or sysadmin).\n" +
-                    "Example of response:\n" +
-                    "```\n[\n  \"TOTP\",\n  \"EMAIL\",\n  \"SMS\"\n]\n```" +
-                    ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER
+            "Example of response:\n" +
+            "```\n[\n  \"TOTP\",\n  \"EMAIL\",\n  \"SMS\"\n]\n```" +
+            ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER
     )
     @GetMapping("/providers")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'MFA_CONFIGURATION_TOKEN')")
