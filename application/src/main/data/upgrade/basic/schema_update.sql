@@ -60,7 +60,7 @@ WHERE trigger_type = 'RATE_LIMITS'
 
 -- UPDATE NOTIFICATION RULE CASSANDRA RATE LIMITS END
 
--- CREATE AI MODEL SETTINGS TABLE START
+-- CREATE AI MODEL SETTINGS TABLE AND INDEX START
 
 CREATE TABLE ai_model_settings (
     id              UUID          NOT NULL PRIMARY KEY,
@@ -74,4 +74,6 @@ CREATE TABLE ai_model_settings (
     CONSTRAINT ai_model_settings_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
--- CREATE AI MODEL SETTINGS TABLE END
+CREATE INDEX idx_ai_model_settings_tenant_id ON ai_model_settings(tenant_id);
+
+-- CREATE AI MODEL SETTINGS TABLE AND INDEX END
