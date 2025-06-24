@@ -97,7 +97,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "Will throw an error (Bad Request) if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config/generate")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'ENFORCE_MFA_TOKEN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'MFA_CONFIGURATION_TOKEN')")
     public TwoFaAccountConfig generateTwoFaAccountConfig(@Parameter(description = "2FA provider type to generate new account config for", schema = @Schema(defaultValue = "TOTP", requiredMode = Schema.RequiredMode.REQUIRED))
                                                          @RequestParam TwoFaProviderType providerType) throws Exception {
         SecurityUser user = getCurrentUser();
@@ -137,7 +137,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "Will throw an error (Bad Request) if the provider is not configured for usage. " +
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'ENFORCE_MFA_TOKEN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'MFA_CONFIGURATION_TOKEN')")
     public AccountTwoFaSettings verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFaAccountConfig accountConfig,
                                                                 @RequestParam(required = false) String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
@@ -194,7 +194,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER
     )
     @GetMapping("/providers")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'ENFORCE_MFA_TOKEN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER', 'MFA_CONFIGURATION_TOKEN')")
     public List<TwoFaProviderType> getAvailableTwoFaProviders() throws ThingsboardException {
         return twoFaConfigManager.getPlatformTwoFaSettings(getTenantId(), true)
                 .map(PlatformTwoFaSettings::getProviders).orElse(Collections.emptyList()).stream()

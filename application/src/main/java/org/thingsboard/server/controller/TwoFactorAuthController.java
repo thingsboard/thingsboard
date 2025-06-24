@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
@@ -90,7 +89,14 @@ public class TwoFactorAuthController extends BaseController {
                                               @RequestParam String verificationCode, HttpServletRequest servletRequest) throws Exception {
         SecurityUser user = getCurrentUser();
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, providerType, verificationCode, true);
-        return getRegularJwtPair(servletRequest, user, verificationSuccess, "Verification code is incorrect");
+        if (verificationSuccess) {
+            logLogInAction(servletRequest, user, null);
+            return createTokenPair(user);
+        } else {
+            IllegalArgumentException error = new IllegalArgumentException("Verification code is incorrect");
+            logLogInAction(servletRequest, user, error);
+            throw error;
+        }
     }
 
     @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
@@ -129,26 +135,30 @@ public class TwoFactorAuthController extends BaseController {
                 .collect(Collectors.toList());
     }
 
-    @ApiOperation(value = "Get regular token pair after successfully saved two factor settings",
-            notes = "Checks 2FA setting saved, and if it success the method returns a regular access and refresh token pair.")
+    @ApiOperation(value = "Get regular token pair after successfully configuring 2FA",
+            notes = "Checks 2FA is configured, returning token pair on success.")
     @PostMapping("/login")
-    @PreAuthorize("hasAuthority('ENFORCE_MFA_TOKEN')")
-    public JwtPair authorizeByTwoFaEnforceToken(HttpServletRequest servletRequest) throws ThingsboardException {
+    @PreAuthorize("hasAuthority('MFA_CONFIGURATION_TOKEN')")
+    public JwtPair authenticateByTwoFaConfigurationToken(HttpServletRequest servletRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        boolean isEnabled = twoFactorAuthService.isTwoFaEnabled(user.getTenantId(), user.getId());
-        return getRegularJwtPair(servletRequest, user, isEnabled, "Two factor settings is not set up!");
-    }
-
-    private JwtPair getRegularJwtPair(HttpServletRequest servletRequest, SecurityUser user, boolean isAvailable, String errorMessage) throws ThingsboardException {
-        if (isAvailable) {
-            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, null);
-            user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
-            return tokenFactory.createTokenPair(user);
+        if (twoFactorAuthService.isTwoFaEnabled(user.getTenantId(), user.getId())) {
+            logLogInAction(servletRequest, user, null);
+            return createTokenPair(user);
         } else {
-            ThingsboardException error = new ThingsboardException(errorMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error);
+            IllegalArgumentException error = new IllegalArgumentException("2FA is not configured");
+            logLogInAction(servletRequest, user, error);
             throw error;
         }
+    }
+
+    private JwtPair createTokenPair(SecurityUser user) {
+        log.debug("[{}][{}] Creating token pair for user", user.getTenantId(), user.getId());
+        user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
+        return tokenFactory.createTokenPair(user);
+    }
+
+    private void logLogInAction(HttpServletRequest servletRequest, SecurityUser user, Exception error) {
+        systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error);
     }
 
     @Data

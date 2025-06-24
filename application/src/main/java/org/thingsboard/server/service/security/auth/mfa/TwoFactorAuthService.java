@@ -27,7 +27,7 @@ public interface TwoFactorAuthService {
 
     boolean isTwoFaEnabled(TenantId tenantId, UserId userId);
 
-    boolean isEnforceTwoFaEnabled(TenantId tenantId);
+    boolean isEnforceTwoFaEnabled(TenantId tenantId, User user);
 
     void checkProvider(TenantId tenantId, TwoFaProviderType providerType) throws ThingsboardException;
 

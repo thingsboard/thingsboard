@@ -136,7 +136,7 @@ public class JwtTokenFactory {
         }
 
         UserPrincipal principal;
-        if (authority != Authority.PRE_VERIFICATION_TOKEN && authority != Authority.ENFORCE_MFA_TOKEN) {
+        if (authority != Authority.PRE_VERIFICATION_TOKEN && authority != Authority.MFA_CONFIGURATION_TOKEN) {
             securityUser.setFirstName(claims.get(FIRST_NAME, String.class));
             securityUser.setLastName(claims.get(LAST_NAME, String.class));
             securityUser.setEnabled(claims.get(ENABLED, Boolean.class));

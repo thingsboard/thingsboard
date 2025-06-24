@@ -167,8 +167,8 @@ public class DefaultTwoFaConfigManager implements TwoFaConfigManager {
         for (TwoFaProviderConfig providerConfig : twoFactorAuthSettings.getProviders()) {
             twoFactorAuthService.checkProvider(tenantId, providerConfig.getProviderType());
         }
-        if (twoFactorAuthSettings.isEnforceTwoFa() && twoFactorAuthSettings.getProviders().isEmpty()) {
-            throw new DataValidationException("At least one 2FA provider is required if enforce enabled!");
+        if (tenantId.isSysTenantId() && twoFactorAuthSettings.isEnforceTwoFa() && twoFactorAuthSettings.getProviders().isEmpty()) {
+            throw new DataValidationException("At least one 2FA provider is required if enforcing is enabled");
         }
         AdminSettings settings = Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(tenantId, TWO_FACTOR_AUTH_SETTINGS_KEY))
                 .orElseGet(() -> {

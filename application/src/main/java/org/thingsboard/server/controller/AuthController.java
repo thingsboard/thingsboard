@@ -226,8 +226,8 @@ public class AuthController extends BaseController {
         }
 
         JwtPair tokenPair;
-        if (twoFactorAuthService.isEnforceTwoFaEnabled(securityUser.getTenantId())) {
-            tokenPair = authenticationSuccessHandler.createMfaTokenPair(securityUser, Authority.ENFORCE_MFA_TOKEN);
+        if (twoFactorAuthService.isEnforceTwoFaEnabled(securityUser.getTenantId(), user)) {
+            tokenPair = authenticationSuccessHandler.createMfaTokenPair(securityUser, Authority.MFA_CONFIGURATION_TOKEN);
         } else {
             tokenPair = tokenFactory.createTokenPair(securityUser);
         }

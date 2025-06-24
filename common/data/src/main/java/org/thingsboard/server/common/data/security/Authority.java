@@ -20,9 +20,10 @@ public enum Authority {
     SYS_ADMIN(0),
     TENANT_ADMIN(1),
     CUSTOMER_USER(2),
+
     REFRESH_TOKEN(10),
     PRE_VERIFICATION_TOKEN(11),
-    ENFORCE_MFA_TOKEN(12);
+    MFA_CONFIGURATION_TOKEN(12);
 
     private int code;
 
