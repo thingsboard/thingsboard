@@ -17,7 +17,6 @@ package org.thingsboard.common.util;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.intellij.lang.annotations.Language;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
 import java.util.concurrent.ConcurrentMap;
@@ -42,7 +41,7 @@ public class RegexUtils {
         });
     }
 
-    public static String replace(String input, @Language("regexp") String pattern, Function<MatchResult, String> replacer) {
+    public static String replace(String input, String pattern, Function<MatchResult, String> replacer) {
         return patternsCache.computeIfAbsent(pattern, Pattern::compile).matcher(input).replaceAll(replacer);
     }
 

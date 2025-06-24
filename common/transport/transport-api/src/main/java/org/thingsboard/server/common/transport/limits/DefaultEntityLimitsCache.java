@@ -18,8 +18,8 @@ package org.thingsboard.server.common.transport.limits;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
+import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.queue.util.TbTransportComponent;
@@ -43,17 +43,17 @@ public class DefaultEntityLimitsCache implements EntityLimitsCache {
         cache = Caffeine.newBuilder()
                 .expireAfter(new Expiry<EntityLimitKey, Boolean>() {
                     @Override
-                    public long expireAfterCreate(@NotNull EntityLimitKey key, @NotNull Boolean value, long currentTime) {
+                    public long expireAfterCreate(@Nonnull EntityLimitKey key, @Nonnull Boolean value, long currentTime) {
                         return mainPart + (long) (randomPart * ThreadLocalRandom.current().nextDouble());
                     }
 
                     @Override
-                    public long expireAfterUpdate(@NotNull EntityLimitKey key, @NotNull Boolean value, long currentTime, long currentDuration) {
+                    public long expireAfterUpdate(@Nonnull EntityLimitKey key, @Nonnull Boolean value, long currentTime, long currentDuration) {
                         return currentDuration;
                     }
 
                     @Override
-                    public long expireAfterRead(@NotNull EntityLimitKey key, @NotNull Boolean value, long currentTime, long currentDuration) {
+                    public long expireAfterRead(@Nonnull EntityLimitKey key, @Nonnull Boolean value, long currentTime, long currentDuration) {
                         return currentDuration;
                     }
                 })
