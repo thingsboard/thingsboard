@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,12 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     }
 
     @Override
-    protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
-        return deviceProfileService.saveDeviceProfile(deviceProfile);
+    protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider, CompareResult compareResult) {
+        DeviceProfile saved = deviceProfileService.saveDeviceProfile(deviceProfile);
+        if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
+            importCalculatedFields(ctx, saved, exportData, idProvider);
+        }
+        return saved;
     }
 
     @Override

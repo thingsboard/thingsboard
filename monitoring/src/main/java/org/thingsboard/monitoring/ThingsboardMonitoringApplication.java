@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.monitoring.service.BaseMonitoringService;
+import org.thingsboard.monitoring.service.MonitoringEntityService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -39,6 +39,8 @@ public class ThingsboardMonitoringApplication {
 
     @Autowired
     private List<BaseMonitoringService<?, ?>> monitoringServices;
+    @Autowired
+    private MonitoringEntityService entityService;
 
     @Value("${monitoring.monitoring_rate_ms}")
     private int monitoringRateMs;
@@ -51,7 +53,10 @@ public class ThingsboardMonitoringApplication {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startMonitoring() {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("monitoring-executor"));
+        entityService.checkEntities();
+        monitoringServices.forEach(BaseMonitoringService::init);
+
+        ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("monitoring-executor");
         scheduler.scheduleWithFixedDelay(() -> {
             monitoringServices.forEach(monitoringService -> {
                 monitoringService.runChecks();

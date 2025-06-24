@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.edqs.fields.DeviceFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
 import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
@@ -81,35 +83,37 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
                                              @Param("textSearch") String textSearch,
                                              Pageable pageable);
 
+    @Query("SELECT d.id FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND d.deviceProfileId = :deviceProfileId " +
+            "AND (:textSearch IS NULL OR ilike(d.type, CONCAT('%', :textSearch, '%')) = true)")
+    Page<UUID> findIdsByTenantIdAndDeviceProfileId(@Param("tenantId") UUID tenantId,
+                                                   @Param("deviceProfileId") UUID deviceProfileId,
+                                                   @Param("textSearch") String textSearch,
+                                                   Pageable pageable);
+
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.deviceProfileId = :deviceProfileId " +
-            "AND d.firmwareId = null " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(d.label, CONCAT('%', :textSearch, '%')) = true)")
+            "AND d.firmwareId IS NULL")
     Page<DeviceEntity> findByTenantIdAndTypeAndFirmwareIdIsNull(@Param("tenantId") UUID tenantId,
                                                                 @Param("deviceProfileId") UUID deviceProfileId,
-                                                                @Param("textSearch") String textSearch,
                                                                 Pageable pageable);
 
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.deviceProfileId = :deviceProfileId " +
-            "AND d.softwareId = null " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(d.label, CONCAT('%', :textSearch, '%')) = true)")
+            "AND d.softwareId IS NULL")
     Page<DeviceEntity> findByTenantIdAndTypeAndSoftwareIdIsNull(@Param("tenantId") UUID tenantId,
                                                                 @Param("deviceProfileId") UUID deviceProfileId,
-                                                                @Param("textSearch") String textSearch,
                                                                 Pageable pageable);
 
     @Query("SELECT count(*) FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.deviceProfileId = :deviceProfileId " +
-            "AND d.firmwareId = null")
+            "AND d.firmwareId IS NULL")
     Long countByTenantIdAndDeviceProfileIdAndFirmwareIdIsNull(@Param("tenantId") UUID tenantId,
                                                               @Param("deviceProfileId") UUID deviceProfileId);
 
     @Query("SELECT count(*) FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.deviceProfileId = :deviceProfileId " +
-            "AND d.softwareId = null")
+            "AND d.softwareId IS NULL")
     Long countByTenantIdAndDeviceProfileIdAndSoftwareIdIsNull(@Param("tenantId") UUID tenantId,
                                                               @Param("deviceProfileId") UUID deviceProfileId);
 
@@ -199,5 +203,10 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
 
     @Query("SELECT externalId FROM DeviceEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.DeviceFields(d.id, d.createdTime, d.tenantId, d.customerId," +
+            "d.name, d.version, d.type, d.label, d.deviceProfileId, d.additionalInfo) FROM DeviceEntity d WHERE d.id > :id ORDER BY d.id")
+    List<DeviceFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
 }

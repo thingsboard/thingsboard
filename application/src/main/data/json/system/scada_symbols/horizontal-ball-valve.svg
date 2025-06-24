@@ -1,0 +1,271 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
+  "title": "Horizontal ball valve",
+  "description": "Horizontal ball valve with open/close animation and state colors.",
+  "searchTags": [
+    "valve",
+    "ball"
+  ],
+  "widgetSizeX": 1,
+  "widgetSizeY": 1,
+  "tags": [
+    {
+      "tag": "background",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar color = opened ? ctx.properties.openedColor : ctx.properties.closedColor;\nif (!openAnimate) {\n    element.attr({fill: color});\n} else {\n    ctx.api.cssAnimate(element, 500).attr({fill: color});\n    element.remember('openAnimate', false);\n}\n",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": " ctx.tags.wheel.forEach(e => {\n     e.remember('openAnimate', true);\n });\n ctx.tags.background.forEach(e => {\n     e.remember('openAnimate', true);\n });\n\n\nvar opened = ctx.values.opened;\nvar action = opened ? 'close' : 'open';\n\nctx.api.callAction(event, action, undefined, {\n  next: () => {\n     ctx.api.setValue('opened', !opened);\n  }\n});"
+        }
+      }
+    },
+    {
+      "tag": "wheel",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar angle = opened ? ctx.properties.openedRotationAngle : ctx.properties.closedRotationAngle;\nif (!openAnimate) {\n    element.transform({rotate: angle, originX: 100});\n} else {\n    ctx.api.cssAnimate(element, 500).transform({rotate: angle, originX: 100});\n    element.remember('openAnimate', false);\n}\n",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "opened",
+      "name": "{i18n:scada.symbol.opened}",
+      "hint": "{i18n:scada.symbol.opened-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.opened}",
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "open",
+      "name": "{i18n:scada.symbol.open}",
+      "hint": "{i18n:scada.symbol.open-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": true,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "close",
+      "name": "{i18n:scada.symbol.close}",
+      "hint": "{i18n:scada.symbol.close-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": false,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    }
+  ],
+  "properties": [
+    {
+      "id": "openedColor",
+      "name": "{i18n:scada.symbol.opened-color}",
+      "type": "color",
+      "default": "#1C943E",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "closedColor",
+      "name": "{i18n:scada.symbol.closed-color}",
+      "type": "color",
+      "default": "#696969",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "openedRotationAngle",
+      "name": "{i18n:scada.symbol.opened-rotation-angle}",
+      "type": "number",
+      "default": 0,
+      "required": true,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": -179,
+      "max": 179,
+      "step": null
+    },
+    {
+      "id": "closedRotationAngle",
+      "name": "{i18n:scada.symbol.closed-rotation-angle}",
+      "type": "number",
+      "default": 90,
+      "required": true,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": -179,
+      "max": 179,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<defs>
+  <linearGradient id="paint0_linear_1595_99338" x1="58.72" x2="58.3" y1="46.5" y2="153.51" gradientTransform="translate(-1.1e-6)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".18316"/>
+   <stop stop-color="#fff" stop-opacity=".08" offset=".35085"/>
+   <stop stop-color="#fff" stop-opacity=".25" offset=".49829"/>
+   <stop stop-color="#fff" stop-opacity=".08" offset=".64825"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".82318"/>
+   <stop stop-color="#020202" stop-opacity=".35" offset="1"/>
+  </linearGradient>
+  <filter id="filter0_d_1595_99338" x="65" y="65" width="131" height="70" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset/>
+   <feGaussianBlur stdDeviation="4"/>
+   <feComposite in2="hardAlpha" operator="out"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+   <feBlend in2="BackgroundImageFix" result="effect1_dropShadow_1595_99338"/>
+   <feBlend in="SourceGraphic" in2="effect1_dropShadow_1595_99338" result="shape"/>
+  </filter>
+  <filter id="filter1_d_1595_99338" x="100" y="76.174" width="100" height="47.652" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset/>
+   <feGaussianBlur stdDeviation="2"/>
+   <feComposite in2="hardAlpha" operator="out"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+   <feBlend in2="BackgroundImageFix" result="effect1_dropShadow_1595_99338"/>
+   <feBlend in="SourceGraphic" in2="effect1_dropShadow_1595_99338" result="shape"/>
+  </filter>
+  <radialGradient id="paint1_radial_1595_99338" cx="0" cy="0" r="1" gradientTransform="matrix(0 10.846 -89.342 0 180.83 100.52)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#9B9B9B" offset="1"/>
+  </radialGradient>
+  <filter id="filter2_ii_1595_99338" x="69.875" y="69.875" width="60.25" height="60.25" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="3.12497" dy="-3.12497"/>
+   <feGaussianBlur stdDeviation="3.12497"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1595_99338"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="-3.12497" dy="3.12497"/>
+   <feGaussianBlur stdDeviation="3.12497"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0"/>
+   <feBlend in2="effect1_innerShadow_1595_99338" result="effect2_innerShadow_1595_99338"/>
+  </filter>
+  <filter id="filter3_i_1595_99338" x="72" y="77" width="51" height="51" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="-5" dy="5"/>
+   <feGaussianBlur stdDeviation="4"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1595_99338"/>
+  </filter>
+ </defs><rect x="1.5" y="51.5" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><path d="m14 63.075s25.882-5.5691 43-8.8079c16.632-3.1469 26.182-3.767 43-3.767 16.818 0 26.368 0.6201 43 3.767 17.118 3.2388 43 8.8079 43 8.8079v73.833s-25.882 4.816-43 8.055c-16.632 3.147-26.182 4.374-43 4.52-16.807 0.147-26.377-0.639-43-3.767-17.177-3.231-43-8.808-43-8.808z" fill="#1c943e" tb:tag="background"/><path d="m14 63.075s25.882-5.5691 43-8.8079c16.632-3.1469 26.182-3.767 43-3.767 16.818 0 26.368 0.6201 43 3.767 17.118 3.2388 43 8.8079 43 8.8079v73.833s-25.882 4.816-43 8.055c-16.632 3.147-26.182 4.374-43 4.52-16.807 0.147-26.377-0.639-43-3.767-17.177-3.231-43-8.808-43-8.808z" fill="url(#paint0_linear_1595_99338)" style="fill:url(#paint0_linear_1595_99338)"/><path d="m181.38 63.621c1.321 0.281 2.384 0.5079 3.123 0.6661v71.375c-0.738 0.137-1.787 0.333-3.086 0.575-2.694 0.502-6.465 1.205-10.77 2.01-8.611 1.608-19.362 3.622-27.923 5.242-16.568 3.135-26.026 4.349-42.734 4.494-16.714 0.146-26.186-0.632-42.71-3.741-8.5733-1.613-19.311-3.812-27.912-5.61-4.299-0.898-8.0616-1.696-10.749-2.269-1.3186-0.281-2.3784-0.508-3.1159-0.666v-71.41c0.7391-0.1582 1.8016-0.3851 3.1235-0.6661 2.6925-0.5724 6.4608-1.3694 10.764-2.2675 8.6083-1.7967 19.347-3.9963 27.892-5.6129 16.521-3.1259 25.975-3.7409 42.721-3.7409 16.746 0 26.2 0.615 42.721 3.7409 8.545 1.6166 19.283 3.8162 27.892 5.6129 4.303 0.8981 8.071 1.6951 10.764 2.2675z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="187.5" y="51.5" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><g tb:tag="wheel">
+  <path d="m100 80.174s21.238 7.876 45.5 8c14.198 0.0726 28.327-1.0525 38.64-2.1526 8.35-0.8908 15.86 5.581 15.86 13.979 0 8.3981-7.51 14.869-15.86 13.979-10.313-1.1-24.442-2.226-38.64-2.153-24.262 0.124-45.5 8-45.5 8z" fill="url(#paint1_radial_1595_99338)" style="fill:url(#paint1_radial_1595_99338);filter:url(#filter1_d_1595_99338)"/>
+  <path d="m100.5 119.12v-38.234c0.09 0.0315 0.19 0.0659 0.298 0.1029 0.632 0.217 1.561 0.5266 2.75 0.8983 2.38 0.7432 5.804 1.7348 9.988 2.7301 8.365 1.99 19.78 3.9978 31.961 4.06 14.224 0.0727 28.373-1.0542 38.696-2.1554 8.068-0.8607 15.307 5.3942 15.307 13.482 0 8.0871-7.239 14.342-15.307 13.481-10.323-1.101-24.472-2.228-38.696-2.155-12.181 0.062-23.596 2.07-31.961 4.06-4.184 0.995-7.608 1.987-9.988 2.73-1.189 0.372-2.118 0.681-2.75 0.898-0.108 0.037-0.208 0.072-0.298 0.103z" stroke="#000" stroke-opacity=".12" style="filter:url(#filter1_d_1595_99338)"/>
+ </g><g filter="url(#filter2_ii_1595_99338)">
+  <circle cx="100" cy="100" r="27" fill="#d9d9d9"/>
+ </g><path d="m123 100c0 12.703-10.297 23-23 23-12.702 0-23-10.297-23-23 0-12.702 10.298-23 23-23 12.703 0 23 10.298 23 23z" fill="#000" fill-opacity=".05" style="filter:url(#filter0_d_1595_99338)"/><g filter="url(#filter3_i_1595_99338)">
+  <path d="m123 100c0 12.703-10.297 23-23 23-12.702 0-23-10.297-23-23 0-12.702 10.298-23 23-23 12.703 0 23 10.298 23 23z" fill="#1c943e" tb:tag="background"/>
+ </g><path d="m122 100c0 12.15-9.85 22-22 22-12.15 0-22-9.85-22-22 0-12.15 9.8497-22 22-22 12.15 0 22 9.8497 22 22z" stroke="#fff" stroke-width="2"/><path d="m97.283 90.614c0-0.647-0.6112-1.1214-1.2155-0.8901-4.133 1.5825-7.0677 5.5867-7.0677 10.276 0 6.0751 4.9249 11 11 11 6.075 0 11-4.925 11-11 0-4.5642-2.78-8.4791-6.739-10.144-0.609-0.2563-1.243 0.2209-1.243 0.882 0 0.4223 0.268 0.7938 0.655 0.9649 3.18 1.4098 5.398 4.5944 5.398 8.2973 0 5.0101-4.061 9.0711-9.071 9.0711-5.01 0-9.0714-4.061-9.0714-9.0711 0-3.8068 2.3447-7.0658 5.6688-8.4117 0.4019-0.1628 0.6858-0.541 0.6858-0.9746z" clip-rule="evenodd" fill="#fff" fill-rule="evenodd"/><path d="m99.514 87.637c0-0.3519 0.2852-0.6372 0.6373-0.6372 0.352 0 0.637 0.2853 0.637 0.6372v10.401c0 0.3519-0.285 0.6372-0.637 0.6372-0.3521 0-0.6373-0.2853-0.6373-0.6372z" fill="#fff"/><rect y="50" width="200" height="100" fill="#000" fill-opacity="0" stroke-width="0" tb:tag="clickArea"/>
+</svg>

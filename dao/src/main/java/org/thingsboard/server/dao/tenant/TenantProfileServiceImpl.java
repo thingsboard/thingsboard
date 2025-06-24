@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.thingsboard.common.util.DebugModeUtil.DEBUG_MODE_DEFAULT_DURATION_MINUTES;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("TenantProfileDaoService")
@@ -160,7 +161,9 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
             defaultTenantProfile.setDefault(true);
             defaultTenantProfile.setName("Default");
             TenantProfileData profileData = new TenantProfileData();
-            profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+            DefaultTenantProfileConfiguration configuration = new DefaultTenantProfileConfiguration();
+            configuration.setMaxDebugModeDurationMinutes(DEBUG_MODE_DEFAULT_DURATION_MINUTES);
+            profileData.setConfiguration(configuration);
             defaultTenantProfile.setProfileData(profileData);
             defaultTenantProfile.setDescription("Default tenant profile");
             defaultTenantProfile.setIsolatedTbRuleEngine(false);

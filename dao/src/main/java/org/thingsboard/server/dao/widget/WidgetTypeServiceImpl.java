@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.widget;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -30,12 +31,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetTypeFilter;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -43,7 +46,6 @@ import org.thingsboard.server.dao.service.Validator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 
@@ -68,6 +70,9 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     @Autowired
     protected ImageService imageService;
 
+    @Autowired
+    private ResourceService resourceService;
+
     @Override
     public WidgetType findWidgetTypeById(TenantId tenantId, WidgetTypeId widgetTypeId) {
         log.trace("Executing findWidgetTypeById [{}]", widgetTypeId);
@@ -83,6 +88,13 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
+    public WidgetTypeInfo findWidgetTypeInfoById(TenantId tenantId, WidgetTypeId widgetTypeId) {
+        log.trace("Executing findWidgetTypeInfoById [{}]", widgetTypeId);
+        Validator.validateId(widgetTypeId, id -> "Incorrect widgetTypeId " + id);
+        return widgetTypeDao.findWidgetTypeInfoById(tenantId, widgetTypeId.getId());
+    }
+
+    @Override
     public boolean widgetTypeExistsByTenantIdAndWidgetTypeId(TenantId tenantId, WidgetTypeId widgetTypeId) {
         log.trace("Executing widgetTypeExistsByTenantIdAndWidgetTypeId, tenantId [{}],  widgetTypeId [{}]", tenantId, widgetTypeId);
         Validator.validateId(widgetTypeId, id -> "Incorrect widgetTypeId " + id);
@@ -94,9 +106,15 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         log.trace("Executing saveWidgetType [{}]", widgetTypeDetails);
         widgetTypeValidator.validate(widgetTypeDetails, WidgetType::getTenantId);
         try {
-            imageService.replaceBase64WithImageUrl(widgetTypeDetails);
-            WidgetTypeDetails result = widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())
+            TenantId tenantId = widgetTypeDetails.getTenantId();
+            if (CollectionUtils.isNotEmpty(widgetTypeDetails.getResources())) {
+                resourceService.importResources(tenantId, widgetTypeDetails.getResources());
+            }
+            imageService.updateImagesUsage(widgetTypeDetails);
+            resourceService.updateResourcesUsage(tenantId, widgetTypeDetails);
+
+            WidgetTypeDetails result = widgetTypeDao.save(tenantId, widgetTypeDetails);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
                     .entityId(result.getId()).created(widgetTypeDetails.getId() == null).build());
             return result;
         } catch (Exception t) {
@@ -121,28 +139,30 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findSystemWidgetTypesByPageLink(TenantId tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
-        log.trace("Executing findSystemWidgetTypesByPageLink, fullSearch [{}], deprecatedFilter [{}], widgetTypes [{}], pageLink [{}]", fullSearch, deprecatedFilter, widgetTypes, pageLink);
+    public PageData<WidgetTypeInfo> findSystemWidgetTypesByPageLink(WidgetTypeFilter widgetTypeFilter, PageLink pageLink) {
+        log.trace("Executing findSystemWidgetTypesByPageLink, pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
-        return widgetTypeDao.findSystemWidgetTypes(tenantId, fullSearch, deprecatedFilter, widgetTypes, pageLink);
+        return widgetTypeDao.findSystemWidgetTypes(widgetTypeFilter, pageLink);
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
-        log.trace("Executing findAllTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], fullSearch [{}], deprecatedFilter [{}], widgetTypes [{}], pageLink [{}]",
-                tenantId, fullSearch, deprecatedFilter, widgetTypes, pageLink);
+    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantIdAndPageLink(WidgetTypeFilter widgetTypeFilter, PageLink pageLink) {
+        TenantId tenantId = widgetTypeFilter.getTenantId();
+        log.trace("Executing findAllTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]",
+                tenantId, pageLink);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
-        return widgetTypeDao.findAllTenantWidgetTypesByTenantId(tenantId.getId(), fullSearch, deprecatedFilter, widgetTypes, pageLink);
+        return widgetTypeDao.findAllTenantWidgetTypesByTenantId(widgetTypeFilter, pageLink);
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
-        log.trace("Executing findTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], fullSearch [{}], deprecatedFilter [{}], widgetTypes [{}], pageLink [{}]",
-                tenantId, fullSearch, deprecatedFilter, widgetTypes, pageLink);
+    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantIdAndPageLink(WidgetTypeFilter widgetTypeFilter, PageLink pageLink) {
+        TenantId tenantId = widgetTypeFilter.getTenantId();
+        log.trace("Executing findTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]",
+                tenantId, pageLink);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
-        return widgetTypeDao.findTenantWidgetTypesByTenantId(tenantId.getId(), fullSearch, deprecatedFilter, widgetTypes, pageLink);
+        return widgetTypeDao.findTenantWidgetTypesByTenantId(widgetTypeFilter, pageLink);
     }
 
     @Override
@@ -190,6 +210,15 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
+    public WidgetTypeDetails findWidgetTypeDetailsByTenantIdAndFqn(TenantId tenantId, String fqn) {
+        log.trace("Executing findWidgetTypeDetailsByTenantIdAndFqn, tenantId [{}], fqn [{}]", tenantId, fqn);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validateString(fqn, f -> "Incorrect fqn " + f);
+        return widgetTypeDao.findDetailsByTenantIdAndFqn(tenantId.getId(), fqn);
+    }
+
+
+    @Override
     public void updateWidgetsBundleWidgetTypes(TenantId tenantId, WidgetsBundleId widgetsBundleId, List<WidgetTypeId> widgetTypeIds) {
         log.trace("Executing updateWidgetsBundleWidgetTypes, tenantId [{}], widgetsBundleId [{}], widgetTypeIds [{}]", tenantId, widgetsBundleId, widgetTypeIds);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
@@ -206,7 +235,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         List<WidgetTypeId> toRemove = existingBundleWidgets.stream()
                 .map(WidgetsBundleWidget::getWidgetTypeId)
                 .filter(widgetTypeId -> bundleWidgets.stream().noneMatch(newBundleWidget ->
-                        newBundleWidget.getWidgetTypeId().equals(widgetTypeId))).collect(Collectors.toList());
+                        newBundleWidget.getWidgetTypeId().equals(widgetTypeId))).toList();
         for (WidgetTypeId widgetTypeId : toRemove) {
             widgetTypeDao.removeWidgetTypeFromWidgetsBundle(widgetsBundleId.getId(), widgetTypeId.getId());
         }
@@ -232,6 +261,17 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
+    public void deleteWidgetTypesByBundleId(TenantId tenantId, WidgetsBundleId bundleId) {
+        log.trace("Executing deleteWidgetTypesByBundleId, tenantId [{}], bundleId [{}]", tenantId, bundleId);
+        bundleWidgetTypesRemover.removeEntities(tenantId, bundleId);
+    }
+
+    @Override
+    public PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink) {
+        return widgetTypeDao.findAllWidgetTypesIds(pageLink);
+    }
+
+    @Override
     public void deleteByTenantId(TenantId tenantId) {
         deleteWidgetTypesByTenantId(tenantId);
     }
@@ -246,18 +286,36 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         return EntityType.WIDGET_TYPE;
     }
 
-    private PaginatedRemover<TenantId, WidgetTypeInfo> tenantWidgetTypeRemover =
-            new PaginatedRemover<>() {
+    private final PaginatedRemover<TenantId, WidgetTypeInfo> tenantWidgetTypeRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<WidgetTypeInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return widgetTypeDao.findTenantWidgetTypesByTenantId(id.getId(), false, DeprecatedFilter.ALL, null, pageLink);
-                }
+        @Override
+        protected PageData<WidgetTypeInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return widgetTypeDao.findTenantWidgetTypesByTenantId(
+                    WidgetTypeFilter.builder()
+                            .tenantId(id)
+                            .fullSearch(false)
+                            .deprecatedFilter(DeprecatedFilter.ALL)
+                            .widgetTypes(null).build(),
+                    pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, WidgetTypeInfo entity) {
-                    deleteWidgetType(tenantId, new WidgetTypeId(entity.getUuidId()));
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, WidgetTypeInfo entity) {
+            deleteWidgetType(tenantId, new WidgetTypeId(entity.getUuidId()));
+        }
+    };
+
+    private final PaginatedRemover<WidgetsBundleId, WidgetTypeInfo> bundleWidgetTypesRemover = new PaginatedRemover<>() {
+
+        @Override
+        protected PageData<WidgetTypeInfo> findEntities(TenantId tenantId, WidgetsBundleId widgetsBundleId, PageLink pageLink) {
+            return findWidgetTypesInfosByWidgetsBundleId(tenantId, widgetsBundleId, false, DeprecatedFilter.ALL, null, pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, WidgetTypeInfo widgetTypeInfo) {
+            deleteWidgetType(tenantId, widgetTypeInfo.getId());
+        }
+    };
 
 }

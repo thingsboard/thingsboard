@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,28 +27,28 @@ import {
   ViewChild
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import {
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
+  createValueFormatterFromSettings,
   DateFormatProcessor,
-  getDataKey,
   getLabel,
   getSingleTsValue,
   iconStyle,
   overlayStyle,
-  textStyle
+  resolveCssSize,
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
 import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } from './value-card-widget.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { Observable } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 
 const squareLayoutSize = 160;
-const squareLayoutPadding = 48;
 const horizontalLayoutHeight = 80;
 
 @Component({
@@ -96,12 +96,12 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   private panelResize$: ResizeObserver;
 
   private horizontal = false;
-  private decimals = 0;
-  private units = '';
+  private valueFormat: ValueFormatProcessor;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
@@ -116,15 +116,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.ctx.$scope.valueCardWidget = this;
     this.settings = {...valueCardDefaultSettings(this.horizontal), ...this.ctx.settings};
 
-    this.decimals = this.ctx.decimals;
-    this.units = this.ctx.units;
-    const dataKey = getDataKey(this.ctx.datasources);
-    if (isDefinedAndNotNull(dataKey?.decimals)) {
-      this.decimals = dataKey.decimals;
-    }
-    if (dataKey?.units) {
-      this.units = dataKey.units;
-    }
+    this.valueFormat = createValueFormatterFromSettings(this.ctx);
 
     this.layout = this.settings.layout;
 
@@ -148,6 +140,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
   }
 
   public ngAfterViewInit() {
@@ -186,7 +179,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && tsValue[0] !== 0) {
       ts = tsValue[0];
       value = tsValue[1];
-      this.valueText = formatValue(value, this.decimals, this.units, false);
+      this.valueText = this.valueFormat.format(value);
     } else {
       this.valueText = 'N/A';
     }
@@ -199,8 +192,13 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   private onResize() {
-    const panelWidth = this.valueCardPanel.nativeElement.getBoundingClientRect().width - squareLayoutPadding;
-    const panelHeight = this.valueCardPanel.nativeElement.getBoundingClientRect().height - (this.horizontal ? 0 : squareLayoutPadding);
+    const computedStyle = getComputedStyle(this.valueCardPanel.nativeElement);
+    const [pLeft, pRight, pTop, pBottom] = ['paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom']
+      .map(side => resolveCssSize(computedStyle[side])[0]);
+
+    const widgetBoundingClientRect = this.valueCardPanel.nativeElement.getBoundingClientRect();
+    const panelWidth = widgetBoundingClientRect.width - (pLeft + pRight);
+    const panelHeight = widgetBoundingClientRect.height - (pTop + pBottom);
     let scale: number;
     if (!this.horizontal) {
       const size = Math.min(panelWidth, panelHeight);

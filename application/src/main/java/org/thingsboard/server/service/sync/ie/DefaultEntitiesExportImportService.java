@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -32,7 +33,6 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
@@ -71,7 +71,6 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
             EntityType.ENTITY_VIEW, EntityType.WIDGET_TYPE, EntityType.WIDGETS_BUNDLE,
             EntityType.NOTIFICATION_TEMPLATE, EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE
     );
-
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
@@ -129,12 +128,10 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         }
     }
 
-
     @Override
     public Comparator<EntityType> getEntityTypeComparatorForImport() {
         return Comparator.comparing(SUPPORTED_ENTITY_TYPES::indexOf);
     }
-
 
     @SuppressWarnings("unchecked")
     private <I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> EntityExportService<I, E, D> getExportService(EntityType entityType) {

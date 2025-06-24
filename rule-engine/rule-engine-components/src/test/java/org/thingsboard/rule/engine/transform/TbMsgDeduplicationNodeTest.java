@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -54,7 +54,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,11 +62,13 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -78,8 +79,7 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private TbContext ctx;
 
-    private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("de-duplication-node-test");
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(factory);
+    private final ScheduledExecutorService executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("de-duplication-node-test");
     private final int deduplicationInterval = 1;
 
     private TenantId tenantId;
@@ -105,7 +105,12 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
             EntityId originator = (EntityId) (invocationOnMock.getArguments())[2];
             TbMsgMetaData metaData = (TbMsgMetaData) (invocationOnMock.getArguments())[3];
             String data = (String) (invocationOnMock.getArguments())[4];
-            return TbMsg.newMsg(type, originator, metaData.copy(), data);
+            return TbMsg.newMsg()
+                    .type(type)
+                    .originator(originator)
+                    .copyMetaData(metaData)
+                    .data(data)
+                    .build();
         }).when(ctx).newMsg(isNull(), eq(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
         node = spy(new TbMsgDeduplicationNode());
         config = new TbMsgDeduplicationNodeConfiguration().defaultConfiguration();
@@ -408,6 +413,80 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         Assertions.assertEquals(msgWithLatestTsInSecondPack.getType(), actualMsg.getType());
     }
 
+    @Test
+    public void given_maxRetriesIsZero_when_enqueueFails_then_noRetriesIsScheduled() throws TbNodeException, ExecutionException, InterruptedException {
+        int wantedNumberOfTellSelfInvocation = 1;
+        int msgCount = 1;
+        awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
+        invokeTellSelf(wantedNumberOfTellSelfInvocation);
+
+        // Given
+        when(ctx.getQueueName()).thenReturn(DataConstants.MAIN_QUEUE_NAME);
+        config.setInterval(deduplicationInterval);
+        config.setStrategy(DeduplicationStrategy.FIRST);
+        config.setMaxPendingMsgs(msgCount);
+        config.setMaxRetries(0);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        long currentTimeMillis = System.currentTimeMillis();
+
+        doAnswer(invocation -> {
+            Consumer<Throwable> failureCallback = invocation.getArgument(3);
+            failureCallback.accept(new RuntimeException("Simulated failure"));
+            return null;
+        }).when(ctx).enqueueForTellNext(any(), eq(TbNodeConnectionType.SUCCESS), any(), any());
+
+        TbMsg msg = createMsg(deviceId, currentTimeMillis + 1);
+        node.onMsg(ctx, msg);
+
+        awaitTellSelfLatch.await();
+
+        verify(ctx).enqueueForTellNext(any(), eq(TbNodeConnectionType.SUCCESS), any(), any());
+        verify(ctx, never()).schedule(any(), anyLong(), any());
+    }
+
+    @Test
+    public void given_maxRetriesIsSetToOne_when_enqueueFails_then_onlyOneRetryIsScheduled() throws TbNodeException, ExecutionException, InterruptedException {
+        int wantedNumberOfTellSelfInvocation = 1;
+        int msgCount = 1;
+        awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
+        invokeTellSelf(wantedNumberOfTellSelfInvocation);
+
+        when(ctx.getQueueName()).thenReturn(DataConstants.MAIN_QUEUE_NAME);
+        config.setInterval(deduplicationInterval);
+        config.setStrategy(DeduplicationStrategy.FIRST);
+        config.setMaxPendingMsgs(msgCount);
+        config.setMaxRetries(1);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        long currentTimeMillis = System.currentTimeMillis();
+
+        doAnswer(invocation -> {
+            Consumer<Throwable> failureCallback = invocation.getArgument(3);
+            failureCallback.accept(new RuntimeException("Simulated failure"));
+            return null;
+        }).when(ctx).enqueueForTellNext(any(), eq(TbNodeConnectionType.SUCCESS), any(), any());
+
+        TbMsg msg = createMsg(deviceId, currentTimeMillis + 1);
+        node.onMsg(ctx, msg);
+
+        awaitTellSelfLatch.await();
+
+        ArgumentCaptor<Runnable> retryRunnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(ctx).schedule(retryRunnableCaptor.capture(), eq(TbMsgDeduplicationNode.TB_MSG_DEDUPLICATION_RETRY_DELAY), eq(TimeUnit.SECONDS));
+
+        retryRunnableCaptor.getValue().run();
+
+        // Verify total enqueue attempts (initial + retry)
+        verify(ctx, times(2)).enqueueForTellNext(any(), eq(TbNodeConnectionType.SUCCESS), any(), any());
+        // No more retries scheduled after reaching maxRetries
+        verify(ctx).schedule(any(), eq(TbMsgDeduplicationNode.TB_MSG_DEDUPLICATION_RETRY_DELAY), eq(TimeUnit.SECONDS));
+    }
+
     // Rule nodes upgrade
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
         return Stream.of(
@@ -454,12 +533,13 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         dataNode.put("deviceId", deviceId.getId().toString());
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ts", String.valueOf(ts));
-        return TbMsg.newMsg(
-                DataConstants.MAIN_QUEUE_NAME,
-                TbMsgType.POST_TELEMETRY_REQUEST,
-                deviceId,
-                metaData,
-                JacksonUtil.toString(dataNode));
+        return TbMsg.newMsg()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(metaData)
+                .data(JacksonUtil.toString(dataNode))
+                .build();
     }
 
     private String getMergedData(List<TbMsg> msgs) {

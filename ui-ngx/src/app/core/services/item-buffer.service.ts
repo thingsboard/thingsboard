@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
-import { AliasesInfo, EntityAlias, EntityAliases, EntityAliasInfo } from '@shared/models/alias.models';
+import { BreakpointId, Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
+import { AliasesInfo, EntityAlias, EntityAliases, EntityAliasInfo, getEntityAliasId } from '@shared/models/alias.models';
 import {
   Datasource,
   DatasourceType,
@@ -34,7 +34,8 @@ import { map } from 'rxjs/operators';
 import { FcRuleNode, ruleNodeTypeDescriptors } from '@shared/models/rule-node.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainImport } from '@shared/models/rule-chain.models';
-import { Filter, FilterInfo, Filters, FiltersInfo } from '@shared/models/query/query.models';
+import { Filter, FilterInfo, Filters, FiltersInfo, getFilterId } from '@shared/models/query/query.models';
+import { findWidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
 
 const WIDGET_ITEM = 'widget_item';
 const WIDGET_REFERENCE = 'widget_reference';
@@ -47,6 +48,7 @@ export interface WidgetItem {
   filtersInfo: FiltersInfo;
   originalSize: WidgetSize;
   originalColumns: number;
+  widgetExportInfo?: any;
 }
 
 export interface WidgetReference {
@@ -56,6 +58,7 @@ export interface WidgetReference {
   widgetId: string;
   originalSize: WidgetSize;
   originalColumns: number;
+  breakpoint: string;
 }
 
 export interface RuleNodeConnection {
@@ -85,7 +88,8 @@ export class ItemBufferService {
               private ruleChainService: RuleChainService,
               private utils: UtilsService) {}
 
-  public prepareWidgetItem(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): WidgetItem {
+  public prepareWidgetItem(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
+                           widget: Widget, breakpoint: BreakpointId): WidgetItem {
     const aliasesInfo: AliasesInfo = {
       datasourceAliases: {},
       targetDeviceAlias: null
@@ -93,8 +97,8 @@ export class ItemBufferService {
     const filtersInfo: FiltersInfo = {
       datasourceFilters: {}
     };
-    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout);
-    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget);
+    const originalColumns = this.dashboardUtils.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
+    const originalSize = this.dashboardUtils.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
     const datasources: Datasource[] = widget.type === widgetType.alarm ? [widget.config.alarmSource] : widget.config.datasources;
     if (widget.config && dashboard.configuration
       && dashboard.configuration.entityAliases) {
@@ -137,22 +141,29 @@ export class ItemBufferService {
         }
       }
     }
+    let widgetExportInfo: any;
+    const exportDefinition = findWidgetModelDefinition(widget);
+    if (exportDefinition) {
+      widgetExportInfo = exportDefinition.prepareExportInfo(dashboard, widget);
+    }
     return {
       widget,
       aliasesInfo,
       filtersInfo,
       originalSize,
-      originalColumns
+      originalColumns,
+      widgetExportInfo
     };
   }
 
-  public copyWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): void {
-    const widgetItem = this.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
+  public copyWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: BreakpointId) {
+    const widgetItem = this.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget, breakpoint);
     this.storeSet(WIDGET_ITEM, widgetItem);
   }
 
-  public copyWidgetReference(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): void {
-    const widgetReference = this.prepareWidgetReference(dashboard, sourceState, sourceLayout, widget);
+  public copyWidgetReference(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
+                             widget: Widget, breakpoint: BreakpointId): void {
+    const widgetReference = this.prepareWidgetReference(dashboard, sourceState, sourceLayout, widget, breakpoint);
     this.storeSet(WIDGET_REFERENCE, widgetReference);
   }
 
@@ -160,11 +171,11 @@ export class ItemBufferService {
     return this.storeHas(WIDGET_ITEM);
   }
 
-  public canPasteWidgetReference(dashboard: Dashboard, state: string, layout: DashboardLayoutId): boolean {
+  public canPasteWidgetReference(dashboard: Dashboard, state: string, layout: DashboardLayoutId, breakpoint: string): boolean {
     const widgetReference: WidgetReference = this.storeGet(WIDGET_REFERENCE);
     if (widgetReference) {
       if (widgetReference.dashboardId === dashboard.id.id) {
-        if ((widgetReference.sourceState !== state || widgetReference.sourceLayout !== layout)
+        if ((widgetReference.sourceState !== state || widgetReference.sourceLayout !== layout || widgetReference.breakpoint !== breakpoint)
           && dashboard.configuration.widgets[widgetReference.widgetId]) {
           return true;
         }
@@ -174,7 +185,9 @@ export class ItemBufferService {
   }
 
   public pasteWidget(targetDashboard: Dashboard, targetState: string,
-                     targetLayout: DashboardLayoutId, position: WidgetPosition,
+                     targetLayout: DashboardLayoutId,
+                     breakpoint: string,
+                     position: WidgetPosition,
                      onAliasesUpdateFunction: () => void,
                      onFiltersUpdateFunction: () => void): Observable<Widget> {
     const widgetItem: WidgetItem = this.storeGet(WIDGET_ITEM);
@@ -184,6 +197,7 @@ export class ItemBufferService {
       const filtersInfo = widgetItem.filtersInfo;
       const originalColumns = widgetItem.originalColumns;
       const originalSize = widgetItem.originalSize;
+      const widgetExportInfo = widgetItem.widgetExportInfo;
       let targetRow = -1;
       let targetColumn = -1;
       if (position) {
@@ -194,7 +208,7 @@ export class ItemBufferService {
       return this.addWidgetToDashboard(targetDashboard, targetState,
                                 targetLayout, widget, aliasesInfo, filtersInfo,
                                 onAliasesUpdateFunction, onFiltersUpdateFunction,
-                                originalColumns, originalSize, targetRow, targetColumn).pipe(
+                                originalColumns, originalSize, targetRow, targetColumn, breakpoint, widgetExportInfo).pipe(
         map(() => widget)
       );
     } else {
@@ -202,8 +216,11 @@ export class ItemBufferService {
     }
   }
 
-  public pasteWidgetReference(targetDashboard: Dashboard, targetState: string,
-                              targetLayout: DashboardLayoutId, position: WidgetPosition): Observable<Widget> {
+  public pasteWidgetReference(targetDashboard: Dashboard,
+                              targetState: string,
+                              targetLayout: DashboardLayoutId,
+                              breakpoint: string,
+                              position: WidgetPosition): Observable<Widget> {
     const widgetReference: WidgetReference = this.storeGet(WIDGET_REFERENCE);
     if (widgetReference) {
       const widget = targetDashboard.configuration.widgets[widgetReference.widgetId];
@@ -219,7 +236,7 @@ export class ItemBufferService {
         return this.addWidgetToDashboard(targetDashboard, targetState,
           targetLayout, widget, null,
           null, null, null, originalColumns,
-          originalSize, targetRow, targetColumn).pipe(
+          originalSize, targetRow, targetColumn, breakpoint).pipe(
           map(() => widget)
         );
       } else {
@@ -239,7 +256,9 @@ export class ItemBufferService {
                               originalColumns: number,
                               originalSize: WidgetSize,
                               row: number,
-                              column: number): Observable<Dashboard> {
+                              column: number,
+                              breakpoint = 'default',
+                              widgetExportInfo?: any): Observable<Dashboard> {
     let theDashboard: Dashboard;
     if (dashboard) {
       theDashboard = dashboard;
@@ -249,28 +268,41 @@ export class ItemBufferService {
     theDashboard = this.dashboardUtils.validateAndUpdateDashboard(theDashboard);
     let callAliasUpdateFunction = false;
     let callFilterUpdateFunction = false;
+    let newEntityAliases: EntityAliases;
+    let newFilters: Filters;
+    const exportDefinition = findWidgetModelDefinition(widget);
+    if (exportDefinition && widgetExportInfo || aliasesInfo) {
+      newEntityAliases = deepClone(dashboard.configuration.entityAliases);
+    }
+    if (exportDefinition && widgetExportInfo || filtersInfo) {
+      newFilters = deepClone(dashboard.configuration.filters);
+    }
     if (aliasesInfo) {
-      const newEntityAliases = this.updateAliases(theDashboard, widget, aliasesInfo);
-      const aliasesUpdated = !isEqual(newEntityAliases, theDashboard.configuration.entityAliases);
-      if (aliasesUpdated) {
-        theDashboard.configuration.entityAliases = newEntityAliases;
-        if (onAliasesUpdateFunction) {
-          callAliasUpdateFunction = true;
-        }
-      }
+      this.updateAliases(widget, newEntityAliases, aliasesInfo);
     }
     if (filtersInfo) {
-      const newFilters = this.updateFilters(theDashboard, widget, filtersInfo);
-      const filtersUpdated = !isEqual(newFilters, theDashboard.configuration.filters);
-      if (filtersUpdated) {
-        theDashboard.configuration.filters = newFilters;
-        if (onFiltersUpdateFunction) {
-          callFilterUpdateFunction = true;
-        }
+      this.updateFilters(widget, newFilters, filtersInfo);
+    }
+    if (exportDefinition && widgetExportInfo) {
+      exportDefinition.updateFromExportInfo(widget, newEntityAliases, newFilters, widgetExportInfo);
+    }
+    const aliasesUpdated = newEntityAliases && !isEqual(newEntityAliases, theDashboard.configuration.entityAliases);
+    if (aliasesUpdated) {
+      theDashboard.configuration.entityAliases = newEntityAliases;
+      if (onAliasesUpdateFunction) {
+        callAliasUpdateFunction = true;
       }
     }
+    const filtersUpdated = newFilters && !isEqual(newFilters, theDashboard.configuration.filters);
+    if (filtersUpdated) {
+      theDashboard.configuration.filters = newFilters;
+      if (onFiltersUpdateFunction) {
+        callFilterUpdateFunction = true;
+      }
+    }
+
     this.dashboardUtils.addWidgetToLayout(theDashboard, targetState, targetLayout, widget,
-                                          originalColumns, originalSize, row, column);
+                                          originalColumns, originalSize, row, column, breakpoint);
     if (callAliasUpdateFunction) {
       onAliasesUpdateFunction();
     }
@@ -296,7 +328,11 @@ export class ItemBufferService {
         connectors: [],
         additionalInfo: origNode.additionalInfo,
         configuration: origNode.configuration,
-        debugMode: origNode.debugMode,
+        debugSettings: {
+          failuresEnabled: origNode.debugSettings?.failuresEnabled,
+          allEnabled: origNode.debugSettings?.allEnabled || origNode.debugSettings?.allEnabledUntil > new Date().getTime(),
+          allEnabledUntil: 0
+        },
         x: origNode.x,
         y: origNode.y,
         name: origNode.name,
@@ -387,35 +423,6 @@ export class ItemBufferService {
     return ruleChainImport;
   }
 
-  private getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId): number {
-    let originalColumns = 24;
-    let gridSettings = null;
-    const state = dashboard.configuration.states[sourceState];
-    const layoutCount = Object.keys(state.layouts).length;
-    if (state) {
-      const layout = state.layouts[sourceLayout];
-      if (layout) {
-        gridSettings = layout.gridSettings;
-
-      }
-    }
-    if (gridSettings &&
-      gridSettings.columns) {
-      originalColumns = gridSettings.columns;
-    }
-    originalColumns = originalColumns * layoutCount;
-    return originalColumns;
-  }
-
-  private getOriginalSize(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): WidgetSize {
-    const layout = dashboard.configuration.states[sourceState].layouts[sourceLayout];
-    const widgetLayout = layout.widgets[widget.id];
-    return {
-      sizeX: widgetLayout.sizeX,
-      sizeY: widgetLayout.sizeY
-    };
-  }
-
   private prepareAliasInfo(entityAlias: EntityAlias): EntityAliasInfo {
     return {
       alias: entityAlias.alias,
@@ -432,27 +439,27 @@ export class ItemBufferService {
   }
 
   private prepareWidgetReference(dashboard: Dashboard, sourceState: string,
-                                 sourceLayout: DashboardLayoutId, widget: Widget): WidgetReference {
-    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout);
-    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget);
+                                 sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: BreakpointId): WidgetReference {
+    const originalColumns = this.dashboardUtils.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
+    const originalSize = this.dashboardUtils.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
     return {
       dashboardId: dashboard.id.id,
       sourceState,
       sourceLayout,
       widgetId: widget.id,
       originalSize,
-      originalColumns
+      originalColumns,
+      breakpoint
     };
   }
 
-  private updateAliases(dashboard: Dashboard, widget: Widget, aliasesInfo: AliasesInfo): EntityAliases {
-    const entityAliases = deepClone(dashboard.configuration.entityAliases);
+  private updateAliases(widget: Widget, entityAliases: EntityAliases, aliasesInfo: AliasesInfo): void {
     let aliasInfo: EntityAliasInfo;
     let newAliasId: string;
     for (const datasourceIndexStr of Object.keys(aliasesInfo.datasourceAliases)) {
       const datasourceIndex = Number(datasourceIndexStr);
       aliasInfo = aliasesInfo.datasourceAliases[datasourceIndex];
-      newAliasId = this.getEntityAliasId(entityAliases, aliasInfo);
+      newAliasId = getEntityAliasId(entityAliases, aliasInfo);
       if (widget.type === widgetType.alarm) {
         widget.config.alarmSource.entityAliasId = newAliasId;
       } else {
@@ -461,7 +468,7 @@ export class ItemBufferService {
     }
     if (aliasesInfo.targetDeviceAlias) {
       aliasInfo = aliasesInfo.targetDeviceAlias;
-      newAliasId = this.getEntityAliasId(entityAliases, aliasInfo);
+      newAliasId = getEntityAliasId(entityAliases, aliasInfo);
       if (widget.config.targetDevice?.type !== TargetDeviceType.entity) {
         widget.config.targetDevice = {
           type: TargetDeviceType.entity
@@ -469,101 +476,21 @@ export class ItemBufferService {
       }
       widget.config.targetDevice.entityAliasId = newAliasId;
     }
-    return entityAliases;
   }
 
-  private updateFilters(dashboard: Dashboard, widget: Widget, filtersInfo: FiltersInfo): Filters {
-    const filters = deepClone(dashboard.configuration.filters);
+  private updateFilters(widget: Widget, filters: Filters, filtersInfo: FiltersInfo): void {
     let filterInfo: FilterInfo;
     let newFilterId: string;
     for (const datasourceIndexStr of Object.keys(filtersInfo.datasourceFilters)) {
       const datasourceIndex = Number(datasourceIndexStr);
       filterInfo = filtersInfo.datasourceFilters[datasourceIndex];
-      newFilterId = this.getFilterId(filters, filterInfo);
+      newFilterId = getFilterId(filters, filterInfo);
       if (widget.type === widgetType.alarm) {
         widget.config.alarmSource.filterId = newFilterId;
       } else {
         widget.config.datasources[datasourceIndex].filterId = newFilterId;
       }
     }
-    return filters;
-  }
-
-  private isEntityAliasEqual(alias1: EntityAliasInfo, alias2: EntityAliasInfo): boolean {
-    return isEqual(alias1.filter, alias2.filter);
-  }
-
-  private getEntityAliasId(entityAliases: EntityAliases, aliasInfo: EntityAliasInfo): string {
-    let newAliasId: string;
-    for (const aliasId of Object.keys(entityAliases)) {
-      if (this.isEntityAliasEqual(entityAliases[aliasId], aliasInfo)) {
-        newAliasId = aliasId;
-        break;
-      }
-    }
-    if (!newAliasId) {
-      const newAliasName = this.createEntityAliasName(entityAliases, aliasInfo.alias);
-      newAliasId = this.utils.guid();
-      entityAliases[newAliasId] = {id: newAliasId, alias: newAliasName, filter: aliasInfo.filter};
-    }
-    return newAliasId;
-  }
-
-  private createEntityAliasName(entityAliases: EntityAliases, alias: string): string {
-    let c = 0;
-    let newAlias = alias;
-    let unique = false;
-    while (!unique) {
-      unique = true;
-      for (const entAliasId of Object.keys(entityAliases)) {
-        const entAlias = entityAliases[entAliasId];
-        if (newAlias === entAlias.alias) {
-          c++;
-          newAlias = alias + c;
-          unique = false;
-        }
-      }
-    }
-    return newAlias;
-  }
-
-  private isFilterEqual(filter1: FilterInfo, filter2: FilterInfo): boolean {
-    return isEqual(filter1.keyFilters, filter2.keyFilters);
-  }
-
-  private getFilterId(filters: Filters, filterInfo: FilterInfo): string {
-    let newFilterId: string;
-    for (const filterId of Object.keys(filters)) {
-      if (this.isFilterEqual(filters[filterId], filterInfo)) {
-        newFilterId = filterId;
-        break;
-      }
-    }
-    if (!newFilterId) {
-      const newFilterName = this.createFilterName(filters, filterInfo.filter);
-      newFilterId = this.utils.guid();
-      filters[newFilterId] = {id: newFilterId, filter: newFilterName,
-        keyFilters: filterInfo.keyFilters, editable: filterInfo.editable};
-    }
-    return newFilterId;
-  }
-
-  private createFilterName(filters: Filters, filter: string): string {
-    let c = 0;
-    let newFilter = filter;
-    let unique = false;
-    while (!unique) {
-      unique = true;
-      for (const entFilterId of Object.keys(filters)) {
-        const entFilter = filters[entFilterId];
-        if (newFilter === entFilter.filter) {
-          c++;
-          newFilter = filter + c;
-          unique = false;
-        }
-      }
-    }
-    return newFilter;
   }
 
   private storeSet(key: string, elem: any) {

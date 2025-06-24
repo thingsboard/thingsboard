@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,6 +25,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventType;
@@ -31,9 +33,9 @@ import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
+import org.thingsboard.server.dao.config.DefaultDataSource;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import jakarta.annotation.PostConstruct;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -44,9 +46,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@DefaultDataSource
 @Repository
 @Transactional
 @SqlDao
+@RequiredArgsConstructor
 public class EventInsertRepository {
 
     private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
@@ -55,11 +59,8 @@ public class EventInsertRepository {
 
     private final Map<EventType, String> insertStmtMap = new ConcurrentHashMap<>();
 
-    @Autowired
-    protected JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private TransactionTemplate transactionTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    private final TransactionTemplate transactionTemplate;
 
     @Value("${sql.remove_null_chars:true}")
     private boolean removeNullChars;
@@ -81,6 +82,9 @@ public class EventInsertRepository {
         insertStmtMap.put(EventType.DEBUG_RULE_CHAIN, "INSERT INTO " + EventType.DEBUG_RULE_CHAIN.getTable() +
                 " (id, tenant_id, ts, entity_id, service_id, e_message, e_error) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING;");
+        insertStmtMap.put(EventType.DEBUG_CALCULATED_FIELD, "INSERT INTO " + EventType.DEBUG_CALCULATED_FIELD.getTable() +
+                " (id, tenant_id, ts, entity_id, service_id, cf_id, e_entity_id, e_entity_type, e_msg_id, e_msg_type, e_args, e_result, e_error) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING;");
     }
 
     public void save(List<Event> entities) {
@@ -107,6 +111,8 @@ public class EventInsertRepository {
                 return getRuleNodeEventSetter(events);
             case DEBUG_RULE_CHAIN:
                 return getRuleChainEventSetter(events);
+            case DEBUG_CALCULATED_FIELD:
+                return getCalculatedFieldEventSetter(events);
             default:
                 throw new RuntimeException(eventType + " support is not implemented!");
         }
@@ -206,6 +212,29 @@ public class EventInsertRepository {
         };
     }
 
+    private BatchPreparedStatementSetter getCalculatedFieldEventSetter(List<Event> events) {
+        return new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                CalculatedFieldDebugEvent event = (CalculatedFieldDebugEvent) events.get(i);
+                setCommonEventFields(ps, event);
+                safePutUUID(ps, 6, event.getCalculatedFieldId().getId());
+                safePutUUID(ps, 7, event.getEventEntity() != null ? event.getEventEntity().getId() : null);
+                safePutString(ps, 8, event.getEventEntity() != null ? event.getEventEntity().getEntityType().name() : null);
+                safePutUUID(ps, 9, event.getMsgId());
+                safePutString(ps, 10, event.getMsgType());
+                safePutString(ps, 11, event.getArguments());
+                safePutString(ps, 12, event.getResult());
+                safePutString(ps, 13, event.getError());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return events.size();
+            }
+        };
+    }
+
     void safePutString(PreparedStatement ps, int parameterIdx, String value) throws SQLException {
         if (value != null) {
             ps.setString(parameterIdx, replaceNullChars(value));
@@ -236,4 +265,5 @@ public class EventInsertRepository {
         }
         return strValue;
     }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +37,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
-import javax.annotation.PreDestroy;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -138,19 +140,31 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.other-inline:}")
     private String otherInline;
 
+    @Value("${queue.kafka.consumer-properties-per-topic-inline:}")
+    private String consumerPropertiesPerTopicInline;
+
     @Deprecated
     @Setter
     private List<TbProperty> other;
 
     @Setter
-    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
+    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = new HashMap<>();
 
     private volatile AdminClient adminClient;
+
+    @PostConstruct
+    public void initInlineTopicProperties() {
+        Map<String, List<TbProperty>> inlineProps = parseTopicPropertyList(consumerPropertiesPerTopicInline);
+        if (!inlineProps.isEmpty()) {
+            consumerPropertiesPerTopic.putAll(inlineProps);
+        }
+    }
 
     public Properties toConsumerProps(String topic) {
         Properties props = toProps();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
         props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, maxPartitionFetchBytes);
         props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, fetchMaxBytes);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
@@ -160,9 +174,20 @@ public class TbKafkaSettings {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
 
-        consumerPropertiesPerTopic
-                .getOrDefault(topic, Collections.emptyList())
-                .forEach(kv -> props.put(kv.getKey(), kv.getValue()));
+        if (topic != null) {
+            List<TbProperty> properties = consumerPropertiesPerTopic.get(topic);
+            if (properties == null) {
+                for (Map.Entry<String, List<TbProperty>> entry : consumerPropertiesPerTopic.entrySet()) {
+                    if (topic.startsWith(entry.getKey())) {
+                        properties = entry.getValue();
+                        break;
+                    }
+                }
+            }
+            if (properties != null) {
+                properties.forEach(kv -> props.put(kv.getKey(), kv.getValue()));
+            }
+        }
         return props;
     }
 
@@ -193,8 +218,6 @@ public class TbKafkaSettings {
         }
 
         props.put(CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
-        props.put(CommonClientConfigs.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
-
         props.putAll(PropertyUtils.getProps(otherInline));
 
         if (other != null) {
@@ -233,6 +256,27 @@ public class TbKafkaSettings {
         props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(AdminClientConfig.RETRIES_CONFIG, retries);
         return props;
+    }
+
+    private Map<String, List<TbProperty>> parseTopicPropertyList(String inlineProperties) {
+        Map<String, List<String>> grouped = PropertyUtils.getGroupedProps(inlineProperties);
+        Map<String, List<TbProperty>> result = new HashMap<>();
+
+        grouped.forEach((topic, entries) -> {
+            Map<String, String> merged = new LinkedHashMap<>();
+            for (String entry : entries) {
+                String[] kv = entry.split("=", 2);
+                if (kv.length == 2) {
+                    merged.put(kv[0].trim(), kv[1].trim());
+                }
+            }
+            List<TbProperty> props = merged.entrySet().stream()
+                    .map(e -> new TbProperty(e.getKey(), e.getValue()))
+                    .toList();
+            result.put(topic, props);
+        });
+
+        return result;
     }
 
     @PreDestroy

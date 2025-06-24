@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy.widgets.bundle;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -28,19 +29,21 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 
 @Service
 @TbCoreComponent
 @AllArgsConstructor
+@Slf4j
 public class DefaultWidgetsBundleService extends AbstractTbEntityService implements TbWidgetsBundleService {
 
     private final WidgetsBundleService widgetsBundleService;
     private final WidgetTypeService widgetTypeService;
 
     @Override
-    public WidgetsBundle save(WidgetsBundle widgetsBundle, User user) throws Exception {
+    public WidgetsBundle save(WidgetsBundle widgetsBundle, SecurityUser user) throws Exception {
         ActionType actionType = widgetsBundle.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = widgetsBundle.getTenantId();
         try {
@@ -79,4 +82,5 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
         widgetTypeService.updateWidgetsBundleWidgetFqns(user.getTenantId(), widgetsBundleId, widgetFqns);
         autoCommit(user, widgetsBundleId);
     }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         testBroadcastEntityStateChangeEventTimeManyTimeTenant(savedTenant, ComponentLifecycleEvent.CREATED, 1);
 
         savedTenant.setTitle("My new tenant");
-        saveTenant(savedTenant);
+        savedTenant = saveTenant(savedTenant);
         Tenant foundTenant = doGet("/api/tenant/" + savedTenant.getId().getId().toString(), Tenant.class);
         Assert.assertEquals(foundTenant.getTitle(), savedTenant.getTitle());
 
@@ -470,7 +470,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
         tenant.setTenantProfileId(tenantProfile.getId());
-        saveTenant(tenant);
+        tenant = saveTenant(tenant);
 
         login(username, password);
 
@@ -500,7 +500,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         tenantProfile2 = doPost("/api/tenantProfile", tenantProfile2, TenantProfile.class);
 
         tenant.setTenantProfileId(tenantProfile2.getId());
-        saveTenant(tenant);
+        tenant = saveTenant(tenant);
 
         login(username, password);
 
@@ -542,7 +542,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         loginSysAdmin();
 
         tenant.setTenantProfileId(null);
-        saveTenant(tenant);
+        tenant = saveTenant(tenant);
 
         login(username, password);
         for (Queue queue : foundTenantQueues) {
@@ -664,34 +664,38 @@ public class TenantControllerTest extends AbstractControllerTest {
         savedDifferentTenant.setTenantProfileId(tenantProfile.getId());
         savedDifferentTenant = saveTenant(savedDifferentTenant);
         TenantId tenantId = differentTenantId;
-        await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> {
-                    TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, tenantId);
-                    return !tpi.getTenantId().get().isSysTenantId();
-                });
-        TopicPartitionInfo tpi = new TopicPartitionInfo(MAIN_QUEUE_TOPIC, tenantId, 0, false);
-        String isolatedTopic = tpi.getFullTopicName();
-        TbMsg expectedMsg = publishTbMsg(tenantId, tpi);
+        List<TopicPartitionInfo> isolatedTpis = await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
+            List<TopicPartitionInfo> newTpis = new ArrayList<>();
+            newTpis.add(partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, tenantId));
+            newTpis.add(partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, tenantId));
+            return newTpis;
+        }, newTpis -> newTpis.stream().allMatch(newTpi -> newTpi.getTenantId().get().equals(tenantId)));
+        TbMsg expectedMsg = publishTbMsg(tenantId, isolatedTpis.get(0));
         awaitTbMsg(tbMsg -> tbMsg.getId().equals(expectedMsg.getId()), 10000); // to wait for consumer start
 
         loginSysAdmin();
         tenantProfile.setIsolatedTbRuleEngine(false);
         tenantProfile.getProfileData().setQueueConfiguration(Collections.emptyList());
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-        await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, tenantId)
-                        .getTenantId().get().isSysTenantId());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            TopicPartitionInfo newTpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, tenantId);
+            assertThat(newTpi.getTenantId()).hasValue(TenantId.SYS_TENANT_ID);
+            newTpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, tenantId);
+            assertThat(newTpi.getTenantId()).hasValue(TenantId.SYS_TENANT_ID);
+        });
 
         List<UUID> submittedMsgs = new ArrayList<>();
         long timeLeft = TimeUnit.SECONDS.toMillis(7); // based on topic-deletion-delay
         int msgs = 100;
         for (int i = 1; i <= msgs; i++) {
-            TbMsg tbMsg = publishTbMsg(tenantId, tpi);
+            TbMsg tbMsg = publishTbMsg(tenantId, isolatedTpis.get(0));
             submittedMsgs.add(tbMsg.getId());
             Thread.sleep(timeLeft / msgs);
         }
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(queueAdmin, times(1)).deleteTopic(eq(isolatedTopic));
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            TopicPartitionInfo tpi = isolatedTpis.get(0);
+            // we only expect deletion of Rule Engine topic. for CF - the topic is left as is because queue draining is not supported
+            verify(queueAdmin, times(1)).deleteTopic(eq(tpi.getFullTopicName()));
         });
 
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -719,13 +723,17 @@ public class TenantControllerTest extends AbstractControllerTest {
         savedDifferentTenant.setTenantProfileId(tenantProfile.getId());
         savedDifferentTenant = saveTenant(savedDifferentTenant);
         TenantId tenantId = differentTenantId;
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
-            assertThat(partitionService.getMyPartitions(new QueueKey(ServiceType.TB_RULE_ENGINE, tenantId))).isNotNull();
-        });
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, tenantId);
-        assertThat(tpi.getTenantId()).hasValue(tenantId);
-        TbMsg tbMsg = publishTbMsg(tenantId, tpi);
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        List<TopicPartitionInfo> isolatedTpis = await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
+            List<TopicPartitionInfo> newTpis = new ArrayList<>();
+            newTpis.add(partitionService.resolve(ServiceType.TB_RULE_ENGINE, MAIN_QUEUE_NAME, tenantId, tenantId));
+            newTpis.add(partitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, tenantId));
+            return newTpis;
+        }, newTpis -> newTpis.stream().allMatch(newTpi -> {
+            return newTpi.getTenantId().get().equals(tenantId) &&
+                    newTpi.isMyPartition();
+        }));
+        TbMsg tbMsg = publishTbMsg(tenantId, isolatedTpis.get(0));
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(actorContext).tell(argThat(msg -> {
                 return msg instanceof QueueToRuleEngineMsg && ((QueueToRuleEngineMsg) msg).getMsg().getId().equals(tbMsg.getId());
             }));
@@ -733,27 +741,35 @@ public class TenantControllerTest extends AbstractControllerTest {
 
         deleteDifferentTenant();
 
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(partitionService.getMyPartitions(new QueueKey(ServiceType.TB_RULE_ENGINE, tenantId))).isNull();
             assertThatThrownBy(() -> partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, tenantId))
                     .isInstanceOf(TenantNotFoundException.class);
 
-            verify(queueAdmin).deleteTopic(eq(tpi.getFullTopicName()));
+            isolatedTpis.forEach(tpi -> {
+                verify(queueAdmin).deleteTopic(eq(tpi.getFullTopicName()));
+            });
         });
     }
 
     private TbMsg publishTbMsg(TenantId tenantId, TopicPartitionInfo tpi) {
-        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, tenantId, TbMsgMetaData.EMPTY, "{\"test\":1}");
+        TbMsg tbMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(tenantId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data("{\"test\":1}")
+                .build();
         TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+                .setTbMsgProto(TbMsg.toProto(tbMsg))
+                .build();
         tbClusterService.pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, null);
         return tbMsg;
     }
 
     private void verifyUsedQueueAndMessage(String queue, TenantId tenantId, EntityId entityId, String msgType, Runnable action, Consumer<TopicPartitionInfo> tpiAssert) {
-        await().atMost(30, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, queue, tenantId, entityId);
                     tpiAssert.accept(tpi);

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 import {
   ImageResourceInfo,
-  ImageResourceInfoWithReferences,
+  ResourceInfoWithReferences,
   imageResourceType,
-  toImageDeleteResult
+  ResourceSubType,
+  toResourceDeleteResult
 } from '@shared/models/resource.models';
 import { forkJoin, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { ImageService } from '@core/http/image.service';
@@ -29,10 +30,13 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ElementRef, EventEmitter, HostBinding,
-  Input,
+  ElementRef,
+  EventEmitter,
+  HostBinding,
+  Input, NgZone,
   OnDestroy,
-  OnInit, Output,
+  OnInit,
+  Output,
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
@@ -44,7 +48,6 @@ import { AppState } from '@core/core.state';
 import { DialogService } from '@core/services/dialog.service';
 import { FormBuilder } from '@angular/forms';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
@@ -58,15 +61,15 @@ import { ItemSizeStrategy, ScrollGridComponent } from '@shared/components/grid/s
 import { MatDialog } from '@angular/material/dialog';
 import {
   UploadImageDialogComponent,
-  UploadImageDialogData
+  UploadImageDialogData, UploadImageDialogResult
 } from '@shared/components/image/upload-image-dialog.component';
 import { ImageDialogComponent, ImageDialogData } from '@shared/components/image/image-dialog.component';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import {
-  ImagesInUseDialogComponent,
-  ImagesInUseDialogData
-} from '@shared/components/image/images-in-use-dialog.component';
+  ResourcesInUseDialogComponent,
+  ResourcesInUseDialogData
+} from '@shared/components/resource/resources-in-use-dialog.component';
 import { ImagesDatasource } from '@shared/components/image/images-datasource';
 import { EmbedImageDialogComponent, EmbedImageDialogData } from '@shared/components/image/embed-image-dialog.component';
 
@@ -122,6 +125,9 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   dialogMode = false;
 
   @Input()
+  imageSubType = ResourceSubType.IMAGE;
+
+  @Input()
   mode: 'list' | 'grid' = 'list';
 
   @Input()
@@ -168,6 +174,10 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
 
   authUser = getCurrentAuthUser(this.store);
 
+  get isScada() {
+    return this.imageSubType === ResourceSubType.SCADA_SYMBOL;
+  }
+
   private updateDataSubscription: Subscription;
 
   private widgetResize$: ResizeObserver;
@@ -184,7 +194,8 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
               private importExportService: ImportExportService,
               private elementRef: ElementRef,
               private cd: ChangeDetectorRef,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private zone: NgZone) {
     super(store);
 
     this.gridImagesFetchFunction = (pageSize, page, filter) => {
@@ -192,7 +203,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
         property: 'createdTime',
         direction: Direction.DESC
       });
-      return this.imageService.getImages(pageLink, filter.includeSystemImages);
+      return this.imageService.getImages(pageLink, filter.includeSystemImages, this.imageSubType);
     };
   }
 
@@ -203,6 +214,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
     const routerQueryParams: PageQueryParam = this.route.snapshot.queryParams;
     if (this.pageMode) {
+      this.imageSubType = this.route.snapshot.data.imageSubType || ResourceSubType.IMAGE;
       if (routerQueryParams.hasOwnProperty('direction')
         || routerQueryParams.hasOwnProperty('property')) {
         sortOrder = {
@@ -345,11 +357,13 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   private initListMode() {
     this.destroyListMode$ = new Subject<void>();
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-      if (showHidePageSize !== this.hidePageSize) {
-        this.hidePageSize = showHidePageSize;
-        this.cd.markForCheck();
-      }
+      this.zone.run(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
     });
     this.widgetResize$.observe(this.elementRef.nativeElement);
     if (this.pageMode) {
@@ -427,7 +441,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       } else {
         this.pageLink.sortOrder = null;
       }
-      this.dataSource.loadEntities(this.pageLink, this.includeSystemImages);
+      this.dataSource.loadEntities(this.pageLink, this.imageSubType, this.includeSystemImages);
     } else {
       this.gridComponent.update();
     }
@@ -482,28 +496,38 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     if ($event) {
       $event.stopPropagation();
     }
-    const title = this.translate.instant('image.delete-image-title', {imageTitle: image.title});
-    const content = this.translate.instant('image.delete-image-text');
+    const title = this.translate.instant(this.isScada ? 'scada.delete-symbol-title' : 'image.delete-image-title',
+      {imageTitle: image.title});
+    const content = this.translate.instant(this.isScada ? 'scada.delete-symbol-text' : 'image.delete-image-text');
     this.dialogService.confirm(title, content,
       this.translate.instant('action.no'),
       this.translate.instant('action.yes')).subscribe((result) => {
       if (result) {
         this.imageService.deleteImage(imageResourceType(image), image.resourceKey, false, {ignoreErrors: true}).pipe(
-          map(() => toImageDeleteResult(image)),
-          catchError((err) => of(toImageDeleteResult(image, err)))
+          map(() => toResourceDeleteResult(image)),
+          catchError((err) => of(toResourceDeleteResult(image, err)))
         ).subscribe(
           (deleteResult) => {
             if (deleteResult.success) {
               this.imageDeleted(itemIndex);
-            } else if (deleteResult.imageIsReferencedError) {
-              this.dialog.open<ImagesInUseDialogComponent, ImagesInUseDialogData,
-                ImageResourceInfo[]>(ImagesInUseDialogComponent, {
+            } else if (deleteResult.resourceIsReferencedError) {
+              const images = [{...image, ...{references: deleteResult.references}}];
+              const data = {
+                multiple: false,
+                resources: images,
+                configuration: {
+                  title: 'image.image-is-in-use',
+                  message: this.translate.instant('image.image-is-in-use-text', {title: images[0].title}),
+                  deleteText: 'image.delete-image-in-use-text',
+                  selectedText: 'image.selected-images',
+                  columns: ['select', 'preview', 'title', 'references']
+                }
+              };
+              this.dialog.open<ResourcesInUseDialogComponent, ResourcesInUseDialogData,
+                ImageResourceInfo[]>(ResourcesInUseDialogComponent, {
                 disableClose: true,
                 panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-                data: {
-                  multiple: false,
-                  images: [{...image, ...{references: deleteResult.references}}]
-                }
+                data
               }).afterClosed().subscribe((images) => {
                 if (images) {
                   this.imageService.deleteImage(imageResourceType(image), image.resourceKey, true).subscribe(
@@ -530,37 +554,47 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     }
     const selectedImages = this.dataSource.selection.selected;
     if (selectedImages && selectedImages.length) {
-      const title = this.translate.instant('image.delete-images-title', {count: selectedImages.length});
-      const content = this.translate.instant('image.delete-images-text');
+      const title = this.translate.instant(this.isScada ? 'scada.delete-symbols-title' : 'image.delete-images-title',
+        {count: selectedImages.length});
+      const content = this.translate.instant(this.isScada ? 'scada.delete-symbols-text' : 'image.delete-images-text');
       this.dialogService.confirm(title, content,
         this.translate.instant('action.no'),
         this.translate.instant('action.yes')).subscribe((result) => {
         if (result) {
           const tasks = selectedImages.map((image) =>
             this.imageService.deleteImage(imageResourceType(image), image.resourceKey, false, {ignoreErrors: true}).pipe(
-              map(() => toImageDeleteResult(image)),
-              catchError((err) => of(toImageDeleteResult(image, err)))
+              map(() => toResourceDeleteResult(image)),
+              catchError((err) => of(toResourceDeleteResult(image, err)))
             )
           );
           forkJoin(tasks).subscribe(
             (deleteResults) => {
               const anySuccess = deleteResults.some(res => res.success);
-              const referenceErrors = deleteResults.filter(res => res.imageIsReferencedError);
+              const referenceErrors = deleteResults.filter(res => res.resourceIsReferencedError);
               const otherError = deleteResults.find(res => !res.success);
               if (anySuccess) {
                 this.updateData();
               }
               if (referenceErrors?.length) {
-                const imagesWithReferences: ImageResourceInfoWithReferences[] =
-                  referenceErrors.map(ref => ({...ref.image, ...{references: ref.references}}));
-                this.dialog.open<ImagesInUseDialogComponent, ImagesInUseDialogData,
-                  ImageResourceInfo[]>(ImagesInUseDialogComponent, {
+                const imagesWithReferences: ResourceInfoWithReferences[] =
+                  referenceErrors.map(ref => ({...ref.resource, ...{references: ref.references}}));
+                const data = {
+                  multiple: true,
+                  resources: imagesWithReferences,
+                  configuration: {
+                    title: 'image.images-are-in-use',
+                    message: this.translate.instant('image.images-are-in-use-text'),
+                    deleteText: 'image.delete-image-in-use-text',
+                    selectedText: 'image.selected-images',
+                    columns: ['select', 'preview', 'title', 'references'],
+                    datasource: new ImagesDatasource(null, imagesWithReferences, entity => true)
+                  }
+                };
+                this.dialog.open<ResourcesInUseDialogComponent, ResourcesInUseDialogData,
+                  ImageResourceInfo[]>(ResourcesInUseDialogComponent, {
                   disableClose: true,
                   panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-                  data: {
-                    multiple: true,
-                    images: imagesWithReferences
-                  }
+                  data
                 }).afterClosed().subscribe((forceDeleteImages) => {
                   if (forceDeleteImages && forceDeleteImages.length) {
                     const forceDeleteTasks = forceDeleteImages.map((image) =>
@@ -620,27 +654,39 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   }
 
   rowClick($event, image: ImageResourceInfo) {
-    if (this.selectionMode) {
-      this.selectImage($event, image);
+    if (this.isScada) {
+      this.editImage($event, image);
     } else {
-      if (this.deleteEnabled(image)) {
-        this.dataSource.selection.toggle(image);
+      if (this.selectionMode) {
+        this.selectImage($event, image);
+      } else {
+        if (this.deleteEnabled(image)) {
+          this.dataSource.selection.toggle(image);
+        }
       }
     }
   }
 
   uploadImage(): void {
     this.dialog.open<UploadImageDialogComponent, UploadImageDialogData,
-      ImageResourceInfo>(UploadImageDialogComponent, {
+      UploadImageDialogResult>(UploadImageDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {}
+      data: {
+        imageSubType: this.imageSubType
+      }
     }).afterClosed().subscribe((result) => {
-      if (result) {
+      if (result?.image) {
         if (this.selectionMode) {
-          this.imageSelected.next(result);
+          this.imageSelected.next(result.image);
         } else {
-          this.updateData();
+          if (this.isScada) {
+            const type = imageResourceType(result.image);
+            const key = encodeURIComponent(result.image.resourceKey);
+            this.router.navigateByUrl(`resources/scada-symbols/${type}/${key}`);
+          } else {
+            this.updateData();
+          }
         }
       }
     });
@@ -650,19 +696,25 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<ImageDialogComponent, ImageDialogData,
-      ImageResourceInfo>(ImageDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        image,
-        readonly: this.readonly(image)
-      }
-    }).afterClosed().subscribe((result) => {
-      if (result) {
-        this.imageUpdated(result, itemIndex);
-      }
-    });
+    if (this.isScada) {
+      const type = imageResourceType(image);
+      const key = encodeURIComponent(image.resourceKey);
+      this.router.navigateByUrl(`resources/scada-symbols/${type}/${key}`);
+    } else {
+      this.dialog.open<ImageDialogComponent, ImageDialogData,
+        ImageResourceInfo>(ImageDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          image,
+          readonly: this.readonly(image)
+        }
+      }).afterClosed().subscribe((result) => {
+        if (result) {
+          this.imageUpdated(result, itemIndex);
+        }
+      });
+    }
   }
 
   embedImage($event: Event, image: ImageResourceInfo, itemIndex = -1) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import { Subject } from 'rxjs';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
+import { EditorOptions } from 'tinymce';
 
 @Component({
   selector: 'tb-template-configuration',
@@ -81,18 +82,21 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
   readonly NotificationDeliveryMethod = NotificationDeliveryMethod;
   readonly NotificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
 
-  tinyMceOptions: Record<string, any> = {
+  tinyMceOptions: Partial<EditorOptions> = {
     base_url: '/assets/tinymce',
     suffix: '.min',
-    plugins: ['link table image imagetools code fullscreen'],
+    plugins: ['link', 'table', 'image', 'lists', 'code', 'fullscreen'],
     menubar: 'edit insert tools view format table',
-    toolbar: 'fontselect fontsizeselect | formatselect | bold italic  strikethrough  forecolor backcolor ' +
-      '| link | table | image | alignleft aligncenter alignright alignjustify  ' +
-      '| numlist bullist outdent indent  | removeformat | code | fullscreen',
+    toolbar: 'undo redo | fontfamily fontsize blocks | bold italic  strikethrough | forecolor backcolor ' +
+      '| link table image | alignleft aligncenter alignright alignjustify  ' +
+      '| numlist bullist | outdent indent  | removeformat | code | fullscreen',
     toolbar_mode: 'sliding',
     height: 400,
     autofocus: false,
-    branding: false
+    branding: false,
+    promotion: false,
+    relative_urls: false,
+    urlconverter_callback: (url) => url
   };
 
   private propagateChange = null;
@@ -222,8 +226,8 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     switch (deliveryMethod) {
       case NotificationDeliveryMethod.WEB:
         deliveryMethodForm = this.fb.group({
-          subject: ['', Validators.required],
-          body: ['', Validators.required],
+          subject: ['', [Validators.required, Validators.maxLength(150)]],
+          body: ['', [Validators.required, Validators.maxLength(250)]],
           additionalConfig: this.fb.group({
             icon: this.fb.group({
               enabled: [false],
@@ -248,7 +252,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
         break;
       case NotificationDeliveryMethod.EMAIL:
         deliveryMethodForm = this.fb.group({
-          subject: ['', Validators.required],
+          subject: ['', [Validators.required, Validators.maxLength(250)]],
           body: ['', Validators.required]
         });
         break;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package org.thingsboard.server.queue.discovery;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Service
 public class TopicService {
@@ -30,8 +32,29 @@ public class TopicService {
     @Value("${queue.prefix:}")
     private String prefix;
 
-    private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
-    private Map<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new HashMap<>();
+    @Value("${queue.core.notifications-topic:tb_core.notifications}")
+    private String tbCoreNotificationsTopic;
+
+    @Value("${queue.rule-engine.notifications-topic:tb_rule_engine.notifications}")
+    private String tbRuleEngineNotificationsTopic;
+
+    @Value("${queue.transport.notifications-topic:tb_transport.notifications}")
+    private String tbTransportNotificationsTopic;
+
+    @Value("${queue.edge.notifications-topic:tb_edge.notifications}")
+    private String tbEdgeNotificationsTopic;
+
+    @Value("${queue.edge.event-notifications-topic:tb_edge_event.notifications}")
+    private String tbEdgeEventNotificationsTopic;
+
+    @Value("${queue.calculated-fields.notifications-topic:calculated_field.notifications}")
+    private String tbCalculatedFieldNotificationsTopic;
+
+    private final ConcurrentMap<String, TopicPartitionInfo> tbCoreNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbEdgeNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbCalculatedFieldNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentReferenceHashMap<EdgeId, TopicPartitionInfo> tbEdgeEventsNotificationTopics = new ConcurrentReferenceHashMap<>();
 
     /**
      * Each Service should start a consumer for messages that target individual service instance based on serviceId.
@@ -41,36 +64,61 @@ public class TopicService {
      * @return
      */
     public TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId) {
-        switch (serviceType) {
-            case TB_CORE:
-                return tbCoreNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
-            case TB_RULE_ENGINE:
-                return tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
-            default:
-                return buildNotificationsTopicPartitionInfo(serviceType, serviceId);
-        }
+        return switch (serviceType) {
+            case TB_CORE -> tbCoreNotificationTopics.computeIfAbsent(serviceId,
+                    id -> buildNotificationsTopicPartitionInfo(tbCoreNotificationsTopic, serviceId));
+            case TB_RULE_ENGINE -> tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
+                    id -> buildNotificationsTopicPartitionInfo(tbRuleEngineNotificationsTopic, serviceId));
+            case TB_TRANSPORT -> buildNotificationsTopicPartitionInfo(tbTransportNotificationsTopic, serviceId);
+            default -> throw new IllegalStateException("Unexpected service type: " + serviceType);
+        };
     }
 
-    private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {
-        return buildTopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
+    private TopicPartitionInfo buildNotificationsTopicPartitionInfo(String topic, String serviceId) {
+        return buildTopicPartitionInfo(buildNotificationTopicName(topic, serviceId), null, null, false);
     }
 
     public TopicPartitionInfo buildTopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean myPartition) {
         return new TopicPartitionInfo(buildTopicName(topic), tenantId, partition, myPartition);
     }
 
+    public TopicPartitionInfo getEdgeNotificationsTopic(String serviceId) {
+        return tbEdgeNotificationTopics.computeIfAbsent(serviceId, id -> buildEdgeNotificationsTopicPartitionInfo(serviceId));
+    }
+
+    private TopicPartitionInfo buildEdgeNotificationsTopicPartitionInfo(String serviceId) {
+        return buildTopicPartitionInfo(buildNotificationTopicName(tbEdgeNotificationsTopic, serviceId), null, null, false);
+    }
+
+    public TopicPartitionInfo getCalculatedFieldNotificationsTopic(String serviceId) {
+        return tbCalculatedFieldNotificationTopics.computeIfAbsent(serviceId, id -> buildNotificationsTopicPartitionInfo(tbCalculatedFieldNotificationsTopic, serviceId));
+    }
+
+    public TopicPartitionInfo getEdgeEventNotificationsTopic(TenantId tenantId, EdgeId edgeId) {
+        return tbEdgeEventsNotificationTopics.computeIfAbsent(edgeId, id -> buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId));
+    }
+
+    public TopicPartitionInfo buildEdgeEventNotificationsTopicPartitionInfo(TenantId tenantId, EdgeId edgeId) {
+        return buildTopicPartitionInfo(tbEdgeEventNotificationsTopic + "." + tenantId + "." + edgeId, null, null, false);
+    }
+
     public String buildTopicName(String topic) {
+        if (topic == null) {
+            return null;
+        }
         return prefix.isBlank() ? topic : prefix + "." + topic;
+    }
+
+    private String buildNotificationTopicName(String topic, String serviceId) {
+        return topic + "." + serviceId;
     }
 
     public String buildConsumerGroupId(String servicePrefix, TenantId tenantId, String queueName, Integer partitionId) {
         return this.buildTopicName(
                 servicePrefix + queueName
-                + (tenantId.isSysTenantId() ? "" : ("-isolated-" + tenantId))
-                + "-consumer"
-                + suffix(partitionId));
+                        + (tenantId.isSysTenantId() ? "" : ("-isolated-" + tenantId))
+                        + "-consumer"
+                        + suffix(partitionId));
     }
 
     String suffix(Integer partitionId) {

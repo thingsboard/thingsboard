@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2024 The Thingsboard Authors
+-- Copyright © 2016-2025 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 -- limitations under the License.
 --
 
+CREATE SEQUENCE IF NOT EXISTS ts_kv_latest_version_seq cache 1;
+
 CREATE TABLE IF NOT EXISTS ts_kv_latest
 (
     entity_id uuid   NOT NULL,
@@ -24,12 +26,6 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest
     long_v    bigint,
     dbl_v     double precision,
     json_v    json,
+    version bigint default 0,
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
-);
-
-CREATE TABLE IF NOT EXISTS ts_kv_dictionary
-(
-    key    varchar(255) NOT NULL,
-    key_id serial UNIQUE,
-    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
 );

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,15 @@ package org.thingsboard.server.common.msg.queue;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.UUID;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TopicPartitionInfoTest {
+
+    private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
 
     @Test
     public void givenTopicPartitionInfo_whenEquals_thenTrue() {
@@ -52,13 +56,13 @@ public class TopicPartitionInfoTest {
 
         assertThat(TopicPartitionInfo.builder()
                         .topic("tb_core")
-                        .tenantId(TenantId.SYS_TENANT_ID)
+                        .tenantId(tenantId)
                         .partition(4)
                         .myPartition(true) //will ignored on equals
                         .build()
                 , is(TopicPartitionInfo.builder()
                         .topic("tb_core")
-                        .tenantId(TenantId.SYS_TENANT_ID)
+                        .tenantId(tenantId)
                         .partition(4)
                         .myPartition(true) //will ignored on equals
                         .build()));
@@ -109,7 +113,7 @@ public class TopicPartitionInfoTest {
 
         assertThat(TopicPartitionInfo.builder()
                         .topic("tb_core")
-                        .tenantId(TenantId.SYS_TENANT_ID)
+                        .tenantId(tenantId)
                         .partition(4)
                         .myPartition(true) //will ignored on equals
                         .build()
@@ -117,7 +121,7 @@ public class TopicPartitionInfoTest {
 
         assertThat(TopicPartitionInfo.builder()
                         .topic("tb_core")
-                        .tenantId(TenantId.SYS_TENANT_ID)
+                        .tenantId(tenantId)
                         .partition(4)
                         .myPartition(false) //will ignored on equals
                         .build()

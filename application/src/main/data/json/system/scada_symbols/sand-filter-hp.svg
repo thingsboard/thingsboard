@@ -1,0 +1,652 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="600" height="1e3" fill="none" version="1.1" viewBox="0 0 600 1e3"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Sand filter",
+  "description": "Sand filter with configurable filtration mode option and various states.",
+  "searchTags": [
+    "filter",
+    "sand",
+    "high performance"
+  ],
+  "widgetSizeX": 3,
+  "widgetSizeY": 5,
+  "stateRenderFunction": "var running = ctx.values.running;\nif (running) {\n    ctx.api.enable(ctx.tags.filterMode);\n} else {\n    ctx.api.disable(ctx.tags.filterMode);\n}",
+  "tags": [
+    {
+      "tag": "background",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.running) {\n    color = ctx.properties.runningColor;\n}\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "critical",
+      "stateRenderFunction": "element.attr({fill: ctx.properties.criticalColor});\nif (ctx.values.critical) {\n    element.show();\n} else {\n    element.hide();\n}\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n\n",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'criticalClick');"
+        }
+      }
+    },
+    {
+      "tag": "filterMode",
+      "stateRenderFunction": "var defaultBorderColor = ctx.properties.defaultBorderColor;\nvar activeBorderColor = ctx.properties.activeBorderColor;\nvar defaultLabelColor = ctx.properties.defaultLabelColor;\nvar activeLabelColor = ctx.properties.activeLabelColor;\nvar activeBoxBackground = ctx.properties.activeBoxBackground;\nvar defaultBoxBackground = ctx.properties.defaultBoxBackground;\n\nvar running = ctx.values.running;\nvar filtrationMode = ctx.values.filtrationMode;\n\nvar runningColor = ctx.properties.stoppedColor;\n\nif (running) {\n    runningColor = ctx.properties.runningColor;\n}\nelement.children().forEach((value) => {\n    value.children()[0].fill(runningColor);\n});\n\nvar filtrationMap = {};\nvar bottomShift = 104;\nvar rightShift = 226;\nvar middleShift = 121;\n\nvar filterModeSet = element.remember('filterModeSet');\n\nvar i = 0;\nif (ctx.properties.filtrationMode) {\n    i++;\n    filtrationMap[i] = 'filter';\n}\nif (ctx.properties.wasteMode) {\n    i++;\n    filtrationMap[i] = 'waste';\n}\nif (ctx.properties.backwashMode) {\n    i++;\n    filtrationMap[i] = 'backwash';\n}\nif (ctx.properties.recirculateMode) {\n    i++;\n    filtrationMap[i] = 'recirculate';\n}\nif (ctx.properties.rinseMode) {\n    i++;\n    filtrationMap[i] = 'rinse';\n}\nif (ctx.properties.closedMode) {\n    i++;\n    filtrationMap[i] = 'closed';\n}\n\nif (!filterModeSet) {\n    element.remember('filterModeSet', true);\n    var clone = element.children()[0];\n    setFilterModeColors(clone);\n    element.clear();\n    \n    var filterMode = Object.values(filtrationMap);\n    var lastToMiddle = filterMode.length % 2;\n    \n    filterMode.forEach((mode, index, arr) => {\n        var template = clone.clone();\n        var x = (index % 2) * rightShift;\n        var y = Math.floor((index % filterMode.length) / 2) * bottomShift;\n        if (index === filterMode.length-1 && lastToMiddle) {\n            x = middleShift;\n        }\n        template.attr({'class': mode}).css('cursor', 'pointer').translate(x, y);\n        ctx.api.text(template.findOne('text'), capitalizeFirstLetter(mode));\n        template.click((event) => click(event, getFilterModeKey(mode)));\n        element.add(template);\n    })\n}\n\nif (isFinite(filtrationMode)) {\n    if (element.findOne('.active')) {\n        setFilterModeColors(element.findOne('.active'));\n    }\n    setFilterModeColorsByMap(filtrationMode, running);\n}\n\nfunction click(event, index) {\n    var filtrationMode = ctx.values.filtrationMode;\n    if (ctx.values.running && isFinite(filtrationMode)) {\n        ctx.api.disable(element.children());\n        var newValue = +index;\n        if (newValue === filtrationMode) {\n            newValue = 0;\n        } else {\n            setFilterModeColorsByMap(filtrationMode);\n        }\n        ctx.api.setValue('filtrationMode', newValue);\n        ctx.api.callAction(event, 'filtrationModeUpdateState', newValue, {\n            next: () => {\n                setFilterModeColorsByMap(newValue ? newValue: filtrationMode, newValue);\n                ctx.api.enable(element.children());\n            },\n            error: () => {\n                setFilterModeColorsByMap(newValue);\n                ctx.api.setValue('filtrationMode', filtrationMode);\n                ctx.api.enable(element.children());\n            }\n        });\n    }\n}\n\nfunction getFilterModeKey(value) {\n  return Object.keys(filtrationMap).find(key => filtrationMap[key] === value);\n}\n\nfunction setFilterModeColorsByMap(mode, active = false) {\n    var filterBox = element.findOne('g.'+filtrationMap[mode])\n    if (filterBox) {\n        return setFilterModeColors(filterBox, active);\n    }\n}\n\nfunction setFilterModeColors(filterBox, active = false) {\n    if (filterBox) {\n        if (active) {\n            filterBox.addClass('active');\n        } else {\n            filterBox.removeClass('active');\n        }\n        var borderColor = active ? activeBorderColor : defaultBorderColor;\n        var labelColor = active ? activeLabelColor : defaultLabelColor;\n        var boxColor = active ? activeBoxBackground : defaultBoxBackground;\n        if (running) {\n            filterBox.children()[0].fill(boxColor);\n        }\n        filterBox.children()[1].stroke(borderColor);\n        ctx.api.font(filterBox.findOne('text'), null, labelColor);\n    }\n}\n\nfunction capitalizeFirstLetter(string) {\n    return string.charAt(0).toUpperCase() + string.slice(1);\n}",
+      "actions": null
+    },
+    {
+      "tag": "warning",
+      "stateRenderFunction": "element.attr({fill: ctx.properties.warningColor});\nvar warning = ctx.values.warning && !(ctx.values.warning && ctx.values.critical)\nif (warning) {\n    element.show();\n} else {\n    element.hide();\n}\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = warning && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'warningClick');"
+        }
+      }
+    }
+  ],
+  "behavior": [
+    {
+      "id": "running",
+      "name": "{i18n:scada.symbol.running}",
+      "hint": "{i18n:scada.symbol.running-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.running}",
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "running"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "filtrationMode",
+      "name": "{i18n:scada.symbol.filtration-mode}",
+      "hint": "{i18n:scada.symbol.filtration-mode-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "INTEGER",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": 0,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SERVER_SCOPE",
+          "key": "filtrationMode"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "filtrationModeUpdateState",
+      "name": "{i18n:scada.symbol.filtration-mode-update}",
+      "hint": "{i18n:scada.symbol.filtration-mode-update-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "INTEGER",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "filtrationMode"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "VALUE",
+          "constantValue": false,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warning",
+      "name": "{i18n:scada.symbol.warning}",
+      "hint": "{i18n:scada.symbol.warning-state}",
+      "group": "{i18n:scada.symbol.warning-state}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.warning}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warningClick",
+      "name": "{i18n:scada.symbol.warning-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.warning-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    },
+    {
+      "id": "critical",
+      "name": "{i18n:scada.symbol.critical}",
+      "hint": "{i18n:scada.symbol.critical-state-hint}",
+      "group": "{i18n:scada.symbol.critical-state}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.critical}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "criticalClick",
+      "name": "{i18n:scada.symbol.critical-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.critical-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    },
+    {
+      "id": "criticalAnimation",
+      "name": "{i18n:scada.symbol.warning-critical-state-animation}",
+      "hint": "{i18n:scada.symbol.warning-critical-state-animation-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.animation}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "filtrationMode",
+      "name": "{i18n:scada.symbol.filter-mode}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "wasteMode",
+      "name": "{i18n:scada.symbol.waste-mode}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "backwashMode",
+      "name": "{i18n:scada.symbol.backwash-mode}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "recirculateMode",
+      "name": "{i18n:scada.symbol.recirculate-mode}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "rinseMode",
+      "name": "{i18n:scada.symbol.rinse-mode}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "closedMode",
+      "name": "{i18n:scada.symbol.closed-mode}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "runningColor",
+      "name": "{i18n:scada.symbol.colors}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": "{i18n:scada.symbol.running}",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "stoppedColor",
+      "name": "{i18n:scada.symbol.colors}",
+      "type": "color",
+      "default": "#666666",
+      "required": null,
+      "subLabel": "{i18n:scada.symbol.stopped}",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "warningColor",
+      "name": "{i18n:scada.symbol.alarm-colors}",
+      "type": "color",
+      "default": "#FAA405",
+      "required": null,
+      "subLabel": "{i18n:scada.symbol.warning}",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "criticalColor",
+      "name": "{i18n:scada.symbol.alarm-colors}",
+      "type": "color",
+      "default": "#D12730",
+      "required": null,
+      "subLabel": "{i18n:scada.symbol.critical}",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "activeBoxBackground",
+      "name": "{i18n:scada.symbol.mode-box-background}",
+      "type": "color",
+      "default": "#999999",
+      "required": null,
+      "subLabel": "Active",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "column-xs",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "defaultBoxBackground",
+      "name": "{i18n:scada.symbol.mode-box-background}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": "Default",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "column-xs",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "activeBorderColor",
+      "name": "{i18n:scada.symbol.border-color}",
+      "type": "color",
+      "default": "#999999",
+      "required": null,
+      "subLabel": "Active",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "column-xs",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "defaultBorderColor",
+      "name": "{i18n:scada.symbol.border-color}",
+      "type": "color",
+      "default": "#0000001F",
+      "required": null,
+      "subLabel": "Default",
+      "divider": false,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "activeLabelColor",
+      "name": "{i18n:scada.symbol.label-color}",
+      "type": "color",
+      "default": "#000000C2",
+      "required": null,
+      "subLabel": "Active",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "column-xs",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "defaultLabelColor",
+      "name": "{i18n:scada.symbol.label-color}",
+      "type": "color",
+      "default": "#00000061",
+      "required": null,
+      "subLabel": "Default",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<g fill="#fff" tb:tag="background">
+  <path d="m137.58 946h324.84l53.581 24h-432l53.581-24z"/>
+  <path d="m88.679 969 49.116-22h324.41l49.116 22h-422.64z" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
+  <path d="m0 388c0-99.411 80.588-180 180-180h240c99.411 0 180 80.589 180 180v412c0 81.738-66.262 148-148 148h-304c-81.738 0-148-66.262-148-148z"/>
+  <path d="m1 388c0-98.859 80.14-179 179-179h240c98.858 0 179 80.141 179 179v412c0 81.186-65.814 147-147 147h-304c-81.186 0-147-65.814-147-147z" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
+  <rect x="80" y="968" width="440" height="32" rx="6.9621"/>
+  <rect x="81" y="969" width="438" height="30" rx="5.9621" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
+  <path d="m216 209c0 0.552 0.448 1 1 1h166c0.552 0 1-0.448 1-1v-75c0-0.552-0.448-1-1-1h-166c-0.552 0-1 0.448-1 1z"/>
+  <path d="m217 209h166v-75h-166z" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
+  <path d="m216 66c0 0.5523 0.448 1 1 1l166 2e-4c0.552 0 1-0.4477 1-1v-64c0-1.1046-0.895-2-2-2h-164c-1.105 0-2 0.89543-2 2v64z"/>
+  <path d="m217 66 166 2e-4v-64c0-0.55228-0.448-1-1-1h-164c-0.552 0-1 0.44772-1 1v64z" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
+  <path d="m427.98 136.02h-46.554v72.008h42.554c2.209 0 4 1.791 4 4v60.008s0 30.002 16.001 46.004c18.004 18.004 44.006 18.004 44.006 18.004h112.01v-72.009h-108.01c-2.209 0-4-1.791-4-4v-56.007s0-30.004-12.002-46.006c-16.502-22.002-48.005-22.002-48.005-22.002z"/>
+  <path d="m428.98 272.03v-60.008c0-2.761-2.239-5-5-5h-41.554v-70.008h45.633c0.057 1e-3 0.142 2e-3 0.255 5e-3 0.227 5e-3 0.565 0.015 1.003 0.036 0.877 0.043 2.152 0.127 3.736 0.297 3.17 0.339 7.569 1.018 12.475 2.376 9.827 2.719 21.591 8.133 29.657 18.888 5.849 7.798 8.82 19.097 10.314 28.56 0.744 4.712 1.116 8.93 1.302 11.969 0.093 1.519 0.14 2.742 0.163 3.584 0.011 0.421 0.017 0.746 0.02 0.965 1e-3 0.11 2e-3 0.193 3e-3 0.248v56.087c0 2.762 2.238 5 5 5h107.01v70.009h-111.08c-0.046-1e-3 -0.116-2e-3 -0.21-4e-3 -0.187-4e-3 -0.467-0.013-0.831-0.03-0.73-0.034-1.797-0.103-3.136-0.242-2.68-0.277-6.443-0.832-10.761-1.943-8.647-2.223-19.463-6.659-28.296-15.492-7.797-7.797-11.745-19.07-13.731-28.501-0.989-4.701-1.484-8.908-1.732-11.939-0.123-1.515-0.185-2.735-0.216-3.573-0.015-0.419-0.023-0.743-0.027-0.96-2e-3 -0.109-3e-3 -0.191-3e-3 -0.246v-0.078z" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
+  <rect y="64" width="600" height="72"/>
+  <rect x="1" y="65" width="598" height="70" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
+ </g><path d="m201.79 0s-201.79 0-201.79 167.5v820.9c0 6.628 5.3726 11.601 12 11.601h576c6.6269 0 12-4.9729 12-11.601v-820.9c0-167.5-198.21-167.5-198.21-167.5h-101.79zm201.21 203c-3.866 0-7 3.134-7 7v751.01c0 3.866 3.134 7 7 7h43.999c3.866 0 7-3.134 7-7v-751.01c0-3.866-3.134-7-7-7z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><g fill="#d12730" style="display: none;" tb:tag="critical">
+  <rect width="84" height="84" rx="4" fill="#fff" style=""/>
+  <rect width="84" height="84" rx="4" style=""/>
+  <rect x="2" y="2" width="80" height="80" rx="2" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>
+  <path d="m44.559 27.562-0.4688 20.059h-4.0234l-0.4883-20.059zm-5.1172 26.211c0-0.7161 0.2344-1.3151 0.7031-1.7968 0.4818-0.4948 1.1459-0.7422 1.9922-0.7422 0.8334 0 1.4909 0.2474 1.9727 0.7422 0.4817 0.4817 0.7226 1.0807 0.7226 1.7968 0 0.6901-0.2409 1.2826-0.7226 1.7774-0.4818 0.4818-1.1393 0.7226-1.9727 0.7226-0.8463 0-1.5104-0.2408-1.9922-0.7226-0.4687-0.4948-0.7031-1.0873-0.7031-1.7774z" fill="#000" fill-opacity=".87" style=""/>
+ </g><g fill="#faa405" style="display: none;" tb:tag="warning">
+  <path d="m38.422 7.1554c1.4741-2.9482 5.6813-2.9482 7.1554 0l35.528 71.056c1.3298 2.6596-0.6042 5.7889-3.5777 5.7889h-71.056c-2.9735 0-4.9075-3.1292-3.5777-5.7889z" fill="#fff" style=""/>
+  <path d="m38.422 7.1554c1.4741-2.9482 5.6813-2.9482 7.1554 0l35.528 71.056c1.3298 2.6596-0.6042 5.7889-3.5777 5.7889h-71.056c-2.9735 0-4.9075-3.1292-3.5777-5.7889z" style=""/>
+  <path d="m40.211 8.0498c0.7371-1.4741 2.8407-1.4741 3.5778-1e-5l35.528 71.056c0.6649 1.3298-0.3021 2.8944-1.7888 2.8944h-71.056c-1.4868 0-2.4538-1.5646-1.7889-2.8944z" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>
+  <path d="m44.559 37.562-0.4688 20.059h-4.0234l-0.4883-20.059zm-5.1172 26.211c0-0.7161 0.2344-1.3151 0.7031-1.7968 0.4818-0.4948 1.1459-0.7422 1.9922-0.7422 0.8334 0 1.4909 0.2474 1.9727 0.7422 0.4817 0.4817 0.7226 1.0807 0.7226 1.7968 0 0.6901-0.2409 1.2826-0.7226 1.7774-0.4818 0.4818-1.1393 0.7226-1.9727 0.7226-0.8463 0-1.5104-0.2408-1.9922-0.7226-0.4687-0.4948-0.7031-1.0873-0.7031-1.7774z" fill="#000" fill-opacity=".87" style=""/>
+ </g><g tb:tag="filterMode">
+  <g tb:tag="filter">
+   <rect x="75" y="410" width="208.86" height="96.012" rx="9.8143" fill="#999"/>
+   <path d="m76 419.81c0-4.868 3.9463-8.814 8.8143-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.383c0 4.868-3.946 8.815-8.814 8.815h-189.24c-4.868 0-8.8143-3.947-8.8143-8.815z" stroke="#999" stroke-width="2"/>
+   <text x="180.79984" y="460.00018" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Filter</tspan></text>
+  </g>
+  <g tb:tag="backwash">
+   <path d="m75 539.7c0-5.42 4.394-9.814 9.8143-9.814h189.24c5.42 0 9.814 4.394 9.814 9.814v76.383c0 5.421-4.394 9.815-9.814 9.815h-189.24c-5.4203 0-9.8143-4.394-9.8143-9.815z" fill="#fff"/>
+   <path d="m76 539.7c0-4.868 3.9463-8.814 8.8143-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.383c0 4.868-3.946 8.815-8.814 8.815h-189.24c-4.868 0-8.8143-3.947-8.8143-8.815z" stroke="#999" stroke-width="2"/>
+   <text x="183.43652" y="579.61719" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Backwash</tspan></text>
+  </g>
+  <g tb:tag="rinse">
+   <path d="m75 659.58c0-5.42 4.394-9.814 9.8143-9.814h189.24c5.42 0 9.814 4.394 9.814 9.814v76.384c0 5.42-4.394 9.814-9.814 9.814h-189.24c-5.4203 0-9.8143-4.394-9.8143-9.814z" fill="#fff"/>
+   <path d="m76 659.58c0-4.868 3.9463-8.814 8.8143-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.384c0 4.868-3.946 8.814-8.814 8.814h-189.24c-4.868 0-8.8143-3.946-8.8143-8.814z" stroke="#999" stroke-width="2"/>
+   <text x="181.64941" y="699.61719" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Rinse</tspan></text>
+  </g>
+  <g tb:tag="waste">
+   <path d="m315.69 419.81c0-5.42 4.394-9.814 9.814-9.814h189.24c5.42 0 9.815 4.394 9.815 9.814v76.383c0 5.421-4.395 9.815-9.815 9.815h-189.24c-5.42 0-9.814-4.394-9.814-9.814z" fill="#fff"/>
+   <path d="m316.69 419.81c0-4.868 3.946-8.814 8.814-8.814h189.24c4.868 0 8.815 3.946 8.815 8.814v76.383c0 4.869-3.947 8.815-8.815 8.815h-189.24c-4.868 0-8.814-3.946-8.814-8.814z" stroke="#999" stroke-width="2"/>
+   <text x="421.99316" y="459.75586" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Waste</tspan></text>
+  </g>
+  <g tb:tag="recirculate">
+   <path d="m315.69 539.7c0-5.42 4.394-9.814 9.815-9.814h189.24c5.42 0 9.814 4.394 9.814 9.814v76.383c0 5.421-4.394 9.815-9.814 9.815h-189.24c-5.421 0-9.815-4.394-9.815-9.815z" fill="#fff"/>
+   <path d="m316.69 539.7c0-4.868 3.947-8.814 8.815-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.383c0 4.868-3.946 8.815-8.814 8.815h-189.24c-4.868 0-8.815-3.947-8.815-8.815z" stroke="#999" stroke-width="2"/>
+   <text x="425.14062" y="579.61719" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Recirculate</tspan></text>
+  </g>
+  <g tb:tag="closed">
+   <path d="m315.69 659.58c0-5.42 4.394-9.814 9.815-9.814h189.24c5.42 0 9.814 4.394 9.814 9.814v76.383c0 5.42-4.394 9.814-9.814 9.814h-189.24c-5.421 0-9.815-4.394-9.815-9.814z" fill="#fff"/>
+   <path d="m316.69 659.58c0-4.868 3.947-8.814 8.815-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.383c0 4.868-3.946 8.814-8.814 8.814h-189.24c-4.868 0-8.815-3.946-8.815-8.814z" stroke="#999" stroke-width="2"/>
+   <text x="422.45215" y="699.61719" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Closed</tspan></text>
+  </g>
+ </g>
+</svg>

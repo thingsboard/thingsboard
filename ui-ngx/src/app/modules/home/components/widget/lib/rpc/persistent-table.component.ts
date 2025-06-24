@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectorRef,
   Component,
   ElementRef,
   Injector,
-  Input,
+  Input, NgZone, OnDestroy,
   OnInit,
   StaticProvider,
   ViewChild,
@@ -35,6 +36,8 @@ import { BehaviorSubject, merge, Observable, of, ReplaySubject, Subject, throwEr
 import { catchError, map, tap } from 'rxjs/operators';
 import {
   constructTableCssString,
+  isValidPageStepCount,
+  isValidPageStepIncrement,
   noDataMessage,
   TableCellButtonActionDescriptor,
   TableWidgetSettings
@@ -42,7 +45,7 @@ import {
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { hashCode, isDefined, isNumber, parseHttpErrorMessage } from '@core/utils';
+import { hashCode, isDefined, isDefinedAndNotNull, parseHttpErrorMessage } from '@core/utils';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import {
@@ -73,7 +76,6 @@ import {
   PersistentFilterPanelData
 } from '@home/components/widget/lib/rpc/persistent-filter-panel.component';
 import { PersistentAddDialogComponent } from '@home/components/widget/lib/rpc/persistent-add-dialog.component';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -101,7 +103,7 @@ interface PersistentTableWidgetActionDescriptor extends TableCellButtonActionDes
   styleUrls: ['./persistent-table.component.scss' , '../table-widget.scss']
 })
 
-export class PersistentTableComponent extends PageComponent implements OnInit {
+export class PersistentTableComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @Input()
   ctx: WidgetContext;
@@ -114,7 +116,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
   private subscription: IWidgetSubscription;
   private enableFilterAction = true;
   private allowSendRequest = true;
-  private defaultPageSize = 10;
+  private defaultPageSize;
   private defaultSortOrder = '-createdTime';
   private rpcStatusFilter: RpcStatus;
   private displayDetails = true;
@@ -130,7 +132,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
   public enableStickyHeader = true;
   public enableStickyAction = true;
   public pageLink: PageLink;
-  public pageSizeOptions;
+  public pageSizeOptions = [];
   public actionCellButtonAction: PersistentTableWidgetActionDescriptor[] = [];
   public displayedColumns: string[];
   public hidePageSize = false;
@@ -145,7 +147,8 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
               private dialogService: DialogService,
               private deviceService: DeviceService,
               private dialog: MatDialog,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private zone: NgZone) {
     super(store);
   }
 
@@ -159,11 +162,13 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     this.ctx.updateWidgetParams();
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-        if (showHidePageSize !== this.hidePageSize) {
-          this.hidePageSize = showHidePageSize;
-          this.cd.markForCheck();
-        }
+        this.zone.run(() => {
+          const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+          if (showHidePageSize !== this.hidePageSize) {
+            this.hidePageSize = showHidePageSize;
+            this.cd.markForCheck();
+          }
+        });
       });
       this.widgetResize$.observe(this.elementRef.nativeElement);
     }
@@ -204,10 +209,26 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     this.displayedColumns = [...this.displayTableColumns];
 
     const pageSize = this.settings.defaultPageSize;
-    if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
+    let pageStepIncrement = isValidPageStepIncrement(this.settings.pageStepIncrement) ? this.settings.pageStepIncrement : null;
+    let pageStepCount = isValidPageStepCount(this.settings.pageStepCount) ? this.settings.pageStepCount : null;
+
+    if (Number.isInteger(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
+
+    if (!this.defaultPageSize) {
+      this.defaultPageSize = pageStepIncrement ?? 10;
+    }
+
+    if (!isDefinedAndNotNull(pageStepIncrement) || !isDefinedAndNotNull(pageStepCount)) {
+      pageStepIncrement = this.defaultPageSize;
+      pageStepCount = 3;
+    }
+
+    for (let i = 1; i <= pageStepCount; i++) {
+      this.pageSizeOptions.push(pageStepIncrement * i);
+    }
+
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
       this.defaultSortOrder = this.settings.defaultSortOrder;
     }
@@ -399,7 +420,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
     config.hasBackdrop = true;
@@ -440,6 +461,8 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     });
     this.ctx.detectChanges();
   }
+
+  protected readonly rpcStatusColorsMap = rpcStatusColors;
 }
 
 class PersistentDatasource implements DataSource<PersistentRpcData> {

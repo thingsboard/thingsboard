@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package org.thingsboard.server.common.data.oauth2;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.Valid;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import jakarta.validation.Valid;
 
 @Builder(toBuilder = true)
 @EqualsAndHashCode
@@ -33,6 +33,7 @@ public class OAuth2MapperConfig {
     @Schema(description = "Whether user credentials should be activated when user is created after successful authentication")
     private boolean activateUser;
     @Schema(description = "Type of OAuth2 mapper. Depending on this param, different mapper config fields must be specified", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
     private MapperType type;
     @Valid
     @Schema(description = "Mapper config for BASIC and GITHUB mapper types")

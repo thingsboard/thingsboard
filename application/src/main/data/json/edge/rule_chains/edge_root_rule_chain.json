@@ -20,7 +20,6 @@
         },
         "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
         "name": "Device Profile Node",
-        "debugMode": false,
         "configuration": {
           "persistAlarmRulesState": false,
           "fetchAlarmRulesStateOnStart": false
@@ -34,9 +33,13 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
-        "debugMode": false,
+        "configurationVersion": 1,
         "configuration": {
-          "defaultTTL": 0
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         },
         "externalId": null
       },
@@ -47,9 +50,11 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Client Attributes",
-        "debugMode": false,
-        "configurationVersion": 2,
+        "configurationVersion": 3,
         "configuration": {
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          },
           "scope": "CLIENT_SCOPE",
           "notifyDevice": false,
           "sendAttributesUpdatedNotification": false,
@@ -64,7 +69,6 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
         "name": "Message Type Switch",
-        "debugMode": false,
         "configuration": {
           "version": 0
         },
@@ -77,7 +81,6 @@
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log RPC from Device",
-        "debugMode": false,
         "configuration": {
           "scriptLang": "TBEL",
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
@@ -92,7 +95,6 @@
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log Other",
-        "debugMode": false,
         "configuration": {
           "scriptLang": "TBEL",
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
@@ -107,7 +109,6 @@
         },
         "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
         "name": "RPC Call Request",
-        "debugMode": false,
         "configuration": {
           "timeoutInSeconds": 60
         },
@@ -120,9 +121,8 @@
         },
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
-        "debugMode": false,
         "configuration": {
-          "scope": "SERVER_SCOPE"
+          "scope": "CLIENT_SCOPE"
         },
         "externalId": null
       },
@@ -133,7 +133,6 @@
         },
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
-        "debugMode": false,
         "configuration": {
           "scope": "SERVER_SCOPE"
         },

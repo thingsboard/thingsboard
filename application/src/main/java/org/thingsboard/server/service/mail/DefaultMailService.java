@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +35,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.server.cache.limits.RateLimitService;
@@ -53,14 +56,10 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -111,7 +110,7 @@ public class DefaultMailService implements MailService {
         this.freemarkerConfig = freemarkerConfig;
         this.adminSettingsService = adminSettingsService;
         this.apiUsageClient = apiUsageClient;
-        this.timeoutScheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("mail-service-watchdog"));
+        this.timeoutScheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("mail-service-watchdog");
     }
 
     @PostConstruct
@@ -160,12 +159,12 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendActivationEmail(String activationLink, String email) throws ThingsboardException {
-
+    public void sendActivationEmail(String activationLink, long ttlMs, String email) throws ThingsboardException {
         String subject = messages.getMessage("activation.subject", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
         model.put("activationLink", activationLink);
+        model.put("activationLinkTtlInHours", (int) Math.ceil(ttlMs / 3600000.0));
         model.put(TARGET_EMAIL, email);
 
         String message = mergeTemplateIntoString("activation.ftl", model);
@@ -188,12 +187,13 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendResetPasswordEmail(String passwordResetLink, String email) throws ThingsboardException {
+    public void sendResetPasswordEmail(String passwordResetLink, long ttlMs, String email) throws ThingsboardException {
 
         String subject = messages.getMessage("reset.password.subject", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
         model.put("passwordResetLink", passwordResetLink);
+        model.put("passwordResetLinkTtlInHours", (int) Math.ceil(ttlMs / 3600000.0));
         model.put(TARGET_EMAIL, email);
 
         String message = mergeTemplateIntoString("reset.password.ftl", model);
@@ -202,10 +202,10 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendResetPasswordEmailAsync(String passwordResetLink, String email) {
+    public void sendResetPasswordEmailAsync(String passwordResetLink, long ttlMs, String email) {
         passwordResetExecutorService.execute(() -> {
             try {
-                this.sendResetPasswordEmail(passwordResetLink, email);
+                this.sendResetPasswordEmail(passwordResetLink, ttlMs, email);
             } catch (Exception e) {
                 log.error("Error occurred: {} ", e.getMessage());
             }
@@ -442,17 +442,16 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) {
+    private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) throws ThingsboardException {
         var submittedMail = Futures.withTimeout(
                 mailExecutorService.submit(() -> mailSender.send(msg)),
                 timeout, TimeUnit.MILLISECONDS, timeoutScheduler);
         try {
             submittedMail.get(timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.debug("Error during mail submission", e);
             throw new RuntimeException("Timeout!");
         } catch (Exception e) {
-            throw new RuntimeException(ExceptionUtils.getRootCause(e));
+            throw new ThingsboardException("Unable to send mail", ExceptionUtils.getRootCause(e), ThingsboardErrorCode.GENERAL);
         }
     }
 
@@ -462,20 +461,20 @@ public class DefaultMailService implements MailService {
             Template template = freemarkerConfig.getTemplate(templateLocation);
             return FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
         } catch (Exception e) {
-            throw handleException(e);
+            log.warn("Failed to process mail template: {}", ExceptionUtils.getRootCauseMessage(e));
+            throw new ThingsboardException("Failed to process mail template: " + e.getMessage(), e, ThingsboardErrorCode.GENERAL);
         }
     }
 
-    protected ThingsboardException handleException(Exception exception) {
-        String message;
-        if (exception instanceof NestedRuntimeException) {
-            message = ((NestedRuntimeException) exception).getMostSpecificCause().getMessage();
-        } else {
-            message = exception.getMessage();
+    protected ThingsboardException handleException(Throwable exception) {
+        if (exception instanceof ThingsboardException thingsboardException) {
+            return thingsboardException;
         }
-        log.warn("Unable to send mail: {}", message);
-        return new ThingsboardException(String.format("Unable to send mail: %s", message),
-                ThingsboardErrorCode.GENERAL);
+        if (exception instanceof NestedRuntimeException) {
+            exception = ((NestedRuntimeException) exception).getMostSpecificCause();
+        }
+        log.warn("Unable to send mail: {}", exception.getMessage());
+        return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
     }
 
 }

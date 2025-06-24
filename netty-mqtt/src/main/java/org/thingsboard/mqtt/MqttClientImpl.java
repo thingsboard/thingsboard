@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.mqtt;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -80,6 +81,8 @@ final class MqttClientImpl implements MqttClient {
 
     private final MqttHandler defaultHandler;
 
+    private final ReconnectStrategy reconnectStrategy;
+
     private EventLoopGroup eventLoop;
 
     private volatile Channel channel;
@@ -92,6 +95,8 @@ final class MqttClientImpl implements MqttClient {
     private MqttClientCallback callback;
 
     private final ListeningExecutor handlerExecutor;
+
+    private final static int DISCONNECT_FALLBACK_DELAY_SECS = 1;
 
     /**
      * Construct the MqttClientImpl with default config
@@ -110,6 +115,7 @@ final class MqttClientImpl implements MqttClient {
         this.clientConfig = clientConfig;
         this.defaultHandler = defaultHandler;
         this.handlerExecutor = handlerExecutor;
+        this.reconnectStrategy = new ReconnectStrategyExponential(getClientConfig().getReconnectDelay());
     }
 
     /**
@@ -191,7 +197,10 @@ final class MqttClientImpl implements MqttClient {
             if (reconnect) {
                 this.reconnect = true;
             }
-            eventLoop.schedule((Runnable) () -> connect(host, port, reconnect), clientConfig.getReconnectDelay(), TimeUnit.SECONDS);
+
+            final long nextReconnectDelay = reconnectStrategy.getNextReconnectDelay();
+            log.info("[{}] Scheduling reconnect in [{}] sec", channel != null ? channel.id() : "UNKNOWN", nextReconnectDelay);
+            eventLoop.schedule((Runnable) () -> connect(host, port, reconnect), nextReconnectDelay, TimeUnit.SECONDS);
         }
     }
 
@@ -384,8 +393,33 @@ final class MqttClientImpl implements MqttClient {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, qos, retain, 0);
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, getNewMessageId().messageId());
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
-        MqttPendingPublish pendingPublish = new MqttPendingPublish(variableHeader.packetId(), future,
-                payload.retain(), message, qos, () -> !pendingPublishes.containsKey(variableHeader.packetId()));
+
+        final var pendingPublish = MqttPendingPublish.builder()
+                .messageId(variableHeader.packetId())
+                .future(future)
+                .payload(payload.retain())
+                .message(message)
+                .qos(qos)
+                .ownerId(clientConfig.getOwnerId())
+                .retransmissionConfig(clientConfig.getRetransmissionConfig())
+                .pendingOperation(new PendingOperation() {
+                    @Override
+                    public boolean isCancelled() {
+                        return !pendingPublishes.containsKey(variableHeader.packetId());
+                    }
+
+                    @Override
+                    public void onMaxRetransmissionAttemptsReached() {
+                        pendingPublishes.computeIfPresent(variableHeader.packetId(), (__, pendingPublish) -> {
+                            var message = "Unable to deliver publish message due to max retransmission attempts (%s) being reached for client '%s' on topic '%s' (message ID: %d)"
+                                    .formatted(clientConfig.getRetransmissionConfig().maxAttempts(), clientConfig.getClientId(), topic, variableHeader.packetId());
+                            pendingPublish.getFuture().tryFailure(new MaxRetransmissionsReachedException(message));
+                            pendingPublish.getPayload().release();
+                            return null;
+                        });
+                    }
+                }).build();
+
         this.pendingPublishes.put(pendingPublish.getMessageId(), pendingPublish);
         ChannelFuture channelFuture = this.sendAndFlushPacket(message);
 
@@ -424,16 +458,25 @@ final class MqttClientImpl implements MqttClient {
 
     @Override
     public void disconnect() {
+        if (disconnected) {
+            return;
+        }
+
         log.trace("[{}] Disconnecting from server", channel != null ? channel.id() : "UNKNOWN");
-        disconnected = true;
         if (this.channel != null) {
             MqttMessage message = new MqttMessage(new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0));
-            ChannelFuture channelFuture = this.sendAndFlushPacket(message);
+
+            sendAndFlushPacket(message).addListener((ChannelFutureListener) future -> {
+                future.channel().close();
+                disconnected = true;
+            });
             eventLoop.schedule(() -> {
-                if (!channelFuture.isDone()) {
+                if (channel.isOpen()) {
+                    log.trace("[{}] Channel still open after {} second; forcing close now", channel.id(), DISCONNECT_FALLBACK_DELAY_SECS);
                     this.channel.close();
+                    disconnected = true;
                 }
-            }, 500, TimeUnit.MILLISECONDS);
+            }, DISCONNECT_FALLBACK_DELAY_SECS, TimeUnit.SECONDS);
         }
     }
 
@@ -499,9 +542,30 @@ final class MqttClientImpl implements MqttClient {
         MqttSubscribePayload payload = new MqttSubscribePayload(Collections.singletonList(subscription));
         MqttSubscribeMessage message = new MqttSubscribeMessage(fixedHeader, variableHeader, payload);
 
-        final MqttPendingSubscription pendingSubscription = new MqttPendingSubscription(future, topic, message,
-                () -> !pendingSubscriptions.containsKey(variableHeader.messageId()));
-        pendingSubscription.addHandler(handler, once);
+        final var pendingSubscription = MqttPendingSubscription.builder()
+                .future(future)
+                .topic(topic)
+                .handlers(Sets.newHashSet(new MqttPendingSubscription.MqttPendingHandler(handler, once)))
+                .subscribeMessage(message)
+                .ownerId(clientConfig.getOwnerId())
+                .retransmissionConfig(clientConfig.getRetransmissionConfig())
+                .pendingOperation(new PendingOperation() {
+                    @Override
+                    public boolean isCancelled() {
+                        return !pendingSubscriptions.containsKey(variableHeader.messageId());
+                    }
+
+                    @Override
+                    public void onMaxRetransmissionAttemptsReached() {
+                        pendingSubscriptions.computeIfPresent(variableHeader.messageId(), (__, pendingSubscription) -> {
+                            var message = "Unable to deliver subscribe message due to max retransmission attempts (%s) being reached for client '%s' on topic '%s' (message ID: %d)"
+                                    .formatted(clientConfig.getRetransmissionConfig().maxAttempts(), clientConfig.getClientId(), topic, variableHeader.messageId());
+                            pendingSubscription.getFuture().tryFailure(new MaxRetransmissionsReachedException(message));
+                            return null;
+                        });
+                    }
+                }).build();
+
         this.pendingSubscriptions.put(variableHeader.messageId(), pendingSubscription);
         this.pendingSubscribeTopics.add(topic);
         pendingSubscription.setSent(this.sendAndFlushPacket(message) != null); //If not sent, we will send it when the connection is opened
@@ -518,8 +582,29 @@ final class MqttClientImpl implements MqttClient {
             MqttUnsubscribePayload payload = new MqttUnsubscribePayload(Collections.singletonList(topic));
             MqttUnsubscribeMessage message = new MqttUnsubscribeMessage(fixedHeader, variableHeader, payload);
 
-            MqttPendingUnsubscription pendingUnsubscription = new MqttPendingUnsubscription(promise, topic, message,
-                    () -> !pendingServerUnsubscribes.containsKey(variableHeader.messageId()));
+            final var pendingUnsubscription = MqttPendingUnsubscription.builder()
+                    .future(promise)
+                    .topic(topic)
+                    .unsubscribeMessage(message)
+                    .ownerId(clientConfig.getOwnerId())
+                    .retransmissionConfig(clientConfig.getRetransmissionConfig())
+                    .pendingOperation(new PendingOperation() {
+                        @Override
+                        public boolean isCancelled() {
+                            return !pendingServerUnsubscribes.containsKey(variableHeader.messageId());
+                        }
+
+                        @Override
+                        public void onMaxRetransmissionAttemptsReached() {
+                            pendingServerUnsubscribes.computeIfPresent(variableHeader.messageId(), (__, pendingUnsubscription) -> {
+                                var message = "Unable to deliver unsubscribe message due to max retransmission attempts (%s) being reached for client '%s' on topic '%s' (message ID: %d)"
+                                        .formatted(clientConfig.getRetransmissionConfig().maxAttempts(), clientConfig.getClientId(), topic, variableHeader.messageId());
+                                pendingUnsubscription.getFuture().tryFailure(new MaxRetransmissionsReachedException(message));
+                                return null;
+                            });
+                        }
+                    }).build();
+
             this.pendingServerUnsubscribes.put(variableHeader.messageId(), pendingUnsubscription);
             pendingUnsubscription.startRetransmissionTimer(this.eventLoop.next(), this::sendAndFlushPacket);
 

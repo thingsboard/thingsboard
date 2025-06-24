@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { WidgetConfig, widgetType } from '@shared/models/widget.models';
@@ -23,6 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isDefined } from '@core/utils';
 import { TimewindowStyle } from '@shared/models/widget-settings.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface TimewindowConfigData {
   useDashboardTimewindow: boolean;
@@ -81,7 +82,8 @@ export class TimewindowConfigPanelComponent implements ControlValueAccessor, OnI
 
   constructor(private fb: UntypedFormBuilder,
               public translate: TranslateService,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -91,13 +93,19 @@ export class TimewindowConfigPanelComponent implements ControlValueAccessor, OnI
       timewindow: [null, []],
       timewindowStyle: [null, []]
     });
-    this.timewindowConfig.valueChanges.subscribe(
+    this.timewindowConfig.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.propagateChange(this.timewindowConfig.getRawValue())
     );
-    this.timewindowConfig.get('useDashboardTimewindow').valueChanges.subscribe(() => {
+    this.timewindowConfig.get('useDashboardTimewindow').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateTimewindowConfigEnabledState();
     });
-    this.timewindowConfig.get('displayTimewindow').valueChanges.subscribe(() => {
+    this.timewindowConfig.get('displayTimewindow').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateTimewindowConfigEnabledState();
     });
   }

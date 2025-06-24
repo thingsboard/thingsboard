@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@ package org.thingsboard.server.common.data;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.DeviceId;
 
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class DeviceInfo extends Device {
 
     private static final long serialVersionUID = -3004579925090663691L;

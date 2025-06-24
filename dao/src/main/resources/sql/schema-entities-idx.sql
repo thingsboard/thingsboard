@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2024 The Thingsboard Authors
+-- Copyright © 2016-2025 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -127,3 +127,7 @@ CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 
 CREATE INDEX IF NOT EXISTS idx_resource_type_public_resource_key ON resource(resource_type, public_resource_key);
+
+CREATE INDEX IF NOT EXISTS mobile_app_bundle_tenant_id ON mobile_app_bundle(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_job_tenant_id ON job(tenant_id);

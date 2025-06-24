@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2024 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,6 +57,8 @@ monitoring:
           queue: '${MQTT_TRANSPORT_USED_QUEUE:Main}'
           # Whether to monitor IPs associated with the domain from base url
           check_domain_ips: '${MQTT_TRANSPORT_CHECK_DOMAIN_IPS:false}'
+          # Prefix for the target device name
+          name_prefix: '${MQTT_TRANSPORT_TARGET_NAME_PREFIX:}'
         # To add more targets, use following environment variables:
         # monitoring.transports.mqtt.targets[1].base_url, monitoring.transports.mqtt.targets[2].base_url, etc.
 
@@ -72,6 +74,8 @@ monitoring:
           queue: '${COAP_TRANSPORT_USED_QUEUE:Main}'
           # Whether to monitor IPs associated with the domain from base url
           check_domain_ips: '${COAP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
+          # Prefix for the target device name
+          name_prefix: '${COAP_TRANSPORT_TARGET_NAME_PREFIX:}'
         # To add more targets, use following environment variables:
         # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[2].base_url, etc.
 
@@ -87,6 +91,8 @@ monitoring:
           queue: '${HTTP_TRANSPORT_USED_QUEUE:Main}'
           # Whether to monitor IPs associated with the domain from base url
           check_domain_ips: '${HTTP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
+          # Prefix for the target device name
+          name_prefix: '${HTTP_TRANSPORT_TARGET_NAME_PREFIX:}'
         # To add more targets, use following environment variables:
         # monitoring.transports.http.targets[1].base_url, monitoring.transports.http.targets[2].base_url, etc.
 
@@ -102,8 +108,16 @@ monitoring:
           queue: '${LWM2M_TRANSPORT_USED_QUEUE:Main}'
           # Whether to monitor IPs associated with the domain from base url
           check_domain_ips: '${LWM2M_TRANSPORT_CHECK_DOMAIN_IPS:false}'
+          # Prefix for the target device name
+          name_prefix: '${LWM2M_TRANSPORT_TARGET_NAME_PREFIX:}'
         # To add more targets, use following environment variables:
         # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
+
+  edqs:
+    enabled: "${EDQS_MONITORING_ENABLED:false}"
+
+  calculated_fields:
+    enabled: "${CALCULATED_FIELDS_MONITORING_ENABLED:true}"
 
   notifications:
     message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'

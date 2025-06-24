@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import java.io.IOException;
 @ToString(exclude = {"image", "profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId>, HasImage, HasDefaultOption {
+public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId>, HasImage, HasDefaultOption, HasVersion {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
@@ -97,6 +97,7 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     private RuleChainId defaultEdgeRuleChainId;
 
     private DeviceProfileId externalId;
+    private Long version;
 
     public DeviceProfile() {
         super();
@@ -122,6 +123,7 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
         this.softwareId = deviceProfile.getSoftwareId();
         this.defaultEdgeRuleChainId = deviceProfile.getDefaultEdgeRuleChainId();
         this.externalId = deviceProfile.getExternalId();
+        this.version = deviceProfile.getVersion();
     }
 
     @Schema(description = "JSON object with the device profile Id. " +

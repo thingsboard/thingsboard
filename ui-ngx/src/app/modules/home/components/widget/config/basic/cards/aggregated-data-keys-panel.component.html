@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
     </div>
     <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-form-table-body">
       <div *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
-        <tb-aggregated-data-key-row fxFlex
+        <tb-aggregated-data-key-row class="flex-1"
                          [formControl]="keyControl"
                          [index]="$index"
                          [datasourceType]="datasourceType"
@@ -47,6 +47,5 @@
   </div>
 </div>
 <ng-template #noKeys>
-  <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ 'widgets.aggregated-value-card.no-values' | translate }}</span>
+  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.aggregated-value-card.no-values' | translate }}</span>
 </ng-template>

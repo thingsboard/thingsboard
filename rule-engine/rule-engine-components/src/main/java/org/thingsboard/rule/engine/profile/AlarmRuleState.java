@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.profile;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
@@ -41,7 +42,6 @@ import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
-import org.thingsboard.server.common.adaptor.JsonConverter;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -88,12 +88,6 @@ class AlarmRuleState {
     }
 
     public boolean validateAttrUpdate(Set<AlarmConditionFilterKey> changedKeys) {
-        //If the attribute was updated, but no new telemetry arrived - we ignore this until new telemetry is there.
-        for (AlarmConditionFilterKey key : entityKeys) {
-            if (key.getType().equals(AlarmConditionKeyType.TIME_SERIES)) {
-                return false;
-            }
-        }
         for (AlarmConditionFilterKey key : changedKeys) {
             if (entityKeys.contains(key)) {
                 return true;

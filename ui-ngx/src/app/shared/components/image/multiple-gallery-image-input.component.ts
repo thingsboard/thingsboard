@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,10 +27,14 @@ import { ImageLinkType } from '@shared/components/image/gallery-image-input.comp
 import {
   ImageResourceInfo,
   prependTbImagePrefixToUrls,
-  removeTbImagePrefixFromUrls
+  removeTbImagePrefixFromUrls,
+  ResourceSubType
 } from '@shared/models/resource.models';
 import { MatDialog } from '@angular/material/dialog';
-import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
+import {
+  ImageGalleryDialogComponent,
+  ImageGalleryDialogData
+} from '@shared/components/image/image-gallery-dialog.component';
 
 @Component({
   selector: 'tb-multiple-gallery-image-input',
@@ -135,11 +139,14 @@ export class MultipleGalleryImageInputComponent extends PageComponent implements
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<ImageGalleryDialogComponent, any,
+    this.dialog.open<ImageGalleryDialogComponent, ImageGalleryDialogData,
       ImageResourceInfo>(ImageGalleryDialogComponent, {
       autoFocus: false,
       disableClose: false,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        imageSubType: ResourceSubType.IMAGE
+      }
     }).afterClosed().subscribe((image) => {
       if (image) {
         this.imageUrls.push(image.link);

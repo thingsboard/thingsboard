@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ export enum EventType {
 
 export enum DebugEventType {
   DEBUG_RULE_NODE = 'DEBUG_RULE_NODE',
-  DEBUG_RULE_CHAIN = 'DEBUG_RULE_CHAIN'
+  DEBUG_RULE_CHAIN = 'DEBUG_RULE_CHAIN',
+  DEBUG_CALCULATED_FIELD = 'DEBUG_CALCULATED_FIELD'
 }
 
 export const eventTypeTranslations = new Map<EventType | DebugEventType, string>(
@@ -39,6 +40,7 @@ export const eventTypeTranslations = new Map<EventType | DebugEventType, string>
     [EventType.STATS, 'event.type-stats'],
     [DebugEventType.DEBUG_RULE_NODE, 'event.type-debug-rule-node'],
     [DebugEventType.DEBUG_RULE_CHAIN, 'event.type-debug-rule-chain'],
+    [DebugEventType.DEBUG_CALCULATED_FIELD, 'event.type-debug-calculated-field'],
   ]
 );
 
@@ -80,7 +82,7 @@ export interface DebugRuleChainEventBody extends BaseEventBody {
   error?: string;
 }
 
-export type EventBody = ErrorEventBody & LcEventEventBody & StatsEventBody & DebugRuleNodeEventBody & DebugRuleChainEventBody;
+export type EventBody = ErrorEventBody & LcEventEventBody & StatsEventBody & DebugRuleNodeEventBody & DebugRuleChainEventBody & CalculatedFieldEventBody;
 
 export interface Event extends BaseData<EventId> {
   tenantId: TenantId;
@@ -88,6 +90,16 @@ export interface Event extends BaseData<EventId> {
   type: string;
   uid: string;
   body: EventBody;
+}
+
+export interface CalculatedFieldEventBody extends BaseFilterEventBody {
+  calculatedFieldId: string;
+  entityId: string;
+  entityType: EntityType;
+  arguments: string,
+  result: string,
+  msgId: string;
+  msgType: string;
 }
 
 export interface BaseFilterEventBody {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
         try {
             R dbValue = dbCall.get();
             if (dbValue != null || cacheNullValue) {
-                cacheTransaction.putIfAbsent(key, dbValueToCacheValue.apply(dbValue));
+                cacheTransaction.put(key, dbValueToCacheValue.apply(dbValue));
                 cacheTransaction.commit();
                 return dbValue;
             } else {

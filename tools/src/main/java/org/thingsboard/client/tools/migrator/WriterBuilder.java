@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class WriterBuilder {
 
     public static CQLSSTableWriter getTsWriter(File dir) {
         return CQLSSTableWriter.builder()
-                .inDirectory(dir)
+                .inDirectory(dir.getAbsolutePath())
                 .forTable(tsSchema)
                 .using("INSERT INTO thingsboard.ts_kv_cf (entity_type, entity_id, key, partition, ts, bool_v, str_v, long_v, dbl_v, json_v) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -68,7 +68,7 @@ public class WriterBuilder {
 
     public static CQLSSTableWriter getLatestWriter(File dir) {
         return CQLSSTableWriter.builder()
-                .inDirectory(dir)
+                .inDirectory(dir.getAbsolutePath())
                 .forTable(latestSchema)
                 .using("INSERT INTO thingsboard.ts_kv_latest_cf (entity_type, entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -77,7 +77,7 @@ public class WriterBuilder {
 
     public static CQLSSTableWriter getPartitionWriter(File dir) {
         return CQLSSTableWriter.builder()
-                .inDirectory(dir)
+                .inDirectory(dir.getAbsolutePath())
                 .forTable(partitionSchema)
                 .using("INSERT INTO thingsboard.ts_kv_partitions_cf (entity_type, entity_id, key, partition) " +
                         "VALUES (?, ?, ?, ?)")

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 -->
 <form #inputForm="ngForm">
-  <section [fxLayout]="computedLayout" fxLayoutGap="8px">
+  <section class="flex gap-2" [class]="computedLayout === 'row' ? 'flex-row' : 'flex-col'">
     <mat-form-field *ngIf="showValueType" appearance="outline" subscriptSizing="dynamic" class="tb-value-type tb-inline-field" [class]="computedLayout">
       <mat-select [disabled]="disabled" name="valueType" [(ngModel)]="valueType" (ngModelChange)="onValueTypeChanged()">
         <mat-select-trigger>
@@ -31,9 +31,9 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field *ngIf="valueType === valueTypeEnum.STRING" fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
-      <input [disabled]="disabled" matInput required name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
-             placeholder="{{ 'value.string-value' | translate }}*"/>
+    <mat-form-field *ngIf="valueType === valueTypeEnum.STRING" appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex flex-1">
+      <input [disabled]="disabled" matInput [required]="required" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
+             placeholder="{{ 'value.string-value' | translate }}{{ required ? '*' : ''}}"/>
       <mat-icon matSuffix
                 matTooltipPosition="above"
                 matTooltipClass="tb-error-tooltip"
@@ -43,9 +43,9 @@
         warning
       </mat-icon>
     </mat-form-field>
-    <mat-form-field *ngIf="valueType === valueTypeEnum.INTEGER" fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute number">
-      <input [disabled]="disabled" matInput required name="value" type="number" step="1" pattern="^-?[0-9]+$" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
-             placeholder="{{ 'value.integer-value' | translate }}*"/>
+    <mat-form-field *ngIf="valueType === valueTypeEnum.INTEGER" appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number flex flex-1">
+      <input [disabled]="disabled" matInput [required]="required" name="value" type="number" step="1" pattern="^-?[0-9]+$" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
+             placeholder="{{ 'value.integer-value' | translate }}{{ required ? '*' : ''}}"/>
       <mat-icon matSuffix
                 matTooltipPosition="above"
                 matTooltipClass="tb-error-tooltip"
@@ -56,9 +56,9 @@
         warning
       </mat-icon>
     </mat-form-field>
-    <mat-form-field *ngIf="valueType === valueTypeEnum.DOUBLE" fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute number">
-      <input [disabled]="disabled" matInput required name="value" type="number" step="any" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
-             placeholder="{{ 'value.double-value' | translate }}*"/>
+    <mat-form-field *ngIf="valueType === valueTypeEnum.DOUBLE" appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number flex flex-1">
+      <input [disabled]="disabled" matInput [required]="required" name="value" type="number" step="any" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
+             placeholder="{{ 'value.double-value' | translate }}{{ required ? '*' : ''}}"/>
       <mat-icon matSuffix
                 matTooltipPosition="above"
                 matTooltipClass="tb-error-tooltip"
@@ -68,15 +68,20 @@
         warning
       </mat-icon>
     </mat-form-field>
-    <mat-chip-listbox *ngIf="valueType === valueTypeEnum.BOOLEAN" fxFlex class="tb-boolean-input center-stretch"
-                      [disabled]="disabled" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()">
-      <mat-chip-option [selectable]="!modelValue" [value]="true">{{ trueLabel | translate }}</mat-chip-option>
-      <mat-chip-option [selectable]="modelValue" [value]="false">{{ falseLabel | translate }}</mat-chip-option>
-    </mat-chip-listbox>
-    <div *ngIf="valueType === valueTypeEnum.JSON" fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
-        <input [disabled]="disabled" matInput tb-json-to-string required name="value" #value="ngModel"
-               [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()" placeholder="{{ 'value.json-value' | translate }}*"/>
+    <ng-container *ngIf="valueType === valueTypeEnum.BOOLEAN">
+      <mat-chip-listbox *ngIf="!shortBooleanField" class="tb-boolean-input center-stretch flex-1"
+                        [disabled]="disabled" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()">
+        <mat-chip-option [selectable]="!modelValue" [value]="true">{{ trueLabel }}</mat-chip-option>
+        <mat-chip-option [selectable]="modelValue" [value]="false">{{ falseLabel }}</mat-chip-option>
+      </mat-chip-listbox>
+      <mat-checkbox *ngIf="shortBooleanField" name="value" #value="ngModel" [disabled]="disabled" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()">
+        {{ modelValue ? trueLabel : falseLabel }}
+      </mat-checkbox>
+    </ng-container>
+    <div *ngIf="valueType === valueTypeEnum.JSON" class="flex flex-1 flex-row items-center justify-start gap-2">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex flex-1">
+        <input [disabled]="disabled" matInput tb-json-to-string [required]="required" name="value" #value="ngModel"
+               [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()" placeholder="{{ 'value.json-value' | translate }}{{ required ? '*' : ''}}"/>
         <mat-icon matSuffix
                   matTooltipPosition="above"
                   matTooltipClass="tb-error-tooltip"
@@ -88,7 +93,7 @@
           warning
         </mat-icon>
       </mat-form-field>
-      <button mat-icon-button class="tb-mat-32" (click)="openEditJSONDialog($event)">
+      <button *ngIf="!hideJsonEdit" mat-icon-button class="tb-mat-32" (click)="openEditJSONDialog($event)">
         <mat-icon class="tb-mat-20">open_in_new</mat-icon>
       </button>
     </div>

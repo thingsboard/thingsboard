@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,9 +108,9 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         @Override
         public ObjectModel getObjectModel(int objectId) {
             LwM2mClient lwM2mClient = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint());
-            String version = lwM2mClient.getSupportedObjectVersion(objectId).toString();
+            var version = lwM2mClient.getSupportedObjectVersion(objectId);
             if (version != null) {
-                return this.getObjectModelDynamic(objectId, version);
+                return this.getObjectModelDynamic(objectId, version.toString());
             }
             return null;
         }

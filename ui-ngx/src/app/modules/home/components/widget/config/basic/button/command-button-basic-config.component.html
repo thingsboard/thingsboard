@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@
     <div class="tb-form-panel-title" translate>widgets.command-button.behavior</div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.command-button.on-click-hint' | translate}}" translate>widgets.command-button.on-click</div>
-      <tb-set-value-action-settings fxFlex
-                                    panelTitle="widgets.command-button.on-click"
+      <tb-set-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.command-button.on-click' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -30,10 +30,10 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.disabled-state-hint' | translate}}" translate>widgets.button-state.disabled-state</div>
-      <tb-get-value-action-settings fxFlex
-                                    panelTitle="widgets.button-state.disabled-state"
+      <tb-get-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.button-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
-                                    stateLabel="widgets.button-state.disabled"
+                                    stateLabel="{{ 'widgets.button-state.disabled' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"

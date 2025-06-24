@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
 
     @Query("SELECT tr FROM TbResourceEntity tr " +
             "WHERE tr.resourceType = :resourceType " +
+            "AND (:resourceSubType IS NULL OR tr.resourceSubType = :resourceSubType) " +
             "AND (:searchText IS NULL OR ilike(tr.searchText, CONCAT('%', :searchText, '%')) = true) " +
             "AND (tr.tenantId = :tenantId " +
             "OR (tr.tenantId = :systemAdminId " +
@@ -46,11 +47,13 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
             @Param("tenantId") UUID tenantId,
             @Param("systemAdminId") UUID sysAdminId,
             @Param("resourceType") String resourceType,
+            @Param("resourceSubType") String resourceSubType,
             @Param("searchText") String searchText,
             Pageable pageable);
 
     @Query("SELECT tr FROM TbResourceEntity tr " +
             "WHERE tr.resourceType = :resourceType " +
+            "AND (:resourceSubType IS NULL OR tr.resourceSubType = :resourceSubType) " +
             "AND (:searchText IS NULL OR ilike(tr.searchText, CONCAT('%', :searchText, '%')) = true) " +
             "AND (tr.tenantId = :tenantId " +
             "OR (tr.tenantId = :systemAdminId " +
@@ -62,6 +65,7 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
     List<TbResourceEntity> findResources(@Param("tenantId") UUID tenantId,
                                          @Param("systemAdminId") UUID sysAdminId,
                                          @Param("resourceType") String resourceType,
+                                         @Param("resourceSubType") String resourceSubType,
                                          @Param("searchText") String searchText);
 
     @Query("SELECT tr FROM TbResourceEntity tr " +

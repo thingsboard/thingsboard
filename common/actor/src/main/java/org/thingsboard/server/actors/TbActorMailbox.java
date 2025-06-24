@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ public final class TbActorMailbox implements TbActorCtx {
             }
             if (msg != null) {
                 try {
-                    log.debug("[{}] Going to process message: {}", selfId, msg);
+                    log.trace("[{}] Going to process message: {}", selfId, msg);
                     actor.process(msg);
                 } catch (TbRuleNodeUpdateException updateException) {
                     stopReason = TbActorStopReason.INIT_FAILED;
@@ -237,10 +237,16 @@ public final class TbActorMailbox implements TbActorCtx {
             try {
                 ready.set(NOT_READY);
                 actor.destroy(stopReason, cause);
-                highPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
-                normalPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
+                highPriorityMsgs.removeIf(msg -> {
+                    msg.onTbActorStopped(stopReason);
+                    return true;
+                });
+                normalPriorityMsgs.removeIf(msg -> {
+                    msg.onTbActorStopped(stopReason);
+                    return true;
+                });
             } catch (Throwable t) {
-                log.warn("[{}] Failed to destroy actor: {}", selfId, t);
+                log.warn("[{}] Failed to destroy actor: ", selfId, t);
             }
         });
     }

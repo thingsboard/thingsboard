@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import {
 export class UnreadNotificationBasicConfigComponent extends BasicWidgetConfigComponent {
 
   unreadNotificationWidgetConfigForm: UntypedFormGroup;
+
+  countPreviewFn = this._countPreviewFn.bind(this);
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -87,16 +89,6 @@ export class UnreadNotificationBasicConfigComponent extends BasicWidgetConfigCom
     const showTitle: boolean = this.unreadNotificationWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.unreadNotificationWidgetConfigForm.get('showIcon').value;
 
-    if (showTitle) {
-      this.unreadNotificationWidgetConfigForm.get('title').enable({emitEvent});
-      this.unreadNotificationWidgetConfigForm.get('titleFont').enable({emitEvent});
-      this.unreadNotificationWidgetConfigForm.get('titleColor').enable({emitEvent});
-    } else {
-      this.unreadNotificationWidgetConfigForm.get('title').disable({emitEvent});
-      this.unreadNotificationWidgetConfigForm.get('titleFont').disable({emitEvent});
-      this.unreadNotificationWidgetConfigForm.get('titleColor').disable({emitEvent});
-    }
-
     if (showIcon) {
       this.unreadNotificationWidgetConfigForm.get('iconSize').enable({emitEvent});
       this.unreadNotificationWidgetConfigForm.get('iconSizeUnit').enable({emitEvent});
@@ -114,6 +106,30 @@ export class UnreadNotificationBasicConfigComponent extends BasicWidgetConfigCom
       this.unreadNotificationWidgetConfigForm.get('counterValueColor').enable({emitEvent});
       this.unreadNotificationWidgetConfigForm.get('counterColor').enable({emitEvent});
     } else {
+      this.unreadNotificationWidgetConfigForm.get('counterValueFont').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('counterValueColor').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('counterColor').disable({emitEvent});
+    }
+
+    if (showTitle) {
+      this.unreadNotificationWidgetConfigForm.get('title').enable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('titleFont').enable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('titleColor').enable({emitEvent});
+
+      this.unreadNotificationWidgetConfigForm.get('showCounter').enable({emitEvent: false});
+      this.unreadNotificationWidgetConfigForm.get('showIcon').enable({emitEvent: false});
+    } else {
+      this.unreadNotificationWidgetConfigForm.get('title').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('titleFont').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('titleColor').disable({emitEvent});
+
+      this.unreadNotificationWidgetConfigForm.get('showIcon').disable({emitEvent: false});
+      this.unreadNotificationWidgetConfigForm.get('iconSize').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('iconSizeUnit').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('icon').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('iconColor').disable({emitEvent});
+
+      this.unreadNotificationWidgetConfigForm.get('showCounter').disable({emitEvent: false});
       this.unreadNotificationWidgetConfigForm.get('counterValueFont').disable({emitEvent});
       this.unreadNotificationWidgetConfigForm.get('counterValueColor').disable({emitEvent});
       this.unreadNotificationWidgetConfigForm.get('counterColor').disable({emitEvent});
@@ -172,6 +188,10 @@ export class UnreadNotificationBasicConfigComponent extends BasicWidgetConfigCom
     config.settings.enableMarkAsRead = buttons.includes('markAsRead');
 
     config.enableFullscreen = buttons.includes('fullscreen');
+  }
+
+  private _countPreviewFn(): string {
+    return this.unreadNotificationWidgetConfigForm.get('maxNotificationDisplay').value?.toString() || '6';
   }
 
 }

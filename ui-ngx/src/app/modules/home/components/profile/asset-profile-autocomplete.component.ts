@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -327,7 +327,7 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
   }
 
   createAssetProfile($event: Event, profileName: string) {
-    $event.preventDefault();
+    $event.stopPropagation();
     const assetProfile: AssetProfile = {
       name: profileName
     } as AssetProfile;
@@ -337,7 +337,7 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
   }
 
   editAssetProfile($event: Event) {
-    $event.preventDefault();
+    $event.stopPropagation();
     this.assetProfileService.getAssetProfile(this.modelValue.id).subscribe(
       (assetProfile) => {
         this.openAssetProfileDialog(assetProfile, false);

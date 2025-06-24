@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public interface WidgetsBundleService extends EntityDaoService {
 
@@ -34,18 +36,20 @@ public interface WidgetsBundleService extends EntityDaoService {
 
     WidgetsBundle findWidgetsBundleByTenantIdAndAlias(TenantId tenantId, String alias);
 
-    PageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink);
+    PageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink);
 
     List<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId);
 
     PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(TenantId tenantId, PageLink pageLink);
 
-    PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink);
+    PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink);
 
-    PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink);
+    PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIdAndPageLink(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink);
 
     List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(TenantId tenantId);
 
     void deleteWidgetsBundlesByTenantId(TenantId tenantId);
+
+    void updateSystemWidgets(Stream<String> bundles, Stream<String> widgets);
 
 }

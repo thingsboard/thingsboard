@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConn
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -63,7 +63,9 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
                     return finalFuture.get().get().isPresent();
                 });
         TsKvEntry actualTsKvEntry = finalFuture.get().get().get();
-        Assert.assertEquals(expectedTsKvEntry, actualTsKvEntry);
+        Assert.assertEquals(expectedTsKvEntry.getKey(), actualTsKvEntry.getKey());
+        Assert.assertEquals(expectedTsKvEntry.getValue(), actualTsKvEntry.getValue());
+        Assert.assertEquals(expectedTsKvEntry.getTs(), actualTsKvEntry.getTs());
     }
 
     protected void processClientWithCorrectNodeAccessTokenWithoutNDEATH_Test() throws Exception {
@@ -78,7 +80,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
     protected void processClientWithCorrectNodeAccessTokenNameSpaceInvalid_Test() throws Exception {
         long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
         long value = bdSeq = 0;
-        MqttException actualException = Assert.assertThrows(MqttException.class, () -> clientConnectWithNDEATH(ts, value, "spBv1.2"));
+        MqttException actualException = Assert.assertThrows(MqttException.class, () -> clientMqttV5ConnectWithNDEATH(ts, value, -1L,"spBv1.2"));
         String expectedMessage = "Server unavailable.";
         int expectedReasonCode = 136;
         Assert.assertEquals(expectedMessage, actualException.getMessage());
@@ -95,20 +97,27 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
 
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(messageName(STATE), ONLINE.name()));
-        AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
         await(alias + messageName(STATE) + ", device: " + savedGateway.getName())
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
-                    finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
-                    return finalFuture.get().get().contains(tsKvEntry);
+                    var foundEntry = tsService.findAllLatest(tenantId, savedGateway.getId()).get().stream()
+                            .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
+                            .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
+                            .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
+                            .findFirst();
+                    return foundEntry.isPresent();
                 });
 
         for (Device device : devices) {
             await(alias + messageName(STATE) + ", device: " + device.getName())
                     .atMost(40, TimeUnit.SECONDS)
                     .until(() -> {
-                        finalFuture.set(tsService.findAllLatest(tenantId, device.getId()));
-                        return finalFuture.get().get().contains(tsKvEntry);
+                        var foundEntry = tsService.findAllLatest(tenantId, device.getId()).get().stream()
+                                .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
+                                .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
+                                .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
+                                .findFirst();
+                        return foundEntry.isPresent();
                     });
         }
     }
@@ -126,7 +135,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         if (client.isConnected()) {
             List<Device> devicesList = new ArrayList<>(devices);
             Device device =  devicesList.get(indexDeviceDisconnect);
-            client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.DDEATH.name() + "/" + edgeNode + "/" + device.getName(),
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DDEATH.name() + "/" + edgeNode + "/" + device.getName(),
                     payloadDeathDevice.build().toByteArray(), 0, false);
             await(alias + messageName(STATE) + ", device: " + device.getName())
                     .atMost(40, TimeUnit.SECONDS)

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ public class HousekeeperStatsService {
             this.failedProcessingCounter = register("failedProcessing", statsFactory);
             this.reprocessedCounter = register("reprocessed", statsFactory);
             this.failedReprocessingCounter = register("failedReprocessing", statsFactory);
-            this.processingTimer = statsFactory.createTimer(StatsType.HOUSEKEEPER, "processingTime", "taskType", taskType.name());
+            this.processingTimer = statsFactory.createStatsTimer(StatsType.HOUSEKEEPER.getName(), "processingTime", "taskType", taskType.name());
         }
 
         private StatsCounter register(String statsName, StatsFactory statsFactory) {

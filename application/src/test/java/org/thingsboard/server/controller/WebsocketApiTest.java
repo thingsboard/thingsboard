@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -59,13 +63,18 @@ import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -75,6 +84,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Slf4j
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "server.ws.alarms_per_alarm_status_subscription_cache_size=5",
+        "server.ws.dynamic_page_link.refresh_interval=15"
+})
 public class WebsocketApiTest extends AbstractControllerTest {
     @Autowired
     private TelemetrySubscriptionService tsService;
@@ -315,6 +328,202 @@ public class WebsocketApiTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAlarmCountWsCmdWithSingleEntityFilter() throws Exception {
+        loginTenantAdmin();
+
+        SingleEntityFilter singleEntityFilter = new SingleEntityFilter();
+        singleEntityFilter.setSingleEntity(tenantId);
+        AlarmCountQuery alarmCountQuery = new AlarmCountQuery(singleEntityFilter);
+        AlarmCountCmd cmd1 = new AlarmCountCmd(1, alarmCountQuery);
+
+        getWsClient().send(cmd1);
+
+        AlarmCountUpdate update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        //create alarm, check count = 1
+        getWsClient().registerWaitForUpdate();
+
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(tenantId);
+        alarm.setType("TEST ALARM");
+        alarm.setSeverity(AlarmSeverity.WARNING);
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForUpdate());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        // set wrong entity id in filter, check count = 0
+        singleEntityFilter.setSingleEntity(tenantAdminUserId);
+        AlarmCountCmd cmd3 = new AlarmCountCmd(2, alarmCountQuery);
+
+        getWsClient().send(cmd3);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(2, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+    }
+
+    @Test
+    public void testAlarmCountWsCmdWithDeviceType() throws Exception {
+        loginTenantAdmin();
+
+        DeviceTypeFilter deviceTypeFilter = new DeviceTypeFilter();
+        deviceTypeFilter.setDeviceTypes(List.of("default"));
+        AlarmCountQuery alarmCountQuery = new AlarmCountQuery(deviceTypeFilter);
+        AlarmCountCmd cmd1 = new AlarmCountCmd(1, alarmCountQuery);
+
+        getWsClient().send(cmd1);
+
+        AlarmCountUpdate update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+
+        getWsClient().registerWaitForUpdate();
+
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(device.getId());
+        alarm.setType("TEST ALARM");
+        alarm.setSeverity(AlarmSeverity.WARNING);
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForUpdate());
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertEquals(1, update.getCount());
+
+        deviceTypeFilter.setDeviceTypes(List.of("non-existing"));
+        AlarmCountCmd cmd3 = new AlarmCountCmd(3, alarmCountQuery);
+
+        getWsClient().send(cmd3);
+
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
+        Assert.assertEquals(3, update.getCmdId());
+        Assert.assertEquals(0, update.getCount());
+    }
+
+    @Test
+    public void testAlarmStatusWsCmd() throws Exception {
+        loginTenantAdmin();
+
+        AlarmStatusCmd cmd = new AlarmStatusCmd(1, device.getId(), List.of("TEST ALARM", "TEST ALARM 2"), List.of(AlarmSeverity.WARNING));
+
+        getWsClient().send(cmd);
+
+        AlarmStatusUpdate update = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertFalse(update.isActive());
+
+        //create alarm
+        getWsClient().registerWaitForUpdate();
+
+        Alarm alarm = new Alarm();
+        alarm.setOriginator(device.getId());
+        alarm.setType("TEST ALARM");
+        alarm.setSeverity(AlarmSeverity.WARNING);
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmStatusUpdate alarmStatusUpdate = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertTrue(alarmStatusUpdate.isActive());
+
+        //clear alarm
+        getWsClient().registerWaitForUpdate();
+
+        String alarmId = alarm.getId().getId().toString();
+        Alarm clearedAlarm = doPost("/api/alarm/" + alarmId + "/clear", Alarm.class);
+        Assert.assertNotNull(clearedAlarm);
+        Assert.assertTrue(clearedAlarm.isCleared());
+
+        AlarmStatusUpdate alarmStatusUpdate2 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, alarmStatusUpdate2.getCmdId());
+        Assert.assertFalse(alarmStatusUpdate2.isActive());
+
+        // add second type alarm
+        getWsClient().registerWaitForUpdate();
+
+        Alarm alarm2 = new Alarm();
+        alarm2.setOriginator(device.getId());
+        alarm2.setType("TEST ALARM 2");
+        alarm2.setSeverity(AlarmSeverity.WARNING);
+
+        doPost("/api/alarm", alarm2, Alarm.class);
+
+        AlarmStatusUpdate alarmStatusUpdate3 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, alarmStatusUpdate3.getCmdId());
+        Assert.assertTrue(alarmStatusUpdate3.isActive());
+
+        //change severity
+        getWsClient().registerWaitForUpdate();
+        alarm2.setSeverity(AlarmSeverity.MAJOR);
+        Alarm updatedAlarm = doPost("/api/alarm", alarm2, Alarm.class);
+        Assert.assertNotNull(updatedAlarm);
+        Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
+
+        AlarmStatusUpdate alarmStatusUpdate4 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, alarmStatusUpdate4.getCmdId());
+        Assert.assertFalse(alarmStatusUpdate4.isActive());
+
+        //subscribe for critical alarms
+        AlarmStatusCmd cmd3 = new AlarmStatusCmd(2, device.getId(), List.of("TEST ALARM"), List.of(AlarmSeverity.CRITICAL));
+
+        getWsClient().send(cmd3);
+
+        AlarmStatusUpdate alarmStatusUpdate5 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        Assert.assertEquals(2, alarmStatusUpdate5.getCmdId());
+        Assert.assertFalse(alarmStatusUpdate5.isActive());
+    }
+
+    @Test
+    public void testAlarmStatusWsCmdWithMaxAlarmsCacheSize() throws Exception {
+        loginTenantAdmin();
+
+        AlarmStatusCmd cmd = new AlarmStatusCmd(1, device.getId(), null, List.of(AlarmSeverity.CRITICAL));
+
+        getWsClient().send(cmd);
+
+        AlarmStatusUpdate update = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertFalse(update.isActive());
+
+        getWsClient().registerWaitForUpdate();
+        //create 5+1 alarms
+        List<Alarm> alarms = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            Alarm alarm = new Alarm();
+            alarm.setOriginator(device.getId());
+            alarm.setType(RandomStringUtils.randomAlphabetic(10));
+            alarm.setSeverity(AlarmSeverity.CRITICAL);
+            alarm = doPost("/api/alarm", alarm, Alarm.class);
+            alarms.add(alarm);
+        }
+
+        AlarmStatusUpdate updateAfterAlarmsAdded = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, updateAfterAlarmsAdded.getCmdId());
+        Assert.assertTrue(updateAfterAlarmsAdded.isActive());
+
+        getWsClient().registerWaitForUpdate();
+        //clear first 5 alarms
+        for (int i = 0; i < 5; i++) {
+            String alarmId = alarms.get(i).getId().getId().toString();
+            doPost("/api/alarm/" + alarmId + "/clear", Alarm.class);
+        }
+        AlarmStatusUpdate alarmStatusUpdate = JacksonUtil.fromString(getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(5)), AlarmStatusUpdate.class);
+        Assert.assertNull(alarmStatusUpdate);
+
+        //clear 6-th alarm should send update
+        String alarmId6 = alarms.get(5).getId().getId().toString();
+        doPost("/api/alarm/" + alarmId6 + "/clear", Alarm.class);
+
+        AlarmStatusUpdate alarmStatusUpdate2 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, alarmStatusUpdate2.getCmdId());
+        Assert.assertFalse(alarmStatusUpdate2.isActive());
+    }
+
+    @Test
     public void testEntityDataLatestWidgetFlow() throws Exception {
         List<EntityKey> keys = List.of(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
         long now = System.currentTimeMillis() - 100;
@@ -373,6 +582,33 @@ public class WebsocketApiTest extends AbstractControllerTest {
         //Sending duplicate update again
         getWsClient().registerWaitForUpdate();
         sendTelemetry(device, Arrays.asList(dataPoint2));
+        msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNull(msg);
+    }
+
+    @Test
+    public void testTimeseriesSubscriptionCmd() throws Exception {
+        long now = System.currentTimeMillis() - 100;
+
+        long lastTs = now - TimeUnit.MINUTES.toMillis(1);
+        TsKvEntry dataPoint1 = new BasicTsKvEntry(lastTs, new LongDataEntry("temperature", 42L));
+        sendTelemetry(device, List.of(dataPoint1));
+
+        JsonNode update = getWsClient().sendTimeseriesCmd(device.getId(), "LATEST_TELEMETRY");
+        JsonNode data = update.get("data");
+        Assert.assertEquals(1, data.size());
+        Assert.assertEquals(JacksonUtil.newArrayNode().add(lastTs).add("42"), data.get("temperature").get(0));
+
+        //Sending update from the past, while latest value has new timestamp;
+        TsKvEntry dataPoint4 = new BasicTsKvEntry(now - TimeUnit.MINUTES.toMillis(5), new LongDataEntry("temperature", 45L));
+        getWsClient().registerWaitForUpdate();
+        sendTelemetry(device, List.of(dataPoint4));
+        String msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNull(msg);
+
+        //Sending duplicate update again
+        getWsClient().registerWaitForUpdate();
+        sendTelemetry(device, List.of(dataPoint4));
         msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
         Assert.assertNull(msg);
     }
@@ -678,19 +914,24 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.saveAndNotify(device.getTenantId(), null, device.getId(), tsData, 0, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void result) {
-                log.debug("sendTelemetry callback onSuccess");
-                latch.countDown();
-            }
+        tsService.saveTimeseries(TimeseriesSaveRequest.builder()
+                .tenantId(device.getTenantId())
+                .entityId(device.getId())
+                .entries(tsData)
+                .callback(new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(@Nullable Void result) {
+                        log.debug("sendTelemetry callback onSuccess");
+                        latch.countDown();
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("Failed to send telemetry", t);
-                latch.countDown();
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Failed to send telemetry", t);
+                        latch.countDown();
+                    }
+                })
+                .build());
         assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendTelemetry callback");
     }
 
@@ -700,19 +941,26 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     private void sendAttributes(TenantId tenantId, EntityId entityId, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.saveAndNotify(tenantId, entityId, scope.getAttributeScope(), attrData, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void result) {
-                log.debug("sendAttributes callback onSuccess");
-                latch.countDown();
-            }
+        tsService.saveAttributes(AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .scope(scope.getAttributeScope())
+                .entries(attrData)
+                .callback(new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable Void result) {
+                        log.debug("sendAttributes callback onSuccess");
+                        latch.countDown();
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("Failed to sendAttributes", t);
-                latch.countDown();
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Failed to sendAttributes", t);
+                        latch.countDown();
+                    }
+                })
+                .build());
         assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendAttributes callback").isTrue();
     }
+
 }

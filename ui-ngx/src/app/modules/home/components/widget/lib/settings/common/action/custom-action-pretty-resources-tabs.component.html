@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@
   <mat-tab label="{{ 'widget.resources' | translate }}" style="width: 100%; height: 100%;">
     <div class="tb-custom-action-editor-container" style="background-color: #fff;">
       <div class="mat-padding">
-        <div fxFlex fxLayout="row"
-             fxLayoutAlign="start center"
+        <div class="flex flex-1 flex-row items-center justify-start"
              *ngFor="let resource of action.customResources; let i = index" style="padding-top: 10px;">
-          <tb-resource-autocomplete fxFlex class="mat-block"
+          <tb-resource-autocomplete class="mat-block flex-1"
                                     subscriptSizing="dynamic"
                                     hideRequiredMarker required
                                     [allowAutocomplete]="resource.isModule"
@@ -32,7 +31,7 @@
           </tb-resource-autocomplete>
           <mat-checkbox [(ngModel)]="resource.isModule"
                         (ngModelChange)="notifyActionUpdated()">
-            {{ 'widget.resource-is-module' | translate }}
+            {{ 'widget.resource-is-extension' | translate }}
           </mat-checkbox>
           <button mat-icon-button color="primary"
                   [disabled]="isLoading$ | async"
@@ -96,12 +95,14 @@
     <tb-js-func
       [(ngModel)]="action.customFunction"
       (ngModelChange)="notifyActionUpdated()"
+      withModules
       [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
       [disableUndefinedCheck]="true"
       [validationArgs]="[]"
       [editorCompleter]="customPrettyActionEditorCompleter"
       functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}"
-      helpId="widget/action/custom_pretty_action_fn">
+      [helpId]="helpId"
+      [helpPopupStyle]="{width: '900px'}">
     </tb-js-func>
   </mat-tab>
 </mat-tab-group>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,11 @@ import java.util.List;
 @NoArgsConstructor
 public class AttributesEntityView implements Serializable {
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of client-side attribute keys to expose", example = "currentConfiguration")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of client-side attribute keys to expose", example = "[\"currentConfiguration\"]")
     private List<String> cs = new ArrayList<>();
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of server-side attribute keys to expose", example = "model")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of server-side attribute keys to expose", example = "[\"model\"]")
     private List<String> ss = new ArrayList<>();
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of shared attribute keys to expose", example = "targetConfiguration")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of shared attribute keys to expose", example = "[\"targetConfiguration\"]")
     private List<String> sh = new ArrayList<>();
 
     public AttributesEntityView(List<String> cs,

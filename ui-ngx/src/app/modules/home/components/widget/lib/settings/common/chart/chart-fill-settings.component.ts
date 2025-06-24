@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -30,6 +30,7 @@ import {
   chartFillTypes,
   chartFillTypeTranslations
 } from '@home/components/widget/lib/chart/chart.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-chart-fill-settings',
@@ -55,7 +56,7 @@ export class ChartFillSettingsComponent implements OnInit, ControlValueAccessor 
   disabled: boolean;
 
   @Input()
-  title = 'widgets.chart.fill';
+  titleText = 'widgets.chart.fill';
 
   @Input()
   fillNoneTitle = 'widgets.chart.fill-type-none';
@@ -67,7 +68,8 @@ export class ChartFillSettingsComponent implements OnInit, ControlValueAccessor 
   public fillSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -79,10 +81,14 @@ export class ChartFillSettingsComponent implements OnInit, ControlValueAccessor 
         end: [null, [Validators.min(0), Validators.max(100)]]
       })
     });
-    this.fillSettingsFormGroup.valueChanges.subscribe(() => {
+    this.fillSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.fillSettingsFormGroup.get('type').valueChanges.subscribe(() => {
+    this.fillSettingsFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
     for (const type of chartFillTypes) {

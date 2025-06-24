@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.boot.web.servlet.error.ErrorController;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -46,6 +48,7 @@ import org.springframework.web.util.WebUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
@@ -91,6 +94,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         errorCodeToStatusMap.put(ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS);
         errorCodeToStatusMap.put(ThingsboardErrorCode.TOO_MANY_UPDATES, HttpStatus.TOO_MANY_REQUESTS);
         errorCodeToStatusMap.put(ThingsboardErrorCode.SUBSCRIPTION_VIOLATION, HttpStatus.FORBIDDEN);
+        errorCodeToStatusMap.put(ThingsboardErrorCode.VERSION_CONFLICT, HttpStatus.CONFLICT);
     }
 
     private static ThingsboardErrorCode statusToErrorCode(HttpStatus status) {
@@ -137,6 +141,8 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                     ThingsboardException thingsboardException = (ThingsboardException) exception;
                     if (thingsboardException.getErrorCode() == ThingsboardErrorCode.SUBSCRIPTION_VIOLATION) {
                         handleSubscriptionException((ThingsboardException) exception, response);
+                    } else if (thingsboardException.getErrorCode() == ThingsboardErrorCode.DATABASE) {
+                        handleDatabaseException(thingsboardException.getCause(), response);
                     } else {
                         handleThingsboardException((ThingsboardException) exception, response);
                     }
@@ -146,6 +152,10 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                     handleAccessDeniedException(response);
                 } else if (exception instanceof AuthenticationException) {
                     handleAuthenticationException((AuthenticationException) exception, response);
+                } else if (exception instanceof MaxPayloadSizeExceededException) {
+                    handleMaxPayloadSizeExceededException(response, (MaxPayloadSizeExceededException) exception);
+                } else if (exception instanceof DataAccessException e) {
+                    handleDatabaseException(e, response);
                 } else {
                     response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
                     JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(exception.getMessage(),
@@ -184,10 +194,28 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                         ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS));
     }
 
+    private void handleMaxPayloadSizeExceededException(HttpServletResponse response, MaxPayloadSizeExceededException exception) throws IOException {
+        response.setStatus(HttpStatus.PAYLOAD_TOO_LARGE.value());
+        JacksonUtil.writeValue(response.getWriter(),
+                ThingsboardErrorResponse.of(exception.getMessage(),
+                        ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.PAYLOAD_TOO_LARGE));
+    }
+
     private void handleSubscriptionException(ThingsboardException subscriptionException, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         JacksonUtil.writeValue(response.getWriter(),
                 JacksonUtil.fromBytes(((HttpClientErrorException) subscriptionException.getCause()).getResponseBodyAsByteArray(), Object.class));
+    }
+
+    private void handleDatabaseException(Throwable databaseException, HttpServletResponse response) throws IOException {
+        ThingsboardErrorResponse errorResponse;
+        if (databaseException instanceof ConstraintViolationException) {
+            errorResponse = ThingsboardErrorResponse.of(ExceptionUtils.getRootCause(databaseException).getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.BAD_REQUEST);
+        } else {
+            log.warn("Database error: {} - {}", databaseException.getClass().getSimpleName(), ExceptionUtils.getRootCauseMessage(databaseException));
+            errorResponse = ThingsboardErrorResponse.of("Database error", ThingsboardErrorCode.DATABASE, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        writeResponse(errorResponse, response);
     }
 
     private void handleAccessDeniedException(HttpServletResponse response) throws IOException {
@@ -220,6 +248,13 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         } else {
             JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         }
+    }
+
+    // TODO: refactor this class to use this method instead of boilerplate JacksonUtil.writeValue(response.getWriter(), ...
+    private void writeResponse(ThingsboardErrorResponse errorResponse, HttpServletResponse response) throws IOException {
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setStatus(errorResponse.getStatus());
+        JacksonUtil.writeValue(response.getWriter(), errorResponse);
     }
 
 }

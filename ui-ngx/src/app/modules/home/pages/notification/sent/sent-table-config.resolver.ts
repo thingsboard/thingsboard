@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -45,11 +45,11 @@ import {
   NotificationRequestErrorDialogData,
   SentErrorDialogComponent
 } from '@home/pages/notification/sent/sent-error-dialog.component';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 
 @Injectable()
-export class SentTableConfigResolver implements Resolve<EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo>> {
+export class SentTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo> =
     new EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo>();

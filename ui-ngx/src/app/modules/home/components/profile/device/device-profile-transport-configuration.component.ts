@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -23,14 +23,13 @@ import {
   UntypedFormControl,
   UntypedFormGroup,
   ValidationErrors,
-  Validator,
-  Validators
+  Validator
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceProfileTransportConfiguration, DeviceTransportType } from '@shared/models/device.models';
 import { deepClone } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-device-profile-transport-configuration',
@@ -55,15 +54,6 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
 
   deviceProfileTransportConfigurationFormGroup: UntypedFormGroup;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
-
   @Input()
   disabled: boolean;
 
@@ -75,7 +65,8 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -87,9 +78,11 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
 
   ngOnInit() {
     this.deviceProfileTransportConfigurationFormGroup = this.fb.group({
-      configuration: [null, Validators.required]
+      configuration: [null]
     });
-    this.deviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.deviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }
@@ -110,7 +103,7 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
       delete configuration.type;
     }
     setTimeout(() => {
-      this.deviceProfileTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
+      this.deviceProfileTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: this.isAdd});
     }, 0);
   }
 

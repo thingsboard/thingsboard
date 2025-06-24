@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.mqtt;
 
+import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.credentials.AnonymousCredentials;
@@ -30,10 +31,10 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
     private String clientId;
     private boolean appendClientIdSuffix;
     private boolean retainedMessage;
-
     private boolean cleanSession;
     private boolean ssl;
     private boolean parseToPlainText;
+    private MqttVersion protocolVersion;
     private ClientCredentials credentials;
 
     @Override
@@ -46,6 +47,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
         configuration.setSsl(false);
         configuration.setRetainedMessage(false);
         configuration.setParseToPlainText(false);
+        configuration.setProtocolVersion(MqttVersion.MQTT_3_1_1);
         configuration.setCredentials(new AnonymousCredentials());
         return configuration;
     }

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2024 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,5 +17,12 @@
 
 set -e
 source compose-utils.sh
-checkFolders || exit $?
-echo "OK"
+if checkFolders "$@" ; then
+    echo "------"
+    echo "All checks have passed"
+else
+    CHECK_EXIT_CODE=$?
+    echo "------"
+    echo "Some checks did not pass - check the output"
+    exit $CHECK_EXIT_CODE
+fi

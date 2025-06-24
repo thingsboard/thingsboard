@@ -1,0 +1,269 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Vertical connector",
+  "description": "Vertical connector with an optional directional arrow to visually indicate flow.",
+  "widgetSizeX": 1,
+  "widgetSizeY": 1,
+  "stateRenderFunction": "const {\n    flowAnimation,\n    arrowDirection: flowDirection,\n    flowAnimationSpeed\n} = ctx.values;\nconst {\n    flowAnimationWidth: lineWidth,\n    flowAnimationColor: lineColor,\n    flowStyleDash: dashWidth,\n    flowStyleGap: dashGap,\n    flowDashCap: dashCap\n} = ctx.properties;\nconst line = ctx.tags.line[0].attr('d');\nconst lineReversed = 'M 100,0 V 200';\nconst animation = ctx.tags.animationGroup[0];\nconst duration = 1 / flowAnimationSpeed;\n\nlet animateFlow = ctx.api.connectorAnimation(animation);\n\nif (flowAnimation) {\n    if (!animateFlow) {\n        animateFlow = ctx.api.connectorAnimate(animation, line, lineReversed).flowAppearance(lineWidth, lineColor, dashCap, dashWidth, dashGap).duration(duration).direction(flowDirection).play();\n    } else {\n        animateFlow.duration(duration).direction(flowDirection).play();\n    }\n} else {\n    if (animateFlow) {\n        animateFlow.finish();\n    }\n}\n",
+  "tags": [
+    {
+      "tag": "arrow",
+      "stateRenderFunction": "var arrow = ctx.values.arrow;\nif (arrow) {\n    element.show();\n    element.stroke(ctx.properties.lineColor).fill(ctx.properties.lineColor);\n    var arrowDirection = ctx.values.arrowDirection;\n    var direticon = element.remember('direticon');\n    var angle = arrowDirection ? 0 : 180;\n    if (!direticon) {\n        element.transform({rotate: angle});\n    } else {\n        ctx.api.transform({rotate: angle, originY: 100});\n        element.remember('direticon', false);\n    }\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "line",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nelement.attr({'stroke-width': ctx.properties.mainLineSize});",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "arrow",
+      "name": "{i18n:scada.symbol.arrow-presence}",
+      "hint": "{i18n:scada.symbol.arrow-presence-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": "{i18n:scada.symbol.present}",
+      "falseLabel": "{i18n:scada.symbol.absent}",
+      "stateLabel": "{i18n:scada.symbol.arrow-present}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": true,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "flowAnimation",
+      "name": "{i18n:scada.symbol.flow-animation}",
+      "hint": "{i18n:scada.symbol.flow-animation-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": "{i18n:scada.symbol.present}",
+      "falseLabel": "{i18n:scada.symbol.absent}",
+      "stateLabel": "{i18n:scada.symbol.flow-present}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "arrowDirection",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": "{i18n:scada.symbol.forward}",
+      "falseLabel": "{i18n:scada.symbol.reverse}",
+      "stateLabel": "{i18n:scada.symbol.forward}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": true,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "flowAnimationSpeed",
+      "name": "{i18n:scada.symbol.flow-animation-speed}",
+      "hint": "{i18n:scada.symbol.flow-animation-speed-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": 1,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    }
+  ],
+  "properties": [
+    {
+      "id": "mainLineSize",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "number",
+      "default": 6,
+      "required": true,
+      "divider": false,
+      "fieldSuffix": "px",
+      "min": 0,
+      "max": 99,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "lineColor",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "color",
+      "default": "#1A1A1A",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "flowAnimationWidth",
+      "name": "{i18n:scada.symbol.flow-line}",
+      "group": "{i18n:scada.symbol.flow}",
+      "type": "number",
+      "default": 4,
+      "divider": false,
+      "fieldSuffix": "px",
+      "min": 1,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "flowAnimationColor",
+      "name": "{i18n:scada.symbol.flow-line}",
+      "group": "{i18n:scada.symbol.flow}",
+      "type": "color",
+      "default": "#C8DFF7",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "flowStyleDash",
+      "name": "{i18n:scada.symbol.flow-line-style}",
+      "hint": "{i18n:scada.symbol.flow-style-hint}",
+      "group": "{i18n:scada.symbol.flow}",
+      "type": "number",
+      "default": 10,
+      "required": true,
+      "subLabel": "{i18n:scada.symbol.dash}",
+      "divider": false,
+      "fieldSuffix": "px",
+      "min": 0,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "flowStyleGap",
+      "name": "{i18n:scada.symbol.flow-line-style}",
+      "hint": "{i18n:scada.symbol.flow-style-hint}",
+      "group": "{i18n:scada.symbol.flow}",
+      "type": "number",
+      "default": 10,
+      "subLabel": "{i18n:scada.symbol.gap}",
+      "fieldSuffix": "px",
+      "min": 0,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "flowDashCap",
+      "name": "{i18n:scada.symbol.flow-dash-cap}",
+      "group": "{i18n:scada.symbol.flow}",
+      "type": "select",
+      "default": "butt",
+      "items": [
+        {
+          "value": "butt",
+          "label": "{i18n:scada.symbol.dash-cap-butt}"
+        },
+        {
+          "value": "round",
+          "label": "{i18n:scada.symbol.dash-cap-round}"
+        },
+        {
+          "value": "square",
+          "label": "{i18n:scada.symbol.dash-cap-square}"
+        }
+      ],
+      "disabled": false,
+      "visible": true
+    }
+  ]
+}]]></tb:metadata>
+<path d="M 100,200 V 0" stroke="#1A1A1A" stroke-width="6" tb:tag="line"/><path d="M100 71L129 129H71L100 71Z" fill="#1A1A1A" tb:tag="arrow"/><g tb:tag="animationGroup"/>
+</svg>

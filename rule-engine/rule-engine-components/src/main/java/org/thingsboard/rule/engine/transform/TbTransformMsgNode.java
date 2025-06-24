@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import java.util.List;
                 "<code>{ msg: <i style=\"color: #666;\">new payload</i>,<br/>&nbsp&nbsp&nbspmetadata: <i style=\"color: #666;\">new metadata</i>,<br/>&nbsp&nbsp&nbspmsgType: <i style=\"color: #666;\">new msgType</i> }</code><br/>" +
                 "All fields in resulting object are optional and will be taken from original message if not specified.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeScriptConfig"
 )
 public class TbTransformMsgNode extends TbAbstractTransformNode<TbTransformMsgNodeConfiguration> {
@@ -58,13 +57,11 @@ public class TbTransformMsgNode extends TbAbstractTransformNode<TbTransformMsgNo
 
     @Override
     protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
-        ctx.logJsEvalRequest();
         return scriptEngine.executeUpdateAsync(msg);
     }
 
     @Override
     protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {
-        ctx.logJsEvalFailure();
         super.transformFailure(ctx, msg, t);
     }
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2024 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,20 +42,8 @@ function additionalComposeQueueArgs() {
         confluent)
         ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.confluent.yml"
         ;;
-        aws-sqs)
-        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.aws-sqs.yml"
-        ;;
-        pubsub)
-        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.pubsub.yml"
-        ;;
-        rabbitmq)
-        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.rabbitmq.yml"
-        ;;
-        service-bus)
-        ADDITIONAL_COMPOSE_QUEUE_ARGS="-f docker-compose.service-bus.yml"
-        ;;
         *)
-        echo "Unknown Queue service TB_QUEUE_TYPE value specified in the .env file: '${TB_QUEUE_TYPE}'. Should be either 'kafka' or 'confluent' or 'aws-sqs' or 'pubsub' or 'rabbitmq' or 'service-bus'." >&2
+        echo "Unknown Queue service TB_QUEUE_TYPE value specified in the .env file: '${TB_QUEUE_TYPE}'. Should be either 'kafka' or 'confluent'." >&2
         exit 1
     esac
     echo $ADDITIONAL_COMPOSE_QUEUE_ARGS
@@ -76,19 +64,19 @@ function additionalComposeMonitoringArgs() {
 function additionalComposeCacheArgs() {
     source .env
     CACHE_COMPOSE_ARGS=""
-    CACHE="${CACHE:-redis}"
+    CACHE="${CACHE:-valkey}"
     case $CACHE in
-        redis)
-        CACHE_COMPOSE_ARGS="-f docker-compose.redis.yml"
+        valkey)
+        CACHE_COMPOSE_ARGS="-f docker-compose.valkey.yml"
         ;;
-        redis-cluster)
-        CACHE_COMPOSE_ARGS="-f docker-compose.redis-cluster.yml"
+        valkey-cluster)
+        CACHE_COMPOSE_ARGS="-f docker-compose.valkey-cluster.yml"
         ;;
-        redis-sentinel)
-        CACHE_COMPOSE_ARGS="-f docker-compose.redis-sentinel.yml"
+        valkey-sentinel)
+        CACHE_COMPOSE_ARGS="-f docker-compose.valkey-sentinel.yml"
         ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'valkey' or 'valkey-cluster' or 'valkey-sentinel'." >&2
         exit 1
     esac
     echo $CACHE_COMPOSE_ARGS
@@ -109,29 +97,40 @@ function additionalStartupServices() {
         exit 1
     esac
 
-    CACHE="${CACHE:-redis}"
+    CACHE="${CACHE:-valkey}"
     case $CACHE in
-        redis)
-        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis"
+        valkey)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES valkey"
         ;;
-        redis-cluster)
-        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5"
+        valkey-cluster)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES valkey-node-0 valkey-node-1 valkey-node-2 valkey-node-3 valkey-node-4 valkey-node-5"
         ;;
-        redis-sentinel)
-        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES redis-master redis-slave redis-sentinel"
+        valkey-sentinel)
+        ADDITIONAL_STARTUP_SERVICES="$ADDITIONAL_STARTUP_SERVICES valkey-primary valkey-replica valkey-sentinel"
         ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'valkey' or 'valkey-cluster' or 'valkey-sentinel'." >&2
         exit 1
     esac
 
     echo $ADDITIONAL_STARTUP_SERVICES
 }
 
+function additionalComposeEdqsArgs() {
+    source .env
+
+    if [ "$EDQS_ENABLED" = true ]
+    then
+      ADDITIONAL_COMPOSE_EDQS_ARGS="-f docker-compose.edqs.yml"
+      echo $ADDITIONAL_COMPOSE_EDQS_ARGS
+    else
+      echo ""
+    fi
+}
+
 function permissionList() {
     PERMISSION_LIST="
       799  799  tb-node/log
-      799  799  tb-transports/coap/log
       799  799  tb-transports/lwm2m/log
       799  799  tb-transports/http/log
       799  799  tb-transports/mqtt/log
@@ -149,32 +148,38 @@ function permissionList() {
       "
     fi
 
-    CACHE="${CACHE:-redis}"
+    if [ "$EDQS_ENABLED" = true ]; then
+      PERMISSION_LIST="$PERMISSION_LIST
+      799  799  edqs/log
+      "
+    fi
+
+    CACHE="${CACHE:-valkey}"
     case $CACHE in
-        redis)
+        valkey)
           PERMISSION_LIST="$PERMISSION_LIST
-          1001 1001 tb-node/redis-data
+          1001 1001 tb-node/valkey-data
           "
         ;;
-        redis-cluster)
+        valkey-cluster)
           PERMISSION_LIST="$PERMISSION_LIST
-          1001 1001 tb-node/redis-cluster-data-0
-          1001 1001 tb-node/redis-cluster-data-1
-          1001 1001 tb-node/redis-cluster-data-2
-          1001 1001 tb-node/redis-cluster-data-3
-          1001 1001 tb-node/redis-cluster-data-4
-          1001 1001 tb-node/redis-cluster-data-5
+          1001 1001 tb-node/valkey-cluster-data-0
+          1001 1001 tb-node/valkey-cluster-data-1
+          1001 1001 tb-node/valkey-cluster-data-2
+          1001 1001 tb-node/valkey-cluster-data-3
+          1001 1001 tb-node/valkey-cluster-data-4
+          1001 1001 tb-node/valkey-cluster-data-5
           "
         ;;
-        redis-sentinel)
+        valkey-sentinel)
           PERMISSION_LIST="$PERMISSION_LIST
-          1001 1001 tb-node/redis-sentinel-data-master
-          1001 1001 tb-node/redis-sentinel-data-slave
-          1001 1001 tb-node/redis-sentinel-data-sentinel
+          1001 1001 tb-node/valkey-sentinel-data-primary
+          1001 1001 tb-node/valkey-sentinel-data-replica
+          1001 1001 tb-node/valkey-sentinel-data-sentinel
           "
         ;;
         *)
-        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'redis' or 'redis-cluster' or 'redis-sentinel'." >&2
+        echo "Unknown CACHE value specified in the .env file: '${CACHE}'. Should be either 'valkey' or 'valkey-cluster' or 'valkey-sentinel'." >&2
         exit 1
     esac
 
@@ -182,29 +187,77 @@ function permissionList() {
 }
 
 function checkFolders() {
+  CREATE=false
+  SKIP_CHOWN=false
+  for i in "$@"
+    do
+      case $i in
+          --create)
+          CREATE=true
+          shift
+          ;;
+          --skipChown)
+          SKIP_CHOWN=true
+          shift
+          ;;
+          *)
+                  # unknown option
+          ;;
+      esac
+    done
   EXIT_CODE=0
   PERMISSION_LIST=$(permissionList) || exit $?
   set -e
   while read -r USR GRP DIR
   do
-    if [ -z "$DIR" ]; then # skip empty lines
+    IS_EXIST_CHECK_PASSED=false
+    IS_OWNER_CHECK_PASSED=false
+
+    # skip empty lines
+    if [ -z "$DIR" ]; then
           continue
     fi
-    MESSAGE="Checking user ${USR} group ${GRP} dir ${DIR}"
-    if [[ -d "$DIR" ]] &&
-       [[ $(ls -ldn "$DIR" | awk '{print $3}') -eq "$USR" ]] &&
-       [[ $(ls -ldn "$DIR" | awk '{print $4}') -eq "$GRP" ]]
-    then
-      MESSAGE="$MESSAGE OK"
+
+    # checks section
+    echo "Checking if dir ${DIR} exists..."
+    if [[ -d "$DIR" ]]; then
+      echo "> OK"
+      IS_EXIST_CHECK_PASSED=true
+      if [ "$SKIP_CHOWN" = false ]; then
+        echo "Checking user ${USR} group ${GRP} ownership for dir ${DIR}..."
+        if [[ $(ls -ldn "$DIR" | awk '{print $3}') -eq "$USR" ]] && [[ $(ls -ldn "$DIR" | awk '{print $4}') -eq "$GRP" ]]; then
+          echo "> OK"
+          IS_OWNER_CHECK_PASSED=true
+        else
+          echo "...ownership check failed"
+          if [ "$CREATE" = false ]; then
+            EXIT_CODE=1
+          fi
+        fi
+      fi
     else
-      if [ "$1" = "--create" ]; then
-        echo "Create and chown: user ${USR} group ${GRP} dir ${DIR}"
-        mkdir -p "$DIR" && sudo chown -R "$USR":"$GRP" "$DIR"
-      else
-        echo "$MESSAGE FAILED"
+      echo "...does not exist"
+      if [ "$CREATE" = false ]; then
         EXIT_CODE=1
       fi
     fi
+
+    # create/chown section
+    if [ "$CREATE" = true ]; then
+      if [ "$IS_EXIST_CHECK_PASSED" = false ]; then
+        echo "...will create dir ${DIR}"
+        if [ "$SKIP_CHOWN" = false ]; then
+        echo "...will change ownership to user ${USR} group ${GRP} for dir ${DIR}"
+          mkdir -p "$DIR" && sudo chown -R "$USR":"$GRP" "$DIR" && echo "> OK"
+        else
+          mkdir -p "$DIR" && echo "> OK"
+        fi
+      elif [ "$IS_OWNER_CHECK_PASSED" = false ] && [ "$SKIP_CHOWN" = false ]; then
+        echo "...will change ownership to user ${USR} group ${GRP} for dir ${DIR}"
+        sudo chown -R "$USR":"$GRP" "$DIR" && echo "> OK"
+      fi
+    fi
+
   done < <(echo "$PERMISSION_LIST")
   return $EXIT_CODE
 }

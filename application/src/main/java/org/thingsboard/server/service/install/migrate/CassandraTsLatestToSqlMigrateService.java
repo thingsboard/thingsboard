@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
-import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sqlts.dictionary.KeyDictionaryRepository;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;

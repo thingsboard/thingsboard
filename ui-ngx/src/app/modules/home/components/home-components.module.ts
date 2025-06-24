@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -114,6 +114,9 @@ import { EditWidgetComponent } from '@home/components/dashboard-page/edit-widget
 import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
 import { AddWidgetDialogComponent } from '@home/components/dashboard-page/add-widget-dialog.component';
 import { ManageDashboardLayoutsDialogComponent } from '@home/components/dashboard-page/layout/manage-dashboard-layouts-dialog.component';
+import {
+  AddNewBreakpointDialogComponent
+} from '@home/components/dashboard-page/layout/add-new-breakpoint-dialog.component';
 import { DashboardSettingsDialogComponent } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
 import { ManageDashboardStatesDialogComponent } from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component';
 import { DashboardStateDialogComponent } from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
@@ -124,7 +127,10 @@ import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-dow
 import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
 import { AlarmDurationPredicateValueComponent } from '@home/components/profile/alarm/alarm-duration-predicate-value.component';
 import { DashboardImageDialogComponent } from '@home/components/dashboard-page/dashboard-image-dialog.component';
-import { WidgetContainerComponent } from '@home/components/widget/widget-container.component';
+import {
+  EditWidgetActionsTooltipComponent,
+  WidgetContainerComponent
+} from '@home/components/widget/widget-container.component';
 import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snmp/snmp-device-profile-transport.module';
 import { DeviceCredentialsModule } from '@home/components/device/device-credentials.module';
 import { DeviceProfileCommonModule } from '@home/components/profile/device/common/device-profile-common.module';
@@ -171,6 +177,32 @@ import {
 import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
 import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delete-timeseries-panel.component';
+import { MoveWidgetsDialogComponent } from '@home/components/dashboard-page/layout/move-widgets-dialog.component';
+import {
+  SelectDashboardBreakpointComponent
+} from '@home/components/dashboard-page/layout/select-dashboard-breakpoint.component';
+import { EntityChipsComponent } from '@home/components/entity/entity-chips.component';
+import { DashboardViewComponent } from '@home/components/dashboard-view/dashboard-view.component';
+import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
+import { CalculatedFieldDialogComponent } from '@home/components/calculated-fields/components/dialog/calculated-field-dialog.component';
+import {
+  EntityDebugSettingsButtonComponent
+} from '@home/components/entity/debug/entity-debug-settings-button.component';
+import {
+  CalculatedFieldArgumentsTableComponent
+} from '@home/components/calculated-fields/components/arguments-table/calculated-field-arguments-table.component';
+import {
+  CalculatedFieldArgumentPanelComponent
+} from '@home/components/calculated-fields/components/panel/calculated-field-argument-panel.component';
+import {
+  CalculatedFieldDebugDialogComponent
+} from '@home/components/calculated-fields/components/debug-dialog/calculated-field-debug-dialog.component';
+import {
+  CalculatedFieldScriptTestDialogComponent
+} from '@home/components/calculated-fields/components/test-dialog/calculated-field-script-test-dialog.component';
+import {
+  CalculatedFieldTestArgumentsComponent
+} from '@home/components/calculated-fields/components/test-arguments/calculated-field-test-arguments.component';
 
 @NgModule({
   declarations:
@@ -207,6 +239,7 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
       EntityAliasDialogComponent,
       DashboardComponent,
       WidgetContainerComponent,
+      EditWidgetActionsTooltipComponent,
       WidgetComponent,
       WidgetConfigComponent,
       WidgetPreviewComponent,
@@ -280,10 +313,13 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
       DashboardPageComponent,
       DashboardStateComponent,
       DashboardLayoutComponent,
+      SelectDashboardBreakpointComponent,
       EditWidgetComponent,
       DashboardWidgetSelectComponent,
       AddWidgetDialogComponent,
+      MoveWidgetsDialogComponent,
       ManageDashboardLayoutsDialogComponent,
+      AddNewBreakpointDialogComponent,
       DashboardSettingsDialogComponent,
       ManageDashboardStatesDialogComponent,
       DashboardStateDialogComponent,
@@ -308,7 +344,16 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
       RateLimitsComponent,
       RateLimitsTextComponent,
       RateLimitsDetailsDialogComponent,
-      SendNotificationButtonComponent
+      SendNotificationButtonComponent,
+      EntityChipsComponent,
+      DashboardViewComponent,
+      CalculatedFieldsTableComponent,
+      CalculatedFieldDialogComponent,
+      CalculatedFieldArgumentsTableComponent,
+      CalculatedFieldArgumentPanelComponent,
+      CalculatedFieldDebugDialogComponent,
+      CalculatedFieldScriptTestDialogComponent,
+      CalculatedFieldTestArgumentsComponent,
     ],
   imports: [
     CommonModule,
@@ -320,7 +365,8 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
     DeviceCredentialsModule,
-    DeviceProfileCommonModule
+    DeviceProfileCommonModule,
+    EntityDebugSettingsButtonComponent
   ],
   exports: [
     RouterTabsComponent,
@@ -345,6 +391,7 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
     EntityAliasDialogComponent,
     DashboardComponent,
     WidgetContainerComponent,
+    EditWidgetActionsTooltipComponent,
     WidgetComponent,
     WidgetConfigComponent,
     WidgetPreviewComponent,
@@ -411,10 +458,13 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
     DashboardPageComponent,
     DashboardStateComponent,
     DashboardLayoutComponent,
+    SelectDashboardBreakpointComponent,
     EditWidgetComponent,
     DashboardWidgetSelectComponent,
     AddWidgetDialogComponent,
+    MoveWidgetsDialogComponent,
     ManageDashboardLayoutsDialogComponent,
+    AddNewBreakpointDialogComponent,
     DashboardSettingsDialogComponent,
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent,
@@ -439,7 +489,16 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
     RateLimitsComponent,
     RateLimitsTextComponent,
     RateLimitsDetailsDialogComponent,
-    SendNotificationButtonComponent
+    SendNotificationButtonComponent,
+    EntityChipsComponent,
+    DashboardViewComponent,
+    CalculatedFieldsTableComponent,
+    CalculatedFieldDialogComponent,
+    CalculatedFieldArgumentsTableComponent,
+    CalculatedFieldArgumentPanelComponent,
+    CalculatedFieldDebugDialogComponent,
+    CalculatedFieldScriptTestDialogComponent,
+    CalculatedFieldTestArgumentsComponent,
   ],
   providers: [
     WidgetComponentService,

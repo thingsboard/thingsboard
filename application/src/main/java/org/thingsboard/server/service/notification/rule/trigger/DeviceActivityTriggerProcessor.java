@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.DeviceActivityNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
-import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 @Service

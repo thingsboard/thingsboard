@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,106 +15,72 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.Valid;
+import lombok.Data;
 
-import java.util.Objects;
 import java.util.Optional;
 
+@Data
 public class BasicTsKvEntry implements TsKvEntry {
     private static final int MAX_CHARS_PER_DATA_POINT = 512;
     protected final long ts;
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
-    @JsonIgnoreProperties(ignoreUnknown = true)
     @Valid
     private final KvEntry kv;
 
-    @JsonCreator
-    public BasicTsKvEntry(@JsonProperty("ts") long ts, @JsonProperty("kv") KvEntry kv) {
+    private final Long version;
+
+    public BasicTsKvEntry(long ts, KvEntry kv) {
         this.ts = ts;
         this.kv = kv;
+        this.version = null;
     }
 
-    @JsonIgnore
+    public BasicTsKvEntry(long ts, KvEntry kv, Long version) {
+        this.ts = ts;
+        this.kv = kv;
+        this.version = version;
+    }
+
     @Override
     public String getKey() {
         return kv.getKey();
     }
 
-    @JsonIgnore
     @Override
     public DataType getDataType() {
         return kv.getDataType();
     }
 
-    @JsonIgnore
     @Override
     public Optional<String> getStrValue() {
         return kv.getStrValue();
     }
 
-    @JsonIgnore
     @Override
     public Optional<Long> getLongValue() {
         return kv.getLongValue();
     }
 
-    @JsonIgnore
     @Override
     public Optional<Boolean> getBooleanValue() {
         return kv.getBooleanValue();
     }
 
-    @JsonIgnore
     @Override
     public Optional<Double> getDoubleValue() {
         return kv.getDoubleValue();
     }
 
-    @JsonIgnore
     @Override
     public Optional<String> getJsonValue() {
         return kv.getJsonValue();
     }
 
-    @JsonIgnore
     @Override
     public Object getValue() {
         return kv.getValue();
     }
 
-    @Override
-    public long getTs() {
-        return ts;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BasicTsKvEntry)) return false;
-        BasicTsKvEntry that = (BasicTsKvEntry) o;
-        return getTs() == that.getTs() &&
-                Objects.equals(kv, that.kv);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getTs(), kv);
-    }
-
-    @Override
-    public String toString() {
-        return "BasicTsKvEntry{" +
-                "ts=" + ts +
-                ", kv=" + kv +
-                '}';
-    }
-
-    @JsonIgnore
     @Override
     public String getValueAsString() {
         return kv.getValueAsString();

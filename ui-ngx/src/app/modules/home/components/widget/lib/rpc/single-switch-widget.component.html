@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div #singleSwitchPanel class="tb-single-switch-panel" [class.auto-scale]="autoScale" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'" [style]="backgroundStyle$ | async">
+<div #singleSwitchPanel class="tb-single-switch-panel" [class.auto-scale]="autoScale" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-single-switch-overlay" [style]="overlayStyle" [style.inset]="overlayInset"></div>
   <div class="tb-single-switch-title-panel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>

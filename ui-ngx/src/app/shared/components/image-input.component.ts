@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,6 +54,9 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 export class ImageInputComponent extends PageComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
 
   @Input()
+  accept = 'image/*';
+
+  @Input()
   label: string;
 
   @Input()
@@ -84,6 +87,9 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
 
   @Input()
   inputId = this.utils.guid();
+
+  @Input()
+  allowedExtensions: string;
 
   @Input()
   @coerceBoolean()
@@ -141,17 +147,19 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
           );
           return false;
         }
-        const reader = new FileReader();
-        reader.onload = (_loadEvent) => {
-          if (typeof reader.result === 'string' && reader.result.startsWith('data:image/')) {
-            this.imageUrl = reader.result;
-            this.safeImageUrl = this.sanitizer.bypassSecurityTrustUrl(this.imageUrl);
-            this.file = file;
-            this.fileName = fileName;
-            this.updateModel();
-          }
-        };
-        reader.readAsDataURL(file);
+        if (this.filterFile(flowFile)) {
+          const reader = new FileReader();
+          reader.onload = (_loadEvent) => {
+            if (typeof reader.result === 'string' && reader.result.startsWith('data:image/')) {
+              this.imageUrl = reader.result;
+              this.safeImageUrl = this.sanitizer.bypassSecurityTrustUrl(this.imageUrl);
+              this.file = file;
+              this.fileName = fileName;
+              this.updateModel();
+            }
+          };
+          reader.readAsDataURL(file);
+        }
       }
     });
   }
@@ -196,6 +204,14 @@ export class ImageInputComponent extends PageComponent implements AfterViewInit,
       this.propagateChange(this.imageUrl);
     }
     this.fileNameChanged.emit(this.fileName);
+  }
+
+  private filterFile(file: flowjs.FlowFile): boolean {
+    if (this.allowedExtensions) {
+      return this.allowedExtensions.split(',').indexOf(file.getExtension()) > -1;
+    } else {
+      return true;
+    }
   }
 
   clearImage() {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import {
   AfterViewInit, ChangeDetectorRef,
   Component,
-  Input,
+  Input, NgZone,
   OnChanges, OnDestroy,
   OnInit,
   Renderer2,
@@ -34,7 +34,6 @@ import {
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { isObject } from '@app/core/utils';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { ResizeObserver } from '@juggle/resize-observer';
 
 export type ItemSizeFunction = (itemWidth: number) => number;
 
@@ -91,7 +90,8 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
 
   constructor(private breakpointObserver: BreakpointObserver,
               private cd: ChangeDetectorRef,
-              private renderer: Renderer2) {
+              private renderer: Renderer2,
+              private zone: NgZone) {
   }
 
   ngOnInit(): void {
@@ -110,7 +110,9 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
     this.renderer.setStyle(this.viewport._contentWrapper.nativeElement, 'padding', this.gap + 'px');
     if (!(typeof this.itemSize === 'number')) {
       this.contentResize$ = new ResizeObserver(() => {
-        this.onContentResize();
+        this.zone.run(() => {
+          this.onContentResize();
+        });
       });
       this.contentResize$.observe(this.viewport._contentWrapper.nativeElement);
     }

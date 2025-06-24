@@ -1,0 +1,215 @@
+#
+# Copyright © 2016-2025 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+server:
+  # Server bind-address
+  address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
+  # Server bind port
+  port: "${HTTP_BIND_PORT:8080}"
+
+# Application info parameters
+app:
+  # Application version
+  version: "@project.version@"
+
+# Zookeeper connection parameters
+zk:
+  # Enable/disable zookeeper discovery service.
+  enabled: "${ZOOKEEPER_ENABLED:true}"
+  # Zookeeper connect string
+  url: "${ZOOKEEPER_URL:localhost:2181}"
+  # Zookeeper retry interval in milliseconds
+  retry_interval_ms: "${ZOOKEEPER_RETRY_INTERVAL_MS:3000}"
+  # Zookeeper connection timeout in milliseconds
+  connection_timeout_ms: "${ZOOKEEPER_CONNECTION_TIMEOUT_MS:3000}"
+  # Zookeeper session timeout in milliseconds
+  session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
+  # Name of the directory in zookeeper 'filesystem'
+  zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
+  # The recalculate_delay property is recommended in a microservices architecture setup for rule-engine services.
+  # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
+  # The delay is recommended because the initialization of rule chain actors is time-consuming. Avoiding unnecessary recalculations during a restart can enhance system performance and stability.
+  recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
+
+spring:
+  main:
+    allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
+
+# Queue configuration parameters
+queue:
+  type: "${TB_QUEUE_TYPE:kafka}" # kafka (Apache Kafka)
+  prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka).
+  edqs:
+    # Number of partitions for EDQS topics
+    partitions: "${TB_EDQS_PARTITIONS:12}"
+    # EDQS partitioning strategy: tenant (partitions are resolved and distributed by tenant id) or none (partitions are resolved by message key; each instance has all the partitions)
+    partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}"
+    # EDQS events topic
+    events_topic: "${TB_EDQS_EVENTS_TOPIC:edqs.events}"
+    # EDQS state topic
+    state_topic: "${TB_EDQS_STATE_TOPIC:edqs.state}"
+    # EDQS requests topic
+    requests_topic: "${TB_EDQS_REQUESTS_TOPIC:edqs.requests}"
+    # EDQS responses topic
+    responses_topic: "${TB_EDQS_RESPONSES_TOPIC:edqs.responses}"
+    # Poll interval for EDQS topics
+    poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:25}"
+    # Maximum amount of pending requests to EDQS
+    max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
+    # Maximum timeout for requests to EDQS
+    max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:20000}"
+    # Thread pool size for EDQS requests executor
+    request_executor_size: "${TB_EDQS_REQUEST_EXECUTOR_SIZE:50}"
+    # Time to live for EDQS versions cache in minutes. Must be bigger than the time taken for the sync process.
+    versions_cache_ttl: "${TB_EDQS_VERSIONS_CACHE_TTL_MINUTES:60}"
+    # Strings longer than this threshold will be compressed
+    string_compression_length_threshold: "${TB_EDQS_STRING_COMPRESSION_LENGTH_THRESHOLD:512}"
+    stats:
+      # Enable/disable statistics for EDQS
+      enabled: "${TB_EDQS_STATS_ENABLED:true}"
+      # Threshold for slow queries to log, in milliseconds
+      slow_query_threshold: "${TB_EDQS_SLOW_QUERY_THRESHOLD_MS:200}"
+
+  kafka:
+    # Kafka Bootstrap nodes in "host:port" format
+    bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
+    ssl:
+      # Enable/Disable SSL Kafka communication
+      enabled: "${TB_KAFKA_SSL_ENABLED:false}"
+      # The location of the trust store file
+      truststore.location: "${TB_KAFKA_SSL_TRUSTSTORE_LOCATION:}"
+      # The password of trust store file if specified
+      truststore.password: "${TB_KAFKA_SSL_TRUSTSTORE_PASSWORD:}"
+      # The location of the key store file. This is optional for the client and can be used for two-way authentication for the client
+      keystore.location: "${TB_KAFKA_SSL_KEYSTORE_LOCATION:}"
+      # The store password for the key store file. This is optional for the client and only needed if ‘ssl.keystore.location’ is configured. Key store password is not supported for PEM format
+      keystore.password: "${TB_KAFKA_SSL_KEYSTORE_PASSWORD:}"
+      # The password of the private key in the key store file or the PEM key specified in ‘keystore.key’
+      key.password: "${TB_KAFKA_SSL_KEY_PASSWORD:}"
+    # The number of acknowledgments the producer requires the leader to have received before considering a request complete. This controls the durability of records that are sent. The following settings are allowed:0, 1 and all
+    acks: "${TB_KAFKA_ACKS:all}"
+    # Number of retries. Resend any record whose send fails with a potentially transient error
+    retries: "${TB_KAFKA_RETRIES:1}"
+    # The compression type for all data generated by the producer. The default is none (i.e. no compression). Valid values none or gzip
+    compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip
+    # Default batch size. This setting gives the upper bound of the batch size to be sent
+    batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
+    # This variable creates a small amount of artificial delay—that is, rather than immediately sending out a record
+    linger.ms: "${TB_KAFKA_LINGER_MS:1}"
+    # The maximum size of a request in bytes. This setting will limit the number of record batches the producer will send in a single request to avoid sending huge requests
+    max.request.size: "${TB_KAFKA_MAX_REQUEST_SIZE:1048576}"
+    # The maximum number of unacknowledged requests the client will send on a single connection before blocking
+    max.in.flight.requests.per.connection: "${TB_KAFKA_MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION:5}"
+    # The total bytes of memory the producer can use to buffer records waiting to be sent to the server
+    buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
+    # The multiple copies of data over the multiple brokers of Kafka
+    replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
+    # The maximum delay between invocations of poll() method when using consumer group management. This places an upper bound on the amount of time that the consumer can be idle before fetching more records
+    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:300000}"
+    # The maximum number of records returned in a single call of poll() method
+    max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
+    # The maximum amount of data per-partition the server will return. Records are fetched in batches by the consumer
+    max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
+    # The maximum amount of data the server will return. Records are fetched in batches by the consumer
+    fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
+    request.timeout.ms: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
+    session.timeout.ms: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+    auto_offset_reset: "${TB_QUEUE_KAFKA_AUTO_OFFSET_RESET:earliest}" # earliest, latest or none
+    # Enable/Disable using of Confluent Cloud
+    use_confluent_cloud: "${TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD:false}"
+    confluent:
+      # The endpoint identification algorithm used by clients to validate server hostname. The default value is https
+      ssl.algorithm: "${TB_QUEUE_KAFKA_CONFLUENT_SSL_ALGORITHM:https}"
+      # The mechanism used to authenticate Schema Registry requests. SASL/PLAIN should only be used with TLS/SSL as a transport layer to ensure that clear passwords are not transmitted on the wire without encryption
+      sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
+      # Using JAAS Configuration for specifying multiple SASL mechanisms on a broker
+      sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
+      # Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
+      security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
+    # Key-value properties for Kafka consumer per specific topic, e.g. tb_ota_package is a topic name for ota, tb_rule_engine.sq is a topic name for default SequentialByOriginator queue.
+    # Check TB_QUEUE_CORE_OTA_TOPIC and TB_QUEUE_RE_SQ_TOPIC params
+    consumer-properties-per-topic:
+      edqs.events:
+        # Key-value properties for Kafka consumer for edqs.events topic
+        - key: max.poll.records
+          # Max poll records for edqs.events topic
+          value: "${TB_QUEUE_KAFKA_EDQS_EVENTS_MAX_POLL_RECORDS:512}"
+      edqs.state:
+        # Key-value properties for Kafka consumer for edqs.state topic
+        - key: max.poll.records
+          # Max poll records for edqs.state topic
+          value: "${TB_QUEUE_KAFKA_EDQS_STATE_MAX_POLL_RECORDS:512}"
+    # If you override any default Kafka topic name using environment variables, you must also specify the related consumer properties
+    # for the new topic in `consumer-properties-per-topic-inline`. Otherwise, the topic will not inherit its expected configuration (e.g., max.poll.records, timeouts, etc).
+    # Format: "topic1:key1=value1,key2=value2;topic2:key=value"
+    # Example: "tb_core_modified.notifications:max.poll.records=10;tb_edge_modified:max.poll.records=10,enable.auto.commit=true"
+    consumer-properties-per-topic-inline: "${TB_QUEUE_KAFKA_CONSUMER_PROPERTIES_PER_TOPIC_INLINE:}"
+    other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
+    other: # DEPRECATED. In this section, you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
+    #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
+    #    value: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds)
+    #  - key: "session.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+    #    value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
+    topic-properties:
+      # Kafka properties for EDQS events topics
+      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:86400000;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for EDQS requests topic (default: 3 minutes retention)
+      edqs-requests: "${TB_QUEUE_KAFKA_EDQS_REQUESTS_TOPIC_PROPERTIES:retention.ms:180000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for EDQS state topic (infinite retention, compaction)
+      edqs-state: "${TB_QUEUE_KAFKA_EDQS_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1;cleanup.policy:compact}"
+    consumer-stats:
+      # Prints lag between consumer group offset and last messages offset in Kafka topics
+      enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
+      # Statistics printing interval for Kafka's consumer-groups stats
+      print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
+      # Time to wait for the stats-loading requests to Kafka to finish
+      kafka-response-timeout-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_RESPONSE_TIMEOUT_MS:1000}"
+  partitions:
+    hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
+
+# General service parameters
+service:
+  type: "${TB_SERVICE_TYPE:edqs}"
+  # Unique id for this service (autogenerated if empty)
+  id: "${TB_SERVICE_ID:}"
+  edqs:
+    # EDQS instances with the same label will share the same list of partitions
+    label: "${TB_EDQS_LABEL:}"
+
+# Metrics parameters
+metrics:
+  # Enable/disable actuator metrics.
+  enabled: "${METRICS_ENABLED:false}"
+  timer:
+    # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
+    percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
+  system_info:
+    # Persist frequency of system info (CPU, memory usage, etc.) in seconds
+    persist_frequency: "${METRICS_SYSTEM_INFO_PERSIST_FREQUENCY_SECONDS:60}"
+    # TTL in days for system info timeseries
+    ttl: "${METRICS_SYSTEM_INFO_TTL_DAYS:7}"
+
+# General management parameters
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
+        include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+  health:
+    elasticsearch:
+      # Enable the org.springframework.boot.actuate.elasticsearch.ElasticsearchRestClientHealthIndicator.doHealthCheck
+      enabled: "false"

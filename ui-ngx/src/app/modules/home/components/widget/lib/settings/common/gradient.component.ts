@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 
 @Component({

@@ -1,78 +1,87 @@
 Here is the list of commands, that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the server.
 
-#### Install Java 17 (OpenJDK)
-ThingsBoard service is running on Java 17. Follow these instructions to install OpenJDK 17:
+#### Step 1. Install Java 17 (OpenJDK)
+ThingsBoard service is running on Java 17. To install OpenJDK 17, follow these instructions:
 
 ```bash
-sudo apt update
-sudo apt install openjdk-17-jdk
+sudo apt update && sudo apt install openjdk-17-jdk
 {:copy-code}
 ```
 
-Please don't forget to configure your operating system to use OpenJDK 17 by default.
-You can configure which version is the default using the following command:
+Configure your operating system to use OpenJDK 17 by default. You can configure the default version by running the following command:
 
 ```bash
 sudo update-alternatives --config java
 {:copy-code}
 ```
 
-You can check the installation using the following command:
+To check the installed Java version on your system, use the following command:
 
 ```bash
 java -version
 {:copy-code}
 ```
 
-Expected command output is:
+The expected result is:
 
 ```text
-openjdk version "17.x.xx"
+openjdk version "17.x.xx" 
 OpenJDK Runtime Environment (...)
-OpenJDK 64-Bit Server VM (build ...)
+OpenJDK 64-Bit Server VM (...)
 ```
 
-#### Configure PostgreSQL
+#### Step 2. Configure ThingsBoard Edge Database
+
+ThingsBoard Edge supports SQL and hybrid database approaches.
+In this guide we will use SQL only.
+For hybrid details please follow official installation instructions from the ThingsBoard documentation site.
+
+### Configure PostgreSQL
 ThingsBoard Edge uses PostgreSQL database as a local storage.
-Instructions listed below will help you to install PostgreSQL.
+
+To install the PostgreSQL database, run these commands:
 
 ```bash
-# install **wget** if not already installed:
-sudo apt install -y wget
-
-# import the repository signing key:
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-
-# add repository contents to your system:
-RELEASE=$(lsb_release -cs)
-echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | sudo tee  /etc/apt/sources.list.d/pgdg.list
+# Automated repository configuration:
+sudo apt install -y postgresql-common
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
 
 # install and launch the postgresql service:
 sudo apt update
-sudo apt -y install postgresql-15
+sudo apt -y install postgresql-16
 sudo service postgresql start
 {:copy-code}
 ```
 
-Once PostgreSQL is installed you may want to create a new user or set the password for the main user.
-The instructions below will help to set the password for main PostgreSQL user:
+Once PostgreSQL is installed, it is recommended to set the password for the PostgreSQL main user.
 
-```text
-sudo su - postgres
-psql
-\password
-\q
+The following command will switch the current user to the PostgreSQL user and set the password directly in PostgreSQL.
+
+```bash
+sudo -u postgres psql -c "\password"
+{:copy-code}
 ```
 
-Then, press “Ctrl+D” to return to main user console and connect to the database to create ThingsBoard Edge DB:
+Then, enter and confirm the password.
 
-```text
-psql -U postgres -d postgres -h 127.0.0.1 -W
-CREATE DATABASE tb_edge;
-\q
+Finally, create a new PostgreSQL database named tb_edge by running the following command:
+
+```bash
+echo "CREATE DATABASE tb_edge;" | psql -U postgres -d postgres -h 127.0.0.1 -W
+{:copy-code}
 ```
 
-#### Thingsboard Edge service installation
+#### Step 3. Choose Queue Service
+
+ThingsBoard Edge supports only Kafka or in-memory queue (since v4.0) for message storage and communication between ThingsBoard services. Choose the appropriate queue implementation based on your specific business needs:
+
+In Memory: The built-in and default queue implementation. It is useful for development or proof-of-concept (PoC) environments, but is not recommended for production or any type of clustered deployments due to limited scalability.
+
+Kafka: Recommended for production deployments. This queue is used in the most of ThingsBoard production environments now.
+
+In Memory queue is built in and enabled by default. No additional configuration is required.
+
+#### Step 4. ThingsBoard Edge Service Installation
 Download installation package:
 
 ```bash
@@ -87,7 +96,7 @@ sudo dpkg -i tb-edge-${TB_EDGE_TAG}.deb
 {:copy-code}
 ```
 
-#### Configure ThingsBoard Edge
+#### Step 5. Configure ThingsBoard Edge
 To configure ThingsBoard Edge, you  can use the following command to automatically update the configuration file with specific values:
 
 ```bash
@@ -101,24 +110,19 @@ EOL'
 {:copy-code}
 ```
 
-##### [Optional] Database Configuration
-In case you changed default PostgreSQL datasource settings (**postgres**/**postgres**) please update the configuration file (**/etc/tb-edge/conf/tb-edge.conf**) with your actual values:
+##### [Optional] Configure PostgreSQL
+If you changed PostgreSQL default datasource settings, use the following command:
 
 ```bash
-sudo nano /etc/tb-edge/conf/tb-edge.conf
-{:copy-code}
-```
-
-Please update the following lines in your configuration file. Make sure **to replace**:
-- Replace 'postgres' with your actual PostgreSQL username;
-- Replace 'PUT_YOUR_POSTGRESQL_PASSWORD_HERE' with your actual PostgreSQL password.
-
-```bash
+sudo sh -c 'cat <<EOL >> /etc/tb-edge/conf/tb-edge.conf
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/tb_edge
 export SPRING_DATASOURCE_USERNAME=postgres
-export SPRING_DATASOURCE_PASSWORD=PUT_YOUR_POSTGRESQL_PASSWORD_HERE
+export SPRING_DATASOURCE_PASSWORD=<PUT_YOUR_POSTGRESQL_PASSWORD_HERE>
+EOL'
 {:copy-code}
 ```
+
+PUT_YOUR_POSTGRESQL_PASSWORD_HERE: Replace with your actual PostgreSQL user password.
 
 ##### [Optional] Update bind ports
 If ThingsBoard Edge is going to be running on the same machine where ThingsBoard server (cloud) is running, you'll need to update configuration parameters to avoid port collision between ThingsBoard server and ThingsBoard Edge.
@@ -138,7 +142,7 @@ EOL'
 
 Make sure that ports above (18080, 11883, 15683) are not used by any other application.
 
-#### Run installation script
+#### Step 6. Run installation Script
 
 Once ThingsBoard Edge is installed and configured please execute the following install script:
 
@@ -147,14 +151,14 @@ sudo /usr/share/tb-edge/bin/install/install.sh
 {:copy-code}
 ```
 
-#### Restart ThingsBoard Edge service
+#### Step 7. Restart ThingsBoard Edge Service
 
 ```bash
 sudo service tb-edge restart
 {:copy-code}
 ```
 
-#### Open ThingsBoard Edge UI
+#### Step 8. Open ThingsBoard Edge UI
 
 Once started, you will be able to open **ThingsBoard Edge UI** using the following link http://localhost:8080.
 

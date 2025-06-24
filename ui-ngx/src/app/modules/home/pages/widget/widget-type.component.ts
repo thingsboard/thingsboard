@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ export class WidgetTypeComponent extends EntityComponent<WidgetTypeDetails> {
         image: [entity ? entity.image : ''],
         description: [entity  ? entity.description : '', Validators.maxLength(1024)],
         tags: [entity ? entity.tags : []],
+        scada: [entity ? entity.scada : false],
         deprecated: [entity ? entity.deprecated : false]
       }
     );
@@ -64,6 +65,7 @@ export class WidgetTypeComponent extends EntityComponent<WidgetTypeDetails> {
       image: entity.image,
       description: entity.description,
       tags: entity.tags,
+      scada: entity.scada,
       deprecated: entity.deprecated
     });
   }

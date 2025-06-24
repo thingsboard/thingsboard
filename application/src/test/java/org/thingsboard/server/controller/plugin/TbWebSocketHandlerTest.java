@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.controller.plugin;
 
+import jakarta.websocket.RemoteEndpoint;
+import jakarta.websocket.SendHandler;
+import jakarta.websocket.SendResult;
+import jakarta.websocket.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
@@ -26,10 +30,6 @@ import org.springframework.web.socket.adapter.NativeWebSocketSession;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 
-import jakarta.websocket.RemoteEndpoint;
-import jakarta.websocket.SendHandler;
-import jakarta.websocket.SendResult;
-import jakarta.websocket.Session;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Deque;

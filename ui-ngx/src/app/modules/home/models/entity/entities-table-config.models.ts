@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ export interface HeaderActionDescriptor {
   onAction: ($event: MouseEvent) => void;
 }
 
-export type EntityTableColumnType = 'content' | 'action' | 'link';
+export type EntityTableColumnType = 'content' | 'action' | 'link' | 'entityChips';
 
 export class BaseEntityTableColumn<T extends BaseData<HasId>> {
   constructor(public type: EntityTableColumnType,
@@ -121,7 +121,11 @@ export class EntityLinkTableColumn<T extends BaseData<HasId>> extends BaseEntity
               public width: string = '0px',
               public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property] ? entity[property] : '',
               public entityURL: (entity) => string,
-              public sortable: boolean = true) {
+              public sortable: boolean = true,
+              public cellStyleFunction: CellStyleFunction<T> = () => ({}),
+              public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({}),
+              public cellTooltipFunction: CellTooltipFunction<T> = () => undefined,
+              public actionCell: CellActionDescriptor<T> = null) {
     super('link', key, title, width, sortable);
   }
 }
@@ -141,7 +145,16 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
   }
 }
 
-export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T> | EntityLinkTableColumn<T>;
+export class EntityChipsEntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
+  constructor(public key: string,
+              public title: string,
+              public width: string = '0px',
+              public entityURL?: (entity) => string) {
+    super('entityChips', key, title, width, false);
+  }
+}
+
+export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T> | EntityLinkTableColumn<T> | EntityChipsEntityTableColumn<T>;
 
 export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = PageLink, L extends BaseData<HasId> = T> {
 
@@ -162,6 +175,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   selectionEnabled = true;
   searchEnabled = true;
   addEnabled = true;
+  addAsTextButton = false;
   entitiesDeleteEnabled = true;
   detailsPanelEnabled = true;
   hideDetailsTabsOnEdit = true;

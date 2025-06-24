@@ -1,0 +1,300 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="400" fill="none" version="1.1" viewBox="0 0 200 400"><tb:metadata xmlns=""><![CDATA[{
+  "title": "Vertical wheel valve",
+  "description": "Vertical wheel valve with open/close animation and state colors.",
+  "searchTags": [
+    "valve",
+    "wheel"
+  ],
+  "widgetSizeX": 1,
+  "widgetSizeY": 2,
+  "tags": [
+    {
+      "tag": "background",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar color = opened ? ctx.properties.openedColor : ctx.properties.closedColor;\nif (!openAnimate) {\n    element.attr({fill: color});\n} else {\n    ctx.api.cssAnimate(element, 500).attr({fill: color});\n    element.remember('openAnimate', false);\n}\n",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": " ctx.tags.wheel.forEach(e => {\n     e.remember('openAnimate', true);\n });\n ctx.tags.background.forEach(e => {\n     e.remember('openAnimate', true);\n });\n\n\nvar opened = ctx.values.opened;\nvar action = opened ? 'close' : 'open';\n\nctx.api.callAction(event, action, undefined, {\n  next: () => {\n     ctx.api.setValue('opened', !opened);\n  }\n});"
+        }
+      }
+    },
+    {
+      "tag": "wheel",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar angle = opened ? ctx.properties.openedRotationAngle : ctx.properties.closedRotationAngle;\nif (!openAnimate) {\n    element.transform({rotate: angle});\n} else {\n    ctx.api.cssAnimate(element, 500).transform({rotate: angle});\n    element.remember('openAnimate', false);\n}\n",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "opened",
+      "name": "{i18n:scada.symbol.opened}",
+      "hint": "{i18n:scada.symbol.opened-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.opened}",
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "open",
+      "name": "{i18n:scada.symbol.open}",
+      "hint": "{i18n:scada.symbol.open-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": true,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "close",
+      "name": "{i18n:scada.symbol.close}",
+      "hint": "{i18n:scada.symbol.close-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": false,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    }
+  ],
+  "properties": [
+    {
+      "id": "openedColor",
+      "name": "{i18n:scada.symbol.opened-color}",
+      "type": "color",
+      "default": "#1C943E",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "closedColor",
+      "name": "{i18n:scada.symbol.closed-color}",
+      "type": "color",
+      "default": "#696969",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "openedRotationAngle",
+      "name": "{i18n:scada.symbol.opened-rotation-angle}",
+      "type": "number",
+      "default": 0,
+      "required": true,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": -179,
+      "max": 179,
+      "step": null
+    },
+    {
+      "id": "closedRotationAngle",
+      "name": "{i18n:scada.symbol.closed-rotation-angle}",
+      "type": "number",
+      "default": 90,
+      "required": true,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": -179,
+      "max": 179,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<path d="m171.26 200c0-28.161-0.82311-44.15-5-72-4.2988-28.662-17-72-17-72h13.99c4.4182 0 8-3.5817 8-8v-26c0-4.4183-3.5818-8-8-8h-126c-4.418 0-8 3.5817-8 8v26c0 4.4183 3.582 8 8 8h14.01s-12.711 43.238-17 72c-4.151 27.834-5.195 43.859-5 72 0.19499 28.16 1.823 44.15 6 72 4.299 28.663 16 72 16 72h-14.01c-4.418 0-8 3.582-8 8v26c0 4.418 3.582 8 8 8h126c4.4182 0 8-3.582 8-8v-26c0-4.418-3.5818-8-8-8h-13.99s12.701-43.337 17-72c4.1769-27.85 5-43.839 5-72z" fill="#1c943e" tb:tag="background"/><rect transform="rotate(90)" x="1.5" y="-148.25" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><rect transform="rotate(90)" x="14" y="-170.75" width="42" height="142" rx="8" fill="url(#paint0_linear_1343_53957)" style="fill:url(#paint0_linear_1343_53957)"/><rect transform="rotate(90)" x="15.5" y="-169.25" width="39" height="139" rx="6.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m148.76 56s12.701 43.338 17 72c4.1769 27.85 5 43.839 5 72s-0.8231 44.15-5 72c-4.2988 28.663-17 72-17 72h-98s-11.701-43.337-16-72c-4.177-27.85-5.806-43.84-6-72-0.195-28.141 0.849-44.166 5-72 4.289-28.762 17-72 17-72z" fill="url(#paint1_linear_1343_53957)" style="fill:url(#paint1_linear_1343_53957)"/><path d="m147.87 341.67c-0.09 0.314-0.1699 0.591-0.239 0.831h-95.722c-0.062-0.233-0.133-0.501-0.212-0.802-0.328-1.238-0.801-3.04-1.382-5.292-1.163-4.505-2.758-10.809-4.487-18.008-3.46-14.409-7.448-32.357-9.587-46.62-4.169-27.798-5.789-43.715-5.983-71.788-0.194-28.068 0.844-44.015 4.983-71.769 2.133-14.3 6.366-32.237 10.078-46.632 1.854-7.1905 3.574-13.484 4.83-17.98 0.629-2.2476 1.141-4.0454 1.496-5.2807 0.09-0.3128 0.17-0.5896 0.239-0.8284h95.747c0.0691 0.2396 0.149 0.5174 0.239 0.8314 0.3548 1.2379 0.8668 3.0393 1.4947 5.2909 1.2558 4.5034 2.9751 10.806 4.8284 18.003 3.7103 14.408 7.9439 32.345 10.081 46.596 4.1635 27.761 4.9834 43.674 4.9834 71.778s-0.8199 44.017-4.9834 71.778c-2.1374 14.251-6.371 32.189-10.081 46.596-1.8533 7.197-3.5726 13.5-4.8284 18.004-0.6279 2.251-1.1399 4.053-1.4947 5.291z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect transform="rotate(90)" x="344" y="-170.75" width="42" height="142" rx="8" fill="url(#paint2_linear_1343_53957)" style="fill:url(#paint2_linear_1343_53957)"/><rect transform="rotate(90)" x="345.5" y="-169.25" width="39" height="139" rx="6.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect transform="rotate(90)" x="387.5" y="-148.25" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><defs>
+  <filter id="filter0_ii_1343_53957" x="166.88" y="67.863" width="66.25" height="66.25" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="3.12497" dy="-3.12497"/>
+   <feGaussianBlur stdDeviation="3.12497"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1343_53957"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="-3.12497" dy="3.12497"/>
+   <feGaussianBlur stdDeviation="3.12497"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0"/>
+   <feBlend in2="effect1_innerShadow_1343_53957" result="effect2_innerShadow_1343_53957"/>
+  </filter>
+  <filter id="filter1_i_1343_53957" x="172" y="78" width="51" height="51" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="-5" dy="5"/>
+   <feGaussianBlur stdDeviation="4"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1343_53957"/>
+  </filter>
+  <linearGradient id="paint0_linear_1343_53957" x1="24.92" x2="21.891" y1="30" y2="171.95" gradientTransform="translate(-1e-5 -200.75)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".18316"/>
+   <stop stop-color="#fff" stop-opacity=".08" offset=".35085"/>
+   <stop stop-color="#fff" stop-opacity=".25" offset=".49829"/>
+   <stop stop-color="#fff" stop-opacity=".08" offset=".64825"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".82318"/>
+   <stop stop-color="#020202" stop-opacity=".35" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint1_linear_1343_53957" x1="130.88" x2="130.44" y1="29.988" y2="172.02" gradientTransform="rotate(90 100.37 100.37)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".18316"/>
+   <stop stop-color="#fff" stop-opacity=".08" offset=".35085"/>
+   <stop stop-color="#fff" stop-opacity=".25" offset=".49829"/>
+   <stop stop-color="#fff" stop-opacity=".08" offset=".64825"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".82318"/>
+   <stop stop-color="#020202" stop-opacity=".35" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint2_linear_1343_53957" x1="354.92" x2="351.89" y1="30" y2="171.95" gradientTransform="translate(-1e-5 -200.75)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".18316"/>
+   <stop stop-color="#fff" stop-opacity=".08" offset=".35085"/>
+   <stop stop-color="#fff" stop-opacity=".25" offset=".49829"/>
+   <stop stop-color="#fff" stop-opacity=".08" offset=".64825"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".82318"/>
+   <stop stop-color="#020202" stop-opacity=".35" offset="1"/>
+  </linearGradient>
+  <radialGradient id="paint3_radial_1343_53957" cx="0" cy="0" r="1" gradientTransform="matrix(0,100,-100,0,100,200)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" offset=".75112"/>
+   <stop stop-color="#fff" offset=".87301"/>
+   <stop stop-color="#727171" offset="1"/>
+  </radialGradient>
+  <linearGradient id="paint4_linear_1343_53957" x1="191" x2="209" y1="44.877" y2="44.877" gradientTransform="translate(-100,99.01)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#fff" offset=".49829"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint5_linear_1343_53957" x1="250.96" x2="257.61" y1="75.954" y2="93.485" gradientTransform="translate(-100,99.01)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#fff" offset=".49829"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint6_linear_1343_53957" x1="173.92" x2="159.04" y1="153.14" y2="141.73" gradientTransform="translate(-100,99.01)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#fff" offset=".49829"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint7_linear_1343_53957" x1="228.3" x2="243.18" y1="153.14" y2="141.73" gradientTransform="translate(-100,99.01)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#fff" offset=".49829"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint8_linear_1343_53957" x1="142.78" x2="148.28" y1="92.333" y2="74.407" gradientTransform="translate(-100,99.01)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#fff" offset=".49829"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+ </defs><g tb:tag="wheel">
+  <path d="m200 200c0 55.229-44.772 100-100 100s-100-44.771-100-100c0-55.228 44.772-100 100-100s100 44.772 100 100zm-175.01 0c0 41.428 33.584 75.012 75.012 75.012s75.012-33.584 75.012-75.012-33.584-75.012-75.012-75.012-75.012 33.584-75.012 75.012z" fill="url(#paint3_radial_1343_53957)" style="fill:url(#paint3_radial_1343_53957)"/>
+  <path d="m94.12 175c-1.726 0-3.125-1.3991-3.125-3.125v-46.625c0-3.4517 2.798-6.2499 6.25-6.2499h5.5c3.452 0 6.25 2.7982 6.25 6.2499v46.625c0 1.7259-1.399 3.125-3.125 3.125z" fill="url(#paint4_linear_1343_53957)" style="fill:url(#paint4_linear_1343_53957)"/>
+  <path d="m122.98 188.92c-0.612-1.6137 0.2-3.418 1.814-4.0301l43.595-16.534c3.227-1.2241 6.836 0.3999 8.06 3.6273l2.217 5.8439c1.224 3.2274-0.4 6.8361-3.628 8.0602l-43.595 16.535c-1.613 0.612-3.418-0.2-4.03-1.814l-4.433-11.688z" fill="url(#paint5_linear_1343_53957)" style="fill:url(#paint5_linear_1343_53957)"/>
+  <path d="m90.37 225.55c1.37 1.05 1.63 3.012 0.58 4.382l-28.362 37.006c-2.1 2.74-6.023 3.259-8.762 1.159l-4.961-3.802c-2.74-2.099-3.259-6.022-1.159-8.762l28.362-37.007c1.05-1.37 3.011-1.629 4.381-0.579z" fill="url(#paint6_linear_1343_53957)" style="fill:url(#paint6_linear_1343_53957)"/>
+  <path d="m111.85 225.55c-1.37 1.05-1.63 3.012-0.58 4.382l28.362 37.006c2.1 2.74 6.023 3.259 8.762 1.159l4.961-3.802c2.74-2.099 3.259-6.022 1.159-8.762l-28.362-37.007c-1.05-1.37-3.011-1.629-4.381-0.579z" fill="url(#paint7_linear_1343_53957)" style="fill:url(#paint7_linear_1343_53957)"/>
+  <path d="m73.44 197.47c-0.506 1.6506-2.253 2.5776-3.903 2.0716l-44.578-13.664c-3.3-1.0116-5.156-4.507-4.144-7.8072l1.832-5.9756c1.011-3.3002 4.507-5.1555 7.807-4.1439l44.578 13.664c1.65 0.5058 2.577 2.2535 2.072 3.9036l-3.664 11.951z" fill="url(#paint8_linear_1343_53957)" style="fill:url(#paint8_linear_1343_53957)"/>
+ </g><g transform="translate(-100,100)" filter="url(#filter0_ii_1343_53957)">
+  <circle cx="200" cy="100.99" r="30" fill="#d9d9d9"/>
+ </g><path d="m123 200.99c0 12.703-10.297 23-23 23s-23-10.297-23-23c0-12.702 10.297-23 23-23s23 10.297 23 23z" fill="#000" fill-opacity=".05"/><g transform="translate(-100,100)" filter="url(#filter1_i_1343_53957)">
+  <path d="m223 101c0 12.703-10.297 23-23 23s-23-10.297-23-23c0-12.702 10.297-23 23-23s23 10.298 23 23z" fill="#1c943e" tb:tag="background"/>
+ </g><path d="m122 201c0 12.15-9.85 22-22 22s-22-9.85-22-22 9.85-22 22-22 22 9.8497 22 22z" stroke="#fff" stroke-width="2"/><path d="m97.28 191.61c0-0.647-0.611-1.1214-1.216-0.8901-4.132 1.5826-7.067 5.5867-7.067 10.276 0 6.075 4.925 11 11 11s11-4.925 11-11c0-4.5645-2.78-8.4795-6.739-10.144-0.609-0.2563-1.244 0.2209-1.244 0.882 0 0.4223 0.269 0.7938 0.655 0.9649 3.181 1.4097 5.399 4.5944 5.399 8.2976 0 5.01-4.061 9.071-9.071 9.071s-9.071-4.061-9.071-9.071c0-3.8069 2.344-7.0659 5.668-8.4119 0.402-0.1627 0.686-0.5409 0.686-0.9745z" clip-rule="evenodd" fill="#fff" fill-rule="evenodd"/><path d="m99.51 188.64c0-0.3519 0.285-0.6372 0.637-0.6372s0.637 0.2853 0.637 0.6372v10.401c0 0.3519-0.285 0.6372-0.637 0.6372s-0.637-0.2853-0.637-0.6372z" fill="#fff"/><rect y="100" width="200" height="200" fill="#000" fill-opacity="0" stroke-width="0" tb:tag="clickArea"/>
+</svg>

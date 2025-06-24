@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
@@ -36,9 +37,8 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
-import org.thingsboard.server.service.install.update.ImagesUpdater;
+import org.thingsboard.server.service.install.update.ResourcesUpdater;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +65,9 @@ class InstallScriptsTest {
     @MockBean
     ResourceService resourceService;
     @MockBean
-    ImagesUpdater imagesUpdater;
+    ImageService imageService;
+    @MockBean
+    ResourcesUpdater resourcesUpdater;
     @SpyBean
     InstallScripts installScripts;
 
@@ -84,14 +86,14 @@ class InstallScriptsTest {
     }
 
     @Test
-    void testDefaultRuleChainsTemplates() throws IOException {
+    void testDefaultRuleChainsTemplates() {
         Path dir = installScripts.getTenantRuleChainsDir();
         installScripts.findRuleChainsFromPath(dir)
                 .forEach(this::validateRuleChainTemplate);
     }
 
     @Test
-    void testDefaultEdgeRuleChainsTemplates() throws IOException {
+    void testDefaultEdgeRuleChainsTemplates() {
         Path dir = installScripts.getEdgeRuleChainsDir();
         installScripts.findRuleChainsFromPath(dir)
                 .forEach(this::validateRuleChainTemplate);

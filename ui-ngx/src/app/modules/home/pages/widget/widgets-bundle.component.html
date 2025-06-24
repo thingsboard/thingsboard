@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,33 +15,33 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column">
+<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'widgets-bundle.open-widgets-bundle' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'openDetails')"
-          [fxShow]="!isEdit && !isDetailsPage">
+          [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'widgets-bundle.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit">
+          [class.!hidden]="hideDelete() || isEdit">
     {{'widgets-bundle.delete' | translate }}
   </button>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
@@ -54,7 +54,7 @@
           {{ 'widgets-bundle.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-gallery-image-input fxFlex
+      <tb-gallery-image-input class="flex-1"
                               label="{{'widgets-bundle.image-preview' | translate}}"
                               formControlName="image">
       </tb-gallery-image-input>
@@ -63,6 +63,9 @@
         <textarea matInput formControlName="description" rows="2" maxlength="1024" #descriptionInput></textarea>
         <mat-hint align="end">{{descriptionInput.value?.length || 0}}/1024</mat-hint>
       </mat-form-field>
+      <mat-slide-toggle formControlName="scada" style="padding-bottom: 16px;">
+        {{ 'widgets-bundle.scada' | translate }}
+      </mat-slide-toggle>
       <mat-form-field class="mat-block">
         <mat-label translate>widgets-bundle.order</mat-label>
         <input matInput type="number" step="1" formControlName="order">

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import {
 import { EntityKeyType } from '@shared/models/query/query.models';
 import { ResourcesService } from '@core/services/resources.service';
 import { isDefinedAndNotNull } from '@core/utils';
+import { MenuId } from '@core/services/menu.models';
 
 const sysAdminHomePageJson = '/assets/dashboard/sys_admin_home_page.json';
 const tenantAdminHomePageJson = '/assets/dashboard/tenant_admin_home_page.json';
@@ -125,8 +126,7 @@ const routes: Routes = [
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       title: 'home.home',
       breadcrumb: {
-        label: 'home.home',
-        icon: 'home'
+        menuId: MenuId.home
       }
     },
     resolve: {

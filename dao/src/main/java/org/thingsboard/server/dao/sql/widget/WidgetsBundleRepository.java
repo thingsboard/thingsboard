@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields;
+import org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
-import org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 
 import java.util.List;
@@ -107,7 +109,7 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                             "OR :textSearch ILIKE '% ' || currentTag " +
                             "OR :textSearch ILIKE '% ' || currentTag || ' %')" +
                     ")))) " +
-                    "ORDER BY wb.widgets_bundle_order ASC NULLS LAST",
+                    "ORDER BY CASE WHEN :scadaFirst then wb.scada END DESC, wb.widgets_bundle_order ASC NULLS LAST",
             countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantIds) " +
                     "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
@@ -126,8 +128,9 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                     "))))"
     )
     Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdsFullSearch(@Param("tenantIds") List<UUID> tenantIds,
-                                                                              @Param("textSearch") String textSearch,
-                                                                              Pageable pageable);
+                                                                               @Param("textSearch") String textSearch,
+                                                                               @Param("scadaFirst") boolean scadaFirst,
+                                                                               Pageable pageable);
 
     WidgetsBundleEntity findFirstByTenantIdAndTitle(UUID tenantId, String title);
 
@@ -139,4 +142,8 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
 
     @Query(nativeQuery = true, value = "SELECT * FROM widgets_bundle wb WHERE wb.image = :imageLink limit :lmt")
     List<WidgetsBundleEntity> findByImageUrl(@Param("imageLink") String imageLink, @Param("lmt") int lmt);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields(w.id, w.createdTime, w.tenantId," +
+            "w.alias, w.version) FROM WidgetsBundleEntity w WHERE w.id > :id ORDER BY w.id")
+    List<WidgetsBundleFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

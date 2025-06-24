@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ export interface StatusWidgetSettings {
   layout: StatusWidgetLayout;
   onState: StatusWidgetStateSettings;
   offState: StatusWidgetStateSettings;
+  padding: string
 }
 
 export const statusWidgetDefaultSettings: StatusWidgetSettings = {
@@ -84,6 +85,10 @@ export const statusWidgetDefaultSettings: StatusWidgetSettings = {
     getTimeSeries: {
       key: 'state'
     },
+    getAlarmStatus: {
+      severityList: null,
+      typeList: null
+    },
     dataToValue: {
       type: DataToValueType.NONE,
       compareToValue: true,
@@ -99,6 +104,10 @@ export const statusWidgetDefaultSettings: StatusWidgetSettings = {
     },
     getTimeSeries: {
       key: 'state'
+    },
+    getAlarmStatus: {
+      severityList: null,
+      typeList: null
     },
     dataToValue: {
       type: DataToValueType.NONE,
@@ -200,5 +209,6 @@ export const statusWidgetDefaultSettings: StatusWidgetSettings = {
         blur: 3
       }
     }
-  }
+  },
+  padding: ''
 };

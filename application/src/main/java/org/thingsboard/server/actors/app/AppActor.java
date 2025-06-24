@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,13 +36,12 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
-import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
@@ -89,6 +88,7 @@ public class AppActor extends ContextAwareActor {
             case APP_INIT_MSG:
                 break;
             case PARTITION_CHANGE_MSG:
+            case CF_PARTITIONS_CHANGE_MSG:
                 ctx.broadcastToChildren(msg, true);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
@@ -110,13 +110,21 @@ public class AppActor extends ContextAwareActor {
             case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg, true);
                 break;
-            case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
-            case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG:
-            case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG:
-                onToEdgeSessionMsg((EdgeSessionMsg) msg);
-                break;
             case SESSION_TIMEOUT_MSG:
                 ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
+                break;
+            case CF_CACHE_INIT_MSG:
+            case CF_INIT_PROFILE_ENTITY_MSG:
+            case CF_INIT_MSG:
+            case CF_LINK_INIT_MSG:
+            case CF_STATE_RESTORE_MSG:
+                //TODO: use priority from the message body. For example, messages about CF lifecycle are important and Device lifecycle are not.
+                //      same for the Linked telemetry.
+                onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, true);
+                break;
+            case CF_TELEMETRY_MSG:
+            case CF_LINKED_TELEMETRY_MSG:
+                onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, false);
                 break;
             default:
                 return false;
@@ -182,6 +190,19 @@ public class AppActor extends ContextAwareActor {
         }
     }
 
+    private void onToCalculatedFieldSystemActorMsg(ToCalculatedFieldSystemMsg msg, boolean priority) {
+        getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {
+            if (priority) {
+                tenantActor.tellWithHighPriority(msg);
+            } else {
+                tenantActor.tell(msg);
+            }
+        }, () -> {
+            msg.getCallback().onSuccess();
+        });
+    }
+
+
     private void onToDeviceActorMsg(TenantAwareMsg msg, boolean priority) {
         getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {
             if (priority) {
@@ -204,20 +225,6 @@ public class AppActor extends ContextAwareActor {
                 () -> DefaultActorService.TENANT_DISPATCHER_NAME,
                 () -> new TenantActor.ActorCreator(systemContext, tenantId),
                 () -> true));
-    }
-
-    private void onToEdgeSessionMsg(EdgeSessionMsg msg) {
-        TbActorRef target = null;
-        if (ModelConstants.SYSTEM_TENANT.equals(msg.getTenantId())) {
-            log.warn("Message has system tenant id: {}", msg);
-        } else {
-            target = getOrCreateTenantActor(msg.getTenantId()).orElse(null);
-        }
-        if (target != null) {
-            target.tellWithHighPriority(msg);
-        } else {
-            log.debug("[{}] Invalid edge session msg: {}", msg.getTenantId(), msg);
-        }
     }
 
     @Override

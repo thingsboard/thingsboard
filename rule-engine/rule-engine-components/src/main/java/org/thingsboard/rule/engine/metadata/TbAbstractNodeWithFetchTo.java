@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,9 +82,13 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     protected TbMsg transformMessage(TbMsg msg, ObjectNode msgDataNode, TbMsgMetaData msgMetaData) {
         switch (fetchTo) {
             case DATA:
-                return TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataNode));
+                return msg.transform()
+                        .data(JacksonUtil.toString(msgDataNode))
+                        .build();
             case METADATA:
-                return TbMsg.transformMsgMetadata(msg, msgMetaData);
+                return msg.transform()
+                        .metaData(msgMetaData)
+                        .build();
             default:
                 log.debug("Unexpected FetchTo value: {}. Allowed values: {}", fetchTo, TbMsgSource.values());
                 return msg;

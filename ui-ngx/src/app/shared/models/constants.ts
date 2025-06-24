@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -91,6 +91,10 @@ export const HelpLinks = {
     slackSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/slack-settings`,
     securitySettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/security-settings`,
     oauth2Settings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/oauth-2-support/`,
+    oauth2Apple: 'https://developer.apple.com/sign-in-with-apple/get-started/',
+    oauth2Facebook: 'https://developers.facebook.com/docs/facebook-login/web#logindialog',
+    oauth2Github: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
+    oauth2Google: 'https://developers.google.com/google-ads/api/docs/start',
     ruleEngine: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/overview/`,
     ruleNodeCheckRelation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/filter-nodes/#check-relation-filter-node`,
     ruleNodeCheckExistenceFields: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/filter-nodes/#check-existence-fields-node`,
@@ -109,6 +113,7 @@ export const HelpLinks = {
     ruleNodeOriginatorTelemetry: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#originator-telemetry`,
     ruleNodeCustomerAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#customer-attributes`,
     ruleNodeCustomerDetails: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#customer-details`,
+    ruleNodeFetchDeviceCredentials: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#fetch-device-credentials`,
     ruleNodeDeviceAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#device-attributes`,
     ruleNodeRelatedAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#related-attributes`,
     ruleNodeTenantAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#tenant-attributes`,
@@ -116,13 +121,14 @@ export const HelpLinks = {
     ruleNodeChangeOriginator: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#change-originator`,
     ruleNodeTransformMsg: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#script-transformation-node`,
     ruleNodeMsgToEmail: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#to-email-node`,
-    ruleNodeAssignToCustomer: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#assign-to-customer-node`,
-    ruleNodeUnassignFromCustomer: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#unassign-from-customer-node`,
+    ruleNodeAssignToCustomer: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#assign-to-customer-node`,
+    ruleNodeUnassignFromCustomer: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#unassign-from-customer-node`,
+    ruleNodeCalculatedFields: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#calculated-fields-node`,
     ruleNodeClearAlarm: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#clear-alarm-node`,
     ruleNodeCreateAlarm: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#create-alarm-node`,
     ruleNodeCreateRelation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#create-relation-node`,
     ruleNodeDeleteRelation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#delete-relation-node`,
-    ruleNodeMsgDelay: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#delay-node`,
+    ruleNodeMsgDelay: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#delay-node-deprecated`,
     ruleNodeMsgGenerator: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#generator-node`,
     ruleNodeGpsGeofencingEvents: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#gps-geofencing-events-node`,
     ruleNodeLog: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#log-node`,
@@ -148,6 +154,10 @@ export const HelpLinks = {
     ruleNodeRestCallReply: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#rest-call-reply-node`,
     ruleNodePushToCloud: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud`,
     ruleNodePushToEdge: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#push-to-edge`,
+    ruleNodeAcknowledge: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#acknowledge-node`,
+    ruleNodeCheckpoint: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#checkpoint-node`,
+    ruleNodeSendNotification: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#send-notification-node`,
+    ruleNodeSendSlack: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#send-to-slack-node`,
     tenants: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/tenants`,
     tenantProfiles: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/tenant-profiles`,
     customers: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/customers`,
@@ -157,7 +167,7 @@ export const HelpLinks = {
     assetProfiles: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/asset-profiles`,
     edges: `${helpBaseUrl}/docs/edge/getting-started-guides/what-is-edge`,
     assets: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/assets`,
-    entityViews: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/entity-views`,
+    entityViews: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/entity-views`,
     entitiesImport: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/bulk-provisioning`,
     rulechains: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/rule-chains`,
     lwm2mResourceLibrary: `${helpBaseUrl}/docs${docPlatformPrefix}/reference/lwm2m-api`,
@@ -179,8 +189,19 @@ export const HelpLinks = {
     templateNotifications: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/notifications/#templates`,
     recipientNotifications: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/notifications/#recipients`,
     ruleNotifications: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/notifications/#rules`,
-    jwtSecuritySettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/jwt-security-settings/`,
-    gatewayInstall: `${helpBaseUrl}/docs/iot-gateway/install/docker-installation/`,
+    jwtSecuritySettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/jwt-security-settings`,
+    gatewayInstall: `${helpBaseUrl}/docs/iot-gateway/install/docker-installation`,
+    scada: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada`,
+    scadaSymbolDev: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/`,
+    scadaSymbolDevAnimation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolanimation`,
+    scadaSymbolDevConnectorAnimation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#connectorscadasymbolanimation`,
+    domains: `${helpBaseUrl}/docs${docPlatformPrefix}/domains`,
+    mobileApplication: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/applications/`,
+    mobileBundle: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/mobile-center/`,
+    mobileQrCode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/mobile-qr-code/`,
+    calculatedField: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/calculated-fields/`,
+    timewindowSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/dashboards/#time-window`,
+    trendzSettings: `${helpBaseUrl}/docs/trendz/`
   }
 };
 /* eslint-enable max-len */

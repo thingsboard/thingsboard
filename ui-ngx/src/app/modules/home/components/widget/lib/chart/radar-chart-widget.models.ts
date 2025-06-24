@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ export interface RadarChartWidgetSettings extends LatestChartWidgetSettings {
   labelFont: Font;
   labelColor: string;
   fillAreaSettings: ChartFillSettings;
+  normalizeAxes: boolean;
   axisShowLabel: boolean;
   axisLabelFont: Font;
   axisShowTickLabels: boolean;
@@ -88,6 +89,7 @@ export const radarChartWidgetDefaultSettings: RadarChartWidgetSettings = {
       end: 20
     }
   },
+  normalizeAxes: false,
   axisShowLabel: true,
   axisLabelFont: {
     family: 'Roboto',
@@ -123,6 +125,7 @@ export const radarChartWidgetRadarChartSettings = (settings: RadarChartWidgetSet
   labelFont: settings.labelFont,
   labelColor: settings.labelColor,
   fillAreaSettings: settings.fillAreaSettings,
+  normalizeAxes: settings.normalizeAxes,
   axisShowLabel: settings.axisShowLabel,
   axisLabelFont: settings.axisLabelFont,
   axisShowTickLabels: settings.axisShowTickLabels,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -30,8 +32,8 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.sync.ie.AttributeExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.relation.RelationDao;
-import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
@@ -60,7 +62,7 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     @Autowired
     private AttributesService attributesService;
     @Autowired
-    protected ImageService imageService;
+    private CalculatedFieldService calculatedFieldService;
 
     @Override
     public final D getExportData(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
@@ -74,6 +76,9 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         exportData.setEntity(entity);
         exportData.setEntityType(entityId.getEntityType());
         setAdditionalExportData(ctx, entity, exportData);
+        if (entity instanceof HasVersion hasVersion) {
+            hasVersion.setVersion(null);
+        }
 
         var externalId = entity.getExternalId() != null ? entity.getExternalId() : entity.getId();
         ctx.putExternalId(entityId, externalId);
@@ -96,6 +101,10 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         if (exportSettings.isExportAttributes()) {
             Map<String, List<AttributeExportData>> attributes = exportAttributes(ctx, entity);
             exportData.setAttributes(attributes);
+        }
+        if (ctx.getSettings().isExportCalculatedFields()) {
+            List<CalculatedField> calculatedFields = exportCalculatedFields(ctx, entity.getId());
+            exportData.setCalculatedFields(calculatedFields);
         }
     }
 
@@ -138,6 +147,19 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
             }
         });
         return attributes;
+    }
+
+    private List<CalculatedField> exportCalculatedFields(EntitiesExportCtx<?> ctx, EntityId entityId) {
+        List<CalculatedField> calculatedFields = calculatedFieldService.findCalculatedFieldsByEntityId(ctx.getTenantId(), entityId);
+        calculatedFields.forEach(calculatedField -> {
+            calculatedField.setEntityId(getExternalIdOrElseInternal(ctx, entityId));
+            calculatedField.getConfiguration().getArguments().values().forEach(argument -> {
+                if (argument.getRefEntityId() != null) {
+                    argument.setRefEntityId(getExternalIdOrElseInternal(ctx, argument.getRefEntityId()));
+                }
+            });
+        });
+        return calculatedFields;
     }
 
     protected <ID extends EntityId> ID getExternalIdOrElseInternal(EntitiesExportCtx<?> ctx, ID internalId) {

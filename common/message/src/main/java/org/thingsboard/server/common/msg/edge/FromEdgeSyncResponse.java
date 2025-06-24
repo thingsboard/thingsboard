@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,20 +20,24 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 
+import java.io.Serial;
 import java.util.UUID;
 
 @Data
 public class FromEdgeSyncResponse implements EdgeSessionMsg {
 
-    private static final long serialVersionUID = -6360890886315347486L;
+    @Serial
+    private static final long serialVersionUID = -6360890556315667486L;
 
     private final UUID id;
     private final TenantId tenantId;
     private final EdgeId edgeId;
     private final boolean success;
+    private final String error;
 
     @Override
     public MsgType getMsgType() {
         return MsgType.EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG;
     }
+
 }

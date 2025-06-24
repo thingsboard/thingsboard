@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import {
   OnDestroy,
   OnInit,
   Renderer2,
-  TemplateRef,
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
@@ -33,7 +32,8 @@ import {
   ComponentStyle,
   getDataKey,
   overlayStyle,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
@@ -48,6 +48,9 @@ import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
+import { WidgetComponent } from '@home/components/widget/widget.component';
+import { TbUnitConverter } from '@shared/models/unit.models';
+import { UnitService } from '@core/services/unit.service';
 
 @Component({
   selector: 'tb-range-chart-widget',
@@ -65,9 +68,6 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   @Input()
   ctx: WidgetContext;
 
-  @Input()
-  widgetTitlePanel: TemplateRef<any>;
-
   showLegend: boolean;
   legendClass: string;
 
@@ -80,13 +80,15 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   visibleRangeItems: RangeItem[];
 
   private decimals = 0;
-  private units = '';
+  private units: string = '';
+  private unitConvertor: TbUnitConverter;
 
   private rangeItems: RangeItem[];
 
   private timeSeriesChart: TbTimeSeriesChart;
 
-  constructor(private imagePipe: ImagePipe,
+  constructor(public widgetComponent: WidgetComponent,
+              private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
@@ -95,25 +97,34 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   ngOnInit(): void {
     this.ctx.$scope.rangeChartWidget = this;
     this.settings = {...rangeChartDefaultSettings, ...this.ctx.settings};
+    const unitService = this.ctx.$injector.get(UnitService);
 
     this.decimals = this.ctx.decimals;
-    this.units = this.ctx.units;
+    let units = this.ctx.units;
     const dataKey = getDataKey(this.ctx.datasources);
     if (isDefinedAndNotNull(dataKey?.decimals)) {
       this.decimals = dataKey.decimals;
     }
     if (dataKey?.units) {
-      this.units = dataKey.units;
+      units = dataKey.units;
     }
     if (dataKey) {
       dataKey.settings = rangeChartTimeSeriesKeySettings(this.settings);
     }
+    this.units = unitService.getTargetUnitSymbol(units);
+    this.unitConvertor = unitService.geUnitConverter(units);
+
+    const valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {
+      units,
+      decimals: this.decimals,
+      ignoreUnitSymbol: true
+    });
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
     this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
-    this.rangeItems = toRangeItems(this.settings.rangeColors);
+    this.rangeItems = toRangeItems(this.settings.rangeColors, valueFormat);
     this.visibleRangeItems = this.rangeItems.filter(item => item.visible);
 
     this.showLegend = this.settings.showLegend && !!this.rangeItems.length;
@@ -127,7 +138,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   ngAfterViewInit() {
-    const settings = rangeChartTimeSeriesSettings(this.settings, this.rangeItems, this.decimals, this.units);
+    const settings = rangeChartTimeSeriesSettings(this.settings, this.rangeItems, this.decimals, this.units, this.unitConvertor);
     this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, settings, this.chartShape.nativeElement, this.renderer);
   }
 

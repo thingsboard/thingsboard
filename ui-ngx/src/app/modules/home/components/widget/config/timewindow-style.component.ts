@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -80,11 +80,15 @@ export class TimewindowStyleComponent implements OnInit, ControlValueAccessor {
         timewindowStyle: this.modelValue,
         previewValue: this.previewValue
       };
-      const timewindowStylePanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimewindowStylePanelComponent, 'left', true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const timewindowStylePanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        hostView: this.viewContainerRef,
+        componentType: TimewindowStylePanelComponent,
+        preferredPlacement: 'left',
+        context: ctx,
+        isModal: true
+      });
       timewindowStylePanelPopover.tbComponentRef.instance.popover = timewindowStylePanelPopover;
       timewindowStylePanelPopover.tbComponentRef.instance.timewindowStyleApplied.subscribe((timewindowStyle) => {
         timewindowStylePanelPopover.hide();

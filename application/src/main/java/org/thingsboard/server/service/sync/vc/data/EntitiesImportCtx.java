@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,10 @@ public class EntitiesImportCtx {
         return getSettings().isSaveCredentials();
     }
 
+    public boolean isSaveCalculatedFields() {
+        return getSettings().isSaveCalculatedFields();
+    }
+
     public EntityId getInternalId(EntityId externalId) {
         var result = externalToInternalIdMap.get(externalId);
         log.debug("[{}][{}] Local cache {} for id", externalId.getEntityType(), externalId.getId(), result != null ? "hit" : "miss");
@@ -139,6 +143,5 @@ public class EntitiesImportCtx {
     public boolean isNotFound(EntityId externalId) {
         return notFoundIds.contains(externalId);
     }
-
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.Assert;
 import org.thingsboard.edge.rpc.EdgeGrpcClient;
 import org.thingsboard.edge.rpc.EdgeRpcClient;
 import org.thingsboard.server.controller.AbstractWebTest;
@@ -47,7 +48,8 @@ import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationRuleUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationTargetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationTemplateUpdateMsg;
-import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2ClientUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2DomainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
@@ -65,7 +67,9 @@ import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
@@ -77,6 +81,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EdgeImitator {
 
+    private static final int MAX_DOWNLINK_FAILS = 2;
     private final String routingKey;
     private final String routingSecret;
 
@@ -92,6 +97,7 @@ public class EdgeImitator {
     private boolean randomFailuresOnTimeseriesDownlink = false;
     @Setter
     private double failureProbability = 0.0;
+    private final Map<Integer, Integer> downlinkFailureCountMap = new HashMap<>();
 
     @Getter
     private EdgeConfiguration configuration;
@@ -243,8 +249,11 @@ public class EdgeImitator {
         if (downlinkMsg.getEntityDataCount() > 0) {
             for (EntityDataProto entityData : downlinkMsg.getEntityDataList()) {
                 if (randomFailuresOnTimeseriesDownlink) {
-                    if (getRandomBoolean()) {
+                    int downlinkMsgId = downlinkMsg.getDownlinkMsgId();
+
+                    if (getRandomBoolean() && checkFailureThreshold(downlinkMsgId)) {
                         result.add(Futures.immediateFailedFuture(new RuntimeException("Random failure. This is expected error for edge test")));
+                        downlinkFailureCountMap.put(downlinkMsgId, downlinkFailureCountMap.getOrDefault(downlinkMsgId, 0) + 1);
                     } else {
                         result.add(saveDownlinkMsg(entityData));
                     }
@@ -318,9 +327,14 @@ public class EdgeImitator {
                 result.add(saveDownlinkMsg(resourceUpdateMsg));
             }
         }
-        if (downlinkMsg.getOAuth2UpdateMsgCount() > 0) {
-            for (OAuth2UpdateMsg oAuth2UpdateMsg : downlinkMsg.getOAuth2UpdateMsgList()) {
-                result.add(saveDownlinkMsg(oAuth2UpdateMsg));
+        if (downlinkMsg.getOAuth2ClientUpdateMsgCount() > 0) {
+            for (OAuth2ClientUpdateMsg oAuth2ClientUpdateMsg : downlinkMsg.getOAuth2ClientUpdateMsgList()) {
+                result.add(saveDownlinkMsg(oAuth2ClientUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getOAuth2DomainUpdateMsgCount() > 0) {
+            for (OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg : downlinkMsg.getOAuth2DomainUpdateMsgList()) {
+                result.add(saveDownlinkMsg(oAuth2DomainUpdateMsg));
             }
         }
         if (downlinkMsg.getNotificationTemplateUpdateMsgCount() > 0) {
@@ -348,6 +362,12 @@ public class EdgeImitator {
         return Futures.allAsList(result);
     }
 
+    private boolean checkFailureThreshold(int downlinkMsgId) {
+        return failureProbability == 100 ||
+                downlinkFailureCountMap.get(downlinkMsgId) == null ||
+                downlinkFailureCountMap.get(downlinkMsgId) < MAX_DOWNLINK_FAILS;
+    }
+
     private boolean getRandomBoolean() {
         double randomValue = ThreadLocalRandom.current().nextDouble() * 100;
         return randomValue <= this.failureProbability;
@@ -367,7 +387,19 @@ public class EdgeImitator {
     }
 
     public boolean waitForMessages() throws InterruptedException {
-        return waitForMessages(AbstractWebTest.TIMEOUT);
+        boolean success = waitForMessages(AbstractWebTest.TIMEOUT);
+
+        if (!success) {
+            List<AbstractMessage> downlinkMsgs = getDownlinkMsgs();
+            for (AbstractMessage downlinkMsg : downlinkMsgs) {
+                log.error("{}\n{}", downlinkMsg.getClass(), downlinkMsg);
+            }
+
+            log.error("message count: {}", downlinkMsgs.size());
+            Assert.fail("Await for messages was not successful!");
+        }
+
+        return true;
     }
 
     public boolean waitForMessages(int timeoutInSeconds) throws InterruptedException {

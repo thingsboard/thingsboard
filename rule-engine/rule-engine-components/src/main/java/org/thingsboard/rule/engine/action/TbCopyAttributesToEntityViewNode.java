@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -29,6 +32,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
@@ -37,9 +41,7 @@ import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.adaptor.JsonConverter;
 
-import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -61,7 +63,6 @@ import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCES
         nodeDetails = "Copy attributes from asset/device to related entity view according to entity view configuration. \n " +
                 "Copy will be done only for attributes that are between start and end dates and according to attribute keys configuration. \n" +
                 "Changes message originator to related entity view and produces new messages according to count of updated entity views",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
         icon = "content_copy"
 )
@@ -105,15 +106,25 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                         List<String> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr, entityView)).collect(Collectors.toList());
                                         if (!filteredAttributes.isEmpty()) {
-                                            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), entityView.getId(), scope, filteredAttributes,
-                                                    getFutureCallback(ctx, msg, entityView));
+                                            ctx.getTelemetryService().deleteAttributes(AttributesDeleteRequest.builder()
+                                                    .tenantId(ctx.getTenantId())
+                                                    .entityId(entityView.getId())
+                                                    .scope(scope)
+                                                    .keys(filteredAttributes)
+                                                    .callback(getFutureCallback(ctx, msg, entityView))
+                                                    .build());
                                         }
                                     } else {
                                         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
                                         List<AttributeKvEntry> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).collect(Collectors.toList());
-                                        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), entityView.getId(), scope, filteredAttributes,
-                                                getFutureCallback(ctx, msg, entityView));
+                                        ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
+                                                .tenantId(ctx.getTenantId())
+                                                .entityId(entityView.getId())
+                                                .scope(scope)
+                                                .entries(filteredAttributes)
+                                                .callback(getFutureCallback(ctx, msg, entityView))
+                                                .build());
                                     }
                                 }
                             }

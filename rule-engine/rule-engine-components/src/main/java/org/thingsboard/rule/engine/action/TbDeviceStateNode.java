@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ConcurrentReferenceHashMap;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
+import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -58,7 +58,6 @@ import java.util.Set;
                 "This node is particularly useful when device isn't using transports to receive data, such as when fetching data from external API or computing new data within the rule chain.",
         configClazz = TbDeviceStateNodeConfiguration.class,
         relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, "Rate limited"},
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeviceStateConfig"
 )
 public class TbDeviceStateNode implements TbNode {
@@ -120,7 +119,7 @@ public class TbDeviceStateNode implements TbNode {
         TenantId tenantId = ctx.getTenantId();
         long eventTs = msg.getMetaDataTs();
 
-        RuleEngineDeviceStateManager deviceStateManager = ctx.getDeviceStateManager();
+        DeviceStateManager deviceStateManager = ctx.getDeviceStateManager();
         TbCallback callback = getMsgEnqueuedCallback(ctx, msg);
 
         switch (event) {

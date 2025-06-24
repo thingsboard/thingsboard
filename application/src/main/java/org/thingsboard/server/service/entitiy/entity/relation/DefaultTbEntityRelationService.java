@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,13 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
     private final RelationService relationService;
 
     @Override
-    public void save(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user) throws ThingsboardException {
+    public EntityRelation save(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user) throws ThingsboardException {
         ActionType actionType = ActionType.RELATION_ADD_OR_UPDATE;
         try {
-            relationService.saveRelation(tenantId, relation);
+            var savedRelation = relationService.saveRelation(tenantId, relation);
             logEntityActionService.logEntityRelationAction(tenantId, customerId,
-                    relation, user, actionType, null, relation);
+                    savedRelation, user, actionType, null, savedRelation);
+            return savedRelation;
         } catch (Exception e) {
             logEntityActionService.logEntityRelationAction(tenantId, customerId,
                     relation, user, actionType, e, relation);
@@ -53,14 +54,15 @@ public class DefaultTbEntityRelationService extends AbstractTbEntityService impl
     }
 
     @Override
-    public void delete(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user) throws ThingsboardException {
+    public EntityRelation delete(TenantId tenantId, CustomerId customerId, EntityRelation relation, User user) throws ThingsboardException {
         ActionType actionType = ActionType.RELATION_DELETED;
         try {
-            boolean found = relationService.deleteRelation(tenantId, relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
-            if (!found) {
+            var found = relationService.deleteRelation(tenantId, relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
+            if (found == null) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
-            logEntityActionService.logEntityRelationAction(tenantId, customerId, relation, user, actionType, null, relation);
+            logEntityActionService.logEntityRelationAction(tenantId, customerId, found, user, actionType, null, found);
+            return found;
         } catch (Exception e) {
             logEntityActionService.logEntityRelationAction(tenantId, customerId,
                     relation, user, actionType, e, relation);

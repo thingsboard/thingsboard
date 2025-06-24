@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 package org.thingsboard.server.service.rpc;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
@@ -31,22 +33,19 @@ import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -86,7 +85,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
 
     @PostConstruct
     public void initExecutor() {
-        scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-core-rpc-scheduler"));
+        scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("tb-core-rpc-scheduler");
         serviceId = serviceInfoProvider.getServiceId();
     }
 
@@ -184,7 +183,14 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         entityNode.put(DataConstants.ADDITIONAL_INFO, msg.getAdditionalInfo());
 
         try {
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null), metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
+                    .originator(msg.getDeviceId())
+                    .customerId(Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null))
+                    .copyMetaData(metaData)
+                    .dataType(TbMsgDataType.JSON)
+                    .data(JacksonUtil.toString(entityNode))
+                    .build();
             clusterService.pushMsgToRuleEngine(msg.getTenantId(), msg.getDeviceId(), tbMsg, null);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
+import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@app/shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-type-select',
@@ -33,7 +33,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
     multi: true
   }]
 })
-export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnChanges {
+export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
 
   entityTypeFormGroup: UntypedFormGroup;
 
@@ -48,35 +48,38 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   @Input()
   filterAllowedEntityTypes = true;
 
-  private showLabelValue: boolean;
-  get showLabel(): boolean {
-    return this.showLabelValue;
-  }
   @Input()
-  set showLabel(value: boolean) {
-    this.showLabelValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  showLabel: boolean;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  label = this.translate.instant('entity.type');
+
+  @Input()
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
   disabled: boolean;
 
-  entityTypes: Array<EntityType | AliasEntityType>;
+  @Input()
+  additionEntityTypes: {[key in string]: string} = {};
 
-  private propagateChange = (v: any) => { };
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
-  constructor(private store: Store<AppState>,
-              private entityService: EntityService,
-              public translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
+
+  entityTypes: Array<EntityType | AliasEntityType | string>;
+
+  private propagateChange = (_v: any) => { };
+
+  constructor(private entityService: EntityService,
+              private translate: TranslateService,
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     this.entityTypeFormGroup = this.fb.group({
       entityType: [null]
     });
@@ -86,16 +89,22 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   ngOnInit() {
     this.entityTypes = this.filterAllowedEntityTypes
       ? this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes)
       : this.allowedEntityTypes;
-    this.entityTypeFormGroup.get('entityType').valueChanges.subscribe(
+    const additionEntityTypes = Object.keys(this.additionEntityTypes);
+    if (additionEntityTypes.length > 0) {
+      this.entityTypes.push(...additionEntityTypes);
+    }
+    this.entityTypeFormGroup.get('entityType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (value) => {
-        let modelValue;
+        let modelValue: EntityType | AliasEntityType;
         if (!value || value === '') {
           modelValue = null;
         } else {
@@ -113,6 +122,10 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
         if (propName === 'allowedEntityTypes') {
           this.entityTypes = this.filterAllowedEntityTypes ?
             this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes) : this.allowedEntityTypes;
+          const additionEntityTypes = Object.keys(this.additionEntityTypes);
+          if (additionEntityTypes.length > 0) {
+            this.entityTypes.push(...additionEntityTypes);
+          }
           const currentEntityType: EntityType | AliasEntityType = this.entityTypeFormGroup.get('entityType').value;
           if (currentEntityType && !this.entityTypes.includes(currentEntityType)) {
             this.entityTypeFormGroup.get('entityType').patchValue(null, {emitEvent: true});
@@ -120,9 +133,6 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
         }
       }
     }
-  }
-
-  ngAfterViewInit(): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -152,7 +162,9 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   displayEntityTypeFn(entityType?: EntityType | AliasEntityType | null): string | undefined {
-    if (entityType) {
+    if (this.additionEntityTypes[entityType]) {
+      return this.additionEntityTypes[entityType];
+    } else if (entityType) {
       return this.translate.instant(entityTypeTranslations.get(entityType as EntityType).type);
     } else {
       return '';

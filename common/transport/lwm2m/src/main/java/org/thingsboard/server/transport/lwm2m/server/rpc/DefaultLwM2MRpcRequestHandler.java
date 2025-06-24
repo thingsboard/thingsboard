@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,9 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteUpdateRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MCancelObserveCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MCancelObserveCompositeRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
@@ -277,17 +277,6 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     private void sendWriteReplaceRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcWriteReplaceRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteReplaceRequest.class);
-        LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
-        if (path.isResource()) {
-            ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
-            if (resourceModel != null && resourceModel.multiple) {
-                try {
-                    Map<Integer, Object> value = convertMultiResourceValuesFromRpcBody(requestBody.getValue(), resourceModel.type, versionedId);
-                    requestBody.setValue(value);
-                } catch (Exception e) {
-                }
-            }
-        }
         TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId)
                 .value(requestBody.getValue())
                 .timeout(clientContext.getRequestTimeout(client)).build();
@@ -330,7 +319,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
             if (versionedId == null) {
                 if (path.isResourceInstance()) {
-                    setValueToCompositeNodes(client, newNodes, nodes, key, value.toString());
+                    setValueToCompositeNodes(client, newNodes, nodes, key, value);
                 } else if (path.isResource()) {
                     validateResource(client, newNodes, nodes, key , value);
                 } else if (path.isObjectInstance() && value instanceof Map<?, ?>) {
@@ -342,7 +331,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                             "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes));
                 }
             } else {
-                setValueToCompositeNodes(client, newNodes, nodes, versionedId, value.toString());
+                setValueToCompositeNodes(client, newNodes, nodes, versionedId, value);
             }
         });
         return newNodes;
@@ -351,10 +340,10 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private void validateResource(LwM2mClient client, Map newNodes, Map nodes, String resourceId , Object value) {
         if (value instanceof Map<?, ?>) {
             ((Map<?, ?>) value).forEach((k, v) -> {
-                setValueToCompositeNodes(client, newNodes, nodes, validateResourceId (resourceId, k.toString(), nodes), v.toString());
+                setValueToCompositeNodes(client, newNodes, nodes, validateResourceId (resourceId, k.toString(), nodes), v);
             });
         } else {
-            setValueToCompositeNodes(client, newNodes, nodes, resourceId, value.toString());
+            setValueToCompositeNodes(client, newNodes, nodes, resourceId, value);
         }
     }
 
@@ -368,7 +357,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
     }
 
-    private void setValueToCompositeNodes (LwM2mClient client, Map newNodes, Map nodes, String versionedId , String value) {
+    private void setValueToCompositeNodes (LwM2mClient client, Map newNodes, Map nodes, String versionedId , Object value) {
         // validate value. Must be only primitive, not JsonObject or JsonArray
         try {
             JsonElement element = JsonUtils.parse(value);
@@ -378,7 +367,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
             }
             // convert value from JsonPrimitive() to resource/ResourceInstance type
             ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
-            Object newValue = convertValueByTypeResource(value, resourceModel.type,  versionedId);
+            Object newValue = convertValueByTypeResource(element, resourceModel.type,  versionedId);
 
             // add new value after convert
             newNodes.put(fromVersionedIdToObjectId(versionedId), newValue);

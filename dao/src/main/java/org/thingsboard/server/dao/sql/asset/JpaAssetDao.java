@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package org.thingsboard.server.dao.sql.asset;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
+import org.thingsboard.server.common.data.edqs.fields.AssetFields;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -36,6 +39,7 @@ import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.device.NativeAssetRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
@@ -55,6 +59,9 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
 
     @Autowired
     private AssetRepository assetRepository;
+
+    @Autowired
+    private NativeAssetRepository nativeAssetRepository;
 
     @Autowired
     private AssetProfileRepository assetProfileRepository;
@@ -161,6 +168,16 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
     }
 
     @Override
+    public PageData<AssetId> findAssetIdsByTenantIdAndAssetProfileId(UUID tenantId, UUID assetProfileId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(assetRepository.findAssetIdsByTenantIdAndAssetProfileId(
+                        tenantId,
+                        assetProfileId,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)))
+                .mapData(AssetId::new);
+    }
+
+    @Override
     public PageData<Asset> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, PageLink pageLink) {
         return DaoUtil.toPageData(assetRepository
                 .findByTenantIdAndCustomerIdAndType(
@@ -243,6 +260,18 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
     }
 
     @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink) {
+        log.debug("Find profile asset id infos by pageLink [{}]", pageLink);
+        return nativeAssetRepository.findProfileEntityIdInfos(DaoUtil.toPageable(pageLink));
+    }
+
+    @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink) {
+        log.debug("Find profile asset id infos by pageLink [{}]", pageLink);
+        return nativeAssetRepository.findProfileEntityIdInfosByTenantId(tenantId, DaoUtil.toPageable(pageLink));
+    }
+
+    @Override
     public Long countByTenantId(TenantId tenantId) {
         return assetRepository.countByTenantId(tenantId.getId());
     }
@@ -271,6 +300,11 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
     @Override
     public PageData<Asset> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<AssetFields> findNextBatch(UUID uuid, int batchSize) {
+        return assetRepository.findAllFields(uuid, Limit.of(batchSize));
     }
 
     @Override

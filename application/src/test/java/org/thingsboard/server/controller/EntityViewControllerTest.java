@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
 
         savedView.setName("New test entity view");
 
-        doPost("/api/entityView", savedView, EntityView.class);
+        savedView = doPost("/api/entityView", savedView, EntityView.class);
         foundEntityView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
 
         assertEquals(savedView, foundEntityView);

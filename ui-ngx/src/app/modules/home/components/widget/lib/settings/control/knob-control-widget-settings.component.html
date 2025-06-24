@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,66 +15,66 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="knobControlWidgetSettingsForm" fxLayout="column">
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.rpc.common-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
-      <mat-label translate>widgets.rpc.knob-title</mat-label>
-      <input matInput formControlName="title">
-    </mat-form-field>
-  </fieldset>
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.rpc.value-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
-      <mat-label translate>widgets.rpc.initial-value</mat-label>
-      <input matInput type="number" formControlName="initialValue">
-    </mat-form-field>
-    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block">
-        <mat-label translate>widgets.rpc.min-value</mat-label>
-        <input required matInput type="number" formControlName="minValue">
+<ng-container [formGroup]="knobControlWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.knob.behavior</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.knob.initial-value-hint' | translate}}" translate>widgets.knob.initial-value</div>
+      <tb-get-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.knob.initial-value' | translate }}"
+                                    [valueType]="valueType.DOUBLE"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="initialState"></tb-get-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.knob.on-value-change-hint' | translate}}" translate>widgets.knob.on-value-change</div>
+      <tb-set-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.knob.on-value-change' | translate }}"
+                                    [valueType]="valueType.DOUBLE"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="valueChange"></tb-set-value-action-settings>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>widgets.rpc.knob-title</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
-        <mat-label translate>widgets.rpc.max-value</mat-label>
-        <input required matInput type="number" formControlName="maxValue">
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div>{{ 'widgets.knob.range' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <div class="tb-small-label" translate>widgets.knob.min</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="minValue" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <div class="tb-small-label" translate>widgets.knob.max</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="maxValue" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width">{{ 'widgets.knob.value' | translate }}</div>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <tb-unit-input class="flex" formControlName="valueUnits" supportsUnitConversion></tb-unit-input>
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput formControlName="valueDecimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>widgets.knob.fallback-initial-value</div>
+      <mat-form-field class="number" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="initialValue" type="number" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-    </section>
-    <mat-form-field fxFlex class="mat-block">
-      <mat-label translate>widgets.rpc.get-value-method</mat-label>
-      <input required matInput formControlName="getValueMethod">
-    </mat-form-field>
-    <mat-form-field fxFlex class="mat-block">
-      <mat-label translate>widgets.rpc.set-value-method</mat-label>
-      <input required matInput formControlName="setValueMethod">
-    </mat-form-field>
-  </fieldset>
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.rpc.rpc-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
-      <mat-label translate>widgets.rpc.request-timeout</mat-label>
-      <input required matInput type="number" min="0" formControlName="requestTimeout">
-    </mat-form-field>
-    <fieldset class="fields-group fields-group-slider">
-      <legend class="group-title" translate>widgets.rpc.persistent-rpc-settings</legend>
-      <mat-expansion-panel class="tb-settings" [expanded]="knobControlWidgetSettingsForm.get('requestPersistent').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
-          <mat-panel-title>
-            <mat-slide-toggle formControlName="requestPersistent" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
-              {{ 'widgets.rpc.request-persistent' | translate }}
-            </mat-slide-toggle>
-          </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
-            widget-config.advanced-settings
-          </mat-panel-description>
-        </mat-expansion-panel-header>
-        <ng-template matExpansionPanelContent>
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>widgets.rpc.persistent-polling-interval</mat-label>
-            <input matInput type="number" min="1000" formControlName="persistentPollingInterval">
-          </mat-form-field>
-        </ng-template>
-      </mat-expansion-panel>
-    </fieldset>
-  </fieldset>
-</section>
+    </div>
+  </div>
+</ng-container>

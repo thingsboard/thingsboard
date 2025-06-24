@@ -4,9 +4,31 @@ Here is the list of commands, that can be used to quickly install ThingsBoard Ed
 
 Install <a href="https://docs.docker.com/engine/install/" target="_blank"> Docker CE</a> and <a href="https://docs.docker.com/compose/install/" target="_blank"> Docker Compose</a>.
 
-#### Running ThingsBoard Edge as docker service
+#### Step 1. Running ThingsBoard Edge
 
-Create docker compose file for ThingsBoard Edge service:
+Here you can find ThingsBoard Edge docker image:
+
+<a href="https://hub.docker.com/r/thingsboard/tb-edge" target="_blank"> thingsboard/tb-edge</a>
+
+#### Step 2. Choose Queue and/or Database Services
+
+ThingsBoard Edge supports only Kafka or in-memory queue (since v4.0) for message storage and communication between ThingsBoard services.
+
+ThingsBoard Edge supports SQL and hybrid database approaches.
+In this guide we will use SQL only.
+For hybrid details please follow official installation instructions from the ThingsBoard documentation site.
+
+How to choose the right queue implementation?
+
+In Memory queue implementation is built-in and default. It is useful for development(PoC) environments and is not suitable for production deployments or any sort of cluster deployments.
+
+Kafka is recommended for production deployments. This queue is used on the most of ThingsBoard production environments now.
+
+Hybrid implementation combines PostgreSQL and Cassandra databases with Kafka queue service. It is recommended if you plan to manage 1M+ devices in production or handle high data ingestion rate (more than 5000 msg/sec).
+
+Create a docker compose file for the ThingsBoard Edge service:
+
+##### In Memory
 
 ```bash
 nano docker-compose.yml
@@ -35,10 +57,9 @@ services:
     volumes:
       - tb-edge-data:/data
       - tb-edge-logs:/var/log/tb-edge
-    ${EXTRA_HOSTS}
   postgres:
     restart: always
-    image: "postgres:15"
+    image: "postgres:16"
     ports:
       - "5432"
     environment:
@@ -58,24 +79,20 @@ volumes:
 ```
 
 ##### [Optional] Update bind ports 
-If ThingsBoard Edge is going to be running on the same machine where ThingsBoard server (cloud) is running, you'll need to update docker compose port mapping to avoid port collision between ThingsBoard server and ThingsBoard Edge.
+If ThingsBoard Edge is set to run on the same machine where the ThingsBoard server is operating, you need to update port configuration to prevent port collision between the ThingsBoard server and ThingsBoard Edge.
 
-Please update next lines of `docker-compose.yml` file:
+Ensure that the ports 18080, 11883, 15683-15688 are not used by any other application.
 
-```text
-ports:
-  - "18080:8080"
-  - "11883:1883"
-  - "15683-15688:5683-5688/udp"
+Then, update the port configuration in the docker-compose.yml file:
+```bash
+sed -i ‘s/8080:8080/18080:8080/; s/1883:1883/11883:1883/; s/5683-5688:5683-5688\/udp/15683-15688:5683-5688\/udp/’ docker-compose.yml
+{:copy-code}
 ```
-Make sure that ports above (18080, 11883, 15683-15688) are not used by any other application.
-
 #### Start ThingsBoard Edge
-Set the terminal in the directory which contains the `docker-compose.yml` file and execute the following commands to up this docker compose directly:
+Set the terminal in the directory which contains the docker-compose.yml file and execute the following commands to up this docker compose directly:
 
 ```bash
-docker compose up -d
-docker compose logs -f mytbedge
+docker compose up -d && docker compose logs -f mytbedge
 {:copy-code}
 ```
 
@@ -90,11 +107,12 @@ docker-compose up -d
 docker-compose logs -f mytbedge
 ```
 
-#### Open ThingsBoard Edge UI
+#### Step 3. Open ThingsBoard Edge UI
 
-Once started, you will be able to open **ThingsBoard Edge UI** using the following link http://localhost:8080.
+Once the Edge service is started, open the Edge UI at http://localhost:8080.
 
 ###### NOTE: Edge HTTP bind port update 
 
-Use next **ThingsBoard Edge UI** link **http://localhost:18080** if you updated HTTP 8080 bind port to **18080**.
+If the Edge HTTP bind port was changed to 18080 during Edge installation, access the ThingsBoard Edge instance at http://localhost:18080.
 
+Please use your tenant credentials from local Server instance or ThingsBoard Live Demo to log in to the ThingsBoard Edge.

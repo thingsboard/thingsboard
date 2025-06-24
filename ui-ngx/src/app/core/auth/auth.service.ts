@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import { TimeService } from '@core/services/time.service';
 import { UtilsService } from '@core/services/utils.service';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
-import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
+import { OAuth2ClientLoginInfo, PlatformType } from '@shared/models/oauth2.models';
 import { isMobileApp } from '@core/utils';
 import { TwoFactorAuthProviderType, TwoFaProviderInfo } from '@shared/models/two-factor-auth.models';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
@@ -66,7 +66,7 @@ export class AuthService {
   }
 
   redirectUrl: string;
-  oauth2Clients: Array<OAuth2ClientInfo> = null;
+  oauth2Clients: Array<OAuth2ClientLoginInfo> = null;
   twoFactorAuthProviders: Array<TwoFaProviderInfo> = null;
 
   private refreshTokenSubject: ReplaySubject<LoginResponse> = null;
@@ -152,12 +152,8 @@ export class AuthService {
       ));
   }
 
-  public resetPassword(resetToken: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>('/api/noauth/resetPassword', {resetToken, password}, defaultHttpOptions()).pipe(
-      tap((loginResponse: LoginResponse) => {
-          this.setUserFromJwtToken(loginResponse.token, loginResponse.refreshToken, true);
-        }
-      ));
+  public resetPassword(resetToken: string, password: string): Observable<void> {
+    return this.http.post<void>('/api/noauth/resetPassword', {resetToken, password}, defaultHttpOptions());
   }
 
   public changePassword(currentPassword: string, newPassword: string, config?: RequestConfig) {
@@ -223,9 +219,9 @@ export class AuthService {
     }
   }
 
-  public loadOAuth2Clients(): Observable<Array<OAuth2ClientInfo>> {
+  public loadOAuth2Clients(): Observable<Array<OAuth2ClientLoginInfo>> {
     const url = '/api/noauth/oauth2Clients?platform=' + PlatformType.WEB;
-    return this.http.post<Array<OAuth2ClientInfo>>(url,
+    return this.http.post<Array<OAuth2ClientLoginInfo>>(url,
       null, defaultHttpOptions()).pipe(
       catchError(err => of([])),
       tap((OAuth2Clients) => {
@@ -350,7 +346,7 @@ export class AuthService {
           )
         );
       } else if (loginError) {
-        this.showLoginErrorDialog(loginError);
+        Promise.resolve().then(() => this.showLoginErrorDialog(loginError));
         this.utils.updateQueryParam('loginError', null);
         return throwError(Error());
       }
@@ -624,6 +620,7 @@ export class AuthService {
   private userForceFullscreen(authPayload: AuthPayload): boolean {
     return (authPayload.authUser && authPayload.authUser.isPublic) ||
       (authPayload.userDetails && authPayload.userDetails.additionalInfo &&
+        authPayload.userDetails.additionalInfo.defaultDashboardId &&
         authPayload.userDetails.additionalInfo.defaultDashboardFullscreen &&
         authPayload.userDetails.additionalInfo.defaultDashboardFullscreen === true);
   }

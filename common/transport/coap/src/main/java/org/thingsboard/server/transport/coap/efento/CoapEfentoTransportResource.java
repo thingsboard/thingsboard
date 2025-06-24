@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,42 +28,60 @@ import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.adaptor.ProtoConverter;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.EfentoCoapDeviceTypeConfiguration;
-import org.thingsboard.server.common.adaptor.AdaptorException;
-import org.thingsboard.server.common.adaptor.ProtoConverter;
-import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.coap.ConfigProtos;
 import org.thingsboard.server.gen.transport.coap.DeviceInfoProtos;
-import org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos;
 import org.thingsboard.server.gen.transport.coap.MeasurementsProtos;
+import org.thingsboard.server.gen.transport.coap.MeasurementsProtos.ProtoChannel;
 import org.thingsboard.server.transport.coap.AbstractCoapTransportResource;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 import org.thingsboard.server.transport.coap.callback.CoapEfentoCallback;
 import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
+import org.thingsboard.server.transport.coap.efento.utils.PulseCounterType;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.google.gson.JsonParser.parseString;
 import static org.thingsboard.server.transport.coap.CoapTransportService.CONFIGURATION;
 import static org.thingsboard.server.transport.coap.CoapTransportService.CURRENT_TIMESTAMP;
 import static org.thingsboard.server.transport.coap.CoapTransportService.DEVICE_INFO;
 import static org.thingsboard.server.transport.coap.CoapTransportService.MEASUREMENTS;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.BREATH_VOC_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.CO2_EQUIVALENT_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.CO2_GAS_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.ELEC_METER_ACC_MAJOR_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.ELEC_METER_ACC_MINOR_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.IAQ_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.PULSE_CNT_ACC_MAJOR_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.PULSE_CNT_ACC_MINOR_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.PULSE_CNT_ACC_WIDE_MAJOR_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.PULSE_CNT_ACC_WIDE_MINOR_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.STATIC_IAQ_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.WATER_METER_ACC_MAJOR_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.WATER_METER_ACC_MINOR_METADATA_FACTOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.isBinarySensor;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.isSensorError;
+import static org.thingsboard.server.transport.coap.efento.utils.PulseCounterType.ELEC_METER_ACC;
+import static org.thingsboard.server.transport.coap.efento.utils.PulseCounterType.PULSE_CNT_ACC;
+import static org.thingsboard.server.transport.coap.efento.utils.PulseCounterType.PULSE_CNT_ACC_WIDE;
+import static org.thingsboard.server.transport.coap.efento.utils.PulseCounterType.WATER_CNT_ACC;
 
 @Slf4j
 public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
@@ -84,6 +102,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         List<String> uriPath = request.getOptions().getUriPath();
         boolean validPath = uriPath.size() == CHILD_RESOURCE_POSITION && uriPath.get(1).equals(CURRENT_TIMESTAMP);
         if (!validPath) {
+            log.trace("Invalid path: [{}]", uriPath);
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
         } else {
             int dateInSec = (int) (System.currentTimeMillis() / 1000);
@@ -98,6 +117,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         Request request = advanced.getRequest();
         List<String> uriPath = request.getOptions().getUriPath();
         if (uriPath.size() != CHILD_RESOURCE_POSITION) {
+            log.trace("Unexpected uri path size, uri path: [{}]", uriPath);
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
             return;
         }
@@ -113,6 +133,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 processConfigurationRequest(exchange);
                 break;
             default:
+                log.trace("Unexpected request type: [{}]", requestType);
                 exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
                 break;
         }
@@ -179,6 +200,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                     log.error("[{}] Failed to decode Efento ProtoConfig: ", sessionId, e);
                     exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
                 } catch (InvalidProtocolBufferException e) {
+                    log.error("[{}] Error while processing efento message: ", sessionId, e);
                     throw new RuntimeException(e);
                 }
             });
@@ -222,126 +244,205 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private List<EfentoTelemetry> getEfentoMeasurements(MeasurementsProtos.ProtoMeasurements protoMeasurements, UUID sessionId) {
+    List<EfentoTelemetry> getEfentoMeasurements(MeasurementsProtos.ProtoMeasurements protoMeasurements, UUID sessionId) {
         String serialNumber = CoapEfentoUtils.convertByteArrayToString(protoMeasurements.getSerialNum().toByteArray());
         boolean batteryStatus = protoMeasurements.getBatteryStatus();
         int measurementPeriodBase = protoMeasurements.getMeasurementPeriodBase();
         int measurementPeriodFactor = protoMeasurements.getMeasurementPeriodFactor();
         int signal = protoMeasurements.getSignal();
-        List<MeasurementsProtos.ProtoChannel> channelsList = protoMeasurements.getChannelsList();
-        Map<Long, JsonObject> valuesMap = new TreeMap<>();
-        if (!CollectionUtils.isEmpty(channelsList)) {
-            int channel = 0;
-            JsonObject values;
-            for (MeasurementsProtos.ProtoChannel protoChannel : channelsList) {
-                channel++;
-                boolean isBinarySensor = false;
-                MeasurementTypeProtos.MeasurementType measurementType = protoChannel.getType();
-                String measurementTypeName = measurementType.name();
-                if (measurementType.equals(MeasurementTypeProtos.MeasurementType.OK_ALARM)
-                        || measurementType.equals(MeasurementTypeProtos.MeasurementType.FLOODING)) {
-                    isBinarySensor = true;
-                }
-                if (measurementPeriodFactor == 0 && isBinarySensor) {
-                    measurementPeriodFactor = 14;
-                } else {
-                    measurementPeriodFactor = 1;
-                }
-                int measurementPeriod = measurementPeriodBase * measurementPeriodFactor;
-                long measurementPeriodMillis = TimeUnit.SECONDS.toMillis(measurementPeriod);
-                long nextTransmissionAtMillis = TimeUnit.SECONDS.toMillis(protoMeasurements.getNextTransmissionAt());
-                int startPoint = protoChannel.getStartPoint();
-                int startTimestamp = protoChannel.getTimestamp();
-                long startTimestampMillis = TimeUnit.SECONDS.toMillis(startTimestamp);
-                List<Integer> sampleOffsetsList = protoChannel.getSampleOffsetsList();
-                if (!CollectionUtils.isEmpty(sampleOffsetsList)) {
-                    int sampleOfssetsListSize = sampleOffsetsList.size();
-                    for (int i = 0; i < sampleOfssetsListSize; i++) {
-                        int sampleOffset = sampleOffsetsList.get(i);
-                        Integer previousSampleOffset = isBinarySensor && i > 0 ? sampleOffsetsList.get(i - 1) : null;
-                        if (sampleOffset == -32768) {
-                            log.warn("[{}],[{}] Sensor error value! Ignoring.", sessionId, sampleOffset);
-                        } else {
-                            switch (measurementType) {
-                                case TEMPERATURE:
-                                    values = valuesMap.computeIfAbsent(startTimestampMillis, k ->
-                                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
-                                    values.addProperty("temperature_" + channel, ((double) (startPoint + sampleOffset)) / 10f);
-                                    startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
-                                    break;
-                                case WATER_METER:
-                                    values = valuesMap.computeIfAbsent(startTimestampMillis, k ->
-                                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
-                                    values.addProperty("pulse_counter_water_" + channel, ((double) (startPoint + sampleOffset)));
-                                    startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
-                                    break;
-                                case HUMIDITY:
-                                    values = valuesMap.computeIfAbsent(startTimestampMillis, k ->
-                                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
-                                    values.addProperty("humidity_" + channel, (double) (startPoint + sampleOffset));
-                                    startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
-                                    break;
-                                case ATMOSPHERIC_PRESSURE:
-                                    values = valuesMap.computeIfAbsent(startTimestampMillis, k ->
-                                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
-                                    values.addProperty("pressure_" + channel, (double) (startPoint + sampleOffset) / 10f);
-                                    startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
-                                    break;
-                                case DIFFERENTIAL_PRESSURE:
-                                    values = valuesMap.computeIfAbsent(startTimestampMillis, k ->
-                                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
-                                    values.addProperty("pressure_diff_" + channel, (double) (startPoint + sampleOffset));
-                                    startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
-                                    break;
-                                case OK_ALARM:
-                                    boolean currentIsOk = sampleOffset < 0;
-                                    if (previousSampleOffset != null) {
-                                        boolean previousIsOk = previousSampleOffset < 0;
-                                        boolean isOk = previousIsOk && currentIsOk;
-                                        boolean isAlarm = !previousIsOk && !currentIsOk;
-                                        if (isOk || isAlarm) {
-                                            break;
-                                        }
-                                    }
-                                    String data = currentIsOk ? "OK" : "ALARM";
-                                    long sampleOffsetMillis = TimeUnit.SECONDS.toMillis(sampleOffset);
-                                    long measurementTimestamp = startTimestampMillis + Math.abs(sampleOffsetMillis);
-                                    values = valuesMap.computeIfAbsent(measurementTimestamp - 1000, k ->
-                                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
-                                    values.addProperty("ok_alarm_" + channel, data);
-                                    break;
-                                case PULSE_CNT:
-                                    values = valuesMap.computeIfAbsent(startTimestampMillis, k ->
-                                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
-                                    values.addProperty("pulse_cnt_" + channel, (double) (startPoint + sampleOffset));
-                                    startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
-                                    break;
-                                case NO_SENSOR:
-                                case UNRECOGNIZED:
-                                    log.trace("[{}][{}] Sensor error value! Ignoring.", sessionId, measurementTypeName);
-                                    break;
-                                default:
-                                    log.trace("[{}],[{}] Unsupported measurementType! Ignoring.", sessionId, measurementTypeName);
-                                    break;
-                            }
-                        }
-                    }
-                } else {
-                    log.trace("[{}][{}] sampleOffsetsList list is empty!", sessionId, measurementTypeName);
-                }
-            }
-        } else {
+        long nextTransmissionAtMillis = TimeUnit.SECONDS.toMillis(protoMeasurements.getNextTransmissionAt());
+
+        List<ProtoChannel> channelsList = protoMeasurements.getChannelsList();
+        if (CollectionUtils.isEmpty(channelsList)) {
             throw new IllegalStateException("[" + sessionId + "]: Failed to get Efento measurements, reason: channels list is empty!");
         }
-        if (!CollectionUtils.isEmpty(valuesMap)) {
-            List<EfentoTelemetry> efentoMeasurements = new ArrayList<>();
-            for (Long ts : valuesMap.keySet()) {
-                EfentoTelemetry measurement = new EfentoTelemetry(ts, valuesMap.get(ts));
-                efentoMeasurements.add(measurement);
+
+        Map<Long, JsonObject> valuesMap = new TreeMap<>();
+        for (int channel = 0; channel < channelsList.size(); channel++) {
+            ProtoChannel protoChannel = channelsList.get(channel);
+            List<Integer> sampleOffsetsList = protoChannel.getSampleOffsetsList();
+            if (CollectionUtils.isEmpty(sampleOffsetsList)) {
+                log.trace("[{}][{}] sampleOffsetsList list is empty!", sessionId, protoChannel.getType().name());
+                continue;
             }
-            return efentoMeasurements;
-        } else {
+            boolean isBinarySensor = isBinarySensor(protoChannel.getType());
+            int channelPeriodFactor = (measurementPeriodFactor == 0 ? (isBinarySensor ? 14 : 1) : measurementPeriodFactor);
+            int measurementPeriod = measurementPeriodBase * channelPeriodFactor;
+            long measurementPeriodMillis = TimeUnit.SECONDS.toMillis(measurementPeriod);
+            long startTimestampMillis = TimeUnit.SECONDS.toMillis(protoChannel.getTimestamp());
+
+            for (int i = 0; i < sampleOffsetsList.size(); i++) {
+                int sampleOffset = sampleOffsetsList.get(i);
+                if (isSensorError(sampleOffset)) {
+                    log.warn("[{}],[{}] Sensor error value! Ignoring.", sessionId, sampleOffset);
+                    continue;
+                }
+
+                JsonObject values;
+                if (isBinarySensor) {
+                    boolean currentIsOk = sampleOffset < 0;
+                    Integer previousSampleOffset = i > 0 ? sampleOffsetsList.get(i - 1) : null;
+                    if (previousSampleOffset != null) {  //compare with previous value
+                        boolean previousIsOk = previousSampleOffset < 0;
+                        if (currentIsOk == previousIsOk) {
+                            break;
+                        }
+                    }
+                    long sampleOffsetMillis = TimeUnit.SECONDS.toMillis(sampleOffset);
+                    long measurementTimestamp = startTimestampMillis + Math.abs(sampleOffsetMillis);
+                    values = valuesMap.computeIfAbsent(measurementTimestamp - 1000, k ->
+                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
+                    addBinarySample(protoChannel, currentIsOk, values, channel + 1, sessionId);
+                } else {
+                    long timestampMillis = startTimestampMillis + i * measurementPeriodMillis;
+                    values = valuesMap.computeIfAbsent(timestampMillis, k -> CoapEfentoUtils.setDefaultMeasurements(
+                            serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
+                    addContinuesSample(protoChannel, sampleOffset, values, channel + 1, sessionId);
+                }
+            }
+        }
+
+        if (CollectionUtils.isEmpty(valuesMap)) {
             throw new IllegalStateException("[" + sessionId + "]: Failed to collect Efento measurements, reason, values map is empty!");
+        }
+
+        return valuesMap.entrySet().stream()
+                .map(entry -> new EfentoTelemetry(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    private void addContinuesSample(ProtoChannel protoChannel, int sampleOffset, JsonObject values, int channelNumber, UUID sessionId) {
+        int startPoint = protoChannel.getStartPoint();
+
+        switch (protoChannel.getType()) {
+            case MEASUREMENT_TYPE_TEMPERATURE:
+                values.addProperty("temperature_" + channelNumber, ((double) (startPoint + sampleOffset)) / 10f);
+                break;
+            case MEASUREMENT_TYPE_WATER_METER:
+                values.addProperty("pulse_counter_water_" + channelNumber, ((double) (startPoint + sampleOffset)));
+                break;
+            case MEASUREMENT_TYPE_HUMIDITY:
+                values.addProperty("humidity_" + channelNumber, (double) (startPoint + sampleOffset));
+                break;
+            case MEASUREMENT_TYPE_ATMOSPHERIC_PRESSURE:
+                values.addProperty("pressure_" + channelNumber, (double) (startPoint + sampleOffset) / 10f);
+                break;
+            case MEASUREMENT_TYPE_DIFFERENTIAL_PRESSURE:
+                values.addProperty("pressure_diff_" + channelNumber, (double) (startPoint + sampleOffset));
+                break;
+            case MEASUREMENT_TYPE_PULSE_CNT:
+                values.addProperty("pulse_cnt_" + channelNumber, (double) (startPoint + sampleOffset));
+                break;
+            case MEASUREMENT_TYPE_IAQ:
+                addPropertiesForMeasurementTypeWithMetadataFactor(values, "iaq_", channelNumber, startPoint + sampleOffset, IAQ_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_ELECTRICITY_METER:
+                values.addProperty("watt_hour_" + channelNumber, (double) (startPoint + sampleOffset));
+                break;
+            case MEASUREMENT_TYPE_SOIL_MOISTURE:
+                values.addProperty("soil_moisture_" + channelNumber, (double) (startPoint + sampleOffset));
+                break;
+            case MEASUREMENT_TYPE_AMBIENT_LIGHT:
+                values.addProperty("ambient_light_" + channelNumber, (double) (startPoint + sampleOffset) / 10f);
+                break;
+            case MEASUREMENT_TYPE_HIGH_PRESSURE:
+                values.addProperty("high_pressure_" + channelNumber, (double) (startPoint + sampleOffset));
+                break;
+            case MEASUREMENT_TYPE_DISTANCE_MM:
+                values.addProperty("distance_mm_" + channelNumber, (double) (startPoint + sampleOffset));
+                break;
+            case MEASUREMENT_TYPE_WATER_METER_ACC_MINOR:
+                calculateAccPulseCounterTotalValue(values, WATER_CNT_ACC , channelNumber, startPoint + sampleOffset, WATER_METER_ACC_MINOR_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR:
+                addPropertiesForMeasurementTypeWithMetadataFactor(values, WATER_CNT_ACC.getPrefix(), channelNumber, startPoint + sampleOffset, WATER_METER_ACC_MAJOR_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_HUMIDITY_ACCURATE:
+                values.addProperty("humidity_relative_" + channelNumber, (double) (startPoint + sampleOffset) / 10f);
+                break;
+            case MEASUREMENT_TYPE_STATIC_IAQ:
+                addPropertiesForMeasurementTypeWithMetadataFactor(values, "static_iaq_", channelNumber, startPoint + sampleOffset, STATIC_IAQ_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_CO2_GAS:
+                addPropertiesForMeasurementTypeWithMetadataFactor(values, "co2_gas_", channelNumber, startPoint + sampleOffset, CO2_GAS_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_CO2_EQUIVALENT:
+                addPropertiesForMeasurementTypeWithMetadataFactor(values, "co2_", channelNumber, startPoint + sampleOffset, CO2_EQUIVALENT_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_BREATH_VOC:
+                addPropertiesForMeasurementTypeWithMetadataFactor(values, "breath_voc_", channelNumber, startPoint + sampleOffset, BREATH_VOC_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_PERCENTAGE:
+                values.addProperty("percentage_" + channelNumber, (double) (startPoint + sampleOffset) / 100f);
+                break;
+            case MEASUREMENT_TYPE_VOLTAGE:
+                values.addProperty("voltage_" + channelNumber, (double) (startPoint + sampleOffset) / 10f);
+                break;
+            case MEASUREMENT_TYPE_CURRENT:
+                values.addProperty("current_" + channelNumber, (double) (startPoint + sampleOffset) / 100f);
+                break;
+            case MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR:
+                calculateAccPulseCounterTotalValue(values, PULSE_CNT_ACC , channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_MINOR_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR:
+                addPropertiesForMeasurementTypeWithMetadataFactor(values, PULSE_CNT_ACC.getPrefix(), channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_MAJOR_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR:
+                calculateAccPulseCounterTotalValue(values, ELEC_METER_ACC , channelNumber, startPoint + sampleOffset, ELEC_METER_ACC_MINOR_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR:
+                addPropertiesForMeasurementTypeWithMetadataFactor(values, ELEC_METER_ACC.getPrefix(), channelNumber, startPoint + sampleOffset, ELEC_METER_ACC_MAJOR_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR:
+                calculateAccPulseCounterTotalValue(values, PULSE_CNT_ACC_WIDE , channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_WIDE_MINOR_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR:
+                addPropertiesForMeasurementTypeWithMetadataFactor(values, PULSE_CNT_ACC_WIDE.getPrefix(), channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_WIDE_MAJOR_METADATA_FACTOR);
+                break;
+            case MEASUREMENT_TYPE_CURRENT_PRECISE:
+                values.addProperty("current_precise_" + channelNumber, (double) (startPoint + sampleOffset) / 1000f);
+                break;
+            case MEASUREMENT_TYPE_NO_SENSOR:
+            case UNRECOGNIZED:
+                log.trace("[{}][{}] Sensor error value! Ignoring.", sessionId, protoChannel.getType().name());
+                break;
+            default:
+                log.trace("[{}],[{}] Unsupported measurementType! Ignoring.", sessionId, protoChannel.getType().name());
+                break;
+        }
+    }
+
+    private void addPropertiesForMeasurementTypeWithMetadataFactor(JsonObject values, String prefix, int channelNumber, int value, int metadataFactor) {
+        values.addProperty(prefix + channelNumber, value / metadataFactor);
+        values.addProperty(prefix + "metadata_" + channelNumber, value % metadataFactor);
+    }
+
+    private void calculateAccPulseCounterTotalValue(JsonObject values, PulseCounterType pulseCounterType, int channelNumber, int value, int metadataFactor) {
+        int minorValue = value / metadataFactor;
+        int majorChannel = value % metadataFactor + 1;
+        String majorPropertyKey = pulseCounterType.getPrefix() + majorChannel;
+        JsonElement majorProperty = values.get(majorPropertyKey);
+        if (majorProperty != null) {
+            int totalValue = majorProperty.getAsInt() * pulseCounterType.getMajorResolution() + minorValue;
+            values.addProperty(pulseCounterType.getPrefix() + "total_" + channelNumber, totalValue);
+            values.remove(majorPropertyKey);
+        }
+    }
+
+    private void addBinarySample(ProtoChannel protoChannel, boolean valueIsOk, JsonObject values, int channel, UUID sessionId) {
+        switch (protoChannel.getType()) {
+            case MEASUREMENT_TYPE_OK_ALARM:
+                values.addProperty("ok_alarm_" + channel, valueIsOk ? "OK" : "ALARM");
+                break;
+            case MEASUREMENT_TYPE_FLOODING:
+                values.addProperty("flooding_" + channel, valueIsOk ? "OK" : "WATER_DETECTED");
+                break;
+            case MEASUREMENT_TYPE_OUTPUT_CONTROL:
+                values.addProperty("output_control_" + channel, valueIsOk ? "OFF" : "ON");
+                break;
+            default:
+                log.trace("[{}],[{}] Unsupported binary measurementType! Ignoring.", sessionId, protoChannel.getType().name());
+                break;
         }
     }
 

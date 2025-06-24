@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package org.thingsboard.rule.engine.mqtt.azure;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.AzureIotHubUtil;
+import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -31,21 +34,21 @@ import org.thingsboard.rule.engine.mqtt.TbMqttNode;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
 import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-
-import javax.net.ssl.SSLException;
+import org.thingsboard.server.common.data.util.TbPair;
 
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
         name = "azure iot hub",
         configClazz = TbAzureIotHubNodeConfiguration.class,
+        version = 1,
         clusteringMode = ComponentClusteringMode.SINGLETON,
         nodeDescription = "Publish messages to the Azure IoT Hub",
         nodeDetails = "Will publish message payload to the Azure IoT Hub with QoS <b>AT_LEAST_ONCE</b>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbExternalNodeAzureIotHubConfig"
 )
 public class TbAzureIotHubNode extends TbMqttNode {
+
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx);
@@ -60,18 +63,39 @@ public class TbAzureIotHubNode extends TbMqttNode {
                     pemCredentials.setCaCert(AzureIotHubUtil.getDefaultCaCert());
                 }
             }
-            this.mqttClient = initClient(ctx);
+            this.mqttClient = initAzureClient(ctx);
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
     }
 
-    protected void prepareMqttClientConfig(MqttClientConfig config) throws SSLException {
-        config.setProtocolVersion(MqttVersion.MQTT_3_1_1);
+    protected void prepareMqttClientConfig(MqttClientConfig config) {
         config.setUsername(AzureIotHubUtil.buildUsername(mqttNodeConfiguration.getHost(), config.getClientId()));
         ClientCredentials credentials = mqttNodeConfiguration.getCredentials();
         if (CredentialsType.SAS == credentials.getType()) {
             config.setPassword(AzureIotHubUtil.buildSasToken(mqttNodeConfiguration.getHost(), ((AzureIotHubSasCredentials) credentials).getSasKey()));
         }
     }
+
+    MqttClient initAzureClient(TbContext ctx) throws Exception {
+        return initClient(ctx);
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                String protocolVersion = "protocolVersion";
+                if (!oldConfiguration.has(protocolVersion)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(protocolVersion, MqttVersion.MQTT_3_1_1.name());
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
 }

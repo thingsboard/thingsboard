@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  */
 package org.thingsboard.server.common.data;
 
-public enum ObjectType { // TODO: choose a better name. cannot move to EntityType: TS_KV, ADMIN_SETTINGS, etc., also need specific ordering
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
+public enum ObjectType {
     TENANT,
+    TENANT_PROFILE,
     CUSTOMER,
     ADMIN_SETTINGS,
     QUEUE,
@@ -27,6 +31,8 @@ public enum ObjectType { // TODO: choose a better name. cannot move to EntityTyp
     RULE_NODE_STATE,
     OTA_PACKAGE,
     RESOURCE,
+    EVENT,
+    RULE_NODE,
     USER,
     USER_CREDENTIALS,
     USER_SETTINGS,
@@ -45,14 +51,16 @@ public enum ObjectType { // TODO: choose a better name. cannot move to EntityTyp
     ENTITY_VIEW,
     ALARM,
     ENTITY_ALARM,
-    OAUTH2_PARAMS,
+    OAUTH2_CLIENT,
     OAUTH2_DOMAIN,
     OAUTH2_MOBILE,
-    OAUTH2_REGISTRATION,
+    USER_SETTINGS,
     NOTIFICATION_TARGET,
     NOTIFICATION_TEMPLATE,
     NOTIFICATION_RULE,
     ALARM_COMMENT,
+    API_USAGE_STATE,
+    QUEUE_STATS,
     ALARM_TYPE,
     MOBILE_APP_SETTINGS,
     EVENT,
@@ -61,5 +69,32 @@ public enum ObjectType { // TODO: choose a better name. cannot move to EntityTyp
     ATTRIBUTE_KV,
     LATEST_TS_KV,
     TS_KV;
+
+    public static final Set<ObjectType> edqsTenantTypes = EnumSet.of(
+            TENANT, CUSTOMER, DEVICE_PROFILE, DEVICE, ASSET_PROFILE, ASSET, EDGE, ENTITY_VIEW, USER, DASHBOARD,
+            RULE_CHAIN, WIDGET_TYPE, WIDGETS_BUNDLE, API_USAGE_STATE, QUEUE_STATS
+    );
+    public static final Set<ObjectType> edqsTypes =  EnumSet.copyOf(edqsTenantTypes);
+    public static final Set<ObjectType> edqsSystemTypes = EnumSet.of(TENANT, USER, DASHBOARD,
+            API_USAGE_STATE, ATTRIBUTE_KV, LATEST_TS_KV);
+    public static final Set<ObjectType> unversionedTypes = EnumSet.of(
+            QUEUE_STATS // created once, never updated
+    );
+
+    static {
+        edqsTypes.addAll(List.of(RELATION, ATTRIBUTE_KV, LATEST_TS_KV));
+    }
+
+    public EntityType toEntityType() {
+        return EntityType.valueOf(name());
+    }
+
+    public static ObjectType fromEntityType(EntityType entityType) {
+        try {
+            return ObjectType.valueOf(entityType.name());
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
 }

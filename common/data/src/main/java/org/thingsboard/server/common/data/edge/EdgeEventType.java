@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,8 @@ public enum EdgeEventType {
     NOTIFICATION_TARGET (true, EntityType.NOTIFICATION_TARGET),
     NOTIFICATION_TEMPLATE (true, EntityType.NOTIFICATION_TEMPLATE),
     TB_RESOURCE(true, EntityType.TB_RESOURCE),
-    OAUTH2(true, null);
+    OAUTH2_CLIENT(true, EntityType.OAUTH2_CLIENT),
+    DOMAIN(true, EntityType.DOMAIN);
 
     private final boolean allEdgesRelated;
 

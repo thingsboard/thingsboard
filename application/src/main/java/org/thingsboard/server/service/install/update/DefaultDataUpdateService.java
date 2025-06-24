@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,30 +24,33 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
+import org.thingsboard.server.service.install.DbUpgradeExecutorService;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+
+import static org.thingsboard.server.dao.rule.BaseRuleChainService.TB_RULE_CHAIN_INPUT_NODE;
 
 @Service
 @Profile("install")
@@ -61,162 +64,90 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private RuleChainService ruleChainService;
 
     @Autowired
+    private RelationService relationService;
+
+    @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
 
     @Autowired
-    JpaExecutorService jpaExecutorService;
-
-    @Autowired
-    AdminSettingsService adminSettingsService;
-
-    @Autowired
-    DeviceConnectivityConfiguration connectivityConfiguration;
-
-    @Autowired
-    private CustomerDao customerDao;
-
-    @Autowired
-    private CustomerService customerService;
+    private DbUpgradeExecutorService executorService;
 
     @Autowired
     private TenantProfileService tenantProfileService;
 
     @Override
-    public void updateData(String fromVersion) throws Exception {
-        switch (fromVersion) {
-            case "3.6.0":
-                log.info("Updating data from version 3.6.0 to 3.6.1 ...");
-                migrateDeviceConnectivity();
-                break;
-            case "3.6.4":
-                log.info("Updating data from version 3.6.4 to 3.7.0 ...");
-                updateCustomersWithTheSameTitle();
-                updateMaxRuleNodeExecsPerMessage();
-                updateGatewayRateLimits();
-                break;
-            default:
-                throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
-        }
+    public void updateData() throws Exception {
+        log.info("Updating data ...");
+        //TODO: should be cleaned after each release
+        updateInputNodes();
+        deduplicateRateLimitsPerSecondsConfigurations();
+        log.info("Data updated.");
     }
 
-    private void updateGatewayRateLimits() {
-        var tenantProfiles = new PageDataIterable<>(link -> tenantProfileService.findTenantProfiles(TenantId.SYS_TENANT_ID, link), DEFAULT_PAGE_SIZE);
-        tenantProfiles.forEach(tenantProfile -> {
-            var configurationOpt = tenantProfile.getProfileConfiguration();
-            configurationOpt.ifPresent(configuration -> {
-                boolean updated = false;
-                if (configuration.getTransportDeviceMsgRateLimit() != null) {
-                    if (configuration.getTransportGatewayMsgRateLimit() == null) {
-                        configuration.setTransportGatewayMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
-                        updated = true;
-                    }
-                    if (configuration.getTransportGatewayDeviceMsgRateLimit() == null) {
-                        configuration.setTransportGatewayDeviceMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
-                        updated = true;
-                    }
-                }
-                if (configuration.getTransportDeviceTelemetryMsgRateLimit() != null) {
-                    if (configuration.getTransportGatewayTelemetryMsgRateLimit() == null) {
-                        configuration.setTransportGatewayTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
-                        updated = true;
-                    }
-                    if (configuration.getTransportGatewayDeviceTelemetryMsgRateLimit() == null) {
-                        configuration.setTransportGatewayDeviceTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
-                        updated = true;
-                    }
-                }
-                if (configuration.getTransportDeviceTelemetryDataPointsRateLimit() != null) {
-                    if (configuration.getTransportGatewayTelemetryDataPointsRateLimit() == null) {
-                        configuration.setTransportGatewayTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
-                        updated = true;
-                    }
-                    if (configuration.getTransportGatewayDeviceTelemetryDataPointsRateLimit() == null) {
-                        configuration.setTransportGatewayDeviceTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
-                        updated = true;
-                    }
-                }
-                if (updated) {
-                    try {
-                        tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-                    } catch (Exception e) {
-                        log.error("Failed to update tenant profile with id: {} due to: ", tenantProfile.getId(), e);
-                    }
-                }
-            });
-        });
-    }
+    private void deduplicateRateLimitsPerSecondsConfigurations() {
+        log.info("Starting update of tenant profiles...");
 
-    private void updateMaxRuleNodeExecsPerMessage() {
+        int totalProfiles = 0;
+        int updatedTenantProfiles = 0;
+        int skippedProfiles = 0;
+        int failedProfiles = 0;
+
         var tenantProfiles = new PageDataIterable<>(
-                link -> tenantProfileService.findTenantProfiles(TenantId.SYS_TENANT_ID, link), DEFAULT_PAGE_SIZE);
-        tenantProfiles.forEach(tenantProfile -> {
-            var configurationOpt = tenantProfile.getProfileConfiguration();
-            configurationOpt.ifPresent(configuration -> {
-                if (configuration.getMaxRuleNodeExecsPerMessage() == 0) {
-                    configuration.setMaxRuleNodeExecutionsPerMessage(1000);
-                    try {
-                        tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-                    } catch (Exception e) {
-                        log.error("Failed to update tenant profile with id: {} due to: ", tenantProfile.getId(), e);
-                    }
-                }
-            });
-        });
-    }
+                pageLink -> tenantProfileService.findTenantProfiles(TenantId.SYS_TENANT_ID, pageLink), 1024);
 
-    private void updateCustomersWithTheSameTitle() {
-        var customers = new ArrayList<Customer>();
-        new PageDataIterable<>(pageLink ->
-                customerDao.findCustomersWithTheSameTitle(pageLink), DEFAULT_PAGE_SIZE
-        ).forEach(customers::add);
-        if (customers.isEmpty()) {
-            return;
-        }
-        var firstCustomer = customers.get(0);
-        var titleToDeduplicate = firstCustomer.getTitle();
-        var tenantIdToDeduplicate = firstCustomer.getTenantId();
-        int duplicateCounter = 1;
+        for (TenantProfile tenantProfile : tenantProfiles) {
+            totalProfiles++;
+            String profileName = tenantProfile.getName();
+            UUID profileId = tenantProfile.getId().getId();
+            try {
+                Optional<DefaultTenantProfileConfiguration> profileConfiguration = tenantProfile.getProfileConfiguration();
+                if (profileConfiguration.isEmpty()) {
+                    log.debug("[{}][{}] Skipping tenant profile with non-default configuration.", profileId, profileName);
+                    skippedProfiles++;
+                    continue;
+                }
 
-        for (int i = 1; i < customers.size(); i++) {
-            var currentCustomer = customers.get(i);
-            if (currentCustomer.getTitle().equals(titleToDeduplicate) && currentCustomer.getTenantId().equals(tenantIdToDeduplicate)) {
-                duplicateCounter++;
-                String currentTitle = currentCustomer.getTitle();
-                String newTitle = currentTitle + " " + duplicateCounter;
-                try {
-                    Optional<Customer> customerOpt = customerService.findCustomerByTenantIdAndTitle(tenantIdToDeduplicate, newTitle);
-                    if (customerOpt.isPresent()) {
-                        // fallback logic: customer with title 'currentTitle + " " + duplicateCounter;' might be another duplicate.
-                        newTitle = currentTitle + "_" + currentCustomer.getId();
-                    }
-                } catch (Exception e) {
-                    log.trace("Failed to find customer with title due to: ", e);
-                    // fallback logic: customer with title 'currentTitle + " " + duplicateCounter;' might be another duplicate.
-                    newTitle = currentTitle + "_" + currentCustomer.getId();
-                }
-                currentCustomer.setTitle(newTitle);
-                try {
-                    customerService.saveCustomer(currentCustomer);
-                } catch (Exception e) {
-                    log.error("[{}] Failed to update customer with id and title: {}, oldTitle: {}, due to: ",
-                            currentCustomer.getTenantId(), newTitle, currentTitle, e);
-                }
-                continue;
+                DefaultTenantProfileConfiguration defaultTenantProfileConfiguration = profileConfiguration.get();
+                defaultTenantProfileConfiguration.deduplicateRateLimitsConfigs();
+                tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+                updatedTenantProfiles++;
+                log.debug("[{}][{}] Successfully updated tenant profile.", profileId, profileName);
+            } catch (Exception e) {
+                log.error("[{}][{}] Failed to updated tenant profile: ", profileId, profileName, e);
+                failedProfiles++;
             }
-            titleToDeduplicate = currentCustomer.getTitle();
-            tenantIdToDeduplicate = currentCustomer.getTenantId();
-            duplicateCounter = 1;
         }
+
+        log.info("Tenant profiles update completed. Total: {}, Updated: {}, Skipped: {}, Failed: {}",
+                totalProfiles, updatedTenantProfiles, skippedProfiles, failedProfiles);
     }
 
-    private void migrateDeviceConnectivity() {
-        if (adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "connectivity") == null) {
-            AdminSettings connectivitySettings = new AdminSettings();
-            connectivitySettings.setTenantId(TenantId.SYS_TENANT_ID);
-            connectivitySettings.setKey("connectivity");
-            connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
-            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
+
+    private void updateInputNodes() {
+        log.info("Creating relations for input nodes...");
+        int n = 0;
+        var inputNodes = new PageDataIterable<>(pageLink -> ruleChainService.findAllRuleNodesByType(TB_RULE_CHAIN_INPUT_NODE, pageLink), 1024);
+        for (RuleNode inputNode : inputNodes) {
+            try {
+                RuleChainId targetRuleChainId = Optional.ofNullable(inputNode.getConfiguration().get("ruleChainId"))
+                        .filter(JsonNode::isTextual).map(JsonNode::asText).map(id -> new RuleChainId(UUID.fromString(id)))
+                        .orElse(null);
+                if (targetRuleChainId == null) {
+                    continue;
+                }
+
+                EntityRelation relation = new EntityRelation();
+                relation.setFrom(inputNode.getRuleChainId());
+                relation.setTo(targetRuleChainId);
+                relation.setType(EntityRelation.USES_TYPE);
+                relation.setTypeGroup(RelationTypeGroup.COMMON);
+                relationService.saveRelation(TenantId.SYS_TENANT_ID, relation);
+                n++;
+            } catch (Exception e) {
+                log.error("Failed to save relation for input node: {}", inputNode, e);
+            }
         }
+        log.info("Created {} relations for input nodes", n);
     }
 
     @Override
@@ -262,7 +193,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     ruleNodeId, ruleNodeType, fromVersion, toVersion);
             try {
                 TbNodeUpgradeUtils.upgradeConfigurationAndVersion(ruleNode, ruleNodeClassInfo);
-                saveFutures.add(jpaExecutorService.submit(() -> {
+                saveFutures.add(executorService.submit(() -> {
                     ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
                     log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                             ruleNodeId, ruleNodeType, fromVersion, toVersion);

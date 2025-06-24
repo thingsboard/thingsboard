@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import {
 } from '@home/components/widget/config/timewindow-config-panel.component';
 import { formatValue, isUndefined } from '@core/utils';
 import { ColorType } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -49,6 +50,7 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
   radialGaugeWidgetConfigForm: UntypedFormGroup;
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
+  unitsPreviewFn = this._unitsPreviewFn.bind(this);
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -182,7 +184,11 @@ export class GaugeBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.radialGaugeWidgetConfigForm.get('units').value;
+    const units: string = getSourceTbUnitSymbol(this.radialGaugeWidgetConfigForm.get('units').value);
     return formatValue(22, 0, units, true);
+  }
+
+  private _unitsPreviewFn(): string {
+    return getSourceTbUnitSymbol(this.radialGaugeWidgetConfigForm.get('units').value);
   }
 }

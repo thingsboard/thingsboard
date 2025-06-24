@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
 import { isFunction } from '@core/utils';
 import { FormattedData } from '@shared/models/widget.models';
 import { DateFormatProcessor, DateFormatSettings, Font } from '@shared/models/widget-settings.models';
-import {
-  TimeSeriesChartDataItem,
-} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { TimeSeriesChartDataItem } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { Renderer2, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
@@ -39,6 +37,7 @@ export interface TimeSeriesChartTooltipWidgetSettings {
   tooltipValueFormatter?: string | TimeSeriesChartTooltipValueFormatFunction;
   tooltipShowDate: boolean;
   tooltipDateInterval?: boolean;
+  tooltipHideZeroValues?: boolean;
   tooltipDateFormat: DateFormatSettings;
   tooltipDateFont: Font;
   tooltipDateColor: string;
@@ -103,6 +102,9 @@ export class TimeSeriesChartTooltip {
     if (!tooltipParams.items.length && !tooltipParams.comparisonItems.length) {
       return null;
     }
+    if (this.settings.tooltipHideZeroValues && !tooltipParams.items.some(value => value.param.value[1] && value.param.value[1] !== 'false')) {
+      return undefined;
+    }
 
     const tooltipElement: HTMLElement = this.renderer.createElement('div');
     this.renderer.setStyle(tooltipElement, 'display', 'flex');
@@ -129,7 +131,9 @@ export class TimeSeriesChartTooltip {
         this.renderer.appendChild(tooltipItemsElement, this.constructTooltipDateElement(items[0].param, interval));
       }
       for (const item of items) {
-        this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
+        if (!this.settings.tooltipHideZeroValues || (item.param.value[1] && item.param.value[1] !== 'false')) {
+          this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
+        }
       }
     }
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
 
 @ExtendWith(MockitoExtension.class)
 public class TbMsgPushToEdgeNodeTest {
@@ -82,10 +83,15 @@ public class TbMsgPushToEdgeNodeTest {
     public void ackMsgInCaseNoEdgeRelated() {
         Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
         Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
-        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(TbMsgPushToEdgeNode.DEFAULT_PAGE_SIZE))).thenReturn(new PageData<>());
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(new PageData<>());
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         node.onMsg(ctx, msg);
 
@@ -103,10 +109,15 @@ public class TbMsgPushToEdgeNodeTest {
         UserId userId = new UserId(UUID.randomUUID());
         EdgeId edgeId = new EdgeId(UUID.randomUUID());
         PageData<EdgeId> edgePageData = new PageData<>(List.of(edgeId), 1, 1, false);
-        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(TbMsgPushToEdgeNode.DEFAULT_PAGE_SIZE))).thenReturn(edgePageData);
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(edgePageData);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.ATTRIBUTES_UPDATED, userId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.ATTRIBUTES_UPDATED)
+                .originator(userId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         node.onMsg(ctx, msg);
 
@@ -136,8 +147,13 @@ public class TbMsgPushToEdgeNodeTest {
         Mockito.when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
         Mockito.when(edgeEventService.saveAsync(any())).thenReturn(SettableFuture.create());
 
-        TbMsg msg = TbMsg.newMsg(event, new EdgeId(UUID.randomUUID()), metaData,
-                TbMsgDataType.JSON, "{\"lastConnectTs\":1}", null, null);
+        TbMsg msg = TbMsg.newMsg()
+                .type(event)
+                .originator(new EdgeId(UUID.randomUUID()))
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data("{\"lastConnectTs\":1}")
+                .build();
 
         node.onMsg(ctx, msg);
 

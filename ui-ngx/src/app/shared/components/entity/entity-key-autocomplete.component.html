@@ -1,0 +1,51 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field class="tb-flex no-gap !w-full" appearance="outline" subscriptSizing="dynamic">
+  <input matInput type="text" placeholder="{{ 'action.set' | translate }}"
+         #keyInput
+         [formControl]="keyControl"
+         required
+         (focusin)="keyInputSubject.next()"
+         [matAutocomplete]="keysAutocomplete">
+  @if (keyControl.value) {
+    <button type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  } @else if (keyControl.hasError('required') && keyControl.touched) {
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'common.hint.key-required' | translate"
+              class="tb-error">
+      warning
+    </mat-icon>
+  }
+  <mat-autocomplete
+    class="tb-autocomplete"
+    #keysAutocomplete="matAutocomplete">
+    @for (key of filteredKeys$ | async; track key) {
+      <mat-option [value]="key"><span [innerHTML]="key | highlight: searchText"></span></mat-option>
+    } @empty {
+      @if (!this.keyControl.value) {
+        <mat-option [value]="''">{{ 'entity.no-keys-found' | translate }}</mat-option>
+      }
+    }
+  </mat-autocomplete>
+</mat-form-field>

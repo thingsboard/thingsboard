@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,36 @@ import org.eclipse.leshan.core.link.Link;
 import org.eclipse.leshan.core.link.LinkParseException;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.test.context.event.annotation.BeforeTestClass;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.transport.lwm2m.config.TbLwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVerId;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_6;
 
 
 public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegrationTest {
+
+    @BeforeEach
+    public void beforeTest () throws Exception {
+        testInit();
+    }
 
     /**
      * DiscoverAll
@@ -48,7 +61,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
     @Test
     public void testDiscoverAll_Return_CONTENT_LinksAllObjectsAllInstancesOfClient() throws Exception {
         String setRpcRequest = "{\"method\":\"DiscoverAll\"}";
-        String actualResult = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        String actualResult = doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         JsonNode rpcActualValue = JacksonUtil.toJsonNode(rpcActualResult.get("value").asText());
@@ -168,8 +181,40 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());
     }
 
+    @Test
+    public void testDiscoverRequestCannotTargetResourceInstance_Return_INTERNAL_SERVER_ERROR() throws Exception {
+        // ResourceInstanceId
+        String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_6 + "/1";
+        String actualResult = sendDiscover(expectedPath);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.INTERNAL_SERVER_ERROR.getName(), rpcActualResult.get("result").asText());
+        String expected = "InvalidRequestException: Discover request cannot target resource instance path: /3/0/6/1";
+        assertTrue(rpcActualResult.get("error").asText().contains(expected));
+    }
+
     private String sendDiscover(String path) throws Exception {
         String setRpcRequest = "{\"method\": \"Discover\", \"params\": {\"id\": \"" + path + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
+    }
+
+    private  String convertObjectIdToVerId(String path, String ver) {
+        ver = ver != null ? ver : TbLwM2mVersion.VERSION_1_0.getVersion().toString();
+        try {
+            String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
+            if (keyArray.length > 1) {
+                keyArray[1] = keyArray[1] + LWM2M_SEPARATOR_KEY + ver;
+                return StringUtils.join(keyArray, LWM2M_SEPARATOR_PATH);
+            } else {
+                return path;
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void testInit() throws Exception {
+        await("Update Registration at-least-once after start")
+                .atMost(50, TimeUnit.SECONDS)
+                .until(() -> countUpdateReg() > 0);
     }
 }

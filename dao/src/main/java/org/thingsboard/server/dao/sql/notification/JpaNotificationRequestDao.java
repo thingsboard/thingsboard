@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
-import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -74,8 +73,8 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     }
 
     @Override
-    public List<NotificationRequest> findByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId) {
-        return DaoUtil.convertDataList(notificationRequestRepository.findAllByRuleIdAndOriginatorEntityIdAndOriginatorEntityType(ruleId.getId(), originatorEntityId.getId(), originatorEntityId.getEntityType()));
+    public List<NotificationRequest> findByRuleIdAndOriginatorEntityIdAndStatus(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId, NotificationRequestStatus status) {
+        return DaoUtil.convertDataList(notificationRequestRepository.findAllByRuleIdAndOriginatorEntityIdAndOriginatorEntityTypeAndStatus(ruleId.getId(), originatorEntityId.getId(), originatorEntityId.getEntityType(), status));
     }
 
     @Override

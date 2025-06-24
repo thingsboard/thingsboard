@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" class="marker-color" fill="#307FE5">
+  <g filter="url(#shadow-filter)">
+    <path class="marker-opacity" d="M19 24.5C17.4075 27.4125 17 33 17 33C17 33 27.0858 32.1955 30.9992 27.4998C34 23.8992 31.9992 19 27.9992 19C23.9993 19 21.1929 20.4894 19 24.5Z" fill="black" fill-opacity="0.24"/>
+  </g>
+  <path d="M9 25L17 34L25 25C25 25 23 27 17 27C11 27 9 25 9 25Z" style="filter:url(#stroke-filter)" />
+  <path d="M 30,13 C 30,20.1797 24.1797,26 17,26 9.8203,26 4,20.1797 4,13 4,5.8203 9.8203,0 17,0 24.1797,0 30,5.8203 30,13 Z M 9.99998,13 c 0,3.866 3.13402,7 7.00002,7 3.866,0 7,-3.134 7,-7 C 24,9.13399 20.866,5.99998 17,5.99998 13.134,5.99998 9.99998,9.13399 9.99998,13 Z" />
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M 17,25 C 23.6274,25 29,19.6274 29,13 29,6.37258 23.6274,1 17,1 10.3726,1 5,6.37258 5,13 c 0,6.6274 5.3726,12 12,12 z m 0,-4 C 12.5817,21 8.99998,17.4183 8.99998,13 8.99998,8.58171 12.5817,4.99998 17,4.99998 c 4.4183,0 8,3.58173 8,8.00002 0,4.4183 -3.5817,8 -8,8 z m 0,5 C 24.1797,26 30,20.1797 30,13 30,5.8203 24.1797,0 17,0 9.8203,0 4,5.8203 4,13 4,20.1797 9.8203,26 17,26 Z m 0,-6 C 13.134,20 9.99998,16.866 9.99998,13 9.99998,9.13399 13.134,5.99998 17,5.99998 c 3.866,0 7,3.13401 7,7.00002 0,3.866 -3.134,7 -7,7 z" style="filter:url(#stroke-filter)" />
+  <defs>
+    <filter id="shadow-filter" x="12.75" y="14.75" width="23.9434" height="22.5" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="2.125"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_8817_262071"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_8817_262071" result="shape"/>
+      <feGaussianBlur stdDeviation="0.5" result="effect2_foregroundBlur_8817_262071"/>
+    </filter>
+    <filter
+      id="stroke-filter"
+      style="color-interpolation-filters:sRGB"
+      x="0" y="0" width="1" height="1">
+      <feColorMatrix values="0.6 0 0 0 0 0 0.6 0 0 0 0 0 0.6 0 0 0 0 0 1 0" />
+    </filter>
+  </defs>
+</svg>

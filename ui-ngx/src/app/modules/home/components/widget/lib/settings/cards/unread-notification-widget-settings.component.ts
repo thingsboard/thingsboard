@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ export class UnreadNotificationWidgetSettingsComponent extends WidgetSettingsCom
 
   unreadNotificationWidgetSettingsForm: UntypedFormGroup;
 
+  countPreviewFn = this._countPreviewFn.bind(this);
+
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
     super(store);
@@ -40,7 +42,7 @@ export class UnreadNotificationWidgetSettingsComponent extends WidgetSettingsCom
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...unreadNotificationDefaultSettings};
+    return unreadNotificationDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -76,6 +78,10 @@ export class UnreadNotificationWidgetSettingsComponent extends WidgetSettingsCom
       this.unreadNotificationWidgetSettingsForm.get('counterValueColor').disable({emitEvent});
       this.unreadNotificationWidgetSettingsForm.get('counterColor').disable({emitEvent});
     }
+  }
+
+  private _countPreviewFn(): string {
+    return this.unreadNotificationWidgetSettingsForm.get('maxNotificationDisplay').value?.toString() || '6';
   }
 
 }

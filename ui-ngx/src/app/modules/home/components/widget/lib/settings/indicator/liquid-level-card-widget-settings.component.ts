@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import {
   ShapesTranslations,
   updatedFormSettingsValidators
 } from '@home/components/widget/lib/indicator/liquid-level-widget.models';
-import { UnitsType } from '@shared/models/unit.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 import { ImageCardsSelectComponent } from '@home/components/widget/lib/settings/common/image-cards-select.component';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Observable, of, ReplaySubject } from 'rxjs';
@@ -53,9 +53,10 @@ import { ResourcesService } from '@core/services/resources.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'liquid-level-card-widget-settings',
+  selector: 'tb-liquid-level-card-widget-settings',
   templateUrl: './liquid-level-card-widget-settings.component.html',
   styleUrls: []
 })
@@ -94,8 +95,6 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
   shapes = Object.values(Shapes) as Shapes[];
   shapesImageMap: Map<Shapes, string> = new Map();
   ShapesTranslationMap = ShapesTranslations;
-
-  unitsType = UnitsType;
 
   levelCardWidgetSettingsForm: FormGroup;
 
@@ -189,7 +188,9 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
     });
 
-    this.levelCardWidgetSettingsForm.get('selectedShape').valueChanges.subscribe(() => {
+    this.levelCardWidgetSettingsForm.get('selectedShape').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.cd.detectChanges();
       this.layoutsImageCardsSelect?.imageCardsSelectOptions.notifyOnChanges();
     });
@@ -227,13 +228,13 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units: string = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(32, decimals, units, true);
   }
 
   private _tooltipValuePreviewFn() {
-    const units: string = this.levelCardWidgetSettingsForm.get('tooltipUnits').value;
+    const units: string = getSourceTbUnitSymbol(this.levelCardWidgetSettingsForm.get('tooltipUnits').value);
     const decimals: number = this.levelCardWidgetSettingsForm.get('tooltipLevelDecimals').value;
     return formatValue(32, decimals, units, true);
   }
@@ -242,7 +243,7 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
     const value = this.levelCardWidgetSettingsForm.get('volumeConstant').value;
     const datasourceUnits = this.levelCardWidgetSettingsForm.get('datasourceUnits').value;
     const decimals: number = this.widgetConfig.config.decimals;
-    let units: string = this.widgetConfig.config.units;
+    let units: string = getSourceTbUnitSymbol(this.widgetConfig.config.units);
 
     if (datasourceUnits !== CapacityUnits.percent) {
       units = datasourceUnits;

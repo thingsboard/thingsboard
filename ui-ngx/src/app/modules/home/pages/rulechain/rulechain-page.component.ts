@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -77,8 +77,8 @@ import {
 } from '@shared/models/rule-node.models';
 import { FcRuleNodeModel, FcRuleNodeTypeModel, RuleChainMenuContextInfo } from './rulechain-page.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { NEVER, Observable, of, ReplaySubject, skip, startWith, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, mergeMap, takeUntil, tap } from 'rxjs/operators';
+import { NEVER, Observable, of, ReplaySubject, skip, startWith, Subject, throwError } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, mergeMap, takeUntil, tap } from 'rxjs/operators';
 import { ISearchableComponent } from '../../models/searchable-component.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-details.component';
@@ -93,6 +93,9 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
 import { MatDrawer } from '@angular/material/sidenav';
+import { HttpStatusCode } from '@angular/common/http';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
+import { EntityDebugSettings } from '@shared/models/entity.models';
 import Timeout = NodeJS.Timeout;
 
 @Component({
@@ -130,7 +133,7 @@ export class RuleChainPageComponent extends PageComponent
 
   ruleChainMenuPosition = { x: '0px', y: '0px' };
 
-  contextMenuEvent: MouseEvent;
+  contextMenuEvent: TbContextMenuEvent;
 
   ruleNodeTypeDescriptorsMap = ruleNodeTypeDescriptors;
   ruleNodeTypesLibraryArray = ruleNodeTypesLibrary;
@@ -366,7 +369,7 @@ export class RuleChainPageComponent extends PageComponent
   private initHotKeys(): void {
     if (!this.hotKeys.length) {
       this.hotKeys.push(
-        new Hotkey('ctrl+a', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+a', 'meta+a'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
               this.ruleChainCanvas.modelService.selectAll();
@@ -377,7 +380,7 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('rulenode.select-all-objects'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+c', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+c', 'meta+c'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
               this.copyRuleNodes();
@@ -388,7 +391,7 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('rulenode.copy-selected'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+v', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+v', 'meta+v'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
               if (this.itembuffer.hasRuleNodes()) {
@@ -413,7 +416,7 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('rulenode.deselect-all-objects'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+s', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+s', 'meta+s'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
               this.saveRuleChain();
@@ -424,7 +427,7 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('action.apply'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+z', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+z', 'meta+z'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
               this.revertRuleChain();
@@ -446,7 +449,7 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('rulenode.delete-selected-objects'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+r', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+r', 'meta+r'], (event: KeyboardEvent) => {
             if (this.enableHotKeys && this.canCreateNestedRuleChain()) {
               event.preventDefault();
               this.createNestedRuleChain();
@@ -573,7 +576,7 @@ export class RuleChainPageComponent extends PageComponent
         additionalInfo: ruleNode.additionalInfo,
         configuration: ruleNode.configuration,
         configurationVersion: isDefinedAndNotNull(ruleNode.configurationVersion) ? ruleNode.configurationVersion : 0,
-        debugMode: ruleNode.debugMode,
+        debugSettings: ruleNode.debugSettings,
         singletonMode: ruleNode.singletonMode,
         queueName: ruleNode.queueName,
         x: Math.round(ruleNode.additionalInfo.layoutX),
@@ -656,7 +659,7 @@ export class RuleChainPageComponent extends PageComponent
     this.validate();
   }
 
-  openRuleChainContextMenu($event: MouseEvent) {
+  openRuleChainContextMenu($event: TbContextMenuEvent) {
     if (this.ruleChainCanvas.modelService && !$event.ctrlKey && !$event.metaKey) {
       const x = $event.clientX;
       const y = $event.clientY;
@@ -934,7 +937,7 @@ export class RuleChainPageComponent extends PageComponent
             name: node.name,
             configuration: deepClone(node.configuration),
             additionalInfo: node.additionalInfo ? deepClone(node.additionalInfo) : {},
-            debugMode: node.debugMode,
+            debugSettings: node.debugSettings,
             singletonMode: node.singletonMode,
             queueName: node.queueName
           };
@@ -1007,7 +1010,6 @@ export class RuleChainPageComponent extends PageComponent
             name: outputEdge.label,
             configuration: {},
             additionalInfo: {},
-            debugMode: false,
             singletonMode: false
           };
           outputNode.additionalInfo.layoutX = Math.round(destNode.x);
@@ -1053,7 +1055,6 @@ export class RuleChainPageComponent extends PageComponent
             configuration: {
               ruleChainId: ruleChain.id.id
             },
-            debugMode: false,
             singletonMode: false,
             x: Math.round(ruleChainNodeX),
             y: Math.round(ruleChainNodeY),
@@ -1282,7 +1283,9 @@ export class RuleChainPageComponent extends PageComponent
   onDebugEventSelected(debugEventBody: DebugRuleNodeEventBody) {
     const ruleNodeConfigComponent = this.ruleNodeComponent.ruleNodeConfigComponent;
     const ruleNodeConfigDefinedComponent = ruleNodeConfigComponent.definedConfigComponent;
-    if (ruleNodeConfigComponent.useDefinedDirective() && ruleNodeConfigDefinedComponent.hasScript && ruleNodeConfigDefinedComponent.testScript) {
+    if (ruleNodeConfigComponent.useDefinedDirective()
+      && ruleNodeConfigDefinedComponent.hasScript
+      && ruleNodeConfigDefinedComponent.testScript) {
       ruleNodeConfigDefinedComponent.testScript(debugEventBody);
     }
   }
@@ -1413,22 +1416,29 @@ export class RuleChainPageComponent extends PageComponent
     this.ruleChainCanvas.modelService.deleteSelected();
   }
 
-  isDebugModeEnabled(): boolean {
-    const res = this.ruleChainModel.nodes.find((node) => node.debugMode);
+  isDebugSettingsEnabled(): boolean {
+    const res = this.ruleChainModel.nodes.find((node) => node?.debugSettings && this.isDebugSettingsActive(node.debugSettings));
     return typeof res !== 'undefined';
   }
 
-  resetDebugModeInAllNodes() {
+  resetDebugSettingsInAllNodes(): void {
     let changed = false;
     this.ruleChainModel.nodes.forEach((node) => {
       if (node.component.type !== RuleNodeType.INPUT) {
-        changed = changed || node.debugMode;
-        node.debugMode = false;
+        const nodeHasActiveDebugSettings = node?.debugSettings && this.isDebugSettingsActive(node.debugSettings);
+        changed = changed || nodeHasActiveDebugSettings;
+        if (nodeHasActiveDebugSettings) {
+          node.debugSettings = { allEnabled: false, failuresEnabled: false, allEnabledUntil: 0 };
+        }
       }
     });
     if (changed) {
       this.onModelChanged();
     }
+  }
+
+  private isDebugSettingsActive(debugSettings: EntityDebugSettings): boolean {
+    return debugSettings.allEnabled || debugSettings.failuresEnabled || debugSettings.allEnabledUntil > new Date().getTime();
   }
 
   validate() {
@@ -1456,7 +1466,8 @@ export class RuleChainPageComponent extends PageComponent
       const ruleChainMetaData: RuleChainMetaData = {
         ruleChainId: this.ruleChain.id,
         nodes: [],
-        connections: []
+        connections: [],
+        version: ruleChain.version
       };
       const nodes: FcRuleNode[] = [];
       this.ruleChainModel.nodes.forEach((node) => {
@@ -1465,10 +1476,12 @@ export class RuleChainPageComponent extends PageComponent
             id: node.ruleNodeId,
             type: node.component.clazz,
             name: node.name,
-            configurationVersion: isDefinedAndNotNull(node.configurationVersion) ? node.configurationVersion : node.component.configurationVersion,
+            configurationVersion: isDefinedAndNotNull(node.configurationVersion)
+              ? node.configurationVersion
+              : node.component.configurationVersion,
             configuration: node.configuration,
             additionalInfo: node.additionalInfo ? node.additionalInfo : {},
-            debugMode: node.debugMode,
+            debugSettings: node.debugSettings,
             singletonMode: node.singletonMode,
             queueName: node.queueName
           };
@@ -1500,20 +1513,30 @@ export class RuleChainPageComponent extends PageComponent
           });
         }
       });
-      this.ruleChainService.saveRuleChainMetadata(ruleChainMetaData).subscribe((savedRuleChainMetaData) => {
-        this.ruleChainMetaData = savedRuleChainMetaData;
-        if (this.isImport) {
-          this.isDirtyValue = false;
-          this.isImport = false;
-          if (this.ruleChainType !== RuleChainType.EDGE) {
-            this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
+      this.ruleChainService.saveRuleChainMetadata(ruleChainMetaData)
+        .pipe(
+          catchError(err => {
+            if (err.status === HttpStatusCode.Conflict) {
+              return this.ruleChainService.getRuleChainMetadata(ruleChainMetaData.ruleChainId.id);
+            }
+            return throwError(() => err);
+          })
+        )
+        .subscribe((savedRuleChainMetaData) => {
+          this.ruleChain.version = savedRuleChainMetaData.version;
+          this.ruleChainMetaData = savedRuleChainMetaData;
+          if (this.isImport) {
+            this.isDirtyValue = false;
+            this.isImport = false;
+            if (this.ruleChainType !== RuleChainType.EDGE) {
+              this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
+            } else {
+              this.router.navigateByUrl(`edgeManagement/ruleChains/${this.ruleChain.id.id}`);
+            }
           } else {
-            this.router.navigateByUrl(`edgeManagement/ruleChains/${this.ruleChain.id.id}`);
+            this.createRuleChainModel();
           }
-        } else {
-          this.createRuleChainModel();
-        }
-        saveResult.next();
+          saveResult.next();
       });
     });
     return saveResult;

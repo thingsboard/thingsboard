@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2024 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 FROM thingsboard/openjdk17:bookworm-slim
 
-ENV PG_MAJOR=15
+ENV PG_MAJOR=16
 
 ENV DATA_FOLDER=/data
 
@@ -29,7 +29,6 @@ ENV CASSANDRA_DATA=/data/cassandra
 ENV SPRING_DRIVER_CLASS_NAME=org.postgresql.Driver
 ENV SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/thingsboard
 ENV SPRING_DATASOURCE_USERNAME=${pkg.user}
-ENV SPRING_DATASOURCE_PASSWORD=postgres
 
 ENV CASSANDRA_HOST=localhost
 ENV CASSANDRA_PORT=9042

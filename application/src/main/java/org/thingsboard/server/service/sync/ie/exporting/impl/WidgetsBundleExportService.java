@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.sync.ie.WidgetsBundleExportData;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -41,7 +40,6 @@ public class WidgetsBundleExportService extends BaseEntityExportService<WidgetsB
         if (widgetsBundle.getTenantId() == null || widgetsBundle.getTenantId().isNullUid()) {
             throw new IllegalArgumentException("Export of system Widget Bundles is not allowed");
         }
-        imageService.inlineImage(widgetsBundle);
 
         List<String> fqns = widgetTypeService.findWidgetFqnsByWidgetsBundleId(ctx.getTenantId(), widgetsBundle.getId());
         exportData.setFqns(fqns);

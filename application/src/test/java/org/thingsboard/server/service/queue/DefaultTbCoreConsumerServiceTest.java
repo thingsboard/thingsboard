@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.UUID;
@@ -48,6 +49,8 @@ public class DefaultTbCoreConsumerServiceTest {
     private DeviceStateService stateServiceMock;
     @Mock
     private TbCoreConsumerStats statsMock;
+    @Mock
+    private RuleEngineCallService ruleEngineCallServiceMock;
 
     @Mock
     private TbCallback tbCallbackMock;
@@ -527,6 +530,112 @@ public class DefaultTbCoreConsumerServiceTest {
 
         // THEN
         then(statsMock).should(never()).log(inactivityMsg);
+    }
+
+    @Test
+    public void givenProcessingSuccess_whenForwardingInactivityTimeoutUpdateMsgToStateService_thenOnSuccessCallbackIsCalled() {
+        // GIVEN
+        var inactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setInactivityTimeout(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // THEN
+        then(stateServiceMock).should().onDeviceInactivityTimeoutUpdate(tenantId, deviceId, time);
+        then(tbCallbackMock).should().onSuccess();
+        then(tbCallbackMock).should(never()).onFailure(any());
+    }
+
+    @Test
+    public void givenProcessingFailure_whenForwardingInactivityTimeoutUpdateMsgToStateService_thenOnFailureCallbackIsCalled() {
+        // GIVEN
+        var inactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setInactivityTimeout(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        var runtimeException = new RuntimeException("Something bad happened!");
+        doThrow(runtimeException).when(stateServiceMock).onDeviceInactivityTimeoutUpdate(tenantId, deviceId, time);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // THEN
+        then(tbCallbackMock).should(never()).onSuccess();
+        then(tbCallbackMock).should().onFailure(runtimeException);
+    }
+
+    @Test
+    public void givenStatsEnabled_whenForwardingInactivityTimeoutUpdateMsgToStateService_thenStatsAreRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", true);
+
+        var inactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setInactivityTimeout(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should().log(inactivityTimeoutUpdateMsg);
+    }
+
+    @Test
+    public void givenStatsDisabled_whenForwardingInactivityTimeoutUpdateMsgToStateService_thenStatsAreNotRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", false);
+
+        var inactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setInactivityTimeout(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should(never()).log(inactivityTimeoutUpdateMsg);
+    }
+
+    @Test
+    public void givenRestApiCallResponseMsgProto_whenForwardToRuleEngineCallService_thenCallOnQueueMsg() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "ruleEngineCallService", ruleEngineCallServiceMock);
+        var restApiCallResponseMsgProto = TransportProtos.RestApiCallResponseMsgProto.getDefaultInstance();
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToRuleEngineCallService(restApiCallResponseMsgProto, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToRuleEngineCallService(restApiCallResponseMsgProto, tbCallbackMock);
+
+        // THEN
+        then(ruleEngineCallServiceMock).should().onQueueMsg(restApiCallResponseMsgProto, tbCallbackMock);
     }
 
 }

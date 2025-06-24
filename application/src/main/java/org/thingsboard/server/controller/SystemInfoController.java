@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,23 +28,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileAppSettings;
-import org.thingsboard.server.common.data.mobile.QRCodeConfig;
+import org.thingsboard.server.common.data.mobile.qrCodeSettings.QRCodeConfig;
+import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.dao.mobile.MobileAppSettingsService;
+import org.thingsboard.server.dao.mobile.QrCodeSettingService;
+import org.thingsboard.server.dao.trendz.TrendzSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
+import org.thingsboard.server.utils.DebugModeRateLimitsConfig;
 
 import java.util.Collections;
 import java.util.List;
@@ -70,6 +73,9 @@ public class SystemInfoController extends BaseController {
     @Value("${ui.dashboard.max_datapoints_limit}")
     private long maxDatapointsLimit;
 
+    @Value("${debug.settings.default_duration:15}")
+    private int defaultDebugDurationMinutes;
+
     @Autowired(required = false)
     private BuildProperties buildProperties;
 
@@ -77,7 +83,13 @@ public class SystemInfoController extends BaseController {
     private EntitiesVersionControlService versionControlService;
 
     @Autowired
-    private MobileAppSettingsService mobileAppSettingsService;
+    private QrCodeSettingService qrCodeSettingService;
+
+    @Autowired
+    private DebugModeRateLimitsConfig debugModeRateLimitsConfig;
+
+    @Autowired
+    private TrendzSettingsService trendzSettingsService;
 
     @PostConstruct
     public void init() {
@@ -141,9 +153,19 @@ public class SystemInfoController extends BaseController {
         if (!currentUser.isSystemAdmin()) {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
+            systemParams.setMaxDebugModeDurationMinutes(DebugModeUtil.getMaxDebugAllDuration(tenantProfileConfiguration.getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));
+            if (debugModeRateLimitsConfig.isRuleChainDebugPerTenantLimitsEnabled()) {
+                systemParams.setRuleChainDebugPerTenantLimitsConfiguration(debugModeRateLimitsConfig.getRuleChainDebugPerTenantLimitsConfiguration());
+            }
+            if (debugModeRateLimitsConfig.isCalculatedFieldDebugPerTenantLimitsEnabled()) {
+                systemParams.setCalculatedFieldDebugPerTenantLimitsConfiguration(debugModeRateLimitsConfig.getCalculatedFieldDebugPerTenantLimitsConfiguration());
+            }
+            systemParams.setMaxArgumentsPerCF(tenantProfileConfiguration.getMaxArgumentsPerCF());
+            systemParams.setMaxDataPointsPerRollingArg(tenantProfileConfiguration.getMaxDataPointsPerRollingArg());
+            systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
         }
-        systemParams.setMobileQrEnabled(Optional.ofNullable(mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID))
-                .map(MobileAppSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
+        systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
+                .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
                 .orElse(false));
         return systemParams;
     }
@@ -164,6 +186,7 @@ public class SystemInfoController extends BaseController {
         } else {
             infoObject.put("version", "unknown");
         }
+        infoObject.put("type", "CE");
         return infoObject;
     }
 }

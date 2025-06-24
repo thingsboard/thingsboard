@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import { Injectable, Type } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -25,18 +25,25 @@ import {
   BaseWidgetType,
   DeprecatedFilter,
   fullWidgetTypeFqn,
+  IWidgetSettingsComponent,
+  migrateWidgetTypeToDynamicForms,
+  WidgetSettingsComponent,
   WidgetType,
   widgetType,
   WidgetTypeDetails,
   WidgetTypeInfo,
   widgetTypesData
 } from '@shared/models/widget.models';
-import { TranslateService } from '@ngx-translate/core';
 import { toWidgetInfo, toWidgetTypeDetails, WidgetInfo } from '@app/modules/home/models/widget-component.models';
 import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActivationEnd, Router } from '@angular/router';
+import {
+  BasicWidgetConfigComponent,
+  IBasicWidgetConfigComponent
+} from '@home/components/widget/config/widget-config.component.models';
+import { ResourcesService } from '@core/services/resources.service';
 
 @Injectable({
   providedIn: 'root'
@@ -51,10 +58,13 @@ export class WidgetService {
 
   private loadWidgetsBundleCacheSubject: ReplaySubject<void>;
 
+  private basicWidgetSettingsComponentsMap: { [key: string]: Type<IBasicWidgetConfigComponent> } = {};
+  private widgetSettingsComponentsMap: { [key: string]: Type<IWidgetSettingsComponent> } = {};
+
   constructor(
     private http: HttpClient,
-    private translate: TranslateService,
-    private router: Router
+    private router: Router,
+    private resourcesService: ResourcesService,
   ) {
     this.router.events.pipe(filter(event => event instanceof ActivationEnd)).subscribe(
       () => {
@@ -86,9 +96,9 @@ export class WidgetService {
   }
 
   public getWidgetBundles(pageLink: PageLink, fullSearch = false,
-                          tenantOnly = false, config?: RequestConfig): Observable<PageData<WidgetsBundle>> {
+                          tenantOnly = false, scadaFirst = false, config?: RequestConfig): Observable<PageData<WidgetsBundle>> {
     return this.http.get<PageData<WidgetsBundle>>(
-      `/api/widgetsBundles${pageLink.toQuery()}&tenantOnly=${tenantOnly}&fullSearch=${fullSearch}`,
+      `/api/widgetsBundles${pageLink.toQuery()}&tenantOnly=${tenantOnly}&fullSearch=${fullSearch}&scadaFirst=${scadaFirst}`,
       defaultHttpOptionsFromConfig(config)
     );
   }
@@ -126,14 +136,10 @@ export class WidgetService {
   }
 
   public deleteWidgetsBundle(widgetsBundleId: string, config?: RequestConfig) {
-    return this.getWidgetsBundle(widgetsBundleId, config).pipe(
-      mergeMap((widgetsBundle) => this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`,
-          defaultHttpOptionsFromConfig(config)).pipe(
-          tap(() => {
-            this.invalidateWidgetsBundleCache();
-          })
-        )
-    ));
+    return this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`, defaultHttpOptionsFromConfig(config))
+      .pipe(
+        tap(() => this.invalidateWidgetsBundleCache())
+      );
   }
 
   public getBundleWidgetTypes(widgetsBundleId: string,
@@ -143,9 +149,13 @@ export class WidgetService {
   }
 
   public exportBundleWidgetTypesDetails(widgetsBundleId: string,
-                                     config?: RequestConfig): Observable<Array<WidgetTypeDetails>> {
-    return this.http.get<Array<WidgetTypeDetails>>(`/api/widgetTypesDetails?widgetsBundleId=${widgetsBundleId}&inlineImages=true`,
-      defaultHttpOptionsFromConfig(config));
+                                        includeResources = true,
+                                        config?: RequestConfig): Observable<Array<WidgetTypeDetails>> {
+    let url = `/api/widgetTypesDetails?widgetsBundleId=${widgetsBundleId}`
+    if (includeResources) {
+      url += '&includeResources=true';
+    }
+    return this.http.get<Array<WidgetTypeDetails>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getBundleWidgetTypeFqns(widgetsBundleId: string,
@@ -185,8 +195,9 @@ export class WidgetService {
   public saveWidgetTypeDetails(widgetInfo: WidgetInfo,
                                id: WidgetTypeId,
                                createdTime: number,
+                               version: number,
                                config?: RequestConfig): Observable<WidgetTypeDetails> {
-    const widgetTypeDetails = toWidgetTypeDetails(widgetInfo, id, undefined, createdTime);
+    const widgetTypeDetails = toWidgetTypeDetails(widgetInfo, id, undefined, createdTime, version);
     return this.http.post<WidgetTypeDetails>('/api/widgetType', widgetTypeDetails,
       defaultHttpOptionsFromConfig(config)).pipe(
       tap((savedWidgetType) => {
@@ -210,9 +221,13 @@ export class WidgetService {
   }
 
   public exportWidgetType(widgetTypeId: string,
+                          includeResources = true,
                           config?: RequestConfig): Observable<WidgetTypeDetails> {
-    return this.http.get<WidgetTypeDetails>(`/api/widgetType/${widgetTypeId}?inlineImages=true`,
-      defaultHttpOptionsFromConfig(config));
+    let url = `/api/widgetType/${widgetTypeId}`;
+    if (includeResources) {
+      url += '?includeResources=true';
+    }
+    return this.http.get<WidgetTypeDetails>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getWidgetTypeInfoById(widgetTypeId: string,
@@ -240,10 +255,13 @@ export class WidgetService {
   }
 
   public getWidgetTypes(pageLink: PageLink, tenantOnly = false,
-                        fullSearch = false, deprecatedFilter = DeprecatedFilter.ALL, widgetTypes: Array<widgetType> = null,
+                        fullSearch = false, scadaFirst = false,
+                        deprecatedFilter = DeprecatedFilter.ALL,
+                        widgetTypes: Array<widgetType> = null,
                         config?: RequestConfig): Observable<PageData<WidgetTypeInfo>> {
     let url =
-      `/api/widgetTypes${pageLink.toQuery()}&tenantOnly=${tenantOnly}&fullSearch=${fullSearch}&deprecatedFilter=${deprecatedFilter}`;
+      `/api/widgetTypes${pageLink.toQuery()}&tenantOnly=${tenantOnly}&fullSearch=${fullSearch}
+      &scadaFirst=${scadaFirst}&deprecatedFilter=${deprecatedFilter}`;
     if (widgetTypes && widgetTypes.length) {
       url += `&widgetTypeList=${widgetTypes.join(',')}`;
     }
@@ -265,6 +283,7 @@ export class WidgetService {
     return this.getWidgetType(templateWidgetType.template.fullFqn,
       config).pipe(
         map((result) => {
+          result = migrateWidgetTypeToDynamicForms(result);
           const widgetInfo = toWidgetInfo(result);
           widgetInfo.fullFqn = undefined;
           return widgetInfo;
@@ -278,6 +297,30 @@ export class WidgetService {
 
   public putWidgetInfoToCache(widgetInfo: WidgetInfo) {
     this.widgetsInfoInMemoryCache.set(widgetInfo.fullFqn, widgetInfo);
+  }
+
+  public registerBasicWidgetConfigComponents(module: any) {
+    Object.assign(this.basicWidgetSettingsComponentsMap, this.resourcesService.extractComponentsFromModule<IBasicWidgetConfigComponent>(module, BasicWidgetConfigComponent));
+  }
+
+  public getBasicWidgetSettingsComponentBySelector(selector: string): Type<IBasicWidgetConfigComponent> {
+    return this.basicWidgetSettingsComponentsMap[selector];
+  }
+
+  public putBasicWidgetSettingsComponentToMap(selector: string, compType: Type<IBasicWidgetConfigComponent>) {
+    this.basicWidgetSettingsComponentsMap[selector] = compType;
+  }
+
+  public registerWidgetSettingsComponents(module: any) {
+    Object.assign(this.widgetSettingsComponentsMap, this.resourcesService.extractComponentsFromModule<IWidgetSettingsComponent>(module, WidgetSettingsComponent));
+  }
+
+  public getWidgetSettingsComponentTypeBySelector(selector: string): Type<IWidgetSettingsComponent> {
+    return this.widgetSettingsComponentsMap[selector];
+  }
+
+  public putWidgetSettingsComponentToMap(selector: string, compType: Type<IWidgetSettingsComponent>) {
+    this.widgetSettingsComponentsMap[selector] = compType;
   }
 
   private widgetTypeUpdated(updatedWidgetType: BaseWidgetType): void {
