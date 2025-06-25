@@ -20,11 +20,11 @@ import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
 
 public record MistralAiChatModel(
         MistralAiProviderConfig providerConfig,
-        String modelId,
         Config modelConfig
 ) implements AiChatModel<MistralAiChatModel.Config> {
 
     public record Config(
+            String modelId,
             Double temperature,
             Integer timeoutSeconds,
             Integer maxRetries
@@ -32,17 +32,17 @@ public record MistralAiChatModel(
 
         @Override
         public Config withTemperature(Double temperature) {
-            return new Config(temperature, timeoutSeconds, maxRetries);
+            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
         }
 
         @Override
         public Config withTimeoutSeconds(Integer timeoutSeconds) {
-            return new Config(temperature, timeoutSeconds, maxRetries);
+            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
         }
 
         @Override
         public Config withMaxRetries(Integer maxRetries) {
-            return new Config(temperature, timeoutSeconds, maxRetries);
+            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
         }
 
     }
@@ -54,7 +54,7 @@ public record MistralAiChatModel(
 
     @Override
     public MistralAiChatModel withModelConfig(Config config) {
-        return new MistralAiChatModel(providerConfig, modelId, config);
+        return new MistralAiChatModel(providerConfig, config);
     }
 
 }

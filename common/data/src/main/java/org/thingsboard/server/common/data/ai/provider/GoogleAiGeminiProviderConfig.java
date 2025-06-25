@@ -22,9 +22,4 @@ public record GoogleAiGeminiProviderConfig(String apiKey) implements AiProviderC
         return AiProvider.GOOGLE_AI_GEMINI;
     }
 
-    @Override
-    public String apiKey() {
-        return apiKey;
-    }
-
 }

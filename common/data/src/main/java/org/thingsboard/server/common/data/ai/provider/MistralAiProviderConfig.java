@@ -22,9 +22,4 @@ public record MistralAiProviderConfig(String apiKey) implements AiProviderConfig
         return AiProvider.MISTRAL_AI;
     }
 
-    @Override
-    public String apiKey() {
-        return apiKey;
-    }
-
 }

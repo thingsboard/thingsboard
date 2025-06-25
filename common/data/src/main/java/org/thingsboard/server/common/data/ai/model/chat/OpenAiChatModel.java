@@ -20,11 +20,11 @@ import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 
 public record OpenAiChatModel(
         OpenAiProviderConfig providerConfig,
-        String modelId,
         Config modelConfig
 ) implements AiChatModel<OpenAiChatModel.Config> {
 
     public record Config(
+            String modelId,
             Double temperature,
             Integer timeoutSeconds,
             Integer maxRetries
@@ -32,17 +32,17 @@ public record OpenAiChatModel(
 
         @Override
         public OpenAiChatModel.Config withTemperature(Double temperature) {
-            return new Config(temperature, timeoutSeconds, maxRetries);
+            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
         }
 
         @Override
         public OpenAiChatModel.Config withTimeoutSeconds(Integer timeoutSeconds) {
-            return new Config(temperature, timeoutSeconds, maxRetries);
+            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
         }
 
         @Override
         public OpenAiChatModel.Config withMaxRetries(Integer maxRetries) {
-            return new Config(temperature, timeoutSeconds, maxRetries);
+            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
         }
 
     }
@@ -54,7 +54,7 @@ public record OpenAiChatModel(
 
     @Override
     public OpenAiChatModel withModelConfig(OpenAiChatModel.Config config) {
-        return new OpenAiChatModel(providerConfig, modelId, config);
+        return new OpenAiChatModel(providerConfig, config);
     }
 
 }

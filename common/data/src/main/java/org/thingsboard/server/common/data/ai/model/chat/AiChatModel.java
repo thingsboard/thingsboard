@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.ai.model.AiModel;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 
 public sealed interface AiChatModel<C extends AiChatModelConfig<C>> extends AiModel<C>
-        permits OpenAiChatModel, AzureOpenAiChatModel, GoogleAiGeminiChatModel, MistralAiChatModel {
+        permits OpenAiChatModel, AzureOpenAiChatModel, GoogleAiGeminiChatModel, GoogleVertexAiGeminiChatModel, MistralAiChatModel {
 
     ChatModel configure(Langchain4jChatModelConfigurer configurer);
 

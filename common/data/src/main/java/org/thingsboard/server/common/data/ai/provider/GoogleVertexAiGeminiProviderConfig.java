@@ -15,11 +15,17 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record AzureOpenAiProviderConfig(String apiKey) implements AiProviderConfig {
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+public record GoogleVertexAiGeminiProviderConfig(
+        String projectId,
+        String location,
+        ObjectNode serviceAccountKey
+) implements AiProviderConfig {
 
     @Override
     public AiProvider provider() {
-        return AiProvider.AZURE_OPENAI;
+        return AiProvider.GOOGLE_VERTEX_AI_GEMINI;
     }
 
 }

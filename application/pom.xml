@@ -395,6 +395,10 @@
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-vertex-ai-gemini</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-mistral-ai</artifactId>
         </dependency>
     </dependencies>

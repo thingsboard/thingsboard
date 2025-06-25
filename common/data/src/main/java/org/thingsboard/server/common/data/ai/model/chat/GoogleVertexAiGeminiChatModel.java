@@ -16,32 +16,32 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
-import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 
-public record AzureOpenAiChatModel(
-        AzureOpenAiProviderConfig providerConfig,
+public record GoogleVertexAiGeminiChatModel(
+        GoogleVertexAiGeminiProviderConfig providerConfig,
         Config modelConfig
-) implements AiChatModel<AzureOpenAiChatModel.Config> {
+) implements AiChatModel<GoogleVertexAiGeminiChatModel.Config> {
 
     public record Config(
             String modelId,
             Double temperature,
-            Integer timeoutSeconds,
+            Integer timeoutSeconds, // TODO: not supported by Vertex AI
             Integer maxRetries
-    ) implements AiChatModelConfig<AzureOpenAiChatModel.Config> {
+    ) implements AiChatModelConfig<GoogleVertexAiGeminiChatModel.Config> {
 
         @Override
-        public AzureOpenAiChatModel.Config withTemperature(Double temperature) {
+        public Config withTemperature(Double temperature) {
             return new Config(modelId, temperature, timeoutSeconds, maxRetries);
         }
 
         @Override
-        public AzureOpenAiChatModel.Config withTimeoutSeconds(Integer timeoutSeconds) {
+        public Config withTimeoutSeconds(Integer timeoutSeconds) {
             return new Config(modelId, temperature, timeoutSeconds, maxRetries);
         }
 
         @Override
-        public AzureOpenAiChatModel.Config withMaxRetries(Integer maxRetries) {
+        public Config withMaxRetries(Integer maxRetries) {
             return new Config(modelId, temperature, timeoutSeconds, maxRetries);
         }
 
@@ -53,8 +53,8 @@ public record AzureOpenAiChatModel(
     }
 
     @Override
-    public AzureOpenAiChatModel withModelConfig(AzureOpenAiChatModel.Config config) {
-        return new AzureOpenAiChatModel(providerConfig, config);
+    public GoogleVertexAiGeminiChatModel withModelConfig(GoogleVertexAiGeminiChatModel.Config config) {
+        return new GoogleVertexAiGeminiChatModel(providerConfig, config);
     }
 
 }

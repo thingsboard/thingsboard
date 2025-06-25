@@ -35,15 +35,27 @@ interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity,
 
     Optional<AiModelSettingsEntity> findByTenantIdAndName(UUID tenantId, String name);
 
-    @Query(nativeQuery = true, value = """
-            SELECT *
-            FROM ai_model_settings ai_model
-            WHERE ai_model.tenant_id = :tenantId
-              AND (:textSearch IS NULL
-                OR ai_model.name ILIKE '%' || :textSearch || '%'
-                OR (ai_model.configuration -> 'providerConfig' ->> 'provider') ILIKE '%' || :textSearch || '%'
-                OR (ai_model.configuration ->> 'modelId') ILIKE '%' || :textSearch || '%')
-            """)
+    @Query(
+            value = """
+                    SELECT *
+                    FROM ai_model_settings ai_model
+                    WHERE ai_model.tenant_id = :tenantId
+                      AND (:textSearch IS NULL
+                        OR ai_model.name ILIKE '%' || :textSearch || '%'
+                        OR (ai_model.configuration -> 'providerConfig' ->> 'provider') ILIKE '%' || :textSearch || '%'
+                        OR (ai_model.configuration -> 'modelConfig' ->> 'modelId') ILIKE '%' || :textSearch || '%')
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM ai_model_settings ai_model
+                    WHERE ai_model.tenant_id = :tenantId
+                      AND (:textSearch IS NULL
+                        OR ai_model.name ILIKE '%' || :textSearch || '%'
+                        OR (ai_model.configuration -> 'providerConfig' ->> 'provider') ILIKE '%' || :textSearch || '%'
+                        OR (ai_model.configuration -> 'modelConfig'  ->> 'modelId') ILIKE '%' || :textSearch || '%')
+                    """,
+            nativeQuery = true
+    )
     Page<AiModelSettingsEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
 
     @Query("SELECT ai_model.id FROM AiModelSettingsEntity ai_model WHERE ai_model.tenantId = :tenantId")

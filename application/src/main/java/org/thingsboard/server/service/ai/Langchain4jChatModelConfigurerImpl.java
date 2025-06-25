@@ -15,25 +15,37 @@
  */
 package org.thingsboard.server.service.ai;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.vertexai.Transport;
+import com.google.cloud.vertexai.VertexAI;
+import com.google.cloud.vertexai.api.GenerationConfig;
+import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModel;
+import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.Duration;
 
 @Component
-public class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigurer {
+class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigurer {
 
     @Override
     public ChatModel configureChatModel(OpenAiChatModel chatModel) {
         OpenAiChatModel.Config modelConfig = chatModel.modelConfig();
         return dev.langchain4j.model.openai.OpenAiChatModel.builder()
                 .apiKey(chatModel.providerConfig().apiKey())
-                .modelName(chatModel.modelId())
+                .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
@@ -45,7 +57,7 @@ public class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelC
         AzureOpenAiChatModel.Config modelConfig = chatModel.modelConfig();
         return dev.langchain4j.model.azure.AzureOpenAiChatModel.builder()
                 .apiKey(chatModel.providerConfig().apiKey())
-                .deploymentName(chatModel.modelId())
+                .deploymentName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
@@ -57,7 +69,7 @@ public class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelC
         GoogleAiGeminiChatModel.Config modelConfig = chatModel.modelConfig();
         return dev.langchain4j.model.googleai.GoogleAiGeminiChatModel.builder()
                 .apiKey(chatModel.providerConfig().apiKey())
-                .modelName(chatModel.modelId())
+                .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
@@ -65,11 +77,48 @@ public class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelC
     }
 
     @Override
+    public ChatModel configureChatModel(GoogleVertexAiGeminiChatModel chatModel) {
+        GoogleVertexAiGeminiProviderConfig providerConfig = chatModel.providerConfig();
+        GoogleVertexAiGeminiChatModel.Config modelConfig = chatModel.modelConfig();
+
+        // construct service account credentials using service account key JSON
+        ObjectNode serviceAccountKeyJson = providerConfig.serviceAccountKey();
+        ServiceAccountCredentials serviceAccountCredentials;
+        try {
+            serviceAccountCredentials = ServiceAccountCredentials
+                    .fromStream(new ByteArrayInputStream(JacksonUtil.writeValueAsBytes(serviceAccountKeyJson)));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to parse service account key JSON", e);
+        }
+
+        // construct Vertex AI instance
+        var vertexAI = new VertexAI.Builder()
+                .setProjectId(providerConfig.projectId())
+                .setLocation(providerConfig.location())
+                .setCredentials(serviceAccountCredentials)
+                .setTransport(Transport.REST) // GRPC also possible, but likely does not work with service account keys
+                .build();
+
+        // map model config to generation config
+        var generationConfigBuilder = GenerationConfig.newBuilder();
+        if (modelConfig.temperature() != null) {
+            generationConfigBuilder.setTemperature(modelConfig.temperature().floatValue());
+        }
+        var generationConfig = generationConfigBuilder.build();
+
+        // construct generative model instance
+        var generativeModel = new GenerativeModel(modelConfig.modelId(), vertexAI)
+                .withGenerationConfig(generationConfig);
+
+        return new VertexAiGeminiChatModel(generativeModel, generationConfig, modelConfig.maxRetries());
+    }
+
+    @Override
     public ChatModel configureChatModel(MistralAiChatModel chatModel) {
         MistralAiChatModel.Config modelConfig = chatModel.modelConfig();
         return dev.langchain4j.model.mistralai.MistralAiChatModel.builder()
                 .apiKey(chatModel.providerConfig().apiKey())
-                .modelName(chatModel.modelId())
+                .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())

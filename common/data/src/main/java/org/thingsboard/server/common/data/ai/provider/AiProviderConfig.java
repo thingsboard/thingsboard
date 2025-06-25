@@ -27,13 +27,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = OpenAiProviderConfig.class, name = "OPENAI"),
         @JsonSubTypes.Type(value = AzureOpenAiProviderConfig.class, name = "AZURE_OPENAI"),
         @JsonSubTypes.Type(value = GoogleAiGeminiProviderConfig.class, name = "GOOGLE_AI_GEMINI"),
+        @JsonSubTypes.Type(value = GoogleVertexAiGeminiProviderConfig.class, name = "GOOGLE_VERTEX_AI_GEMINI"),
         @JsonSubTypes.Type(value = MistralAiProviderConfig.class, name = "MISTRAL_AI")
 })
 public sealed interface AiProviderConfig
-        permits OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig, MistralAiProviderConfig {
+        permits OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig, GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig {
 
     AiProvider provider();
-
-    String apiKey();
 
 }

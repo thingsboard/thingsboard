@@ -22,9 +22,4 @@ public record OpenAiProviderConfig(String apiKey) implements AiProviderConfig {
         return AiProvider.OPENAI;
     }
 
-    @Override
-    public String apiKey() {
-        return apiKey;
-    }
-
 }
