@@ -22,6 +22,10 @@ import org.thingsboard.server.common.data.OtaPackage;
 @EqualsAndHashCode(callSuper = true)
 public class OtaPackageExportData extends EntityExportData<OtaPackage> {
 
+    /*
+     * OtaPackage is not a versioned entity; its 'version' field is part of the domain model (not used for optimistic locking)
+     * We override both methods to ensure 'version' is not ignored during (de)serialization.
+     */
     @JsonIgnoreProperties(value = {"tenantId", "createdTime"}, ignoreUnknown = true)
     @Override
     public OtaPackage getEntity() {

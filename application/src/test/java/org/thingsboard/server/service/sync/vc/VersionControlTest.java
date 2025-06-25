@@ -685,23 +685,28 @@ public class VersionControlTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testOtaPackageVc_betweenTenants() throws Exception {
+    public void testOtaPackageVcWithProfile_betweenTenants() throws Exception {
         DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile v1.0");
         OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
         OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
+        deviceProfile.setFirmwareId(firmware.getId());
+        deviceProfile.setSoftwareId(software.getId());
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         String versionId = createVersion("ota packages", EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE);
-
-        OtaPackage firmwareOta = findOtaPackage(firmware.getTitle());
-        OtaPackage softwareOta = findOtaPackage(software.getTitle());
 
         loginTenant2();
         loadVersion(versionId, EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE);
-        OtaPackage importedFirmwareOta = findOtaPackage(firmwareOta.getTitle());
-        OtaPackage importedSoftwareOta = findOtaPackage(softwareOta.getTitle());
-        checkImportedEntity(tenantId1, firmwareOta, tenantId2, importedFirmwareOta);
-        checkImportedOtaPackageData(firmwareOta, importedFirmwareOta);
-        checkImportedEntity(tenantId1, softwareOta, tenantId2, importedSoftwareOta);
-        checkImportedOtaPackageData(softwareOta, importedSoftwareOta);
+        DeviceProfile importedProfile = findDeviceProfile(deviceProfile.getName());
+        OtaPackage importedFirmwareOta = findOtaPackage(firmware.getTitle());
+        OtaPackage importedSoftwareOta = findOtaPackage(software.getTitle());
+        checkImportedEntity(tenantId1, deviceProfile, tenantId2, importedProfile);
+        checkImportedDeviceProfileData(deviceProfile, importedProfile);
+        checkImportedEntity(tenantId1, firmware, tenantId2, importedFirmwareOta);
+        checkImportedOtaPackageData(firmware, importedFirmwareOta);
+        checkImportedEntity(tenantId1, software, tenantId2, importedSoftwareOta);
+        checkImportedOtaPackageData(software, importedSoftwareOta);
+        assertThat(importedProfile.getFirmwareId()).isEqualTo(importedFirmwareOta.getId());
+        assertThat(importedProfile.getSoftwareId()).isEqualTo(importedSoftwareOta.getId());
     }
 
     protected void checkImportedOtaPackageData(OtaPackage otaPackage, OtaPackage importedOtaPackage) {
