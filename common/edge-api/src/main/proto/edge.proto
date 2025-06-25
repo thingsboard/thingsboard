@@ -42,6 +42,7 @@ enum EdgeVersion {
   V_3_8_0 = 8;
   V_3_9_0 = 9;
   V_4_0_0 = 10;
+  V_4_1_0 = 11;
 
   V_LATEST = 999;
 }
@@ -123,6 +124,14 @@ enum UpdateMsgType {
   ALARM_CLEAR_RPC_MESSAGE = 4;
   // use 6 as a next number
 }
+
+message CalculatedFieldUpdateMsg{
+  UpdateMsgType msgType = 1;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string entity = 4;
+}
+
 
 message EntityDataProto {
   int64 entityIdMSB = 1;
@@ -325,6 +334,12 @@ message RelationRequestMsg {
   string entityType = 3;
 }
 
+message CalculatedFieldRequestMsg {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  string entityType = 3;
+}
+
 // DEPRECATED. FOR REMOVAL
 message UserCredentialsRequestMsg {
   option deprecated = true;
@@ -423,6 +438,8 @@ message UplinkMsg {
   repeated AlarmCommentUpdateMsg alarmCommentUpdateMsg = 22;
   repeated RuleChainUpdateMsg ruleChainUpdateMsg = 23;
   repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 24;
+  repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 25;
+  repeated CalculatedFieldRequestMsg calculatedFieldRequestMsg = 26;
 }
 
 message UplinkResponseMsg {
@@ -472,4 +489,5 @@ message DownlinkMsg {
   repeated NotificationTargetUpdateMsg notificationTargetUpdateMsg = 32;
   repeated NotificationTemplateUpdateMsg notificationTemplateUpdateMsg = 33;
   repeated OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg = 34;
+  repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 35;
 }
