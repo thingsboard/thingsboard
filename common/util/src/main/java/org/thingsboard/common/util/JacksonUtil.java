@@ -62,9 +62,6 @@ import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
-/**
- * Created by Valerii Sosliuk on 5/12/2017.
- */
 @Slf4j
 public class JacksonUtil {
 
