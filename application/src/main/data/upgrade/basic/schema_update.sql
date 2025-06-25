@@ -22,3 +22,16 @@ ALTER TABLE ota_package
     ADD CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id);
 
 -- UPDATE OTA PACKAGE EXTERNAL ID END
+
+-- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT START
+
+DROP INDEX IF EXISTS idx_device_external_id;
+DROP INDEX IF EXISTS idx_device_profile_external_id;
+DROP INDEX IF EXISTS idx_asset_external_id;
+DROP INDEX IF EXISTS idx_entity_view_external_id;
+DROP INDEX IF EXISTS idx_rule_chain_external_id;
+DROP INDEX IF EXISTS idx_dashboard_external_id;
+DROP INDEX IF EXISTS idx_customer_external_id;
+DROP INDEX IF EXISTS idx_widgets_bundle_external_id;
+
+-- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT END
