@@ -524,7 +524,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             case ENTITY_VIEW:
             case DASHBOARD:
             case RULE_CHAIN:
-            case CALCULATED_FIELD:
                 return relatedEdgesService.findEdgeIdsByEntityId(tenantId, entityId, pageLink);
             case USER:
                 User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
