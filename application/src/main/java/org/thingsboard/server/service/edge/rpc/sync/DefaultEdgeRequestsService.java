@@ -54,12 +54,14 @@ import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
+import org.thingsboard.server.gen.edge.v1.CalculatedFieldRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
@@ -90,7 +92,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Autowired
     private TimeseriesService timeseriesService;
-    
+
     @Autowired
     private RelationService relationService;
 
@@ -103,6 +105,9 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
     @Autowired
     private WidgetTypeService widgetTypeService;
+
+    @Autowired
+    private CalculatedFieldService calculatedFieldService;
 
     @Autowired
     private DbCallbackExecutorService dbCallbackExecutorService;
@@ -291,6 +296,44 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             }
         }, dbCallbackExecutorService);
         return futureToSet;
+    }
+
+    @Override
+    public ListenableFuture<Void> processCalculatedFieldRequestMsg(TenantId tenantId, Edge edge, CalculatedFieldRequestMsg calculatedFieldRequestMsg) {
+        log.trace("[{}] processCalculatedFieldRequestMsg [{}][{}]", tenantId, edge.getName(), calculatedFieldRequestMsg);
+
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(
+                EntityType.valueOf(calculatedFieldRequestMsg.getEntityType()),
+                new UUID(calculatedFieldRequestMsg.getEntityIdMSB(), calculatedFieldRequestMsg.getEntityIdLSB()));
+
+        log.trace("[{}] processCalculatedField [{}][{}] for entity [{}][{}]", tenantId, edge.getName(), calculatedFieldRequestMsg, entityId.getEntityType(), entityId.getId());
+        return saveCalculatedFieldsToEdge(tenantId, edge.getId(), entityId);
+    }
+
+    private ListenableFuture<Void> saveCalculatedFieldsToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId) {
+        return Futures.transformAsync(
+                dbCallbackExecutorService.submit(() -> calculatedFieldService.findCalculatedFieldsByEntityId(tenantId, entityId)),
+                calculatedFields -> {
+                    log.trace("[{}][{}][{}][{}] calculatedField(s) are going to be pushed to edge.", tenantId, edgeId, entityId, calculatedFields.size());
+
+                    List<ListenableFuture<?>> futures = calculatedFields.stream().map(calculatedField -> {
+                        try {
+                            return saveEdgeEvent(tenantId, edgeId, EdgeEventType.CALCULATED_FIELD,
+                                    EdgeEventActionType.ADDED, calculatedField.getId(), JacksonUtil.valueToTree(calculatedField));
+                        } catch (Exception e) {
+                            log.error("[{}][{}] Exception during loading calculatedField [{}] to edge on sync!", tenantId, edgeId, calculatedField, e);
+                            return Futures.immediateFailedFuture(e);
+                        }
+                    }).toList();
+
+                    return Futures.transform(
+                            Futures.allAsList(futures),
+                            voids -> null,
+                            dbCallbackExecutorService
+                    );
+                },
+                dbCallbackExecutorService
+        );
     }
 
     private ListenableFuture<List<EntityRelation>> findRelationByQuery(TenantId tenantId, Edge edge, EntityId entityId, EntitySearchDirection direction) {
