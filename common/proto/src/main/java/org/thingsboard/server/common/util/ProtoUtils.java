@@ -522,7 +522,7 @@ public class ProtoUtils {
     }
 
     private static TransportProtos.ToDeviceRpcRequestActorMsgProto toProto(ToDeviceRpcRequestActorMsg msg) {
-        TransportProtos.ToDeviceRpcRequestMsg proto = TransportProtos.ToDeviceRpcRequestMsg.newBuilder()
+        TransportProtos.ToDeviceRpcRequestMsg.Builder builder = TransportProtos.ToDeviceRpcRequestMsg.newBuilder()
                 .setMethodName(msg.getMsg().getBody().getMethod())
                 .setParams(msg.getMsg().getBody().getParams())
                 .setExpirationTime(msg.getMsg().getExpirationTime())
@@ -530,7 +530,11 @@ public class ProtoUtils {
                 .setRequestIdLSB(msg.getMsg().getId().getLeastSignificantBits())
                 .setOneway(msg.getMsg().isOneway())
                 .setPersisted(msg.getMsg().isPersisted())
-                .build();
+                .setAdditionalInfo(msg.getMsg().getAdditionalInfo());
+        if (msg.getMsg().getRetries() != null) {
+            builder.setRetries(msg.getMsg().getRetries());
+        }
+        TransportProtos.ToDeviceRpcRequestMsg proto = builder.build();
 
         return TransportProtos.ToDeviceRpcRequestActorMsgProto.newBuilder()
                 .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
@@ -551,7 +555,7 @@ public class ProtoUtils {
                 toDeviceRpcRequestMsg.getOneway(),
                 toDeviceRpcRequestMsg.getExpirationTime(),
                 new ToDeviceRpcRequestBody(toDeviceRpcRequestMsg.getMethodName(), toDeviceRpcRequestMsg.getParams()),
-                toDeviceRpcRequestMsg.getPersisted(), 0, "");
+                toDeviceRpcRequestMsg.getPersisted(), toDeviceRpcRequestMsg.hasRetries() ? toDeviceRpcRequestMsg.getRetries() : null, toDeviceRpcRequestMsg.getAdditionalInfo());
         return new ToDeviceRpcRequestActorMsg(proto.getServiceId(), toDeviceRpcRequest);
     }
 

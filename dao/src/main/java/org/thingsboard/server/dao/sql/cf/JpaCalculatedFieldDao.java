@@ -66,6 +66,11 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
+    public CalculatedField findByEntityIdAndName(EntityId entityId, String name) {
+        return DaoUtil.getData(calculatedFieldRepository.findByEntityIdAndName(entityId.getId(), name));
+    }
+
+    @Override
     public PageData<CalculatedField> findAll(PageLink pageLink) {
         log.debug("Try to find calculated fields by pageLink [{}]", pageLink);
         return nativeCalculatedFieldRepository.findCalculatedFields(DaoUtil.toPageable(pageLink));

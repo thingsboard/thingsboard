@@ -13,31 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache.resourceInfo;
+package org.thingsboard.server.service.edge.rpc.processor.cf;
 
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.common.data.id.TbResourceId;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
+import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
 
-import java.io.Serial;
-import java.io.Serializable;
+public interface CalculatedFieldProcessor extends EdgeProcessor {
 
-@Getter
-@EqualsAndHashCode
-@RequiredArgsConstructor
-@Builder
-public class ResourceInfoCacheKey implements Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 2100510964692846992L;
-
-    private final TbResourceId tbResourceId;
-
-    @Override
-    public String toString() {
-        return tbResourceId.toString();
-    }
+    ListenableFuture<Void> processCalculatedFieldMsgFromEdge(TenantId tenantId, Edge edge, CalculatedFieldUpdateMsg calculatedFieldUpdateMsg);
 
 }
