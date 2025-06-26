@@ -20,7 +20,8 @@ import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extends AiModelConfig<C>
         permits
         OpenAiChatModel.Config, AzureOpenAiChatModel.Config, GoogleAiGeminiChatModel.Config,
-        GoogleVertexAiGeminiChatModel.Config, MistralAiChatModel.Config, AnthropicChatModel.Config {
+        GoogleVertexAiGeminiChatModel.Config, MistralAiChatModel.Config, AnthropicChatModel.Config,
+        AmazonBedrockChatModel.Config {
 
     Double temperature();
 

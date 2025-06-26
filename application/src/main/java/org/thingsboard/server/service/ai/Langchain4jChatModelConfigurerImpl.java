@@ -21,10 +21,13 @@ import com.google.cloud.vertexai.Transport;
 import com.google.cloud.vertexai.VertexAI;
 import com.google.cloud.vertexai.api.GenerationConfig;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
+import dev.langchain4j.model.bedrock.BedrockChatModel;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
@@ -32,7 +35,12 @@ import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChat
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModel;
+import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -133,6 +141,33 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .apiKey(chatModel.providerConfig().apiKey())
                 .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
+                .timeout(toDuration(modelConfig.timeoutSeconds()))
+                .maxRetries(modelConfig.maxRetries())
+                .build();
+    }
+
+    @Override
+    public ChatModel configureChatModel(AmazonBedrockChatModel chatModel) {
+        AmazonBedrockProviderConfig providerConfig = chatModel.providerConfig();
+        AmazonBedrockChatModel.Config modelConfig = chatModel.modelConfig();
+
+        var credentialsProvider = StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(providerConfig.accessKeyId(), providerConfig.secretAccessKey())
+        );
+
+        var bedrockClient = BedrockRuntimeClient.builder()
+                .region(Region.of(providerConfig.region()))
+                .credentialsProvider(credentialsProvider)
+                .build();
+
+        var defaultChatRequestParams = ChatRequestParameters.builder()
+                .temperature(modelConfig.temperature())
+                .build();
+
+        return BedrockChatModel.builder()
+                .client(bedrockClient)
+                .modelId(modelConfig.modelId())
+                .defaultRequestParameters(defaultChatRequestParams)
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();

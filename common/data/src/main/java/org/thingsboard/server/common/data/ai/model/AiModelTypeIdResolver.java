@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DatabindContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.jsontype.impl.TypeIdResolverBase;
+import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModel;
@@ -85,6 +86,9 @@ public final class AiModelTypeIdResolver extends TypeIdResolverBase {
         map.put("ANTHROPIC::claude-3-5-sonnet-latest", AnthropicChatModel.class);
         map.put("ANTHROPIC::claude-3-5-haiku-latest", AnthropicChatModel.class);
         map.put("ANTHROPIC::claude-3-opus-latest", AnthropicChatModel.class);
+
+        // Amazon Bedrock models
+        map.put("AMAZON_BEDROCK::amazon.nova-lite-v1:0", AmazonBedrockChatModel.class);
 
         typeIdToModelClass = Collections.unmodifiableMap(map);
     }

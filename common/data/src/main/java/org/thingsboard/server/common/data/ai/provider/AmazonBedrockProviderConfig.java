@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public enum AiProvider {
+public record AmazonBedrockProviderConfig(String region, String accessKeyId, String secretAccessKey) implements AiProviderConfig {
 
-    OPENAI,
-    AZURE_OPENAI,
-    GOOGLE_AI_GEMINI,
-    GOOGLE_VERTEX_AI_GEMINI,
-    MISTRAL_AI,
-    ANTHROPIC,
-    AMAZON_BEDROCK
+    @Override
+    public AiProvider provider() {
+        return AiProvider.AMAZON_BEDROCK;
+    }
 
 }
