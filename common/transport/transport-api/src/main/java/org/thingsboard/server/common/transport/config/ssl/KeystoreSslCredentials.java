@@ -26,7 +26,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 public class KeystoreSslCredentials extends AbstractSslCredentials {
 
     private String type;

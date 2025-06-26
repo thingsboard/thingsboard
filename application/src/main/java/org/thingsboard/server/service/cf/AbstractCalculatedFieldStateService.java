@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.cf;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldStateRestoreMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -39,6 +40,7 @@ import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 public abstract class AbstractCalculatedFieldStateService implements CalculatedFieldStateService {
 
     @Autowired
+    @Lazy
     private ActorSystemContext actorSystemContext;
 
     protected QueueStateService<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>> stateService;

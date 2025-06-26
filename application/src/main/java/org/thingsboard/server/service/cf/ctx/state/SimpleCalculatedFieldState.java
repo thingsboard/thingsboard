@@ -58,7 +58,13 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
             try {
                 BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getKvEntryValue();
-                expr.setVariable(entry.getKey(), Double.parseDouble(kvEntry.getValueAsString()));
+                double value = switch (kvEntry.getDataType()) {
+                    case LONG -> kvEntry.getLongValue().map(Long::doubleValue).orElseThrow();
+                    case DOUBLE -> kvEntry.getDoubleValue().orElseThrow();
+                    case BOOLEAN -> kvEntry.getBooleanValue().map(b -> b ? 1.0 : 0.0).orElseThrow();
+                    case STRING, JSON -> Double.parseDouble(kvEntry.getValueAsString());
+                };
+                expr.setVariable(entry.getKey(), value);
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");
             }
@@ -68,7 +74,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
         Output output = ctx.getOutput();
         Object result = formatResult(expressionResult, output.getDecimalsByDefault());
-        JsonNode outputResult = createResultJson(ctx.isPreserveMsgTs(), output.getName(), result);
+        JsonNode outputResult = createResultJson(ctx.isUseLatestTs(), output.getName(), result);
 
         return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), outputResult));
     }
@@ -83,14 +89,20 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         return TbUtils.toFixed(expressionResult, decimals);
     }
 
-    private JsonNode createResultJson(boolean preserveMsgTs, String outputName, Object result) {
+    private JsonNode createResultJson(boolean useLatestTs, String outputName, Object result) {
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
-        valuesNode.set(outputName, JacksonUtil.valueToTree(result));
+        if (result instanceof Double doubleValue) {
+            valuesNode.put(outputName, doubleValue);
+        } else if (result instanceof Integer integerValue) {
+            valuesNode.put(outputName, integerValue);
+        } else {
+            valuesNode.set(outputName, JacksonUtil.valueToTree(result));
+        }
 
-        long lastTimestamp = getLastUpdateTimestamp();
-        if (preserveMsgTs && lastTimestamp != -1) {
+        long latestTs = getLatestTimestamp();
+        if (useLatestTs && latestTs != -1) {
             ObjectNode resultNode = JacksonUtil.newObjectNode();
-            resultNode.put("ts", lastTimestamp);
+            resultNode.put("ts", latestTs);
             resultNode.set("values", valuesNode);
             return resultNode;
         } else {

@@ -53,7 +53,7 @@ public class SingleValueArgumentEntryTest {
     }
 
     @Test
-    void testUpdateEntryWithThaSameTs() {
+    void testUpdateEntryWithTheSameTs() {
         assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts, new LongDataEntry("key", 13L), 363L))).isFalse();
     }
 
@@ -79,6 +79,11 @@ public class SingleValueArgumentEntryTest {
     @Test
     void testUpdateEntryWhenValueWasNotChanged() {
         assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 18, new LongDataEntry("key", 11L), 364L))).isTrue();
+    }
+
+    @Test
+    void testUpdateEntryWithOldTs() {
+        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts - 10, new LongDataEntry("key", 14L), 365L))).isFalse();
     }
 
     @Test

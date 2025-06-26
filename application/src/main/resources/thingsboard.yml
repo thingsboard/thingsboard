@@ -346,6 +346,7 @@ sql:
     stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}" # Interval in milliseconds for printing timeseries insert statistic
     batch_threads: "${SQL_TS_BATCH_THREADS:3}" # batch thread count has to be a prime number like 3 or 5 to gain perfect hash distribution
     value_no_xss_validation: "${SQL_TS_VALUE_NO_XSS_VALIDATION:false}" # If true telemetry values will be checked for XSS vulnerability
+    callback_thread_pool_size: "${SQL_TS_CALLBACK_THREAD_POOL_SIZE:12}" # Thread pool size for telemetry callback executor
   ts_latest:
     batch_size: "${SQL_TS_LATEST_BATCH_SIZE:1000}" # Batch size for persisting latest telemetry updates
     batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:50}" # Maximum timeout for latest telemetry entries queue polling. The value set in milliseconds
@@ -898,6 +899,8 @@ state:
   # Used only when state.persistToTelemetry is set to 'true' and Cassandra is used for timeseries data.
   # 0 means time-to-live mechanism is disabled.
   telemetryTtl: "${STATE_TELEMETRY_TTL:0}"
+  # Number of device records to fetch per batch when initializing device activity states
+  initFetchPackSize: "${TB_DEVICE_STATE_INIT_FETCH_PACK_SIZE:50000}"
   # Configuration properties for rule nodes related to device activity state
   rule:
     node:

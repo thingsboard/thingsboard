@@ -35,7 +35,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     protected Map<String, ArgumentEntry> arguments;
     protected boolean sizeExceedsLimit;
 
-    protected long lastUpdateTimestamp = -1;
+    protected long latestTimestamp = -1;
 
     public BaseCalculatedFieldState(List<String> requiredArguments) {
         this.requiredArguments = requiredArguments;
@@ -110,12 +110,14 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     protected abstract void validateNewEntry(ArgumentEntry newEntry);
 
     private void updateLastUpdateTimestamp(ArgumentEntry entry) {
+        long newTs = this.latestTimestamp;
         if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-            this.lastUpdateTimestamp = singleValueArgumentEntry.getTs();
+            newTs = singleValueArgumentEntry.getTs();
         } else if (entry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
             Map.Entry<Long, Double> lastEntry = tsRollingArgumentEntry.getTsRecords().lastEntry();
-            this.lastUpdateTimestamp = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
+            newTs = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
         }
+        this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
     }
 
 }

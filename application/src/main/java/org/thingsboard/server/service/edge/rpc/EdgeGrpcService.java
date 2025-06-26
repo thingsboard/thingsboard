@@ -335,6 +335,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         Edge edge = edgeGrpcSession.getEdge();
         TenantId tenantId = edge.getTenantId();
         log.info("[{}][{}] edge [{}] connected successfully.", tenantId, edgeGrpcSession.getSessionId(), edgeId);
+        if (sessions.containsKey(edgeId)) {
+            destroySession(sessions.get(edgeId));
+        }
         sessions.put(edgeId, edgeGrpcSession);
         final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
         newEventLock.lock();
@@ -503,7 +506,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             } finally {
                 newEventLock.unlock();
             }
-            toRemove.destroy();
+            destroySession(toRemove);
             TenantId tenantId = toRemove.getEdge().getTenantId();
             save(tenantId, edgeId, ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
@@ -514,6 +517,12 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             log.debug("[{}] edge session [{}] is not available anymore, nothing to remove. most probably this session is already outdated!", edgeId, sessionId);
         }
         edgeIdServiceIdCache.evict(edgeId);
+    }
+
+    private void destroySession(EdgeGrpcSession session) {
+        try (session) {
+            session.destroy();
+        }
     }
 
     private void save(TenantId tenantId, EdgeId edgeId, String key, long value) {

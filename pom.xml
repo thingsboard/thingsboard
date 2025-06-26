@@ -42,19 +42,19 @@
         <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jaxb-runtime.version>4.0.5</jaxb-runtime.version>
-        <tomcat.version>10.1.40</tomcat.version> <!-- Vulnerability fix, Remove after update spring-boot to new version-->
+        <tomcat.version>10.1.42</tomcat.version> <!-- Vulnerability fix, Remove after update spring-boot to new version-->
         <net.minidev.json-smart>2.5.2</net.minidev.json-smart> <!-- Vulnerability fix, CVE-2024-57699, Remove after update spring-boot 3.2.12 to a newer version-->
         <spring-boot.version>3.2.12</spring-boot.version>
         <spring-data.version>3.2.12</spring-data.version>
         <spring-data-redis.version>3.2.12</spring-data-redis.version>
-        <spring.version>6.1.15</spring.version>
+        <spring.version>6.1.21</spring.version>
         <spring-redis.version>6.2.11</spring-redis.version>
-        <spring-security.version>6.3.8</spring-security.version>
+        <spring-security.version>6.3.9</spring-security.version>
         <jedis.version>5.1.5</jedis.version>
         <jjwt.version>0.12.5</jjwt.version>
-        <slf4j.version>2.0.13</slf4j.version>
-        <log4j.version>2.23.1</log4j.version>
-        <logback.version>1.5.5</logback.version>
+        <slf4j.version>2.0.17</slf4j.version>
+        <log4j.version>2.24.3</log4j.version>
+        <logback.version>1.5.6</logback.version>
         <rat.version>0.10</rat.version> <!-- unused -->
         <cassandra.version>4.17.0</cassandra.version>
         <metrics.version>4.2.25</metrics.version>
@@ -83,7 +83,7 @@
         <freemarker.version>2.3.32</freemarker.version>
         <mail.version>2.0.1</mail.version>
         <curator.version>5.6.0</curator.version>
-        <zookeeper.version>3.9.2</zookeeper.version>
+        <zookeeper.version>3.9.3</zookeeper.version>
         <protobuf.version>3.25.5</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
         <grpc.version>1.63.0</grpc.version>
         <tbel.version>1.2.6</tbel.version>
@@ -103,7 +103,7 @@
         <jts.version>1.19.0</jts.version>
         <bouncycastle.version>1.78.1</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
-        <postgresql.driver.version>42.7.5</postgresql.driver.version>
+        <postgresql.driver.version>42.7.7</postgresql.driver.version>
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
@@ -113,7 +113,7 @@
         <!-- IMPORTANT: If you change the version of the kafka client, make sure to synchronize our overwritten implementation of the
         org.apache.kafka.common.network.NetworkReceive class in the application module. It addresses the issue https://issues.apache.org/jira/browse/KAFKA-4090.
         Here is the source to track https://github.com/apache/kafka/tree/trunk/clients/src/main/java/org/apache/kafka/common/network -->
-        <kafka.version>3.7.2</kafka.version>
+        <kafka.version>3.9.1</kafka.version>
         <bucket4j.version>8.10.1</bucket4j.version>
         <antlr.version>3.5.3</antlr.version>
         <snakeyaml.version>2.2</snakeyaml.version>
@@ -158,7 +158,7 @@
         <allure-maven.version>2.12.0</allure-maven.version>
 
         <opensmpp.version>3.0.2</opensmpp.version>
-        <jgit.version>6.9.0.202403050737-r</jgit.version>
+        <jgit.version>6.10.1.202505221210-r</jgit.version>
         <exp4j.version>0.4.8</exp4j.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
 
@@ -1178,7 +1178,7 @@
             <!-- ...Vulnerability fix - transitive dependency from Spring Boot, remove after Spring Boot upgrade -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter</artifactId>
+                    <artifactId>spring-boot-starter</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>

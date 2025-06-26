@@ -244,7 +244,7 @@ public class CalculatedFieldController extends BaseController {
             );
 
             Object[] args = new Object[ctxAndArgNames.size()];
-            args[0] = new TbelCfCtx(arguments, getLastUpdateTimestamp(arguments));
+            args[0] = new TbelCfCtx(arguments, getLatestTimestamp(arguments));
             for (int i = 1; i < ctxAndArgNames.size(); i++) {
                 var arg = arguments.get(ctxAndArgNames.get(i));
                 if (arg instanceof TbelCfSingleValueArg svArg) {
@@ -267,7 +267,7 @@ public class CalculatedFieldController extends BaseController {
         return result;
     }
 
-    private long getLastUpdateTimestamp(Map<String, TbelCfArg> arguments) {
+    private long getLatestTimestamp(Map<String, TbelCfArg> arguments) {
         long lastUpdateTimestamp = -1;
         for (TbelCfArg entry : arguments.values()) {
             if (entry instanceof TbelCfSingleValueArg singleValueArg) {

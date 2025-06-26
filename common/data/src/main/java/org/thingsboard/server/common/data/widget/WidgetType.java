@@ -21,15 +21,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 
 import java.util.Optional;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class WidgetType extends BaseWidgetType {
 
     @Schema(description = "Complex JSON object that describes the widget type", accessMode = Schema.AccessMode.READ_ONLY)
-    private transient JsonNode descriptor;
+    private JsonNode descriptor;
 
     public WidgetType() {
         super();
