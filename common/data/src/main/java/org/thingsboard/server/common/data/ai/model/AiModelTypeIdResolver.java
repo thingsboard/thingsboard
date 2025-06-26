@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DatabindContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.jsontype.impl.TypeIdResolverBase;
+import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
@@ -76,6 +77,14 @@ public final class AiModelTypeIdResolver extends TypeIdResolverBase {
         map.put("MISTRAL_AI::ministral-8b-latest", MistralAiChatModel.class);
         map.put("MISTRAL_AI::ministral-3b-latest", MistralAiChatModel.class);
         map.put("MISTRAL_AI::open-mistral-nemo", MistralAiChatModel.class);
+
+        // Anthropic models
+        map.put("ANTHROPIC::claude-opus-4-0", AnthropicChatModel.class);
+        map.put("ANTHROPIC::claude-sonnet-4-0", AnthropicChatModel.class);
+        map.put("ANTHROPIC::claude-3-7-sonnet-latest", AnthropicChatModel.class);
+        map.put("ANTHROPIC::claude-3-5-sonnet-latest", AnthropicChatModel.class);
+        map.put("ANTHROPIC::claude-3-5-haiku-latest", AnthropicChatModel.class);
+        map.put("ANTHROPIC::claude-3-opus-latest", AnthropicChatModel.class);
 
         typeIdToModelClass = Collections.unmodifiableMap(map);
     }

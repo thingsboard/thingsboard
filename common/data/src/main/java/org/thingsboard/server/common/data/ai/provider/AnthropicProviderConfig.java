@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai.model.chat;
+package org.thingsboard.server.common.data.ai.provider;
 
-import dev.langchain4j.model.chat.ChatModel;
+public record AnthropicProviderConfig(String apiKey) implements AiProviderConfig {
 
-public interface Langchain4jChatModelConfigurer {
-
-    ChatModel configureChatModel(OpenAiChatModel chatModel);
-
-    ChatModel configureChatModel(AzureOpenAiChatModel chatModel);
-
-    ChatModel configureChatModel(GoogleAiGeminiChatModel chatModel);
-
-    ChatModel configureChatModel(GoogleVertexAiGeminiChatModel chatModel);
-
-    ChatModel configureChatModel(MistralAiChatModel chatModel);
-
-    ChatModel configureChatModel(AnthropicChatModel chatModel);
+    @Override
+    public AiProvider provider() {
+        return AiProvider.ANTHROPIC;
+    }
 
 }

@@ -383,11 +383,11 @@
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-azure-open-ai</artifactId>
+            <artifactId>langchain4j-open-ai</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-open-ai</artifactId>
+            <artifactId>langchain4j-azure-open-ai</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
@@ -400,6 +400,10 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-mistral-ai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-anthropic</artifactId>
         </dependency>
     </dependencies>
 

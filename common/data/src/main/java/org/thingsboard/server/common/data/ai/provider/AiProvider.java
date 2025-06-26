@@ -21,6 +21,7 @@ public enum AiProvider {
     AZURE_OPENAI,
     GOOGLE_AI_GEMINI,
     GOOGLE_VERTEX_AI_GEMINI,
-    MISTRAL_AI
+    MISTRAL_AI,
+    ANTHROPIC
 
 }

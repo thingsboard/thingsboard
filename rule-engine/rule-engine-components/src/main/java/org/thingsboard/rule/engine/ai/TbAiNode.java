@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import dev.langchain4j.data.message.SystemMessage;
@@ -25,7 +24,6 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
-import dev.langchain4j.model.chat.request.json.JsonSchema;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.common.util.JacksonUtil;
@@ -81,10 +79,13 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             throw new TbNodeException(e, true);
         }
 
-        responseFormat = ResponseFormat.builder()
-                .type(config.getResponseFormatType())
-                .jsonSchema(getJsonSchema(config.getResponseFormatType(), config.getJsonSchema()))
-                .build();
+        // LC4j AnthropicChatModel rejects requests with non-null ResponseFormat even if ResponseFormatType is TEXT
+        if (config.getResponseFormatType() == ResponseFormatType.JSON) {
+            responseFormat = ResponseFormat.builder()
+                    .type(config.getResponseFormatType())
+                    .jsonSchema(config.getJsonSchema() != null ? Langchain4jJsonSchemaAdapter.fromJsonNode(config.getJsonSchema()) : null)
+                    .build();
+        }
 
         systemPrompt = config.getSystemPrompt();
         userPrompt = config.getUserPrompt();
@@ -99,13 +100,6 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         if (modelType != AiModelType.CHAT) {
             throw new TbNodeException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] must be of type CHAT, but was " + modelType, true);
         }
-    }
-
-    private static JsonSchema getJsonSchema(ResponseFormatType responseFormatType, ObjectNode jsonSchema) {
-        if (responseFormatType == ResponseFormatType.TEXT) {
-            return null;
-        }
-        return responseFormatType == ResponseFormatType.JSON && jsonSchema != null ? Langchain4jJsonSchemaAdapter.fromJsonNode(jsonSchema) : null;
     }
 
     @Override

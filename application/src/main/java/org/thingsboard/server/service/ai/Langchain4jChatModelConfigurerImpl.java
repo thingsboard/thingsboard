@@ -25,6 +25,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModel;
@@ -117,6 +118,18 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     public ChatModel configureChatModel(MistralAiChatModel chatModel) {
         MistralAiChatModel.Config modelConfig = chatModel.modelConfig();
         return dev.langchain4j.model.mistralai.MistralAiChatModel.builder()
+                .apiKey(chatModel.providerConfig().apiKey())
+                .modelName(modelConfig.modelId())
+                .temperature(modelConfig.temperature())
+                .timeout(toDuration(modelConfig.timeoutSeconds()))
+                .maxRetries(modelConfig.maxRetries())
+                .build();
+    }
+
+    @Override
+    public ChatModel configureChatModel(AnthropicChatModel chatModel) {
+        AnthropicChatModel.Config modelConfig = chatModel.modelConfig();
+        return dev.langchain4j.model.anthropic.AnthropicChatModel.builder()
                 .apiKey(chatModel.providerConfig().apiKey())
                 .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
