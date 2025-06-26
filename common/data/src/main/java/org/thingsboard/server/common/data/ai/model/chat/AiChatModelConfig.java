@@ -21,7 +21,7 @@ public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extend
         permits
         OpenAiChatModel.Config, AzureOpenAiChatModel.Config, GoogleAiGeminiChatModel.Config,
         GoogleVertexAiGeminiChatModel.Config, MistralAiChatModel.Config, AnthropicChatModel.Config,
-        AmazonBedrockChatModel.Config {
+        AmazonBedrockChatModel.Config, GitHubModelsChatModel.Config {
 
     Double temperature();
 

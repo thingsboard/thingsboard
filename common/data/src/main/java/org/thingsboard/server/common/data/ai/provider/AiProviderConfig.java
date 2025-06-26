@@ -30,13 +30,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = GoogleVertexAiGeminiProviderConfig.class, name = "GOOGLE_VERTEX_AI_GEMINI"),
         @JsonSubTypes.Type(value = MistralAiProviderConfig.class, name = "MISTRAL_AI"),
         @JsonSubTypes.Type(value = AnthropicProviderConfig.class, name = "ANTHROPIC"),
-        @JsonSubTypes.Type(value = AmazonBedrockProviderConfig.class, name = "AMAZON_BEDROCK")
+        @JsonSubTypes.Type(value = AmazonBedrockProviderConfig.class, name = "AMAZON_BEDROCK"),
+        @JsonSubTypes.Type(value = GithubModelsProviderConfig.class, name = "GITHUB_MODELS")
 })
 public sealed interface AiProviderConfig
         permits
         OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig,
         GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig, AnthropicProviderConfig,
-        AmazonBedrockProviderConfig {
+        AmazonBedrockProviderConfig, GithubModelsProviderConfig {
 
     AiProvider provider();
 

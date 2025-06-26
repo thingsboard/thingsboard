@@ -33,4 +33,6 @@ public interface Langchain4jChatModelConfigurer {
 
     ChatModel configureChatModel(AmazonBedrockChatModel chatModel);
 
+    ChatModel configureChatModel(GitHubModelsChatModel chatModel);
+
 }

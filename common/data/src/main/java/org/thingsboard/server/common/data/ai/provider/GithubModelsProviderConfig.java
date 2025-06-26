@@ -15,15 +15,11 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public enum AiProvider {
+public record GithubModelsProviderConfig(String personalAccessToken) implements AiProviderConfig {
 
-    OPENAI,
-    AZURE_OPENAI,
-    GOOGLE_AI_GEMINI,
-    GOOGLE_VERTEX_AI_GEMINI,
-    MISTRAL_AI,
-    ANTHROPIC,
-    AMAZON_BEDROCK,
-    GITHUB_MODELS
+    @Override
+    public AiProvider provider() {
+        return AiProvider.GITHUB_MODELS;
+    }
 
 }

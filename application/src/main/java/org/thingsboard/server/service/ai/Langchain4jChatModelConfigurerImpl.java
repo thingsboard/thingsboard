@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.ai;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.vertexai.Transport;
 import com.google.cloud.vertexai.VertexAI;
@@ -30,6 +29,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.GitHubModelsChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
@@ -91,11 +91,10 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         GoogleVertexAiGeminiChatModel.Config modelConfig = chatModel.modelConfig();
 
         // construct service account credentials using service account key JSON
-        ObjectNode serviceAccountKeyJson = providerConfig.serviceAccountKey();
         ServiceAccountCredentials serviceAccountCredentials;
         try {
             serviceAccountCredentials = ServiceAccountCredentials
-                    .fromStream(new ByteArrayInputStream(JacksonUtil.writeValueAsBytes(serviceAccountKeyJson)));
+                    .fromStream(new ByteArrayInputStream(JacksonUtil.writeValueAsBytes(providerConfig.serviceAccountKey())));
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse service account key JSON", e);
         }
@@ -168,6 +167,18 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .client(bedrockClient)
                 .modelId(modelConfig.modelId())
                 .defaultRequestParameters(defaultChatRequestParams)
+                .timeout(toDuration(modelConfig.timeoutSeconds()))
+                .maxRetries(modelConfig.maxRetries())
+                .build();
+    }
+
+    @Override
+    public ChatModel configureChatModel(GitHubModelsChatModel chatModel) {
+        GitHubModelsChatModel.Config modelConfig = chatModel.modelConfig();
+        return dev.langchain4j.model.github.GitHubModelsChatModel.builder()
+                .gitHubToken(chatModel.providerConfig().personalAccessToken())
+                .modelName(modelConfig.modelId())
+                .temperature(modelConfig.temperature())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();

@@ -23,7 +23,7 @@ public sealed interface AiChatModel<C extends AiChatModelConfig<C>> extends AiMo
         permits
         OpenAiChatModel, AzureOpenAiChatModel, GoogleAiGeminiChatModel,
         GoogleVertexAiGeminiChatModel, MistralAiChatModel, AnthropicChatModel,
-        AmazonBedrockChatModel {
+        AmazonBedrockChatModel, GitHubModelsChatModel {
 
     ChatModel configure(Langchain4jChatModelConfigurer configurer);
 
