@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 
 public record AmazonBedrockChatModel(
+        AiModelType modelType,
         AmazonBedrockProviderConfig providerConfig,
         Config modelConfig
 ) implements AiChatModel<AmazonBedrockChatModel.Config> {
@@ -54,7 +56,7 @@ public record AmazonBedrockChatModel(
 
     @Override
     public AmazonBedrockChatModel withModelConfig(AmazonBedrockChatModel.Config config) {
-        return new AmazonBedrockChatModel(providerConfig, config);
+        return new AmazonBedrockChatModel(modelType, providerConfig, config);
     }
 
 }

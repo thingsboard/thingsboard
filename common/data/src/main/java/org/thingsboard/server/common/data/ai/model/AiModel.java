@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.ai.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
@@ -29,6 +30,7 @@ public interface AiModel<C extends AiModelConfig<C>> {
 
     AiProviderConfig providerConfig();
 
+    @JsonProperty("modelType")
     AiModelType modelType();
 
     C modelConfig();

@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
 
 public record GoogleAiGeminiChatModel(
+        AiModelType modelType,
         GoogleAiGeminiProviderConfig providerConfig,
         Config modelConfig
 ) implements AiChatModel<GoogleAiGeminiChatModel.Config> {
@@ -54,7 +56,7 @@ public record GoogleAiGeminiChatModel(
 
     @Override
     public GoogleAiGeminiChatModel withModelConfig(GoogleAiGeminiChatModel.Config config) {
-        return new GoogleAiGeminiChatModel(providerConfig, config);
+        return new GoogleAiGeminiChatModel(modelType, providerConfig, config);
     }
 
 }

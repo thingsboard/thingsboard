@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 
 public record OpenAiChatModel(
+        AiModelType modelType,
         OpenAiProviderConfig providerConfig,
         Config modelConfig
 ) implements AiChatModel<OpenAiChatModel.Config> {
@@ -54,7 +56,7 @@ public record OpenAiChatModel(
 
     @Override
     public OpenAiChatModel withModelConfig(OpenAiChatModel.Config config) {
-        return new OpenAiChatModel(providerConfig, config);
+        return new OpenAiChatModel(modelType, providerConfig, config);
     }
 
 }

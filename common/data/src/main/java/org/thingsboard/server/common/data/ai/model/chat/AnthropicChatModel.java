@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 
 public record AnthropicChatModel(
+        AiModelType modelType,
         AnthropicProviderConfig providerConfig,
         Config modelConfig
 ) implements AiChatModel<AnthropicChatModel.Config> {
@@ -54,7 +56,7 @@ public record AnthropicChatModel(
 
     @Override
     public AnthropicChatModel withModelConfig(AnthropicChatModel.Config config) {
-        return new AnthropicChatModel(providerConfig, config);
+        return new AnthropicChatModel(modelType, providerConfig, config);
     }
 
 }

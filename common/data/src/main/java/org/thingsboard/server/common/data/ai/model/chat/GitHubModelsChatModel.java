@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.GithubModelsProviderConfig;
 
 public record GitHubModelsChatModel(
+        AiModelType modelType,
         GithubModelsProviderConfig providerConfig,
         Config modelConfig
 ) implements AiChatModel<GitHubModelsChatModel.Config> {
@@ -54,7 +56,7 @@ public record GitHubModelsChatModel(
 
     @Override
     public GitHubModelsChatModel withModelConfig(GitHubModelsChatModel.Config config) {
-        return new GitHubModelsChatModel(providerConfig, config);
+        return new GitHubModelsChatModel(modelType, providerConfig, config);
     }
 
 }

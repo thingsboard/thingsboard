@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
 
 public record MistralAiChatModel(
+        AiModelType modelType,
         MistralAiProviderConfig providerConfig,
         Config modelConfig
 ) implements AiChatModel<MistralAiChatModel.Config> {
@@ -54,7 +56,7 @@ public record MistralAiChatModel(
 
     @Override
     public MistralAiChatModel withModelConfig(Config config) {
-        return new MistralAiChatModel(providerConfig, config);
+        return new MistralAiChatModel(modelType, providerConfig, config);
     }
 
 }
