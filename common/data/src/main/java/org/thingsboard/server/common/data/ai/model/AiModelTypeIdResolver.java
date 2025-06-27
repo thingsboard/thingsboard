@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModel;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
 
 import java.util.Map;
 
@@ -89,6 +90,8 @@ public final class AiModelTypeIdResolver extends TypeIdResolverBase {
             Map.entry("GITHUB_MODELS::gpt-4o", GitHubModelsChatModel.class)
     );
 
+    private static final String PROVIDER_MODEL_SEPARATOR = "::";
+
     private JavaType baseType;
 
     @Override
@@ -109,9 +112,28 @@ public final class AiModelTypeIdResolver extends TypeIdResolverBase {
     @Override
     public JavaType typeFromId(DatabindContext context, String id) {
         Class<?> modelClass = typeIdToModelClass.get(id);
-        if (modelClass == null) { // TODO: if provider is unknown - throw, if provider is valid but model is unknown - fallback to default model
-            throw new IllegalArgumentException("Unknown model type ID: " + id);
+        if (modelClass != null) { // known model
+            return context.constructSpecializedType(baseType, modelClass);
         }
+
+        String[] parts = id.split(PROVIDER_MODEL_SEPARATOR, 2);
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid model type ID format: " + id + ". Expected format: PROVIDER::MODEL_ID");
+        }
+
+        String providerName = parts[0];
+
+        // Check if the provider exists
+        AiProvider provider;
+        try {
+            provider = AiProvider.valueOf(providerName);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unknown AI provider: " + providerName);
+        }
+
+        // Provider is valid but model is unknown - fallback to default model class
+        modelClass = provider.getDefaultModelClass();
+
         return context.constructSpecializedType(baseType, modelClass);
     }
 
@@ -123,7 +145,7 @@ public final class AiModelTypeIdResolver extends TypeIdResolverBase {
     private static String generateId(AiModel<?> model) {
         String provider = model.providerConfig().provider().name();
         String modelId = model.modelConfig().modelId();
-        return provider + "::" + modelId;
+        return provider + PROVIDER_MODEL_SEPARATOR + modelId;
     }
 
 }
