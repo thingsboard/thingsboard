@@ -27,75 +27,67 @@ import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChat
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModel;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 public final class AiModelTypeIdResolver extends TypeIdResolverBase {
 
-    private static final Map<String, Class<?>> typeIdToModelClass;
+    private static final Map<String, Class<?>> typeIdToModelClass = Map.ofEntries(
+            // OpenAI models
+            Map.entry("OPENAI::o4-mini", OpenAiChatModel.class),
+            // Map.entry("OPENAI::o3-pro", OpenAiChatModel.class); // needs verification with Gov ID :)
+            // Map.entry("OPENAI::o3", OpenAiChatModel.class);     // needs verification with Gov ID :)
+            Map.entry("OPENAI::o3-mini", OpenAiChatModel.class),
+            // Map.entry("OPENAI::o1-pro", OpenAiChatModel.class); // LC4j sends requests to v1/chat/completions, but o1-pro is only supported in v1/responses
+            Map.entry("OPENAI::o1", OpenAiChatModel.class),
+            Map.entry("OPENAI::gpt-4.1", OpenAiChatModel.class),
+            Map.entry("OPENAI::gpt-4.1-mini", OpenAiChatModel.class),
+            Map.entry("OPENAI::gpt-4.1-nano", OpenAiChatModel.class),
+            Map.entry("OPENAI::gpt-4o", OpenAiChatModel.class),
+            Map.entry("OPENAI::gpt-4o-mini", OpenAiChatModel.class),
 
-    static {
-        Map<String, Class<?>> map = new HashMap<>();
+            // Google AI Gemini models
+            Map.entry("GOOGLE_AI_GEMINI::gemini-2.5-pro", GoogleAiGeminiChatModel.class),
+            Map.entry("GOOGLE_AI_GEMINI::gemini-2.5-flash", GoogleAiGeminiChatModel.class),
+            Map.entry("GOOGLE_AI_GEMINI::gemini-2.0-flash", GoogleAiGeminiChatModel.class),
+            Map.entry("GOOGLE_AI_GEMINI::gemini-2.0-flash-lite", GoogleAiGeminiChatModel.class),
+            Map.entry("GOOGLE_AI_GEMINI::gemini-1.5-pro", GoogleAiGeminiChatModel.class),
+            Map.entry("GOOGLE_AI_GEMINI::gemini-1.5-flash", GoogleAiGeminiChatModel.class),
+            Map.entry("GOOGLE_AI_GEMINI::gemini-1.5-flash-8b", GoogleAiGeminiChatModel.class),
 
-        // OpenAI models
-        map.put("OPENAI::o4-mini", OpenAiChatModel.class);
-        // map.put("OPENAI::o3-pro", OpenAiChatModel.class); // needs verification with Gov ID :)
-        // map.put("OPENAI::o3", OpenAiChatModel.class);     // needs verification with Gov ID :)
-        map.put("OPENAI::o3-mini", OpenAiChatModel.class);
-        // map.put("OPENAI::o1-pro", OpenAiChatModel.class); // LC4j sends requests to v1/chat/completions, but o1-pro is only supported in v1/responses
-        map.put("OPENAI::o1", OpenAiChatModel.class);
-        map.put("OPENAI::gpt-4.1", OpenAiChatModel.class);
-        map.put("OPENAI::gpt-4.1-mini", OpenAiChatModel.class);
-        map.put("OPENAI::gpt-4.1-nano", OpenAiChatModel.class);
-        map.put("OPENAI::gpt-4o", OpenAiChatModel.class);
-        map.put("OPENAI::gpt-4o-mini", OpenAiChatModel.class);
+            // Google Vertex AI Gemini models
+            Map.entry("GOOGLE_VERTEX_AI_GEMINI::gemini-2.5-pro", GoogleVertexAiGeminiChatModel.class),
+            Map.entry("GOOGLE_VERTEX_AI_GEMINI::gemini-2.5-flash", GoogleVertexAiGeminiChatModel.class),
+            Map.entry("GOOGLE_VERTEX_AI_GEMINI::gemini-2.0-flash", GoogleVertexAiGeminiChatModel.class),
+            Map.entry("GOOGLE_VERTEX_AI_GEMINI::gemini-2.0-flash-lite", GoogleVertexAiGeminiChatModel.class),
+            Map.entry("GOOGLE_VERTEX_AI_GEMINI::gemini-1.5-pro", GoogleVertexAiGeminiChatModel.class),
+            Map.entry("GOOGLE_VERTEX_AI_GEMINI::gemini-1.5-flash", GoogleVertexAiGeminiChatModel.class),
+            Map.entry("GOOGLE_VERTEX_AI_GEMINI::gemini-1.5-flash-8b", GoogleVertexAiGeminiChatModel.class),
 
-        // Google AI Gemini models
-        map.put("GOOGLE_AI_GEMINI::gemini-2.5-pro", GoogleAiGeminiChatModel.class);
-        map.put("GOOGLE_AI_GEMINI::gemini-2.5-flash", GoogleAiGeminiChatModel.class);
-        map.put("GOOGLE_AI_GEMINI::gemini-2.0-flash", GoogleAiGeminiChatModel.class);
-        map.put("GOOGLE_AI_GEMINI::gemini-2.0-flash-lite", GoogleAiGeminiChatModel.class);
-        map.put("GOOGLE_AI_GEMINI::gemini-1.5-pro", GoogleAiGeminiChatModel.class);
-        map.put("GOOGLE_AI_GEMINI::gemini-1.5-flash", GoogleAiGeminiChatModel.class);
-        map.put("GOOGLE_AI_GEMINI::gemini-1.5-flash-8b", GoogleAiGeminiChatModel.class);
+            // Mistral AI models
+            Map.entry("MISTRAL_AI::magistral-medium-latest", MistralAiChatModel.class),
+            Map.entry("MISTRAL_AI::magistral-small-latest", MistralAiChatModel.class),
+            Map.entry("MISTRAL_AI::mistral-large-latest", MistralAiChatModel.class),
+            Map.entry("MISTRAL_AI::mistral-medium-latest", MistralAiChatModel.class),
+            Map.entry("MISTRAL_AI::mistral-small-latest", MistralAiChatModel.class),
+            Map.entry("MISTRAL_AI::pixtral-large-latest", MistralAiChatModel.class),
+            Map.entry("MISTRAL_AI::ministral-8b-latest", MistralAiChatModel.class),
+            Map.entry("MISTRAL_AI::ministral-3b-latest", MistralAiChatModel.class),
+            Map.entry("MISTRAL_AI::open-mistral-nemo", MistralAiChatModel.class),
 
-        // Google Vertex AI Gemini models
-        map.put("GOOGLE_VERTEX_AI_GEMINI::gemini-2.5-pro", GoogleVertexAiGeminiChatModel.class);
-        map.put("GOOGLE_VERTEX_AI_GEMINI::gemini-2.5-flash", GoogleVertexAiGeminiChatModel.class);
-        map.put("GOOGLE_VERTEX_AI_GEMINI::gemini-2.0-flash", GoogleVertexAiGeminiChatModel.class);
-        map.put("GOOGLE_VERTEX_AI_GEMINI::gemini-2.0-flash-lite", GoogleVertexAiGeminiChatModel.class);
-        map.put("GOOGLE_VERTEX_AI_GEMINI::gemini-1.5-pro", GoogleVertexAiGeminiChatModel.class);
-        map.put("GOOGLE_VERTEX_AI_GEMINI::gemini-1.5-flash", GoogleVertexAiGeminiChatModel.class);
-        map.put("GOOGLE_VERTEX_AI_GEMINI::gemini-1.5-flash-8b", GoogleVertexAiGeminiChatModel.class);
+            // Anthropic models
+            Map.entry("ANTHROPIC::claude-opus-4-0", AnthropicChatModel.class),
+            Map.entry("ANTHROPIC::claude-sonnet-4-0", AnthropicChatModel.class),
+            Map.entry("ANTHROPIC::claude-3-7-sonnet-latest", AnthropicChatModel.class),
+            Map.entry("ANTHROPIC::claude-3-5-sonnet-latest", AnthropicChatModel.class),
+            Map.entry("ANTHROPIC::claude-3-5-haiku-latest", AnthropicChatModel.class),
+            Map.entry("ANTHROPIC::claude-3-opus-latest", AnthropicChatModel.class),
 
-        // Mistral AI models
-        map.put("MISTRAL_AI::magistral-medium-latest", MistralAiChatModel.class);
-        map.put("MISTRAL_AI::magistral-small-latest", MistralAiChatModel.class);
-        map.put("MISTRAL_AI::mistral-large-latest", MistralAiChatModel.class);
-        map.put("MISTRAL_AI::mistral-medium-latest", MistralAiChatModel.class);
-        map.put("MISTRAL_AI::mistral-small-latest", MistralAiChatModel.class);
-        map.put("MISTRAL_AI::pixtral-large-latest", MistralAiChatModel.class);
-        map.put("MISTRAL_AI::ministral-8b-latest", MistralAiChatModel.class);
-        map.put("MISTRAL_AI::ministral-3b-latest", MistralAiChatModel.class);
-        map.put("MISTRAL_AI::open-mistral-nemo", MistralAiChatModel.class);
+            // Amazon Bedrock models
+            Map.entry("AMAZON_BEDROCK::amazon.nova-lite-v1:0", AmazonBedrockChatModel.class),
 
-        // Anthropic models
-        map.put("ANTHROPIC::claude-opus-4-0", AnthropicChatModel.class);
-        map.put("ANTHROPIC::claude-sonnet-4-0", AnthropicChatModel.class);
-        map.put("ANTHROPIC::claude-3-7-sonnet-latest", AnthropicChatModel.class);
-        map.put("ANTHROPIC::claude-3-5-sonnet-latest", AnthropicChatModel.class);
-        map.put("ANTHROPIC::claude-3-5-haiku-latest", AnthropicChatModel.class);
-        map.put("ANTHROPIC::claude-3-opus-latest", AnthropicChatModel.class);
-
-        // Amazon Bedrock models
-        map.put("AMAZON_BEDROCK::amazon.nova-lite-v1:0", AmazonBedrockChatModel.class);
-
-        // GitHub Models models
-        map.put("GITHUB_MODELS::gpt-4o", GitHubModelsChatModel.class);
-
-        typeIdToModelClass = Collections.unmodifiableMap(map);
-    }
+            // GitHub Models models
+            Map.entry("GITHUB_MODELS::gpt-4o", GitHubModelsChatModel.class)
+    );
 
     private JavaType baseType;
 
@@ -117,7 +109,7 @@ public final class AiModelTypeIdResolver extends TypeIdResolverBase {
     @Override
     public JavaType typeFromId(DatabindContext context, String id) {
         Class<?> modelClass = typeIdToModelClass.get(id);
-        if (modelClass == null) {
+        if (modelClass == null) { // TODO: if provider is unknown - throw, if provider is valid but model is unknown - fallback to default model
             throw new IllegalArgumentException("Unknown model type ID: " + id);
         }
         return context.constructSpecializedType(baseType, modelClass);
