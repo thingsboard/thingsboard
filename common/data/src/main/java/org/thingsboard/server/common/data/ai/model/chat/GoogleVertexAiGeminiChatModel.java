@@ -32,6 +32,7 @@ public record GoogleVertexAiGeminiChatModel(
             Double temperature,
             Double topP,
             Integer topK,
+            Double frequencyPenalty,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<GoogleVertexAiGeminiChatModel.Config> {}

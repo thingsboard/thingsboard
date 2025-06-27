@@ -31,6 +31,7 @@ public record MistralAiChatModel(
             String modelId,
             Double temperature,
             Double topP,
+            Double frequencyPenalty,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<MistralAiChatModel.Config> {}

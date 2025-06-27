@@ -31,6 +31,7 @@ public record OpenAiChatModel(
             String modelId,
             Double temperature,
             Double topP,
+            Double frequencyPenalty,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<OpenAiChatModel.Config> {}
