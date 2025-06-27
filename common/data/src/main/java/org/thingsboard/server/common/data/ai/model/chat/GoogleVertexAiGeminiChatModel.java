@@ -31,7 +31,7 @@ public record GoogleVertexAiGeminiChatModel(
             String modelId,
             Double temperature,
             Double topP,
-            Integer timeoutSeconds, // TODO: not supported by Vertex AI
+            Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<GoogleVertexAiGeminiChatModel.Config> {}
 
