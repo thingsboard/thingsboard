@@ -16,47 +16,28 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 
 public record AmazonBedrockChatModel(
         AiModelType modelType,
         AmazonBedrockProviderConfig providerConfig,
-        Config modelConfig
+        @With Config modelConfig
 ) implements AiChatModel<AmazonBedrockChatModel.Config> {
 
+    @With
     public record Config(
             String modelId,
             Double temperature,
+            Double topP,
             Integer timeoutSeconds,
             Integer maxRetries
-    ) implements AiChatModelConfig<AmazonBedrockChatModel.Config> {
-
-        @Override
-        public AmazonBedrockChatModel.Config withTemperature(Double temperature) {
-            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
-        }
-
-        @Override
-        public AmazonBedrockChatModel.Config withTimeoutSeconds(Integer timeoutSeconds) {
-            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
-        }
-
-        @Override
-        public AmazonBedrockChatModel.Config withMaxRetries(Integer maxRetries) {
-            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
-        }
-
-    }
+    ) implements AiChatModelConfig<AmazonBedrockChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {
         return configurer.configureChatModel(this);
-    }
-
-    @Override
-    public AmazonBedrockChatModel withModelConfig(AmazonBedrockChatModel.Config config) {
-        return new AmazonBedrockChatModel(modelType, providerConfig, config);
     }
 
 }

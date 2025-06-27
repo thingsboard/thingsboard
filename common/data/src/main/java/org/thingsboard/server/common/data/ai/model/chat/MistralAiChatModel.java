@@ -16,47 +16,28 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
 
 public record MistralAiChatModel(
         AiModelType modelType,
         MistralAiProviderConfig providerConfig,
-        Config modelConfig
+        @With Config modelConfig
 ) implements AiChatModel<MistralAiChatModel.Config> {
 
+    @With
     public record Config(
             String modelId,
             Double temperature,
+            Double topP,
             Integer timeoutSeconds,
             Integer maxRetries
-    ) implements AiChatModelConfig<MistralAiChatModel.Config> {
-
-        @Override
-        public Config withTemperature(Double temperature) {
-            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
-        }
-
-        @Override
-        public Config withTimeoutSeconds(Integer timeoutSeconds) {
-            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
-        }
-
-        @Override
-        public Config withMaxRetries(Integer maxRetries) {
-            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
-        }
-
-    }
+    ) implements AiChatModelConfig<MistralAiChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {
         return configurer.configureChatModel(this);
-    }
-
-    @Override
-    public MistralAiChatModel withModelConfig(Config config) {
-        return new MistralAiChatModel(modelType, providerConfig, config);
     }
 
 }

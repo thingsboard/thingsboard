@@ -56,6 +56,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .apiKey(chatModel.providerConfig().apiKey())
                 .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
+                .topP(modelConfig.topP())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -68,6 +69,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .apiKey(chatModel.providerConfig().apiKey())
                 .deploymentName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
+                .topP(modelConfig.topP())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -80,6 +82,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .apiKey(chatModel.providerConfig().apiKey())
                 .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
+                .topP(modelConfig.topP())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -112,6 +115,9 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         if (modelConfig.temperature() != null) {
             generationConfigBuilder.setTemperature(modelConfig.temperature().floatValue());
         }
+        if (modelConfig.topP() != null) {
+            generationConfigBuilder.setTopP(modelConfig.topP().floatValue());
+        }
         var generationConfig = generationConfigBuilder.build();
 
         // construct generative model instance
@@ -128,6 +134,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .apiKey(chatModel.providerConfig().apiKey())
                 .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
+                .topP(modelConfig.topP())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -140,6 +147,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .apiKey(chatModel.providerConfig().apiKey())
                 .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
+                .topP(modelConfig.topP())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -161,6 +169,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
         var defaultChatRequestParams = ChatRequestParameters.builder()
                 .temperature(modelConfig.temperature())
+                .topP(modelConfig.topP())
                 .build();
 
         return BedrockChatModel.builder()
@@ -179,6 +188,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .gitHubToken(chatModel.providerConfig().personalAccessToken())
                 .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
+                .topP(modelConfig.topP())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();

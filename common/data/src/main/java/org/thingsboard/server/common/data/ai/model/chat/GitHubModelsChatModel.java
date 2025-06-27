@@ -16,47 +16,28 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.GithubModelsProviderConfig;
 
 public record GitHubModelsChatModel(
         AiModelType modelType,
         GithubModelsProviderConfig providerConfig,
-        Config modelConfig
+        @With Config modelConfig
 ) implements AiChatModel<GitHubModelsChatModel.Config> {
 
+    @With
     public record Config(
             String modelId,
             Double temperature,
+            Double topP,
             Integer timeoutSeconds,
             Integer maxRetries
-    ) implements AiChatModelConfig<GitHubModelsChatModel.Config> {
-
-        @Override
-        public GitHubModelsChatModel.Config withTemperature(Double temperature) {
-            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
-        }
-
-        @Override
-        public GitHubModelsChatModel.Config withTimeoutSeconds(Integer timeoutSeconds) {
-            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
-        }
-
-        @Override
-        public GitHubModelsChatModel.Config withMaxRetries(Integer maxRetries) {
-            return new Config(modelId, temperature, timeoutSeconds, maxRetries);
-        }
-
-    }
+    ) implements AiChatModelConfig<GitHubModelsChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {
         return configurer.configureChatModel(this);
-    }
-
-    @Override
-    public GitHubModelsChatModel withModelConfig(GitHubModelsChatModel.Config config) {
-        return new GitHubModelsChatModel(modelType, providerConfig, config);
     }
 
 }

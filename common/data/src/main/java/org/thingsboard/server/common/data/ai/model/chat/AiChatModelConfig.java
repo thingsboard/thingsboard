@@ -23,13 +23,9 @@ public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extend
         GoogleVertexAiGeminiChatModel.Config, MistralAiChatModel.Config, AnthropicChatModel.Config,
         AmazonBedrockChatModel.Config, GitHubModelsChatModel.Config {
 
-    Double temperature();
-
     Integer timeoutSeconds();
 
     Integer maxRetries();
-
-    C withTemperature(Double temperature);
 
     C withTimeoutSeconds(Integer timeoutSeconds);
 
