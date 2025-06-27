@@ -20,6 +20,8 @@ import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 
+import java.util.List;
+
 public record AnthropicChatModel(
         AiModelType modelType,
         AnthropicProviderConfig providerConfig,
@@ -33,6 +35,7 @@ public record AnthropicChatModel(
             Double topP,
             Integer topK,
             Integer maxOutputTokens,
+            List<String> stopSequences,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<AnthropicChatModel.Config> {}

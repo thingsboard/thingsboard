@@ -64,6 +64,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .frequencyPenalty(modelConfig.frequencyPenalty())
                 .presencePenalty(modelConfig.presencePenalty())
                 .maxTokens(modelConfig.maxOutputTokens())
+                .stop(modelConfig.stopSequences())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -80,6 +81,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .frequencyPenalty(modelConfig.frequencyPenalty())
                 .presencePenalty(modelConfig.presencePenalty())
                 .maxTokens(modelConfig.maxOutputTokens())
+                .stop(modelConfig.stopSequences())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -97,6 +99,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .frequencyPenalty(modelConfig.frequencyPenalty())
                 .presencePenalty(modelConfig.presencePenalty())
                 .maxOutputTokens(modelConfig.maxOutputTokens())
+                .stopSequences(modelConfig.stopSequences())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -171,6 +174,9 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         if (modelConfig.maxOutputTokens() != null) {
             generationConfigBuilder.setMaxOutputTokens(modelConfig.maxOutputTokens());
         }
+        if (modelConfig.stopSequences() != null) {
+            generationConfigBuilder.addAllStopSequences(modelConfig.stopSequences());
+        }
         var generationConfig = generationConfigBuilder.build();
 
         // construct generative model instance
@@ -198,6 +204,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .frequencyPenalty(modelConfig.frequencyPenalty())
                 .presencePenalty(modelConfig.presencePenalty())
                 .maxTokens(modelConfig.maxOutputTokens())
+                .stopSequences(modelConfig.stopSequences())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -213,6 +220,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .topP(modelConfig.topP())
                 .topK(modelConfig.topK())
                 .maxTokens(modelConfig.maxOutputTokens())
+                .stopSequences(modelConfig.stopSequences())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -236,6 +244,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .temperature(modelConfig.temperature())
                 .topP(modelConfig.topP())
                 .maxOutputTokens(modelConfig.maxOutputTokens())
+                .stopSequences(modelConfig.stopSequences())
                 .build();
 
         return BedrockChatModel.builder()
@@ -258,6 +267,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .frequencyPenalty(modelConfig.frequencyPenalty())
                 .presencePenalty(modelConfig.presencePenalty())
                 .maxTokens(modelConfig.maxOutputTokens())
+                .stop(modelConfig.stopSequences())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();

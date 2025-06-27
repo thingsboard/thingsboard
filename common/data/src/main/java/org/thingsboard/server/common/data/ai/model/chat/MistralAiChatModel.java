@@ -20,6 +20,8 @@ import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
 
+import java.util.List;
+
 public record MistralAiChatModel(
         AiModelType modelType,
         MistralAiProviderConfig providerConfig,
@@ -34,6 +36,7 @@ public record MistralAiChatModel(
             Double frequencyPenalty,
             Double presencePenalty,
             Integer maxOutputTokens,
+            List<String> stopSequences,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<MistralAiChatModel.Config> {}

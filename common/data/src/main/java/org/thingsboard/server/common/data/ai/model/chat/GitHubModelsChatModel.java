@@ -20,6 +20,8 @@ import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.GithubModelsProviderConfig;
 
+import java.util.List;
+
 public record GitHubModelsChatModel(
         AiModelType modelType,
         GithubModelsProviderConfig providerConfig,
@@ -34,6 +36,7 @@ public record GitHubModelsChatModel(
             Double frequencyPenalty,
             Double presencePenalty,
             Integer maxOutputTokens,
+            List<String> stopSequences,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<GitHubModelsChatModel.Config> {}

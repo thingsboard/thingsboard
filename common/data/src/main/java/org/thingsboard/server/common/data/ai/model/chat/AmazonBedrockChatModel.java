@@ -20,6 +20,8 @@ import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 
+import java.util.List;
+
 public record AmazonBedrockChatModel(
         AiModelType modelType,
         AmazonBedrockProviderConfig providerConfig,
@@ -32,6 +34,7 @@ public record AmazonBedrockChatModel(
             Double temperature,
             Double topP,
             Integer maxOutputTokens,
+            List<String> stopSequences,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<AmazonBedrockChatModel.Config> {}

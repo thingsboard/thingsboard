@@ -20,6 +20,8 @@ import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 
+import java.util.List;
+
 public record OpenAiChatModel(
         AiModelType modelType,
         OpenAiProviderConfig providerConfig,
@@ -34,6 +36,7 @@ public record OpenAiChatModel(
             Double frequencyPenalty,
             Double presencePenalty,
             Integer maxOutputTokens,
+            List<String> stopSequences,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<OpenAiChatModel.Config> {}
