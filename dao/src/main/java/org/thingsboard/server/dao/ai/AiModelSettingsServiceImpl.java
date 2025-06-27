@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.CachedVersionedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.model.sql.AiModelSettingsEntity;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
@@ -92,7 +93,7 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
 
     @Override
     public PageData<AiModelSettings> findAiModelSettingsByTenantId(TenantId tenantId, PageLink pageLink) {
-        validatePageLink(pageLink);
+        validatePageLink(pageLink, AiModelSettingsEntity.ALLOWED_SORT_PROPERTIES);
         return aiModelSettingsDao.findAllByTenantId(tenantId, pageLink);
     }
 

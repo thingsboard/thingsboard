@@ -17,6 +17,9 @@ package org.thingsboard.server.dao.sql.ai;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -25,6 +28,7 @@ import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.ai.AiModelSettingsDao;
 import org.thingsboard.server.dao.model.sql.AiModelSettingsEntity;
@@ -65,15 +69,27 @@ class JpaAiModelSettingsDao extends JpaAbstractDao<AiModelSettingsEntity, AiMode
     @Override
     public PageData<AiModelSettings> findByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(aiModelSettingsRepository.findByTenantId(
-                tenantId, StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), DaoUtil.toPageable(pageLink, AiModelSettingsEntity.COLUMN_MAP))
+                tenantId, StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), toPageRequest(pageLink))
         );
     }
 
     @Override
     public PageData<AiModelSettingsId> findIdsByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.pageToPageData(
-                aiModelSettingsRepository.findIdsByTenantId(tenantId, DaoUtil.toPageable(pageLink, AiModelSettingsEntity.COLUMN_MAP)).map(AiModelSettingsId::new)
-        );
+        return DaoUtil.pageToPageData(aiModelSettingsRepository.findIdsByTenantId(tenantId, toPageRequest(pageLink)).map(AiModelSettingsId::new));
+    }
+
+    private static PageRequest toPageRequest(PageLink pageLink) {
+        Sort sort;
+        SortOrder sortOrder = pageLink.getSortOrder();
+        if (sortOrder == null) {
+            sort = Sort.by(Sort.Direction.ASC, "id");
+        } else {
+            sort = JpaSort.unsafe(
+                    Sort.Direction.fromString(sortOrder.getDirection().name()),
+                    AiModelSettingsEntity.COLUMN_MAP.getOrDefault(sortOrder.getProperty(), sortOrder.getProperty())
+            );
+        }
+        return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), sort);
     }
 
     @Override

@@ -35,7 +35,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.AI_MODEL_SETTINGS_TEXT_SEARCH_DESCRIPTION;
@@ -48,9 +47,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 
 @RestController
 @RequestMapping("/api/ai-model-settings")
-public class AiModelSettingsController extends BaseController {
-
-    private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of("createdTime", "name");
+class AiModelSettingsController extends BaseController {
 
     @ApiOperation(
             value = "Create or update AI model settings (saveAiModelSettings)",
@@ -75,16 +72,16 @@ public class AiModelSettingsController extends BaseController {
                     TENANT_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping("/{aiModelSettingsId}")
+    @GetMapping("/{settingsUuid}")
     public AiModelSettings getAiModelSettingsById(
             @Parameter(
                     description = "ID of the AI model settings record",
                     required = true,
                     example = "de7900d4-30e2-11f0-9cd2-0242ac120002"
             )
-            @PathVariable("aiModelSettingsId") UUID aiModelSettingsUuid
+            @PathVariable UUID settingsUuid
     ) throws ThingsboardException {
-        return checkAiModelSettingsId(new AiModelSettingsId(aiModelSettingsUuid), Operation.READ);
+        return checkAiModelSettingsId(new AiModelSettingsId(settingsUuid), Operation.READ);
     }
 
     @ApiOperation(
@@ -101,22 +98,15 @@ public class AiModelSettingsController extends BaseController {
             @RequestParam int page,
             @Parameter(description = AI_MODEL_SETTINGS_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name"}))
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "provider", "modelId"}))
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder
     ) throws ThingsboardException {
         var user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI_MODEL_SETTINGS, Operation.READ);
-        validateSortProperty(sortProperty);
         var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return aiModelSettingsService.findAiModelSettingsByTenantId(user.getTenantId(), pageLink);
-    }
-
-    private static void validateSortProperty(String sortProperty) {
-        if (sortProperty != null && !ALLOWED_SORT_PROPERTIES.contains(sortProperty)) {
-            throw new IllegalArgumentException("Unsupported sort property '" + sortProperty + "'! Only '" + String.join("', '", ALLOWED_SORT_PROPERTIES) + "' are allowed.");
-        }
     }
 
     @ApiOperation(
@@ -127,17 +117,17 @@ public class AiModelSettingsController extends BaseController {
                     TENANT_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @DeleteMapping("/{aiModelSettingsId}")
+    @DeleteMapping("/{settingsUuid}")
     public boolean deleteAiModelSettingsById(
             @Parameter(
                     description = "ID of the AI model settings record",
                     required = true,
                     example = "de7900d4-30e2-11f0-9cd2-0242ac120002"
             )
-            @PathVariable("aiModelSettingsId") UUID aiModelSettingsUuid
+            @PathVariable UUID settingsUuid
     ) throws ThingsboardException {
         var user = getCurrentUser();
-        var settingsId = new AiModelSettingsId(aiModelSettingsUuid);
+        var settingsId = new AiModelSettingsId(settingsUuid);
         accessControlService.checkPermission(user, Resource.AI_MODEL_SETTINGS, Operation.DELETE);
         Optional<AiModelSettings> toDelete = aiModelSettingsService.findAiModelSettingsByTenantIdAndId(user.getTenantId(), settingsId);
         if (toDelete.isEmpty()) {

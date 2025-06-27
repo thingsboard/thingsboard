@@ -31,8 +31,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -43,7 +47,13 @@ import java.util.UUID;
 public class AiModelSettingsEntity extends BaseVersionedEntity<AiModelSettings> {
 
     public static final Map<String, String> COLUMN_MAP = Map.of(
-            "createdTime", "created_time"
+            "createdTime", "created_time",
+            "provider", "(configuration -> 'providerConfig' ->> 'provider')",
+            "modelId", "(configuration -> 'modelConfig' ->> 'modelId')"
+    );
+
+    public static final Set<String> ALLOWED_SORT_PROPERTIES = Collections.unmodifiableSet(
+            new LinkedHashSet<>(List.of("createdTime", "name", "provider", "modelId"))
     );
 
     @Column(name = ModelConstants.AI_MODEL_SETTINGS_TENANT_ID_COLUMN_NAME, nullable = false, columnDefinition = "UUID")
