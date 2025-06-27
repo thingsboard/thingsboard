@@ -32,6 +32,7 @@ public record AzureOpenAiChatModel(
             Double temperature,
             Double topP,
             Double frequencyPenalty,
+            Double presencePenalty,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<AzureOpenAiChatModel.Config> {}

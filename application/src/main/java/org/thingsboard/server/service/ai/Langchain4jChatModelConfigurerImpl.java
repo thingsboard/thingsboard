@@ -62,6 +62,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .temperature(modelConfig.temperature())
                 .topP(modelConfig.topP())
                 .frequencyPenalty(modelConfig.frequencyPenalty())
+                .presencePenalty(modelConfig.presencePenalty())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -76,6 +77,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .temperature(modelConfig.temperature())
                 .topP(modelConfig.topP())
                 .frequencyPenalty(modelConfig.frequencyPenalty())
+                .presencePenalty(modelConfig.presencePenalty())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -91,6 +93,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .topP(modelConfig.topP())
                 .topK(modelConfig.topK())
                 .frequencyPenalty(modelConfig.frequencyPenalty())
+                .presencePenalty(modelConfig.presencePenalty())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -159,6 +162,9 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         if (modelConfig.frequencyPenalty() != null) {
             generationConfigBuilder.setFrequencyPenalty(modelConfig.frequencyPenalty().floatValue());
         }
+        if (modelConfig.frequencyPenalty() != null) {
+            generationConfigBuilder.setPresencePenalty(modelConfig.frequencyPenalty().floatValue());
+        }
         var generationConfig = generationConfigBuilder.build();
 
         // construct generative model instance
@@ -184,6 +190,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .temperature(modelConfig.temperature())
                 .topP(modelConfig.topP())
                 .frequencyPenalty(modelConfig.frequencyPenalty())
+                .presencePenalty(modelConfig.presencePenalty())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -240,6 +247,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .temperature(modelConfig.temperature())
                 .topP(modelConfig.topP())
                 .frequencyPenalty(modelConfig.frequencyPenalty())
+                .presencePenalty(modelConfig.presencePenalty())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();

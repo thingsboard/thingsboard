@@ -32,6 +32,7 @@ public record GitHubModelsChatModel(
             Double temperature,
             Double topP,
             Double frequencyPenalty,
+            Double presencePenalty,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<GitHubModelsChatModel.Config> {}
