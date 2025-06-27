@@ -31,6 +31,7 @@ public record AmazonBedrockChatModel(
             String modelId,
             Double temperature,
             Double topP,
+            Integer maxOutputTokens,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<AmazonBedrockChatModel.Config> {}

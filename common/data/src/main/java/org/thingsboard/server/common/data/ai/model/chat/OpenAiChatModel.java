@@ -33,6 +33,7 @@ public record OpenAiChatModel(
             Double topP,
             Double frequencyPenalty,
             Double presencePenalty,
+            Integer maxOutputTokens,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<OpenAiChatModel.Config> {}

@@ -32,6 +32,7 @@ public record AnthropicChatModel(
             Double temperature,
             Double topP,
             Integer topK,
+            Integer maxOutputTokens,
             Integer timeoutSeconds,
             Integer maxRetries
     ) implements AiChatModelConfig<AnthropicChatModel.Config> {}
