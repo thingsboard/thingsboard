@@ -87,6 +87,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
                 .topP(modelConfig.topP())
+                .topK(modelConfig.topK())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
@@ -149,6 +150,9 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         if (modelConfig.topP() != null) {
             generationConfigBuilder.setTopP(modelConfig.topP().floatValue());
         }
+        if (modelConfig.topK() != null) {
+            generationConfigBuilder.setTopK(modelConfig.topK());
+        }
         var generationConfig = generationConfigBuilder.build();
 
         // construct generative model instance
@@ -186,6 +190,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .modelName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
                 .topP(modelConfig.topP())
+                .topK(modelConfig.topK())
                 .timeout(toDuration(modelConfig.timeoutSeconds()))
                 .maxRetries(modelConfig.maxRetries())
                 .build();
