@@ -57,6 +57,7 @@ import {
 import {
   TimeSeriesChartTooltipWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
+import { TbUnit } from '@shared/models/unit.models';
 
 export interface RangeItem {
   index: number;
@@ -221,13 +222,13 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
 };
 
 export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings, rangeItems: RangeItem[],
-                                             decimals: number, units: string, valueConvertor: (x: number) => number): DeepPartial<TimeSeriesChartSettings> => {
+                                             decimals: number, units: TbUnit): DeepPartial<TimeSeriesChartSettings> => {
   let thresholds: DeepPartial<TimeSeriesChartThreshold>[] = settings.showRangeThresholds ? getMarkPoints(rangeItems).map(item => ({
     ...{type: ValueSourceType.constant,
     yAxisId: 'default',
     units,
     decimals,
-    value: valueConvertor(item)},
+    value: item},
     ...settings.rangeThreshold
   } as DeepPartial<TimeSeriesChartThreshold>)) : [];
   if (settings.thresholds?.length) {
@@ -240,10 +241,8 @@ export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings,
     yAxes: {
       default: {
         ...settings.yAxis,
-        ...{
-          decimals,
-          units
-        }
+        decimals,
+        units
       }
     },
     xAxis: settings.xAxis,
@@ -299,14 +298,15 @@ export const toRangeItems = (colorRanges: Array<ColorRange>, valueFormat: ValueF
   for (let i = 0; i < ranges.length; i++) {
     const range = ranges[i];
     let from = range.from;
-    const to = isDefinedAndNotNull(range.to) ? Number(valueFormat.format(range.to)) : range.to;
+    const to = range.to;
     if (i > 0) {
       const prevRange = ranges[i - 1];
       if (isNumber(prevRange.to) && isNumber(from) && from < prevRange.to) {
         from = prevRange.to;
       }
     }
-    from = isDefinedAndNotNull(from) ? Number(valueFormat.format(from)) : from;
+    const formatToValue = isDefinedAndNotNull(to) ? Number(valueFormat.format(to)) : to;
+    const formatFromValue = isDefinedAndNotNull(from) ? Number(valueFormat.format(from)) : from;
     rangeItems.push(
       {
         index: counter++,
@@ -315,12 +315,12 @@ export const toRangeItems = (colorRanges: Array<ColorRange>, valueFormat: ValueF
         visible: true,
         from,
         to,
-        label: rangeItemLabel(from, to),
-        piece: createTimeSeriesChartVisualMapPiece(range.color, from, to)
+        label: rangeItemLabel(formatFromValue, formatToValue),
+        piece: createTimeSeriesChartVisualMapPiece(range.color, formatFromValue, formatToValue)
       }
     );
     if (!isNumber(from) || !isNumber(to)) {
-      const value = !isNumber(from) ? to : from;
+      const value = !isNumber(from) ? formatToValue : formatFromValue;
       rangeItems.push(
         {
           index: counter++,
