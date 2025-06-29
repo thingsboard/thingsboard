@@ -83,13 +83,13 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
 
         for (int i = 0; i < 10; i++) {
             doReturn(1).when(defaultSmsService).sendSms(any(), any());
-            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message");
+            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message").get(30, TimeUnit.SECONDS);
         }
 
         //wait 1 sec so that api usage state is updated
         TimeUnit.SECONDS.sleep(1);
-        assertThrows(RuntimeException.class, () -> {
-            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message");
+        assertThrows(Exception.class, () -> {
+            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message").get(30, TimeUnit.SECONDS);
         }, "SMS sending is disabled due to API limits!");
     }
 
@@ -101,8 +101,8 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
         saveTenantProfileWitConfiguration(tenantProfile, config);
 
         TimeUnit.SECONDS.sleep(1);
-        assertThrows(RuntimeException.class, () -> {
-            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message");
+        assertThrows(Exception.class, () -> {
+            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message").get(30, TimeUnit.SECONDS);
         }, "SMS sending is disabled due to API limits!");
 
         //enable sms messaging
@@ -112,7 +112,7 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
 
         for (int i = 0; i < 10; i++) {
             doReturn(1).when(defaultSmsService).sendSms(any(), any());
-            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message");
+            defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message").get(30, TimeUnit.SECONDS);
         }
     }
 

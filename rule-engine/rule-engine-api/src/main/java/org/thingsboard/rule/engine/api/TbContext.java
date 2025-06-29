@@ -323,8 +323,6 @@ public interface TbContext {
 
     ListeningExecutor getMailExecutor();
 
-    ListeningExecutor getSmsExecutor();
-
     ListeningExecutor getDbCallbackExecutor();
 
     ListeningExecutor getExternalCallExecutor();

@@ -599,11 +599,6 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public ListeningExecutor getSmsExecutor() {
-        return mainCtx.getSmsExecutor();
-    }
-
-    @Override
     public ListeningExecutor getDbCallbackExecutor() {
         return mainCtx.getDbCallbackExecutor();
     }
