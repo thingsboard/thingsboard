@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +39,7 @@ import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
+import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.Map;
 import java.util.Optional;
@@ -63,10 +63,16 @@ public class EdgeKafkaLagReporter {
     @Value("${queue.kafka.lag-report.send-ts-interval-ms:60000}")
     private long reportIntervalMs;
 
+    @Value("${queue.prefix:}")
+    private String tbQueuePrefix;
+
+    @Value("${queue.edge.event_notifications_topic:tb_edge_event.notifications}")
+    private String tbQueueEdgeEventNotificationsTopic;
+
     private KafkaConsumer<String, byte[]> consumer;
     private ScheduledExecutorService scheduler;
 
-    @PostConstruct
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void init() {
         log.info("Initializing EdgeKafkaLagReporter with interval {}ms...", reportIntervalMs);
         this.consumer = new KafkaConsumer<>(kafkaSettings.toConsumerProps(null));
@@ -76,16 +82,17 @@ public class EdgeKafkaLagReporter {
 
     private void reportLag() {
         try {
+            String fullEdgeNotificationTopicName = tbQueuePrefix + tbQueueEdgeEventNotificationsTopic;
             AdminClient adminClient = kafkaSettings.getAdminClient();
             Set<String> groupIds = adminClient.listConsumerGroups()
                     .all()
                     .get(10, TimeUnit.SECONDS)
                     .stream()
                     .map(ConsumerGroupListing::groupId)
-                    .filter(id -> id.startsWith("tb_edge_event.notifications."))
+                    .filter(id -> id.startsWith(fullEdgeNotificationTopicName))
                     .collect(Collectors.toSet());
 
-            log.debug("Found {} consumer groups with prefix 'tb_edge_event.notifications.'", groupIds.size());
+            log.debug("Found {} consumer groups with prefix '{}'", groupIds.size(), fullEdgeNotificationTopicName);
 
             for (String groupId : groupIds) {
                 log.debug("Processing consumer group: {}", groupId);
@@ -98,34 +105,34 @@ public class EdgeKafkaLagReporter {
                     TopicPartition tp = entry.getKey();
                     String topic = tp.topic();
                     long committed = entry.getValue().offset();
-                    Long latest = endOffsets.get(tp);
-                    if (latest == null) {
+                    Long endOffset = endOffsets.get(tp);
+                    if (endOffset == null) {
                         log.warn("No end offset for topic-partition {}. Skipping.", tp);
                         continue;
                     }
 
-                    long lag = latest - committed;
+                    long lag = endOffset - committed;
 
-                    extractTenantEdge(topic).ifPresent(tenantEdge -> {
+                    extractTenantEdge(topic).ifPresent(tenantIdEdgeId -> {
                         long now = System.currentTimeMillis();
-                        long roundedTs = now - (now % TimeUnit.MINUTES.toMillis(1));
+                        long roundedTs = now - (now % reportIntervalMs);
                         TsKvEntry kvEntry = new BasicTsKvEntry(roundedTs, new LongDataEntry(LAG_KEY, lag));
 
                         ListenableFuture<TimeseriesSaveResult> future = tsService.save(
-                                TenantId.fromUUID(tenantEdge.getFirst()),
-                                new EdgeId(tenantEdge.getSecond()),
+                                TenantId.fromUUID(tenantIdEdgeId.getFirst()),
+                                EdgeId.fromUUID(tenantIdEdgeId.getSecond()),
                                 kvEntry
                         );
 
                         Futures.addCallback(future, new com.google.common.util.concurrent.FutureCallback<>() {
                             @Override
                             public void onSuccess(TimeseriesSaveResult result) {
-                                log.debug("Successfully saved downlinkLag [{}] for edge [{}]", lag, tenantEdge.getSecond());
+                                log.debug("Successfully saved downlinkLag [{}] for edge [{}]", lag, tenantIdEdgeId.getSecond());
                             }
 
                             @Override
                             public void onFailure(Throwable t) {
-                                log.warn("Failed to save downlinkLag for edge [{}]: {}", tenantEdge.getSecond(), t.getMessage(), t);
+                                log.warn("Failed to save downlinkLag for edge [{}]: {}", tenantIdEdgeId.getSecond(), t.getMessage(), t);
                             }
                         }, MoreExecutors.directExecutor());
                     });
@@ -138,14 +145,14 @@ public class EdgeKafkaLagReporter {
 
     /**
      * Parse tenantId and edgeId from topic name.
-     * Expected format: tb_edge_event.notifications.<tenantId>.<edgeId>
+     * Expected topic should always end with .<tenantId>.<edgeId>
      */
     private Optional<Pair<UUID, UUID>> extractTenantEdge(String topic) {
         String[] parts = topic.split("\\.");
-        if (parts.length >= 4) {
+        if (parts.length >= 2) {
             try {
-                UUID tenantId = UUID.fromString(parts[2]);
-                UUID edgeId = UUID.fromString(parts[3]);
+                UUID tenantId = UUID.fromString(parts[parts.length - 2]);
+                UUID edgeId = UUID.fromString(parts[parts.length - 1]);
                 return Optional.of(Pair.of(tenantId, edgeId));
             } catch (IllegalArgumentException e) {
                 log.debug("Failed to parse tenantId or edgeId from topic: {}", topic, e);
@@ -156,8 +163,12 @@ public class EdgeKafkaLagReporter {
 
     @PreDestroy
     public void shutdown() {
-        if (scheduler != null) scheduler.shutdownNow();
-        if (consumer != null) consumer.close();
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
+        if (consumer != null) {
+            consumer.close();
+        }
     }
 
 }
