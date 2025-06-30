@@ -60,12 +60,12 @@ public class EdgeKafkaLagReporter {
     private final TbKafkaSettings kafkaSettings;
     private final TimeseriesService tsService;
 
-    @Value("${queue.kafka.lag-report.send-ts-interval-ms:60000}")
+    @Value("${edges.kafka.downlink-lag-report-to-ts.enabled:true}")
+    private boolean lagReportEnabled;
+    @Value("${edges.kafka.downlink-lag-report-to-ts.send-ts-interval-ms:60000}")
     private long reportIntervalMs;
-
     @Value("${queue.prefix:}")
     private String tbQueuePrefix;
-
     @Value("${queue.edge.event_notifications_topic:tb_edge_event.notifications}")
     private String tbQueueEdgeEventNotificationsTopic;
 
@@ -74,6 +74,10 @@ public class EdgeKafkaLagReporter {
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void init() {
+        if (!lagReportEnabled) {
+            log.info("EdgeKafkaLagReporter is disabled by configuration.");
+            return;
+        }
         log.info("Initializing EdgeKafkaLagReporter with interval {}ms...", reportIntervalMs);
         this.consumer = new KafkaConsumer<>(kafkaSettings.toConsumerProps(null));
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
