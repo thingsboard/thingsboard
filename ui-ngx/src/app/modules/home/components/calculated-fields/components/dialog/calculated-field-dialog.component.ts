@@ -77,6 +77,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
         type: [OutputType.Timeseries],
         decimalsByDefault: [null as number, [Validators.min(0), Validators.max(15), Validators.pattern(digitsRegex)]],
       }),
+      useLatestTs: [false]
     }),
   });
 
@@ -204,7 +205,20 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   }
 
   private toggleScopeByOutputType(type: OutputType): void {
-    this.outputFormGroup.get('scope')[type === OutputType.Attribute? 'enable' : 'disable']({emitEvent: false});
+    if (type === OutputType.Attribute) {
+      this.outputFormGroup.get('scope').enable({emitEvent: false});
+    } else {
+      this.outputFormGroup.get('scope').disable({emitEvent: false});
+    }
+    if (this.fieldFormGroup.get('type').value === CalculatedFieldType.SIMPLE) {
+      if (type === OutputType.Attribute) {
+        this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
+      } else {
+        this.configFormGroup.get('useLatestTs').enable({emitEvent: false});
+      }
+    } else {
+      this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
+    }
   }
 
   private toggleKeyByCalculatedFieldType(type: CalculatedFieldType): void {
@@ -212,8 +226,14 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       this.outputFormGroup.get('name').enable({emitEvent: false});
       this.configFormGroup.get('expressionSIMPLE').enable({emitEvent: false});
       this.configFormGroup.get('expressionSCRIPT').disable({emitEvent: false});
+      if (this.outputFormGroup.get('type').value === OutputType.Attribute) {
+        this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
+      } else {
+        this.configFormGroup.get('useLatestTs').enable({emitEvent: false});
+      }
     } else {
       this.outputFormGroup.get('name').disable({emitEvent: false});
+      this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
       this.configFormGroup.get('expressionSIMPLE').disable({emitEvent: false});
       this.configFormGroup.get('expressionSCRIPT').enable({emitEvent: false});
     }

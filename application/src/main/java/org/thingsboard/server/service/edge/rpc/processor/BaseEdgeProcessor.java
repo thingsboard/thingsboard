@@ -219,7 +219,7 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
                 case CREDENTIALS_UPDATED:
                 case ASSIGNED_TO_CUSTOMER:
                 case UNASSIGNED_FROM_CUSTOMER:
-                    if (edgeId != null) {
+                    if (edgeId != null && !edgeId.equals(originatorEdgeId)) {
                         return saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body);
                     } else {
                         return processNotificationToRelatedEdges(tenantId, entityId, type, actionType, originatorEdgeId);

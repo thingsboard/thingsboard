@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasEmail;
@@ -41,19 +42,25 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityNameFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.msg.edqs.EdqsApiService;
+import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.common.stats.EdqsStatsService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -89,6 +96,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     EntityServiceRegistry entityServiceRegistry;
 
     @Autowired
+    private EdqsService edqsService;
+
+    @Autowired
     @Lazy
     private EdqsApiService edqsApiService;
 
@@ -104,7 +114,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
         long startNs = System.nanoTime();
         Long result;
-        if (edqsApiService.isEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
+        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityCountQuery(query)
                     .build();
@@ -126,7 +136,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
         long startNs = System.nanoTime();
         PageData<EntityData> result;
-        if (edqsApiService.isEnabled() && validForEdqs(query)) {
+        if (edqsService.isApiEnabled() && validForEdqs(query)) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityDataQuery(query)
                     .build();
@@ -197,6 +207,30 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Override
     public Optional<HasId<?>> fetchEntity(TenantId tenantId, EntityId entityId) {
         return fetchAndConvert(tenantId, entityId, Function.identity());
+    }
+
+    @Override
+    public Map<EntityId, EntityInfo> fetchEntityInfos(TenantId tenantId, CustomerId customerId, Set<EntityId> entityIds) {
+        Map<EntityId, EntityInfo> infos = new HashMap<>();
+        entityIds.stream()
+                .collect(Collectors.groupingBy(EntityId::getEntityType))
+                .forEach((entityType, ids) -> {
+                    EntityListFilter filter = new EntityListFilter();
+                    filter.setEntityType(entityType);
+                    filter.setEntityList(ids.stream().map(Object::toString).toList());
+                    EntityDataQuery query = new EntityDataQuery(filter, new EntityDataPageLink(ids.size(), 0, null, null),
+                            List.of(new EntityKey(EntityKeyType.ENTITY_FIELD, ModelConstants.NAME_PROPERTY)), Collections.emptyList(), Collections.emptyList());
+
+                    entityQueryDao.findEntityDataByQuery(tenantId, customerId, query).getData().forEach(entityData -> {
+                        EntityId entityId = entityData.getEntityId();
+                        Optional.ofNullable(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD))
+                                .map(fields -> fields.get(ModelConstants.NAME_PROPERTY))
+                                .map(TsValue::getValue).ifPresent(name -> {
+                                    infos.put(entityId, new EntityInfo(entityId, name));
+                                });
+                    });
+                });
+        return infos;
     }
 
     private <T> Optional<T> fetchAndConvert(TenantId tenantId, EntityId entityId, Function<HasId<?>, T> converter) {
@@ -295,7 +329,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         }
 
         if ((query.getEntityFields() == null || query.getEntityFields().isEmpty()) &&
-                (query.getLatestValues() == null || query.getLatestValues().isEmpty())) {
+            (query.getLatestValues() == null || query.getLatestValues().isEmpty())) {
             return false;
         }
 

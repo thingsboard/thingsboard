@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef } from '@angular/core';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
@@ -31,7 +31,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   templateUrl: './device-profile-tabs.component.html',
   styleUrls: []
 })
-export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfile> {
+export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfile> implements OnInit {
 
   deviceTransportTypes = Object.values(DeviceTransportType);
 
@@ -53,6 +53,11 @@ export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfil
     ).subscribe(() => {
       this.isTransportTypeChanged = true;
     });
+  }
+
+  protected setEntity(entity: DeviceProfile) {
+    this.isTransportTypeChanged = false;
+    super.setEntity(entity);
   }
 
 }

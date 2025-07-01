@@ -73,7 +73,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                 .queueKey(queueKey)
                 .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
-                .msgPackProcessor((msgs, consumer, config) -> {
+                .msgPackProcessor((msgs, consumer, consumerKey, config) -> {
                     for (TbProtoQueueMsg<CalculatedFieldStateProto> msg : msgs) {
                         try {
                             if (msg.getValue() != null) {
@@ -114,18 +114,14 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
         stateProducer.send(tpi, stateId.toKey(), msg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
-                if (callback != null) {
-                    callback.onSuccess();
-                }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                if (callback != null) {
-                    callback.onFailure(t);
-                }
+                log.error("Failed to send state message: {}", stateId, t);
             }
         });
+        callback.onSuccess();
     }
 
     @Override

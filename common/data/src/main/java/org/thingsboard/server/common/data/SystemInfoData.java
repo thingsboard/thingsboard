@@ -20,6 +20,7 @@ import lombok.Data;
 
 @Data
 public class SystemInfoData {
+
     @Schema(description = "Service Id.")
     private String serviceId;
     @Schema(description = "Service type.")

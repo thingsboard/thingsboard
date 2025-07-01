@@ -5,6 +5,7 @@ ThingsBoard is an open-source IoT platform for data collection, processing, visu
 
 <img src="./img/logo.png?raw=true" width="100" height="100">
 
+
 ## Documentation
 
 ThingsBoard documentation is hosted on [thingsboard.io](https://thingsboard.io/docs).
@@ -13,6 +14,9 @@ ThingsBoard documentation is hosted on [thingsboard.io](https://thingsboard.io/d
 
 [**Smart energy**](https://thingsboard.io/smart-energy/)
 [![Smart energy](https://user-images.githubusercontent.com/8308069/152984256-eb48564a-645c-468d-912b-f554b63104a5.gif "Smart energy")](https://thingsboard.io/smart-energy/)
+
+[**SCADA Swimming pool**](https://thingsboard.io/use-cases/scada/)
+[![SCADA Swimming pool](https://github.com/user-attachments/assets/0878a2f5-d358-47c5-b295-03b4533685cf "SCADA Swimming pool")](https://thingsboard.io/use-cases/scada/)
 
 [**Fleet tracking**](https://thingsboard.io/fleet-tracking/)
 [![Fleet tracking](https://user-images.githubusercontent.com/8308069/152984528-0054ed55-8b8b-4cda-ba45-02fe95a81222.gif "Fleet tracking")](https://thingsboard.io/fleet-tracking/)

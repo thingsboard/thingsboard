@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.dao.service.Validator;
@@ -41,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.attributes.AttributeUtils.validate;
 
@@ -101,26 +101,29 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<Long> save(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
+    public ListenableFuture<AttributesSaveResult> save(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
         validate(entityId, scope);
         AttributeUtils.validate(attribute, valueNoXssValidation);
-        return doSave(tenantId, entityId, scope, attribute);
+        return doSave(tenantId, entityId, scope, List.of(attribute));
     }
 
     @Override
-    public ListenableFuture<List<Long>> save(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes) {
+    public ListenableFuture<AttributesSaveResult> save(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         AttributeUtils.validate(attributes, valueNoXssValidation);
-        List<ListenableFuture<Long>> saveFutures = attributes.stream().map(attribute -> doSave(tenantId, entityId, scope, attribute)).collect(Collectors.toList());
-        return Futures.allAsList(saveFutures);
+        return doSave(tenantId, entityId, scope, attributes);
     }
 
-    private ListenableFuture<Long> doSave(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
-        ListenableFuture<Long> future = attributesDao.save(tenantId, entityId, scope, attribute);
-        return Futures.transform(future, version -> {
-            edqsService.onUpdate(tenantId, ObjectType.ATTRIBUTE_KV, new AttributeKv(entityId, scope, attribute, version));
-            return version;
-        }, MoreExecutors.directExecutor());
+    private ListenableFuture<AttributesSaveResult> doSave(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes) {
+        List<ListenableFuture<Long>> futures = new ArrayList<>(attributes.size());
+        for (AttributeKvEntry attribute : attributes) {
+            ListenableFuture<Long> future = Futures.transform(attributesDao.save(tenantId, entityId, scope, attribute), version -> {
+                edqsService.onUpdate(tenantId, ObjectType.ATTRIBUTE_KV, new AttributeKv(entityId, scope, attribute, version));
+                return version;
+            }, MoreExecutors.directExecutor());
+            futures.add(future);
+        }
+        return Futures.transform(Futures.allAsList(futures), AttributesSaveResult::of, MoreExecutors.directExecutor());
     }
 
     @Override

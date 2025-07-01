@@ -16,10 +16,8 @@
 package org.thingsboard.server.dao.sql.attributes;
 
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.AbstractVersionedInsertRepository;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -27,8 +25,6 @@ import java.sql.Types;
 import java.util.List;
 
 @Repository
-@Transactional
-@SqlDao
 public class AttributeKvInsertRepository extends AbstractVersionedInsertRepository<AttributeKvEntity> {
 
     private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, version = nextval('attribute_kv_version_seq') " +

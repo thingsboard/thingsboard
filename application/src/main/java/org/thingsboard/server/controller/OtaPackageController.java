@@ -24,13 +24,14 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -48,8 +49,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.ota.TbOtaPackageService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
-
-import java.io.IOException;
 
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
@@ -80,8 +79,7 @@ public class OtaPackageController extends BaseController {
 
     @ApiOperation(value = "Download OTA Package (downloadOtaPackage)", notes = "Download OTA Package based on the provided OTA Package Id." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority( 'TENANT_ADMIN')")
-    @RequestMapping(value = "/otaPackage/{otaPackageId}/download", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/otaPackage/{otaPackageId}/download")
     public ResponseEntity<org.springframework.core.io.Resource> downloadOtaPackage(@Parameter(description = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                                                                    @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
@@ -105,8 +103,7 @@ public class OtaPackageController extends BaseController {
             notes = "Fetch the OTA Package Info object based on the provided OTA Package Id. " +
                     OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/otaPackage/info/{otaPackageId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/otaPackage/info/{otaPackageId}")
     public OtaPackageInfo getOtaPackageInfoById(@Parameter(description = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                                 @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
@@ -118,8 +115,7 @@ public class OtaPackageController extends BaseController {
             notes = "Fetch the OTA Package object based on the provided OTA Package Id. " +
                     "The server checks that the OTA Package is owned by the same tenant. " + OTA_PACKAGE_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/otaPackage/{otaPackageId}")
     public OtaPackage getOtaPackageById(@Parameter(description = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                         @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
@@ -134,10 +130,9 @@ public class OtaPackageController extends BaseController {
                     "Referencing non-existing OTA Package Id will cause 'Not Found' error. " +
                     "\n\nOTA Package combination of the title with the version is unique in the scope of tenant. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/otaPackage", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/otaPackage")
     public OtaPackageInfo saveOtaPackageInfo(@Parameter(description = "A JSON value representing the OTA Package.")
-                                             @RequestBody SaveOtaPackageInfoRequest otaPackageInfo) throws ThingsboardException {
+                                             @RequestBody SaveOtaPackageInfoRequest otaPackageInfo) throws Exception {
         otaPackageInfo.setTenantId(getTenantId());
         checkEntity(otaPackageInfo.getId(), otaPackageInfo, Resource.OTA_PACKAGE);
 
@@ -148,8 +143,7 @@ public class OtaPackageController extends BaseController {
             notes = "Update the OTA Package. Adds the date to the existing OTA Package Info" + TENANT_AUTHORITY_PARAGRAPH,
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = MULTIPART_FORM_DATA_VALUE)))
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.POST, consumes = MULTIPART_FORM_DATA_VALUE)
-    @ResponseBody
+    @PostMapping(value = "/otaPackage/{otaPackageId}", consumes = MULTIPART_FORM_DATA_VALUE)
     public OtaPackageInfo saveOtaPackageData(@Parameter(description = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                              @PathVariable(OTA_PACKAGE_ID) String strOtaPackageId,
                                              @Parameter(description = "OTA Package checksum. For example, '0xd87f7e0c'")
@@ -157,7 +151,7 @@ public class OtaPackageController extends BaseController {
                                              @Parameter(description = "OTA Package checksum algorithm.", schema = @Schema(allowableValues = {"MD5", "SHA256", "SHA384", "SHA512", "CRC32", "MURMUR3_32", "MURMUR3_128"}))
                                              @RequestParam(CHECKSUM_ALGORITHM) String checksumAlgorithmStr,
                                              @Parameter(description = "OTA Package data.")
-                                             @RequestPart MultipartFile file) throws ThingsboardException, IOException {
+                                             @RequestPart MultipartFile file) throws Exception {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
         OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
@@ -172,8 +166,7 @@ public class OtaPackageController extends BaseController {
             notes = "Returns a page of OTA Package Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/otaPackages", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/otaPackages")
     public PageData<OtaPackageInfo> getOtaPackages(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                    @RequestParam int pageSize,
                                                    @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -192,8 +185,7 @@ public class OtaPackageController extends BaseController {
             notes = "Returns a page of OTA Package Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + OTA_PACKAGE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/otaPackages/{deviceProfileId}/{type}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/otaPackages/{deviceProfileId}/{type}")
     public PageData<OtaPackageInfo> getOtaPackages(@Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
                                                    @PathVariable("deviceProfileId") String strDeviceProfileId,
                                                    @Parameter(description = "OTA Package type.", schema = @Schema(allowableValues = {"FIRMWARE", "SOFTWARE"}))
@@ -219,8 +211,7 @@ public class OtaPackageController extends BaseController {
             notes = "Deletes the OTA Package. Referencing non-existing OTA Package Id will cause an error. " +
                     "Can't delete the OTA Package if it is referenced by existing devices or device profile." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/otaPackage/{otaPackageId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/otaPackage/{otaPackageId}")
     public void deleteOtaPackage(@Parameter(description = OTA_PACKAGE_ID_PARAM_DESCRIPTION)
                                  @PathVariable("otaPackageId") String strOtaPackageId) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);

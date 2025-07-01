@@ -1,0 +1,120 @@
+#
+# Copyright © 2016-2025 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+version: '3.0'
+
+services:
+  # Valkey sentinel
+  # The latest version of Valkey compatible with ThingsBoard is 8.0
+  valkey-primary:
+    image: 'bitnami/valkey:8.0'
+    volumes:
+      - ./tb-node/valkey-sentinel-data-primary:/bitnami/valkey/data
+    environment:
+      - 'VALKEY_REPLICATION_MODE=primary'
+      - 'VALKEY_PASSWORD=thingsboard'
+
+  valkey-replica:
+    image: 'bitnami/valkey:8.0'
+    volumes:
+      - ./tb-node/valkey-sentinel-data-replica:/bitnami/valkey/data
+    environment:
+      - 'VALKEY_REPLICATION_MODE=replica'
+      - 'VALKEY_PRIMARY_HOST=valkey-primary'
+      - 'VALKEY_PRIMARY_PASSWORD=thingsboard'
+      - 'VALKEY_PASSWORD=thingsboard'
+    depends_on:
+      - valkey-primary
+
+  valkey-sentinel:
+    image: 'bitnami/valkey-sentinel:8.0'
+    volumes:
+      - ./tb-node/valkey-sentinel-data-sentinel:/bitnami/valkey/data
+    environment:
+      - 'VALKEY_PRIMARY_HOST=valkey-primary'
+      - 'VALKEY_MASTER_SET=myprimary'
+      - 'VALKEY_SENTINEL_PASSWORD=sentinel'
+      - 'VALKEY_PRIMARY_PASSWORD=thingsboard'
+    depends_on:
+      - valkey-primary
+      - valkey-replica
+
+  # ThingsBoard setup to use valkey-sentinel
+  tb-core1:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-core2:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-rule-engine1:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-rule-engine2:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-mqtt-transport1:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-mqtt-transport2:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-http-transport1:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-http-transport2:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-coap-transport:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-lwm2m-transport:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-snmp-transport:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-vc-executor1:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel
+  tb-vc-executor2:
+    env_file:
+      - cache-valkey-sentinel.env
+    depends_on:
+      - valkey-sentinel

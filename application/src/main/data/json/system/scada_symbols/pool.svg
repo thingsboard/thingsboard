@@ -148,80 +148,43 @@
       "name": "{i18n:scada.symbol.tank-color}",
       "type": "color",
       "default": "#E5E5E5",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "fluidColor",
       "name": "{i18n:scada.symbol.fluid-color}",
       "type": "color",
       "default": "#1EC1F480",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueBox",
       "name": "{i18n:scada.symbol.value-box}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueBoxColor",
       "name": "{i18n:scada.symbol.value-box}",
       "type": "color",
       "default": "#F3F3F3",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "valueBox",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueUnits",
       "name": "{i18n:scada.symbol.value-text}",
       "type": "units",
       "default": "gal",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.units}",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": "valueBox",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "supportsUnitConversion": true,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueTextFont",
@@ -234,48 +197,26 @@
         "weight": "500",
         "style": "normal"
       },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "valueBox",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueTextColor",
       "name": "{i18n:scada.symbol.value-text}",
       "type": "color",
       "default": "#0000008A",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "valueBox",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "transparent",
       "name": "{i18n:scada.symbol.transparent-mode}",
       "type": "switch",
       "default": false,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     }
   ]
 }]]></tb:metadata>

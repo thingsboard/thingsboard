@@ -1292,6 +1292,12 @@ pre.tb-highlight {
       background: rgba(0, 0, 0, 0.06);
     }
   }
+
+  &.tox-fullscreen {
+    mat-sidenav.tb-site-sidenav {
+      z-index: 1;
+    }
+  }
 }
 
 /***************

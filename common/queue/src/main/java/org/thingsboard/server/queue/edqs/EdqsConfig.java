@@ -44,6 +44,10 @@ public class EdqsConfig {
     private int maxPendingRequests;
     @Value("${queue.edqs.max_request_timeout:20000}")
     private int maxRequestTimeout;
+    @Value("${queue.edqs.request_executor_size:50}")
+    private int requestExecutorSize;
+    @Value("${queue.edqs.versions_cache_ttl:60}")
+    private int versionsCacheTtl;
 
     public String getLabel() {
         if (partitioningStrategy == EdqsPartitioningStrategy.NONE) {

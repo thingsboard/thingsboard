@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
@@ -36,6 +37,7 @@ import java.util.Map;
         @JsonSubTypes.Type(value = SimpleCalculatedFieldConfiguration.class, name = "SIMPLE"),
         @JsonSubTypes.Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT")
 })
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface CalculatedFieldConfiguration {
 
     @JsonIgnore

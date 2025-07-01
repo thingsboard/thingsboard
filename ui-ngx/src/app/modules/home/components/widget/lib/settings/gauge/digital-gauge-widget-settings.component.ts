@@ -20,7 +20,8 @@ import {
   AbstractControl,
   UntypedFormArray,
   UntypedFormBuilder,
-  UntypedFormGroup, ValidationErrors,
+  UntypedFormGroup,
+  ValidationErrors,
   ValidatorFn,
   Validators
 } from '@angular/forms';
@@ -36,7 +37,7 @@ import {
   digitalGaugeLayoutTranslations,
   DigitalGaugeType
 } from '@home/components/widget/lib/digital-gauge.models';
-import { formatValue } from '@core/utils';
+import { formatValue, isDefined } from '@core/utils';
 import {
   ColorSettings,
   ColorType,
@@ -45,6 +46,7 @@ import {
   ValueSourceConfig,
   ValueSourceType
 } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-digital-gauge-widget-settings',
@@ -245,6 +247,10 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     settings.titleFont.color = this.digitalGaugeWidgetSettingsForm.get('titleColor').value;
     settings.labelFont.color = this.digitalGaugeWidgetSettingsForm.get('labelColor').value;
 
+    if (isDefined(settings.decimals)) {
+      delete settings.decimals;
+    }
+
     return settings;
   }
 
@@ -412,6 +418,6 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   private _valuePreviewFn(units: boolean): string {
-    return formatValue(22, 0, units ? this.widget.config.units : null, true);
+    return formatValue(22, 0, units ? getSourceTbUnitSymbol(this.widget.config.units) : null, true);
   }
 }
