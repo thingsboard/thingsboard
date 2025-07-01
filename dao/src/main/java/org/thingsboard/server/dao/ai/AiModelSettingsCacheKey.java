@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.ai;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.common.data.id.AiModelSettingsId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
@@ -29,6 +30,13 @@ record AiModelSettingsCacheKey(UUID tenantId, UUID settingsId) implements Versio
     AiModelSettingsCacheKey {
         requireNonNull(tenantId);
         requireNonNull(settingsId);
+
+        if (TenantId.SYS_TENANT_ID.getId().equals(tenantId)) {
+            throw new IllegalArgumentException("Tenant ID must not be the system tenant ID");
+        }
+        if (EntityId.NULL_UUID.equals(settingsId)) {
+            throw new IllegalArgumentException("Settings ID must not be reserved null UUID");
+        }
     }
 
     static AiModelSettingsCacheKey of(TenantId tenantId, AiModelSettingsId settingsId) {
