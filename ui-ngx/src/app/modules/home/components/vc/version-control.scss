@@ -16,9 +16,11 @@
 :host {
   .vc-result-message {
     max-width: 65vw;
+    max-height: 65vh;
     padding: 0 8px;
     text-align: center;
     word-wrap: break-word;
+    overflow: auto;
     &:first-child {
       padding-top: 48px;
     }
