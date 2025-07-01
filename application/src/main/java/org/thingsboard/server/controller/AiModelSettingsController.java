@@ -46,7 +46,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERT
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
 @RestController
-@RequestMapping("/api/ai-model-settings")
+@RequestMapping("/api/ai/model/settings")
 class AiModelSettingsController extends BaseController {
 
     @ApiOperation(
