@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -81,7 +82,7 @@ public class EdgeKafkaLagReporter {
         log.info("Initializing EdgeKafkaLagReporter with interval {}ms...", reportIntervalMs);
         this.consumer = new KafkaConsumer<>(kafkaSettings.toConsumerProps(null));
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
-        this.scheduler.scheduleAtFixedRate(this::reportLag, 0, reportIntervalMs, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleAtFixedRate(this::reportLag, reportIntervalMs, reportIntervalMs, TimeUnit.MILLISECONDS);
     }
 
     private void reportLag() {
@@ -128,7 +129,7 @@ public class EdgeKafkaLagReporter {
                                 kvEntry
                         );
 
-                        Futures.addCallback(future, new com.google.common.util.concurrent.FutureCallback<>() {
+                        Futures.addCallback(future, new FutureCallback<>() {
                             @Override
                             public void onSuccess(TimeseriesSaveResult result) {
                                 log.debug("Successfully saved downlinkLag [{}] for edge [{}]", lag, tenantIdEdgeId.getSecond());
