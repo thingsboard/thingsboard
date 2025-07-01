@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityView;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -35,12 +37,15 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructor;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.UUID;
 
 @Slf4j
-public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor implements EntityViewProcessor {
+@Component
+@TbCoreComponent
+public class EntityViewEdgeProcessor extends BaseEntityViewProcessor implements EntityViewProcessor {
 
     @Override
     public ListenableFuture<Void> processEntityViewMsgFromEdge(TenantId tenantId, Edge edge, EntityViewUpdateMsg entityViewUpdateMsg) {
@@ -55,9 +60,9 @@ public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor im
                     saveOrUpdateEntityView(tenantId, entityViewId, entityViewUpdateMsg, edge);
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    EntityView entityViewToDelete = entityViewService.findEntityViewById(tenantId, entityViewId);
+                    EntityView entityViewToDelete = edgeCtx.getEntityViewService().findEntityViewById(tenantId, entityViewId);
                     if (entityViewToDelete != null) {
-                        entityViewService.unassignEntityViewFromEdge(tenantId, entityViewId, edge.getId());
+                        edgeCtx.getEntityViewService().unassignEntityViewFromEdge(tenantId, entityViewId, edge.getId());
                     }
                     return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
@@ -82,7 +87,7 @@ public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor im
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), entityViewId);
             pushEntityViewCreatedEventToRuleEngine(tenantId, edge, entityViewId);
-            entityViewService.assignEntityViewToEdge(tenantId, entityViewId, edge.getId());
+            edgeCtx.getEntityViewService().assignEntityViewToEdge(tenantId, entityViewId, edge.getId());
         }
         Boolean assetNameUpdated = resultPair.getSecond();
         if (assetNameUpdated) {
@@ -92,7 +97,7 @@ public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor im
 
     private void pushEntityViewCreatedEventToRuleEngine(TenantId tenantId, Edge edge, EntityViewId entityViewId) {
         try {
-            EntityView entityView = entityViewService.findEntityViewById(tenantId, entityViewId);
+            EntityView entityView = edgeCtx.getEntityViewService().findEntityViewById(tenantId, entityViewId);
             String entityViewAsString = JacksonUtil.toString(entityView);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, entityView.getCustomerId());
             pushEntityEventToRuleEngine(tenantId, entityViewId, entityView.getCustomerId(), TbMsgType.ENTITY_CREATED, entityViewAsString, msgMetaData);
@@ -101,28 +106,41 @@ public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor im
         }
     }
 
-    public DownlinkMsg convertEntityViewEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         EntityViewId entityViewId = new EntityViewId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
-        var msgConstructor = (EntityViewMsgConstructor) entityViewMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
-                EntityView entityView = entityViewService.findEntityViewById(edgeEvent.getTenantId(), entityViewId);
+                EntityView entityView = edgeCtx.getEntityViewService().findEntityViewById(edgeEvent.getTenantId(), entityViewId);
                 if (entityView != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    EntityViewUpdateMsg entityViewUpdateMsg = msgConstructor.constructEntityViewUpdatedMsg(msgType, entityView);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    EntityViewUpdateMsg entityViewUpdateMsg = EdgeMsgConstructorUtils.constructEntityViewUpdatedMsg(msgType, entityView);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addEntityViewUpdateMsg(entityViewUpdateMsg)
                             .build();
                 }
             }
-            case DELETED, UNASSIGNED_FROM_EDGE -> downlinkMsg = DownlinkMsg.newBuilder()
-                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                    .addEntityViewUpdateMsg(msgConstructor.constructEntityViewDeleteMsg(entityViewId))
-                    .build();
+            case DELETED, UNASSIGNED_FROM_EDGE -> {
+                EntityViewUpdateMsg entityViewUpdateMsg = EdgeMsgConstructorUtils.constructEntityViewDeleteMsg(entityViewId);
+                return DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                        .addEntityViewUpdateMsg(entityViewUpdateMsg)
+                        .build();
+            }
         }
-        return downlinkMsg;
+        return null;
+    }
+
+    @Override
+    protected void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg) {
+        CustomerId customerUUID = entityView.getCustomerId() != null ? entityView.getCustomerId() : customerId;
+        entityView.setCustomerId(customerUUID);
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.ENTITY_VIEW;
     }
 
 }

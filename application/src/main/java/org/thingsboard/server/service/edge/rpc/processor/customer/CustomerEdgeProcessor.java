@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,65 +36,82 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.rpc.constructor.customer.CustomerMsgConstructor;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class CustomerEdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertCustomerEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         CustomerId customerId = new CustomerId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                Customer customer = customerService.findCustomerById(edgeEvent.getTenantId(), customerId);
+                Customer customer = edgeCtx.getCustomerService().findCustomerById(edgeEvent.getTenantId(), customerId);
                 if (customer != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    CustomerUpdateMsg customerUpdateMsg = ((CustomerMsgConstructor)
-                            customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructCustomerUpdatedMsg(msgType, customer);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    CustomerUpdateMsg customerUpdateMsg = EdgeMsgConstructorUtils.constructCustomerUpdatedMsg(msgType, customer);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addCustomerUpdateMsg(customerUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                CustomerUpdateMsg customerUpdateMsg = ((CustomerMsgConstructor)
-                        customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructCustomerDeleteMsg(customerId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+                CustomerUpdateMsg customerUpdateMsg = EdgeMsgConstructorUtils.constructCustomerDeleteMsg(customerId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addCustomerUpdateMsg(customerUpdateMsg)
                         .build();
             }
         }
-        return downlinkMsg;
+        return null;
     }
 
-    public ListenableFuture<Void> processCustomerNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+    @Override
+    public ListenableFuture<Void> processEntityNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
         EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
         UUID uuid = new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB());
         CustomerId customerId = new CustomerId(EntityIdFactory.getByEdgeEventTypeAndUuid(type, uuid).getId());
         switch (actionType) {
-            case UPDATED:
-                List<ListenableFuture<Void>> futures = new ArrayList<>();
-                PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, link), 1024);
-                for (Edge edge : edges) {
-                    futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, customerId, null));
+            case ADDED:
+                Customer customerById = edgeCtx.getCustomerService().findCustomerById(tenantId, customerId);
+                if (customerById != null && customerById.isPublic()) {
+                    return findEdgesAndSaveEdgeEvents(link -> edgeCtx.getEdgeService().findEdgesByTenantId(tenantId, link),
+                            tenantId, type, actionType, customerId);
                 }
-                return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+                return Futures.immediateFuture(null);
+            case UPDATED:
+                return findEdgesAndSaveEdgeEvents(link -> edgeCtx.getEdgeService().findEdgesByTenantIdAndCustomerId(tenantId, customerId, link),
+                        tenantId, type, actionType, customerId);
             case DELETED:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
                 return saveEdgeEvent(tenantId, edgeId, type, actionType, customerId, null);
             default:
                 return Futures.immediateFuture(null);
         }
+    }
+
+    public ListenableFuture<Void> findEdgesAndSaveEdgeEvents(PageDataIterable.FetchFunction<Edge> edgeFetcher, TenantId tenantId,
+                                                             EdgeEventType type, EdgeEventActionType actionType, CustomerId customerId) {
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
+        PageDataIterable<Edge> edges = new PageDataIterable<>(edgeFetcher, 1024);
+        for (Edge edge : edges) {
+            futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, customerId, null));
+        }
+        return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.CUSTOMER;
     }
 
 }

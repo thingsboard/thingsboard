@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,7 +238,7 @@ public class TbRuleEngineStrategyTest {
                 .map(this::toProto)
                 .toList();
 
-        consumerManager.processMsgs(protoMsgs, consumer, queue);
+        consumerManager.processMsgs(protoMsgs, consumer, queueKey, queue);
 
         processingData.forEach(data -> {
             verify(actorContext, times(data.attempts)).tell(argThat(msg ->
@@ -248,7 +248,7 @@ public class TbRuleEngineStrategyTest {
     }
 
     private static TbMsg createRandomMsg() {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .id(UUID.randomUUID())
                 .type("test type")
                 .originator(deviceId)
@@ -263,7 +263,7 @@ public class TbRuleEngineStrategyTest {
                 .setTenantIdMSB(tenantId.getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getLeastSignificantBits())
                 .addRelationTypes("Success")
-                .setTbMsg(TbMsg.toByteString(tbMsg))
+                .setTbMsgProto(TbMsg.toProto(tbMsg))
                 .build());
     }
 

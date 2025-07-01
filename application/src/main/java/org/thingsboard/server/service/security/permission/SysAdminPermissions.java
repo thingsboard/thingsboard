@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-@Component(value="sysAdminPermissions")
+@Component(value = "sysAdminPermissions")
 public class SysAdminPermissions extends AbstractPermissions {
 
     public SysAdminPermissions() {
@@ -35,8 +35,9 @@ public class SysAdminPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, systemEntityPermissionChecker);
         put(Resource.WIDGET_TYPE, systemEntityPermissionChecker);
-        put(Resource.OAUTH2_CLIENT, PermissionChecker.allowAllPermissionChecker);
-        put(Resource.MOBILE_APP, PermissionChecker.allowAllPermissionChecker);
+        put(Resource.OAUTH2_CLIENT, systemEntityPermissionChecker);
+        put(Resource.MOBILE_APP, systemEntityPermissionChecker);
+        put(Resource.MOBILE_APP_BUNDLE, systemEntityPermissionChecker);
         put(Resource.DOMAIN, PermissionChecker.allowAllPermissionChecker);
         put(Resource.OAUTH2_CONFIGURATION_TEMPLATE, PermissionChecker.allowAllPermissionChecker);
         put(Resource.TENANT_PROFILE, PermissionChecker.allowAllPermissionChecker);

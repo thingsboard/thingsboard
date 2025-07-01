@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,22 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 import lombok.Getter;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -35,6 +38,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -47,6 +51,7 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -63,6 +68,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
@@ -73,6 +79,7 @@ import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -83,7 +90,10 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.QueueId;
@@ -97,7 +107,10 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -111,14 +124,17 @@ import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
@@ -130,10 +146,13 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.job.JobService;
+import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
+import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -170,28 +189,39 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPOutputStream;
 
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
+import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_DASHBOARD;
+import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @TbCoreComponent
 public abstract class BaseController {
 
-    private final Logger log = org.slf4j.LoggerFactory.getLogger(getClass());
+    protected static final String DASHBOARD_ID = "dashboardId";
+
+    protected static final String HOME_DASHBOARD_ID = "homeDashboardId";
+    protected static final String HOME_DASHBOARD_HIDE_TOOLBAR = "homeDashboardHideToolbar";
+
+    protected final Logger log = org.slf4j.LoggerFactory.getLogger(getClass());
 
     /*Swagger UI description*/
 
@@ -254,6 +284,9 @@ public abstract class BaseController {
 
     @Autowired
     protected MobileAppService mobileAppService;
+
+    @Autowired
+    protected MobileAppBundleService mobileAppBundleService;
 
     @Autowired
     protected OAuth2ConfigTemplateService oAuth2ConfigTemplateService;
@@ -336,6 +369,15 @@ public abstract class BaseController {
     @Autowired
     protected TbServiceInfoProvider serviceInfoProvider;
 
+    @Autowired
+    protected NotificationTargetService notificationTargetService;
+
+    @Autowired
+    protected JobService jobService;
+
+    @Autowired
+    protected CalculatedFieldService calculatedFieldService;
+
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
     private boolean logControllerErrorStackTrace;
@@ -348,7 +390,7 @@ public abstract class BaseController {
     public void handleControllerException(Exception e, HttpServletResponse response) {
         ThingsboardException thingsboardException = handleException(e);
         if (thingsboardException.getErrorCode() == ThingsboardErrorCode.GENERAL && thingsboardException.getCause() instanceof Exception
-                && StringUtils.equals(thingsboardException.getCause().getMessage(), thingsboardException.getMessage())) {
+            && StringUtils.equals(thingsboardException.getCause().getMessage(), thingsboardException.getMessage())) {
             e = (Exception) thingsboardException.getCause();
         } else {
             e = thingsboardException;
@@ -379,7 +421,7 @@ public abstract class BaseController {
         return handleException(exception, true);
     }
 
-    private ThingsboardException handleException(Exception exception, boolean logException) {
+    private ThingsboardException handleException(Throwable exception, boolean logException) {
         if (logException && logControllerErrorStackTrace) {
             try {
                 SecurityUser user = getCurrentUser();
@@ -390,24 +432,20 @@ public abstract class BaseController {
         }
 
         Throwable cause = exception.getCause();
+        if (exception instanceof ExecutionException) {
+            exception = cause;
+        }
         if (exception instanceof ThingsboardException) {
             return (ThingsboardException) exception;
         } else if (exception instanceof IllegalArgumentException || exception instanceof IncorrectParameterException
-                || exception instanceof DataValidationException || cause instanceof IncorrectParameterException) {
+                   || exception instanceof DataValidationException || cause instanceof IncorrectParameterException) {
             return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         } else if (exception instanceof MessagingException) {
-            return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
+            return new ThingsboardException("Unable to send mail", ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof AsyncRequestTimeoutException) {
             return new ThingsboardException("Request timeout", ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof DataAccessException) {
-            if (!logControllerErrorStackTrace) { // not to log the error twice
-                log.warn("Database error: {} - {}", exception.getClass().getSimpleName(), ExceptionUtils.getRootCauseMessage(exception));
-            }
-            if (cause instanceof ConstraintViolationException) {
-                return new ThingsboardException(ExceptionUtils.getRootCause(exception).getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            } else {
-                return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
-            }
+            return new ThingsboardException(exception, ThingsboardErrorCode.DATABASE);
         } else if (exception instanceof EntityVersionMismatchException) {
             return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.VERSION_CONFLICT);
         }
@@ -565,82 +603,39 @@ public abstract class BaseController {
         }
     }
 
-    protected void checkEntityId(EntityId entityId, Operation operation) throws ThingsboardException {
+    protected HasId<? extends EntityId> checkEntityId(EntityId entityId, Operation operation) throws ThingsboardException {
         try {
             if (entityId == null) {
                 throw new ThingsboardException("Parameter entityId can't be empty!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
             validateId(entityId.getId(), id -> "Incorrect entityId " + id);
-            switch (entityId.getEntityType()) {
-                case ALARM:
-                    checkAlarmId(new AlarmId(entityId.getId()), operation);
-                    return;
-                case DEVICE:
-                    checkDeviceId(new DeviceId(entityId.getId()), operation);
-                    return;
-                case DEVICE_PROFILE:
-                    checkDeviceProfileId(new DeviceProfileId(entityId.getId()), operation);
-                    return;
-                case CUSTOMER:
-                    checkCustomerId(new CustomerId(entityId.getId()), operation);
-                    return;
-                case TENANT:
-                    checkTenantId(TenantId.fromUUID(entityId.getId()), operation);
-                    return;
-                case TENANT_PROFILE:
-                    checkTenantProfileId(new TenantProfileId(entityId.getId()), operation);
-                    return;
-                case RULE_CHAIN:
-                    checkRuleChain(new RuleChainId(entityId.getId()), operation);
-                    return;
-                case RULE_NODE:
-                    checkRuleNode(new RuleNodeId(entityId.getId()), operation);
-                    return;
-                case ASSET:
-                    checkAssetId(new AssetId(entityId.getId()), operation);
-                    return;
-                case ASSET_PROFILE:
-                    checkAssetProfileId(new AssetProfileId(entityId.getId()), operation);
-                    return;
-                case DASHBOARD:
-                    checkDashboardId(new DashboardId(entityId.getId()), operation);
-                    return;
-                case USER:
-                    checkUserId(new UserId(entityId.getId()), operation);
-                    return;
-                case ENTITY_VIEW:
-                    checkEntityViewId(new EntityViewId(entityId.getId()), operation);
-                    return;
-                case EDGE:
-                    checkEdgeId(new EdgeId(entityId.getId()), operation);
-                    return;
-                case WIDGETS_BUNDLE:
-                    checkWidgetsBundleId(new WidgetsBundleId(entityId.getId()), operation);
-                    return;
-                case WIDGET_TYPE:
-                    checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
-                    return;
-                case TB_RESOURCE:
-                    checkResourceInfoId(new TbResourceId(entityId.getId()), operation);
-                    return;
-                case OTA_PACKAGE:
-                    checkOtaPackageId(new OtaPackageId(entityId.getId()), operation);
-                    return;
-                case QUEUE:
-                    checkQueueId(new QueueId(entityId.getId()), operation);
-                    return;
-                case OAUTH2_CLIENT:
-                    checkOauth2ClientId(new OAuth2ClientId(entityId.getId()), operation);
-                    return;
-                case DOMAIN:
-                    checkDomainId(new DomainId(entityId.getId()), operation);
-                    return;
-                case MOBILE_APP:
-                    checkMobileAppId(new MobileAppId(entityId.getId()), operation);
-                    return;
-                default:
-                    checkEntityId(entityId, entitiesService::findEntityByTenantIdAndId, operation);
-            }
+            return switch (entityId.getEntityType()) {
+                case ALARM -> checkAlarmId(new AlarmId(entityId.getId()), operation);
+                case DEVICE -> checkDeviceId(new DeviceId(entityId.getId()), operation);
+                case DEVICE_PROFILE -> checkDeviceProfileId(new DeviceProfileId(entityId.getId()), operation);
+                case CUSTOMER -> checkCustomerId(new CustomerId(entityId.getId()), operation);
+                case TENANT -> checkTenantId(TenantId.fromUUID(entityId.getId()), operation);
+                case TENANT_PROFILE -> checkTenantProfileId(new TenantProfileId(entityId.getId()), operation);
+                case RULE_CHAIN -> checkRuleChain(new RuleChainId(entityId.getId()), operation);
+                case RULE_NODE -> checkRuleNode(new RuleNodeId(entityId.getId()), operation);
+                case ASSET -> checkAssetId(new AssetId(entityId.getId()), operation);
+                case ASSET_PROFILE -> checkAssetProfileId(new AssetProfileId(entityId.getId()), operation);
+                case DASHBOARD -> checkDashboardId(new DashboardId(entityId.getId()), operation);
+                case USER -> checkUserId(new UserId(entityId.getId()), operation);
+                case ENTITY_VIEW -> checkEntityViewId(new EntityViewId(entityId.getId()), operation);
+                case EDGE -> checkEdgeId(new EdgeId(entityId.getId()), operation);
+                case WIDGETS_BUNDLE -> checkWidgetsBundleId(new WidgetsBundleId(entityId.getId()), operation);
+                case WIDGET_TYPE -> checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
+                case TB_RESOURCE -> checkResourceInfoId(new TbResourceId(entityId.getId()), operation);
+                case OTA_PACKAGE -> checkOtaPackageId(new OtaPackageId(entityId.getId()), operation);
+                case QUEUE -> checkQueueId(new QueueId(entityId.getId()), operation);
+                case OAUTH2_CLIENT -> checkOauth2ClientId(new OAuth2ClientId(entityId.getId()), operation);
+                case DOMAIN -> checkDomainId(new DomainId(entityId.getId()), operation);
+                case MOBILE_APP -> checkMobileAppId(new MobileAppId(entityId.getId()), operation);
+                case MOBILE_APP_BUNDLE -> checkMobileAppBundleId(new MobileAppBundleId(entityId.getId()), operation);
+                case CALCULATED_FIELD -> checkCalculatedFieldId(new CalculatedFieldId(entityId.getId()), operation);
+                default -> (HasId<? extends EntityId>) checkEntityId(entityId, entitiesService::findEntityByTenantIdAndId, operation);
+            };
         } catch (Exception e) {
             throw handleException(e, false);
         }
@@ -724,6 +719,10 @@ public abstract class BaseController {
 
     WidgetTypeDetails checkWidgetTypeId(WidgetTypeId widgetTypeId, Operation operation) throws ThingsboardException {
         return checkEntityId(widgetTypeId, widgetTypeService::findWidgetTypeDetailsById, operation);
+    }
+
+    WidgetTypeInfo checkWidgetTypeInfoId(WidgetTypeId widgetTypeId, Operation operation) throws ThingsboardException {
+        return checkEntityId(widgetTypeId, widgetTypeService::findWidgetTypeInfoById, operation);
     }
 
     Dashboard checkDashboardId(DashboardId dashboardId, Operation operation) throws ThingsboardException {
@@ -826,6 +825,18 @@ public abstract class BaseController {
         return checkEntityId(mobileAppId, mobileAppService::findMobileAppById, operation);
     }
 
+    MobileAppBundle checkMobileAppBundleId(MobileAppBundleId mobileAppBundleId, Operation operation) throws ThingsboardException {
+        return checkEntityId(mobileAppBundleId, mobileAppBundleService::findMobileAppBundleById, operation);
+    }
+
+    NotificationTarget checkNotificationTargetId(NotificationTargetId notificationTargetId, Operation operation) throws ThingsboardException {
+        return checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, operation);
+    }
+
+    Job checkJobId(JobId jobId, Operation operation) throws ThingsboardException {
+        return checkEntityId(jobId, jobService::findJobById, operation);
+    }
+
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
@@ -870,13 +881,84 @@ public abstract class BaseController {
         }
     }
 
-    protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {
-        String dashboardId = additionalInfo.has(requiredFields) ? additionalInfo.get(requiredFields).asText() : null;
-        if (dashboardId != null && !dashboardId.equals("null")) {
-            if (dashboardService.findDashboardById(getTenantId(), new DashboardId(UUID.fromString(dashboardId))) == null) {
-                additionalInfo.remove(requiredFields);
+    protected void checkUserInfo(User user) throws ThingsboardException {
+        ObjectNode info;
+        if (user.getAdditionalInfo() instanceof ObjectNode additionalInfo) {
+            info = additionalInfo;
+            checkDashboardInfo(info);
+        } else {
+            info = JacksonUtil.newObjectNode();
+            user.setAdditionalInfo(info);
+        }
+
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
+        info.put("userCredentialsEnabled", userCredentials.isEnabled());
+        info.put("userActivated", userCredentials.getActivateToken() == null);
+        info.put("lastLoginTs", userCredentials.getLastLoginTs());
+    }
+
+    protected void checkDashboardInfo(JsonNode additionalInfo) throws ThingsboardException {
+        checkDashboardInfo(additionalInfo, DEFAULT_DASHBOARD);
+        checkDashboardInfo(additionalInfo, HOME_DASHBOARD);
+    }
+
+    protected void checkDashboardInfo(JsonNode node, String dashboardField) throws ThingsboardException {
+        if (node instanceof ObjectNode additionalInfo) {
+            DashboardId dashboardId = Optional.ofNullable(additionalInfo.get(dashboardField))
+                    .filter(JsonNode::isTextual).map(JsonNode::asText)
+                    .map(id -> {
+                        try {
+                            return new DashboardId(UUID.fromString(id));
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    }).orElse(null);
+
+            if (dashboardId != null && !dashboardService.existsById(getTenantId(), dashboardId)) {
+                additionalInfo.remove(dashboardField);
             }
         }
+    }
+
+    private CalculatedField checkCalculatedFieldId(CalculatedFieldId calculatedFieldId, Operation operation) throws ThingsboardException {
+        validateId(calculatedFieldId, "Invalid entity id");
+        SecurityUser user = getCurrentUser();
+        CalculatedField cf = calculatedFieldService.findById(user.getTenantId(), calculatedFieldId);
+        checkNotNull(cf, calculatedFieldId.getEntityType().getNormalName() + " with id [" + calculatedFieldId + "] is not found");
+        checkEntityId(cf.getEntityId(), operation);
+        return cf;
+    }
+
+    protected HomeDashboardInfo getHomeDashboardInfo(SecurityUser securityUser, JsonNode additionalInfo) {
+        HomeDashboardInfo homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
+        if (homeDashboardInfo == null) {
+            if (securityUser.isCustomerUser()) {
+                Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
+                homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(customer.getAdditionalInfo());
+            }
+            if (homeDashboardInfo == null) {
+                Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
+                homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(tenant.getAdditionalInfo());
+            }
+        }
+        return homeDashboardInfo;
+    }
+
+    private HomeDashboardInfo extractHomeDashboardInfoFromAdditionalInfo(JsonNode additionalInfo) {
+        try {
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
+                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
+                DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+                checkDashboardId(dashboardId, Operation.READ);
+                boolean hideDashboardToolbar = true;
+                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+                }
+                return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     protected MediaType parseMediaType(String contentType) {
@@ -910,6 +992,39 @@ public abstract class BaseController {
         } else {
             return null;
         }
+    }
+
+    protected void compressResponseWithGzipIFAccepted(String acceptEncodingHeader, HttpServletResponse response, byte[] content) throws IOException {
+        if (StringUtils.isNotEmpty(acceptEncodingHeader) && acceptEncodingHeader.contains("gzip")) {
+            response.setHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.displayName());
+            try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(response.getOutputStream())) {
+                gzipOutputStream.write(content);
+                gzipOutputStream.finish();
+            }
+        } else {
+            try (ServletOutputStream outputStream = response.getOutputStream()) {
+                outputStream.write(content);
+                outputStream.flush();
+            }
+        }
+    }
+
+    protected <T> ResponseEntity<T> response(HttpStatus status) {
+        return ResponseEntity.status(status).build();
+    }
+
+    protected <T> ResponseEntity<T> redirectTo(String location) {
+        URI uri;
+        try {
+            uri = URI.create(location);
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to create URI from '{}'", location, e);
+            throw e;
+        }
+        return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                .location(uri)
+                .build();
     }
 
     protected List<OAuth2ClientId> getOAuth2ClientIds(UUID[] ids) throws ThingsboardException {

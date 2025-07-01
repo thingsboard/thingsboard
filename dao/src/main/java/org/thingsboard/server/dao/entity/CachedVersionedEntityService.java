@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package org.thingsboard.server.dao.entity;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.cache.VersionedTbCache;
 import org.thingsboard.server.common.data.HasVersion;
 
 import java.io.Serializable;
 
-public abstract class CachedVersionedEntityService<K extends Serializable, V extends Serializable & HasVersion, E> extends AbstractCachedEntityService<K, V, E> {
+public abstract class CachedVersionedEntityService<K extends VersionedCacheKey, V extends Serializable & HasVersion, E> extends AbstractCachedEntityService<K, V, E> {
 
     @Autowired
     protected VersionedTbCache<K, V> cache;

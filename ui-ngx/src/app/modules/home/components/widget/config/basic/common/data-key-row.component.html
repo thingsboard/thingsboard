@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -69,17 +69,18 @@
   </div>
   <div *ngIf="!hideUnits && !hideDataKeyUnits && (!singleRow || displayUnitsOrDigits)" class="tb-units-field">
     <tb-unit-input *ngIf="displayUnitsOrDigits"
+                   [supportsUnitConversion]="supportsUnitConversion"
       formControlName="units">
     </tb-unit-input>
   </div>
   <div *ngIf="!hideDecimals && !hideDataKeyDecimals && (!singleRow || displayUnitsOrDigits)" class="tb-decimals-field">
     <mat-form-field *ngIf="displayUnitsOrDigits" appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
       <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-      <div *ngIf="singleRow" matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+      <div *ngIf="singleRow" matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
     </mat-form-field>
   </div>
   <div *ngIf="!singleRow" class="tb-form-table-row-cell-buttons">
-    <div fxHide.lt-lg class="tb-settings-button">
+    <div class="tb-settings-button lt-lg:!hidden">
       <button *ngIf="modelValue"
               type="button"
               mat-icon-button

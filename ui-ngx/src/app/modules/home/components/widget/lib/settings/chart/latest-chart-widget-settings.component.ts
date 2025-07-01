@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,9 +29,11 @@ import {
 } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
-  DoughnutLayout, doughnutLayoutImages,
+  DoughnutLayout,
+  doughnutLayoutImages,
   doughnutLayouts,
-  doughnutLayoutTranslations, horizontalDoughnutLayoutImages
+  doughnutLayoutTranslations,
+  horizontalDoughnutLayoutImages
 } from '@home/components/widget/lib/chart/doughnut-widget.models';
 import {
   chartLabelPositions,
@@ -44,10 +46,11 @@ import {
   pieChartLabelPositionTranslations
 } from '@home/components/widget/lib/chart/chart.models';
 import { radarChartShapes, radarChartShapeTranslations } from '@home/components/widget/lib/chart/radar-chart.models';
-import { formatValue, isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -116,7 +119,7 @@ export abstract class LatestChartWidgetSettingsComponent<S extends LatestChartWi
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeep<S>({} as S, this.defaultLatestChartSettings());
+    return this.defaultLatestChartSettings();
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -200,7 +203,7 @@ export abstract class LatestChartWidgetSettingsComponent<S extends LatestChartWi
   public abstract latestChartConfigTemplate(): TemplateRef<any>;
 
   private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(110, decimals, units, false);
   }
@@ -211,7 +214,7 @@ export abstract class LatestChartWidgetSettingsComponent<S extends LatestChartWi
     if (tooltipValueType === LatestChartTooltipValueType.percentage) {
       return formatValue(35, decimals, '%', false);
     } else {
-      const units: string = this.widgetConfig.config.units;
+      const units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
       return formatValue(110, decimals, units, false);
     }
   }

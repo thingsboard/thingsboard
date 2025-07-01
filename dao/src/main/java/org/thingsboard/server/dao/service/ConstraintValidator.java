@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
+import org.thingsboard.server.common.data.validation.RateLimit;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.Collection;
@@ -103,6 +104,7 @@ public class ConstraintValidator {
         ConstraintMapping constraintMapping = new DefaultConstraintMapping(null);
         constraintMapping.constraintDefinition(NoXss.class).validatedBy(NoXssValidator.class);
         constraintMapping.constraintDefinition(Length.class).validatedBy(StringLengthValidator.class);
+        constraintMapping.constraintDefinition(RateLimit.class).validatedBy(RateLimitValidator.class);
         return constraintMapping;
     }
 

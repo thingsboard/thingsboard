@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package org.thingsboard.server.transport.mqtt.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -48,6 +50,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -62,6 +66,7 @@ import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
 
 import java.util.ArrayList;
@@ -112,14 +117,17 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     private final ConcurrentMap<String, T> devices;
     private final ConcurrentMap<String, ListenableFuture<T>> deviceFutures;
     protected final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
+    @Getter
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
+    protected final GatewayMetricsService gatewayMetricsService;
 
     @Getter
     @Setter
     private boolean overwriteDevicesActivity = false;
 
     public AbstractGatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId, boolean overwriteDevicesActivity) {
+        log.debug("[{}] Gateway connect [{}] session [{}]", deviceSessionCtx.getTenantId(), deviceSessionCtx.getDeviceId(), sessionId);
         this.context = deviceSessionCtx.getContext();
         this.transportService = context.getTransportService();
         this.deviceSessionCtx = deviceSessionCtx;
@@ -131,6 +139,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
         this.channel = deviceSessionCtx.getChannel();
         this.overwriteDevicesActivity = overwriteDevicesActivity;
+        this.gatewayMetricsService = deviceSessionCtx.getContext().getGatewayMetricsService();
     }
 
     ConcurrentReferenceHashMap<String, Lock> createWeakMap() {
@@ -190,7 +199,27 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     public void onDevicesDisconnect() {
-        devices.forEach(this::deregisterSession);
+        log.debug("[{}] Gateway disconnect [{}]", gateway.getTenantId(), gateway.getDeviceId());
+        try {
+            deviceFutures.forEach((name, future) -> {
+                Futures.addCallback(future, new FutureCallback<T>() {
+                    @Override
+                    public void onSuccess(T result) {
+                        log.debug("[{}] Gateway disconnect [{}] device deregister callback [{}]", gateway.getTenantId(), gateway.getDeviceId(), name);
+                        deregisterSession(name, result);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+
+                    }
+                }, MoreExecutors.directExecutor());
+            });
+
+            devices.forEach(this::deregisterSession);
+        } catch (Exception e) {
+            log.error("Gateway disconnect failure", e);
+        }
     }
 
     public void onDeviceDeleted(String deviceName) {
@@ -286,6 +315,15 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                                 log.trace("[{}][{}][{}] First got or created device [{}], type [{}] for the gateway session", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, deviceType);
                                 SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
                                 transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
+                                /**
+                                 *  3.0.0 Device Session Establishment:
+                                 * dcmd-subscribe
+                                 * [tck-id-message-flow-device-dcmd-subscribe] If the Device supports writing to outputs, the
+                                 * MQTT client associated with the Device MUST subscribe to a topic of the form
+                                 * spBv1.0/group_id/DCMD/edge_node_id/device_id where group_id is the Sparkplug Group ID
+                                 * the edge_node_id is the Sparkplug Edge Node ID and the device_id is the Sparkplug Device ID
+                                 * for this Device. It MUST subscribe on this topic with a QoS of 1
+                                 */
                                 transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
                                         .setSessionInfo(deviceSessionInfo)
                                         .setSessionEvent(SESSION_EVENT_MSG_OPEN)
@@ -380,7 +418,13 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     private void processPostTelemetryMsg(T deviceCtx, JsonElement msg, String deviceName, int msgId) {
         try {
-            TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(msg.getAsJsonArray());
+            long systemTs = System.currentTimeMillis();
+            TbPair<TransportProtos.PostTelemetryMsg, List<GatewayMetadata>> gatewayPayloadPair = JsonConverter.convertToGatewayTelemetry(msg.getAsJsonArray(), systemTs);
+            TransportProtos.PostTelemetryMsg postTelemetryMsg = gatewayPayloadPair.getFirst();
+            List<GatewayMetadata> metadata = gatewayPayloadPair.getSecond();
+            if (!CollectionUtils.isEmpty(metadata)) {
+                gatewayMetricsService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), metadata, systemTs);
+            }
             transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
         } catch (Throwable e) {
             log.warn("[{}][{}][{}] Failed to convert telemetry: [{}]", gateway.getTenantId(), gateway.getDeviceId(), deviceName, msg, e);
@@ -699,6 +743,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         keyValueProtoBuilder.setStringV(connectionState.name());
         TransportProtos.PostTelemetryMsg postTelemetryMsg = postTelemetryMsgCreated(keyValueProtoBuilder.build(), ts);
         transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(channel, deviceName, -1, postTelemetryMsg));
+    }
+
+    public ConcurrentMap<String, T> getDevices () {
+        return this.devices;
     }
 
     private <T> TransportServiceCallback<Void> getPubAckCallback(final ChannelHandlerContext ctx, final String deviceName, final int msgId, final T msg) {

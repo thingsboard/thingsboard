@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.common.collect.Streams;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -40,6 +41,7 @@ import org.eclipse.jgit.diff.HistogramDiff;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.errors.LargeObjectException;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -50,7 +52,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -67,6 +71,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -75,6 +80,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -82,12 +88,17 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.eclipse.jgit.api.ListBranchCommand.ListMode;
+import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_NODELETE;
+import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD;
+import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_OTHER_REASON;
+import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_REMOTE_CHANGED;
 
 @Slf4j
 public class GitRepository {
@@ -136,6 +147,34 @@ public class GitRepository {
         return new GitRepository(git, settings, authHandler, directory.getAbsolutePath());
     }
 
+    public static GitRepository openOrClone(Path directory, RepositorySettings settings, boolean fetch) throws IOException, GitAPIException {
+        if (GitRepository.exists(directory.toString())) {
+            try {
+                GitRepository repository = GitRepository.open(directory.toFile(), settings);
+                if (fetch) {
+                    repository.fetch();
+                }
+                return repository;
+            } catch (RepositoryNotFoundException e) {
+                log.warn("{} not a git repository, reinitializing", directory);
+            } catch (org.eclipse.jgit.errors.TransportException | org.eclipse.jgit.api.errors.TransportException e) {
+                if (StringUtils.containsIgnoreCase(e.getMessage(), "missing commit")) {
+                    log.warn("Couldn't fetch {} due to {}, reinitializing", directory, e.getMessage());
+                } else {
+                    throw e;
+                }
+            }
+        }
+
+        FileUtils.deleteDirectory(directory.toFile());
+        Files.createDirectories(directory);
+        if (settings.isLocalOnly()) {
+            return GitRepository.create(settings, directory.toFile());
+        } else {
+            return GitRepository.clone(settings, directory.toFile());
+        }
+    }
+
     public static void test(RepositorySettings settings, File directory) throws Exception {
         if (settings.isLocalOnly()) {
             return;
@@ -163,9 +202,9 @@ public class GitRepository {
         }
     }
 
-    public void fetch() throws GitAPIException {
+    public boolean fetch() throws GitAPIException {
         if (settings.isLocalOnly()) {
-            return;
+            return false;
         }
         log.debug("Executing fetch [{}]", settings.getRepositoryUri());
         FetchResult result = execute(git.fetch()
@@ -174,6 +213,7 @@ public class GitRepository {
         if (head != null) {
             this.headId = head.getObjectId();
         }
+        return CollectionsUtil.isNotEmpty(result.getTrackingRefUpdates());
     }
 
     public void deleteLocalBranchIfExists(String branch) throws GitAPIException {
@@ -233,29 +273,36 @@ public class GitRepository {
         return iterableToPageData(commits, this::toCommit, pageLink, revCommitComparatorFunction);
     }
 
-    public List<String> listFilesAtCommit(String commitId) throws IOException {
-        return listFilesAtCommit(commitId, null);
+    public List<String> listFilesAtCommit(String commitId, String path) {
+        return listFilesAtCommit(commitId, path, -1).stream().map(RepoFile::path).toList();
     }
 
-    public List<String> listFilesAtCommit(String commitId, String path) throws IOException {
+    @SneakyThrows
+    public List<RepoFile> listFilesAtCommit(String commitId, String path, int depth) {
         log.debug("Executing listFilesAtCommit [{}][{}][{}]", settings.getRepositoryUri(), commitId, path);
-        List<String> files = new ArrayList<>();
+        List<RepoFile> files = new ArrayList<>();
         RevCommit revCommit = resolveCommit(commitId);
         try (TreeWalk treeWalk = new TreeWalk(git.getRepository())) {
             treeWalk.reset(revCommit.getTree().getId());
             if (StringUtils.isNotEmpty(path)) {
                 treeWalk.setFilter(PathFilter.create(path));
             }
-            treeWalk.setRecursive(true);
+            boolean fixedDepth = depth != -1;
+            treeWalk.setRecursive(!fixedDepth);
             while (treeWalk.next()) {
-                files.add(treeWalk.getPathString());
+                if (!fixedDepth || treeWalk.getDepth() == depth) {
+                    files.add(new RepoFile(treeWalk.getPathString(), treeWalk.getNameString(), treeWalk.isSubtree() ? FileType.DIRECTORY : FileType.FILE));
+                }
+                if (fixedDepth && treeWalk.getDepth() < depth) {
+                    treeWalk.enterSubtree();
+                }
             }
         }
         return files;
     }
 
-
-    public String getFileContentAtCommit(String file, String commitId) throws IOException {
+    @SneakyThrows
+    public byte[] getFileContentAtCommit(String file, String commitId) {
         log.debug("Executing getFileContentAtCommit [{}][{}][{}]", settings.getRepositoryUri(), commitId, file);
         RevCommit revCommit = resolveCommit(commitId);
         try (TreeWalk treeWalk = TreeWalk.forPath(git.getRepository(), file, revCommit.getTree())) {
@@ -266,8 +313,7 @@ public class GitRepository {
             try (ObjectReader objectReader = git.getRepository().newObjectReader()) {
                 ObjectLoader objectLoader = objectReader.open(blobId);
                 try {
-                    byte[] bytes = objectLoader.getBytes();
-                    return new String(bytes, StandardCharsets.UTF_8);
+                    return objectLoader.getBytes();
                 } catch (LargeObjectException e) {
                     throw new RuntimeException("File " + file + " is too big to load");
                 }
@@ -321,8 +367,18 @@ public class GitRepository {
             return;
         }
         log.debug("Executing push [{}][{}]", settings.getRepositoryUri(), remoteBranch);
-        execute(git.push()
+        Iterable<PushResult> result = execute(git.push()
                 .setRefSpecs(new RefSpec(localBranch + ":" + remoteBranch)));
+        result.forEach(pushResult -> {
+            for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
+                RemoteRefUpdate.Status status = update.getStatus();
+                if (status == REJECTED_NONFASTFORWARD || status == REJECTED_NODELETE ||
+                        status == REJECTED_REMOTE_CHANGED || status == REJECTED_OTHER_REASON) {
+                    throw new RuntimeException("Remote repository answered with error: " +
+                            Optional.ofNullable(update.getMessage()).orElseGet(status::name));
+                }
+            }
+        });
     }
 
     public String getContentsDiff(String content1, String content2) throws IOException {
@@ -367,11 +423,11 @@ public class GitRepository {
                         diff.setFilePath(diffEntry.getChangeType() != DiffEntry.ChangeType.DELETE ? diffEntry.getNewPath() : diffEntry.getOldPath());
                         diff.setChangeType(diffEntry.getChangeType());
                         try {
-                            diff.setFileContentAtCommit1(getFileContentAtCommit(diff.getFilePath(), commit1));
+                            diff.setFileContentAtCommit1(new String(getFileContentAtCommit(diff.getFilePath(), commit1), StandardCharsets.UTF_8));
                         } catch (IllegalArgumentException ignored) {
                         }
                         try {
-                            diff.setFileContentAtCommit2(getFileContentAtCommit(diff.getFilePath(), commit2));
+                            diff.setFileContentAtCommit2(new String(getFileContentAtCommit(diff.getFilePath(), commit2), StandardCharsets.UTF_8));
                         } catch (IllegalArgumentException ignored) {
                         }
                         return diff;
@@ -404,9 +460,15 @@ public class GitRepository {
         }
         ObjectId result = git.getRepository().resolve(rev);
         if (result == null) {
-            throw new IllegalArgumentException("Failed to parse git revision string: \"" + rev + "\"");
+            throw new IllegalArgumentException("Failed to resolve '" + rev + "'");
         }
         return result;
+    }
+
+    @SneakyThrows
+    public static boolean exists(String directory) {
+        File gitDirectory = Path.of(directory, ".git").toFile();
+        return FileUtils.isDirectory(gitDirectory) && !FileUtils.isEmptyDirectory(gitDirectory);
     }
 
     private <C extends GitCommand<T>, T> T execute(C command) throws GitAPIException {
@@ -582,6 +644,12 @@ public class GitRepository {
         private String fileContentAtCommit1;
         private String fileContentAtCommit2;
         private String diffStringValue;
+    }
+
+    public record RepoFile(String path, String name, FileType type) {}
+
+    public enum FileType {
+        FILE, DIRECTORY
     }
 
 }

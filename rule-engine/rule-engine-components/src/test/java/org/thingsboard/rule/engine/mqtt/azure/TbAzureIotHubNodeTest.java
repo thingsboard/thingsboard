@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import io.netty.handler.codec.mqtt.MqttVersion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -26,10 +27,14 @@ import org.thingsboard.common.util.AzureIotHubUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.credentials.CertPemCredentials;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -38,7 +43,7 @@ import static org.mockito.BDDMockito.spy;
 import static org.mockito.BDDMockito.willReturn;
 
 @ExtendWith(MockitoExtension.class)
-public class TbAzureIotHubNodeTest {
+public class TbAzureIotHubNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private TbAzureIotHubNode azureIotHubNode;
     private TbAzureIotHubNodeConfiguration azureIotHubNodeConfig;
@@ -66,6 +71,7 @@ public class TbAzureIotHubNodeTest {
         assertThat(azureIotHubNodeConfig.isCleanSession()).isTrue();
         assertThat(azureIotHubNodeConfig.isSsl()).isTrue();
         assertThat(azureIotHubNodeConfig.isParseToPlainText()).isFalse();
+        assertThat(azureIotHubNodeConfig.getProtocolVersion()).isEqualTo(MqttVersion.MQTT_3_1_1);
         assertThat(azureIotHubNodeConfig.getCredentials()).isInstanceOf(AzureIotHubSasCredentials.class);
     }
 
@@ -82,7 +88,6 @@ public class TbAzureIotHubNodeTest {
         MqttClientConfig mqttClientConfig = new MqttClientConfig();
         azureIotHubNode.prepareMqttClientConfig(mqttClientConfig);
 
-        assertThat(mqttClientConfig.getProtocolVersion()).isEqualTo(MqttVersion.MQTT_3_1_1);
         assertThat(mqttClientConfig.getUsername()).isEqualTo(AzureIotHubUtil.buildUsername(azureIotHubNodeConfig.getHost(), mqttClientConfig.getClientId()));
         assertThat(mqttClientConfig.getPassword()).isEqualTo(AzureIotHubUtil.buildSasToken(azureIotHubNodeConfig.getHost(), credentials.getSasKey()));
     }
@@ -103,6 +108,26 @@ public class TbAzureIotHubNodeTest {
         assertThat(mqttNodeConfiguration).isNotNull();
         assertThat(mqttNodeConfiguration.getPort()).isEqualTo(8883);
         assertThat(mqttNodeConfiguration.isCleanSession()).isTrue();
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // default config for version 0
+                Arguments.of(0,
+                        "{\"topicPattern\":\"devices/<device_id>/messages/events/\",\"port\":1883,\"connectTimeoutSec\":10,\"cleanSession\":true, \"ssl\":false, \"retainedMessage\":false,\"credentials\":{\"type\":\"sas\",\"sasKey\":\"sasKey\",\"caCert\":null,\"caCertFileName\":null}}}",
+                        true,
+                        "{\"topicPattern\":\"devices/<device_id>/messages/events/\",\"port\":1883,\"connectTimeoutSec\":10,\"cleanSession\":true, \"ssl\":false, \"retainedMessage\":false,\"credentials\":{\"type\":\"sas\",\"sasKey\":\"sasKey\",\"caCert\":null,\"caCertFileName\":null}, \"protocolVersion\":\"MQTT_3_1_1\"}\"}"),
+                // default config for version 1 with upgrade from version 0
+                Arguments.of(1,
+                        "{\"topicPattern\":\"devices/<device_id>/messages/events/\",\"port\":1883,\"connectTimeoutSec\":10,\"cleanSession\":true, \"ssl\":false, \"retainedMessage\":false,\"credentials\":{\"type\":\"sas\",\"sasKey\":\"sasKey\",\"caCert\":null,\"caCertFileName\":null}, \"protocolVersion\":\"MQTT_3_1_1\"}\"}",
+                        false,
+                        "{\"topicPattern\":\"devices/<device_id>/messages/events/\",\"port\":1883,\"connectTimeoutSec\":10,\"cleanSession\":true, \"ssl\":false, \"retainedMessage\":false,\"credentials\":{\"type\":\"sas\",\"sasKey\":\"sasKey\",\"caCert\":null,\"caCertFileName\":null}, \"protocolVersion\":\"MQTT_3_1_1\"}\"}")
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return azureIotHubNode;
     }
 
 }

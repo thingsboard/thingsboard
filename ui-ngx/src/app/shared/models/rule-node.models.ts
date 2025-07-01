@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,23 +21,21 @@ import { ComponentDescriptor } from '@shared/models/component-descriptor.models'
 import { FcEdge, FcNode } from 'ngx-flowchart';
 import { Observable } from 'rxjs';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, EventEmitter, Inject, OnInit, Directive } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import { AfterViewInit, DestroyRef, Directive, EventEmitter, inject, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
-import { TranslateService } from '@ngx-translate/core';
+import { EntityTestScriptResult, HasEntityDebugSettings } from '@shared/models/entity.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
 }
 
-export interface RuleNode extends BaseData<RuleNodeId> {
+export interface RuleNode extends BaseData<RuleNodeId>, HasEntityDebugSettings {
   ruleChainId?: RuleChainId;
   type: string;
   name: string;
-  debugMode: boolean;
   singletonMode: boolean;
   queueName?: string;
   configurationVersion?: number;
@@ -103,6 +101,7 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
 
   private configurationSet = false;
   private disabledValue = false;
+  protected destroyRef = inject(DestroyRef);
 
   set disabled(value: boolean) {
     if (this.disabledValue !== value) {
@@ -133,8 +132,8 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
   configurationChangedEmiter = new EventEmitter<RuleNodeConfiguration>();
   configurationChanged = this.configurationChangedEmiter.asObservable();
 
-  protected constructor(@Inject(Store) protected store: Store<AppState>) {
-    super(store);
+  protected constructor(...args: unknown[]) {
+    super();
   }
 
   ngOnInit() {}
@@ -160,11 +159,15 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
       for (const part of path) {
         control = control.get(part);
       }
-      control.valueChanges.subscribe(() => {
+      control.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true, trigger);
       });
     }
-    this.configForm().valueChanges.subscribe((updated: RuleNodeConfiguration) => {
+    this.configForm().valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((updated: RuleNodeConfiguration) => {
       this.onConfigurationChanged(updated);
     });
   }
@@ -332,7 +335,7 @@ export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
   configurationDescriptor?: RuleNodeConfigurationDescriptor;
 }
 
-export interface FcRuleNodeType extends FcNode {
+export interface FcRuleNodeType extends FcNode, HasEntityDebugSettings {
   component?: RuleNodeComponentDescriptor;
   singletonMode?: boolean;
   queueName?: string;
@@ -345,7 +348,6 @@ export interface FcRuleNode extends FcRuleNodeType {
   ruleNodeId?: RuleNodeId;
   additionalInfo?: any;
   configuration?: RuleNodeConfiguration;
-  debugMode?: boolean;
   error?: string;
   highlighted?: boolean;
   componentClazz?: string;
@@ -370,10 +372,7 @@ export interface TestScriptInputParams {
   msgType: string;
 }
 
-export interface TestScriptResult {
-  output: string;
-  error: string;
-}
+export type TestScriptResult = EntityTestScriptResult;
 
 export enum MessageType {
   POST_ATTRIBUTES_REQUEST = 'POST_ATTRIBUTES_REQUEST',
@@ -470,6 +469,7 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.metadata.TbGetTelemetryNode': 'ruleNodeOriginatorTelemetry',
   'org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode': 'ruleNodeCustomerAttributes',
   'org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode': 'ruleNodeCustomerDetails',
+  'org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode': 'ruleNodeFetchDeviceCredentials',
   'org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode': 'ruleNodeDeviceAttributes',
   'org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode': 'ruleNodeRelatedAttributes',
   'org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode': 'ruleNodeTenantAttributes',
@@ -480,6 +480,7 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.mail.TbMsgToEmailNode': 'ruleNodeMsgToEmail',
   'org.thingsboard.rule.engine.action.TbAssignToCustomerNode': 'ruleNodeAssignToCustomer',
   'org.thingsboard.rule.engine.action.TbUnassignFromCustomerNode': 'ruleNodeUnassignFromCustomer',
+  'org.thingsboard.rule.engine.telemetry.TbCalculatedFieldsNode': 'ruleNodeCalculatedFields',
   'org.thingsboard.rule.engine.action.TbClearAlarmNode': 'ruleNodeClearAlarm',
   'org.thingsboard.rule.engine.action.TbCreateAlarmNode': 'ruleNodeCreateAlarm',
   'org.thingsboard.rule.engine.action.TbCreateRelationNode': 'ruleNodeCreateRelation',
@@ -493,7 +494,7 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode': 'ruleNodeSaveAttributes',
   'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode': 'ruleNodeSaveTimeseries',
   'org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode': 'ruleNodeSaveToCustomTable',
-  'org.thingsboard.rule.engine.aws.lambda.TbLambdaNode': 'ruleNodeAwsLambda',
+  'org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode': 'ruleNodeAwsLambda',
   'org.thingsboard.rule.engine.aws.sns.TbSnsNode': 'ruleNodeAwsSns',
   'org.thingsboard.rule.engine.aws.sqs.TbSqsNode': 'ruleNodeAwsSqs',
   'org.thingsboard.rule.engine.kafka.TbKafkaNode': 'ruleNodeKafka',
@@ -507,8 +508,12 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.edge.TbMsgPushToEdgeNode': 'ruleNodePushToEdge',
   'org.thingsboard.rule.engine.flow.TbRuleChainInputNode': 'ruleNodeRuleChain',
   'org.thingsboard.rule.engine.flow.TbRuleChainOutputNode': 'ruleNodeOutputNode',
+  'org.thingsboard.rule.engine.flow.TbAckNode': 'ruleNodeAcknowledge',
+  'org.thingsboard.rule.engine.flow.TbCheckpointNode': 'ruleNodeCheckpoint',
   'org.thingsboard.rule.engine.math.TbMathNode': 'ruleNodeMath',
   'org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode': 'ruleNodeRestCallReply',
+  'org.thingsboard.rule.engine.notification.TbNotificationNode': 'ruleNodeSendNotification',
+  'org.thingsboard.rule.engine.notification.TbSlackNode': 'ruleNodeSendSlack',
 };
 
 export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): string {

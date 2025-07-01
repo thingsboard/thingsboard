@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,21 @@ import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.Me
 import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_OUTPUT_CONTROL;
 
 public class CoapEfentoUtils {
+
+    public static final int PULSE_CNT_ACC_MINOR_METADATA_FACTOR = 6;
+    public static final int PULSE_CNT_ACC_MAJOR_METADATA_FACTOR = 4;
+    public static final int ELEC_METER_ACC_MINOR_METADATA_FACTOR = 6;
+    public static final int ELEC_METER_ACC_MAJOR_METADATA_FACTOR = 4;
+    public static final int PULSE_CNT_ACC_WIDE_MINOR_METADATA_FACTOR = 6;
+    public static final int PULSE_CNT_ACC_WIDE_MAJOR_METADATA_FACTOR = 4;
+    public static final int WATER_METER_ACC_MINOR_METADATA_FACTOR = 6;
+    public static final int WATER_METER_ACC_MAJOR_METADATA_FACTOR = 4;
+    public static final int IAQ_METADATA_FACTOR = 3;
+    public static final int STATIC_IAQ_METADATA_FACTOR = 3;
+    public static final int CO2_GAS_METADATA_FACTOR = 3;
+    public static final int CO2_EQUIVALENT_METADATA_FACTOR = 3;
+    public static final int BREATH_VOC_METADATA_FACTOR = 3;
+
 
     public static String convertByteArrayToString(byte[] a) {
         StringBuilder out = new StringBuilder();

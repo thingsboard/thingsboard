@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 import { Injectable } from '@angular/core';
 
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   checkBoxCell,
   DateEntityTableColumn,
+  EntityChipsEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -48,7 +49,7 @@ import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widge
 import { MatDialog } from '@angular/material/dialog';
 
 @Injectable()
-export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig<WidgetTypeInfo | WidgetTypeDetails>> {
+export class WidgetTypesTableConfigResolver  {
 
   private readonly config: EntityTableConfig<WidgetTypeInfo | WidgetTypeDetails> =
     new EntityTableConfig<WidgetTypeInfo | WidgetTypeDetails>();
@@ -75,7 +76,9 @@ export class WidgetTypesTableConfigResolver implements Resolve<EntityTableConfig
 
     this.config.columns.push(
       new DateEntityTableColumn<WidgetTypeInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<WidgetTypeInfo>('name', 'widget.title', '100%'),
+      new EntityTableColumn<WidgetTypeInfo>('name', 'widget.title', '60%'),
+      new EntityChipsEntityTableColumn<WidgetTypeInfo>( 'bundles', 'entity.type-widgets-bundles', '40%',
+          () => '/resources/widgets-library/widgets-bundles'),
       new EntityTableColumn<WidgetTypeInfo>('widgetType', 'widget.type', '150px', entity =>
         entity?.widgetType ? this.translate.instant(widgetTypesData.get(entity.widgetType).name) : '', undefined, false),
       new EntityTableColumn<WidgetTypeInfo>('tenantId', 'widget.system', '60px',

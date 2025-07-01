@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,12 @@ public class AssetProfileImportService extends BaseEntityImportService<AssetProf
     }
 
     @Override
-    protected AssetProfile saveOrUpdate(EntitiesImportCtx ctx, AssetProfile assetProfile, EntityExportData<AssetProfile> exportData, IdProvider idProvider) {
-        return assetProfileService.saveAssetProfile(assetProfile);
+    protected AssetProfile saveOrUpdate(EntitiesImportCtx ctx, AssetProfile assetProfile, EntityExportData<AssetProfile> exportData, IdProvider idProvider, CompareResult compareResult) {
+        AssetProfile saved = assetProfileService.saveAssetProfile(assetProfile);
+        if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
+            importCalculatedFields(ctx, saved, exportData, idProvider);
+        }
+        return saved;
     }
 
     @Override

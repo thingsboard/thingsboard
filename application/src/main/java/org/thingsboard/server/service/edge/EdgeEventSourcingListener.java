@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,10 @@ import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.domain.Domain;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -48,7 +50,6 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.dao.user.UserServiceImpl;
 
 /**
  * This event listener does not support async event processing because relay on ThreadLocal
@@ -64,14 +65,15 @@ import org.thingsboard.server.dao.user.UserServiceImpl;
  *     future.addCallback(eventPublisher.publishEvent(...))
  *   }
  * */
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class EdgeEventSourcingListener {
 
     private final TbClusterService tbClusterService;
-    private final EdgeSynchronizationManager edgeSynchronizationManager;
+
     private final TenantService tenantService;
+    private final EdgeSynchronizationManager edgeSynchronizationManager;
 
     @PostConstruct
     public void init() {
@@ -80,6 +82,11 @@ public class EdgeEventSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(SaveEntityEvent<?> event) {
+        if (Boolean.FALSE.equals(event.getBroadcastEvent())) {
+            log.trace("Ignoring event {}", event);
+            return;
+        }
+
         try {
             if (!isValidSaveEntityEventForEdgeProcessing(event)) {
                 return;
@@ -105,7 +112,7 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType)) {
+            if (EntityType.TENANT.equals(entityType) || EntityType.EDGE.equals(entityType)) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", tenantId, event);
@@ -133,7 +140,21 @@ public class EdgeEventSourcingListener {
         if (EntityType.DEVICE.equals(event.getEntityId().getEntityType()) && ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType())) {
             return;
         }
+        if (EntityType.ALARM.equals(event.getEntityId().getEntityType())) {
+            return;
+        }
         try {
+            if (event.getEntityId().getEntityType().equals(EntityType.RULE_CHAIN) && event.getEdgeId() != null && event.getActionType().equals(ActionType.ASSIGNED_TO_EDGE)) {
+                try {
+                    Edge edge = JacksonUtil.fromString(event.getBody(), Edge.class);
+                    if (edge != null && new RuleChainId(event.getEntityId().getId()).equals(edge.getRootRuleChainId())) {
+                        log.trace("[{}] skipping ASSIGNED_TO_EDGE event of RULE_CHAIN entity in case Edge Root Rule Chain: {}", event.getTenantId(), event);
+                        return;
+                    }
+                } catch (Exception ignored) {
+                    return;
+                }
+            }
             log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                     event.getBody(), null, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()),
@@ -146,6 +167,11 @@ public class EdgeEventSourcingListener {
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(RelationActionEvent event) {
         try {
+            TenantId tenantId = event.getTenantId();
+            if (ActionType.RELATION_DELETED.equals(event.getActionType()) && !tenantService.tenantExists(tenantId)) {
+                log.debug("[{}] Ignoring RelationActionEvent because tenant does not exist: {}", tenantId, event);
+                return;
+            }
             EntityRelation relation = event.getRelation();
             if (relation == null) {
                 log.trace("[{}] skipping RelationActionEvent event in case relation is null: {}", event.getTenantId(), event);
@@ -213,13 +239,10 @@ public class EdgeEventSourcingListener {
     }
 
     private void cleanUpUserAdditionalInfo(User user) {
-        // reset FAILED_LOGIN_ATTEMPTS and LAST_LOGIN_TS - edge is not interested in this information
         if (user.getAdditionalInfo() instanceof NullNode) {
             user.setAdditionalInfo(null);
         }
         if (user.getAdditionalInfo() instanceof ObjectNode additionalInfo) {
-            additionalInfo.remove(UserServiceImpl.FAILED_LOGIN_ATTEMPTS);
-            additionalInfo.remove(UserServiceImpl.LAST_LOGIN_TS);
             if (additionalInfo.isEmpty()) {
                 user.setAdditionalInfo(null);
             } else {

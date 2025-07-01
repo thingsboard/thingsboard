@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 
@@ -23,9 +24,11 @@ import java.util.UUID;
 @Slf4j
 public class TbPackCallback<T> implements TbCallback {
     private final TbPackProcessingContext<T> ctx;
+    @Getter
     private final UUID id;
 
     public TbPackCallback(UUID id, TbPackProcessingContext<T> ctx) {
+        log.trace("[{}] CALLBACK CREATED", id);
         this.id = id;
         this.ctx = ctx;
     }

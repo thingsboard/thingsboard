@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,12 +64,14 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -98,9 +100,9 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.mobile.MobileAppDao;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
-import org.thingsboard.server.dao.mobile.MobileAppDao;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -121,6 +123,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.thingsboard.common.util.DebugModeUtil.DEBUG_MODE_DEFAULT_DURATION_MINUTES;
 import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
 import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.isSigningKeyDefault;
 import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.validateKeyLength;
@@ -198,7 +201,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         tenantProfileService.findOrCreateDefaultTenantProfile(TenantId.SYS_TENANT_ID);
 
         TenantProfileData isolatedRuleEngineTenantProfileData = new TenantProfileData();
-        isolatedRuleEngineTenantProfileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        DefaultTenantProfileConfiguration configuration = new DefaultTenantProfileConfiguration();
+        configuration.setMaxDebugModeDurationMinutes(DEBUG_MODE_DEFAULT_DURATION_MINUTES);
+        isolatedRuleEngineTenantProfileData.setConfiguration(configuration);
 
         TenantProfileQueueConfiguration mainQueueConfiguration = new TenantProfileQueueConfiguration();
         mainQueueConfiguration.setName(DataConstants.MAIN_QUEUE_NAME);
@@ -308,7 +313,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             jwtSettingsService.saveJwtSettings(jwtSettings);
         }
 
-        List<MobileApp> mobiles = mobileAppDao.findByTenantId(TenantId.SYS_TENANT_ID, new PageLink(Integer.MAX_VALUE,0)).getData();
+        List<MobileApp> mobiles = mobileAppDao.findByTenantId(TenantId.SYS_TENANT_ID, null, new PageLink(Integer.MAX_VALUE, 0)).getData();
         if (CollectionUtils.isNotEmpty(mobiles)) {
             mobiles.stream()
                     .filter(mobileApp -> !validateKeyLength(mobileApp.getAppSecret()))
@@ -571,15 +576,15 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     private void save(DeviceId deviceId, String key, boolean value) {
         if (persistActivityToTelemetry) {
-            ListenableFuture<Integer> saveFuture = tsService.save(
+            ListenableFuture<TimeseriesSaveResult> saveFuture = tsService.save(
                     TenantId.SYS_TENANT_ID,
                     deviceId,
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))), 0L);
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
-            ListenableFuture<List<Long>> saveFuture = attributesService.save(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE,
-                    Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
-                            , System.currentTimeMillis())));
+            ListenableFuture<AttributesSaveResult> saveFuture = attributesService.save(
+                    TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, new BaseAttributeKvEntry(new BooleanDataEntry(key, value), System.currentTimeMillis())
+            );
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));
         }
     }
@@ -607,7 +612,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     private <S> void addTsCallback(ListenableFuture<S> saveFuture, final FutureCallback<S> callback) {
-        Futures.addCallback(saveFuture, new FutureCallback<S>() {
+        Futures.addCallback(saveFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable S result) {
                 callback.onSuccess(result);

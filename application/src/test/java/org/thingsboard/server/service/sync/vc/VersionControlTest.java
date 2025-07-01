@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,23 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
@@ -103,6 +116,8 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.controller.TbResourceControllerTest.JS_TEST_FILE_NAME;
+import static org.thingsboard.server.controller.TbResourceControllerTest.TEST_DATA;
 
 @DaoSqlTest
 public class VersionControlTest extends AbstractControllerTest {
@@ -247,19 +262,24 @@ public class VersionControlTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDeviceVc_withProfile_betweenTenants() throws Exception {
+    public void testDeviceVc_withProfileAndOtaPackage_betweenTenants() throws Exception {
         DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile of tenant 1");
         createVersion("profiles", EntityType.DEVICE_PROFILE);
-        Device device = createDevice(null, deviceProfile.getId(), "Device of tenant 1", "test1");
-        String versionId = createVersion("devices", EntityType.DEVICE);
+        OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
+        OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
+        Device device = createDevice(null, deviceProfile.getId(), "Device of tenant 1", "test1", newDevice -> {
+            newDevice.setFirmwareId(firmware.getId());
+            newDevice.setSoftwareId(software.getId());
+        });
+        String versionId = createVersion("devices with ota", EntityType.DEVICE, EntityType.OTA_PACKAGE);
         DeviceCredentials deviceCredentials = findDeviceCredentials(device.getId());
         DeviceCredentials newCredentials = new DeviceCredentials(deviceCredentials);
         newCredentials.setCredentialsId("new access token"); // updating access token to avoid constraint errors on import
         doPost("/api/device/credentials", newCredentials, DeviceCredentials.class);
-        assertThat(listVersions()).extracting(EntityVersion::getName).containsExactly("devices", "profiles");
+        assertThat(listVersions()).extracting(EntityVersion::getName).containsExactly("devices with ota", "profiles");
 
         loginTenant2();
-        Map<EntityType, EntityTypeLoadResult> result = loadVersion(versionId, EntityType.DEVICE, EntityType.DEVICE_PROFILE);
+        Map<EntityType, EntityTypeLoadResult> result = loadVersion(versionId, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE);
         assertThat(result.get(EntityType.DEVICE).getCreated()).isEqualTo(1);
         assertThat(result.get(EntityType.DEVICE_PROFILE).getCreated()).isEqualTo(1);
 
@@ -278,6 +298,13 @@ public class VersionControlTest extends AbstractControllerTest {
         assertThat(importedCredentials.getCredentialsId()).isEqualTo(deviceCredentials.getCredentialsId());
         assertThat(importedCredentials.getCredentialsValue()).isEqualTo(deviceCredentials.getCredentialsValue());
         assertThat(importedCredentials.getCredentialsType()).isEqualTo(deviceCredentials.getCredentialsType());
+
+        OtaPackage importedFirmwareOta = findOtaPackage(firmware.getTitle());
+        OtaPackage importedSoftwareOta = findOtaPackage(software.getTitle());
+        checkImportedEntity(tenantId1, firmware, tenantId2, importedFirmwareOta);
+        checkImportedOtaPackageData(firmware, importedFirmwareOta);
+        checkImportedEntity(tenantId1, software, tenantId2, importedSoftwareOta);
+        checkImportedOtaPackageData(software, importedSoftwareOta);
     }
 
     @Test
@@ -561,6 +588,154 @@ public class VersionControlTest extends AbstractControllerTest {
         checkImportedEntity(tenantId1, defaultDeviceProfile, tenantId2, importedDeviceProfile);
     }
 
+    @Test
+    public void testVcWithCalculatedFields_betweenTenants() throws Exception {
+        Asset asset = createAsset(null, null, "Asset 1");
+        Device device = createDevice(null, null, "Device 1", "test1");
+        CalculatedField calculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
+        String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        loginTenant2();
+        loadVersion(versionId, config -> {
+            config.setLoadCredentials(false);
+        }, EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        Asset importedAsset = findAsset(asset.getName());
+        Device importedDevice = findDevice(device.getName());
+        checkImportedEntity(tenantId1, device, tenantId2, importedDevice);
+        checkImportedEntity(tenantId1, asset, tenantId2, importedAsset);
+
+        List<CalculatedField> importedCalculatedFields = findCalculatedFieldsByEntityId(importedDevice.getId());
+        assertThat(importedCalculatedFields).size().isOne();
+        assertThat(importedCalculatedFields.get(0)).satisfies(importedField -> {
+            assertThat(importedField.getName()).isEqualTo(calculatedField.getName());
+            assertThat(importedField.getType()).isEqualTo(calculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(calculatedField.getId());
+        });
+    }
+
+    @Test
+    public void testVcWithReferencedCalculatedFields_betweenTenants() throws Exception {
+        Asset asset = createAsset(null, null, "Asset 1");
+        Device device = createDevice(null, null, "Device 1", "test1");
+        CalculatedField deviceCalculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
+        CalculatedField assetCalculatedField = createCalculatedField("CalculatedField2", asset.getId(), device.getId());
+        String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        loginTenant2();
+        loadVersion(versionId, config -> {
+            config.setLoadCredentials(false);
+        }, EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
+
+        Asset importedAsset = findAsset(asset.getName());
+        Device importedDevice = findDevice(device.getName());
+        checkImportedEntity(tenantId1, device, tenantId2, importedDevice);
+        checkImportedEntity(tenantId1, asset, tenantId2, importedAsset);
+
+        List<CalculatedField> importedDeviceCalculatedFields = findCalculatedFieldsByEntityId(importedDevice.getId());
+        assertThat(importedDeviceCalculatedFields).size().isOne();
+        assertThat(importedDeviceCalculatedFields.get(0)).satisfies(importedField -> {
+            assertThat(importedField.getName()).isEqualTo(deviceCalculatedField.getName());
+            assertThat(importedField.getType()).isEqualTo(deviceCalculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(deviceCalculatedField.getId());
+            assertThat(importedField.getConfiguration().getArguments().get("T").getRefEntityId()).isEqualTo(importedAsset.getId());
+        });
+
+        List<CalculatedField> importedAssetCalculatedFields = findCalculatedFieldsByEntityId(importedAsset.getId());
+        assertThat(importedAssetCalculatedFields).size().isOne();
+        assertThat(importedAssetCalculatedFields.get(0)).satisfies(importedField -> {
+            assertThat(importedField.getName()).isEqualTo(assetCalculatedField.getName());
+            assertThat(importedField.getType()).isEqualTo(assetCalculatedField.getType());
+            assertThat(importedField.getId()).isNotEqualTo(assetCalculatedField.getId());
+            assertThat(importedField.getConfiguration().getArguments().get("T").getRefEntityId()).isEqualTo(importedDevice.getId());
+        });
+    }
+
+    @Test
+    public void testVcWithCalculatedFields_sameTenant() throws Exception {
+        Asset asset = createAsset(null, null, "Asset 1");
+        CalculatedField calculatedField = createCalculatedField("CalculatedField", asset.getId(), asset.getId());
+        String versionId = createVersion("asset and field", EntityType.ASSET);
+
+        loadVersion(versionId, EntityType.ASSET);
+        CalculatedField importedCalculatedField = findCalculatedFieldByEntityId(asset.getId());
+        assertThat(importedCalculatedField.getId()).isEqualTo(calculatedField.getId());
+        assertThat(importedCalculatedField.getName()).isEqualTo(calculatedField.getName());
+        assertThat(importedCalculatedField.getConfiguration()).isEqualTo(calculatedField.getConfiguration());
+        assertThat(importedCalculatedField.getType()).isEqualTo(calculatedField.getType());
+    }
+
+    @Test
+    public void testOtaPackageVc_sameTenant() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile v1.0");
+        OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
+        OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
+        String versionId = createVersion("ota packages", EntityType.OTA_PACKAGE);
+
+        OtaPackage firmwareOta = findOtaPackage(firmware.getTitle());
+        OtaPackage softwareOta = findOtaPackage(software.getTitle());
+
+        loadVersion(versionId, EntityType.OTA_PACKAGE);
+        OtaPackage importedFirmwareOta = findOtaPackage(firmwareOta.getTitle());
+        OtaPackage importedSoftwareOta = findOtaPackage(softwareOta.getTitle());
+        checkImportedEntity(tenantId1, firmwareOta, tenantId1, importedFirmwareOta);
+        checkImportedOtaPackageData(firmwareOta, importedFirmwareOta);
+        checkImportedEntity(tenantId1, softwareOta, tenantId1, importedSoftwareOta);
+        checkImportedOtaPackageData(softwareOta, importedSoftwareOta);
+    }
+
+    @Test
+    public void testOtaPackageVcWithProfile_betweenTenants() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile v1.0");
+        OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
+        OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
+        deviceProfile.setFirmwareId(firmware.getId());
+        deviceProfile.setSoftwareId(software.getId());
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        String versionId = createVersion("ota packages", EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE);
+
+        loginTenant2();
+        loadVersion(versionId, EntityType.DEVICE_PROFILE, EntityType.OTA_PACKAGE);
+        DeviceProfile importedProfile = findDeviceProfile(deviceProfile.getName());
+        OtaPackage importedFirmwareOta = findOtaPackage(firmware.getTitle());
+        OtaPackage importedSoftwareOta = findOtaPackage(software.getTitle());
+        checkImportedEntity(tenantId1, deviceProfile, tenantId2, importedProfile);
+        checkImportedDeviceProfileData(deviceProfile, importedProfile);
+        checkImportedEntity(tenantId1, firmware, tenantId2, importedFirmwareOta);
+        checkImportedOtaPackageData(firmware, importedFirmwareOta);
+        checkImportedEntity(tenantId1, software, tenantId2, importedSoftwareOta);
+        checkImportedOtaPackageData(software, importedSoftwareOta);
+        assertThat(importedProfile.getFirmwareId()).isEqualTo(importedFirmwareOta.getId());
+        assertThat(importedProfile.getSoftwareId()).isEqualTo(importedSoftwareOta.getId());
+    }
+
+    protected void checkImportedOtaPackageData(OtaPackage otaPackage, OtaPackage importedOtaPackage) {
+        assertThat(importedOtaPackage.getName()).isEqualTo(otaPackage.getName());
+        assertThat(importedOtaPackage.getTag()).isEqualTo(otaPackage.getTag());
+        assertThat(importedOtaPackage.getType()).isEqualTo(otaPackage.getType());
+        assertThat(importedOtaPackage.getFileName()).isEqualTo(otaPackage.getFileName());
+    }
+
+    @Test
+    public void testResourceVc_sameTenant() throws Exception {
+        TbResourceInfo resourceInfo = createResource("Test resource");
+        String versionId = createVersion("resources", EntityType.TB_RESOURCE);
+
+        TbResource resource = findResource(resourceInfo.getName());
+
+        loadVersion(versionId, EntityType.TB_RESOURCE);
+        TbResource importedResource = findResource(resource.getName());
+        checkImportedEntity(tenantId1, resource, tenantId1, importedResource);
+        checkImportedResourceData(resource, importedResource);
+    }
+
+    protected void checkImportedResourceData(TbResource resource, TbResource importedResource) {
+        assertThat(importedResource.getName()).isEqualTo(resource.getName());
+        assertThat(importedResource.getData()).isEqualTo(resource.getData());
+        assertThat(importedResource.getResourceKey()).isEqualTo(resource.getResourceKey());
+        assertThat(importedResource.getResourceType()).isEqualTo(resource.getResourceType());
+    }
+
     private <E extends ExportableEntity<?> & HasTenantId> void checkImportedEntity(TenantId tenantId1, E initialEntity, TenantId tenantId2, E importedEntity) {
         assertThat(initialEntity.getTenantId()).isEqualTo(tenantId1);
         assertThat(importedEntity.getTenantId()).isEqualTo(tenantId2);
@@ -625,10 +800,10 @@ public class VersionControlTest extends AbstractControllerTest {
         request.setEntityTypes(Arrays.stream(entityTypes).collect(Collectors.toMap(t -> t, entityType -> {
             EntityTypeVersionCreateConfig config = new EntityTypeVersionCreateConfig();
             config.setAllEntities(true);
-
             config.setSaveRelations(true);
             config.setSaveAttributes(true);
             config.setSaveCredentials(true);
+            config.setSaveCalculatedFields(true);
             return config;
         })));
 
@@ -694,6 +869,7 @@ public class VersionControlTest extends AbstractControllerTest {
             config.setLoadAttributes(true);
             config.setLoadRelations(true);
             config.setLoadCredentials(true);
+            config.setLoadCalculatedFields(true);
             config.setRemoveOtherEntities(false);
             config.setFindExistingEntityByName(true);
             configModifier.accept(config);
@@ -810,6 +986,7 @@ public class VersionControlTest extends AbstractControllerTest {
         otaPackage.setDeviceProfileId(deviceProfileId);
         otaPackage.setType(type);
         otaPackage.setTitle("My " + type);
+        otaPackage.setTag("My " + type);
         otaPackage.setVersion("v1.0");
         otaPackage.setFileName("filename.txt");
         otaPackage.setContentType("text/plain");
@@ -818,6 +995,10 @@ public class VersionControlTest extends AbstractControllerTest {
         otaPackage.setDataSize(1L);
         otaPackage.setData(ByteBuffer.wrap(new byte[]{(int) 1}));
         return otaPackageService.saveOtaPackage(otaPackage);
+    }
+
+    private OtaPackage findOtaPackage(String title) throws Exception {
+        return doGetTypedWithPageLink("/api/otaPackages?", new TypeReference<PageData<OtaPackage>>() {}, new PageLink(100, 0, title)).getData().get(0);
     }
 
     protected Dashboard createDashboard(CustomerId customerId, String name) {
@@ -870,7 +1051,7 @@ public class VersionControlTest extends AbstractControllerTest {
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("Generator 1");
         ruleNode1.setType(TbMsgGeneratorNode.class.getName());
-        ruleNode1.setDebugMode(true);
+        ruleNode1.setDebugSettings(DebugSettings.all());
         TbMsgGeneratorNodeConfiguration configuration1 = new TbMsgGeneratorNodeConfiguration();
         configuration1.setOriginatorType(originatorId.getEntityType());
         configuration1.setOriginatorId(originatorId.getId().toString());
@@ -880,7 +1061,7 @@ public class VersionControlTest extends AbstractControllerTest {
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode2.setDebugMode(true);
+        ruleNode2.setDebugSettings(DebugSettings.all());
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
@@ -908,7 +1089,7 @@ public class VersionControlTest extends AbstractControllerTest {
         ruleNode1.setName("Simple Rule Node 1");
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode1.setDebugMode(true);
+        ruleNode1.setDebugSettings(DebugSettings.all());
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
         ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
@@ -917,7 +1098,7 @@ public class VersionControlTest extends AbstractControllerTest {
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode2.setDebugMode(true);
+        ruleNode2.setDebugSettings(DebugSettings.all());
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
@@ -938,6 +1119,38 @@ public class VersionControlTest extends AbstractControllerTest {
         relation.setAdditionalInfo(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
         relation.setTypeGroup(RelationTypeGroup.COMMON);
         return doPost("/api/v2/relation", relation, EntityRelation.class);
+    }
+
+    private CalculatedField createCalculatedField(String name, EntityId entityId, EntityId referencedEntityId) {
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(entityId);
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName(name);
+        calculatedField.setConfigurationVersion(1);
+        calculatedField.setConfiguration(getCalculatedFieldConfig(referencedEntityId));
+        calculatedField.setVersion(1L);
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+    }
+
+    private CalculatedFieldConfiguration getCalculatedFieldConfig(EntityId referencedEntityId) {
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        argument.setRefEntityId(referencedEntityId);
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
+
+        config.setArguments(Map.of("T", argument));
+
+        config.setExpression("T - (100 - H) / 5");
+
+        Output output = new Output();
+        output.setName("output");
+        output.setType(OutputType.TIME_SERIES);
+
+        config.setOutput(output);
+
+        return config;
     }
 
     protected void checkImportedRuleChainData(RuleChain initialRuleChain, RuleChainMetaData initialMetaData, RuleChain importedRuleChain, RuleChainMetaData importedMetaData) {
@@ -994,11 +1207,36 @@ public class VersionControlTest extends AbstractControllerTest {
 
     private RuleChain findRuleChain(String name) throws Exception {
         return doGetTypedWithPageLink("/api/ruleChains?", new TypeReference<PageData<RuleChain>>() {}, new PageLink(100, 0, name)).getData().get(0);
-
     }
 
     private RuleChainMetaData findRuleChainMetaData(RuleChainId ruleChainId) throws Exception {
         return doGet("/api/ruleChain/" + ruleChainId + "/metadata", RuleChainMetaData.class);
+    }
+
+    private CalculatedField findCalculatedFieldByEntityId(EntityId entityId) throws Exception {
+        return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields?", new TypeReference<PageData<CalculatedField>>() {}, new PageLink(100, 0)).getData().get(0);
+    }
+
+    private List<CalculatedField> findCalculatedFieldsByEntityId(EntityId entityId) throws Exception {
+        return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields?", new TypeReference<PageData<CalculatedField>>() {}, new PageLink(100, 0)).getData();
+    }
+
+    private TbResourceInfo createResource(String name) {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JKS);
+        resource.setTitle(name);
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setEncodedData(TEST_DATA);
+
+        return saveTbResource(resource);
+    }
+
+    private TbResourceInfo saveTbResource(TbResource tbResource) {
+        return doPost("/api/resource", tbResource, TbResourceInfo.class);
+    }
+
+    private TbResource findResource(String name) throws Exception {
+        return doGetTypedWithPageLink("/api/resource?", new TypeReference<PageData<TbResource>>() {}, new PageLink(100, 0, name)).getData().get(0);
     }
 
 }

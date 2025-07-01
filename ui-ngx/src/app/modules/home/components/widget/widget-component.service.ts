@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ComponentFactory, Inject, Injectable, Optional, Type } from '@angular/core';
+import { Inject, Injectable, Optional, Type } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
 import { forkJoin, from, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
@@ -28,16 +28,24 @@ import {
 } from '@home/models/widget-component.models';
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
-import { ModulesWithFactories, ResourcesService } from '@core/services/resources.service';
+import {
+  componentTypeBySelector,
+  flatModulesWithComponents,
+  ModulesWithComponents,
+  modulesWithComponentsToTypes,
+  ResourcesService
+} from '@core/services/resources.service';
 import {
   IWidgetSettingsComponent,
+  migrateWidgetTypeToDynamicForms,
   Widget,
   widgetActionSources,
+  WidgetActionType,
   WidgetControllerDescriptor,
   WidgetType
 } from '@shared/models/widget.models';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { isFunction, isUndefined } from '@core/utils';
+import { isDefinedAndNotNull, isFunction, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
 import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
@@ -52,10 +60,10 @@ import tinycolor from 'tinycolor2';
 import moment from 'moment';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
-import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
-import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
-import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
+import { compileTbFunction, TbFunction } from '@shared/models/js-function.models';
+import { HttpClient } from '@angular/common/http';
+import { jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 
 @Injectable()
 export class WidgetComponentService {
@@ -77,7 +85,8 @@ export class WidgetComponentService {
               private widgetService: WidgetService,
               private utils: UtilsService,
               private resources: ResourcesService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private http: HttpClient) {
 
     this.cssParser.testMode = false;
 
@@ -104,9 +113,9 @@ export class WidgetComponentService {
             templateHtml: this.utils.editWidgetInfo.templateHtml,
             templateCss: this.utils.editWidgetInfo.templateCss,
             controllerScript: this.utils.editWidgetInfo.controllerScript,
-            settingsSchema: this.utils.editWidgetInfo.settingsSchema,
-            dataKeySettingsSchema: this.utils.editWidgetInfo.dataKeySettingsSchema,
-            latestDataKeySettingsSchema: this.utils.editWidgetInfo.latestDataKeySettingsSchema,
+            settingsForm: this.utils.editWidgetInfo.settingsForm,
+            dataKeySettingsForm: this.utils.editWidgetInfo.dataKeySettingsForm,
+            latestDataKeySettingsForm: this.utils.editWidgetInfo.latestDataKeySettingsForm,
             settingsDirective: this.utils.editWidgetInfo.settingsDirective,
             dataKeySettingsDirective: this.utils.editWidgetInfo.dataKeySettingsDirective,
             latestDataKeySettingsDirective: this.utils.editWidgetInfo.latestDataKeySettingsDirective,
@@ -124,11 +133,13 @@ export class WidgetComponentService {
       w.tinycolor = tinycolor;
       w.cssjs = cssjs;
       w.moment = moment;
-      w.$ = $;
-      w.jQuery = $;
 
       const widgetModulesTasks: Observable<any>[] = [];
-      widgetModulesTasks.push(from(import('jquery.terminal')));
+      widgetModulesTasks.push(from(import('jquery.terminal')).pipe(
+        tap((mod) => {
+          mod.default(window, $);
+        })
+      ));
 
       widgetModulesTasks.push(from(import('flot/src/jquery.flot.js')).pipe(
         mergeMap(() => {
@@ -175,7 +186,7 @@ export class WidgetComponentService {
           (window as any).TbCanvasDigitalGauge = mod.TbCanvasDigitalGauge;
         }))
       );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps/map-widget2')).pipe(
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps-legacy/map-widget2')).pipe(
         tap((mod) => {
           (window as any).TbMapWidgetV2 = mod.TbMapWidgetV2;
         }))
@@ -232,7 +243,11 @@ export class WidgetComponentService {
     if (widgetInfo) {
       return widgetInfo;
     } else {
-      return {} as WidgetInfo;
+      return {
+        typeParameters: {
+          hideDataTab: true
+        }
+      } as WidgetInfo;
     }
   }
 
@@ -265,6 +280,7 @@ export class WidgetComponentService {
           this.widgetsInfoFetchQueue.set(fullFqn, fetchQueue);
           this.widgetService.getWidgetType(fullFqn, {ignoreErrors: true}).subscribe(
             (widgetType) => {
+              widgetType = migrateWidgetTypeToDynamicForms(widgetType);
               this.loadWidget(widgetType, widgetInfoSubject);
             },
             () => {
@@ -281,54 +297,57 @@ export class WidgetComponentService {
 
   private loadWidget(widgetType: WidgetType, widgetInfoSubject: Subject<WidgetInfo>) {
     const widgetInfo = toWidgetInfo(widgetType);
-    let widgetControllerDescriptor: WidgetControllerDescriptor = null;
-    try {
-      widgetControllerDescriptor = this.createWidgetControllerDescriptor(widgetInfo);
-    } catch (e) {
-      const details = this.utils.parseException(e);
-      const errorMessage = `Failed to compile widget script. \n Error: ${details.message}`;
-      this.processWidgetLoadError([errorMessage], widgetInfo.fullFqn, widgetInfoSubject);
-    }
-    if (widgetControllerDescriptor) {
-      const widgetNamespace = `widget-type-${widgetInfo.fullFqn.replace(/\./g, '-')}`;
-      this.loadWidgetResources(widgetInfo, widgetNamespace, [SharedModule, WidgetComponentsModule, this.homeComponentsModule]).subscribe(
-        () => {
-          if (widgetControllerDescriptor.settingsSchema) {
-            widgetInfo.typeSettingsSchema = widgetControllerDescriptor.settingsSchema;
-          }
-          if (widgetControllerDescriptor.dataKeySettingsSchema) {
-            widgetInfo.typeDataKeySettingsSchema = widgetControllerDescriptor.dataKeySettingsSchema;
-          }
-          if (widgetControllerDescriptor.latestDataKeySettingsSchema) {
-            widgetInfo.typeLatestDataKeySettingsSchema = widgetControllerDescriptor.latestDataKeySettingsSchema;
-          }
-          widgetInfo.typeParameters = widgetControllerDescriptor.typeParameters;
-          widgetInfo.actionSources = widgetControllerDescriptor.actionSources;
-          widgetInfo.widgetTypeFunction = widgetControllerDescriptor.widgetTypeFunction;
-          this.widgetService.putWidgetInfoToCache(widgetInfo);
-          if (widgetInfoSubject) {
-            widgetInfoSubject.next(widgetInfo);
-            widgetInfoSubject.complete();
-          }
-          this.resolveWidgetsInfoFetchQueue(widgetInfo.fullFqn, widgetInfo);
+    this.createWidgetControllerDescriptor(widgetInfo).subscribe(
+      {
+        next: widgetControllerDescriptor => {
+          const widgetNamespace = `widget-type-${widgetInfo.fullFqn.replace(/\./g, '-')}`;
+          this.loadWidgetResources(widgetInfo, widgetNamespace, [SharedModule, WidgetComponentsModule, this.homeComponentsModule]).subscribe(
+            {
+              next: () => {
+                if (widgetControllerDescriptor.settingsForm) {
+                  widgetInfo.typeSettingsForm = widgetControllerDescriptor.settingsForm;
+                }
+                if (widgetControllerDescriptor.dataKeySettingsForm) {
+                  widgetInfo.typeDataKeySettingsForm = widgetControllerDescriptor.dataKeySettingsForm;
+                }
+                if (widgetControllerDescriptor.latestDataKeySettingsForm) {
+                  widgetInfo.typeLatestDataKeySettingsForm = widgetControllerDescriptor.latestDataKeySettingsForm;
+                }
+                widgetInfo.typeParameters = widgetControllerDescriptor.typeParameters;
+                widgetInfo.actionSources = widgetControllerDescriptor.actionSources;
+                widgetInfo.widgetTypeFunction = widgetControllerDescriptor.widgetTypeFunction;
+                this.widgetService.putWidgetInfoToCache(widgetInfo);
+                if (widgetInfoSubject) {
+                  widgetInfoSubject.next(widgetInfo);
+                  widgetInfoSubject.complete();
+                }
+                this.resolveWidgetsInfoFetchQueue(widgetInfo.fullFqn, widgetInfo);
+              },
+              error: (errorMessages: string[]) => {
+                this.processWidgetLoadError(errorMessages, widgetInfo.fullFqn, widgetInfoSubject);
+              }
+            }
+          );
         },
-        (errorMessages: string[]) => {
-          this.processWidgetLoadError(errorMessages, widgetInfo.fullFqn, widgetInfoSubject);
+        error: e => {
+          const details = this.utils.parseException(e);
+          const errorMessage = `Failed to compile widget script. \n Error: ${details.message}`;
+          this.processWidgetLoadError([errorMessage], widgetInfo.fullFqn, widgetInfoSubject);
         }
-      );
-    }
+      }
+    );
   }
 
   private loadWidgetResources(widgetInfo: WidgetInfo, widgetNamespace: string, modules?: Type<any>[]): Observable<any> {
     this.cssParser.cssPreviewNamespace = widgetNamespace;
     this.cssParser.createStyleElement(widgetNamespace, widgetInfo.templateCss);
     const resourceTasks: Observable<string>[] = [];
-    const modulesTasks: Observable<ModulesWithFactories | string>[] = [];
+    const modulesTasks: Observable<ModulesWithComponents | string>[] = [];
     if (widgetInfo.resources.length > 0) {
       widgetInfo.resources.filter(r => r.isModule).forEach(
         (resource) => {
           modulesTasks.push(
-            this.resources.loadFactories(resource.url, this.modulesMap).pipe(
+            this.resources.loadModulesWithComponents(resource.url, this.modulesMap).pipe(
               catchError((e: Error) => of(e?.message ? e.message : `Failed to load widget resource module: '${resource.url}'`))
             )
           );
@@ -345,7 +364,7 @@ export class WidgetComponentService {
       }
     );
 
-    let modulesObservable: Observable<string | ModulesWithFactories>;
+    let modulesObservable: Observable<string | ModulesWithComponents>;
     if (modulesTasks.length) {
       modulesObservable = forkJoin(modulesTasks).pipe(
         map(res => {
@@ -353,20 +372,13 @@ export class WidgetComponentService {
           if (msg) {
             return msg as string;
           } else {
-            const modulesWithFactoriesList = res as ModulesWithFactories[];
-            const resModulesWithFactories: ModulesWithFactories = {
-              modules: modulesWithFactoriesList.map(mf => mf.modules).flat(),
-              factories: modulesWithFactoriesList.map(mf => mf.factories).flat()
-            };
-            if (modules && modules.length) {
-              resModulesWithFactories.modules = resModulesWithFactories.modules.concat(modules);
-            }
-            return resModulesWithFactories;
+            const modulesWithComponentsList = res as ModulesWithComponents[];
+            return flatModulesWithComponents(modulesWithComponentsList);
           }
         })
       );
     } else {
-      modulesObservable = modules && modules.length ? of({modules, factories: []}) : of({modules: [], factories: []});
+      modulesObservable = of({modules: [], standaloneComponents: []});
     }
 
     resourceTasks.push(
@@ -375,15 +387,18 @@ export class WidgetComponentService {
           if (typeof resolvedModules === 'string') {
             return of(resolvedModules);
           } else {
-            this.registerWidgetSettingsForms(widgetInfo, resolvedModules.factories);
+            this.registerWidgetSettingsForms(widgetInfo, resolvedModules);
+            let imports = modulesWithComponentsToTypes(resolvedModules);
+            if (modules && modules.length) {
+              imports = imports.concat(modules);
+            }
             return this.dynamicComponentFactoryService.createDynamicComponent(
               class DynamicWidgetComponentInstance extends DynamicWidgetComponent {},
               widgetInfo.templateHtml,
-              resolvedModules.modules
+              imports
             ).pipe(
-              map((componentData) => {
-                widgetInfo.componentType = componentData.componentType;
-                widgetInfo.componentModuleRef = componentData.componentModuleRef;
+              map((componentType) => {
+                widgetInfo.componentType = componentType;
                 return null;
               }),
               catchError(e => {
@@ -402,7 +417,7 @@ export class WidgetComponentService {
             errors = msgs.filter(msg => msg && msg.length > 0);
           }
           if (errors && errors.length) {
-            return throwError(errors);
+            return throwError(() => errors);
           } else {
             return of(null);
           }
@@ -410,7 +425,7 @@ export class WidgetComponentService {
     ));
   }
 
-  private registerWidgetSettingsForms(widgetInfo: WidgetInfo, factories: ComponentFactory<any>[]) {
+  private registerWidgetSettingsForms(widgetInfo: WidgetInfo, modulesWithComponents: ModulesWithComponents) {
     const directives: string[] = [];
     const basicDirectives: string[] = [];
     if (widgetInfo.settingsDirective && widgetInfo.settingsDirective.length) {
@@ -426,21 +441,31 @@ export class WidgetComponentService {
       basicDirectives.push(widgetInfo.basicModeDirective);
     }
 
-    this.expandSettingComponentMap(widgetSettingsComponentsMap, directives, factories);
-    this.expandSettingComponentMap(basicWidgetConfigComponentsMap, basicDirectives, factories);
+    this.expandSettingComponentMap(this.widgetService.putWidgetSettingsComponentToMap.bind(this.widgetService), directives, modulesWithComponents);
+    this.expandSettingComponentMap(this.widgetService.putBasicWidgetSettingsComponentToMap.bind(this.widgetService), basicDirectives, modulesWithComponents);
   }
 
-  private expandSettingComponentMap(settingsComponentsMap: {[key: string]: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>},
-                                    directives: string[], factories: ComponentFactory<any>[]): void {
+  private expandSettingComponentMap(putComponentToMap: (selector: string, comp: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>) => void,
+                                    directives: string[], modulesWithComponents: ModulesWithComponents): void {
     if (directives.length) {
-      factories.filter((factory) => directives.includes(factory.selector))
-        .forEach((foundFactory) => {
-          settingsComponentsMap[foundFactory.selector] = foundFactory.componentType;
-        });
+      directives.forEach(selector => {
+        const compType = componentTypeBySelector(modulesWithComponents, selector);
+        if (compType) {
+          putComponentToMap(selector, compType);
+        }
+      });
     }
   }
 
-  private createWidgetControllerDescriptor(widgetInfo: WidgetInfo): WidgetControllerDescriptor {
+  private createWidgetControllerDescriptor(widgetInfo: WidgetInfo): Observable<WidgetControllerDescriptor> {
+    let controllerBody: string;
+    let modules: {[alias: string]: string} = null;
+    if (typeof widgetInfo.controllerScript === 'string') {
+      controllerBody = widgetInfo.controllerScript;
+    } else {
+      controllerBody = widgetInfo.controllerScript.body;
+      modules = widgetInfo.controllerScript.modules;
+    }
     let widgetTypeFunctionBody = `return function _${widgetInfo.fullFqn.replace(/\./g, '_')} (ctx) {\n` +
       '    var self = this;\n' +
       '    self.ctx = ctx;\n\n'; /*+
@@ -487,12 +512,23 @@ export class WidgetComponentService {
 
          '    }\n\n' +
 
-         '    self.getSettingsSchema = function() {\n\n' +
-
+         '    self.getSettingsForm = function() {\n\n' +
+                return [
+                  {
+                    'id': 'testProp',
+                    'name': 'Test property',
+                    'type': 'text',
+                    'default': 'Default value'
+                  }
+                ];
          '    }\n\n' +
 
-         '    self.getDataKeySettingsSchema = function() {\n\n' +
+         '    self.getDataKeySettingsForm = function() {\n\n' +
+                return [];
+         '    }\n\n' +
 
+         '    self.getLatestDataKeySettingsForm = function() {\n\n' +
+                return [];
          '    }\n\n' +
 
          '    self.onDestroy = function() {\n\n' +
@@ -500,113 +536,158 @@ export class WidgetComponentService {
          '    }\n\n' +
          '}';*/
 
-    widgetTypeFunctionBody += widgetInfo.controllerScript;
+    widgetTypeFunctionBody += controllerBody;
     widgetTypeFunctionBody += '\n};\n';
 
-    try {
-
-      const widgetTypeFunction = new Function(widgetTypeFunctionBody);
-      const widgetType = widgetTypeFunction.apply(this);
-      const widgetTypeInstance: WidgetTypeInstance = new widgetType();
-      const result: WidgetControllerDescriptor = {
-        widgetTypeFunction: widgetType
-      };
-      if (isFunction(widgetTypeInstance.getSettingsSchema)) {
-        result.settingsSchema = widgetTypeInstance.getSettingsSchema();
+    let tbWidgetTypeFunction: TbFunction;
+    if (modules && Object.keys(modules).length) {
+      tbWidgetTypeFunction = {
+        body: widgetTypeFunctionBody,
+        modules
       }
-      if (isFunction(widgetTypeInstance.getDataKeySettingsSchema)) {
-        result.dataKeySettingsSchema = widgetTypeInstance.getDataKeySettingsSchema();
-      }
-      if (isFunction(widgetTypeInstance.getLatestDataKeySettingsSchema)) {
-        result.latestDataKeySettingsSchema = widgetTypeInstance.getLatestDataKeySettingsSchema();
-      }
-      if (isFunction(widgetTypeInstance.typeParameters)) {
-        result.typeParameters = widgetTypeInstance.typeParameters();
-      } else {
-        result.typeParameters = {};
-      }
-      if (isFunction(widgetTypeInstance.useCustomDatasources)) {
-        result.typeParameters.useCustomDatasources = widgetTypeInstance.useCustomDatasources();
-      } else {
-        result.typeParameters.useCustomDatasources = false;
-      }
-      if (isUndefined(result.typeParameters.hasDataPageLink)) {
-        result.typeParameters.hasDataPageLink = false;
-      }
-      if (isUndefined(result.typeParameters.maxDatasources)) {
-        result.typeParameters.maxDatasources = -1;
-      }
-      if (isUndefined(result.typeParameters.maxDataKeys)) {
-        result.typeParameters.maxDataKeys = -1;
-      }
-      if (isUndefined(result.typeParameters.singleEntity)) {
-        result.typeParameters.singleEntity = false;
-      }
-      if (isUndefined(result.typeParameters.hasAdditionalLatestDataKeys)) {
-        result.typeParameters.hasAdditionalLatestDataKeys = false;
-      }
-      if (isUndefined(result.typeParameters.warnOnPageDataOverflow)) {
-        result.typeParameters.warnOnPageDataOverflow = true;
-      }
-      if (isUndefined(result.typeParameters.ignoreDataUpdateOnIntervalTick)) {
-        result.typeParameters.ignoreDataUpdateOnIntervalTick = false;
-      }
-      if (isUndefined(result.typeParameters.dataKeysOptional)) {
-        result.typeParameters.dataKeysOptional = false;
-      }
-      if (isUndefined(result.typeParameters.datasourcesOptional)) {
-        result.typeParameters.datasourcesOptional = false;
-      }
-      if (isUndefined(result.typeParameters.stateData)) {
-        result.typeParameters.stateData = false;
-      }
-      if (isUndefined(result.typeParameters.processNoDataByWidget)) {
-        result.typeParameters.processNoDataByWidget = false;
-      }
-      if (isUndefined(result.typeParameters.previewWidth)) {
-        result.typeParameters.previewWidth = '100%';
-      }
-      if (isUndefined(result.typeParameters.previewHeight)) {
-        result.typeParameters.previewHeight = '70%';
-      }
-      if (isUndefined(result.typeParameters.embedTitlePanel)) {
-        result.typeParameters.embedTitlePanel = false;
-      }
-      if (isUndefined(result.typeParameters.overflowVisible)) {
-        result.typeParameters.overflowVisible = false;
-      }
-      if (isUndefined(result.typeParameters.hideDataSettings)) {
-        result.typeParameters.hideDataSettings = false;
-      }
-      if (!isFunction(result.typeParameters.defaultDataKeysFunction)) {
-        result.typeParameters.defaultDataKeysFunction = null;
-      }
-      if (!isFunction(result.typeParameters.defaultLatestDataKeysFunction)) {
-        result.typeParameters.defaultLatestDataKeysFunction = null;
-      }
-      if (!isFunction(result.typeParameters.dataKeySettingsFunction)) {
-        result.typeParameters.dataKeySettingsFunction = null;
-      }
-      if (isUndefined(result.typeParameters.displayRpcMessageToast)) {
-        result.typeParameters.displayRpcMessageToast = true;
-      }
-      if (isUndefined(result.typeParameters.targetDeviceOptional)) {
-        result.typeParameters.targetDeviceOptional = false;
-      }
-      if (isFunction(widgetTypeInstance.actionSources)) {
-        result.actionSources = widgetTypeInstance.actionSources();
-      } else {
-        result.actionSources = {};
-      }
-      for (const actionSourceId of Object.keys(widgetActionSources)) {
-        result.actionSources[actionSourceId] = {...widgetActionSources[actionSourceId]};
-        result.actionSources[actionSourceId].name = this.translate.instant(result.actionSources[actionSourceId].name);
-      }
-      return result;
-    } catch (e) {
-      this.utils.processWidgetException(e);
-      throw e;
+    } else {
+      tbWidgetTypeFunction = widgetTypeFunctionBody;
     }
+
+    return compileTbFunction(this.http, tbWidgetTypeFunction).pipe(
+      map((compiled) => {
+        const widgetType = compiled.apply(this);
+        const widgetTypeInstance: WidgetTypeInstance = new widgetType();
+        const result: WidgetControllerDescriptor = {
+          widgetTypeFunction: widgetType
+        };
+        if (isFunction(widgetTypeInstance.getSettingsForm)) {
+          result.settingsForm = widgetTypeInstance.getSettingsForm();
+        }
+        if (isFunction(widgetTypeInstance.getDataKeySettingsForm)) {
+          result.dataKeySettingsForm = widgetTypeInstance.getDataKeySettingsForm();
+        }
+        if (isFunction(widgetTypeInstance.getLatestDataKeySettingsForm)) {
+          result.latestDataKeySettingsForm = widgetTypeInstance.getLatestDataKeySettingsForm();
+        }
+
+        /** Start migrate from old JSON Schema Form **/
+
+        if (isFunction((widgetTypeInstance as any).getSettingsSchema) && !result.settingsForm?.length) {
+          const settingsSchema = (widgetTypeInstance as any).getSettingsSchema();
+          result.settingsForm = jsonFormSchemaToFormProperties(settingsSchema);
+        }
+        if (isFunction((widgetTypeInstance as any).getDataKeySettingsSchema) && !result.dataKeySettingsForm?.length) {
+          const dataKeySettingsSchema = (widgetTypeInstance as any).getDataKeySettingsSchema();
+          result.dataKeySettingsForm = jsonFormSchemaToFormProperties(dataKeySettingsSchema);
+        }
+        if (isFunction((widgetTypeInstance as any).getLatestDataKeySettingsSchema) && !result.latestDataKeySettingsForm?.length) {
+          const latestDataKeySettingsSchema = (widgetTypeInstance as any).getLatestDataKeySettingsSchema();
+          result.latestDataKeySettingsForm = jsonFormSchemaToFormProperties(latestDataKeySettingsSchema);
+        }
+
+        /** End migrate from old JSON Schema Form **/
+
+        if (isFunction(widgetTypeInstance.typeParameters)) {
+          result.typeParameters = widgetTypeInstance.typeParameters();
+        } else {
+          result.typeParameters = {};
+        }
+        if (isFunction(widgetTypeInstance.useCustomDatasources)) {
+          result.typeParameters.useCustomDatasources = widgetTypeInstance.useCustomDatasources();
+        } else {
+          result.typeParameters.useCustomDatasources = false;
+        }
+        if (isUndefined(result.typeParameters.hasDataPageLink)) {
+          result.typeParameters.hasDataPageLink = false;
+        }
+        if (isUndefined(result.typeParameters.maxDatasources)) {
+          result.typeParameters.maxDatasources = -1;
+        }
+        if (isUndefined(result.typeParameters.maxDataKeys)) {
+          result.typeParameters.maxDataKeys = -1;
+        }
+        if (isUndefined(result.typeParameters.singleEntity)) {
+          result.typeParameters.singleEntity = false;
+        }
+        if (isUndefined(result.typeParameters.hasAdditionalLatestDataKeys)) {
+          result.typeParameters.hasAdditionalLatestDataKeys = false;
+        }
+        if (isUndefined(result.typeParameters.warnOnPageDataOverflow)) {
+          result.typeParameters.warnOnPageDataOverflow = true;
+        }
+        if (isUndefined(result.typeParameters.ignoreDataUpdateOnIntervalTick)) {
+          result.typeParameters.ignoreDataUpdateOnIntervalTick = false;
+        }
+        if (isUndefined(result.typeParameters.dataKeysOptional)) {
+          result.typeParameters.dataKeysOptional = false;
+        }
+        if (isUndefined(result.typeParameters.datasourcesOptional)) {
+          result.typeParameters.datasourcesOptional = false;
+        }
+        if (isUndefined(result.typeParameters.stateData)) {
+          result.typeParameters.stateData = false;
+        }
+        if (isUndefined(result.typeParameters.processNoDataByWidget)) {
+          result.typeParameters.processNoDataByWidget = false;
+        }
+        if (isUndefined(result.typeParameters.previewWidth)) {
+          result.typeParameters.previewWidth = '100%';
+        }
+        if (isUndefined(result.typeParameters.previewHeight)) {
+          result.typeParameters.previewHeight = '70%';
+        }
+        if (isUndefined(result.typeParameters.embedTitlePanel)) {
+          result.typeParameters.embedTitlePanel = false;
+        }
+        if (isUndefined(result.typeParameters.embedActionsPanel)) {
+          result.typeParameters.embedActionsPanel = false;
+        }
+        if (isUndefined(result.typeParameters.overflowVisible)) {
+          result.typeParameters.overflowVisible = false;
+        }
+        if (isUndefined(result.typeParameters.hideDataTab)) {
+          result.typeParameters.hideDataTab = false;
+        }
+        if (isUndefined(result.typeParameters.hideDataSettings)) {
+          result.typeParameters.hideDataSettings = false;
+        }
+        if (!isFunction(result.typeParameters.defaultDataKeysFunction)) {
+          result.typeParameters.defaultDataKeysFunction = null;
+        }
+        if (!isFunction(result.typeParameters.defaultLatestDataKeysFunction)) {
+          result.typeParameters.defaultLatestDataKeysFunction = null;
+        }
+        if (!isFunction(result.typeParameters.dataKeySettingsFunction)) {
+          result.typeParameters.dataKeySettingsFunction = null;
+        }
+        if (isUndefined(result.typeParameters.displayRpcMessageToast)) {
+          result.typeParameters.displayRpcMessageToast = true;
+        }
+        if (isUndefined(result.typeParameters.targetDeviceOptional)) {
+          result.typeParameters.targetDeviceOptional = false;
+        }
+        if (isUndefined(result.typeParameters.supportsUnitConversion)) {
+          result.typeParameters.supportsUnitConversion = false;
+        }
+        if (isDefinedAndNotNull(result.typeParameters.additionalWidgetActionTypes)) {
+          if (Array.isArray(result.typeParameters.additionalWidgetActionTypes)) {
+            result.typeParameters.additionalWidgetActionTypes = result.typeParameters.additionalWidgetActionTypes.filter(type => WidgetActionType[type]);
+          } else {
+            result.typeParameters.additionalWidgetActionTypes = null;
+          }
+        }
+        if (isFunction(widgetTypeInstance.actionSources)) {
+          result.actionSources = widgetTypeInstance.actionSources();
+        } else {
+          result.actionSources = {};
+        }
+        for (const actionSourceId of Object.keys(widgetActionSources)) {
+          result.actionSources[actionSourceId] = {...widgetActionSources[actionSourceId]};
+          result.actionSources[actionSourceId].name = this.translate.instant(result.actionSources[actionSourceId].name);
+        }
+        return result;
+      }),
+      catchError((e) => {
+        this.utils.processWidgetException(e);
+        return throwError(() => e);
+      })
+    );
   }
 
   private processWidgetLoadError(errorMessages: string[], fullFqn: string, widgetInfoSubject: Subject<WidgetInfo>) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.asset;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -36,7 +37,7 @@ import java.util.UUID;
  * The Interface AssetDao.
  *
  */
-public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityDao<AssetId, Asset> {
+public interface AssetDao extends Dao<Asset>, TenantEntityDao<Asset>, ExportableEntityDao<AssetId, Asset> {
 
     /**
      * Find asset info by id.
@@ -102,6 +103,16 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
      * @return the list of asset info objects
      */
     PageData<AssetInfo> findAssetInfosByTenantIdAndAssetProfileId(UUID tenantId, UUID assetProfileId, PageLink pageLink);
+
+    /**
+     * Find asset ids by tenantId, assetProfileId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param assetProfileId the assetProfileId
+     * @param pageLink the page link
+     * @return the list of asset objects
+     */
+    PageData<AssetId> findAssetIdsByTenantIdAndAssetProfileId(UUID tenantId, UUID assetProfileId, PageLink pageLink);
 
     /**
      * Find assets by tenantId and assets Ids.
@@ -226,4 +237,9 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
     PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink);
 
     PageData<TbPair<UUID, String>> getAllAssetTypes(PageLink pageLink);
+
+    PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink);
+
+    PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink);
+
 }

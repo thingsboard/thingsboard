@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,9 +80,7 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         Customer customer = checkCustomerId(customerId, Operation.READ);
-        if (!customer.getAdditionalInfo().isNull()) {
-            processDashboardIdFromAdditionalInfo((ObjectNode) customer.getAdditionalInfo(), HOME_DASHBOARD);
-        }
+        checkDashboardInfo(customer.getAdditionalInfo(), HOME_DASHBOARD);
         return customer;
     }
 
@@ -181,7 +179,8 @@ public class CustomerController extends BaseController {
     public Customer getTenantCustomer(
             @Parameter(description = "A string value representing the Customer title.")
             @RequestParam String customerTitle) throws ThingsboardException {
-            TenantId tenantId = getCurrentUser().getTenantId();
+        TenantId tenantId = getCurrentUser().getTenantId();
         return checkNotNull(customerService.findCustomerByTenantIdAndTitle(tenantId, customerTitle), "Customer with title [" + customerTitle + "] is not found");
     }
+
 }

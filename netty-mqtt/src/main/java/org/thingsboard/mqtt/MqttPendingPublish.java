@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,13 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.Promise;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.function.Consumer;
 
+@Getter(AccessLevel.PACKAGE)
 final class MqttPendingPublish {
 
     private final int messageId;
@@ -32,80 +36,126 @@ final class MqttPendingPublish {
     private final MqttPublishMessage message;
     private final MqttQoS qos;
 
+    @Getter(AccessLevel.NONE)
     private final RetransmissionHandler<MqttPublishMessage> publishRetransmissionHandler;
+    @Getter(AccessLevel.NONE)
     private final RetransmissionHandler<MqttMessage> pubrelRetransmissionHandler;
 
+    @Setter(AccessLevel.PACKAGE)
     private boolean sent = false;
 
-    MqttPendingPublish(int messageId, Promise<Void> future, ByteBuf payload, MqttPublishMessage message, MqttQoS qos, PendingOperation operation) {
+    private MqttPendingPublish(
+            int messageId,
+            Promise<Void> future,
+            ByteBuf payload,
+            MqttPublishMessage message,
+            MqttQoS qos,
+            String ownerId,
+            MqttClientConfig.RetransmissionConfig retransmissionConfig,
+            PendingOperation pendingOperation
+    ) {
         this.messageId = messageId;
         this.future = future;
         this.payload = payload;
         this.message = message;
         this.qos = qos;
 
-        this.publishRetransmissionHandler = new RetransmissionHandler<>(operation);
-        this.publishRetransmissionHandler.setOriginalMessage(message);
-        this.pubrelRetransmissionHandler = new RetransmissionHandler<>(operation);
-    }
-
-    int getMessageId() {
-        return messageId;
-    }
-
-    Promise<Void> getFuture() {
-        return future;
-    }
-
-    ByteBuf getPayload() {
-        return payload;
-    }
-
-    boolean isSent() {
-        return sent;
-    }
-
-    void setSent(boolean sent) {
-        this.sent = sent;
-    }
-
-    MqttPublishMessage getMessage() {
-        return message;
-    }
-
-    MqttQoS getQos() {
-        return qos;
+        publishRetransmissionHandler = new RetransmissionHandler<>(retransmissionConfig, pendingOperation, ownerId);
+        publishRetransmissionHandler.setOriginalMessage(message);
+        pubrelRetransmissionHandler = new RetransmissionHandler<>(retransmissionConfig, pendingOperation, ownerId);
     }
 
     void startPublishRetransmissionTimer(EventLoop eventLoop, Consumer<Object> sendPacket) {
-        this.publishRetransmissionHandler.setHandle(((fixedHeader, originalMessage) ->
-                sendPacket.accept(new MqttPublishMessage(fixedHeader, originalMessage.variableHeader(), this.payload.retain()))));
-        this.publishRetransmissionHandler.start(eventLoop);
+        publishRetransmissionHandler.setHandler(((fixedHeader, originalMessage) ->
+                sendPacket.accept(new MqttPublishMessage(fixedHeader, originalMessage.variableHeader(), payload.retain()))));
+        publishRetransmissionHandler.start(eventLoop);
     }
 
     void onPubackReceived() {
-        this.publishRetransmissionHandler.stop();
+        publishRetransmissionHandler.stop();
     }
 
     void setPubrelMessage(MqttMessage pubrelMessage) {
-        this.pubrelRetransmissionHandler.setOriginalMessage(pubrelMessage);
+        pubrelRetransmissionHandler.setOriginalMessage(pubrelMessage);
     }
 
     void startPubrelRetransmissionTimer(EventLoop eventLoop, Consumer<Object> sendPacket) {
-        this.pubrelRetransmissionHandler.setHandle((fixedHeader, originalMessage) ->
+        pubrelRetransmissionHandler.setHandler((fixedHeader, originalMessage) ->
                 sendPacket.accept(new MqttMessage(fixedHeader, originalMessage.variableHeader())));
-        this.pubrelRetransmissionHandler.start(eventLoop);
+        pubrelRetransmissionHandler.start(eventLoop);
     }
 
     void onPubcompReceived() {
-        this.pubrelRetransmissionHandler.stop();
+        pubrelRetransmissionHandler.stop();
     }
 
     void onChannelClosed() {
-        this.publishRetransmissionHandler.stop();
-        this.pubrelRetransmissionHandler.stop();
+        publishRetransmissionHandler.stop();
+        pubrelRetransmissionHandler.stop();
         if (payload != null) {
             payload.release();
         }
     }
+
+    static Builder builder() {
+        return new Builder();
+    }
+
+    static class Builder {
+
+        private int messageId;
+        private Promise<Void> future;
+        private ByteBuf payload;
+        private MqttPublishMessage message;
+        private MqttQoS qos;
+        private String ownerId;
+        private MqttClientConfig.RetransmissionConfig retransmissionConfig;
+        private PendingOperation pendingOperation;
+
+        Builder messageId(int messageId) {
+            this.messageId = messageId;
+            return this;
+        }
+
+        Builder future(Promise<Void> future) {
+            this.future = future;
+            return this;
+        }
+
+        Builder payload(ByteBuf payload) {
+            this.payload = payload;
+            return this;
+        }
+
+        Builder message(MqttPublishMessage message) {
+            this.message = message;
+            return this;
+        }
+
+        Builder qos(MqttQoS qos) {
+            this.qos = qos;
+            return this;
+        }
+
+        Builder ownerId(String ownerId) {
+            this.ownerId = ownerId;
+            return this;
+        }
+
+        Builder retransmissionConfig(MqttClientConfig.RetransmissionConfig retransmissionConfig) {
+            this.retransmissionConfig = retransmissionConfig;
+            return this;
+        }
+
+        Builder pendingOperation(PendingOperation pendingOperation) {
+            this.pendingOperation = pendingOperation;
+            return this;
+        }
+
+        MqttPendingPublish build() {
+            return new MqttPendingPublish(messageId, future, payload, message, qos, ownerId, retransmissionConfig, pendingOperation);
+        }
+
+    }
+
 }

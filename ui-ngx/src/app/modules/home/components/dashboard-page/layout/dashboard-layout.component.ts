@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import { map } from 'rxjs/operators';
 import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 import { BreakpointId, LayoutType, ViewFormatType } from '@shared/models/dashboard.models';
 import { isNotEmptyStr } from '@core/utils';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -109,10 +110,6 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtx.gridSettings.mobileRowHeight;
   }
 
-  get colWidthInteger(): boolean {
-    return this.isScada;
-  }
-
   get columns(): number {
     return this.layoutCtx.gridSettings.minColumns || this.layoutCtx.gridSettings.columns || 24;
   }
@@ -177,66 +174,71 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
 
   private initHotKeys(): void {
     this.hotKeys.push(
-      new Hotkey('ctrl+c', (event: KeyboardEvent) => {
+      new Hotkey(['ctrl+c', 'meta+c'], (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();
               this.copyWidget(event, widget);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.copy'))
     );
     this.hotKeys.push(
-      new Hotkey('ctrl+r', (event: KeyboardEvent) => {
+      new Hotkey(['ctrl+r', 'meta+r'], (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();
               this.copyWidgetReference(event, widget);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.copy-reference'))
     );
     this.hotKeys.push(
-      new Hotkey('ctrl+v', (event: KeyboardEvent) => {
+      new Hotkey(['ctrl+v', 'meta+v'], (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             if (this.itembuffer.hasWidget()) {
               event.preventDefault();
               this.pasteWidget(event);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.paste'))
     );
     this.hotKeys.push(
-      new Hotkey('ctrl+i', (event: KeyboardEvent) => {
+      new Hotkey(['ctrl+i', 'meta+i'], (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             if (this.itembuffer.canPasteWidgetReference(this.dashboardCtx.getDashboard(),
               this.dashboardCtx.state, this.layoutCtx.id, this.layoutCtx.breakpoint)) {
               event.preventDefault();
               this.pasteWidgetReference(event);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.paste-reference'))
     );
     this.hotKeys.push(
-      new Hotkey('ctrl+x', (event: KeyboardEvent) => {
+      new Hotkey(['ctrl+x', 'meta+x'], (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();
               this.layoutCtx.dashboardCtrl.removeWidget(event, this.layoutCtx, widget);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.delete'))
     );
@@ -323,12 +325,12 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.layoutCtx.dashboardCtrl.copyWidgetReference($event, this.layoutCtx, widget);
   }
 
-  pasteWidget($event: Event) {
+  pasteWidget($event: TbContextMenuEvent | KeyboardEvent) {
     const pos = this.dashboard.getEventGridPosition($event);
     this.layoutCtx.dashboardCtrl.pasteWidget($event, this.layoutCtx, pos);
   }
 
-  pasteWidgetReference($event: Event) {
+  pasteWidgetReference($event: TbContextMenuEvent | KeyboardEvent) {
     const pos = this.dashboard.getEventGridPosition($event);
     this.layoutCtx.dashboardCtrl.pasteWidgetReference($event, this.layoutCtx, pos);
   }

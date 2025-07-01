@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.service.ttl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -66,7 +67,7 @@ public class AlarmsCleanUpService {
             try {
                 cleanUp(tenantId);
             } catch (Exception e) {
-                log.warn("Failed to clean up alarms by ttl for tenant {}", tenantId, e);
+                getLogger().warn("Failed to clean up alarms by ttl for tenant {}", tenantId, e);
             }
         }
     }
@@ -105,8 +106,13 @@ public class AlarmsCleanUpService {
         alarmService.delAlarmTypes(tenantId, typesToRemove);
 
         if (totalRemoved > 0) {
-            log.info("Removed {} outdated alarm(s) for tenant {} older than {}", totalRemoved, tenantId, new Date(expirationTime));
+            getLogger().info("Removed {} outdated alarm(s) for tenant {} older than {}", totalRemoved, tenantId, new Date(expirationTime));
         }
+    }
+
+    // wrapper for tests to spy on static logger
+    Logger getLogger() {
+        return log;
     }
 
 }

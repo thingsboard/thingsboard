@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
@@ -86,7 +86,7 @@ export interface OtaPagesIds {
   softwareId?: OtaPackageId;
 }
 
-export interface OtaPackageInfo extends BaseData<OtaPackageId>, HasTenantId {
+export interface OtaPackageInfo extends Omit<BaseData<OtaPackageId>, 'label'>, HasTenantId, ExportableEntity<OtaPackageId> {
   tenantId?: TenantId;
   type: OtaUpdateType;
   deviceProfileId?: DeviceProfileId;

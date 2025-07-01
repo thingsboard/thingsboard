@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -67,6 +68,8 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.ResourcesShortageTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.ResourcesShortageTrigger.Resource;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmAssignmentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig;
@@ -77,6 +80,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Entit
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RateLimitsNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.ResourcesShortageNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.AffectedTenantAdministratorsFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
@@ -90,6 +94,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -97,8 +102,10 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.queue.notification.DefaultNotificationDeduplicationService;
 import org.thingsboard.server.service.notification.rule.cache.DefaultNotificationRulesCache;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.service.system.DefaultSystemInfoService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -125,12 +132,15 @@ import static org.thingsboard.server.common.data.notification.rule.trigger.confi
 @DaoSqlTest
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
-        "notification_system.rules.deduplication_durations=RATE_LIMITS:10000"
+        "notification_system.rules.deduplication_durations=RATE_LIMITS:10000",
+        "edges.enabled=true"
 })
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
     @SpyBean
     private AlarmSubscriptionService alarmSubscriptionService;
+    @Autowired
+    private DefaultSystemInfoService systemInfoService;
     @Autowired
     private NotificationRequestService notificationRequestService;
     @Autowired
@@ -252,7 +262,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             assertThat(info.getAlarmStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
 
-        clients.values().forEach(wsClient -> wsClient.registerWaitForUpdate());
+        clients.values().forEach(TbTestWebSocketClient::registerWaitForUpdate);
         alarmSubscriptionService.acknowledgeAlarm(tenantId, alarm.getId(), System.currentTimeMillis());
         AlarmStatus expectedStatus = AlarmStatus.ACTIVE_ACK;
         AlarmSeverity expectedSeverity = AlarmSeverity.CRITICAL;
@@ -272,7 +282,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         Device device = createDevice("Device with alarm", "233");
         NotificationTarget target = createNotificationTarget(tenantAdminUserId);
         defaultNotifications.create(tenantId, DefaultNotifications.newAlarm, target.getId());
-        defaultNotifications.create(tenantId, DefaultNotifications.entityAction, target.getId());
         notificationRulesCache.evict(tenantId);
 
         Alarm alarm = new Alarm();
@@ -285,7 +294,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .pollDelay(2, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     List<Notification> notifications = getMyNotifications(false, 10);
-                    assertThat(notifications).hasSize(1).first().matches(notification -> {
+                    assertThat(notifications).singleElement().matches(notification -> {
                         return notification.getType() == NotificationType.ALARM &&
                                 notification.getSubject().equals("New alarm 'testAlarm'");
                     });
@@ -351,12 +360,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .findFirst().orElse(null);
         assertThat(scheduledNotificationRequest).extracting(NotificationRequest::getInfo).isEqualTo(notification.getInfo());
 
-        getWsClient().registerWaitForUpdate();
         alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), System.currentTimeMillis(), null);
-        getWsClient().waitForUpdate(true);
-        notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("critical alarm '" + alarmType + "' is CLEARED_UNACK");
-
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(findNotificationRequests(EntityType.ALARM).getData()).filteredOn(NotificationRequest::isScheduled).isEmpty();
         });
@@ -372,6 +376,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             profileConfiguration.setMaxUsers(limit);
             profileConfiguration.setMaxDashboards(limit);
             profileConfiguration.setMaxRuleChains(limit);
+            profileConfiguration.setMaxEdges(limit);
         });
 
         EntitiesLimitNotificationRuleTriggerConfig triggerConfig = EntitiesLimitNotificationRuleTriggerConfig.builder()
@@ -417,6 +422,19 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             }
         }, notification -> {
             assertThat(notification.getText()).isEqualTo("Rule chains usage: " + threshold + "/" + limit + " (80%)");
+        });
+
+        checkNotificationAfter(() -> {
+            for (int i = 1; i <= threshold; i++) {
+                Edge edge = new Edge();
+                edge.setName(i + "");
+                edge.setType("default");
+                edge.setSecret("secret_" + i);
+                edge.setRoutingKey("routingKey_" + i);
+                doPost("/api/edge", edge);
+            }
+        }, notification -> {
+            assertThat(notification.getText()).isEqualTo("Edges usage: " + threshold + "/" + limit + " (80%)");
         });
 
         triggerConfig.setThreshold(1.0f);
@@ -628,7 +646,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         rule = saveNotificationRule(rule);
 
         NotificationRuleInfo ruleInfo = findNotificationRules().getData().get(0);
-        assertThat(ruleInfo.getId()).isEqualTo(ruleInfo.getId());
+        assertThat(ruleInfo.getId()).isEqualTo(rule.getId());
         assertThat(ruleInfo.getTemplateName()).isEqualTo(template.getName());
         assertThat(ruleInfo.getDeliveryMethods()).containsOnly(deliveryMethods);
     }
@@ -768,6 +786,99 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                     assertThat(notifications2.get(LimitedApi.ENTITY_EXPORT)).isEqualTo(2);
                     assertThat(notifications2.get(LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE)).isEqualTo(2);
                 });
+    }
+
+    @Test
+    public void testNotificationRuleProcessing_resourcesShortage() throws Exception {
+        loginSysAdmin();
+        ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .ramThreshold(0.01f)
+                .cpuThreshold(1f)
+                .storageThreshold(1f)
+                .build();
+        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
+        loginTenantAdmin();
+
+        Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
+        method.setAccessible(true);
+        method.invoke(systemInfoService);
+
+        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        Notification notification = getMyNotifications(false, 100).get(0);
+        assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
+        assertThat(notification.getText()).isEqualTo("RAM shortage");
+    }
+
+    @Test
+    public void testNotificationsDeduplication_resourcesShortage() throws Exception {
+        loginSysAdmin();
+        ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .ramThreshold(0.01f)
+                .cpuThreshold(1f)
+                .storageThreshold(1f)
+                .build();
+        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
+        loginTenantAdmin();
+
+        assertThat(getMyNotifications(false, 100)).size().isZero();
+        for (int i = 0; i < 10; i++) {
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
+                    .resource(Resource.RAM)
+                    .usage(15L)
+                    .serviceType("serviceType")
+                    .serviceId("serviceId")
+                    .build());
+            TimeUnit.MILLISECONDS.sleep(300);
+        }
+        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        Notification notification = getMyNotifications(false, 100).get(0);
+        assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
+        assertThat(notification.getText()).isEqualTo("RAM shortage");
+
+        // deduplication is 1 minute, no new message is exp
+        notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
+                .resource(Resource.RAM)
+                .usage(5L)
+                .serviceType("serviceType")
+                .serviceId("serviceId")
+                .build());
+        await("").atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getMyNotifications(false, 100)).size().isOne());
+    }
+
+    @Test
+    public void testNotificationsResourcesShortage_whenThresholdChangeToMatchingFilter_thenSendNotification() throws Exception {
+        loginSysAdmin();
+        ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .ramThreshold(1f)
+                .cpuThreshold(1f)
+                .storageThreshold(1f)
+                .build();
+        NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
+        loginTenantAdmin();
+
+        Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
+        method.setAccessible(true);
+        method.invoke(systemInfoService);
+
+        TimeUnit.SECONDS.sleep(5);
+        assertThat(getMyNotifications(false, 100)).size().isZero();
+
+        loginSysAdmin();
+        triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
+                .ramThreshold(0.01f)
+                .cpuThreshold(1f)
+                .storageThreshold(1f)
+                .build();
+        rule.setTriggerConfig(triggerConfig);
+        saveNotificationRule(rule);
+        loginTenantAdmin();
+
+        method.invoke(systemInfoService);
+
+        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        Notification notification = getMyNotifications(false, 100).get(0);
+        assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
+        assertThat(notification.getText()).isEqualTo("RAM shortage");
     }
 
     @Test

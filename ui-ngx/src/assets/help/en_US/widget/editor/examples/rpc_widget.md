@@ -12,7 +12,7 @@ The **Widget Editor** will open, pre-populated with default **Control** template
 
 ```html
     <form #rpcForm="ngForm" (submit)="sendCommand()">
-      <div class="mat-content mat-padding" fxLayout="column">
+      <div class="mat-content mat-padding flex flex-col">
         <mat-form-field class="mat-block">
           <mat-label>RPC method</mat-label>
           <input matInput required name="rpcMethod" #rpcMethodField="ngModel" [(ngModel)]="rpcMethod"/>
@@ -40,35 +40,28 @@ The **Widget Editor** will open, pre-populated with default **Control** template
 {:copy-code}
 ```
 
- - Put the following JSON content inside the "Settings schema" tab of **Settings schema section**:
+ - Import the following JSON content inside the "Settings form" tab by clicking on 'Import form from JSON' button:
 
 ```json
-{
-    "schema": {
-        "type": "object",
-        "title": "Settings",
-        "properties": {
-            "oneWayElseTwoWay": {
-                "title": "Is One Way Command",
-                "type": "boolean",
-                "default": true
-            },
-            "requestTimeout": {
-                "title": "RPC request timeout",
-                "type": "number",
-                "default": 500
-            }
-        },
-        "required": []
-    },
-    "form": [
-        "oneWayElseTwoWay",
-        "requestTimeout"
-    ]
-}
+[
+  {
+    "id": "oneWayElseTwoWay",
+    "name": "Is One Way Command",
+    "type": "switch",
+    "default": true
+  },
+  {
+    "id": "requestTimeout",
+    "name": "RPC request timeout",
+    "type": "number",
+    "default": 500
+  }
+]
 {:copy-code}
 ```
 
+ - Clear value of 'Settings form selector' in the "Widget settings" tab. 
+   
  - Put the following JavaScript code inside the "JavaScript" section:
 
 ```javascript

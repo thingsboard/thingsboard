@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -60,7 +61,11 @@ public enum EntityType {
     QUEUE_STATS(34),
     OAUTH2_CLIENT(35),
     DOMAIN(36),
-    MOBILE_APP(37);
+    MOBILE_APP(37),
+    MOBILE_APP_BUNDLE(38),
+    CALCULATED_FIELD(39),
+    CALCULATED_FIELD_LINK(40),
+    JOB(41);
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto
@@ -73,6 +78,15 @@ public enum EntityType {
     public static final List<String> NORMAL_NAMES = EnumSet.allOf(EntityType.class).stream()
             .map(EntityType::getNormalName).toList();
 
+    private static final EntityType[] BY_PROTO;
+
+    static {
+        BY_PROTO = new EntityType[Arrays.stream(values()).mapToInt(EntityType::getProtoNumber).max().orElse(0) + 1];
+        for (EntityType entityType : values()) {
+            BY_PROTO[entityType.getProtoNumber()] = entityType;
+        }
+    }
+
     EntityType(int protoNumber) {
         this.protoNumber = protoNumber;
         this.tableName = name().toLowerCase();
@@ -81,6 +95,25 @@ public enum EntityType {
     EntityType(int protoNumber, String tableName) {
         this.protoNumber = protoNumber;
         this.tableName = tableName;
+    }
+
+    public boolean isOneOf(EntityType... types) {
+        if (types == null) {
+            return false;
+        }
+        for (EntityType type : types) {
+            if (this == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static EntityType forProtoNumber(int protoNumber) {
+        if (protoNumber < 0 || protoNumber >= BY_PROTO.length) {
+            throw new IllegalArgumentException("Invalid EntityType proto number " + protoNumber);
+        }
+        return BY_PROTO[protoNumber];
     }
 
 }

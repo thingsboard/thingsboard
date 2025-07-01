@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,32 @@
 package org.thingsboard.server.service.edge.rpc.processor.entityview;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
 public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
 
+    @Autowired
+    private DataValidator<EntityView> entityViewValidator;
+
     protected Pair<Boolean, Boolean> saveOrUpdateEntityView(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg) {
         boolean created = false;
         boolean entityViewNameUpdated = false;
-        EntityView entityView = constructEntityViewFromUpdateMsg(tenantId, entityViewId, entityViewUpdateMsg);
+        EntityView entityView = JacksonUtil.fromString(entityViewUpdateMsg.getEntity(), EntityView.class, true);
         if (entityView == null) {
             throw new RuntimeException("[{" + tenantId + "}] entityViewUpdateMsg {" + entityViewUpdateMsg + "} cannot be converted to entity view");
         }
-        EntityView entityViewById = entityViewService.findEntityViewById(tenantId, entityViewId);
+        EntityView entityViewById = edgeCtx.getEntityViewService().findEntityViewById(tenantId, entityViewId);
         if (entityViewById == null) {
             created = true;
             entityView.setId(null);
@@ -43,7 +49,7 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
             entityView.setId(entityViewId);
         }
         String entityViewName = entityView.getName();
-        EntityView entityViewByName = entityViewService.findEntityViewByTenantIdAndName(tenantId, entityViewName);
+        EntityView entityViewByName = edgeCtx.getEntityViewService().findEntityViewByTenantIdAndName(tenantId, entityViewName);
         if (entityViewByName != null && !entityViewByName.getId().equals(entityViewId)) {
             entityViewName = entityViewName + "_" + StringUtils.randomAlphanumeric(15);
             log.warn("[{}] Entity view with name {} already exists. Renaming entity view name to {}",
@@ -57,11 +63,9 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         if (created) {
             entityView.setId(entityViewId);
         }
-        entityViewService.saveEntityView(entityView, false);
+        edgeCtx.getEntityViewService().saveEntityView(entityView, false);
         return Pair.of(created, entityViewNameUpdated);
     }
-
-    protected abstract EntityView constructEntityViewFromUpdateMsg(TenantId tenantId, EntityViewId entityViewId, EntityViewUpdateMsg entityViewUpdateMsg);
 
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg);
 

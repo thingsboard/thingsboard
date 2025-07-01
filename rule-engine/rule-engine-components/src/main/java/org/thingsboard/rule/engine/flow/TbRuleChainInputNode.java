@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import java.util.UUID;
                 "then target rule chain might be resolved dynamically based on incoming message originator. " +
                 "In this case rule chain specified in the configuration will be used as fallback rule chain.<br><br>" +
                 "Output connections: <i>Any connection(s) produced by output node(s) in the target rule chain.</i>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFlowNodeRuleChainInputConfig",
         relationTypes = {},
         ruleChainNode = true,

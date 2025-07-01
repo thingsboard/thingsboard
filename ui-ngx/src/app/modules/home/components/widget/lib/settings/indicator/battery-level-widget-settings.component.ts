@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue } from '@core/utils';
 import {
-  batteryLevelDefaultSettings, BatteryLevelLayout,
+  batteryLevelDefaultSettings,
+  BatteryLevelLayout,
   batteryLevelLayoutImages,
   batteryLevelLayouts,
   batteryLevelLayoutTranslations
 } from '@home/components/widget/lib/indicator/battery-level-widget.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-battery-level-widget-settings',
@@ -68,7 +70,7 @@ export class BatteryLevelWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...batteryLevelDefaultSettings};
+    return batteryLevelDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -121,7 +123,7 @@ export class BatteryLevelWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units: string = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, true);
   }

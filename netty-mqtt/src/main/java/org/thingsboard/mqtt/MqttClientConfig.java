@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,26 @@ public final class MqttClientConfig {
     private boolean reconnect = true;
     private long reconnectDelay = 1L;
     private int maxBytesInMessage = 8092;
+
+    @Getter
+    @Setter
+    private RetransmissionConfig retransmissionConfig;
+
+    public record RetransmissionConfig(int maxAttempts, long initialDelayMillis, double jitterFactor) {
+
+        public RetransmissionConfig {
+            if (maxAttempts < 0) {
+                throw new IllegalArgumentException("Max retransmission attempts (maxAttempts) must be zero or greater, but was " + maxAttempts);
+            }
+            if (initialDelayMillis < 0) {
+                throw new IllegalArgumentException("Initial retransmission delay (initialDelayMillis) must be zero or greater, but was " + initialDelayMillis);
+            }
+            if (jitterFactor < 0) {
+                throw new IllegalArgumentException("Jitter factor (jitterFactor) must be zero or greater, but was " + jitterFactor);
+            }
+        }
+
+    }
 
     public MqttClientConfig() {
         this(null);

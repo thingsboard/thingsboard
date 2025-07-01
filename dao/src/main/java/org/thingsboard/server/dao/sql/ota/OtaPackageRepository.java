@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,30 @@
  */
 package org.thingsboard.server.dao.sql.ota;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.OtaPackageEntity;
 
 import java.util.UUID;
 
-public interface OtaPackageRepository extends JpaRepository<OtaPackageEntity, UUID> {
+public interface OtaPackageRepository extends JpaRepository<OtaPackageEntity, UUID>, ExportableEntityRepository<OtaPackageEntity> {
+
     @Query(value = "SELECT COALESCE(SUM(ota.data_size), 0) FROM ota_package ota WHERE ota.tenant_id = :tenantId AND ota.data IS NOT NULL", nativeQuery = true)
     Long sumDataSizeByTenantId(@Param("tenantId") UUID tenantId);
+
+    Page<OtaPackageEntity> findByTenantId(UUID tenantId, Pageable pageable);
+
+    OtaPackageEntity findByTenantIdAndTitleAndVersion(UUID tenantId, String title, String version);
+
+    @Query("SELECT externalId FROM OtaPackageEntity WHERE id = :id")
+    UUID getExternalIdById(@Param("id") UUID id);
+
+    @Query("SELECT r.id FROM OtaPackageEntity r WHERE r.tenantId = :tenantId")
+    Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.FeaturesInfo;
@@ -38,6 +39,9 @@ import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.notification.rule.trigger.ResourcesShortageTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.ResourcesShortageTrigger.Resource;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.dao.domain.DomainService;
@@ -55,7 +59,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -72,9 +75,9 @@ import static org.thingsboard.common.util.SystemUtil.getTotalMemory;
 @Slf4j
 public class DefaultSystemInfoService extends TbApplicationEventListener<PartitionChangeEvent> implements SystemInfoService {
 
-    public static final FutureCallback<Integer> CALLBACK = new FutureCallback<>() {
+    public static final FutureCallback<Void> CALLBACK = new FutureCallback<>() {
         @Override
-        public void onSuccess(@Nullable Integer result) {
+        public void onSuccess(@Nullable Void result) {
         }
 
         @Override
@@ -92,6 +95,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private final DomainService domainService;
     private final MailService mailService;
     private final SmsService smsService;
+    private final NotificationRuleProcessor notificationRuleProcessor;
     private volatile ScheduledExecutorService scheduler;
 
     @Value("${metrics.system_info.persist_frequency:60}")
@@ -106,7 +110,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
             synchronized (this) {
                 if (myPartition) {
                     if (scheduler == null) {
-                        scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-system-info-scheduler"));
+                        scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("tb-system-info-scheduler");
                         scheduler.scheduleWithFixedDelay(this::saveCurrentSystemInfo, 0, systemInfoPersistFrequencySeconds, TimeUnit.SECONDS);
                     }
                 } else {
@@ -163,7 +167,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         if (twoFaSettings != null) {
             var providers = twoFaSettings.getJsonValue().get("providers");
             if (providers != null) {
-                return providers.size() > 0;
+                return !providers.isEmpty();
             }
         }
         return false;
@@ -180,6 +184,16 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private void saveCurrentClusterSystemInfo() {
         long ts = System.currentTimeMillis();
         List<SystemInfoData> clusterSystemData = getSystemData(serviceInfoProvider.getServiceInfo());
+        clusterSystemData.forEach(data -> {
+            Arrays.stream(Resource.values()).forEach(resource -> {
+                notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
+                        .resource(resource)
+                        .serviceId(data.getServiceId())
+                        .serviceType(data.getServiceType())
+                        .usage(extractResourceUsage(data, resource))
+                        .build());
+            });
+        });
         BasicTsKvEntry clusterDataKv = new BasicTsKvEntry(ts, new JsonDataEntry("clusterSystemData", JacksonUtil.toString(clusterSystemData)));
         doSave(Arrays.asList(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", true)), clusterDataKv));
     }
@@ -188,9 +202,21 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         long ts = System.currentTimeMillis();
         List<TsKvEntry> tsList = new ArrayList<>();
         tsList.add(new BasicTsKvEntry(ts, new BooleanDataEntry("clusterMode", false)));
-        getCpuUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuUsage", (long) v))));
-        getMemoryUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", (long) v))));
-        getDiscSpaceUsage().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("discUsage", (long) v))));
+        getCpuUsage().ifPresent(v -> {
+            long value = (long) v;
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuUsage", value)));
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.CPU).usage(value).serviceId(serviceInfoProvider.getServiceId()).serviceType(serviceInfoProvider.getServiceType()).build());
+        });
+        getMemoryUsage().ifPresent(v -> {
+            long value = (long) v;
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("memoryUsage", value)));
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.RAM).usage(value).serviceId(serviceInfoProvider.getServiceId()).serviceType(serviceInfoProvider.getServiceType()).build());
+        });
+        getDiscSpaceUsage().ifPresent(v -> {
+            long value = (long) v;
+            tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("discUsage", value)));
+            notificationRuleProcessor.process(ResourcesShortageTrigger.builder().resource(Resource.STORAGE).usage(value).serviceId(serviceInfoProvider.getServiceId()).serviceType(serviceInfoProvider.getServiceType()).build());
+        });
 
         getCpuCount().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("cpuCount", (long) v))));
         getTotalMemory().ifPresent(v -> tsList.add(new BasicTsKvEntry(ts, new LongDataEntry("totalMemory", v))));
@@ -201,7 +227,13 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
 
     private void doSave(List<TsKvEntry> telemetry) {
         ApiUsageState apiUsageState = apiUsageStateClient.getApiUsageState(TenantId.SYS_TENANT_ID);
-        telemetryService.saveAndNotifyInternal(TenantId.SYS_TENANT_ID, apiUsageState.getId(), telemetry, systemInfoTtlSeconds, CALLBACK);
+        telemetryService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
+                .tenantId(TenantId.SYS_TENANT_ID)
+                .entityId(apiUsageState.getId())
+                .entries(telemetry)
+                .ttl(systemInfoTtlSeconds)
+                .callback(CALLBACK)
+                .build());
     }
 
     private List<SystemInfoData> getSystemData(ServiceInfo serviceInfo) {
@@ -231,6 +263,14 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         return infoData;
     }
 
+    private Long extractResourceUsage(SystemInfoData info, Resource resource) {
+        return switch (resource) {
+            case CPU -> info.getCpuUsage();
+            case RAM -> info.getMemoryUsage();
+            case STORAGE -> info.getDiscUsage();
+        };
+    }
+
     @PreDestroy
     private void destroy() {
         if (scheduler != null) {
@@ -238,4 +278,5 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
             scheduler = null;
         }
     }
+
 }

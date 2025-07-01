@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,11 @@ final class MqttPingHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (!(msg instanceof MqttMessage)) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        if (!(msg instanceof MqttMessage message)) {
             ctx.fireChannelRead(msg);
             return;
         }
-        MqttMessage message = (MqttMessage) msg;
         if (message.fixedHeader().messageType() == MqttMessageType.PINGREQ) {
             this.handlePingReq(ctx.channel());
         } else if (message.fixedHeader().messageType() == MqttMessageType.PINGRESP) {
@@ -61,28 +60,29 @@ final class MqttPingHandler extends ChannelInboundHandlerAdapter {
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         super.userEventTriggered(ctx, evt);
 
-        if (evt instanceof IdleStateEvent) {
-            IdleStateEvent event = (IdleStateEvent) evt;
+        if (evt instanceof IdleStateEvent event) {
             switch (event.state()) {
                 case READER_IDLE:
                     log.debug("[{}] No reads were performed for specified period for channel {}", event.state(), ctx.channel().id());
-                    this.sendPingReq(ctx.channel());
+                    this.sendPingReq(ctx.channel(), event);
                     break;
                 case WRITER_IDLE:
                     log.debug("[{}] No writes were performed for specified period for channel {}", event.state(), ctx.channel().id());
-                    this.sendPingReq(ctx.channel());
+                    this.sendPingReq(ctx.channel(), event);
                     break;
             }
         }
     }
 
-    private void sendPingReq(Channel channel) {
+    private void sendPingReq(Channel channel, IdleStateEvent idleEvent) {
         log.trace("[{}] Sending ping request", channel.id());
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PINGREQ, false, MqttQoS.AT_MOST_ONCE, false, 0);
         channel.writeAndFlush(new MqttMessage(fixedHeader));
 
         if (this.pingRespTimeout == null) {
+            log.trace("[{}] Scheduling disconnect due to {}", channel.id(), idleEvent);
             this.pingRespTimeout = channel.eventLoop().schedule(() -> {
+                log.trace("[{}] Sending disconnect due to {}", channel.id(), idleEvent);
                 MqttFixedHeader fixedHeader2 = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
                 channel.writeAndFlush(new MqttMessage(fixedHeader2)).addListener(ChannelFutureListener.CLOSE);
                 //TODO: what do when the connection is closed ?
@@ -99,6 +99,7 @@ final class MqttPingHandler extends ChannelInboundHandlerAdapter {
     private void handlePingResp(Channel channel) {
         log.trace("[{}] Handling ping response", channel.id());
         if (this.pingRespTimeout != null && !this.pingRespTimeout.isCancelled() && !this.pingRespTimeout.isDone()) {
+            log.trace("[{}] Cancelling disconnect due to idle event because ping response was received", channel.id());
             this.pingRespTimeout.cancel(true);
             this.pingRespTimeout = null;
         }

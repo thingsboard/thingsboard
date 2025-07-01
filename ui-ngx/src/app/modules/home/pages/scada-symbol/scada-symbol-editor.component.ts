@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
@@ -35,7 +37,11 @@ import {
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { FormControl } from '@angular/forms';
-import { removeScadaSymbolMetadata } from '@home/components/widget/lib/scada/scada-symbol.models';
+import {
+  parseScadaSymbolsTagsFromContent,
+  removeScadaSymbolMetadata
+} from '@home/components/widget/lib/scada/scada-symbol.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface ScadaSymbolEditorData {
   scadaSymbolContent: string;
@@ -102,11 +108,20 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
     this.updateEditorMode(value);
   }
 
-  constructor(private cd: ChangeDetectorRef) {
+  constructor(private cd: ChangeDetectorRef,
+              private zone: NgZone,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
-    this.svgContentFormControl.valueChanges.subscribe((svgContent) => {
+    if (this.readonly) {
+      this.svgContentFormControl.disable({emitEvent: false});
+    } else {
+      this.svgContentFormControl.enable({emitEvent: false});
+    }
+    this.svgContentFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((svgContent) => {
       if (this.svgContent !== svgContent) {
         this.svgContent = svgContent;
         this.editObjectCallbacks.onSymbolEditObjectDirty(true);
@@ -128,7 +143,7 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
     };
     this.scadaSymbolEditObject = new ScadaSymbolEditObject(this.scadaSymbolShape.nativeElement,
       this.tooltipsContainer.nativeElement,
-      this.tooltipsContainerComponent.viewContainerRef, this.editObjectCallbacks, this.readonly);
+      this.tooltipsContainerComponent.viewContainerRef, this.zone, this.editObjectCallbacks, this.readonly);
     if (this.data) {
       this.updateContent(this.data.scadaSymbolContent);
     }
@@ -163,6 +178,14 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
       return this.scadaSymbolEditObject?.getContent();
     } else {
       return this.svgContent;
+    }
+  }
+
+  getTags(): string[] {
+    if (this.editorMode === 'svg') {
+      return this.scadaSymbolEditObject?.getTags();
+    } else {
+      return parseScadaSymbolsTagsFromContent(this.svgContent);
     }
   }
 

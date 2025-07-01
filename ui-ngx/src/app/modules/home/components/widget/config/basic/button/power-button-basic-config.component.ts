@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -87,6 +87,19 @@ export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent 
       icon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
 
+      onButtonIcon: this.fb.group({
+        showIcon: [settings.onButtonIcon.showIcon, []],
+        iconSize: [settings.onButtonIcon.iconSize, [Validators.min(0)]],
+        iconSizeUnit: [settings.onButtonIcon.iconSizeUnit, []],
+        icon: [settings.onButtonIcon.icon, []],
+      }),
+      offButtonIcon: this.fb.group({
+        showIcon: [settings.offButtonIcon.showIcon, []],
+        iconSize: [settings.offButtonIcon.iconSize, [Validators.min(0)]],
+        iconSizeUnit: [settings.offButtonIcon.iconSizeUnit, []],
+        icon: [settings.offButtonIcon.icon, []],
+      }),
+
       mainColorOn: [settings.mainColorOn, []],
       backgroundColorOn: [settings.backgroundColorOn, []],
 
@@ -128,6 +141,9 @@ export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent 
 
     this.widgetConfig.config.settings.layout = config.layout;
 
+    this.widgetConfig.config.settings.onButtonIcon = config.onButtonIcon;
+    this.widgetConfig.config.settings.offButtonIcon = config.offButtonIcon;
+
     this.widgetConfig.config.settings.mainColorOn = config.mainColorOn;
     this.widgetConfig.config.settings.backgroundColorOn = config.backgroundColorOn;
 
@@ -148,12 +164,14 @@ export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent 
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon'];
+    return ['showTitle', 'showIcon', 'onButtonIcon.showIcon', 'offButtonIcon.showIcon'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
     const showTitle: boolean = this.powerButtonWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.powerButtonWidgetConfigForm.get('showIcon').value;
+    const onButtonIcon: boolean = this.powerButtonWidgetConfigForm.get('onButtonIcon').get('showIcon').value;
+    const offButtonIcon: boolean = this.powerButtonWidgetConfigForm.get('offButtonIcon').get('showIcon').value;
     if (showTitle) {
       this.powerButtonWidgetConfigForm.get('title').enable();
       this.powerButtonWidgetConfigForm.get('titleFont').enable();
@@ -179,6 +197,24 @@ export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent 
       this.powerButtonWidgetConfigForm.get('iconSizeUnit').disable();
       this.powerButtonWidgetConfigForm.get('icon').disable();
       this.powerButtonWidgetConfigForm.get('iconColor').disable();
+    }
+    if (onButtonIcon) {
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('iconSize').enable();
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('iconSizeUnit').enable();
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('icon').enable();
+    } else {
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('iconSize').disable();
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('iconSizeUnit').disable();
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('icon').disable();
+    }
+    if (offButtonIcon) {
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('iconSize').enable();
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('iconSizeUnit').enable();
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('icon').enable();
+    } else {
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('iconSize').disable();
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('iconSizeUnit').disable();
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('icon').disable();
     }
   }
 

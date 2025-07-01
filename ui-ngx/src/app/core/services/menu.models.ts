@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -59,12 +59,17 @@ export enum MenuId {
   images = 'images',
   scada_symbols = 'scada_symbols',
   resources_library = 'resources_library',
+  javascript_library = 'javascript_library',
   notifications_center = 'notifications_center',
   notification_inbox = 'notification_inbox',
   notification_sent = 'notification_sent',
   notification_recipients = 'notification_recipients',
   notification_templates = 'notification_templates',
   notification_rules = 'notification_rules',
+  mobile_center = 'mobile_center',
+  mobile_apps = 'mobile_apps',
+  mobile_bundles = 'mobile_bundles',
+  mobile_qr_code_widget = 'mobile_qr_code_widget',
   settings = 'settings',
   general = 'general',
   mail_server = 'mail_server',
@@ -73,13 +78,11 @@ export enum MenuId {
   repository_settings = 'repository_settings',
   auto_commit_settings = 'auto_commit_settings',
   queues = 'queues',
-  mobile_app_settings = 'mobile_app_settings',
   security_settings = 'security_settings',
   security_settings_general = 'security_settings_general',
   two_fa = 'two_fa',
   oauth2 = 'oauth2',
   domains = 'domains',
-  mobile_apps = 'mobile_apps',
   clients = 'clients',
   audit_log = 'audit_log',
   alarms = 'alarms',
@@ -88,6 +91,7 @@ export enum MenuId {
   devices = 'devices',
   assets = 'assets',
   entity_views = 'entity_views',
+  gateways = 'gateways',
   profiles = 'profiles',
   device_profiles = 'device_profiles',
   asset_profiles = 'asset_profiles',
@@ -100,7 +104,8 @@ export enum MenuId {
   features = 'features',
   otaUpdates = 'otaUpdates',
   version_control = 'version_control',
-  api_usage = 'api_usage'
+  api_usage = 'api_usage',
+  trendz_settings = 'trendz_settings'
 }
 
 declare type MenuFilter = (authState: AuthState) => boolean;
@@ -207,6 +212,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.javascript_library,
+    {
+      id: MenuId.javascript_library,
+      name: 'javascript.javascript-library',
+      type: 'link',
+      path: '/resources/javascript-library',
+      icon: 'mdi:language-javascript'
+    }
+  ],
+  [
     MenuId.notifications_center,
     {
       id: MenuId.notifications_center,
@@ -269,6 +284,47 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/notification/rules',
       icon: 'mdi:message-cog'
+    }
+  ],
+  [
+    MenuId.mobile_center,
+    {
+      id: MenuId.mobile_center,
+      name: 'mobile.mobile-center',
+      type: 'link',
+      path: '/mobile-center',
+      icon: 'smartphone'
+    }
+  ],
+  [
+    MenuId.mobile_apps,
+    {
+      id: MenuId.mobile_apps,
+      name: 'mobile.applications',
+      type: 'link',
+      path: '/mobile-center/applications',
+      icon: 'list'
+    }
+  ],
+  [
+    MenuId.mobile_bundles,
+    {
+      id: MenuId.mobile_bundles,
+      name: 'mobile.bundles',
+      type: 'link',
+      path: '/mobile-center/bundles',
+      icon: 'mdi:package'
+    }
+  ],
+  [
+    MenuId.mobile_qr_code_widget,
+    {
+      id: MenuId.mobile_qr_code_widget,
+      name: 'mobile.qr-code-widget',
+      fullName: 'mobile.qr-code-widget',
+      type: 'link',
+      path: '/mobile-center/qr-code-widget',
+      icon: 'qr_code'
     }
   ],
   [
@@ -357,17 +413,6 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
-    MenuId.mobile_app_settings,
-    {
-      id: MenuId.mobile_app_settings,
-      name: 'admin.mobile-app.mobile-app',
-      fullName: 'admin.mobile-app.mobile-app',
-      type: 'link',
-      path: '/settings/mobile-app',
-      icon: 'smartphone'
-    }
-  ],
-  [
     MenuId.security_settings,
     {
       id: MenuId.security_settings,
@@ -416,16 +461,6 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/security-settings/oauth2/domains',
       icon: 'domain'
-    }
-  ],
-  [
-    MenuId.mobile_apps,
-    {
-      id: MenuId.mobile_apps,
-      name: 'admin.oauth2.mobile-apps',
-      type: 'link',
-      path: '/security-settings/oauth2/mobile-applications',
-      icon: 'smartphone'
     }
   ],
   [
@@ -506,6 +541,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/entities/entityViews',
       icon: 'view_quilt'
+    }
+  ],
+  [
+    MenuId.gateways,
+    {
+      id: MenuId.gateways,
+      name: 'gateway.gateways',
+      type: 'link',
+      path: '/entities/gateways',
+      icon: 'lan'
     }
   ],
   [
@@ -640,6 +685,17 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       path: '/usage',
       icon: 'insert_chart'
     }
+  ],
+  [
+    MenuId.trendz_settings,
+    {
+      id: MenuId.trendz_settings,
+      name: 'admin.trendz',
+      fullName: 'admin.trendz-settings',
+      type: 'link',
+      path: '/settings/trendz',
+      icon: 'trendz-settings'
+    }
   ]
 ]);
 
@@ -674,6 +730,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           },
           {id: MenuId.images},
           {id: MenuId.scada_symbols},
+          {id: MenuId.javascript_library},
           {id: MenuId.resources_library}
         ]
       },
@@ -688,13 +745,20 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         ]
       },
       {
+        id: MenuId.mobile_center,
+        pages: [
+          {id: MenuId.mobile_bundles},
+          {id: MenuId.mobile_apps},
+          {id: MenuId.mobile_qr_code_widget}
+        ]
+      },
+      {
         id: MenuId.settings,
         pages: [
           {id: MenuId.general},
           {id: MenuId.mail_server},
           {id: MenuId.notification_settings},
-          {id: MenuId.queues},
-          {id: MenuId.mobile_app_settings}
+          {id: MenuId.queues}
         ]
       },
       {
@@ -706,7 +770,6 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
             id: MenuId.oauth2,
             pages: [
               {id: MenuId.domains},
-              {id: MenuId.mobile_apps},
               {id: MenuId.clients}
             ]
           }
@@ -725,7 +788,8 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         pages: [
           {id: MenuId.devices},
           {id: MenuId.assets},
-          {id: MenuId.entity_views}
+          {id: MenuId.entity_views},
+          {id: MenuId.gateways}
         ]
       },
       {
@@ -763,6 +827,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           },
           {id: MenuId.images},
           {id: MenuId.scada_symbols},
+          {id: MenuId.javascript_library},
           {id: MenuId.resources_library}
         ]
       },
@@ -776,6 +841,13 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.notification_rules}
         ]
       },
+      {
+        id: MenuId.mobile_center,
+        pages: [
+          {id: MenuId.mobile_bundles},
+          {id: MenuId.mobile_apps}
+        ]
+      },
       {id: MenuId.api_usage},
       {
         id: MenuId.settings,
@@ -783,13 +855,20 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.home_settings},
           {id: MenuId.notification_settings},
           {id: MenuId.repository_settings},
-          {id: MenuId.auto_commit_settings}
+          {id: MenuId.auto_commit_settings},
+          {id: MenuId.trendz_settings}
         ]
       },
       {
         id: MenuId.security_settings,
         pages: [
-          {id: MenuId.audit_log}
+          {id: MenuId.audit_log},
+          {
+            id: MenuId.oauth2,
+            pages: [
+              {id: MenuId.clients}
+            ]
+          }
         ]
       }
     ]
@@ -834,7 +913,7 @@ const defaultHomeSectionMap = new Map<Authority, HomeSectionReference[]>([
       {
         name: 'admin.system-settings',
         places: [MenuId.general, MenuId.mail_server,
-          MenuId.notification_settings, MenuId.security_settings, MenuId.oauth2, MenuId.domains, MenuId.mobile_apps,
+          MenuId.notification_settings, MenuId.security_settings, MenuId.oauth2, MenuId.domains,
           MenuId.clients, MenuId.two_fa, MenuId.resources_library, MenuId.queues]
       }
     ]
@@ -880,7 +959,7 @@ const defaultHomeSectionMap = new Map<Authority, HomeSectionReference[]>([
       },
       {
         name: 'admin.system-settings',
-        places: [MenuId.home_settings, MenuId.resources_library, MenuId.repository_settings, MenuId.auto_commit_settings]
+        places: [MenuId.home_settings, MenuId.resources_library, MenuId.repository_settings, MenuId.auto_commit_settings, MenuId.trendz_settings]
       }
     ]
   ],

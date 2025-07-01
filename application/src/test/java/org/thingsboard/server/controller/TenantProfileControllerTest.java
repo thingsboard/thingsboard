@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,18 @@ import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
+import org.thingsboard.server.common.data.validation.RateLimit;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.queue.TbQueueCallback;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -312,6 +316,42 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         Assert.assertEquals(1, pageData.getTotalElements());
     }
 
+    @Test
+    public void testRateLimitValidationAllFields() throws Exception {
+        loginSysAdmin();
+        Mockito.reset(tbClusterService);
+
+        List<String> failedFields = new ArrayList<>();
+
+        for (Field field : DefaultTenantProfileConfiguration.class.getDeclaredFields()) {
+            RateLimit rateLimit = field.getAnnotation(RateLimit.class);
+            if (rateLimit == null) continue;
+
+            String fieldName = field.getName();
+            String expectedLabel = rateLimit.fieldName();
+
+
+            TenantProfile tenantProfile = createTenantProfile("Invalid RateLimit - " + fieldName);
+            DefaultTenantProfileConfiguration config = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
+
+            field.setAccessible(true);
+            field.set(config, "10:1,10:1"); // Set invalid duplicate value
+
+            try {
+                doPost("/api/tenantProfile", tenantProfile)
+                        .andExpect(status().isBadRequest())
+                        .andExpect(statusReason(containsString(expectedLabel + " rate limit has duplicate 'Per seconds' configuration.")));
+            } catch (AssertionError e) {
+                failedFields.add(fieldName + " (label: " + expectedLabel + ")");
+            }
+        }
+
+        if (!failedFields.isEmpty()) {
+            throw new AssertionError("RateLimit validation failed for fields: " + String.join(", ", failedFields));
+        }
+        testBroadcastEntityStateChangeEventNeverTenantProfile();
+    }
+
     private TenantProfile createTenantProfile(String name) {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName(name);
@@ -354,7 +394,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
                 argument -> argument.getClass().equals(TenantProfile.class);
         if (ComponentLifecycleEvent.DELETED.equals(event)) {
             Mockito.verify(tbClusterService, times(cntTime)).onTenantProfileDelete(Mockito.argThat(matcherTenantProfile),
-                    Mockito.isNull());
+                    eq(TbQueueCallback.EMPTY));
             testBroadcastEntityStateChangeEventNever(createEntityId_NULL_UUID(new Tenant()));
         } else {
             Mockito.verify(tbClusterService, times(cntTime)).onTenantProfileChange(Mockito.argThat(matcherTenantProfile),

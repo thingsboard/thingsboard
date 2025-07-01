@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 package org.thingsboard.server.dao.asset;
 
 import lombok.Data;
+import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serial;
-import java.io.Serializable;
 
 @Data
-public class AssetProfileCacheKey implements Serializable {
+public class AssetProfileCacheKey implements VersionedCacheKey {
 
     @Serial
     private static final long serialVersionUID = 8220455917177676472L;
@@ -61,6 +61,11 @@ public class AssetProfileCacheKey implements Serializable {
         } else {
             return tenantId + "_" + name;
         }
+    }
+
+    @Override
+    public boolean isVersioned() {
+        return assetProfileId != null;
     }
 
 }

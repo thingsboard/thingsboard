@@ -11,9 +11,9 @@ The **Widget Editor** will open, pre-populated with the content of the default *
  - Put the following HTML code inside the HTML tab of "Resources" section:
 
 ```html
-  <div fxFlex fxLayout="column" style="height: 100%;" fxLayoutAlign="center stretch">
+  <div class="flex h-full flex-1 flex-col items-stretch justify-center">
     <div>My first latest values widget.</div>
-    <div fxFlex fxLayout="row" *ngFor="let dataKeyData of data" fxLayoutAlign="space-around center">
+    <div class="flex flex-1 flex-row items-center justify-around" *ngFor="let dataKeyData of data">
         <div>{{dataKeyData.dataKey.label}}:</div>
         <div>{{(dataKeyData.data[0] && dataKeyData.data[0][0]) | date : 'yyyy-MM-dd HH:mm:ss' }}</div>
         <div>{{dataKeyData.data[0] && dataKeyData.data[0][1]}}</div>

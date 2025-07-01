@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -115,20 +115,22 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        setValueSettings: this.modelValue,
-        panelTitle: this.panelTitle,
-        valueType: this.valueType,
-        aliasController: this.aliasController,
-        targetDevice: this.targetDevice,
-        widgetType: this.widgetType
-      };
-     const setValueSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, SetValueActionSettingsPanelComponent,
-       ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+     const setValueSettingsPanelPopover = this.popoverService.displayPopover({
+       trigger,
+       renderer: this.renderer,
+       componentType: SetValueActionSettingsPanelComponent,
+       hostView: this.viewContainerRef,
+       preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+       context: {
+         setValueSettings: this.modelValue,
+         panelTitle: this.panelTitle,
+         valueType: this.valueType,
+         aliasController: this.aliasController,
+         targetDevice: this.targetDevice,
+         widgetType: this.widgetType
+       },
+       isModal: true
+     });
       setValueSettingsPanelPopover.tbComponentRef.instance.popover = setValueSettingsPanelPopover;
       setValueSettingsPanelPopover.tbComponentRef.instance.setValueSettingsApplied.subscribe((setValueSettings) => {
         setValueSettingsPanelPopover.hide();

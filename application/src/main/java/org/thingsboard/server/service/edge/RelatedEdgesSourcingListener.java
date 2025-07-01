@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class RelatedEdgesSourcingListener {
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent<?> event) {
         executorService.submit(() -> {
+            log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
             try {
                 switch (event.getActionType()) {
                     case ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE ->
@@ -69,6 +70,7 @@ public class RelatedEdgesSourcingListener {
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(DeleteEntityEvent<?> event) {
         executorService.submit(() -> {
+            log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
             try {
                 relatedEdgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
             } catch (Exception e) {

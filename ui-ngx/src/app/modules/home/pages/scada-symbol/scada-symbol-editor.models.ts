@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 import { ImageResourceInfo } from '@shared/models/resource.models';
 import * as svgjs from '@svgdotjs/svg.js';
 import { Box, Element, Rect, Style, SVG, Svg, Timeline } from '@svgdotjs/svg.js';
-import { ResizeObserver } from '@juggle/resize-observer';
-import { ViewContainerRef } from '@angular/core';
+import { NgZone, ViewContainerRef } from '@angular/core';
 import { forkJoin, from } from 'rxjs';
 import {
   setupAddTagPanelTooltip,
@@ -28,14 +27,18 @@ import {
   ScadaSymbolBehavior,
   ScadaSymbolBehaviorType,
   scadaSymbolContentData,
-  ScadaSymbolMetadata,
-  ScadaSymbolProperty,
-  ScadaSymbolPropertyType
+  ScadaSymbolMetadata
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
-import { TbHighlightRule } from '@shared/models/ace/ace.models';
-import { ValueType } from '@shared/models/constants';
+import {
+  AceHighlightRule,
+  AceHighlightRules,
+  dotOperatorHighlightRule,
+  endGroupHighlightRule
+} from '@shared/models/ace/ace.models';
+import { HelpLinks, ValueType } from '@shared/models/constants';
+import { formPropertyCompletions } from '@shared/models/dynamic-form.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
@@ -80,6 +83,7 @@ export class ScadaSymbolEditObject {
   constructor(private rootElement: HTMLElement,
               public tooltipsContainer: HTMLElement,
               public viewContainerRef: ViewContainerRef,
+              private zone: NgZone,
               private callbacks: ScadaSymbolEditObjectCallbacks,
               public readonly: boolean) {
     this.shapeResize$ = new ResizeObserver(() => {
@@ -194,7 +198,9 @@ export class ScadaSymbolEditObject {
       from(import('tooltipster')),
       from(import('tooltipster/dist/js/plugins/tooltipster/SVG/tooltipster-SVG.min.js'))
     ]).subscribe(() => {
-      this.setupElements();
+      this.zone.run(() => {
+        this.setupElements();
+      });
     });
   }
 
@@ -409,6 +415,10 @@ export class ScadaSymbolEditObject {
     this.callbacks.tagsUpdated(this.tags);
   }
 
+  public getTags(): string[] {
+    return this.tags;
+  }
+
   public tagHasStateRenderFunction(tag: string): boolean {
     return this.callbacks.tagHasStateRenderFunction(tag);
   }
@@ -491,17 +501,6 @@ export class ScadaSymbolElement {
       element.show();
     }
     this.box = element.rbox(this.editObject.svgShape);
-/*    if (element.visible()) {
-      this.box = element.rbox(this.editObject.svgShape);
-      if (parentGroup && parentGroup.invisible) {
-        this.invisible = true;
-      }
-    } else {
-      element.show();
-      this.box = element.rbox(this.editObject.svgShape);
-      element.hide();
-      this.invisible = true;
-    }*/
   }
 
   public init() {
@@ -838,6 +837,7 @@ export class ScadaSymbolElement {
   private innerAddTagTooltipPosition(_instance: ITooltipsterInstance,
                                      _helper: ITooltipsterHelper, position: ITooltipPosition): ITooltipPosition {
     const distance = 10;
+    const parentRect = this.tooltipContainer[0].getBoundingClientRect();
     switch (position.side) {
       case 'right':
         position.coord.top = this.tooltipMouseY - position.size.height / 2;
@@ -862,6 +862,14 @@ export class ScadaSymbolElement {
         position.coord.left = this.tooltipMouseX - position.size.width / 2;
         position.target = this.tooltipMouseX;
         break;
+    }
+    const rightOverflow = parentRect.right - (position.coord.left + position.size.width);
+    if (rightOverflow < 0) {
+      position.coord.left += rightOverflow;
+    }
+    const leftOverflow = parentRect.left - position.coord.left;
+    if (leftOverflow > 0) {
+      position.coord.left += leftOverflow;
     }
     return position;
   }
@@ -916,98 +924,181 @@ export class ScadaSymbolElement {
 
 }
 
-const scadaSymbolCtxObjectHighlightRules: TbHighlightRule[] = [
-  {
-    class: 'scada-symbol-ctx',
-    regex: /(?<=\W|^)(ctx)(?=\W|$)\b/
-  }
-];
+const identifierRe = /[a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*/;
 
-export const scadaSymbolGeneralStateRenderHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxObjectHighlightRules.concat({
-    class: 'scada-symbol-svg',
-    regex: /(?<=\W|^)(svg)(?=\W|$)\b/
-  });
+const scadaSymbolCtxObjectHighlightRule: AceHighlightRule = {
+  token: 'tb.scada-symbol-ctx',
+  regex: /\bctx\b/,
+  next: 'scadaSymbolCtxApi'
+};
 
-export const scadaSymbolElementStateRenderHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxObjectHighlightRules.concat({
-    class: 'scada-symbol-element',
-    regex: /(?<=\W|^)(element)(?=\W|$)\b/
-  });
+const scadaSymbolSVGHighlightRule: AceHighlightRule = {
+  token: 'tb.scada-symbol-svg',
+  regex: /\bsvg\b/,
+  next: 'scadaSymbolSVGApi'
+};
 
-export const scadaSymbolClickActionHighlightRules: TbHighlightRule[] =
-  scadaSymbolElementStateRenderHighlightRules.concat({
-    class: 'scada-symbol-event',
-    regex: /(?<=\W|^)(event)(?=\W|$)\b/
-  });
+const scadaSymbolElementHighlightRule: AceHighlightRule = {
+  token: 'tb.scada-symbol-element',
+  regex: /\belement\b/,
+  next: 'scadaSymbolElementApi'
+};
 
-const scadaSymbolCtxPropertyHighlightRules: TbHighlightRule[] = [
-  {
-    class: 'scada-symbol-ctx-properties',
-    regex: /(?<=ctx\.)(properties)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-tags',
-    regex: /(?<=ctx\.)(tags)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-values',
-    regex: /(?<=ctx\.)(values)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-api',
-    regex: /(?<=ctx\.)(api)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-svg',
-    regex: /(?<=ctx\.)(svg)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-property',
-    regex: /(?<=ctx\.properties\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-tag',
-    regex: /(?<=ctx\.tags\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-value',
-    regex: /(?<=ctx\.values\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-api-method',
-    regex: /(?<=ctx\.api\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-svg-method',
-    regex: /(?<=ctx\.svg\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  }
-];
+const scadaSymbolEventHighlightRule: AceHighlightRule = {
+  token: 'tb.scada-symbol-event',
+  regex: /\bevent\b/,
+  next: 'scadaSymbolEventApi'
+};
 
-export const scadaSymbolGeneralStateRenderPropertiesHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxPropertyHighlightRules.concat({
-    class: 'scada-symbol-svg-properties',
-    regex: /(?<=svg\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  });
+const scadaSymbolCtxApiHighlightRules: AceHighlightRules = {
+  scadaSymbolCtxApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-properties',
+      regex: /properties/,
+      next: 'scadaSymbolCtxPropertiesApi'
+    },
+    {
+      token: 'tb.scada-symbol-ctx-tags',
+      regex: /tags/,
+      next: 'scadaSymbolCtxTagsApi'
+    },
+    {
+      token: 'tb.scada-symbol-ctx-values',
+      regex: /values/,
+      next: 'scadaSymbolCtxValuesApi'
+    },
+    {
+      token: 'tb.scada-symbol-ctx-api',
+      regex: /api/,
+      next: 'scadaSymbolCtxApiMethodApi'
+    },
+    {
+      token: 'tb.scada-symbol-ctx-svg',
+      regex: /svg/,
+      next: 'scadaSymbolCtxSVGMethodApi'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxPropertiesApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-property',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxTagsApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-tag',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxValuesApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-value',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxApiMethodApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-api-method',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxSVGMethodApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-svg-method',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ]
+};
 
-export const scadaSymbolElementStateRenderPropertiesHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxPropertyHighlightRules.concat({
-    class: 'scada-symbol-element-properties',
-    regex: /(?<=element\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  });
+const scadaSymbolSVGPropertyHighlightRules: AceHighlightRules = {
+  scadaSymbolSVGApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-svg-properties',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ]
+};
 
-export const scadaSymbolClickActionPropertiesHighlightRules: TbHighlightRule[] =
-  scadaSymbolElementStateRenderPropertiesHighlightRules.concat({
-    class: 'scada-symbol-event-properties',
-    regex: /(?<=event\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  });
+const scadaSymbolElementPropertyHighlightRules: AceHighlightRules = {
+  scadaSymbolElementApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-element-properties',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ]
+};
+
+const scadaSymbolEventPropertyHighlightRules: AceHighlightRules = {
+  scadaSymbolEventApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-event-properties',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ]
+};
+
+export const scadaSymbolGeneralStateHighlightRules: AceHighlightRules = {
+  start: [
+    scadaSymbolCtxObjectHighlightRule,
+    scadaSymbolSVGHighlightRule
+  ],
+  ...scadaSymbolCtxApiHighlightRules,
+  ...scadaSymbolSVGPropertyHighlightRules
+};
+
+export const scadaSymbolRenderFunctionHighlightRules: AceHighlightRules = {
+  no_regex: [
+    scadaSymbolCtxObjectHighlightRule,
+    scadaSymbolElementHighlightRule
+  ],
+  ...scadaSymbolCtxApiHighlightRules,
+  ...scadaSymbolElementPropertyHighlightRules
+};
+
+export const scadaSymbolClickActionHighlightRules: AceHighlightRules = {
+  start: [
+    scadaSymbolCtxObjectHighlightRule,
+    scadaSymbolElementHighlightRule,
+    scadaSymbolEventHighlightRule
+  ],
+  ...scadaSymbolCtxApiHighlightRules,
+  ...scadaSymbolElementPropertyHighlightRules,
+  ...scadaSymbolEventPropertyHighlightRules
+};
 
 export const generalStateRenderFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => ({
     ctx: ctxCompletion,
     svg: {
       meta: 'argument',
-      type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>',
-      description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>.'
+      type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" target="_blank">SVG.Svg</a>',
+      description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" ' +
+        'target="_blank">SVG.Svg</a>.'
     }
   });
 
@@ -1017,8 +1108,9 @@ export const elementStateRenderFunctionCompletions = (ctxCompletion: TbEditorCom
       meta: 'argument',
       type: 'Element',
       description: 'SVG element.<br>' +
-        'See <a href="https://svgjs.dev/docs/3.2/manipulating/">Manipulating</a> section to manipulate the element.<br>' +
-        'See <a href="https://svgjs.dev/docs/3.2/animating/">Animating</a> section to animate the element.'
+        'See <a href="https://svgjs.dev/docs/3.2/manipulating/" ' +
+        'target="_blank">Manipulating</a> section to manipulate the element.<br>' +
+        'See <a href="https://svgjs.dev/docs/3.2/animating/" target="_blank">Animating</a> section to animate the element.'
     }
   });
 
@@ -1034,15 +1126,18 @@ export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion
 
 export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags: string[],
                                              customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+
+  const scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
+  const scadaSymbolAnimation = `<a href="${scadaSymbolAnimationLink}" target="_blank">ScadaSymbolAnimation</a>`;
+  const connectorScadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevConnectorAnimation;
+  const connectorScadaSymbolAnimation = `<a href="${connectorScadaSymbolAnimationLink}" target="_blank">ConnectorScadaSymbolAnimation</a>`;
+
   const properties: TbEditorCompletion = {
     meta: 'object',
     type: 'object',
     description: 'An object holding all defined SCADA symbol properties.',
-    children: {}
+    children: formPropertyCompletions(metadata.properties, customTranslate)
   };
-  for (const property of metadata.properties) {
-    properties.children[property.id] = scadaSymbolPropertyCompletion(property, customTranslate);
-  }
   const values: TbEditorCompletion = {
     meta: 'object',
     type: 'object',
@@ -1078,9 +1173,9 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
         type: 'ScadaSymbolApi',
         description: 'SCADA symbol API',
         children: {
-          animate: {
+          cssAnimate: {
             meta: 'function',
-            description: 'Finishes any previous animation and starts new animation for SVG element.',
+            description: 'Finishes any previous CSS animation and starts new CSS animation for SVG element.',
             args: [
               {
                 name: 'element',
@@ -1094,13 +1189,28 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               }
             ],
             return: {
-              description: 'Instance of SVG.Runner which has the same methods as any element and additional methods to control the runner.',
-              type: '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a>'
+              description: `Instance of ${scadaSymbolAnimation} class with API to setup and control the animation.`,
+              type: scadaSymbolAnimation
             }
           },
-          resetAnimation: {
+          cssAnimation: {
             meta: 'function',
-            description: 'Stops animation if any and restore SVG element initial state, resets animation timeline.',
+            description: 'Get the current CSS animation applied for the SVG element.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
+            ],
+            return: {
+              description: `Instance of ${scadaSymbolAnimation} class with API to setup and control the animation.`,
+              type: scadaSymbolAnimation
+            }
+          },
+          resetCssAnimation: {
+            meta: 'function',
+            description: 'Stops CSS animation if any and restore SVG element initial state, removes CSS animation instance.',
             args: [
               {
                 name: 'element',
@@ -1109,16 +1219,78 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               },
             ]
           },
-          finishAnimation: {
+          finishCssAnimation: {
             meta: 'function',
-            description: 'Finishes animation if any, SVG element state updated according to the end animation values, ' +
-              'resets animation timeline.',
+            description: 'Finishes CSS animation if any, SVG element state updated according to the end animation values, ' +
+              'removes CSS animation instance.',
             args: [
               {
                 name: 'element',
                 description: 'SVG element',
                 type: 'Element'
               },
+            ]
+          },
+          connectorAnimate: {
+            meta: 'function',
+            description: 'Finishes any previous connector animation and starts a new connector animation for the SVG element along the specified path.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              },
+              {
+                name: 'path',
+                description: 'Path defining the animation trajectory',
+                type: 'string'
+              },
+              {
+                name: 'reversedPath',
+                description: 'Path for the reversed animation trajectory',
+                type: 'string'
+              }
+            ],
+            return: {
+              description: `Instance of ${connectorScadaSymbolAnimation} class with API to setup and control the connector animation.`,
+              type: connectorScadaSymbolAnimation
+            }
+          },
+          connectorAnimation: {
+            meta: 'function',
+            description: 'Gets the current connector animation applied to the SVG element.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
+            ],
+            return: {
+              description: `Instance of ${connectorScadaSymbolAnimation} class with API to setup and control the connector animation, or undefined if no animation is applied.`,
+              type: 'ConnectorScadaSymbolAnimation | undefined'
+            }
+          },
+          resetConnectorAnimation: {
+            meta: 'function',
+            description: 'Stops the connector animation if any and restores the SVG element to its initial state, removes the connector animation instance.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
+            ]
+          },
+          finishConnectorAnimation: {
+            meta: 'function',
+            description: 'Finishes the connector animation if any, updates the SVG element state according to the end animation values, removes the connector animation instance.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
             ]
           },
           generateElementId: {
@@ -1132,7 +1304,7 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
           },
           formatValue: {
             meta: 'function',
-            description: 'Formats numeric value according to specified decimals and units',
+            description: 'Formats a numeric value according to specified settings or individual parameters for decimals and units, using a ValueFormatProcessor instance.',
             args: [
               {
                 name: 'value',
@@ -1140,34 +1312,34 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
                 type: 'any'
               },
               {
-                name: 'dec',
-                description: 'Number of decimal digits',
-                type: 'number',
+                name: 'settingsOrDec',
+                description: 'Either a ValueFormatSettings object containing formatting settings or the number of decimal digits. ValueFormatSettings includes: decimals (number of decimal digits, optional), units (unit specification as string or TbUnitMapping, optional), showZeroDecimals (whether to keep zero decimal digits, optional), ignoreUnitSymbol (whether to exclude unit symbol from output, optional).',
+                type: 'ValueFormatSettings | number',
                 optional: true
               },
               {
                 name: 'units',
-                description: 'Units to append to the formatted value',
+                description: 'Units to append to the formatted value, applied only if settingsOrDec is a number',
                 type: 'string',
                 optional: true
               },
               {
                 name: 'showZeroDecimals',
-                description: 'Whether to keep zero decimal digits',
+                description: 'Whether to keep zero decimal digits, applied only if settingsOrDec is a number',
                 type: 'boolean',
                 optional: true
               }
             ],
             return: {
-              type: 'string',
-              description: 'Formatted value'
+              description: 'The formatted value as a string. Returns undefined if the value cannot be formatted and settingsOrDec is not an object.',
+              type: 'string | undefined'
             }
           },
           text: {
             meta: 'function',
             description: 'Set text to element(s). Only applicable for elements of type ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text" target="_blank">SVG.Text</a> or ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan" target="_blank">SVG.Tspan</a>.',
             args: [
               {
                 name: 'element',
@@ -1184,8 +1356,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
           font: {
             meta: 'function',
             description: 'Set element(s) text font and color. Only applicable for elements of type ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text" target="_blank">SVG.Text</a> or ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan" target="_blank">SVG.Tspan</a>.',
             args: [
               {
                 name: 'element',
@@ -1201,6 +1373,41 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
                 name: 'color',
                 description: 'Color string used to apply text color of the element',
                 type: 'string'
+              }
+            ]
+          },
+          icon: {
+            meta: 'function',
+            description: 'Draws icon inside element(s). Only applicable for elements of type ' +
+              '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-g" target="_blank">SVG.G</a>.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element or an array of SVG elements',
+                type: 'Element | Array&lt;Element&gt;'
+              },
+              {
+                name: 'icon',
+                description: 'Icon to draw',
+                type: 'string'
+              },
+              {
+                name: 'size',
+                description: 'Optional icon size in pixels. Default 12 pixels.',
+                type: 'number',
+                optional: true
+              },
+              {
+                name: 'color',
+                description: 'Optional icon color. Default #0000008A.',
+                type: 'string',
+                optional: true
+              },
+              {
+                name: 'center',
+                description: 'Whether to center icon inside group element. Default true.',
+                type: 'boolean',
+                optional: true
               }
             ]
           },
@@ -1272,6 +1479,47 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
                 type: 'any'
               }
             ]
+          },
+          unitSymbol: {
+            meta: 'function',
+            description: 'Retrieves the target unit symbol based on the current unit system or the provided unit.',
+            args: [
+              {
+                name: 'unit',
+                description: 'Unit specification, either a string or a TbUnitMapping object defining unit mappings for different systems.',
+                type: 'TbUnit'
+              }
+            ],
+            return: {
+              description: 'The target unit symbol as a string, or the \'from\' unit if no mapping is found for the current unit system.',
+              type: 'string'
+            }
+          },
+          convertUnitValue: {
+            meta: 'function',
+            description: 'Converts a numeric value from one unit to another, either using a TbUnit mapping or explicit from/to units. Returns the original value on conversion failure.',
+            args: [
+              {
+                name: 'value',
+                description: 'Numeric value to be converted',
+                type: 'number'
+              },
+              {
+                name: 'unit',
+                description: 'Unit specification, either a string representing the source unit or a TbUnitMapping object for system-based conversion',
+                type: 'TbUnit'
+              },
+              {
+                name: 'to',
+                description: 'Optional target unit to convert to. If not provided, the target unit is derived from the TbUnitMapping and current unit system.',
+                type: 'string',
+                optional: true
+              }
+            ],
+            return: {
+              description: 'The converted numeric value. Returns the original value if conversion fails or no conversion is needed.',
+              type: 'number'
+            }
           }
         }
       },
@@ -1280,22 +1528,11 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
       tags: tagsCompletions,
       svg: {
         meta: 'argument',
-        type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>',
-        description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>.'
+        type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" target="_blank">SVG.Svg</a>',
+        description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" ' +
+          'target="_blank">SVG.Svg</a>.'
       }
     }
-  };
-};
-
-const scadaSymbolPropertyCompletion = (property: ScadaSymbolProperty, customTranslate: CustomTranslatePipe): TbEditorCompletion => {
-  let description = customTranslate.transform(property.name, property.name);
-  if (property.subLabel) {
-    description += ` <small>${customTranslate.transform(property.subLabel, property.subLabel)}</small>`;
-  }
-  return {
-    meta: 'property',
-    description,
-    type: scadaSymbolPropertyCompletionType(property.type)
   };
 };
 
@@ -1306,25 +1543,6 @@ const scadaSymbolValueCompletion = (value: ScadaSymbolBehavior, customTranslate:
     description,
     type: scadaSymbolValueCompletionType(value.valueType)
   };
-};
-
-const scadaSymbolPropertyCompletionType = (type: ScadaSymbolPropertyType): string => {
-  switch (type) {
-    case ScadaSymbolPropertyType.text:
-      return 'string';
-    case ScadaSymbolPropertyType.number:
-      return 'number';
-    case ScadaSymbolPropertyType.switch:
-      return 'boolean';
-    case ScadaSymbolPropertyType.color:
-      return 'color string';
-    case ScadaSymbolPropertyType.color_settings:
-      return 'ColorProcessor';
-    case ScadaSymbolPropertyType.font:
-      return 'Font';
-    case ScadaSymbolPropertyType.units:
-      return 'units string';
-  }
 };
 
 const scadaSymbolValueCompletionType = (type: ValueType): string => {

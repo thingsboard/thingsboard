@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ResourcesService } from '@core/services/resources.service';
 import { FormGroup } from '@angular/forms';
+import { TbUnit } from '@shared/models/unit.models';
 
 export interface SvgInfo {
   svg: string;
@@ -70,7 +71,7 @@ export interface LevelCardWidgetSettings extends WidgetConfig {
   backgroundOverlayColor: ColorSettings;
   showTooltip: boolean;
   showTooltipLevel: boolean;
-  tooltipUnits: CapacityUnits;
+  tooltipUnits: TbUnit | CapacityUnits;
   tooltipLevelDecimals: number;
   tooltipLevelFont: Font;
   tooltipLevelColor: ColorSettings;

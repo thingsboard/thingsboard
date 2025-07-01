@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,16 @@
     @media #{$mat-xs} {
       padding: 12px;
       gap: 8px;
+    }
+    &.no-padding-right {
+      padding-right: 0;
+      .mat-expansion-panel {
+        &.tb-settings {
+          > .mat-expansion-panel-header {
+            padding-right: 16px;
+          }
+        }
+      }
     }
     &.no-padding-bottom {
       padding-bottom: 0;
@@ -153,6 +163,13 @@
   .tb-form-panel-title {
     font-weight: 500;
     font-size: 16px;
+
+    &.tb-required::after {
+      font-size: 13px;
+      color: rgba(0, 0, 0, .54);
+      vertical-align: top;
+      content: " *";
+    }
   }
   .tb-form-panel-hint {
     font-size: 12px;
@@ -205,9 +222,15 @@
     &.space-between {
       justify-content: space-between;
     }
+    &.flex-wrap {
+      flex-wrap: wrap;
+    }
+    &.overflow-auto {
+      overflow: auto;
+    }
     .mat-divider-vertical {
       height: 56px;
-      margin-top: -7px;
+      margin-top: -9px;
       margin-bottom: -7px;
     }
     .mat-mdc-form-field, tb-unit-input {
@@ -235,6 +258,10 @@
     .fixed-title-width {
       min-width: 200px;
 
+      &-180 {
+        min-width: 180px;
+      }
+
       &-230 {
         min-width: 230px;
       }
@@ -260,12 +287,21 @@
   }
 
   .tb-flex {
-    display: flex;
     flex: 1;
-    gap: 8px;
+
     &.no-flex {
       flex: none;
     }
+
+    &-xs {
+      @media #{$mat-xs} {
+        flex: 1;
+      }
+    }
+  }
+  [class*="tb-flex"] {
+    display: flex;
+    gap: 8px;
     &.row {
       flex-direction: row;
     }
@@ -287,11 +323,14 @@
     &.space-between {
       justify-content: space-between;
     }
-    &.center {
-      justify-content: center;
-    }
     &.align-center {
       align-items: center;
+    }
+    &.align-start {
+      align-items: start;
+    }
+    &.align-end {
+      align-items: end;
     }
     &.no-gap {
       gap: 0;
@@ -321,9 +360,10 @@
       }
     }
     .tb-small-label {
+      display: flex;
+      align-items: center;
       height: 40px;
       font-size: 14px;
-      line-height: 40px;
       letter-spacing: 0.2px;
       color: rgba(0, 0, 0, 0.38);
     }
@@ -362,8 +402,20 @@
     .mat-mdc-text-field-wrapper {
       &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
         &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(.mdc-text-field--invalid):not(:hover) {
-          .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+          .mdc-notched-outline__leading, .mdc-notched-outline__trailing, .mdc-notched-outline__notch {
             border-color: rgba(0, 0, 0, 0.12);
+          }
+        }
+        .mdc-notched-outline__notch {
+          border-left: none;
+        }
+        .mdc-floating-label {
+          top: 20px;
+          font-weight: 400;
+          font-size: 14px;
+          line-height: 20px;
+          &--float-above {
+            --mat-mdc-form-field-label-transform: translateY(-27px) scale(var(--mat-mdc-form-field-floating-label-scale, 0.75));
           }
         }
         .mat-mdc-form-field-infix {
@@ -377,7 +429,8 @@
             line-height: 20px;
           }
         }
-        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix {
+        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix,
+        .mat-datetimepicker-toggle {
           height: 40px;
           font-size: 14px;
           line-height: 40px;
@@ -391,6 +444,10 @@
               width: 20px;
               height: 20px;
               font-size: 20px;
+              svg {
+                width: 20px;
+                height: 20px;
+              }
             }
             .mat-mdc-button-touch-target {
               width: 40px;
@@ -613,6 +670,15 @@
         color: rgba(0, 0, 0, 0.38);
         &.tb-hidden {
           visibility: hidden;
+        }
+      }
+    }
+
+    .mat-mdc-form-field.tb-inline-field {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix,
+        .mat-datetimepicker-toggle {
+          line-height: normal;
         }
       }
     }

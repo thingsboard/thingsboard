@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 
+import java.io.Serial;
 import java.util.UUID;
 
 @Data
 public class ToEdgeSyncRequest implements EdgeSessionMsg {
 
+    @Serial
     private static final long serialVersionUID = -7624597032448212259L;
 
     private final UUID id;

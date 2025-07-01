@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
-import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
@@ -125,7 +125,7 @@ public class TbRuleEngineProcessingStrategyFactory {
                     }
                     log.debug("[{}] Going to reprocess {} messages", queueName, toReprocess.size());
                     if (log.isTraceEnabled()) {
-                        toReprocess.forEach((id, msg) -> log.trace("Going to reprocess [{}]: {}", id, TbMsg.fromBytes(result.getQueueName(), msg.getValue().getTbMsg().toByteArray(), TbMsgCallback.EMPTY)));
+                        toReprocess.forEach((id, msg) -> log.trace("Going to reprocess [{}]: {}", id, ProtoUtils.fromTbMsgProto(result.getQueueName(), msg.getValue(), TbMsgCallback.EMPTY)));
                     }
                     if (pauseBetweenRetries > 0) {
                         try {
@@ -164,10 +164,10 @@ public class TbRuleEngineProcessingStrategyFactory {
                 log.debug("[{}] Reprocessing skipped for {} failed and {} timeout messages", queueName, result.getFailedMap().size(), result.getPendingMap().size());
             }
             if (log.isTraceEnabled()) {
-                result.getFailedMap().forEach((id, msg) -> log.trace("Failed messages [{}]: {}", id, TbMsg.fromBytes(result.getQueueName(), msg.getValue().getTbMsg().toByteArray(), TbMsgCallback.EMPTY)));
+                result.getFailedMap().forEach((id, msg) -> log.trace("Failed messages [{}]: {}", id, ProtoUtils.fromTbMsgProto(result.getQueueName(), msg.getValue(), TbMsgCallback.EMPTY)));
             }
             if (log.isTraceEnabled()) {
-                result.getPendingMap().forEach((id, msg) -> log.trace("Timeout messages [{}]: {}", id, TbMsg.fromBytes(result.getQueueName(), msg.getValue().getTbMsg().toByteArray(), TbMsgCallback.EMPTY)));
+                result.getPendingMap().forEach((id, msg) -> log.trace("Timeout messages [{}]: {}", id, ProtoUtils.fromTbMsgProto(result.getQueueName(), msg.getValue(), TbMsgCallback.EMPTY)));
             }
             return new TbRuleEngineProcessingDecision(true, null);
         }

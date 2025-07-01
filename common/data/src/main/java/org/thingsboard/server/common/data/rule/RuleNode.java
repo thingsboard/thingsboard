@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,17 @@
 package org.thingsboard.server.common.data.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
+import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -32,7 +36,8 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements HasName {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements HasName, HasDebugSettings {
 
     private static final long serialVersionUID = -5656679015121235465L;
 
@@ -45,18 +50,19 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     @Length(fieldName = "name")
     @Schema(description = "User defined name of the rule node. Used on UI and for logging. ", example = "Process sensor reading")
     private String name;
-    @Schema(description = "Enable/disable debug. ", example = "false")
+    @Deprecated
+    @Schema(description = "Enable/disable debug. ", example = "false", deprecated = true)
     private boolean debugMode;
+    @Schema(description = "Debug settings object.")
+    private DebugSettings debugSettings;
     @Schema(description = "Enable/disable singleton mode. ", example = "false")
     private boolean singletonMode;
     @Schema(description = "Queue name. ", example = "Main")
     private String queueName;
     @Schema(description = "Version of rule node configuration. ", example = "0")
     private int configurationVersion;
-    @Schema(description = "JSON with the rule node configuration. Structure depends on the rule node implementation.", implementation = com.fasterxml.jackson.databind.JsonNode.class)
-    private transient JsonNode configuration;
-    @JsonIgnore
-    private byte[] configurationBytes;
+    @Schema(description = "JSON with the rule node configuration. Structure depends on the rule node implementation.", implementation = JsonNode.class)
+    private JsonNode configuration;
 
     private RuleNodeId externalId;
 
@@ -73,7 +79,7 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
         this.ruleChainId = ruleNode.getRuleChainId();
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
-        this.debugMode = ruleNode.isDebugMode();
+        this.debugSettings = ruleNode.getDebugSettings();
         this.singletonMode = ruleNode.isSingletonMode();
         this.setConfiguration(ruleNode.getConfiguration());
         this.externalId = ruleNode.getExternalId();
@@ -84,18 +90,10 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
         return name;
     }
 
-    public JsonNode getConfiguration() {
-        return BaseDataWithAdditionalInfo.getJson(() -> configuration, () -> configurationBytes);
-    }
-
-    public void setConfiguration(JsonNode data) {
-        setJson(data, json -> this.configuration = json, bytes -> this.configurationBytes = bytes);
-    }
-
     @Schema(description = "JSON object with the Rule Node Id. " +
-            "Specify this field to update the Rule Node. " +
-            "Referencing non-existing Rule Node Id will cause error. " +
-            "Omit this field to create new rule node.")
+                          "Specify this field to update the Rule Node. " +
+                          "Referencing non-existing Rule Node Id will cause error. " +
+                          "Omit this field to create new rule node.")
     @Override
     public RuleNodeId getId() {
         return super.getId();
@@ -107,10 +105,21 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
         return super.getCreatedTime();
     }
 
-    @Schema(description = "Additional parameters of the rule node. Contains 'layoutX' and 'layoutY' properties for visualization.", implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the rule node. Contains 'layoutX' and 'layoutY' properties for visualization.", implementation = JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
     }
 
+    // Getter is ignored for serialization
+    @JsonIgnore
+    public boolean isDebugMode() {
+        return debugMode;
+    }
+
+    // Setter is annotated for deserialization
+    @JsonSetter
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
+    }
 }

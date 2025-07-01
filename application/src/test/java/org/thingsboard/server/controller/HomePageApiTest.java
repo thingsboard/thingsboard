@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -415,6 +415,9 @@ public class HomePageApiTest extends AbstractControllerTest {
 
         Assert.assertEquals(DEFAULT_DASHBOARDS_COUNT, usageInfo.getDashboards());
         Assert.assertEquals(configuration.getMaxDashboards(), usageInfo.getMaxDashboards());
+
+        Assert.assertEquals(0, usageInfo.getEdges());
+        Assert.assertEquals(configuration.getMaxEdges(), usageInfo.getMaxEdges());
 
         Assert.assertEquals(0, usageInfo.getTransportMessages());
         Assert.assertEquals(configuration.getMaxTransportMessages(), usageInfo.getMaxTransportMessages());

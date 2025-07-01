@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,12 @@ import static org.mockito.Mockito.spy;
         "queue.type=kafka",
         "queue.kafka.bootstrap.servers=localhost:9092",
         "queue.kafka.other-inline=metrics.recording.level:INFO;metrics.sample.window.ms:30000",
+        "queue.kafka.consumer-properties-per-topic-inline=" +
+                "tb_core_updated:max.poll.records=10;" +
+                "tb_core_updated:enable.auto.commit=true;" +
+                "tb_core_updated:bootstrap.servers=kafka1:9092,kafka2:9092;" +
+                "tb_edge_updated:max.poll.records=5;" +
+                "tb_edge_updated:auto.offset.reset=latest"
 })
 class TbKafkaSettingsTest {
 
@@ -77,6 +83,18 @@ class TbKafkaSettingsTest {
         settings.toProducerProps();
         Mockito.verify(settings).toProps();
         Mockito.verify(settings).configureSSL(any());
+    }
+
+    @Test
+    void givenMultipleTopicsInInlineConfig_whenParsed_thenEachTopicGetsExpectedProperties() {
+        Properties coreProps = settings.toConsumerProps("tb_core_updated");
+        assertThat(coreProps.getProperty("max.poll.records")).isEqualTo("10");
+        assertThat(coreProps.getProperty("enable.auto.commit")).isEqualTo("true");
+        assertThat(coreProps.getProperty("bootstrap.servers")).isEqualTo("kafka1:9092,kafka2:9092");
+
+        Properties edgeProps = settings.toConsumerProps("tb_edge_updated");
+        assertThat(edgeProps.getProperty("max.poll.records")).isEqualTo("5");
+        assertThat(edgeProps.getProperty("auto.offset.reset")).isEqualTo("latest");
     }
 
 }

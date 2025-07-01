@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import {
   DateEntityTableColumn,
   EntityActionTableColumn,
@@ -24,7 +24,6 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { DomainInfo } from '@shared/models/oauth2.models';
-import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
@@ -33,18 +32,17 @@ import { DomainComponent } from '@home/pages/admin/oauth2/domains/domain.compone
 import { isEqual } from '@core/utils';
 import { DomainTableHeaderComponent } from '@home/pages/admin/oauth2/domains/domain-table-header.component';
 import { Direction } from '@app/shared/models/page/sort-order';
-import { map } from 'rxjs';
+import { map, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 @Injectable()
-export class DomainTableConfigResolver implements Resolve<EntityTableConfig<DomainInfo>> {
+export class DomainTableConfigResolver  {
 
   private readonly config: EntityTableConfig<DomainInfo> = new EntityTableConfig<DomainInfo>();
 
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
-              private utilsService: UtilsService,
               private domainService: DomainService) {
-    this.config.tableTitle = this.translate.instant('admin.oauth2.domains');
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.DOMAIN;
     this.config.rowPointer = true;
@@ -87,22 +85,25 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
     this.config.loadEntity = id => this.domainService.getDomainInfoById(id.id);
     this.config.saveEntity = (domain, originalDomain) => {
       const clientsIds = domain.oauth2ClientInfos as Array<string> || [];
-      if (domain.id && !isEqual(domain.oauth2ClientInfos?.sort(),
-        originalDomain.oauth2ClientInfos?.map(info => info.id ? info.id.id : info).sort())) {
-        this.domainService.updateOauth2Clients(domain.id.id, clientsIds).subscribe();
-      }
+      const shouldUpdateClients = domain.id && !isEqual(domain.oauth2ClientInfos?.sort(),
+        originalDomain.oauth2ClientInfos?.map(info => info.id ? info.id.id : info).sort());
       delete domain.oauth2ClientInfos;
-      return this.domainService.saveDomain(domain, domain.id ? [] : clientsIds).pipe(
-        map(domain => {
-          (domain as DomainInfo).oauth2ClientInfos = clientsIds;
-          return domain;
+
+      return this.domainService.saveDomain(domain, domain.id ? null : clientsIds).pipe(
+        switchMap(savedDomain => shouldUpdateClients
+          ? this.domainService.updateOauth2Clients(domain.id.id, clientsIds).pipe(map(() => savedDomain))
+          : of(savedDomain)
+        ),
+        map(savedDomain => {
+          (savedDomain as DomainInfo).oauth2ClientInfos = clientsIds;
+          return savedDomain;
         })
       );
-    }
+    };
     this.config.deleteEntity = id => this.domainService.deleteDomain(id.id);
   }
 
-  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<DomainInfo> {
+  resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<DomainInfo> {
     return this.config;
   }
 
@@ -111,12 +112,9 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
       $event.stopPropagation();
     }
 
-    const modifiedDomain: DomainInfo = {
-      ...domain,
-      oauth2Enabled: !domain.oauth2Enabled
-    };
+    const { oauth2ClientInfos, oauth2Enabled, ...updatedDomain } = domain;
 
-    this.domainService.saveDomain(modifiedDomain, domain.oauth2ClientInfos.map(clientInfo => clientInfo.id.id),
+    this.domainService.saveDomain({ ...updatedDomain, oauth2Enabled: !oauth2Enabled }, null,
       {ignoreLoading: true})
       .subscribe((result) => {
         domain.oauth2Enabled = result.oauth2Enabled;
@@ -129,12 +127,9 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
       $event.stopPropagation();
     }
 
-    const modifiedDomain: DomainInfo = {
-      ...domain,
-      propagateToEdge: !domain.propagateToEdge
-    };
+    const { oauth2ClientInfos, propagateToEdge, ...updatedDomain } = domain;
 
-    this.domainService.saveDomain(modifiedDomain, domain.oauth2ClientInfos.map(clientInfo => clientInfo.id.id),
+    this.domainService.saveDomain({ ...updatedDomain, propagateToEdge: !propagateToEdge }, null,
       {ignoreLoading: true})
       .subscribe((result) => {
         domain.propagateToEdge = result.propagateToEdge;

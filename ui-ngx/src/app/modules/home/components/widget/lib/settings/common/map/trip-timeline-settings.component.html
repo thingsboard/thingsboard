@@ -1,0 +1,82 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<ng-container [formGroup]="tripTimelineSettingsFormGroup">
+  <div class="tb-form-panel stroked tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings" [expanded]="settingsExpanded"
+                         [disabled]="!tripTimelineSettingsFormGroup.get('showTimelineControl').value">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTimelineControl" (click)="$event.stopPropagation()">
+            {{ 'widgets.maps.timeline.control-panel' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row space-between">
+          <div translate>widgets.maps.timeline.time-step</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput type="number" min="1" step="1" formControlName="timeStep" placeholder="{{ 'widget-config.set' | translate }}">
+            <span matSuffix>ms</span>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row space-between column-xs">
+          <div class="fixed-title-width" translate>widgets.maps.timeline.speed-options</div>
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="speedOptions" multiple>
+              <mat-option *ngFor="let speed of [1,5,10,15,25]" [value]="speed">
+                {{ speed }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row column-xs">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTimestamp">
+            {{ 'widgets.maps.timeline.timestamp' | translate }}
+          </mat-slide-toggle>
+          <tb-date-format-select class="flex-1"
+                                 excludeLastUpdateAgo
+                                 formControlName="timestampFormat"></tb-date-format-select>
+        </div>
+        <div class="tb-form-panel tb-slide-toggle stroked">
+          <mat-expansion-panel class="tb-settings" [expanded]="tripTimelineSettingsFormGroup.get('snapToRealLocation').value"
+                               [disabled]="!tripTimelineSettingsFormGroup.get('snapToRealLocation').value">
+            <mat-expansion-panel-header class="flex flex-row flex-wrap">
+              <mat-panel-title>
+                <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="snapToRealLocation" (click)="$event.stopPropagation()">
+                  {{ 'widgets.maps.timeline.snap-to-real-location' | translate }}
+                </mat-slide-toggle>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <tb-js-func formControlName="locationSnapFilter"
+                          required
+                          withModules
+                          [globalVariables]="functionScopeVariables"
+                          [functionArgs]="['data', 'dsData']"
+                          functionTitle="{{ 'widgets.maps.timeline.location-snap-filter-function' | translate }}"
+                          helpId="widget/lib/map/trip_point_as_anchor_fn"
+                          [helpPopupStyle]="{width: '900px'}">
+              </tb-js-func>
+            </ng-template>
+          </mat-expansion-panel>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+</ng-container>

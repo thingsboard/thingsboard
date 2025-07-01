@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 
+import java.util.concurrent.Future;
+
 public abstract class HousekeeperTaskProcessor<T extends HousekeeperTask> {
 
     @Autowired
@@ -28,5 +30,14 @@ public abstract class HousekeeperTaskProcessor<T extends HousekeeperTask> {
     public abstract void process(T task) throws Exception;
 
     public abstract HousekeeperTaskType getTaskType();
+
+    public <V> V wait(Future<V> future) throws Exception {
+        try {
+            return future.get(); // will be interrupted after taskProcessingTimeout
+        } catch (InterruptedException e) {
+            future.cancel(true); // interrupting the underlying task
+            throw e;
+        }
+    }
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -129,23 +129,25 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        getValueSettings: this.modelValue,
-        panelTitle: this.panelTitle,
-        valueType: this.valueType,
-        trueLabel: this.trueLabel,
-        falseLabel: this.falseLabel,
-        stateLabel: this.stateLabel,
-        aliasController: this.aliasController,
-        targetDevice: this.targetDevice,
-        widgetType: this.widgetType
-      };
-      const getValueSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, GetValueActionSettingsPanelComponent,
-        ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const getValueSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: GetValueActionSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+        context: {
+          getValueSettings: this.modelValue,
+          panelTitle: this.panelTitle,
+          valueType: this.valueType,
+          trueLabel: this.trueLabel,
+          falseLabel: this.falseLabel,
+          stateLabel: this.stateLabel,
+          aliasController: this.aliasController,
+          targetDevice: this.targetDevice,
+          widgetType: this.widgetType
+        },
+        isModal: true
+      });
       getValueSettingsPanelPopover.tbComponentRef.instance.popover = getValueSettingsPanelPopover;
       getValueSettingsPanelPopover.tbComponentRef.instance.getValueSettingsApplied.subscribe((getValueSettings) => {
         getValueSettingsPanelPopover.hide();
@@ -176,6 +178,9 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
       case GetValueAction.GET_TIME_SERIES:
         this.displayValue = this.translate.instant('widgets.value-action.get-time-series-text', {key: this.modelValue.getTimeSeries.key});
         break;
+      case GetValueAction.GET_ALARM_STATUS:
+        this.displayValue = this.translate.instant('widgets.value-action.get-alarm-status-text');
+        break;
       case GetValueAction.GET_DASHBOARD_STATE:
         if (this.valueType === ValueType.BOOLEAN) {
           const state = this.modelValue.dataToValue?.compareToValue;
@@ -186,6 +191,14 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
           }
         } else {
           this.displayValue = this.translate.instant('widgets.value-action.get-dashboard-state-text');
+        }
+        break;
+      case GetValueAction.GET_DASHBOARD_STATE_OBJECT:
+        if (this.valueType === ValueType.BOOLEAN) {
+          const state = this.modelValue.dataToValue?.compareToValue;
+          this.displayValue = this.translate.instant('widgets.value-action.when-dashboard-state-object-function-is-text', {state});
+        } else {
+          this.displayValue = this.translate.instant('widgets.value-action.get-dashboard-state-object-text');
         }
         break;
     }

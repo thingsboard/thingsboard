@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,14 @@ public class EntityIdFactory {
                 return new MobileAppId(uuid);
             case DOMAIN:
                 return new DomainId(uuid);
+            case MOBILE_APP_BUNDLE:
+                return new MobileAppBundleId(uuid);
+            case CALCULATED_FIELD:
+                return new CalculatedFieldId(uuid);
+            case CALCULATED_FIELD_LINK:
+                return new CalculatedFieldLinkId(uuid);
+            case JOB:
+                return new JobId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }
@@ -118,7 +126,7 @@ public class EntityIdFactory {
     public static EntityId getByEdgeEventTypeAndUuid(EdgeEventType edgeEventType, UUID uuid) {
         switch (edgeEventType) {
             case TENANT:
-                return new TenantId(uuid);
+                return TenantId.fromUUID(uuid);
             case CUSTOMER:
                 return new CustomerId(uuid);
             case USER:

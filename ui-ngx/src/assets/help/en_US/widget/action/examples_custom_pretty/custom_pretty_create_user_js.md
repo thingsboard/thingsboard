@@ -93,7 +93,7 @@ function ActivationLinkDialogController(instance) {
 let activationLinkDialogTemplate = `<form style="min-width: 400px; position: relative;">
   <mat-toolbar color="primary">
     <h2 translate>user.activation-link</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="close()"
             type="button">
@@ -104,10 +104,10 @@ let activationLinkDialogTemplate = `<form style="min-width: 400px; position: rel
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content tb-toast toastTarget="activationLinkDialogContent">
-    <div class="mat-content" fxLayout="column">
+    <div class="mat-content" class="flex flex-col">
       <span [innerHTML]="'user.activation-link-text' | translate: {activationLink: activationLink}"></span>
-      <div fxLayout="row" fxLayoutAlign="start center">
-        <pre class="tb-highlight" fxFlex><code>{{ activationLink }}</code></pre>
+      <div class="flex flex-row items-center justify-start">
+        <pre class="tb-highlight flex-1"><code>{{ activationLink }}</code></pre>
         <button mat-icon-button
                 color="primary"
                 ngxClipboard
@@ -120,7 +120,7 @@ let activationLinkDialogTemplate = `<form style="min-width: 400px; position: rel
       </div>
     </div>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial

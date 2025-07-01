@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,8 @@ public class BasicUsageInfoService implements UsageInfoService {
         usageInfo.setMaxUsers(profileConfiguration.getMaxUsers());
         usageInfo.setDashboards(countService.countByTenantIdAndEntityType(tenantId, EntityType.DASHBOARD));
         usageInfo.setMaxDashboards(profileConfiguration.getMaxDashboards());
+        usageInfo.setEdges(countService.countByTenantIdAndEntityType(tenantId, EntityType.EDGE));
+        usageInfo.setMaxEdges(profileConfiguration.getMaxEdges());
 
         usageInfo.setMaxAlarms(profileConfiguration.getMaxCreatedAlarms());
         usageInfo.setMaxTransportMessages(profileConfiguration.getMaxTransportMessages());

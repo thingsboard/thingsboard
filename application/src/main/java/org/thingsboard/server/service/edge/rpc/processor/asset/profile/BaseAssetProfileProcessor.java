@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,35 @@
 package org.thingsboard.server.service.edge.rpc.processor.asset.profile;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
 public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
 
+    @Autowired
+    private DataValidator<AssetProfile> assetProfileValidator;
+
     protected Pair<Boolean, Boolean> saveOrUpdateAssetProfile(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg) {
         boolean created = false;
         boolean assetProfileNameUpdated = false;
         assetCreationLock.lock();
         try {
-            AssetProfile assetProfile = constructAssetProfileFromUpdateMsg(tenantId, assetProfileId, assetProfileUpdateMsg);
+            AssetProfile assetProfile = JacksonUtil.fromString(assetProfileUpdateMsg.getEntity(), AssetProfile.class, true);
             if (assetProfile == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetProfileUpdateMsg {" + assetProfileUpdateMsg + "} cannot be converted to asset profile");
             }
-            AssetProfile assetProfileById = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
+            AssetProfile assetProfileById = edgeCtx.getAssetProfileService().findAssetProfileById(tenantId, assetProfileId);
             if (assetProfileById == null) {
                 created = true;
                 assetProfile.setId(null);
@@ -48,7 +54,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
                 assetProfile.setDefault(assetProfileById.isDefault());
             }
             String assetProfileName = assetProfile.getName();
-            AssetProfile assetProfileByName = assetProfileService.findAssetProfileByName(tenantId, assetProfileName);
+            AssetProfile assetProfileByName = edgeCtx.getAssetProfileService().findAssetProfileByName(tenantId, assetProfileName);
             if (assetProfileByName != null && !assetProfileByName.getId().equals(assetProfileId)) {
                 assetProfileName = assetProfileName + "_" + StringUtils.randomAlphabetic(15);
                 log.warn("[{}] Asset profile with name {} already exists. Renaming asset profile name to {}",
@@ -66,7 +72,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             if (created) {
                 assetProfile.setId(assetProfileId);
             }
-            assetProfileService.saveAssetProfile(assetProfile, false, true);
+            edgeCtx.getAssetProfileService().saveAssetProfile(assetProfile, false, true);
         } catch (Exception e) {
             log.error("[{}] Failed to process asset profile update msg [{}]", tenantId, assetProfileUpdateMsg, e);
             throw e;
@@ -76,11 +82,10 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
         return Pair.of(created, assetProfileNameUpdated);
     }
 
-    protected abstract AssetProfile constructAssetProfileFromUpdateMsg(TenantId tenantId, AssetProfileId assetProfileId, AssetProfileUpdateMsg assetProfileUpdateMsg);
-
     protected abstract void setDefaultRuleChainId(TenantId tenantId, AssetProfile assetProfile, RuleChainId ruleChainId);
 
     protected abstract void setDefaultEdgeRuleChainId(AssetProfile assetProfile, RuleChainId ruleChainId, AssetProfileUpdateMsg assetProfileUpdateMsg);
 
     protected abstract void setDefaultDashboardId(TenantId tenantId, DashboardId dashboardId, AssetProfile assetProfile, AssetProfileUpdateMsg assetProfileUpdateMsg);
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 .tb-autocomplete.tb-unit-input-autocomplete {
+  .mat-mdc-optgroup-label {
+    min-height: 36px;
+    .mdc-list-item__primary-text {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      letter-spacing: 0.2px;
+    }
+  }
   .mat-mdc-option {
     border-bottom: none;
     .mdc-list-item__primary-text {

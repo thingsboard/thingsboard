@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -53,10 +53,13 @@ import {
   pieChartLabelPositionTranslations
 } from '@home/components/widget/lib/chart/chart.models';
 import {
-  DoughnutLayout, doughnutLayoutImages,
+  DoughnutLayout,
+  doughnutLayoutImages,
   doughnutLayouts,
-  doughnutLayoutTranslations, horizontalDoughnutLayoutImages
+  doughnutLayoutTranslations,
+  horizontalDoughnutLayoutImages
 } from '@home/components/widget/lib/chart/doughnut-widget.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -350,7 +353,7 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.latestChartWidgetConfigForm.get('units').value;
+    const units: string = getSourceTbUnitSymbol(this.latestChartWidgetConfigForm.get('units').value);
     const decimals: number = this.latestChartWidgetConfigForm.get('decimals').value;
     return formatValue(110, decimals, units, false);
   }
@@ -361,7 +364,7 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
     if (tooltipValueType === LatestChartTooltipValueType.percentage) {
       return formatValue(35, decimals, '%', false);
     } else {
-      const units: string = this.latestChartWidgetConfigForm.get('units').value;
+      const units: string = getSourceTbUnitSymbol(this.latestChartWidgetConfigForm.get('units').value);
       return formatValue(110, decimals, units, false);
     }
   }

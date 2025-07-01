@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,5 +37,9 @@ public interface DeviceCredentialsRepository extends JpaRepository<DeviceCredent
     @Transactional
     @Query(value = "DELETE FROM device_credentials WHERE device_id = :deviceId RETURNING *", nativeQuery = true)
     DeviceCredentialsEntity deleteByDeviceId(@Param("deviceId") UUID deviceId);
+
+
+    @Query("SELECT c FROM DeviceCredentialsEntity c WHERE c.deviceId IN (SELECT d.id FROM DeviceEntity d WHERE d.tenantId = :tenantId)")
+    Page<DeviceCredentialsEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
 }

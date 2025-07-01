@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,17 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serial;
-import java.io.Serializable;
 
 @Getter
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Builder
-public class DeviceCacheKey implements Serializable {
+public class DeviceCacheKey implements VersionedCacheKey {
 
     @Serial
     private static final long serialVersionUID = 6366389552842340207L;
@@ -59,6 +59,11 @@ public class DeviceCacheKey implements Serializable {
         } else {
             return tenantId + "_" + deviceId;
         }
+    }
+
+    @Override
+    public boolean isVersioned() {
+        return deviceId != null;
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
+import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.concurrent.LazyInitializer;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -55,9 +57,9 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.ImageExportData;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
@@ -86,6 +88,7 @@ import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
@@ -99,6 +102,7 @@ import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -107,6 +111,7 @@ import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
@@ -123,8 +128,9 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.mobile.MobileApp;
-import org.thingsboard.server.common.data.mobile.MobileAppInfo;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundleInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
@@ -203,7 +209,9 @@ public class RestClient implements Closeable {
     private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
     private static final long AVG_REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
-    private final ExecutorService service = ThingsBoardExecutors.newWorkStealingPool(10, getClass());
+    private final LazyInitializer<ExecutorService> executor = LazyInitializer.<ExecutorService>builder()
+            .setInitializer(() -> ThingsBoardExecutors.newWorkStealingPool(10, getClass()))
+            .get();
     protected final RestTemplate restTemplate;
     protected final RestTemplate loginRestTemplate;
     protected final String baseURL;
@@ -221,22 +229,30 @@ public class RestClient implements Closeable {
     }
 
     public RestClient(RestTemplate restTemplate, String baseURL) {
+        this(restTemplate, baseURL, null);
+    }
+
+    public RestClient(RestTemplate restTemplate, String baseURL, String accessToken) {
         this.restTemplate = restTemplate;
         this.loginRestTemplate = new RestTemplate(restTemplate.getRequestFactory());
         this.baseURL = baseURL;
         this.restTemplate.getInterceptors().add((request, bytes, execution) -> {
             HttpRequest wrapper = new HttpRequestWrapper(request);
-            long calculatedTs = System.currentTimeMillis() + clientServerTimeDiff + AVG_REQUEST_TIMEOUT;
-            if (calculatedTs > mainTokenExpTs) {
-                synchronized (RestClient.this) {
-                    if (calculatedTs > mainTokenExpTs) {
-                        if (calculatedTs < refreshTokenExpTs) {
-                            refreshToken();
-                        } else {
-                            doLogin();
+            if (accessToken == null) {
+                long calculatedTs = System.currentTimeMillis() + clientServerTimeDiff + AVG_REQUEST_TIMEOUT;
+                if (calculatedTs > mainTokenExpTs) {
+                    synchronized (RestClient.this) {
+                        if (calculatedTs > mainTokenExpTs) {
+                            if (calculatedTs < refreshTokenExpTs) {
+                                refreshToken();
+                            } else {
+                                doLogin();
+                            }
                         }
                     }
                 }
+            } else {
+                mainToken = accessToken;
             }
             wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + mainToken);
             return execution.execute(wrapper, bytes);
@@ -1356,13 +1372,17 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
-    public PageData<DeviceInfo> getTenantDeviceInfos(String type, DeviceProfileId deviceProfileId, PageLink pageLink) {
+    public PageData<DeviceInfo> getTenantDeviceInfos(String type, Boolean active, DeviceProfileId deviceProfileId, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
         params.put("deviceProfileId", deviceProfileId != null ? deviceProfileId.toString() : null);
+        if (active != null) {
+            params.put("active", active.toString());
+        }
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/tenant/deviceInfos?type={type}&deviceProfileId={deviceProfileId}&" + getUrlParams(pageLink),
+                baseURL + "/api/tenant/deviceInfos?type={type}&deviceProfileId={deviceProfileId}&"
+                        + (active != null ? "active={active}&" : "") + getUrlParams(pageLink),
                 HttpMethod.GET, HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<DeviceInfo>>() {
                 }, params).getBody();
@@ -2107,12 +2127,12 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
-    public List<OAuth2ClientInfo> getTenantOAuth2Clients() {
+    public PageData<OAuth2ClientInfo> getTenantOAuth2Clients() {
         return restTemplate.exchange(
                 baseURL + "/api/oauth2/client/infos",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<OAuth2ClientInfo>>() {
+                new ParameterizedTypeReference<PageData<OAuth2ClientInfo>>() {
                 }).getBody();
     }
 
@@ -2137,12 +2157,12 @@ public class RestClient implements Closeable {
         restTemplate.delete(baseURL + "/api/oauth2/client/{id}", oAuth2ClientId.getId());
     }
 
-    public List<DomainInfo> getTenantDomainInfos() {
+    public PageData<DomainInfo> getTenantDomainInfos() {
         return restTemplate.exchange(
                 baseURL + "/api/domain/infos",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<DomainInfo>>() {
+                new ParameterizedTypeReference<PageData<DomainInfo>>() {
                 }).getBody();
     }
 
@@ -2171,19 +2191,19 @@ public class RestClient implements Closeable {
         restTemplate.postForLocation(baseURL + "/api/domain/{id}/oauth2Clients", oauth2ClientIds, domainId.getId());
     }
 
-    public List<DomainInfo> getTenantMobileAppInfos() {
+    public PageData<MobileApp> getTenantMobileApps() {
         return restTemplate.exchange(
-                baseURL + "/api/mobileApp/infos",
+                baseURL + "/api/mobile/app",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<DomainInfo>>() {
+                new ParameterizedTypeReference<PageData<MobileApp>>() {
                 }).getBody();
     }
 
-    public Optional<MobileAppInfo> getMobileAppInfoById(MobileAppId mobileAppId) {
+    public Optional<MobileApp> getMobileAppById(MobileAppId mobileAppId) {
         try {
-            ResponseEntity<MobileAppInfo> mobileAppInfo = restTemplate.getForEntity(baseURL + "/api/mobileApp/info/{id}", MobileAppInfo.class, mobileAppId.getId());
-            return Optional.ofNullable(mobileAppInfo.getBody());
+            ResponseEntity<MobileApp> mobileApp = restTemplate.getForEntity(baseURL + "/api/mobile/app/{id}", MobileApp.class, mobileAppId.getId());
+            return Optional.ofNullable(mobileApp.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Optional.empty();
@@ -2194,15 +2214,45 @@ public class RestClient implements Closeable {
     }
 
     public MobileApp saveMobileApp(MobileApp mobileApp) {
-        return restTemplate.postForEntity(baseURL + "/api/mobileApp", mobileApp, MobileApp.class).getBody();
+        return restTemplate.postForEntity(baseURL + "/api/mobile/app", mobileApp, MobileApp.class).getBody();
     }
 
     public void deleteMobileApp(MobileAppId mobileAppId) {
-        restTemplate.delete(baseURL + "/api/mobileApp/{id}", mobileAppId.getId());
+        restTemplate.delete(baseURL + "/api/mobile/app/{id}", mobileAppId.getId());
     }
 
-    public void updateMobileAppOauth2Clients(MobileAppId mobileAppId, UUID[] oauth2ClientIds) {
-        restTemplate.postForLocation(baseURL + "/api/mobileApp/{id}/oauth2Clients", oauth2ClientIds, mobileAppId.getId());
+    public PageData<MobileAppBundleInfo> getTenantMobileBundleInfos() {
+        return restTemplate.exchange(
+                baseURL + "/api/mobile/bundle/infos",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<MobileAppBundleInfo>>() {
+                }).getBody();
+    }
+
+    public Optional<MobileAppBundle> getMobileBundleById(MobileAppBundleId mobileAppBundleId) {
+        try {
+            ResponseEntity<MobileAppBundle> mobileApp = restTemplate.getForEntity(baseURL + "/api/mobile/bundle/{id}", MobileAppBundle.class, mobileAppBundleId.getId());
+            return Optional.ofNullable(mobileApp.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public MobileAppBundle saveMobileBundle(MobileAppBundle mobileAppBundle) {
+        return restTemplate.postForEntity(baseURL + "/api/mobile/bundle", mobileAppBundle, MobileAppBundle.class).getBody();
+    }
+
+    public void deleteMobileBundle(MobileAppBundleId mobileAppBundleId) {
+        restTemplate.delete(baseURL + "/api/mobile/bundle/{id}", mobileAppBundleId.getId());
+    }
+
+    public void updateMobileAppBundleOauth2Clients(MobileAppBundleId mobileAppBundleId, UUID[] oauth2ClientIds) {
+        restTemplate.postForLocation(baseURL + "/api/mobile/bundle/{id}/oauth2Clients", oauth2ClientIds, mobileAppBundleId.getId());
     }
 
     public String getLoginProcessingUrl() {
@@ -2367,7 +2417,7 @@ public class RestClient implements Closeable {
     }
 
     public Future<List<AttributeKvEntry>> getAttributeKvEntriesAsync(EntityId entityId, List<String> keys) {
-        return service.submit(() -> getAttributeKvEntries(entityId, keys));
+        return getExecutor().submit(() -> getAttributeKvEntries(entityId, keys));
     }
 
     public List<AttributeKvEntry> getAttributesByScope(EntityId entityId, String scope, List<String> keys) {
@@ -2940,7 +2990,7 @@ public class RestClient implements Closeable {
         addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypes?" + getUrlParams(pageLink) +
-                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
@@ -3028,7 +3078,7 @@ public class RestClient implements Closeable {
         addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypesInfos?widgetsBundleId={widgetsBundleId}&" + getUrlParams(pageLink) +
-                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
@@ -3729,7 +3779,7 @@ public class RestClient implements Closeable {
     }
 
     public PageData<TbResourceInfo> getImages(PageLink pageLink, boolean includeSystemImages) {
-       return this.getImages(pageLink, null, includeSystemImages);
+        return this.getImages(pageLink, null, includeSystemImages);
     }
 
     public PageData<TbResourceInfo> getImages(PageLink pageLink, ResourceSubType imageSubType, boolean includeSystemImages) {
@@ -3802,14 +3852,14 @@ public class RestClient implements Closeable {
         return IOUtils.toByteArray(image.getInputStream());
     }
 
-    public ImageExportData exportImage(String type, String key) {
-        return restTemplate.getForObject(baseURL + "/api/images/{type}/{key}/export", ImageExportData.class, Map.of(
+    public ResourceExportData exportImage(String type, String key) {
+        return restTemplate.getForObject(baseURL + "/api/images/{type}/{key}/export", ResourceExportData.class, Map.of(
                 "type", type,
                 "key", key
         ));
     }
 
-    public TbResourceInfo importImage(ImageExportData exportData) {
+    public TbResourceInfo importImage(ResourceExportData exportData) {
         return restTemplate.exchange(baseURL + "/api/image/import", HttpMethod.PUT, new HttpEntity<>(exportData), TbResourceInfo.class).getBody();
     }
 
@@ -4020,6 +4070,64 @@ public class RestClient implements Closeable {
                 timeout).getBody();
     }
 
+    public CalculatedField saveCalculatedField(CalculatedField calculatedField) {
+        return restTemplate.postForEntity(baseURL + "/api/calculatedField", calculatedField, CalculatedField.class).getBody();
+    }
+
+    public Optional<CalculatedField> getCalculatedFieldById(CalculatedFieldId calculatedFieldId) {
+        try {
+            ResponseEntity<CalculatedField> calculatedField = restTemplate.getForEntity(baseURL + "/api/calculatedField/{calculatedFieldId}", CalculatedField.class, calculatedFieldId.getId());
+            return Optional.ofNullable(calculatedField.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public PageData<CalculatedField> getCalculatedFieldsByEntityId(EntityId entityId, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<CalculatedField>>() {
+                }, params).getBody();
+
+    }
+
+    public void deleteCalculatedField(CalculatedFieldId calculatedFieldId) {
+        restTemplate.delete(baseURL + "/api/calculatedField/{calculatedFieldId}", calculatedFieldId.getId());
+    }
+
+    public Optional<JsonNode> getLatestCalculatedFieldDebugEvent(CalculatedFieldId calculatedFieldId) {
+        try {
+            ResponseEntity<JsonNode> jsonNode = restTemplate.getForEntity(baseURL + "/api/calculatedField/{calculatedFieldId}/debug", JsonNode.class, calculatedFieldId.getId());
+            return Optional.ofNullable(jsonNode.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<JsonNode> testCalculatedFieldScript(JsonNode inputParams) {
+        try {
+            ResponseEntity<JsonNode> jsonNode = restTemplate.postForEntity(baseURL + "/api/calculatedField/testScript", inputParams, JsonNode.class);
+            return Optional.ofNullable(jsonNode.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
     private String getTimeUrlParams(TimePageLink pageLink) {
         String urlParams = getUrlParams(pageLink);
         if (pageLink.getStartTime() != null) {
@@ -4139,7 +4247,14 @@ public class RestClient implements Closeable {
 
     @Override
     public void close() {
-        service.shutdown();
+        if (executor.isInitialized()) {
+            getExecutor().shutdown();
+        }
+    }
+
+    @SneakyThrows
+    private ExecutorService getExecutor() {
+        return executor.get();
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,5 +60,11 @@ public interface UserCredentialsDao extends Dao<UserCredentials> {
     UserCredentials findByResetToken(TenantId tenantId, String resetToken);
 
     void removeByUserId(TenantId tenantId, UserId userId);
+
+    void setLastLoginTs(TenantId tenantId, UserId userId, long lastLoginTs);
+
+    int incrementFailedLoginAttempts(TenantId tenantId, UserId userId);
+
+    void setFailedLoginAttempts(TenantId tenantId, UserId userId, int failedLoginAttempts);
 
 }

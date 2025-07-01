@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.transport.ProxyProvider;
 
 import javax.net.ssl.SSLException;
@@ -95,7 +96,12 @@ public class TbHttpClient {
                 semaphore = new Semaphore(config.getMaxParallelRequestsCount());
             }
 
-            HttpClient httpClient = HttpClient.create()
+            ConnectionProvider connectionProvider = ConnectionProvider
+                    .builder("rule-engine-http-client")
+                    .maxConnections(getPoolMaxConnections())
+                    .build();
+
+            HttpClient httpClient = HttpClient.create(connectionProvider)
                     .runOn(getSharedOrCreateEventLoopGroup(eventLoopGroupShared))
                     .doOnConnected(c ->
                             c.addHandlerLast(new ReadTimeoutHandler(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS)));
@@ -135,13 +141,24 @@ public class TbHttpClient {
 
             this.webClient = WebClient.builder()
                     .clientConnector(new ReactorClientHttpConnector(httpClient))
-                    .defaultHeader(HttpHeaders.CONNECTION, "close") //In previous realization this header was present! (Added for hotfix "Connection reset")
                     .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(
                             (config.getMaxInMemoryBufferSizeInKb() > 0 ? config.getMaxInMemoryBufferSizeInKb() : 256) * 1024))
                     .build();
         } catch (SSLException e) {
             throw new TbNodeException(e);
         }
+    }
+
+    private int getPoolMaxConnections() {
+        String poolMaxConnectionsEnv = System.getenv("TB_RE_HTTP_CLIENT_POOL_MAX_CONNECTIONS");
+
+        int poolMaxConnections;
+        if (poolMaxConnectionsEnv != null) {
+            poolMaxConnections = Integer.parseInt(poolMaxConnectionsEnv);
+        } else {
+            poolMaxConnections = ConnectionProvider.DEFAULT_POOL_MAX_CONNECTIONS;
+        }
+        return poolMaxConnections;
     }
 
     private void validateMaxInMemoryBufferSize(TbRestApiCallNodeConfiguration config) throws TbNodeException {
@@ -306,7 +323,9 @@ public class TbHttpClient {
         metaData.putValue(STATUS_REASON, httpStatus.getReasonPhrase());
         metaData.putValue(ERROR_BODY, response.getBody());
         headersToMetaData(response.getHeaders(), metaData::putValue);
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     private TbMsg processException(TbMsg origMsg, Throwable e) {
@@ -317,7 +336,9 @@ public class TbHttpClient {
             metaData.putValue(STATUS_CODE, restClientResponseException.getStatusCode().value() + "");
             metaData.putValue(ERROR_BODY, restClientResponseException.getResponseBodyAsString());
         }
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     private void prepareHeaders(HttpHeaders headers, TbMsg msg) {
@@ -326,7 +347,7 @@ public class TbHttpClient {
         if (CredentialsType.BASIC == credentials.getType()) {
             BasicCredentials basicCredentials = (BasicCredentials) credentials;
             String authString = basicCredentials.getUsername() + ":" + basicCredentials.getPassword();
-            String encodedAuthString = new String(Base64.getDecoder().decode(authString.getBytes(StandardCharsets.UTF_8)));
+            String encodedAuthString = new String(Base64.getEncoder().encode(authString.getBytes(StandardCharsets.UTF_8)));
             headers.add("Authorization", "Basic " + encodedAuthString);
         }
     }

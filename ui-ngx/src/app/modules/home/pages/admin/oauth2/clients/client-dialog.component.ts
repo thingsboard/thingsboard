@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, OnDestroy, SkipSelf, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, SkipSelf, ViewChild } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroupDirective, NgForm, UntypedFormControl } from '@angular/forms';
+import { FormGroupDirective, NgForm, UntypedFormControl } from '@angular/forms';
 import { getProviderHelpLink, OAuth2Client } from '@shared/models/oauth2.models';
 import { OAuth2Service } from '@core/http/oauth2.service';
 import { ClientComponent } from '@home/pages/admin/oauth2/clients/client.component';
@@ -32,7 +32,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
   providers: [{provide: ErrorStateMatcher, useExisting: ClientDialogComponent}],
   styleUrls: []
 })
-export class ClientDialogComponent extends DialogComponent<ClientDialogComponent, OAuth2Client> implements OnDestroy {
+export class ClientDialogComponent extends DialogComponent<ClientDialogComponent, OAuth2Client> implements OnDestroy, AfterViewInit {
 
   submitted = false;
 
@@ -41,7 +41,6 @@ export class ClientDialogComponent extends DialogComponent<ClientDialogComponent
   constructor(protected store: Store<AppState>,
               protected router: Router,
               protected dialogRef: MatDialogRef<ClientDialogComponent, OAuth2Client>,
-              private fb: FormBuilder,
               private oauth2Service: OAuth2Service,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher) {
     super(store, router, dialogRef);

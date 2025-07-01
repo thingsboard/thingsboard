@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,24 @@ public class TbKafkaTopicConfigs {
     private String vcProperties;
     @Value("${queue.kafka.topic-properties.edge:}")
     private String edgeProperties;
+    @Value("${queue.kafka.topic-properties.edge-event:}")
+    private String edgeEventProperties;
     @Value("${queue.kafka.topic-properties.housekeeper:}")
     private String housekeeperProperties;
     @Value("${queue.kafka.topic-properties.housekeeper-reprocessing:}")
     private String housekeeperReprocessingProperties;
+    @Value("${queue.kafka.topic-properties.calculated-field:}")
+    private String calculatedFieldProperties;
+    @Value("${queue.kafka.topic-properties.calculated-field-state:}")
+    private String calculatedFieldStateProperties;
+    @Value("${queue.kafka.topic-properties.edqs-events:}")
+    private String edqsEventsProperties;
+    @Value("${queue.kafka.topic-properties.edqs-requests:}")
+    private String edqsRequestsProperties;
+    @Value("${queue.kafka.topic-properties.edqs-state:}")
+    private String edqsStateProperties;
+    @Value("${queue.kafka.topic-properties.tasks:}")
+    private String tasksProperties;
 
     @Getter
     private Map<String, String> coreConfigs;
@@ -75,6 +89,20 @@ public class TbKafkaTopicConfigs {
     private Map<String, String> housekeeperReprocessingConfigs;
     @Getter
     private Map<String, String> edgeConfigs;
+    @Getter
+    private Map<String, String> edgeEventConfigs;
+    @Getter
+    private Map<String, String> calculatedFieldConfigs;
+    @Getter
+    private Map<String, String> calculatedFieldStateConfigs;
+    @Getter
+    private Map<String, String> edqsEventsConfigs;
+    @Getter
+    private Map<String, String> edqsRequestsConfigs;
+    @Getter
+    private Map<String, String> edqsStateConfigs;
+    @Getter
+    private Map<String, String> tasksConfigs;
 
     @PostConstruct
     private void init() {
@@ -92,6 +120,13 @@ public class TbKafkaTopicConfigs {
         housekeeperConfigs = PropertyUtils.getProps(housekeeperProperties);
         housekeeperReprocessingConfigs = PropertyUtils.getProps(housekeeperReprocessingProperties);
         edgeConfigs = PropertyUtils.getProps(edgeProperties);
+        edgeEventConfigs = PropertyUtils.getProps(edgeEventProperties);
+        calculatedFieldConfigs = PropertyUtils.getProps(calculatedFieldProperties);
+        calculatedFieldStateConfigs = PropertyUtils.getProps(calculatedFieldStateProperties);
+        edqsEventsConfigs = PropertyUtils.getProps(edqsEventsProperties);
+        edqsRequestsConfigs = PropertyUtils.getProps(edqsRequestsProperties);
+        edqsStateConfigs = PropertyUtils.getProps(edqsStateProperties);
+        tasksConfigs = PropertyUtils.getProps(tasksProperties);
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -384,7 +384,12 @@ public class RuleChainController extends BaseController {
                 }
                 engine = new RuleNodeTbelScriptEngine(getTenantId(), tbelInvokeService, script, argNames);
             }
-            TbMsg inMsg = TbMsg.newMsg(msgType, null, new TbMsgMetaData(metadata), TbMsgDataType.JSON, data);
+            TbMsg inMsg = TbMsg.newMsg()
+                    .type(msgType)
+                    .copyMetaData(new TbMsgMetaData(metadata))
+                    .dataType(TbMsgDataType.JSON)
+                    .data(data)
+                    .build();
             switch (scriptType) {
                 case "update":
                     output = msgToOutput(engine.executeUpdateAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS));

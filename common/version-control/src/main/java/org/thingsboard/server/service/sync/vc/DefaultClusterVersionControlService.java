@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 }
             }
         }
-        consumer.subscribe(event.getPartitionsMap().values().stream().findAny().orElse(Collections.emptySet()));
+        consumer.subscribe(event.getNewPartitions().values().stream().findAny().orElse(Collections.emptySet()));
     }
 
     @Override
@@ -223,7 +223,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                     var currentSettings = vcService.getRepositorySettings(ctx.getTenantId());
                     var newSettings = ctx.getSettings();
                     if (!newSettings.equals(currentSettings)) {
-                        vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
+                        vcService.initRepository(ctx.getTenantId(), ctx.getSettings(), false);
                     }
                     if (msg.hasCommitRequest()) {
                         handleCommitRequest(ctx, msg.getCommitRequest());
@@ -464,7 +464,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void handleInitRepositoryCommand(VersionControlRequestCtx ctx) {
         try {
-            vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
+            vcService.initRepository(ctx.getTenantId(), ctx.getSettings(), false);
             reply(ctx, Optional.empty());
         } catch (Exception e) {
             log.debug("[{}] Failed to connect to the repository: ", ctx, e);
@@ -564,4 +564,5 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             }, MoreExecutors.directExecutor());
         }
     }
+
 }

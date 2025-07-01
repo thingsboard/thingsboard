@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -331,8 +331,23 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Query(value = "SELECT a FROM AlarmInfoEntity a WHERE a.tenantId = :tenantId AND a.id = :alarmId")
     AlarmInfoEntity findAlarmInfoById(@Param("tenantId") UUID tenantId, @Param("alarmId") UUID alarmId);
 
-    @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.assigneeId = :assigneeId")
-    Page<UUID> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId, @Param("assigneeId") UUID assigneeId, Pageable pageable);
+    // using Slice so that count query is not executed
+    @Query("SELECT new org.thingsboard.server.common.data.util.TbPair(a.id, a.createdTime) " +
+            "FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.assigneeId = :assigneeId")
+    Slice<TbPair<UUID, Long>> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId,
+                                                       @Param("assigneeId") UUID assigneeId,
+                                                       Pageable pageable);
+
+    // using Slice so that count query is not executed
+    @Query("SELECT new org.thingsboard.server.common.data.util.TbPair(a.id, a.createdTime) " +
+            "FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.assigneeId = :assigneeId " +
+            "AND (a.createdTime > :createdTimeOffset OR " +
+            "(a.createdTime = :createdTimeOffset AND a.id > :idOffset))")
+    Slice<TbPair<UUID, Long>> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId,
+                                                       @Param("assigneeId") UUID assigneeId,
+                                                       @Param("createdTimeOffset") long createdTimeOffset,
+                                                       @Param("idOffset") UUID idOffset,
+                                                       Pageable pageable);
 
     // using Slice so that count query is not executed
     @Query("SELECT new org.thingsboard.server.common.data.util.TbPair(a.id, a.createdTime) " +
@@ -388,5 +403,17 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Modifying
     @Query(value = "DELETE FROM alarm_types AS at WHERE NOT EXISTS (SELECT 1 FROM alarm AS a WHERE a.tenant_id = at.tenant_id AND a.type = at.type) AND at.tenant_id = :tenantId AND at.type IN (:types)", nativeQuery = true)
     int deleteTypeIfNoAlarmsExist(@Param("tenantId") UUID tenantId, @Param("types") Set<String> types);
+
+    @Query(value = "SELECT a.id FROM alarm a " +
+            "WHERE a.originator_id = :originatorId " +
+            "AND (COALESCE(:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
+            "AND (COALESCE(:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
+            "AND (a.cleared = false) ORDER BY id LIMIT :limit", nativeQuery = true)
+    List<UUID> findActiveOriginatorAlarms(@Param("originatorId") UUID originatorId,
+                                          @Param("alarmTypes") List<String> alarmTypes,
+                                          @Param("alarmSeverities") List<String> alarmSeverities,
+                                          int limit);
+
+    Page<AlarmEntity> findByTenantId(UUID tenantId, Pageable pageable);
 
 }

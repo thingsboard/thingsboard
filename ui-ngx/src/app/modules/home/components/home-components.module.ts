@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -182,6 +182,27 @@ import {
   SelectDashboardBreakpointComponent
 } from '@home/components/dashboard-page/layout/select-dashboard-breakpoint.component';
 import { EntityChipsComponent } from '@home/components/entity/entity-chips.component';
+import { DashboardViewComponent } from '@home/components/dashboard-view/dashboard-view.component';
+import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
+import { CalculatedFieldDialogComponent } from '@home/components/calculated-fields/components/dialog/calculated-field-dialog.component';
+import {
+  EntityDebugSettingsButtonComponent
+} from '@home/components/entity/debug/entity-debug-settings-button.component';
+import {
+  CalculatedFieldArgumentsTableComponent
+} from '@home/components/calculated-fields/components/arguments-table/calculated-field-arguments-table.component';
+import {
+  CalculatedFieldArgumentPanelComponent
+} from '@home/components/calculated-fields/components/panel/calculated-field-argument-panel.component';
+import {
+  CalculatedFieldDebugDialogComponent
+} from '@home/components/calculated-fields/components/debug-dialog/calculated-field-debug-dialog.component';
+import {
+  CalculatedFieldScriptTestDialogComponent
+} from '@home/components/calculated-fields/components/test-dialog/calculated-field-script-test-dialog.component';
+import {
+  CalculatedFieldTestArgumentsComponent
+} from '@home/components/calculated-fields/components/test-arguments/calculated-field-test-arguments.component';
 
 @NgModule({
   declarations:
@@ -324,7 +345,15 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
       RateLimitsTextComponent,
       RateLimitsDetailsDialogComponent,
       SendNotificationButtonComponent,
-      EntityChipsComponent
+      EntityChipsComponent,
+      DashboardViewComponent,
+      CalculatedFieldsTableComponent,
+      CalculatedFieldDialogComponent,
+      CalculatedFieldArgumentsTableComponent,
+      CalculatedFieldArgumentPanelComponent,
+      CalculatedFieldDebugDialogComponent,
+      CalculatedFieldScriptTestDialogComponent,
+      CalculatedFieldTestArgumentsComponent,
     ],
   imports: [
     CommonModule,
@@ -336,7 +365,8 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
     DeviceCredentialsModule,
-    DeviceProfileCommonModule
+    DeviceProfileCommonModule,
+    EntityDebugSettingsButtonComponent
   ],
   exports: [
     RouterTabsComponent,
@@ -460,7 +490,15 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
     RateLimitsTextComponent,
     RateLimitsDetailsDialogComponent,
     SendNotificationButtonComponent,
-    EntityChipsComponent
+    EntityChipsComponent,
+    DashboardViewComponent,
+    CalculatedFieldsTableComponent,
+    CalculatedFieldDialogComponent,
+    CalculatedFieldArgumentsTableComponent,
+    CalculatedFieldArgumentPanelComponent,
+    CalculatedFieldDebugDialogComponent,
+    CalculatedFieldScriptTestDialogComponent,
+    CalculatedFieldTestArgumentsComponent,
   ],
   providers: [
     WidgetComponentService,

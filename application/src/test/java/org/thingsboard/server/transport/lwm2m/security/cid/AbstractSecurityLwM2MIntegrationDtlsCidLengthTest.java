@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpoint;
 import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpointsProvider;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
@@ -49,11 +50,12 @@ public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLengthTest extends 
 
     protected void basicTestConnectionDtlsCidLength(Integer clientDtlsCidLength,
                                                     Integer serverDtlsCidLength) throws Exception {
-        createDeviceProfile(transportConfiguration);
-        final Device device = createDevice(deviceCredentials, clientEndpoint);
-        device.getId().getId().toString();
-        createNewClient(security, null, true, clientEndpoint, clientDtlsCidLength);
+        DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
+        final Device device = createLwm2mDevice(deviceCredentials, clientEndpoint, deviceProfile.getId());
+        createNewClient(security, null, true, clientEndpoint, clientDtlsCidLength, device.getId().getId().toString());
         lwM2MTestClient.start(true);
+
+        awaitUpdateReg(1);
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS));

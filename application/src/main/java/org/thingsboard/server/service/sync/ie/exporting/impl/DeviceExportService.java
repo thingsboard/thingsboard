@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ public class DeviceExportService extends BaseEntityExportService<DeviceId, Devic
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, Device device, DeviceExportData exportData) {
         device.setCustomerId(getExternalIdOrElseInternal(ctx, device.getCustomerId()));
         device.setDeviceProfileId(getExternalIdOrElseInternal(ctx, device.getDeviceProfileId()));
+        device.setFirmwareId(getExternalIdOrElseInternal(ctx, device.getFirmwareId()));
+        device.setSoftwareId(getExternalIdOrElseInternal(ctx, device.getSoftwareId()));
         if (ctx.getSettings().isExportCredentials()) {
             var credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(ctx.getTenantId(), device.getId());
             credentials.setId(null);

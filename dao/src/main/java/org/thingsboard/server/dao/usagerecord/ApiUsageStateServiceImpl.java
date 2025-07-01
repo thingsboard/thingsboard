@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,6 +113,14 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
         ApiUsageState saved = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
 
+        eventPublisher.publishEvent(SaveEntityEvent.builder()
+                .tenantId(saved.getTenantId())
+                .entityId(saved.getId())
+                .entity(saved)
+                .created(true)
+                .broadcastEvent(false)
+                .build());
+
         List<TsKvEntry> apiUsageStates = new ArrayList<>();
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.TRANSPORT.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
@@ -154,6 +162,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         log.trace("Executing save [{}]", apiUsageState.getTenantId());
         validateId(apiUsageState.getTenantId(), id -> INCORRECT_TENANT_ID + id);
         validateId(apiUsageState.getId(), "Can't save new usage state. Only update is allowed!");
+        apiUsageState.setVersion(null);
         ApiUsageState savedState = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedState.getTenantId()).entityId(savedState.getId())
                 .entity(savedState).build());

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
 ///
 
 import { inject, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, ResolveFn, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, ResolveFn, Router, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { MailServerComponent } from '@modules/home/pages/admin/mail-server.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
@@ -38,24 +38,32 @@ import { widgetsLibraryRoutes } from '@home/pages/widget/widget-library-routing.
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
 import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
-import { MobileAppSettingsComponent } from '@home/pages/admin/mobile-app-settings.component';
 import { oAuth2Routes } from '@home/pages/admin/oauth2/oauth2-routing.module';
 import { ImageResourceType, IMAGES_URL_PREFIX, ResourceSubType } from '@shared/models/resource.models';
 import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.component';
 import { ImageService } from '@core/http/image.service';
 import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { MenuId } from '@core/services/menu.models';
+import { catchError } from 'rxjs/operators';
+import { JsLibraryTableConfigResolver } from '@home/pages/admin/resource/js-library-table-config.resolver';
+import { TrendzSettingsComponent } from '@home/pages/admin/trendz-settings.component';
 
 export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
   (route: ActivatedRouteSnapshot,
    state: RouterStateSnapshot,
+   router = inject(Router),
    imageService = inject(ImageService)) => {
     const type: ImageResourceType = route.params.type;
     const key = decodeURIComponent(route.params.key);
     return forkJoin({
       imageResource: imageService.getImageInfo(type, key),
       scadaSymbolContent: imageService.getImageString(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`)
-    });
+    }).pipe(
+      catchError(() => {
+        router.navigate(['/resources/scada-symbols']);
+        return of(null);
+      })
+    );
 };
 
 export const scadaSymbolBreadcumbLabelFunction: BreadCrumbLabelFunction<ScadaSymbolComponent>
@@ -168,6 +176,43 @@ const routes: Routes = [
             },
             resolve: {
               entitiesTableConfig: ResourcesLibraryTableConfigResolver
+            }
+          }
+        ]
+      },
+      {
+        path: 'javascript-library',
+        data: {
+          breadcrumb: {
+            menuId: MenuId.javascript_library
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'javascript.javascript-library',
+            },
+            resolve: {
+              entitiesTableConfig: JsLibraryTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'mdi:language-javascript'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'javascript.javascript-library'
+            },
+            resolve: {
+              entitiesTableConfig: JsLibraryTableConfigResolver
             }
           }
         ]
@@ -306,14 +351,14 @@ const routes: Routes = [
         }
       },
       {
-        path: 'mobile-app',
-        component: MobileAppSettingsComponent,
+        path: 'trendz',
+        component: TrendzSettingsComponent,
         canDeactivate: [ConfirmOnExitGuard],
         data: {
-          auth: [Authority.SYS_ADMIN],
-          title: 'admin.mobile-app.mobile-app',
+          auth: [Authority.TENANT_ADMIN],
+          title: 'admin.trendz-settings',
           breadcrumb: {
-            menuId: MenuId.mobile_app_settings
+            menuId: MenuId.trendz_settings
           }
         }
       },
@@ -399,6 +444,7 @@ const routes: Routes = [
   exports: [RouterModule],
   providers: [
     ResourcesLibraryTableConfigResolver,
+    JsLibraryTableConfigResolver,
     QueuesTableConfigResolver
   ]
 })

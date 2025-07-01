@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,18 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -51,6 +52,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -93,6 +95,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -126,11 +129,10 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private static final List<EntityKey> PERSISTENT_TELEMETRY_KEYS = Arrays.asList(
             new EntityKey(EntityKeyType.TIME_SERIES, LAST_ACTIVITY_TIME),
             new EntityKey(EntityKeyType.TIME_SERIES, INACTIVITY_ALARM_TIME),
-            new EntityKey(EntityKeyType.TIME_SERIES, INACTIVITY_TIMEOUT),
             new EntityKey(EntityKeyType.TIME_SERIES, ACTIVITY_STATE),
             new EntityKey(EntityKeyType.TIME_SERIES, LAST_CONNECT_TIME),
             new EntityKey(EntityKeyType.TIME_SERIES, LAST_DISCONNECT_TIME),
-            new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT));
+            new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT)); // inactivity timeout is always a server attribute, even when activity data is stored as time series
 
     private static final List<EntityKey> PERSISTENT_ATTRIBUTE_KEYS = Arrays.asList(
             new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, LAST_ACTIVITY_TIME),
@@ -140,8 +142,14 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, LAST_CONNECT_TIME),
             new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, LAST_DISCONNECT_TIME));
 
-    public static final List<String> PERSISTENT_ATTRIBUTES = Arrays.asList(ACTIVITY_STATE, LAST_CONNECT_TIME,
-            LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME, INACTIVITY_TIMEOUT);
+    public static final Set<String> ACTIVITY_KEYS_WITHOUT_INACTIVITY_TIMEOUT = Set.of(
+            ACTIVITY_STATE, LAST_CONNECT_TIME, LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME
+    );
+
+    public static final Set<String> ACTIVITY_KEYS_WITH_INACTIVITY_TIMEOUT = Set.of(
+            ACTIVITY_STATE, LAST_CONNECT_TIME, LAST_DISCONNECT_TIME, LAST_ACTIVITY_TIME, INACTIVITY_ALARM_TIME, INACTIVITY_TIMEOUT
+    );
+
     private static final List<EntityKey> PERSISTENT_ENTITY_FIELDS = Arrays.asList(
             new EntityKey(EntityKeyType.ENTITY_FIELD, "name"),
             new EntityKey(EntityKeyType.ENTITY_FIELD, "type"),
@@ -161,35 +169,22 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     @Lazy
     private TelemetrySubscriptionService tsSubService;
 
-    @Value("${state.defaultInactivityTimeoutInSec}")
-    @Getter
-    @Setter
-    private long defaultInactivityTimeoutInSec;
-
     @Value("#{${state.defaultInactivityTimeoutInSec} * 1000}")
-    @Getter
-    @Setter
     private long defaultInactivityTimeoutMs;
 
     @Value("${state.defaultStateCheckIntervalInSec}")
-    @Getter
     private int defaultStateCheckIntervalInSec;
 
     @Value("${usage.stats.devices.report_interval:60}")
-    @Getter
     private int defaultActivityStatsIntervalInSec;
 
     @Value("${state.persistToTelemetry:false}")
-    @Getter
-    @Setter
     private boolean persistToTelemetry;
 
     @Value("${state.initFetchPackSize:50000}")
-    @Getter
     private int initFetchPackSize;
 
     @Value("${state.telemetryTtl:0}")
-    @Getter
     private int telemetryTtl;
 
     private ListeningExecutorService deviceStateExecutor;
@@ -248,7 +243,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
         log.trace("[{}][{}] On device connect: processing connect event with ts [{}].", tenantId.getId(), deviceId.getId(), lastConnectTime);
         stateData.getState().setLastConnectTime(lastConnectTime);
-        save(deviceId, LAST_CONNECT_TIME, lastConnectTime);
+        save(tenantId, deviceId, LAST_CONNECT_TIME, lastConnectTime);
         pushRuleEngineMessage(stateData, TbMsgType.CONNECT_EVENT);
         checkAndUpdateState(deviceId, stateData);
     }
@@ -268,16 +263,15 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     void updateActivityState(DeviceId deviceId, DeviceStateData stateData, long lastReportedActivity) {
         log.trace("updateActivityState - fetched state {} for device {}, lastReportedActivity {}", stateData, deviceId, lastReportedActivity);
         if (stateData != null) {
-            save(deviceId, LAST_ACTIVITY_TIME, lastReportedActivity);
+            save(stateData.getTenantId(), deviceId, LAST_ACTIVITY_TIME, lastReportedActivity);
             DeviceState state = stateData.getState();
             state.setLastActivityTime(lastReportedActivity);
             if (!state.isActive()) {
-                state.setActive(true);
                 if (lastReportedActivity <= state.getLastInactivityAlarmTime()) {
                     state.setLastInactivityAlarmTime(0);
-                    save(deviceId, INACTIVITY_ALARM_TIME, 0);
+                    save(stateData.getTenantId(), deviceId, INACTIVITY_ALARM_TIME, 0);
                 }
-                onDeviceActivityStatusChange(deviceId, true, stateData);
+                onDeviceActivityStatusChange(true, stateData);
             }
         } else {
             log.debug("updateActivityState - fetched state IS NULL for device {}, lastReportedActivity {}", deviceId, lastReportedActivity);
@@ -304,7 +298,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
         log.trace("[{}][{}] On device disconnect: processing disconnect event with ts [{}].", tenantId.getId(), deviceId.getId(), lastDisconnectTime);
         stateData.getState().setLastDisconnectTime(lastDisconnectTime);
-        save(deviceId, LAST_DISCONNECT_TIME, lastDisconnectTime);
+        save(tenantId, deviceId, LAST_DISCONNECT_TIME, lastDisconnectTime);
         pushRuleEngineMessage(stateData, TbMsgType.DISCONNECT_EVENT);
     }
 
@@ -346,7 +340,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             return;
         }
         log.trace("[{}][{}] On device inactivity: processing inactivity event with ts [{}].", tenantId.getId(), deviceId.getId(), lastInactivityTime);
-        reportInactivity(lastInactivityTime, deviceId, stateData);
+        reportInactivity(lastInactivityTime, stateData);
     }
 
     @Override
@@ -378,7 +372,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                             }
 
                             @Override
-                            public void onFailure(Throwable t) {
+                            public void onFailure(@NonNull Throwable t) {
                                 log.warn("Failed to register device to the state service", t);
                                 callback.onFailure(t);
                             }
@@ -415,7 +409,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private void initializeActivityState(DeviceId deviceId, DeviceStateData fetchedState) {
         DeviceStateData cachedState = deviceStates.putIfAbsent(fetchedState.getDeviceId(), fetchedState);
         boolean activityState = Objects.requireNonNullElse(cachedState, fetchedState).getState().isActive();
-        save(deviceId, ACTIVITY_STATE, activityState);
+        save(fetchedState.getTenantId(), deviceId, ACTIVITY_STATE, activityState);
     }
 
     @Override
@@ -493,7 +487,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 updateActivityState(deviceId, state, deviceState.getLastActivityTime());
                 if (deviceState.getLastInactivityAlarmTime() != 0L && deviceState.getLastInactivityAlarmTime() >= deviceState.getLastActivityTime()) {
                     deviceState.setLastInactivityAlarmTime(0L);
-                    save(deviceId, INACTIVITY_ALARM_TIME, 0L);
+                    save(state.getTenantId(), deviceId, INACTIVITY_ALARM_TIME, 0L);
                 }
             }
         }
@@ -530,7 +524,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
     }
 
-    void reportActivityStats() {
+    private void reportActivityStats() {
         try {
             Map<TenantId, Pair<AtomicInteger, AtomicInteger>> stats = new HashMap<>();
             for (DeviceStateData stateData : deviceStates.values()) {
@@ -565,7 +559,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() <= state.getLastActivityTime())
                     && stateData.getDeviceCreationTime() + state.getInactivityTimeout() <= ts) {
                 if (partitionService.resolve(ServiceType.TB_CORE, stateData.getTenantId(), deviceId).isMyPartition()) {
-                    reportInactivity(ts, deviceId, stateData);
+                    reportInactivity(ts, stateData);
                 } else {
                     cleanupEntity(deviceId);
                 }
@@ -576,15 +570,25 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
     }
 
-    private void reportInactivity(long ts, DeviceId deviceId, DeviceStateData stateData) {
-        DeviceState state = stateData.getState();
-        state.setActive(false);
-        state.setLastInactivityAlarmTime(ts);
-        save(deviceId, INACTIVITY_ALARM_TIME, ts);
-        onDeviceActivityStatusChange(deviceId, false, stateData);
+    private void reportInactivity(long ts, DeviceStateData stateData) {
+        var tenantId = stateData.getTenantId();
+        var deviceId = stateData.getDeviceId();
+
+        Futures.addCallback(save(stateData.getTenantId(), deviceId, INACTIVITY_ALARM_TIME, ts), new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void success) {
+                stateData.getState().setLastInactivityAlarmTime(ts);
+                onDeviceActivityStatusChange(false, stateData);
+            }
+
+            @Override
+            public void onFailure(@NonNull Throwable t) {
+                log.error("[{}][{}] Failed to update device last inactivity alarm time to '{}'. Device state data: {}", tenantId, deviceId, ts, stateData, t);
+            }
+        }, deviceStateCallbackExecutor);
     }
 
-    boolean isActive(long ts, DeviceState state) {
+    private static boolean isActive(long ts, DeviceState state) {
         return ts < state.getLastActivityTime() + state.getInactivityTimeout();
     }
 
@@ -607,17 +611,32 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
     }
 
-    private void onDeviceActivityStatusChange(DeviceId deviceId, boolean active, DeviceStateData stateData) {
-        save(deviceId, ACTIVITY_STATE, active);
-        pushRuleEngineMessage(stateData, active ? TbMsgType.ACTIVITY_EVENT : TbMsgType.INACTIVITY_EVENT);
-        TbMsgMetaData metaData = stateData.getMetaData();
-        notificationRuleProcessor.process(DeviceActivityTrigger.builder()
-                .tenantId(stateData.getTenantId()).customerId(stateData.getCustomerId())
-                .deviceId(deviceId).active(active)
-                .deviceName(metaData.getValue("deviceName"))
-                .deviceType(metaData.getValue("deviceType"))
-                .deviceLabel(metaData.getValue("deviceLabel"))
-                .build());
+    private void onDeviceActivityStatusChange(boolean active, DeviceStateData stateData) {
+        var tenantId = stateData.getTenantId();
+        var deviceId = stateData.getDeviceId();
+
+        Futures.addCallback(save(tenantId, deviceId, ACTIVITY_STATE, active), new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void success) {
+                stateData.getState().setActive(active);
+                pushRuleEngineMessage(stateData, active ? TbMsgType.ACTIVITY_EVENT : TbMsgType.INACTIVITY_EVENT);
+                TbMsgMetaData metaData = stateData.getMetaData();
+                notificationRuleProcessor.process(DeviceActivityTrigger.builder()
+                        .tenantId(tenantId)
+                        .customerId(stateData.getCustomerId())
+                        .deviceId(deviceId)
+                        .active(active)
+                        .deviceName(metaData.getValue("deviceName"))
+                        .deviceType(metaData.getValue("deviceType"))
+                        .deviceLabel(metaData.getValue("deviceLabel"))
+                        .build());
+            }
+
+            @Override
+            public void onFailure(@NonNull Throwable t) {
+                log.error("[{}][{}] Failed to change device activity status to '{}'. Device state data: {}", tenantId, deviceId, active, stateData, t);
+            }
+        }, deviceStateCallbackExecutor);
     }
 
     boolean cleanDeviceStateIfBelongsToExternalPartition(TenantId tenantId, final DeviceId deviceId) {
@@ -625,8 +644,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         boolean cleanup = !partitionedEntities.containsKey(tpi);
         if (cleanup) {
             cleanupEntity(deviceId);
-            log.debug("[{}][{}] device belongs to external partition. Probably rebalancing is in progress. Topic: {}"
-                    , tenantId, deviceId, tpi.getFullTopicName());
+            log.debug("[{}][{}] device belongs to external partition. Probably rebalancing is in progress. Topic: {}", tenantId, deviceId, tpi.getFullTopicName());
         }
         return cleanup;
     }
@@ -640,41 +658,43 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         deviceStates.remove(deviceId);
     }
 
-
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
         ListenableFuture<DeviceStateData> future;
         if (persistToTelemetry) {
-            ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
-            future = Futures.transform(tsData, extractDeviceStateData(device), MoreExecutors.directExecutor());
+            ListenableFuture<List<TsKvEntry>> timeseriesActivityDataFuture = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), ACTIVITY_KEYS_WITHOUT_INACTIVITY_TIMEOUT);
+            ListenableFuture<Optional<AttributeKvEntry>> inactivityTimeoutAttributeFuture = attributesService.find(
+                    TenantId.SYS_TENANT_ID, device.getId(), AttributeScope.SERVER_SCOPE, INACTIVITY_TIMEOUT
+            );
+
+            ListenableFuture<List<? extends KvEntry>> fullActivityDataFuture = Futures.whenAllSucceed(timeseriesActivityDataFuture, inactivityTimeoutAttributeFuture).call(() -> {
+                List<TsKvEntry> activityTimeseries = Futures.getDone(timeseriesActivityDataFuture);
+                Optional<AttributeKvEntry> inactivityTimeoutAttribute = Futures.getDone(inactivityTimeoutAttributeFuture);
+
+                if (inactivityTimeoutAttribute.isPresent()) {
+                    List<KvEntry> result = new ArrayList<>(activityTimeseries.size() + 1);
+                    result.addAll(activityTimeseries);
+                    result.add(inactivityTimeoutAttribute.get());
+                    return result;
+                } else {
+                    return activityTimeseries;
+                }
+            }, deviceStateCallbackExecutor);
+
+            future = Futures.transform(fullActivityDataFuture, extractDeviceStateData(device), MoreExecutors.directExecutor());
         } else {
-            ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), AttributeScope.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
-            future = Futures.transform(attrData, extractDeviceStateData(device), MoreExecutors.directExecutor());
+            ListenableFuture<List<AttributeKvEntry>> attributesActivityDataFuture = attributesService.find(
+                    TenantId.SYS_TENANT_ID, device.getId(), AttributeScope.SERVER_SCOPE, ACTIVITY_KEYS_WITH_INACTIVITY_TIMEOUT
+            );
+            future = Futures.transform(attributesActivityDataFuture, extractDeviceStateData(device), MoreExecutors.directExecutor());
         }
-        return transformInactivityTimeout(future);
+        return future;
     }
 
-    private ListenableFuture<DeviceStateData> transformInactivityTimeout(ListenableFuture<DeviceStateData> future) {
-        return Futures.transformAsync(future, deviceStateData -> {
-            if (!persistToTelemetry || deviceStateData.getState().getInactivityTimeout() != defaultInactivityTimeoutMs) {
-                return future; //fail fast
-            }
-            var attributesFuture = attributesService.find(TenantId.SYS_TENANT_ID, deviceStateData.getDeviceId(), AttributeScope.SERVER_SCOPE, INACTIVITY_TIMEOUT);
-            return Futures.transform(attributesFuture, attributes -> {
-                attributes.flatMap(KvEntry::getLongValue).ifPresent((inactivityTimeout) -> {
-                    if (inactivityTimeout > 0) {
-                        deviceStateData.getState().setInactivityTimeout(inactivityTimeout);
-                    }
-                });
-                return deviceStateData;
-            }, MoreExecutors.directExecutor());
-        }, deviceStateCallbackExecutor);
-    }
-
-    private <T extends KvEntry> Function<List<T>, DeviceStateData> extractDeviceStateData(Device device) {
+    private Function<List<? extends KvEntry>, DeviceStateData> extractDeviceStateData(Device device) {
         return new Function<>() {
             @Nonnull
             @Override
-            public DeviceStateData apply(@Nullable List<T> data) {
+            public DeviceStateData apply(@Nullable List<? extends KvEntry> data) {
                 try {
                     long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
                     long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
@@ -687,7 +707,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                             .lastDisconnectTime(getEntryValue(data, LAST_DISCONNECT_TIME, 0L))
                             .lastActivityTime(lastActivityTime)
                             .lastInactivityAlarmTime(inactivityAlarmTime)
-                            .inactivityTimeout(inactivityTimeout)
+                            .inactivityTimeout(inactivityTimeout > 0 ? inactivityTimeout : defaultInactivityTimeoutMs)
                             .build();
                     TbMsgMetaData md = new TbMsgMetaData();
                     md.putValue("deviceName", device.getName());
@@ -755,15 +775,10 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     }
 
-    DeviceStateData toDeviceStateData(EntityData ed, DeviceIdInfo deviceIdInfo) {
+    private DeviceStateData toDeviceStateData(EntityData ed, DeviceIdInfo deviceIdInfo) {
         long lastActivityTime = getEntryValue(ed, getKeyType(), LAST_ACTIVITY_TIME, 0L);
         long inactivityAlarmTime = getEntryValue(ed, getKeyType(), INACTIVITY_ALARM_TIME, 0L);
-        long inactivityTimeout = getEntryValue(ed, getKeyType(), INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
-        if (persistToTelemetry && inactivityTimeout == defaultInactivityTimeoutMs) {
-            log.trace("[{}] default value for inactivity timeout fetched {}, going to fetch inactivity timeout from attributes",
-                    deviceIdInfo.getDeviceId(), inactivityTimeout);
-            inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
-        }
+        long inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
         // Actual active state by wall-clock will be updated outside this method. This method is only for fetching persistent state
         final boolean active = getEntryValue(ed, getKeyType(), ACTIVITY_STATE, false);
         DeviceState deviceState = DeviceState.builder()
@@ -843,6 +858,9 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     }
 
     private void pushRuleEngineMessage(DeviceStateData stateData, TbMsgType msgType) {
+        var tenantId = stateData.getTenantId();
+        var deviceId = stateData.getDeviceId();
+
         DeviceState state = stateData.getState();
         try {
             String data;
@@ -857,58 +875,66 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             if (!persistToTelemetry) {
                 md.putValue(SCOPE, SERVER_SCOPE);
             }
-            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getCustomerId(), md, TbMsgDataType.JSON, data);
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(msgType)
+                    .originator(deviceId)
+                    .customerId(stateData.getCustomerId())
+                    .copyMetaData(md)
+                    .dataType(TbMsgDataType.JSON)
+                    .data(data)
+                    .build();
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
         } catch (Exception e) {
-            log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);
+            log.warn("[{}][{}] Failed to push '{}' message to the rule engine due to {}. Device state: {}", tenantId, deviceId, msgType, e.getMessage(), state);
         }
     }
 
-    private void save(DeviceId deviceId, String key, long value) {
-        if (persistToTelemetry) {
-            tsSubService.saveAndNotifyInternal(
-                    TenantId.SYS_TENANT_ID, deviceId,
-                    Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new LongDataEntry(key, value))),
-                    telemetryTtl, new TelemetrySaveCallback<>(deviceId, key, value));
-        } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
-        }
+    private ListenableFuture<Void> save(TenantId tenantId, DeviceId deviceId, String key, long value) {
+        return save(tenantId, deviceId, new LongDataEntry(key, value), getCurrentTimeMillis());
     }
 
-    private void save(DeviceId deviceId, String key, boolean value) {
+    private ListenableFuture<Void> save(TenantId tenantId, DeviceId deviceId, String key, boolean value) {
+        return save(tenantId, deviceId, new BooleanDataEntry(key, value), getCurrentTimeMillis());
+    }
+
+    private ListenableFuture<Void> save(TenantId tenantId, DeviceId deviceId, KvEntry kvEntry, long ts) {
+        ListenableFuture<?> future;
         if (persistToTelemetry) {
-            tsSubService.saveAndNotifyInternal(
-                    TenantId.SYS_TENANT_ID, deviceId,
-                    Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new BooleanDataEntry(key, value))),
-                    telemetryTtl, new TelemetrySaveCallback<>(deviceId, key, value));
+            future = tsSubService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(deviceId)
+                    .entry(new BasicTsKvEntry(ts, kvEntry))
+                    .ttl(telemetryTtl)
+                    .callback(new TelemetrySaveCallback<>(deviceId, kvEntry))
+                    .build());
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
+            future = tsSubService.saveAttributesInternal(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(deviceId)
+                    .scope(AttributeScope.SERVER_SCOPE)
+                    .entry(new BaseAttributeKvEntry(ts, kvEntry))
+                    .callback(new TelemetrySaveCallback<>(deviceId, kvEntry))
+                    .build());
         }
+        return Futures.transform(future, __ -> null, MoreExecutors.directExecutor());
     }
 
     long getCurrentTimeMillis() {
         return System.currentTimeMillis();
     }
 
-    private static class TelemetrySaveCallback<T> implements FutureCallback<T> {
-        private final DeviceId deviceId;
-        private final String key;
-        private final Object value;
-
-        TelemetrySaveCallback(DeviceId deviceId, String key, Object value) {
-            this.deviceId = deviceId;
-            this.key = key;
-            this.value = value;
-        }
+    private record TelemetrySaveCallback<T>(DeviceId deviceId, KvEntry kvEntry) implements FutureCallback<T> {
 
         @Override
         public void onSuccess(@Nullable T result) {
-            log.trace("[{}] Successfully updated attribute [{}] with value [{}]", deviceId, key, value);
+            log.trace("[{}] Successfully updated entry {}", deviceId, kvEntry);
         }
 
         @Override
-        public void onFailure(Throwable t) {
-            log.warn("[{}] Failed to update attribute [{}] with value [{}]", deviceId, key, value, t);
+        public void onFailure(@NonNull Throwable t) {
+            log.warn("[{}] Failed to update entry {}", deviceId, kvEntry, t);
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,9 +117,10 @@ public class HousekeeperService {
             throw new IllegalArgumentException("Unsupported task type " + taskType);
         }
 
+        Future<Object> future = null;
         try {
             long startTs = System.currentTimeMillis();
-            Future<Object> future = taskExecutor.submit(() -> {
+            future = taskExecutor.submit(() -> {
                 taskProcessor.process((T) task);
                 return null;
             });
@@ -137,7 +138,7 @@ public class HousekeeperService {
             if (e instanceof ExecutionException) {
                 error = e.getCause();
             } else if (e instanceof TimeoutException) {
-                error = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " seconds");
+                error = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " ms");
             }
 
             if (msg.getTask().getAttempt() < config.getMaxReprocessingAttempts()) {
@@ -153,6 +154,10 @@ public class HousekeeperService {
                         .build());
             }
             statsService.ifPresent(statsService -> statsService.reportFailure(taskType, msg));
+        } finally {
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
+            }
         }
     }
 
@@ -160,6 +165,7 @@ public class HousekeeperService {
     private void stop() {
         consumer.stop();
         consumerExecutor.shutdownNow();
+        taskExecutor.shutdownNow();
         log.info("Stopped Housekeeper service");
     }
 

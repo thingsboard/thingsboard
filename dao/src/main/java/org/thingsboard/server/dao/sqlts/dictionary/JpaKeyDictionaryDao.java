@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
-import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,7 +37,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Component
 @Slf4j
-@SqlDao
 @RequiredArgsConstructor
 public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService implements KeyDictionaryDao {
 
@@ -90,6 +91,11 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
     public String getKey(Integer keyId) {
         Optional<KeyDictionaryEntry> byKeyId = keyDictionaryRepository.findByKeyId(keyId);
         return byKeyId.map(KeyDictionaryEntry::getKey).orElse(null);
+    }
+
+    @Override
+    public PageData<KeyDictionaryEntry> findAll(PageLink pageLink) {
+        return DaoUtil.pageToPageData(keyDictionaryRepository.findAll(DaoUtil.toPageable(pageLink)));
     }
 
 }

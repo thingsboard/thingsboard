@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
            [formGroupName]="NotificationDeliveryMethod.WEB"
            *ngIf="templateConfigurationForm.get('WEB.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.WEB) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.WEB).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.WEB).name | translate }}
@@ -43,6 +43,11 @@
           <input matInput formControlName="subject">
           <mat-error *ngIf="templateConfigurationForm.get('WEB.subject').hasError('required')">
             {{ 'notification.subject-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="templateConfigurationForm.get('WEB.subject').hasError('maxlength')">
+            {{'notification.subject-max-length' | translate :
+              {length: templateConfigurationForm.get('WEB.subject').getError('maxlength').requiredLength}
+            }}
           </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block">
@@ -56,13 +61,18 @@
           <mat-error *ngIf="templateConfigurationForm.get('WEB.body').hasError('required')">
             {{ 'notification.message-required' | translate }}
           </mat-error>
+          <mat-error *ngIf="templateConfigurationForm.get('WEB.body').hasError('maxlength')">
+            {{ 'notification.message-max-length' | translate :
+              {length: templateConfigurationForm.get('WEB.body').getError('maxlength').requiredLength}
+            }}
+          </mat-error>
         </mat-form-field>
         <section formGroupName="additionalConfig" class="tb-form-panel no-padding no-border">
           <div class="tb-form-row space-between" formGroupName="icon">
             <mat-slide-toggle formControlName="enabled" class="mat-slide">
               {{ 'icon.icon' | translate }}
             </mat-slide-toggle>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-material-icon-select asBoxInput
                                        [color]="templateConfigurationForm.get('WEB.additionalConfig.icon.color').value"
                                        formControlName="icon">
@@ -84,7 +94,7 @@
            [formGroupName]="NotificationDeliveryMethod.MOBILE_APP"
            *ngIf="templateConfigurationForm.get('MOBILE_APP.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.MOBILE_APP) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.MOBILE_APP).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.MOBILE_APP).name | translate }}
@@ -125,7 +135,7 @@
             <mat-slide-toggle formControlName="enabled" class="mat-slide">
               {{ 'icon.icon' | translate }}
             </mat-slide-toggle>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-material-icon-select asBoxInput
                                        [color]="templateConfigurationForm.get('MOBILE_APP.additionalConfig.icon.color').value"
                                        formControlName="icon">
@@ -149,7 +159,7 @@
            [formGroupName]="NotificationDeliveryMethod.SMS"
            *ngIf="templateConfigurationForm.get('SMS.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.SMS) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SMS).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SMS).name | translate }}
@@ -181,7 +191,7 @@
            [formGroupName]="NotificationDeliveryMethod.EMAIL"
            *ngIf="templateConfigurationForm.get('EMAIL.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.EMAIL) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.EMAIL).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.EMAIL).name | translate }}
@@ -193,6 +203,11 @@
           <input matInput formControlName="subject">
           <mat-error *ngIf="templateConfigurationForm.get('EMAIL.subject').hasError('required')">
             {{ 'notification.subject-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="templateConfigurationForm.get('EMAIL.subject').hasError('maxlength')">
+            {{'notification.subject-max-length' | translate :
+              {length: templateConfigurationForm.get('EMAIL.subject').getError('maxlength').requiredLength}
+            }}
           </mat-error>
         </mat-form-field>
         <mat-label class="tb-title tb-required"
@@ -211,7 +226,7 @@
            [formGroupName]="NotificationDeliveryMethod.SLACK"
            *ngIf="templateConfigurationForm.get('SLACK.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.SLACK) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SLACK).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SLACK).name | translate }}
@@ -237,7 +252,7 @@
            [formGroupName]="NotificationDeliveryMethod.MICROSOFT_TEAMS"
            *ngIf="templateConfigurationForm.get('MICROSOFT_TEAMS.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.MICROSOFT_TEAMS) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.MICROSOFT_TEAMS).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.MICROSOFT_TEAMS).name | translate }}

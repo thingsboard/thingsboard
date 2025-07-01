@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.support.NullValue;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
+import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.connection.jedis.JedisClusterConnection;
 import org.springframework.data.redis.connection.jedis.JedisConnection;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
@@ -87,17 +89,11 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Override
     public TbCacheValueWrapper<V> get(K key) {
-        return get(key, false);
-    }
-
-    @Override
-    public TbCacheValueWrapper<V> get(K key, boolean transactionMode) {
         if (!cacheEnabled) {
             return null;
         }
         try (var connection = connectionFactory.getConnection()) {
-            byte[] rawKey = getRawKey(key);
-            byte[] rawValue = doGet(connection, rawKey, transactionMode);
+            byte[] rawValue = doGet(key, connection);
             if (rawValue == null || rawValue.length == 0) {
                 return null;
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
@@ -114,8 +110,8 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         }
     }
 
-    protected byte[] doGet(RedisConnection connection, byte[] rawKey, boolean transactionMode) {
-        return connection.stringCommands().get(rawKey);
+    protected byte[] doGet(K key, RedisConnection connection) {
+        return connection.stringCommands().get(getRawKey(key));
     }
 
     @Override
@@ -124,11 +120,11 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             return;
         }
         try (var connection = connectionFactory.getConnection()) {
-            put(key, value, connection, false);
+            put(key, value, connection);
         }
     }
 
-    public void put(K key, V value, RedisConnection connection, boolean transactionMode) {
+    public void put(K key, V value, RedisConnection connection) {
         put(connection, key, value, RedisStringCommands.SetOption.UPSERT);
     }
 
@@ -273,6 +269,26 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     public void put(RedisConnection connection, byte[] rawKey, V value, RedisStringCommands.SetOption setOption) {
         byte[] rawValue = getRawValue(value);
         connection.stringCommands().set(rawKey, rawValue, this.cacheTtl, setOption);
+    }
+
+    protected void executeScript(RedisConnection connection, byte[] scriptSha, byte[] luaScript, ReturnType returnType, int numKeys, byte[]... keysAndArgs) {
+        try {
+            connection.scriptingCommands().evalSha(scriptSha, returnType, numKeys, keysAndArgs);
+        } catch (InvalidDataAccessApiUsageException ignored) {
+            log.debug("Loading LUA with expected SHA [{}], connection [{}]", new String(scriptSha), connection.getNativeConnection());
+            String actualSha = connection.scriptingCommands().scriptLoad(luaScript);
+            if (!Arrays.equals(scriptSha, StringRedisSerializer.UTF_8.serialize(actualSha))) {
+                String message = String.format("SHA for LUA script wrong! Expected [%s], but actual [%s], connection [%s]",
+                        new String(scriptSha), actualSha, connection.getNativeConnection());
+                throw new IllegalStateException(message);
+            }
+            try {
+                connection.scriptingCommands().evalSha(scriptSha, returnType, numKeys, keysAndArgs);
+            } catch (InvalidDataAccessApiUsageException exception) {
+                log.warn("Slowly executing eval instead of fast evalSha", exception);
+                connection.scriptingCommands().eval(luaScript, returnType, numKeys, keysAndArgs);
+            }
+        }
     }
 
 }

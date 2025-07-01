@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -127,6 +128,9 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     @Lazy
     private RelatedEdgesService relatedEdgesService;
 
+    @Autowired
+    private EntityCountService countService;
+
     @Value("${edges.enabled}")
     @Getter
     private boolean edgesEnabled;
@@ -189,6 +193,13 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
+    public PageData<Edge> findActiveEdges(PageLink pageLink) {
+        log.trace("Executing findActiveEdges [{}]", pageLink);
+        Validator.validatePageLink(pageLink);
+        return edgeDao.findActiveEdges(pageLink);
+    }
+
+    @Override
     public Edge saveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
         Edge oldEdge = edgeValidator.validate(edge, Edge::getTenantId);
@@ -198,6 +209,9 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedEdge.getTenantId())
                     .entityId(savedEdge.getId()).entity(savedEdge).created(edge.getId() == null).build());
+            if (edge.getId() == null) {
+                countService.publishCountEntityEvictEvent(savedEdge.getTenantId(), EntityType.EDGE);
+            }
             return savedEdge;
         } catch (Exception t) {
             handleEvictEvent(evictEvent);
@@ -252,6 +266,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         edgeDao.removeById(tenantId, edgeId.getId());
 
         publishEvictEvent(new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), null));
+        countService.publishCountEntityEvictEvent(tenantId, EntityType.EDGE);
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(edgeId).build());
     }
 
@@ -259,6 +274,14 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         deleteEdge(tenantId, (EdgeId) id);
+    }
+
+    @Override
+    public PageData<EdgeId> findEdgeIdsByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findEdgeIdsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return edgeDao.findEdgeIdsByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override
@@ -594,6 +617,11 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             result.add(ruleChain);
         }
         return result;
+    }
+
+    @Override
+    public long countByTenantId(TenantId tenantId) {
+        return edgeDao.countByTenantId(tenantId);
     }
 
     @Override

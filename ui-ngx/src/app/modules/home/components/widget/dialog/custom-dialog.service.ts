@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import {
 @Injectable()
 export class CustomDialogService {
 
-  private customModules: Array<Type<any>>;
+  private customImports: Array<Type<any>>;
 
   constructor(
     private dynamicComponentFactoryService: DynamicComponentFactoryService,
@@ -47,24 +47,23 @@ export class CustomDialogService {
   ) {
   }
 
-  setAdditionalModules(modules: Array<Type<any>>) {
-    this.customModules = modules;
+  setAdditionalImports(imports: Array<Type<any>>) {
+    this.customImports = imports;
   }
 
   customDialog(template: string, controller: (instance: CustomDialogComponent) => void, data?: any,
                config?: MatDialogConfig): Observable<any> {
-    const modules = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule,
+    const imports = [this.sharedModule, CommonModule, this.sharedHomeComponentsModule, this.homeComponentsModule,
       this.widgetComponentsModule];
-    if (Array.isArray(this.customModules)) {
-      modules.push(...this.customModules);
+    if (Array.isArray(this.customImports)) {
+      imports.push(...this.customImports);
     }
     return this.dynamicComponentFactoryService.createDynamicComponent(
-      class CustomDialogComponentInstance extends CustomDialogComponent {}, template, modules).pipe(
-      mergeMap((componentData) => {
+      class CustomDialogComponentInstance extends CustomDialogComponent {}, template, imports).pipe(
+      mergeMap((componentType) => {
           const dialogData: CustomDialogContainerData = {
             controller,
-            customComponentType: componentData.componentType,
-            customComponentModuleRef: componentData.componentModuleRef,
+            customComponentType: componentType,
             data
           };
           let dialogConfig: MatDialogConfig = {
@@ -79,7 +78,7 @@ export class CustomDialogService {
             CustomDialogContainerComponent,
             dialogConfig).afterClosed().pipe(
             tap(() => {
-              this.dynamicComponentFactoryService.destroyDynamicComponent(componentData.componentType);
+              this.dynamicComponentFactoryService.destroyDynamicComponent(componentType);
             })
           );
         }

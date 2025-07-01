@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,9 @@ public class DataConstants {
     public static final String HTTP_TRANSPORT_NAME = "HTTP";
     public static final String SNMP_TRANSPORT_NAME = "SNMP";
     public static final String MAXIMUM_NUMBER_OF_DEVICES_REACHED = "Maximum number of devices reached!";
+
     public static final String TB_IMAGE_PREFIX = "tb-image;";
+    public static final String TB_RESOURCE_PREFIX = "tb-resource;";
 
 
     public static String[] allScopes() {
@@ -141,5 +143,11 @@ public class DataConstants {
     public static final String QUEUE_NAME = "queueName";
 
     public static final String EDGE_QUEUE_NAME = "Edge";
+    public static final String EDGE_EVENT_QUEUE_NAME = "EdgeEvent";
+
+    public static final String CF_QUEUE_NAME = "CalculatedFields";
+    public static final String CF_STATES_QUEUE_NAME = "CalculatedFieldStates";
+
+    public static final String LATEST_TELEMETRY_SCOPE = "LATEST_TELEMETRY";
 
 }

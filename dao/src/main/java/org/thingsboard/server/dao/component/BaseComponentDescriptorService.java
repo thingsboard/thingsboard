@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package org.thingsboard.server.dao.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.core.report.ProcessingReport;
-import com.github.fge.jsonschema.main.JsonSchemaFactory;
-import com.github.fge.jsonschema.main.JsonValidator;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion;
+import com.networknt.schema.ValidationMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author Andrew Shvayka
@@ -89,15 +90,18 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
 
     @Override
     public boolean validate(TenantId tenantId, ComponentDescriptor component, JsonNode configuration) {
-        JsonValidator validator = JsonSchemaFactory.byDefault().getValidator();
         try {
             if (!component.getConfigurationDescriptor().has("schema")) {
                 throw new DataValidationException("Configuration descriptor doesn't contain schema property!");
             }
             JsonNode configurationSchema = component.getConfigurationDescriptor().get("schema");
-            ProcessingReport report = validator.validate(configurationSchema, configuration);
-            return report.isSuccess();
-        } catch (ProcessingException e) {
+
+            JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V4);
+            JsonSchema schema = factory.getSchema(configurationSchema);
+
+            Set<ValidationMessage> validationMessages = schema.validate(configuration);
+            return validationMessages.isEmpty();
+        } catch (Exception e) {
             throw new IncorrectParameterException(e.getMessage(), e);
         }
     }

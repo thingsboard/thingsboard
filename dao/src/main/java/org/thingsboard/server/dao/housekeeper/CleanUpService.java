@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.dao.eventsourcing.ActionCause;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
@@ -75,6 +76,10 @@ public class CleanUpService {
         submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
         submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
         submitTask(HousekeeperTask.deleteAlarms(tenantId, entityId));
+        submitTask(HousekeeperTask.deleteCalculatedFields(tenantId, entityId));
+        if (Job.SUPPORTED_ENTITY_TYPES.contains(entityId.getEntityType())) {
+            submitTask(HousekeeperTask.deleteJobs(tenantId, entityId));
+        }
     }
 
     public void removeTenantEntities(TenantId tenantId, EntityType... entityTypes) {

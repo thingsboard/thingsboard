@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,10 +41,9 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 export class ResourcesLibraryComponent extends EntityComponent<Resource> implements OnInit, OnDestroy {
 
   readonly resourceType = ResourceType;
-  readonly resourceTypes: ResourceType[] = Object.values(this.resourceType);
+  readonly resourceTypes = [ResourceType.LWM2M_MODEL, ResourceType.PKCS_12, ResourceType.JKS];
   readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
-
-  maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
+  readonly maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
   private destroy$ = new Subject<void>();
 
@@ -57,20 +56,20 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     super.ngOnInit();
     if (this.isAdd) {
       this.observeResourceTypeChange();
     }
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     super.ngOnDestroy();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  hideDelete() {
+  hideDelete(): boolean {
     if (this.entitiesTableConfig) {
       return !this.entitiesTableConfig.deleteEnabled(this.entity);
     } else {
@@ -81,25 +80,22 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   buildForm(entity: Resource): FormGroup {
     return this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
-      resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.JS_MODULE, Validators.required],
+      resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL, Validators.required],
       fileName: [entity ? entity.fileName : null, Validators.required],
       data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []]
     });
   }
 
-  updateForm(entity: Resource) {
-    if (this.isEdit) {
-      this.entityForm.get('resourceType').disable({emitEvent: false});
-      if (entity.resourceType !== ResourceType.JS_MODULE) {
-        this.entityForm.get('fileName').disable({emitEvent: false});
-      }
+  updateForm(entity: Resource): void {
+    this.entityForm.patchValue(entity);
+  }
+
+  override updateFormState(): void {
+    super.updateFormState();
+    if (this.isEdit && this.entityForm && !this.isAdd) {
+      this.entityForm.get('resourceType').disable({ emitEvent: false });
+      this.entityForm.get('fileName').disable({ emitEvent: false });
     }
-    this.entityForm.patchValue({
-      resourceType: entity.resourceType,
-      fileName: entity.fileName,
-      title: entity.title,
-      data: entity.data
-    });
   }
 
   prepareFormValue(formValue: Resource): Resource {
@@ -109,7 +105,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     return super.prepareFormValue(formValue);
   }
 
-  getAllowedExtensions() {
+  getAllowedExtensions(): string {
     try {
       return ResourceTypeExtension.get(this.entityForm.get('resourceType').value);
     } catch (e) {
@@ -117,7 +113,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     }
   }
 
-  getAcceptType() {
+  getAcceptType(): string {
     try {
       return ResourceTypeMIMETypes.get(this.entityForm.get('resourceType').value);
     } catch (e) {
@@ -129,7 +125,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     return window.btoa(data);
   }
 
-  onResourceIdCopied() {
+  onResourceIdCopied(): void {
     this.store.dispatch(new ActionNotificationShow(
       {
         message: this.translate.instant('resource.idCopiedMessage'),
@@ -142,7 +138,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
 
   private observeResourceTypeChange(): void {
     this.entityForm.get('resourceType').valueChanges.pipe(
-      startWith(ResourceType.JS_MODULE),
+      startWith(ResourceType.LWM2M_MODEL),
       takeUntil(this.destroy$)
     ).subscribe((type: ResourceType) => this.onResourceTypeChange(type));
   }

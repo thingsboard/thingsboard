@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.thingsboard.server.common.stats;
 
 import io.micrometer.core.instrument.Timer;
 
+import java.util.function.ToDoubleFunction;
+
 public interface StatsFactory {
 
     StatsCounter createStatsCounter(String key, String statsName, String... otherTags);
@@ -25,10 +27,14 @@ public interface StatsFactory {
 
     <T extends Number> T createGauge(String key, T number, String... tags);
 
+    <T extends Number> T createGauge(String type, String name, T number, String... tags);
+
+    <S> void createGauge(String type, String name, S stateObject, ToDoubleFunction<S> numberProvider, String... tags);
+
     MessagesStats createMessagesStats(String key);
 
     Timer createTimer(String key, String... tags);
 
-    StatsTimer createTimer(StatsType type, String name, String... tags);
+    StatsTimer createStatsTimer(String type, String name, String... tags);
 
 }

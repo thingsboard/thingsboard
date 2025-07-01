@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,10 +29,11 @@
     </div>
     <div *ngIf="thresholdsFormArray().controls.length; else noThresholds" class="tb-form-table-body">
       <div *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold; let $index = index; let $last = last">
-        <tb-time-series-chart-threshold-row fxFlex
+        <tb-time-series-chart-threshold-row class="flex-1"
                                     [formControl]="thresholdControl"
                                     [hideYAxis]="hideYAxis"
                                     [yAxisIds]="yAxisIds"
+                                    [supportsUnitConversion]="supportsUnitConversion"
                                     (thresholdRemoved)="removeThreshold($index)">
         </tb-time-series-chart-threshold-row>
         <mat-divider *ngIf="!$last"></mat-divider>
@@ -46,6 +47,5 @@
   </div>
 </div>
 <ng-template #noThresholds>
-  <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ 'widgets.time-series-chart.threshold.no-thresholds' | translate }}</span>
+  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.time-series-chart.threshold.no-thresholds' | translate }}</span>
 </ng-template>

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
           <mat-icon>arrow_back</mat-icon>
         </button>
         <span class="mat-headline-5">{{ widgetsBundle.title }}: {{ 'widget.widgets' | translate }}</span>
-        <span fxFlex></span>
+        <span class="flex-1"></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
                 *ngIf="!isReadOnly"
                 matTooltip="{{ 'widget.add-new-widget' | translate }}"
@@ -90,7 +90,7 @@
           <mat-icon>delete</mat-icon>
         </button>
         <button cdkDragHandle *ngIf="editMode"
-                [fxShow]="widgets?.length > 1"
+                [class.!hidden]="!widgets || widgets.length <= 1"
                 mat-icon-button
                 matTooltip="{{ 'action.drag' | translate }}"
                 matTooltipPosition="above"

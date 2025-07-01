@@ -1,5 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200">
-<tb:metadata xmlns=""><![CDATA[{
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
   "title": "Top tee pipe",
   "description": "Top tee pipe with configurable left/right/top fluid and leak visualizations.",
   "searchTags": [
@@ -8,7 +7,7 @@
   ],
   "widgetSizeX": 1,
   "widgetSizeY": 1,
-  "stateRenderFunction": "var leftLiquidPattern = prepareLiquidPattern('left-fluid');\nvar rightLiquidPattern = prepareLiquidPattern('right-fluid');\nvar topLiquidPattern = prepareLiquidPattern('top-fluid');\n\nupdateLiquidPatternAnimation(leftLiquidPattern, 'left');\nupdateLiquidPatternAnimation(rightLiquidPattern, 'right');\nupdateLiquidPatternAnimation(topLiquidPattern, 'top');\n\n\nfunction prepareLiquidPattern(fluidElementTag) {\n    return ctx.tags[fluidElementTag][0].reference('fill');\n}\n\nfunction updateLiquidPatternAnimation(liquidPattern, prefix) {\n    if (liquidPattern) {\n        var fluid = ctx.values[prefix + 'Fluid'] && !ctx.values.leak;\n        var flow = ctx.values[prefix + 'Flow'];\n        var flowDirection = ctx.values[prefix + 'FlowDirection'];\n        var flowAnimationSpeed = ctx.values[prefix + 'FlowAnimationSpeed'];\n\n        var elementFluid = liquidPattern.remember('fluid');\n        var elementFlow = null;\n        var elementFlowDirection = null;\n        \n        if (fluid !== elementFluid) {\n            liquidPattern.remember('fluid', fluid);\n            elementFlow = null;\n            elementFlowDirection = null;\n        } else {\n            elementFlow = liquidPattern.remember('flow');\n            elementFlowDirection = liquidPattern.remember('flowDirection');\n        }\n        \n        if (fluid) {\n            if (flow !== elementFlow) {\n                liquidPattern.remember('flow', flow);\n                if (flow) {\n                    liquidPattern.remember('flowDirection', flowDirection);\n                    animateFlow(liquidPattern, flowDirection);\n                } else {\n                    ctx.api.resetAnimation(liquidPattern);\n                }\n            } else if (flow && elementFlowDirection !== flowDirection) {\n                liquidPattern.remember('flowDirection', flowDirection);\n                animateFlow(liquidPattern, flowDirection);\n            }\n            if (flow && liquidPattern) {\n                liquidPattern.timeline().speed(flowAnimationSpeed);\n            }\n        } else {\n            ctx.api.resetAnimation(liquidPattern);\n        }\n    }\n}\n\nfunction animateFlow(liquidPattern, forwardElseReverse) {\n    ctx.api.resetAnimation(liquidPattern);\n    var deltaX = forwardElseReverse ? 172 : -172;\n    liquidPattern.animate(1000).ease('-').relative(deltaX, 0).loop();\n}\n\n",
+  "stateRenderFunction": "var leftLiquidPattern = prepareLiquidPattern('left-fluid');\nvar rightLiquidPattern = prepareLiquidPattern('right-fluid');\nvar topLiquidPattern = prepareLiquidPattern('top-fluid');\n\nupdateLiquidPatternAnimation(leftLiquidPattern, 'left');\nupdateLiquidPatternAnimation(rightLiquidPattern, 'right');\nupdateLiquidPatternAnimation(topLiquidPattern, 'top');\n\n\nfunction prepareLiquidPattern(fluidElementTag) {\n    return ctx.tags[fluidElementTag][0].reference('fill').first();\n}\n\nfunction updateLiquidPatternAnimation(liquidPattern, prefix) {\n    if (liquidPattern) {\n        var fluid = ctx.values[prefix + 'Fluid'] && !ctx.values.leak;\n        var flow = ctx.values[prefix + 'Flow'];\n        var flowDirection = ctx.values[prefix + 'FlowDirection'];\n        var flowAnimationSpeed = ctx.values[prefix + 'FlowAnimationSpeed'];\n\n        var elementFluid = liquidPattern.remember('fluid');\n        var elementFlow = null;\n        var elementFlowDirection = null;\n        \n        if (fluid !== elementFluid) {\n            liquidPattern.remember('fluid', fluid);\n            elementFlow = null;\n            elementFlowDirection = null;\n        } else {\n            elementFlow = liquidPattern.remember('flow');\n            elementFlowDirection = liquidPattern.remember('flowDirection');\n        }\n        var fluidAnimation = ctx.api.cssAnimation(liquidPattern);\n        \n        if (fluid) {\n            if (flow !== elementFlow) {\n                liquidPattern.remember('flow', flow);\n                if (flow) {\n                    if (elementFlowDirection !== flowDirection || !fluidAnimation) {\n                        liquidPattern.remember('flowDirection', flowDirection);\n                        animateFlow(liquidPattern, flowDirection);\n                    } else {\n                        fluidAnimation.play();\n                    }\n                } else {\n                    if (fluidAnimation) {\n                        fluidAnimation.pause();\n                    }\n                }\n            } else if (flow && elementFlowDirection !== flowDirection) {\n                liquidPattern.remember('flowDirection', flowDirection);\n                animateFlow(liquidPattern, flowDirection);\n            }\n            if (flow) {\n                if (fluidAnimation) {\n                    fluidAnimation.speed(flowAnimationSpeed);\n                }\n            }\n        } else {\n            if (fluidAnimation) {\n                fluidAnimation.pause();\n            }\n        }\n    }\n}\n\nfunction animateFlow(liquidPattern, forwardElseReverse) {\n    ctx.api.resetCssAnimation(liquidPattern);\n    var deltaX = forwardElseReverse ? 172 : -172;\n    return ctx.api.cssAnimate(liquidPattern, 1000).relative(deltaX, 0).loop();\n}\n",
   "tags": [
     {
       "tag": "leak",
@@ -576,7 +575,8 @@
       "step": null
     }
   ]
-}]]></tb:metadata><g transform="translate(-4)" clip-path="url(#clip0_1245_66653)">
+}]]></tb:metadata>
+<g transform="translate(-4)" clip-path="url(#clip0_1245_66653)">
   <path d="m18 64h172v72h-172z" fill="#fff" tb:tag="pipe-background"/>
   <path d="m18 64h172v72h-172z" fill="url(#paint0_linear_1245_66653)" style="fill:url(#paint0_linear_1245_66653)"/>
   <path d="m19.5 65.5h169v69h-169z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
@@ -738,9 +738,12 @@
    <stop stop-color="#727171" offset=".89138"/>
    <stop stop-color="#727171" offset="1"/>
   </linearGradient>
-  <pattern id="left-liquid" patternTransform="translate(14,-8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
-  <pattern id="right-liquid" patternTransform="translate(14,-8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
-  <pattern id="top-liquid" patternTransform="translate(14,8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
+  <pattern id="base-left-liquid" patternTransform="translate(14,-8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
+  <pattern id="left-liquid" width="172" height="72" patternUnits="userSpaceOnUse"><rect width="688" height="72" x="-172" y="0" stroke-width="0" fill="url(#base-left-liquid)"/></pattern>
+  <pattern id="base-right-liquid" patternTransform="translate(14,-8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
+  <pattern id="right-liquid" width="172" height="72" patternUnits="userSpaceOnUse"><rect width="688" height="72" x="-172" y="0" stroke-width="0" fill="url(#base-right-liquid)"/></pattern>
+  <pattern id="base-top-liquid" patternTransform="translate(14,8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
+  <pattern id="top-liquid" width="172" height="72" patternUnits="userSpaceOnUse"><rect width="688" height="72" x="-172" y="0" stroke-width="0" fill="url(#base-top-liquid)"/></pattern>
   <clipPath id="clip0_1245_66653">
    <rect transform="translate(4)" width="200" height="200" fill="#fff"/>
   </clipPath>

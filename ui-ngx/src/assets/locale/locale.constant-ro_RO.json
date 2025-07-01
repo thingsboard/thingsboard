@@ -1401,7 +1401,6 @@
         "output": "Ieşire",
         "test": "Test",
         "help": "Ajutor",
-        "reset-debug-mode": "Dezactivează modul depanare în toate nodurile"
     },
     "tenant": {
         "tenant": "Locatar",

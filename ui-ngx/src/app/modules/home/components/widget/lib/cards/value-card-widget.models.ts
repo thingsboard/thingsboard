@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import {
   BackgroundType,
   ColorSettings,
   constantColor,
-  cssUnit, DateFormatSettings,
-  Font, lastUpdateAgoDateFormat
+  cssUnit,
+  DateFormatSettings,
+  Font,
+  lastUpdateAgoDateFormat
 } from '@shared/models/widget-settings.models';
 
 export enum ValueCardLayout {
@@ -80,6 +82,7 @@ export interface ValueCardWidgetSettings {
   dateFont: Font;
   dateColor: ColorSettings;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const valueCardDefaultSettings = (horizontal: boolean): ValueCardWidgetSettings => ({
@@ -128,5 +131,6 @@ export const valueCardDefaultSettings = (horizontal: boolean): ValueCardWidgetSe
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: ''
 });

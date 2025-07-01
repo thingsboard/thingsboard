@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import {
   AggregatedValueCardKeyPosition,
   aggregatedValueCardKeyPositionTranslations
 } from '@home/components/widget/lib/cards/aggregated-value-card.models';
-import { constantColor } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-aggregated-value-card-key-settings',
@@ -50,7 +49,7 @@ export class AggregatedValueCardKeySettingsComponent extends WidgetSettingsCompo
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...aggregatedValueCardDefaultKeySettings};
+    return aggregatedValueCardDefaultKeySettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

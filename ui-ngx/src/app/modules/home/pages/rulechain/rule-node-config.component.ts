@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
 ///
 
 import {
-  AfterViewInit,
   Component,
   ComponentRef,
   EventEmitter,
   forwardRef,
+  HostBinding,
   Input,
   OnDestroy,
-  OnInit,
   Output,
   ViewChild,
-  ViewContainerRef
+  ViewContainerRef,
+  ViewEncapsulation
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -42,7 +42,6 @@ import {
 import { Subscription } from 'rxjs';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { TranslateService } from '@ngx-translate/core';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { deepClone } from '@core/utils';
 import { RuleChainType } from '@shared/models/rule-chain.models';
@@ -55,13 +54,15 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => RuleNodeConfigComponent),
     multi: true
-  }]
+  }],
+  encapsulation: ViewEncapsulation.None
 })
-export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit {
+export class RuleNodeConfigComponent implements ControlValueAccessor, OnDestroy {
 
   @ViewChild('definedConfigContent', {read: ViewContainerRef, static: true}) definedConfigContainer: ViewContainerRef;
-
   @ViewChild('jsonObjectEditComponent') jsonObjectEditComponent: JsonObjectEditComponent;
+
+  @HostBinding('style.display') readonly styleDisplay = 'block';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -121,10 +122,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
 
   private configuration: RuleNodeConfiguration;
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (_v: any) => { };
 
-  constructor(private translate: TranslateService,
-              private ruleChainService: RuleChainService,
+  constructor(private ruleChainService: RuleChainService,
               private fb: UntypedFormBuilder) {
     this.ruleNodeConfigFormGroup = this.fb.group({
       configuration: [null, Validators.required]
@@ -135,10 +135,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
-  }
-
-  ngOnInit(): void {
+  registerOnTouched(_fn: any): void {
   }
 
   ngOnDestroy(): void {
@@ -153,9 +150,6 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       this.changeScriptSubscription.unsubscribe();
       this.changeScriptSubscription = null;
     }
-  }
-
-  ngAfterViewInit(): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -217,9 +211,13 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
         this.changeSubscription.unsubscribe();
         this.changeSubscription = null;
       }
+      if (this.changeScriptSubscription) {
+        this.changeScriptSubscription.unsubscribe();
+        this.changeScriptSubscription = null;
+      }
       this.definedConfigContainer.clear();
-      const factory = this.ruleChainService.getRuleNodeConfigFactory(this.nodeDefinition.configDirective);
-      this.definedConfigComponentRef = this.definedConfigContainer.createComponent(factory);
+      const component = this.ruleChainService.getRuleNodeConfigComponent(this.nodeDefinition.configDirective);
+      this.definedConfigComponentRef = this.definedConfigContainer.createComponent(component);
       this.definedConfigComponent = this.definedConfigComponentRef.instance;
       this.definedConfigComponent.ruleNodeId = this.ruleNodeId;
       this.definedConfigComponent.ruleChainId = this.ruleChainId;

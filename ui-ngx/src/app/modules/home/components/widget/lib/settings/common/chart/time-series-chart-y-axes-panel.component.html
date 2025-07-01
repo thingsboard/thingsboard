@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -36,17 +36,18 @@
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
            class="tb-draggable-form-table-row"
            *ngFor="let axisControl of axesFormArray().controls; trackBy: trackByAxis; let $index = index;">
-        <tb-time-series-chart-y-axis-row fxFlex
+        <tb-time-series-chart-y-axis-row class="flex-1"
                                             [formControl]="axisControl"
                                             [advanced]="advanced"
+                                            [supportsUnitConversion]="supportsUnitConversion"
                                             (axisRemoved)="removeAxis($index)">
         </tb-time-series-chart-y-axis-row>
         <div class="tb-form-table-row-cell-buttons">
-          <button fxHide.lt-lg
+          <button class="lt-lg:!hidden"
+                  [class.tb-hidden]="!dragEnabled"
                   mat-icon-button
                   type="button"
                   cdkDragHandle
-                  [ngClass]="{'tb-hidden': !dragEnabled}"
                   matTooltip="{{ 'action.drag' | translate }}"
                   matTooltipPosition="above">
             <mat-icon>drag_indicator</mat-icon>

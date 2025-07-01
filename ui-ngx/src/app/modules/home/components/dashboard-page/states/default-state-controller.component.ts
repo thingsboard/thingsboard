@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -187,7 +187,8 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   }
 
   public getStateName(id: string, state: DashboardState): string {
-    return this.utils.customTranslation(state.name, id);
+    const name = this.utils.customTranslation(state.name, id);
+    return name === this.stateControllerId() ? name.charAt(0).toUpperCase() + name.slice(1) : name;
   }
 
   public getCurrentStateName(): string {

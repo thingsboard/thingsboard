@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,16 +16,20 @@
 
 import {
   ControlValueAccessor,
+  FormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
   Validator,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, computed, ElementRef, forwardRef, input, Input, OnInit, ViewChild } from '@angular/core';
 import {
+  MapItemType,
+  mapItemTypeTranslationMap,
   WidgetAction,
   WidgetActionType,
   widgetActionTypes,
@@ -44,8 +48,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { PopoverPlacement, PopoverPlacements } from '@shared/components/popover.models';
 import {
   CustomActionEditorCompleter,
-  toCustomAction
+  toCustomAction,
+  toPlaceMapItemAction
 } from '@home/components/widget/lib/settings/common/action/custom-action.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 const stateDisplayTypes = ['normal', 'separateDialog', 'popover'] as const;
 type stateDisplayTypeTuple = typeof  stateDisplayTypes;
@@ -89,9 +95,28 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   @Input()
   callbacks: WidgetActionCallbacks;
 
-  widgetActionTypes = widgetActionTypes;
+  @Input()
+  @coerceBoolean()
+  withName = false;
+
+  @Input()
+  actionNames: string[];
+
+  additionalWidgetActionTypes = input<WidgetActionType[]>(null);
+
+  actionTypes = computed(() => {
+    const predefinedActionTypes = widgetActionTypes;
+    if (this.additionalWidgetActionTypes()?.length) {
+      return predefinedActionTypes.concat(this.additionalWidgetActionTypes());
+    }
+    return predefinedActionTypes;
+  });
+
   widgetActionTypeTranslations = widgetActionTypeTranslationMap;
   widgetActionType = WidgetActionType;
+
+  mapItemTypes = Object.values(MapItemType) as MapItemType[];
+  mapItemTypeTranslationMap = mapItemTypeTranslationMap;
 
   allStateDisplayTypes = stateDisplayTypes;
   allPopoverPlacements = PopoverPlacements;
@@ -147,6 +172,10 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
 
   ngOnInit() {
     this.widgetActionFormGroup = this.fb.group({});
+    if (this.withName) {
+      this.widgetActionFormGroup.addControl('name',
+        this.fb.control(null, [this.validateActionName(), Validators.required]));
+    }
     this.widgetActionFormGroup.addControl('type',
       this.fb.control(null, [Validators.required]));
     this.widgetActionFormGroup.get('type').valueChanges.pipe(
@@ -162,6 +191,11 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   }
 
   writeValue(widgetAction?: WidgetAction): void {
+    if (this.withName) {
+      this.widgetActionFormGroup.patchValue({
+        name: widgetAction?.name
+      }, {emitEvent: false});
+    }
     this.widgetActionFormGroup.patchValue({
       type: widgetAction?.type
     }, {emitEvent: false});
@@ -288,6 +322,17 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
           this.actionTypeFormGroup.addControl(
             'url',
             this.fb.control(action ? action.url : null, [Validators.required])
+          );
+          break;
+        case WidgetActionType.placeMapItem:
+          this.actionTypeFormGroup.addControl(
+            'mapItemType',
+            this.fb.control(action?.mapItemType ?? MapItemType.marker, [Validators.required])
+          );
+          this.actionTypeFormGroup.addControl('mapItemTooltips', this.fb.control(action?.mapItemTooltips ?? {}));
+          this.actionTypeFormGroup.addControl(
+            'customAction',
+            this.fb.control(toPlaceMapItemAction(action), [Validators.required])
           );
           break;
       }
@@ -457,11 +502,36 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
     return res;
   }
 
+  private validateActionName(): ValidatorFn {
+    return (c: FormControl) => {
+      const newName = c.value;
+      const valid = this.checkActionName(newName);
+      return !valid ? {
+        actionNameNotUnique: true
+      } : null;
+    };
+  }
+
+  private checkActionName(name: string): boolean {
+    let actionNameIsUnique = true;
+    if (this.actionNames?.length) {
+      actionNameIsUnique = !this.actionNames.includes(name);
+    }
+    return actionNameIsUnique;
+  }
+
   private widgetActionUpdated() {
     const type: WidgetActionType = this.widgetActionFormGroup.get('type').value;
     let result: WidgetAction;
     if (type === WidgetActionType.customPretty) {
       result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.get('customAction').value};
+    } else if (type === WidgetActionType.placeMapItem) {
+      result = {
+        ...this.widgetActionFormGroup.value,
+        ...this.actionTypeFormGroup.get('customAction').value,
+        mapItemType: this.actionTypeFormGroup.get('mapItemType').value,
+        mapItemTooltips: this.actionTypeFormGroup.get('mapItemTooltips').value,
+      };
     } else {
       result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.value};
     }

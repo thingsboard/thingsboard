@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
     }
 
     @Override
-    protected WidgetsBundle saveOrUpdate(EntitiesImportCtx ctx, WidgetsBundle widgetsBundle, WidgetsBundleExportData exportData, IdProvider idProvider) {
+    protected WidgetsBundle saveOrUpdate(EntitiesImportCtx ctx, WidgetsBundle widgetsBundle, WidgetsBundleExportData exportData, IdProvider idProvider, CompareResult compareResult) {
         if (CollectionsUtil.isNotEmpty(exportData.getWidgets())) {
             exportData.getWidgets().forEach(widgetTypeNode -> {
                 String bundleAlias = widgetTypeNode.remove("bundleAlias").asText();
@@ -75,8 +75,8 @@ public class WidgetsBundleImportService extends BaseEntityImportService<WidgetsB
     }
 
     @Override
-    protected boolean compare(EntitiesImportCtx ctx, WidgetsBundleExportData exportData, WidgetsBundle prepared, WidgetsBundle existing) {
-        return true;
+    protected CompareResult compare(EntitiesImportCtx ctx, WidgetsBundleExportData exportData, WidgetsBundle prepared, WidgetsBundle existing) {
+        return new CompareResult(true);
     }
 
     @Override

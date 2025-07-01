@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2024 The Thingsboard Authors
+-- Copyright © 2016-2025 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,20 +17,9 @@
 CREATE TABLE IF NOT EXISTS tb_schema_settings
 (
     schema_version bigint NOT NULL,
+    product varchar(2) NOT NULL,
     CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version)
 );
-
-CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
-    LANGUAGE plpgsql AS
-$$
-BEGIN
-    IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3006004);
-    END IF;
-END;
-$$;
-
-call insert_tb_schema_settings();
 
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
@@ -193,7 +182,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     configuration varchar(10000000),
     type varchar(255),
     name varchar(255),
-    debug_mode boolean,
+    debug_settings varchar(1024),
     singleton_mode boolean,
     queue_name varchar(255),
     external_id uuid
@@ -227,7 +216,9 @@ CREATE TABLE IF NOT EXISTS ota_package (
     data oid,
     data_size bigint,
     additional_info varchar,
-    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
+    external_id uuid,
+    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version),
+    CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS queue (
@@ -491,11 +482,15 @@ CREATE TABLE IF NOT EXISTS user_credentials (
     id uuid NOT NULL CONSTRAINT user_credentials_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     activate_token varchar(255) UNIQUE,
+    activate_token_exp_time BIGINT,
     enabled boolean,
     password varchar(255),
     reset_token varchar(255) UNIQUE,
+    reset_token_exp_time BIGINT,
     user_id uuid UNIQUE,
-    additional_info varchar DEFAULT '{}'
+    additional_info varchar DEFAULT '{}',
+    last_login_ts BIGINT,
+    failed_login_attempts INT
 );
 
 CREATE TABLE IF NOT EXISTS widget_type (
@@ -630,9 +625,27 @@ CREATE TABLE IF NOT EXISTS mobile_app (
     id uuid NOT NULL CONSTRAINT mobile_app_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid,
-    pkg_name varchar(255) UNIQUE,
+    pkg_name varchar(255),
     app_secret varchar(2048),
-    oauth2_enabled boolean
+    platform_type varchar(32),
+    status varchar(32),
+    version_info varchar(100000),
+    store_info varchar(16384),
+    CONSTRAINT mobile_app_pkg_name_platform_unq_key UNIQUE (pkg_name, platform_type)
+);
+
+CREATE TABLE IF NOT EXISTS mobile_app_bundle (
+    id uuid NOT NULL CONSTRAINT mobile_app_bundle_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    title varchar(255),
+    description varchar(1024),
+    android_app_id uuid UNIQUE,
+    ios_app_id uuid UNIQUE,
+    layout_config varchar(16384),
+    oauth2_enabled boolean,
+    CONSTRAINT fk_android_app_id FOREIGN KEY (android_app_id) REFERENCES mobile_app(id) ON DELETE SET NULL,
+    CONSTRAINT fk_ios_app_id FOREIGN KEY (ios_app_id) REFERENCES mobile_app(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS domain_oauth2_client (
@@ -642,10 +655,10 @@ CREATE TABLE IF NOT EXISTS domain_oauth2_client (
     CONSTRAINT fk_oauth2_client FOREIGN KEY (oauth2_client_id) REFERENCES oauth2_client(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS mobile_app_oauth2_client (
-    mobile_app_id uuid NOT NULL,
+CREATE TABLE IF NOT EXISTS mobile_app_bundle_oauth2_client (
+    mobile_app_bundle_id uuid NOT NULL,
     oauth2_client_id uuid NOT NULL,
-    CONSTRAINT fk_domain FOREIGN KEY (mobile_app_id) REFERENCES mobile_app(id) ON DELETE CASCADE,
+    CONSTRAINT fk_domain FOREIGN KEY (mobile_app_bundle_id) REFERENCES mobile_app_bundle(id) ON DELETE CASCADE,
     CONSTRAINT fk_oauth2_client FOREIGN KEY (oauth2_client_id) REFERENCES oauth2_client(id) ON DELETE CASCADE
 );
 
@@ -691,6 +704,7 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     email_exec varchar(32),
     sms_exec varchar(32),
     alarm_exec varchar(32),
+    version BIGINT DEFAULT 1,
     CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
 );
 
@@ -884,13 +898,68 @@ CREATE TABLE IF NOT EXISTS queue_stats (
     CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id)
 );
 
-CREATE TABLE IF NOT EXISTS mobile_app_settings (
-    id uuid NOT NULL CONSTRAINT mobile_app_settings_pkey PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS qr_code_settings (
+    id uuid NOT NULL CONSTRAINT qr_code_settings_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
     use_default_app boolean,
-    android_config VARCHAR(1000),
-    ios_config VARCHAR(1000),
+    android_enabled boolean,
+    ios_enabled boolean,
+    mobile_app_bundle_id uuid,
     qr_code_config VARCHAR(100000),
-    CONSTRAINT mobile_app_settings_tenant_id_unq_key UNIQUE (tenant_id)
+    CONSTRAINT qr_code_settings_tenant_id_unq_key UNIQUE (tenant_id)
+);
+
+CREATE TABLE IF NOT EXISTS calculated_field (
+    id uuid NOT NULL CONSTRAINT calculated_field_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    entity_type VARCHAR(32),
+    entity_id uuid NOT NULL,
+    type varchar(32) NOT NULL,
+    name varchar(255) NOT NULL,
+    configuration_version int DEFAULT 0,
+    configuration varchar(1000000),
+    version BIGINT DEFAULT 1,
+    debug_settings varchar(1024),
+    CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS calculated_field_link (
+    id uuid NOT NULL CONSTRAINT calculated_field_link_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    entity_type VARCHAR(32),
+    entity_id uuid NOT NULL,
+    calculated_field_id uuid NOT NULL,
+    CONSTRAINT fk_calculated_field_id FOREIGN KEY (calculated_field_id) REFERENCES calculated_field(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cf_debug_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL ,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL, -- calculated field id
+    service_id varchar,
+    cf_id uuid NOT NULL,
+    e_entity_id uuid, -- target entity id
+    e_entity_type varchar,
+    e_msg_id uuid,
+    e_msg_type varchar,
+    e_args varchar,
+    e_result varchar,
+    e_error varchar
+) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS job (
+    id uuid NOT NULL CONSTRAINT job_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    type varchar NOT NULL,
+    key varchar NOT NULL,
+    entity_id uuid NOT NULL,
+    entity_type varchar NOT NULL,
+    status varchar NOT NULL,
+    configuration varchar NOT NULL,
+    result varchar
 );

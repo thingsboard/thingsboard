@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +208,24 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query) {
+        if (query.getEntityFilter() != null) {
+            EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
+            PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
+                    securityUser.getCustomerId(), entityDataQuery);
+            if (entities.getTotalElements() > 0) {
+                List<EntityId> entityIds = entities.getData().stream().map(EntityData::getEntityId).toList();
+                return alarmService.countAlarmsByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query, entityIds);
+            } else {
+                return 0;
+            }
+        }
         return alarmService.countAlarmsByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
+    }
+
+    private EntityDataQuery buildEntityDataQuery(AlarmCountQuery query) {
+        EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null,
+                new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, ModelConstants.CREATED_TIME_PROPERTY)));
+        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters());
     }
 
     private EntityDataQuery buildEntityDataQuery(AlarmDataQuery query) {
@@ -220,7 +237,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
             entitiesSortOrder = sortOrder;
         }
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null, entitiesSortOrder);
-        return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters());
+        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters());
     }
 
     @Override

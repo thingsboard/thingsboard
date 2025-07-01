@@ -41,7 +41,7 @@ All fields in resulting object are mandatory.
 ```javascript
 var temperature = 18 + Math.random() * (32 - 18);
 // Round to at most 2 decimal places (optional)
-temperature = Math.round( temperature * 100 ) / 100;
+temperature = toFixed(temperature, 2);
 var msg = { temperature: temperature };
 return { msg: msg, metadata: {}, msgType: "POST_TELEMETRY_REQUEST" };
 {:copy-code}

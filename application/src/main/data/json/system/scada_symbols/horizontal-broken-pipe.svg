@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
+  "title": "Horizontal broken pipe",
+  "description": "Horizontal broken pipe.",
+  "searchTags": [
+    "pipe",
+    "horizontal pipe",
+    "broken pipe"
+  ],
+  "widgetSizeX": 1,
+  "widgetSizeY": 1,
+  "tags": [
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "pipe-background",
+      "stateRenderFunction": "var color = ctx.properties.pipeColor;\nelement.attr({fill: color});",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "pipeColor",
+      "name": "{i18n:scada.symbol.pipe-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<g tb:tag="clickArea">
+  <path d="m14 64s53.5 0.2293 60.5 0 17-6.5 17-6.5l-14.5 21.5 14.5 6.5-10.5 9 14.5 11-18.5 6.5 10 6-2.5 11.5 7 14s-10-7.5-17-7.5h-60.5v-72z" fill="#fff" tb:tag="pipe-background"/>
+  <path d="m14 64s53.5 0.2293 60.5 0 17-6.5 17-6.5l-14.5 21.5 14.5 6.5-10.5 9 14.5 11-18.5 6.5 10 6-2.5 11.5 7 14s-10-7.5-17-7.5h-60.5v-72z" fill="url(#paint0_linear_2474_252376)"/>
+  <path d="m86.266 62.02c0.1879-0.0889 0.3731-0.1777 0.5555-0.2661l-12.062 17.886 13.968 6.2614-8.7036 7.4602-1.4118 1.2101 13.759 10.438-15.869 5.576-3.0127 1.058 2.7382 1.643 9.0774 5.447-2.2715 10.448-0.1123 0.517 0.2365 0.473 4.5114 9.023c-0.4206-0.249-0.8606-0.502-1.3163-0.755-3.3898-1.883-7.9357-3.939-11.854-3.939h-59v-68.994l0.8066 0.0033c1.4767 0.0058 3.5942 0.0139 6.1569 0.0228 5.1255 0.0179 12.032 0.0394 19.158 0.0538 14.23 0.0286 29.393 0.0289 32.927-0.0868 3.8302-0.1255 8.3197-1.8722 11.717-3.4792z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <path d="m105.5 56.5s13.5 7.395 18.5 7.5 62 0 62 0v72s-54.5-0.086-62 0-18.5 4.5-18.5 4.5l6-13.5-15-14 16.5-5-7.5-6 6-13-18-13 19.5-4.5-7.5-15z" fill="#fff" tb:tag="pipe-background"/>
+  <path d="m105.5 56.5s13.5 7.395 18.5 7.5 62 0 62 0v72s-54.5-0.086-62 0-18.5 4.5-18.5 4.5l6-13.5-15-14 16.5-5-7.5-6 6-13-18-13 19.5-4.5-7.5-15z" fill="url(#paint1_linear_2474_252376)"/>
+  <path d="m184.5 65.503v68.995l-0.854-2e-3c-1.505-2e-3 -3.663-5e-3 -6.277-8e-3 -5.227-7e-3 -12.274-0.015-19.555-0.02-14.556-0.011-30.069-0.011-33.831 0.032-3.973 0.046-8.768 1.225-12.479 2.346-1.18 0.357-2.264 0.712-3.197 1.031l4.564-10.268 0.434-0.976-0.782-0.73-13.096-12.223 14.008-4.244 2.727-0.827-2.225-1.78-6.583-5.267 5.508-11.933 0.518-1.1215-1.002-0.7231-15.321-11.065 16.28-3.757 1.857-0.4284-0.852-1.704-5.435-10.87c1.009 0.5039 2.144 1.0566 3.335 1.611 2.02 0.9404 4.222 1.8953 6.25 2.6248 1.981 0.7123 3.962 1.2726 5.476 1.3044 2.522 0.0529 18.049 0.0528 32.908 0.0397 7.438-0.0066 14.72-0.0164 20.142-0.0246 2.711-0.0041 4.957-0.0078 6.526-0.0105l0.956-0.0017z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect x="187.5" y="51.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/>
+  <rect x="1.5" y="51.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/>
+ </g><defs>
+  <linearGradient id="paint0_linear_2474_252376" x1="32.98" x2="32.532" y1="64" y2="136" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint1_linear_2474_252376" x1="129.76" x2="129.33" y1="64" y2="136" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+ </defs>
+</svg>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,13 +16,17 @@
 
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { widgetType } from '@shared/models/widget.models';
+import { AlarmSeverity } from '@shared/models/alarm.models';
+import { TbFunction } from '@shared/models/js-function.models';
 
 export enum GetValueAction {
   DO_NOTHING = 'DO_NOTHING',
   EXECUTE_RPC = 'EXECUTE_RPC',
   GET_ATTRIBUTE = 'GET_ATTRIBUTE',
   GET_TIME_SERIES = 'GET_TIME_SERIES',
-  GET_DASHBOARD_STATE = 'GET_DASHBOARD_STATE'
+  GET_ALARM_STATUS = 'GET_ALARM_STATUS',
+  GET_DASHBOARD_STATE = 'GET_DASHBOARD_STATE',
+  GET_DASHBOARD_STATE_OBJECT = 'GET_DASHBOARD_STATE_OBJECT',
 }
 
 export const getValueActions = Object.keys(GetValueAction) as GetValueAction[];
@@ -41,7 +45,9 @@ export const getValueActionTranslations = new Map<GetValueAction, string>(
     [GetValueAction.EXECUTE_RPC, 'widgets.value-action.execute-rpc'],
     [GetValueAction.GET_ATTRIBUTE, 'widgets.value-action.get-attribute'],
     [GetValueAction.GET_TIME_SERIES, 'widgets.value-action.get-time-series'],
-    [GetValueAction.GET_DASHBOARD_STATE, 'widgets.value-action.get-dashboard-state']
+    [GetValueAction.GET_ALARM_STATUS, 'widgets.value-action.get-alarm-status'],
+    [GetValueAction.GET_DASHBOARD_STATE, 'widgets.value-action.get-dashboard-state'],
+    [GetValueAction.GET_DASHBOARD_STATE_OBJECT, 'widgets.value-action.get-dashboard-state-object'],
   ]
 );
 
@@ -50,6 +56,11 @@ export interface RpcSettings {
   requestTimeout: number;
   requestPersistent: boolean;
   persistentPollingInterval: number;
+}
+
+export interface AlarmStatusSettings {
+  severityList: Array<AlarmSeverity>;
+  typeList: Array<string>;
 }
 
 export interface TelemetryValueSettings {
@@ -71,7 +82,7 @@ export enum DataToValueType {
 
 export interface DataToValueSettings {
   type: DataToValueType;
-  dataToValueFunction: string;
+  dataToValueFunction: TbFunction;
   compareToValue?: any;
 }
 
@@ -85,6 +96,7 @@ export interface GetValueSettings<V> extends ValueActionSettings {
   executeRpc?: RpcSettings;
   getAttribute: GetAttributeValueSettings;
   getTimeSeries: TelemetryValueSettings;
+  getAlarmStatus: AlarmStatusSettings;
   dataToValue: DataToValueSettings;
 }
 
@@ -122,7 +134,7 @@ export enum ValueToDataType {
 export interface ValueToDataSettings {
   type: ValueToDataType;
   constantValue: any;
-  valueToDataFunction: string;
+  valueToDataFunction: TbFunction;
 }
 
 export interface SetValueSettings extends ValueActionSettings {

@@ -7,5 +7,10 @@ User=${pkg.user}
 ExecStart=${pkg.installFolder}/bin/${pkg.name}.jar
 SuccessExitStatus=143
 
+# Service shall be restarted in 30 seconds when the service process exits, is killed, or a timeout is reached.
+# Restart parameter default value 'no'
+Restart=always 
+RestartSec=30
+
 [Install]
 WantedBy=multi-user.target

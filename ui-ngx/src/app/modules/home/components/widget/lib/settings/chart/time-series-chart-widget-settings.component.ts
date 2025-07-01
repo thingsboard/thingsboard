@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,11 +26,10 @@ import {
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue, isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
-  timeSeriesChartWidgetDefaultSettings,
-  TimeSeriesChartWidgetSettings
+  timeSeriesChartWidgetDefaultSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import {
   TimeSeriesChartKeySettings,
@@ -105,11 +104,22 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
     const params = widgetConfig.typeParameters as any;
     if (isDefinedAndNotNull(params.chartType)) {
       this.chartType = params.chartType;
+    } else {
+      this.chartType = TimeSeriesChartType.default;
+    }
+    if (this.timeSeriesChartWidgetSettingsForm) {
+      const isStateChartType = this.chartType === TimeSeriesChartType.state;
+      const hasStatesControl = this.timeSeriesChartWidgetSettingsForm.contains('states');
+      if (isStateChartType && !hasStatesControl) {
+        this.timeSeriesChartWidgetSettingsForm.addControl('states', this.fb.control(widgetConfig.config.settings.states), { emitEvent: false });
+      } else if (!isStateChartType && hasStatesControl) {
+        this.timeSeriesChartWidgetSettingsForm.removeControl('states', { emitEvent: false });
+      }
     }
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeep<TimeSeriesChartWidgetSettings>({} as TimeSeriesChartWidgetSettings, timeSeriesChartWidgetDefaultSettings);
+    return timeSeriesChartWidgetDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -153,6 +163,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       tooltipDateFont: [settings.tooltipDateFont, []],
       tooltipDateColor: [settings.tooltipDateColor, []],
       tooltipDateInterval: [settings.tooltipDateInterval, []],
+      tooltipHideZeroValues: [settings.tooltipHideZeroValues ,[]],
 
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
@@ -213,6 +224,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueFormatter').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').enable({emitEvent: false});
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipHideZeroValues').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundBlur').enable();
       if (tooltipShowDate) {
@@ -238,6 +250,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('tooltipDateFont').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipDateColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipDateInterval').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipHideZeroValues').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
     }

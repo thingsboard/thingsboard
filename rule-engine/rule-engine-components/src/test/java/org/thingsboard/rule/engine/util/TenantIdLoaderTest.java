@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -52,7 +54,9 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
@@ -66,12 +70,14 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
@@ -83,6 +89,7 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -151,6 +158,12 @@ public class TenantIdLoaderTest {
     private DomainService domainService;
     @Mock
     private MobileAppService mobileAppService;
+    @Mock
+    private MobileAppBundleService mobileAppBundleService;
+    @Mock
+    private CalculatedFieldService calculatedFieldService;
+    @Mock
+    private JobService jobService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -391,6 +404,30 @@ public class TenantIdLoaderTest {
                 mobileApp.setTenantId(tenantId);
                 when(ctx.getMobileAppService()).thenReturn(mobileAppService);
                 doReturn(mobileApp).when(mobileAppService).findMobileAppById(eq(tenantId), any());
+                break;
+            case MOBILE_APP_BUNDLE:
+                MobileAppBundle mobileAppBundle = new MobileAppBundle();
+                mobileAppBundle.setTenantId(tenantId);
+                when(ctx.getMobileAppBundleService()).thenReturn(mobileAppBundleService);
+                doReturn(mobileAppBundle).when(mobileAppBundleService).findMobileAppBundleById(eq(tenantId), any());
+                break;
+            case CALCULATED_FIELD:
+                CalculatedField calculatedField = new CalculatedField();
+                calculatedField.setTenantId(tenantId);
+                when(ctx.getCalculatedFieldService()).thenReturn(calculatedFieldService);
+                doReturn(calculatedField).when(calculatedFieldService).findById(eq(tenantId), any());
+                break;
+            case CALCULATED_FIELD_LINK:
+                CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
+                calculatedFieldLink.setTenantId(tenantId);
+                when(ctx.getCalculatedFieldService()).thenReturn(calculatedFieldService);
+                doReturn(calculatedFieldLink).when(calculatedFieldService).findCalculatedFieldLinkById(eq(tenantId), any());
+                break;
+            case JOB:
+                Job job = new Job();
+                job.setTenantId(tenantId);
+                when(ctx.getJobService()).thenReturn(jobService);
+                doReturn(job).when(jobService).findJobById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

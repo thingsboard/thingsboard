@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,11 @@
 package org.thingsboard.server.service.entitiy.mobile;
 
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
-
-import java.util.List;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
 
 public interface TbMobileAppService {
 
-    MobileApp save(MobileApp mobileApp, List<OAuth2ClientId> oauth2Clients, User user) throws Exception;
-
-    void updateOauth2Clients(MobileApp mobileApp, List<OAuth2ClientId> oAuth2ClientIds, User user);
+    MobileApp save(MobileApp mobileApp, User user) throws Exception;
 
     void delete(MobileApp mobileApp, User user);
 

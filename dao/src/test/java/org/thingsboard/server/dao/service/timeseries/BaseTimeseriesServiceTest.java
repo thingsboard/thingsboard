@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
@@ -80,21 +81,21 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     protected static final int MAX_TIMEOUT = 30;
 
-    private static final String STRING_KEY = "stringKey";
+    protected static final String STRING_KEY = "stringKey";
     private static final String LONG_KEY = "longKey";
     private static final String DOUBLE_KEY = "doubleKey";
     private static final String BOOLEAN_KEY = "booleanKey";
 
-    private static final long TS = 42L;
+    protected static final long TS = 42L;
     private static final String DESC_ORDER = "DESC";
 
-    KvEntry stringKvEntry = new StringDataEntry(STRING_KEY, "value");
+    protected KvEntry stringKvEntry = new StringDataEntry(STRING_KEY, "value");
     KvEntry longKvEntry = new LongDataEntry(LONG_KEY, Long.MAX_VALUE);
     KvEntry doubleKvEntry = new DoubleDataEntry(DOUBLE_KEY, Double.MAX_VALUE);
     KvEntry booleanKvEntry = new BooleanDataEntry(BOOLEAN_KEY, Boolean.TRUE);
 
     protected TenantId tenantId;
-    DeviceId deviceId = new DeviceId(Uuids.timeBased());
+    protected DeviceId deviceId = new DeviceId(Uuids.timeBased());
 
     @Before
     public void before() {
@@ -757,6 +758,21 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         assertThat(fullList).containsOnlyOnceElementsOf(timeseries);
     }
 
+    @Test
+    public void testFindAllByQueriesWithAggregationAndZeroInterval() throws Exception {
+        testFindAllByQueriesWithAggregationAndInvalidInterval(0);
+    }
+
+    @Test
+    public void testFindAllByQueriesWithAggregationAndNegativeInterval() throws Exception {
+        testFindAllByQueriesWithAggregationAndInvalidInterval(-1);
+    }
+
+    private void testFindAllByQueriesWithAggregationAndInvalidInterval(long interval) {
+        BaseReadTsKvQuery query = new BaseReadTsKvQuery(STRING_KEY, TS, TS, interval, 1000, Aggregation.SUM, "DESC");
+        Assert.assertThrows(IncorrectParameterException.class, () -> findAndVerifyQueryId(deviceId, query));
+    }
+
     private TsKvEntry save(DeviceId deviceId, long ts, long value) throws Exception {
         TsKvEntry entry = new BasicTsKvEntry(ts, new LongDataEntry(LONG_KEY, value));
         tsService.save(tenantId, deviceId, entry).get(MAX_TIMEOUT, TimeUnit.SECONDS);
@@ -795,11 +811,11 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         tsService.saveWithoutLatest(tenantId, deviceId, tsKvEntry, 0).get(MAX_TIMEOUT, TimeUnit.SECONDS);
     }
 
-    private static TsKvEntry toTsEntry(long ts, KvEntry entry) {
+    protected static TsKvEntry toTsEntry(long ts, KvEntry entry) {
         return new BasicTsKvEntry(ts, entry);
     }
 
-    private static void equalsIgnoreVersion(TsKvEntry expected, TsKvEntry actual) {
+    protected static void equalsIgnoreVersion(TsKvEntry expected, TsKvEntry actual) {
         assertEquals(expected.getKey(), actual.getKey());
         assertEquals(expected.getValue(), actual.getValue());
         assertEquals(expected.getTs(), actual.getTs());

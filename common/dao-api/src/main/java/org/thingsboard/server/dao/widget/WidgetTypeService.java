@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ public interface WidgetTypeService extends EntityDaoService {
 
     WidgetTypeDetails findWidgetTypeDetailsById(TenantId tenantId, WidgetTypeId widgetTypeId);
 
+    WidgetTypeInfo findWidgetTypeInfoById(TenantId tenantId, WidgetTypeId widgetTypeId);
+
     boolean widgetTypeExistsByTenantIdAndWidgetTypeId(TenantId tenantId, WidgetTypeId widgetTypeId);
 
     WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetType);
@@ -64,5 +66,9 @@ public interface WidgetTypeService extends EntityDaoService {
     void updateWidgetsBundleWidgetFqns(TenantId tenantId, WidgetsBundleId widgetsBundleId, List<String> widgetFqns);
 
     void deleteWidgetTypesByTenantId(TenantId tenantId);
+
+    void deleteWidgetTypesByBundleId(TenantId tenantId, WidgetsBundleId bundleId);
+
+    PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink);
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -49,15 +49,15 @@ import {
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
+  createValueFormatterFromSettings,
   DateFormatProcessor,
-  getDataKey,
   getSingleTsValue,
   overlayStyle,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
-import { formatValue, isDefinedAndNotNull, isNumeric, isUndefinedOrNull } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
+import { isNumeric, isUndefinedOrNull } from '@core/utils';
 import { Element, G, Svg, SVG } from '@svgdotjs/svg.js';
 import {
   signalBarActive,
@@ -131,8 +131,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
 
   hasCardClickAction = false;
 
-  private decimals = 0;
-  private units = '';
+  private valueFormat: ValueFormatProcessor;
 
   private drawSvgShapePending = false;
   private svgShape: Svg;
@@ -146,6 +145,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
   private rssi = -100;
   private noSignal = false;
   private noData = false;
+  private noSignalRssiValue = -100;
 
   constructor(public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
@@ -167,6 +167,9 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.dateStyle.color = this.settings.dateColor;
     }
 
+    this.noSignalRssiValue = this.settings.noSignalRssiValue ?? -100;
+    this.rssi = this.noSignalRssiValue;
+
     this.activeBarsColor = ColorProcessor.fromSettings(this.settings.activeBarsColor);
     const inactiveBarsColor = tinycolor(this.settings.inactiveBarsColor);
     this.inactiveBarsColorHex = inactiveBarsColor.toHexString();
@@ -185,15 +188,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     this.showTooltipDate = this.showTooltip && this.settings.showTooltipDate;
 
     if (this.showTooltipValue) {
-      this.decimals = this.ctx.decimals;
-      this.units = this.ctx.units;
-      const dataKey = getDataKey(this.ctx.datasources);
-      if (isDefinedAndNotNull(dataKey?.decimals)) {
-        this.decimals = dataKey.decimals;
-      }
-      if (dataKey?.units) {
-        this.units = dataKey.units;
-      }
+      this.valueFormat = createValueFormatterFromSettings(this.ctx);
       this.tooltipValueStyle = textStyle(this.settings.tooltipValueFont);
       this.tooltipValueStyle.color = this.settings.tooltipValueColor;
       this.tooltipValueLabelStyle = {...this.tooltipValueStyle, ...this.tooltipValueLabelStyle};
@@ -254,16 +249,16 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     if (!this.noData) {
       this.rssi = Number(value);
       if (this.showTooltipValue) {
-        this.tooltipValueText = formatValue(value, this.decimals, this.units, false);
+        this.tooltipValueText = this.valueFormat.format(value);
       }
     } else {
-      this.rssi = -100;
+      this.rssi = this.noSignalRssiValue;
       if (this.showTooltipValue) {
         this.tooltipValueText = 'N/A';
       }
     }
 
-    this.noSignal = this.rssi <= this.settings.noSignalRssiValue;
+    this.noSignal = this.rssi <= this.noSignalRssiValue;
 
     this.activeBarsColor.update(this.rssi);
 
@@ -343,7 +338,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       const activeBarsOpacity = activeBarsColor.getAlpha();
       for (let index = 0; index < this.bars.length; index++) {
         const bar = this.bars[index];
-        const active = signalBarActive(this.rssi, index);
+        const active = signalBarActive(this.rssi, index, this.noSignalRssiValue);
         const newFill = active ? activeBarsColorHex : this.inactiveBarsColorHex;
         const newOpacity = active ? activeBarsOpacity : this.inactiveBarsOpacity;
         if (newFill !== bar.fill() || newOpacity !== bar.opacity()) {

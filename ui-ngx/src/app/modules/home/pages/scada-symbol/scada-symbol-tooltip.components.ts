@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -258,7 +258,11 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
         );
 
         const scadaSymbolTagSettingsTooltip = tagSettingsButton.tooltipster('instance');
-        setTooltipComponent(this.symbolElement, this.container, ScadaSymbolTagSettingsComponent, scadaSymbolTagSettingsTooltip);
+        const scadaSymbolTagSettingsComponentRef =
+          setTooltipComponent(this.symbolElement, this.container, ScadaSymbolTagSettingsComponent, scadaSymbolTagSettingsTooltip);
+        scadaSymbolTagSettingsTooltip.on('ready', () => {
+          scadaSymbolTagSettingsComponentRef.instance.updateFunctionsState();
+        });
       }
 
       if (!this.symbolElement.readonly) {
@@ -400,7 +404,7 @@ class ScadaSymbolTagSettingsComponent extends ScadaSymbolPanelComponent implemen
     this.updateFunctionsState();
   }
 
-  private updateFunctionsState() {
+  updateFunctionsState() {
     this.hasStateRenderFunction = this.symbolElement.hasStateRenderFunction();
     this.hasClickAction = this.symbolElement.hasClickAction();
   }

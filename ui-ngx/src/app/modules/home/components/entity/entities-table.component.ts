@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,15 +19,16 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver,
   ElementRef,
   EventEmitter,
   Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
   SimpleChanges,
-  ViewChild
+  ViewChild,
+  ViewContainerRef,
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -59,12 +60,11 @@ import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
 import { AddEntityDialogComponent } from './add-entity-dialog.component';
 import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
-import { calculateIntervalStartEndTime, HistoryWindowType, Timewindow } from '@shared/models/time/time.models';
+import { getTimePageLinkInterval, Timewindow } from '@shared/models/time/time.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isEqual, isNotEmptyStr, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { EntitiesTableAction, IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
@@ -141,9 +141,10 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
               private domSanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
               private router: Router,
-              private componentFactoryResolver: ComponentFactoryResolver,
               private elementRef: ElementRef,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private zone: NgZone,
+              public viewContainerRef: ViewContainerRef) {
     super(store);
   }
 
@@ -158,11 +159,13 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       });
     }
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-      if (showHidePageSize !== this.hidePageSize) {
-        this.hidePageSize = showHidePageSize;
-        this.cd.markForCheck();
-      }
+      this.zone.run(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
     });
     this.widgetResize$.observe(this.elementRef.nativeElement);
   }
@@ -191,10 +194,9 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     this.entitiesTableConfig = entitiesTableConfig;
     this.pageMode = this.entitiesTableConfig.pageMode;
     if (this.entitiesTableConfig.headerComponent) {
-      const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.headerComponent);
       const viewContainerRef = this.entityTableHeaderAnchor.viewContainerRef;
       viewContainerRef.clear();
-      const componentRef = viewContainerRef.createComponent(componentFactory);
+      const componentRef = viewContainerRef.createComponent(this.entitiesTableConfig.headerComponent);
       const headerComponent = componentRef.instance;
       headerComponent.entitiesTableConfig = this.entitiesTableConfig;
     }
@@ -258,7 +260,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
     if (this.entitiesTableConfig.useTimePageLink) {
       this.timewindow = this.entitiesTableConfig.defaultTimewindowInterval;
-      const interval = this.getTimePageLinkInterval();
+      const interval = getTimePageLinkInterval(this.timewindow);
       this.pageLink = new TimePageLink(10, 0, null, sortOrder,
         interval.startTime, interval.endTime);
     } else {
@@ -423,7 +425,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     }
     if (this.entitiesTableConfig.useTimePageLink) {
       const timePageLink = this.pageLink as TimePageLink;
-      const interval = this.getTimePageLinkInterval();
+      const interval = getTimePageLinkInterval(this.timewindow);
       timePageLink.startTime = interval.startTime;
       timePageLink.endTime = interval.endTime;
     }
@@ -431,31 +433,6 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     if (reloadEntity && this.isDetailsOpen && this.entityDetailsPanel) {
       this.entityDetailsPanel.reloadEntity();
     }
-  }
-
-  private getTimePageLinkInterval(): {startTime?: number, endTime?: number} {
-    const interval: {startTime?: number, endTime?: number} = {};
-    switch (this.timewindow.history.historyType) {
-      case HistoryWindowType.LAST_INTERVAL:
-        const currentTime = Date.now();
-        interval.startTime = currentTime - this.timewindow.history.timewindowMs;
-        interval.endTime = currentTime;
-        break;
-      case HistoryWindowType.FIXED:
-        interval.startTime = this.timewindow.history.fixedTimewindow.startTimeMs;
-        interval.endTime = this.timewindow.history.fixedTimewindow.endTimeMs;
-        break;
-      case HistoryWindowType.INTERVAL:
-        const startEndTime = calculateIntervalStartEndTime(this.timewindow.history.quickInterval);
-        interval.startTime = startEndTime[0];
-        interval.endTime = startEndTime[1];
-        break;
-      case HistoryWindowType.FOR_ALL_TIME:
-        interval.startTime = null;
-        interval.endTime = null;
-        break;
-    }
-    return interval;
   }
 
   private dataLoaded(col?: number, row?: number) {
@@ -688,7 +665,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   cellTooltip(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number) {
-    if (column instanceof EntityTableColumn) {
+    if (column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn) {
       const col = this.entitiesTableConfig.columns.indexOf(column);
       const index = row * this.entitiesTableConfig.columns.length + col;
       let res = this.cellTooltipCache[index];

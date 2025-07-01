@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,14 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
+import java.io.Serial;
+
 @Data
 @Builder
 public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
+
+    @Serial
+    private static final long serialVersionUID = 3298785969736390092L;
 
     private final UpdateMessage updateInfo;
 
@@ -45,19 +50,14 @@ public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
 
 
     @Override
-    public boolean deduplicate() {
-        return true;
+    public DeduplicationStrategy getDeduplicationStrategy() {
+        return DeduplicationStrategy.ALL;
     }
 
     @Override
     public String getDeduplicationKey() {
         return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(),
                 updateInfo.getCurrentVersion(), updateInfo.getLatestVersion());
-    }
-
-    @Override
-    public long getDefaultDeduplicationDuration() {
-        return 0;
     }
 
 }

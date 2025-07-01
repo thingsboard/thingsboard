@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
  */
 package org.thingsboard.server.common.data.id;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.UUID;
 
 public class UserAuthSettingsId extends UUIDBased {
 
-    public UserAuthSettingsId(UUID id) {
+    @JsonCreator
+    public UserAuthSettingsId(@JsonProperty("id") UUID id) {
         super(id);
     }
 

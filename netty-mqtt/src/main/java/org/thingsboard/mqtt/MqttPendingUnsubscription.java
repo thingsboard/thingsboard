@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,43 +18,96 @@ package org.thingsboard.mqtt;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
 import io.netty.util.concurrent.Promise;
+import lombok.AccessLevel;
+import lombok.Getter;
 
 import java.util.function.Consumer;
 
-final class MqttPendingUnsubscription{
+@Getter(AccessLevel.PACKAGE)
+final class MqttPendingUnsubscription {
 
     private final Promise<Void> future;
     private final String topic;
 
+    @Getter(AccessLevel.NONE)
     private final RetransmissionHandler<MqttUnsubscribeMessage> retransmissionHandler;
 
-    MqttPendingUnsubscription(Promise<Void> future, String topic, MqttUnsubscribeMessage unsubscribeMessage, PendingOperation operation) {
+    private MqttPendingUnsubscription(
+            Promise<Void> future,
+            String topic,
+            MqttUnsubscribeMessage unsubscribeMessage,
+            String ownerId,
+            MqttClientConfig.RetransmissionConfig retransmissionConfig,
+            PendingOperation operation
+    ) {
         this.future = future;
         this.topic = topic;
 
-        this.retransmissionHandler = new RetransmissionHandler<>(operation);
-        this.retransmissionHandler.setOriginalMessage(unsubscribeMessage);
-    }
-
-    Promise<Void> getFuture() {
-        return future;
-    }
-
-    String getTopic() {
-        return topic;
+        retransmissionHandler = new RetransmissionHandler<>(retransmissionConfig, operation, ownerId);
+        retransmissionHandler.setOriginalMessage(unsubscribeMessage);
     }
 
     void startRetransmissionTimer(EventLoop eventLoop, Consumer<Object> sendPacket) {
-        this.retransmissionHandler.setHandle((fixedHeader, originalMessage) ->
+        retransmissionHandler.setHandler((fixedHeader, originalMessage) ->
                 sendPacket.accept(new MqttUnsubscribeMessage(fixedHeader, originalMessage.variableHeader(), originalMessage.payload())));
-        this.retransmissionHandler.start(eventLoop);
+        retransmissionHandler.start(eventLoop);
     }
 
-    void onUnsubackReceived(){
-        this.retransmissionHandler.stop();
+    void onUnsubackReceived() {
+        retransmissionHandler.stop();
     }
 
-    void onChannelClosed(){
-        this.retransmissionHandler.stop();
+    void onChannelClosed() {
+        retransmissionHandler.stop();
     }
+
+    static Builder builder() {
+        return new Builder();
+    }
+
+    static class Builder {
+
+        private Promise<Void> future;
+        private String topic;
+        private MqttUnsubscribeMessage unsubscribeMessage;
+        private String ownerId;
+        private PendingOperation pendingOperation;
+        private MqttClientConfig.RetransmissionConfig retransmissionConfig;
+
+        Builder future(Promise<Void> future) {
+            this.future = future;
+            return this;
+        }
+
+        Builder topic(String topic) {
+            this.topic = topic;
+            return this;
+        }
+
+        Builder unsubscribeMessage(MqttUnsubscribeMessage unsubscribeMessage) {
+            this.unsubscribeMessage = unsubscribeMessage;
+            return this;
+        }
+
+        Builder ownerId(String ownerId) {
+            this.ownerId = ownerId;
+            return this;
+        }
+
+        Builder retransmissionConfig(MqttClientConfig.RetransmissionConfig retransmissionConfig) {
+            this.retransmissionConfig = retransmissionConfig;
+            return this;
+        }
+
+        Builder pendingOperation(PendingOperation pendingOperation) {
+            this.pendingOperation = pendingOperation;
+            return this;
+        }
+
+        MqttPendingUnsubscription build() {
+            return new MqttPendingUnsubscription(future, topic, unsubscribeMessage, ownerId, retransmissionConfig, pendingOperation);
+        }
+
+    }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,11 +131,13 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
 
     void saveLatestTsForAssetAndDevice(List<Device> devices, Asset asset, int idx) throws ExecutionException, InterruptedException, TimeoutException {
         for (Device device : devices) {
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST,
-                    device.getId(),
-                    getTbMsgMetadata(device.getName(), ts.get(idx)),
-                    TbMsgDataType.JSON,
-                    getTbMsgData(msgValue.get(idx)));
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(device.getId())
+                    .copyMetaData(getTbMsgMetadata(device.getName(), ts.get(idx)))
+                    .dataType(TbMsgDataType.JSON)
+                    .data(getTbMsgData(msgValue.get(idx)))
+                    .build();
             saveDeviceTsEntry(device.getId(), tbMsg, msgValue.get(idx));
             saveAssetTsEntry(asset, device.getName(), msgValue.get(idx), TbMsgTimeseriesNode.computeTs(tbMsg, configuration.isUseServerTs()));
             idx++;

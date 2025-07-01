@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, Optional } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit, Optional } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -26,7 +26,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
-import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
+import { DataKeyConfigComponent } from '@home/components/widget/lib/settings/common/key/data-key-config.component';
 import {
   ChartBarSettings,
   ChartLabelPosition,
@@ -37,6 +37,8 @@ import {
   pieChartLabelPositionTranslations
 } from '@home/components/widget/lib/chart/chart.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getSourceTbUnitSymbol, isNotEmptyTbUnits } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-chart-bar-settings',
@@ -77,7 +79,8 @@ export class ChartBarSettingsComponent implements OnInit, ControlValueAccessor {
 
   constructor(protected store: Store<AppState>,
               @Optional() private dataKeyConfigComponent: DataKeyConfigComponent,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -104,13 +107,17 @@ export class ChartBarSettingsComponent implements OnInit, ControlValueAccessor {
       this.barSettingsFormGroup.addControl('barWidth', this.fb.control(null,
         [Validators.min(0), Validators.max(100)]));
     }
-    this.barSettingsFormGroup.valueChanges.subscribe(() => {
+    this.barSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     merge(this.barSettingsFormGroup.get('showBorder').valueChanges,
       this.barSettingsFormGroup.get('showLabel').valueChanges,
-      this.barSettingsFormGroup.get('enableLabelBackground').valueChanges)
-    .subscribe(() => {
+      this.barSettingsFormGroup.get('enableLabelBackground').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }
@@ -177,10 +184,10 @@ export class ChartBarSettingsComponent implements OnInit, ControlValueAccessor {
     if (this.series) {
       const dataKey = this.dataKeyConfigComponent.modelValue;
       const widgetConfig = this.dataKeyConfigComponent.widgetConfig;
-      const units = dataKey.units && dataKey.units.length ? dataKey.units : widgetConfig.config.units;
+      const units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units : widgetConfig.config.units;
       const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
         (isDefinedAndNotNull(widgetConfig.config.decimals) ? widgetConfig.config.decimals : 2);
-      return formatValue(22, decimals, units, false);
+      return formatValue(22, decimals, getSourceTbUnitSymbol(units), false);
     } else {
       return 'Wind';
     }

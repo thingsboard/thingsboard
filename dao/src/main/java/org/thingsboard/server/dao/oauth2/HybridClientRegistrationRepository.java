@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,15 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
 
     private ClientRegistration toSpringClientRegistration(OAuth2Client oAuth2Client){
         String registrationId = oAuth2Client.getUuidId().toString();
+
+        // NONE is used if we need pkce-based code challenge
+        ClientAuthenticationMethod authMethod = ClientAuthenticationMethod.NONE;
+        if (oAuth2Client.getClientAuthenticationMethod().equals("POST")) {
+            authMethod = ClientAuthenticationMethod.CLIENT_SECRET_POST;
+        } else if (oAuth2Client.getClientAuthenticationMethod().equals("BASIC")) {
+            authMethod = ClientAuthenticationMethod.CLIENT_SECRET_BASIC;
+        }
+
         return ClientRegistration.withRegistrationId(registrationId)
                 .clientName(oAuth2Client.getName())
                 .clientId(oAuth2Client.getClientId())
@@ -54,8 +63,7 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
                 .userInfoUri(oAuth2Client.getUserInfoUri())
                 .userNameAttributeName(oAuth2Client.getUserNameAttributeName())
                 .jwkSetUri(oAuth2Client.getJwkSetUri())
-                .clientAuthenticationMethod(oAuth2Client.getClientAuthenticationMethod().equals("POST") ?
-                        ClientAuthenticationMethod.CLIENT_SECRET_POST : ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .clientAuthenticationMethod(authMethod)
                 .redirectUri(defaultRedirectUriTemplate)
                 .build();
     }

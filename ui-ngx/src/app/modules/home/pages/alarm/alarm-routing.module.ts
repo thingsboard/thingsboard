@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Injectable, NgModule } from '@angular/core';
-import { Resolve, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { Observable } from 'rxjs';
 import { OAuth2Service } from '@core/http/oauth2.service';
@@ -24,7 +24,7 @@ import { AlarmsMode } from '@shared/models/alarm.models';
 import { MenuId } from '@core/services/menu.models';
 
 @Injectable()
-export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
+export class OAuth2LoginProcessingUrlResolver  {
 
   constructor(private oauth2Service: OAuth2Service) {
   }

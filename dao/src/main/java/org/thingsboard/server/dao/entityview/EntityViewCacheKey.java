@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,17 @@ package org.thingsboard.server.dao.entityview;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serial;
-import java.io.Serializable;
 
 @Getter
 @EqualsAndHashCode
 @Builder
-public class EntityViewCacheKey implements Serializable {
+public class EntityViewCacheKey implements VersionedCacheKey {
 
     @Serial
     private static final long serialVersionUID = 5986277528222738163L;
@@ -66,6 +66,11 @@ public class EntityViewCacheKey implements Serializable {
         } else {
             return tenantId + "_n_" + name;
         }
+    }
+
+    @Override
+    public boolean isVersioned() {
+        return entityViewId != null;
     }
 
 }

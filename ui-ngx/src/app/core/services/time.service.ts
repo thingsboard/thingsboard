@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,13 +19,18 @@ import {
   AggregationType,
   DAY,
   defaultTimeIntervals,
-  defaultTimewindow, Interval, IntervalMath,
+  defaultTimewindow,
+  getDefaultTimezoneInfo,
+  Interval,
+  IntervalMath,
   SECOND,
   TimeInterval,
-  Timewindow
+  Timewindow,
+  TimezoneInfo
 } from '@shared/models/time/time.models';
 import { HttpClient } from '@angular/common/http';
-import { isDefined } from '@core/utils';
+import { deepClone, isDefined } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
 
 const MIN_INTERVAL = SECOND;
 const MAX_INTERVAL = 365 * 20 * DAY;
@@ -41,8 +46,11 @@ export class TimeService {
 
   private maxDatapointsLimit = MAX_DATAPOINTS_LIMIT;
 
+  private localBrowserTimezoneInfoPlaceholder: TimezoneInfo;
+
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private translate: TranslateService
   ) {}
 
   public setMaxDatapointsLimit(limit: number) {
@@ -160,5 +168,14 @@ export class TimeService {
     } else {
       return defValue;
     }
+  }
+
+  public getLocalBrowserTimezoneInfoPlaceholder(): TimezoneInfo {
+    if (!this.localBrowserTimezoneInfoPlaceholder) {
+      this.localBrowserTimezoneInfoPlaceholder = deepClone(getDefaultTimezoneInfo());
+      this.localBrowserTimezoneInfoPlaceholder.id = null;
+      this.localBrowserTimezoneInfoPlaceholder.name = this.translate.instant('timezone.browser-time');
+    }
+    return this.localBrowserTimezoneInfoPlaceholder;
   }
 }

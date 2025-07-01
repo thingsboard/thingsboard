@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import {
   Component,
+  DestroyRef,
   forwardRef,
   Input,
   OnChanges,
@@ -49,12 +50,12 @@ import {
   elementStateRenderFunctionCompletions,
   generalStateRenderFunctionCompletions,
   scadaSymbolContextCompletion,
-  scadaSymbolGeneralStateRenderHighlightRules,
-  scadaSymbolGeneralStateRenderPropertiesHighlightRules
+  scadaSymbolGeneralStateHighlightRules
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-scada-symbol-metadata',
@@ -91,7 +92,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   @Input()
   tags: string[];
 
-  private modelValue: ScadaSymbolMetadata;
+  modelValue: ScadaSymbolMetadata;
 
   private propagateChange = null;
 
@@ -122,14 +123,13 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   elementStateRenderFunctionCompleter: TbEditorCompleter;
   clickActionFunctionCompleter: TbEditorCompleter;
 
-  scadaSymbolGeneralStateRenderHighlightRules = scadaSymbolGeneralStateRenderHighlightRules;
-
-  scadaSymbolGeneralStateRenderPropertiesHighlightRules = scadaSymbolGeneralStateRenderPropertiesHighlightRules;
+  highlightRules = scadaSymbolGeneralStateHighlightRules;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
               private translate: TranslateService,
-              private customTranslate: CustomTranslatePipe) {
+              private customTranslate: CustomTranslatePipe,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -147,7 +147,9 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     });
     this.updateFunctionCompleters(emptyMetadata());
 
-    this.metadataFormGroup.valueChanges.subscribe(() => {
+    this.metadataFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }
