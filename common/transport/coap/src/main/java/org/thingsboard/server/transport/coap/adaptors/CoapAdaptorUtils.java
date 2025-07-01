@@ -57,19 +57,21 @@ public class CoapAdaptorUtils {
 
     private static void processNotScopedRequest(List<String> queryParameters, TransportProtos.GetAttributeRequestMsg.Builder result) {
         if (queryParameters != null && !queryParameters.isEmpty()) {
-            result.setAddClient(false);
-            result.setAddShared(false);
+            boolean addClient = false;
+            boolean addShared = false;
             Set<String> clientKeys = extractKeys(queryParameters, "clientKeys");
             Set<String> sharedKeys = extractKeys(queryParameters, "sharedKeys");
 
             if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
-                result.setAddClient(true);
+                addClient = true;
             }
             if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
-                result.setAddShared(true);
+                addShared = true;
             }
+            result.setAddClient(addClient);
+            result.setAddShared(addShared);
         } else {
             result.setAddClient(true);
             result.setAddShared(true);

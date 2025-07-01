@@ -178,8 +178,8 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         String topicName = inbound.variableHeader().topicName();
         try {
             TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
-            result.setAddClient(false);
-            result.setAddShared(false);
+            boolean addClient = false;
+            boolean addShared = false;
             result.setRequestId(getRequestId(topicName, topicBase));
             String payload = inbound.payload().toString(UTF8);
             JsonElement requestBody = JsonParser.parseString(payload);
@@ -187,16 +187,18 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
             if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
-                result.setAddClient(true);
+                addClient = true;
             }
             if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
-                result.setAddShared(true);
+                addShared = true;
             }
             if (clientKeys == null && sharedKeys == null) {
-                result.setAddClient(true);
-                result.setAddShared(true);
+                addClient = true;
+                addShared = true;
             }
+            result.setAddClient(addClient);
+            result.setAddShared(addShared);
             return result.build();
         } catch (RuntimeException e) {
             log.debug("Failed to decode get attributes request", e);

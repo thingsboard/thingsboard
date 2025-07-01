@@ -154,22 +154,24 @@ public class DeviceApiController implements TbTransportService {
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     GetAttributeRequestMsg.Builder request = GetAttributeRequestMsg.newBuilder().setRequestId(0);
-                    request.setAddClient(false);
-                    request.setAddShared(false);
+                    boolean addClient = false;
+                    boolean addShared = false;
                     List<String> clientKeySet = !StringUtils.isEmpty(clientKeys) ? Arrays.asList(clientKeys.split(",")) : null;
                     List<String> sharedKeySet = !StringUtils.isEmpty(sharedKeys) ? Arrays.asList(sharedKeys.split(",")) : null;
                     if (clientKeySet != null) {
                         request.addAllClientAttributeNames(clientKeySet);
-                        request.setAddClient(true);
+                        addClient = true;
                     }
                     if (sharedKeySet != null) {
                         request.addAllSharedAttributeNames(sharedKeySet);
-                        request.setAddShared(true);
+                        addShared = true;
                     }
                     if (clientKeySet == null && sharedKeySet == null) {
-                        request.setAddClient(true);
-                        request.setAddShared(true);
+                        addClient = true;
+                        addShared = true;
                     }
+                    request.setAddClient(addClient);
+                    request.setAddShared(addShared);
                     TransportService transportService = transportContext.getTransportService();
                     transportService.registerSyncSession(sessionInfo,
                             new HttpSessionListener(responseWriter, transportContext.getTransportService(), sessionInfo),
