@@ -470,8 +470,6 @@ actors:
       pool-name: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_NAME:ai-requests}"
       # The maximum number of concurrent HTTP requests
       pool-size: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_SIZE:50}"
-      # The maximum queue size for pending AI requests
-      max-queue-size: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_QUEUE_SIZE:10000}"
       # The maximum time in seconds to wait for active tasks to complete during graceful shutdown
       termination-timeout-seconds: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_TERMINATION_TIMEOUT_SECONDS:60}"
     chain:

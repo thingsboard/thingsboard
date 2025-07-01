@@ -32,10 +32,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
-import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.AiRequestsExecutor;
 
 import java.time.Duration;
+import java.util.concurrent.Executors;
 
 @Lazy
 @Component
@@ -56,9 +57,6 @@ class DefaultAiRequestsExecutor implements AiRequestsExecutor {
         @Min(value = 1, message = "Pool size must be at least 1")
         private int poolSize = 50;
 
-        @Min(value = 1, message = "Max queue size must be at least 1")
-        private int maxQueueSize = 10000;
-
         @Min(value = 1, message = "Termination timeout must be at least 1 second")
         private int terminationTimeoutSeconds = 60;
 
@@ -69,7 +67,7 @@ class DefaultAiRequestsExecutor implements AiRequestsExecutor {
     @PostConstruct
     private void init() {
         executorService = MoreExecutors.listeningDecorator(
-                ThingsBoardExecutors.newLimitedTasksExecutor(properties.getPoolSize(), properties.getMaxQueueSize(), properties.getPoolName())
+                Executors.newFixedThreadPool(properties.getPoolSize(), ThingsBoardThreadFactory.forName(properties.getPoolName()))
         );
     }
 
