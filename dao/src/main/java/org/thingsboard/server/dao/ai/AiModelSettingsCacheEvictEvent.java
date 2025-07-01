@@ -15,15 +15,31 @@
  */
 package org.thingsboard.server.dao.ai;
 
-import org.thingsboard.server.common.data.id.AiModelSettingsId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ai.AiModelSettings;
 
-import java.util.Set;
+import static java.util.Objects.requireNonNull;
+import static org.thingsboard.server.dao.ai.AiModelSettingsCacheEvictEvent.Deleted;
+import static org.thingsboard.server.dao.ai.AiModelSettingsCacheEvictEvent.Saved;
 
-record AiModelSettingsCacheEvictEvent(Set<AiModelSettingsCacheKey> keys) {
+sealed interface AiModelSettingsCacheEvictEvent permits Saved, Deleted {
 
-    static AiModelSettingsCacheEvictEvent of(TenantId tenantId, AiModelSettingsId settingsId) {
-        return new AiModelSettingsCacheEvictEvent(Set.of(AiModelSettingsCacheKey.of(tenantId, settingsId)));
+    AiModelSettingsCacheKey cacheKey();
+
+    record Saved(AiModelSettingsCacheKey cacheKey, AiModelSettings savedSettings) implements AiModelSettingsCacheEvictEvent {
+
+        public Saved {
+            requireNonNull(cacheKey);
+            requireNonNull(savedSettings);
+        }
+
+    }
+
+    record Deleted(AiModelSettingsCacheKey cacheKey) implements AiModelSettingsCacheEvictEvent {
+
+        public Deleted {
+            requireNonNull(cacheKey);
+        }
+
     }
 
 }

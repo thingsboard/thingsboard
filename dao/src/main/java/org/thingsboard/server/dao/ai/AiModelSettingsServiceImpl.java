@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.ai;
 
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,7 +37,6 @@ import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
@@ -54,7 +52,14 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
     @Override
     @TransactionalEventListener
     public void handleEvictEvent(AiModelSettingsCacheEvictEvent event) {
-        cache.evict(event.keys());
+        var cacheKey = event.cacheKey();
+        if (event instanceof AiModelSettingsCacheEvictEvent.Saved savedEvent) {
+            cache.put(cacheKey, savedEvent.savedSettings());
+        } else if (event instanceof AiModelSettingsCacheEvictEvent.Deleted) {
+            cache.evict(cacheKey);
+        } else {
+            throw new UnsupportedOperationException("Unsupported event type: " + event.getClass().getSimpleName());
+        }
     }
 
     @Override
@@ -81,7 +86,8 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
                 .broadcastEvent(true)
                 .build());
 
-        publishEvictEvent(AiModelSettingsCacheEvictEvent.of(savedSettings.getTenantId(), savedSettings.getId()));
+        var cacheKey = AiModelSettingsCacheKey.of(savedSettings.getTenantId(), savedSettings.getId());
+        publishEvictEvent(new AiModelSettingsCacheEvictEvent.Saved(cacheKey, savedSettings));
 
         return savedSettings;
     }
@@ -139,7 +145,7 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
         boolean deleted = aiModelSettingsDao.deleteByTenantIdAndId(tenantId, settingsId);
         if (deleted) {
             publishDeleteEvent(toDeleteOpt.get());
-            publishEvictEvent(AiModelSettingsCacheEvictEvent.of(tenantId, settingsId));
+            publishEvictEvent(new AiModelSettingsCacheEvictEvent.Deleted(AiModelSettingsCacheKey.of(tenantId, settingsId)));
         }
         return deleted;
     }
@@ -154,13 +160,10 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
 
         aiModelSettingsDao.deleteByTenantId(tenantId);
 
-        Set<AiModelSettingsCacheKey> cacheKeys = Sets.newHashSetWithExpectedSize(toDelete.size());
         toDelete.forEach(settings -> {
             publishDeleteEvent(settings);
-            cacheKeys.add(AiModelSettingsCacheKey.of(settings.getTenantId(), settings.getId()));
+            publishEvictEvent(new AiModelSettingsCacheEvictEvent.Deleted(AiModelSettingsCacheKey.of(settings.getTenantId(), settings.getId())));
         });
-
-        publishEvictEvent(new AiModelSettingsCacheEvictEvent(cacheKeys));
     }
 
     private void publishDeleteEvent(AiModelSettings settings) {
