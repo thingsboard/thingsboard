@@ -99,7 +99,7 @@ public class EntityStateSourcingListener {
             case ASSET -> {
                 onAssetUpdate(event.getEntity(), event.getOldEntity());
             }
-            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE, AI_MODEL_SETTINGS -> {
+            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
             }
             case RULE_CHAIN -> {
@@ -164,7 +164,7 @@ public class EntityStateSourcingListener {
                 Asset asset = (Asset) event.getEntity();
                 tbClusterService.onAssetDeleted(tenantId, asset, null);
             }
-            case ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE, AI_MODEL_SETTINGS -> {
+            case ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
             }
             case NOTIFICATION_REQUEST -> {

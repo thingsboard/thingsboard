@@ -29,14 +29,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.CachedVersionedEntityService;
-import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
-import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.model.sql.AiModelSettingsEntity;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
@@ -65,7 +63,7 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
     @Override
     @Transactional
     public AiModelSettings save(AiModelSettings settings) {
-        AiModelSettings oldSettings = aiModelSettingsValidator.validate(settings, AiModelSettings::getTenantId);
+        aiModelSettingsValidator.validate(settings, AiModelSettings::getTenantId);
 
         AiModelSettings savedSettings;
         try {
@@ -76,15 +74,6 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
                     "ai_model_settings_external_id_unq_key", "AI model settings with such external ID already exist!");
             throw e;
         }
-
-        eventPublisher.publishEvent(SaveEntityEvent.builder()
-                .tenantId(savedSettings.getTenantId())
-                .entity(savedSettings)
-                .oldEntity(oldSettings)
-                .entityId(savedSettings.getId())
-                .created(oldSettings == null)
-                .broadcastEvent(true)
-                .build());
 
         var cacheKey = AiModelSettingsCacheKey.of(savedSettings.getTenantId(), savedSettings.getId());
         publishEvictEvent(new AiModelSettingsCacheEvictEvent.Saved(cacheKey, savedSettings));
@@ -138,13 +127,8 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
     }
 
     private boolean deleteByTenantIdAndIdInternal(TenantId tenantId, AiModelSettingsId settingsId) {
-        Optional<AiModelSettings> toDeleteOpt = aiModelSettingsDao.findByTenantIdAndId(tenantId, settingsId);
-        if (toDeleteOpt.isEmpty()) {
-            return false;
-        }
         boolean deleted = aiModelSettingsDao.deleteByTenantIdAndId(tenantId, settingsId);
         if (deleted) {
-            publishDeleteEvent(toDeleteOpt.get());
             publishEvictEvent(new AiModelSettingsCacheEvictEvent.Deleted(AiModelSettingsCacheKey.of(tenantId, settingsId)));
         }
         return deleted;
@@ -153,25 +137,8 @@ class AiModelSettingsServiceImpl extends CachedVersionedEntityService<AiModelSet
     @Override
     @Transactional
     public void deleteByTenantId(TenantId tenantId) {
-        List<AiModelSettings> toDelete = aiModelSettingsDao.findAllByTenantId(tenantId, new PageLink(Integer.MAX_VALUE)).getData();
-        if (toDelete.isEmpty()) {
-            return;
-        }
-
-        aiModelSettingsDao.deleteByTenantId(tenantId);
-
-        toDelete.forEach(settings -> {
-            publishDeleteEvent(settings);
-            publishEvictEvent(new AiModelSettingsCacheEvictEvent.Deleted(AiModelSettingsCacheKey.of(settings.getTenantId(), settings.getId())));
-        });
-    }
-
-    private void publishDeleteEvent(AiModelSettings settings) {
-        eventPublisher.publishEvent(DeleteEntityEvent.builder()
-                .tenantId(settings.getTenantId())
-                .entityId(settings.getId())
-                .entity(settings)
-                .build());
+        Set<AiModelSettingsId> deleted = aiModelSettingsDao.deleteByTenantId(tenantId);
+        deleted.forEach(id -> publishEvictEvent(new AiModelSettingsCacheEvictEvent.Deleted(AiModelSettingsCacheKey.of(tenantId, id))));
     }
 
     @Override

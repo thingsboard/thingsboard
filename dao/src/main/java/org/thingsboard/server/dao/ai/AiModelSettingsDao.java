@@ -22,6 +22,7 @@ import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.Optional;
+import java.util.Set;
 
 public interface AiModelSettingsDao extends TenantEntityDao<AiModelSettings>, ExportableEntityDao<AiModelSettingsId, AiModelSettings> {
 
@@ -29,7 +30,7 @@ public interface AiModelSettingsDao extends TenantEntityDao<AiModelSettings>, Ex
 
     boolean deleteById(TenantId tenantId, AiModelSettingsId settingsId);
 
-    int deleteByTenantId(TenantId tenantId);
+    Set<AiModelSettingsId> deleteByTenantId(TenantId tenantId);
 
     boolean deleteByTenantIdAndId(TenantId tenantId, AiModelSettingsId settingsId);
 

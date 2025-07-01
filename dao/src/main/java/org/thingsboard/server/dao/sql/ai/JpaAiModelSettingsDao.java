@@ -39,6 +39,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static java.util.stream.Collectors.toSet;
+
 @SqlDao
 @Component
 @RequiredArgsConstructor
@@ -108,8 +110,10 @@ class JpaAiModelSettingsDao extends JpaAbstractDao<AiModelSettingsEntity, AiMode
     }
 
     @Override
-    public int deleteByTenantId(TenantId tenantId) {
-        return aiModelSettingsRepository.deleteByTenantId(tenantId.getId());
+    public Set<AiModelSettingsId> deleteByTenantId(TenantId tenantId) {
+        return aiModelSettingsRepository.deleteByTenantId(tenantId.getId()).stream()
+                .map(AiModelSettingsId::new)
+                .collect(toSet());
     }
 
     @Override

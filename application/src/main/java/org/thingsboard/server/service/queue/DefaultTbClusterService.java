@@ -589,7 +589,6 @@ public class DefaultTbClusterService implements TbClusterService {
                 EntityType.ENTITY_VIEW,
                 EntityType.NOTIFICATION_RULE,
                 EntityType.CALCULATED_FIELD,
-                EntityType.AI_MODEL_SETTINGS,
                 EntityType.TENANT_PROFILE,
                 EntityType.DEVICE_PROFILE,
                 EntityType.ASSET_PROFILE,

@@ -73,8 +73,13 @@ interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity,
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM AiModelSettingsEntity ai_model WHERE ai_model.tenantId = :tenantId")
-    int deleteByTenantId(@Param("tenantId") UUID tenantId);
+    @Query(value = """
+                DELETE FROM ai_model_settings
+                WHERE tenant_id = :tenantId
+                RETURNING id
+            """, nativeQuery = true
+    )
+    Set<UUID> deleteByTenantId(@Param("tenantId") UUID tenantId);
 
     @Transactional
     @Modifying
