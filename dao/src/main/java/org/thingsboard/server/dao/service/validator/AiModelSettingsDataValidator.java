@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.service.validator;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiModelSettings;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.ai.AiModelSettingsDao;
@@ -33,11 +32,6 @@ class AiModelSettingsDataValidator extends DataValidator<AiModelSettings> {
 
     private final TenantService tenantService;
     private final AiModelSettingsDao aiModelSettingsDao;
-
-    @Override
-    protected void validateCreate(TenantId tenantId, AiModelSettings settings) {
-        validateNumberOfEntitiesPerTenant(tenantId, EntityType.AI_MODEL_SETTINGS);
-    }
 
     @Override
     protected AiModelSettings validateUpdate(TenantId tenantId, AiModelSettings settings) {
