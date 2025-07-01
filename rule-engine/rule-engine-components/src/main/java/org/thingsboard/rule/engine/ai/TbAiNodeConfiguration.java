@@ -23,6 +23,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.thingsboard.common.util.JsonSchemaUtils;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
@@ -35,7 +36,7 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @NotNull
     private AiModelSettingsId aiModelSettingsId;
 
-    @NotBlank
+    @Pattern(regexp = ".*\\S.*", message = "must contain at least one non-whitespace character")
     @Length(min = 1, max = 1000)
     private String systemPrompt;
 

@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.ai;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
+import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -106,11 +108,14 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         var ackedMsg = ackIfNeeded(ctx, msg);
 
-        var systemMessage = SystemMessage.from(TbNodeUtils.processPattern(systemPrompt, ackedMsg));
-        var userMessage = UserMessage.from(TbNodeUtils.processPattern(userPrompt, ackedMsg));
+        List<ChatMessage> chatMessages = new ArrayList<>(2);
+        if (systemPrompt != null) {
+            chatMessages.add(SystemMessage.from(TbNodeUtils.processPattern(systemPrompt, ackedMsg)));
+        }
+        chatMessages.add(UserMessage.from(TbNodeUtils.processPattern(userPrompt, ackedMsg)));
 
         var chatRequest = ChatRequest.builder()
-                .messages(List.of(systemMessage, userMessage))
+                .messages(chatMessages)
                 .responseFormat(responseFormat)
                 .build();
 
