@@ -30,7 +30,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.AiRequestsExecutor;
 import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
@@ -321,10 +320,6 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private AiModelSettingsService aiModelSettingsService;
-
-    @Autowired
-    @Getter
-    private AiRequestsExecutor aiRequestsExecutor;
 
     @Autowired
     @Getter

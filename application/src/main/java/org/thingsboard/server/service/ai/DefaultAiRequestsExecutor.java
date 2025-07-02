@@ -33,7 +33,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.rule.engine.api.AiRequestsExecutor;
 
 import java.time.Duration;
 import java.util.concurrent.Executors;

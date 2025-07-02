@@ -19,23 +19,9 @@ import com.google.common.util.concurrent.FluentFuture;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.ai.model.chat.AiChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
 
-@Service
-@RequiredArgsConstructor
-class AiModelServiceImpl implements AiModelService {
+public interface AiRequestsExecutor {
 
-    private final Langchain4jChatModelConfigurer chatModelConfigurer;
-    private final AiRequestsExecutor aiRequestsExecutor;
-
-    @Override
-    public <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModel<C> chatModel, ChatRequest chatRequest) {
-        ChatModel lc4jChatModel = chatModel.configure(chatModelConfigurer);
-        return aiRequestsExecutor.sendChatRequestAsync(lc4jChatModel, chatRequest);
-    }
+    FluentFuture<ChatResponse> sendChatRequestAsync(ChatModel chatModel, ChatRequest chatRequest);
 
 }

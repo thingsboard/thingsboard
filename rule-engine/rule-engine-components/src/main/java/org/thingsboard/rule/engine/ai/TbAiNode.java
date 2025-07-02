@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.ResponseFormatType;
@@ -119,29 +118,27 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 .responseFormat(responseFormat)
                 .build();
 
-        configureChatModelAsync(ctx)
-                .transformAsync(chatModel -> ctx.getAiRequestsExecutor().sendChatRequestAsync(chatModel, chatRequest), directExecutor())
-                .addCallback(new FutureCallback<>() {
-                    @Override
-                    public void onSuccess(ChatResponse chatResponse) {
-                        String response = chatResponse.aiMessage().text();
-                        if (!isValidJsonObject(response)) {
-                            response = wrapInJsonObject(response);
-                        }
-                        tellSuccess(ctx, ackedMsg.transform()
-                                .data(response)
-                                .build());
-                    }
+        sendChatRequestAsync(ctx, chatRequest).addCallback(new FutureCallback<>() {
+            @Override
+            public void onSuccess(ChatResponse chatResponse) {
+                String response = chatResponse.aiMessage().text();
+                if (!isValidJsonObject(response)) {
+                    response = wrapInJsonObject(response);
+                }
+                tellSuccess(ctx, ackedMsg.transform()
+                        .data(response)
+                        .build());
+            }
 
-                    @Override
-                    public void onFailure(@NonNull Throwable t) {
-                        tellFailure(ctx, ackedMsg, t);
-                    }
-                }, directExecutor());
+            @Override
+            public void onFailure(@NonNull Throwable t) {
+                tellFailure(ctx, ackedMsg, t);
+            }
+        }, directExecutor());
     }
 
-    private <C extends AiChatModelConfig<C>> FluentFuture<ChatModel> configureChatModelAsync(TbContext ctx) {
-        return ctx.getAiModelSettingsService().findAiModelSettingsByTenantIdAndIdAsync(ctx.getTenantId(), modelSettingsId).transform(settingsOpt -> {
+    private <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(TbContext ctx, ChatRequest chatRequest) {
+        return ctx.getAiModelSettingsService().findAiModelSettingsByTenantIdAndIdAsync(ctx.getTenantId(), modelSettingsId).transformAsync(settingsOpt -> {
             if (settingsOpt.isEmpty()) {
                 throw new NoSuchElementException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] were not found");
             }
@@ -158,7 +155,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                     .withTimeoutSeconds(timeoutSeconds)
                     .withMaxRetries(0)); // disable retries to respect timeout set in rule node config
 
-            return ctx.getAiModelService().configureChatModel(chatModel);
+            return ctx.getAiModelService().sendChatRequestAsync(chatModel, chatRequest);
         }, ctx.getDbCallbackExecutor());
     }
 

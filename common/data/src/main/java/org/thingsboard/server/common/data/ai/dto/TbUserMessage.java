@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.common.data.ai.dto;
 
-import com.google.common.util.concurrent.FluentFuture;
-import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.response.ChatResponse;
-import org.thingsboard.server.common.data.ai.model.chat.AiChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 
-public interface RuleEngineAiModelService {
+import java.util.List;
 
-    <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModel<C> chatModel, ChatRequest chatRequest);
-
-}
+public record TbUserMessage(
+        @NotEmpty
+        @Valid
+        @Schema(
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "A list of content parts that make up the complete user prompt"
+        )
+        List<TbContent> contents
+) {}

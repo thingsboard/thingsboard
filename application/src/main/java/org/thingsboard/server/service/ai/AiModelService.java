@@ -13,15 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.service.ai;
 
-import com.google.common.util.concurrent.FluentFuture;
-import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.response.ChatResponse;
+import org.thingsboard.rule.engine.api.RuleEngineAiModelService;
 
-public interface AiRequestsExecutor {
-
-    FluentFuture<ChatResponse> sendChatRequestAsync(ChatModel chatModel, ChatRequest chatRequest);
-
-}
+public interface AiModelService extends RuleEngineAiModelService {}
