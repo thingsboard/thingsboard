@@ -48,7 +48,7 @@ public class AiModelSettingsEntity extends BaseVersionedEntity<AiModelSettings> 
 
     public static final Map<String, String> COLUMN_MAP = Map.of(
             "createdTime", "created_time",
-            "provider", "(configuration -> 'providerConfig' ->> 'provider')",
+            "provider", "(configuration ->> 'provider')",
             "modelId", "(configuration -> 'modelConfig' ->> 'modelId')"
     );
 

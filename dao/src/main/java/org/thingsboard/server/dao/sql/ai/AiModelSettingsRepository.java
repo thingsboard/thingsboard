@@ -42,7 +42,7 @@ interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity,
                     WHERE ai_model.tenant_id = :tenantId
                       AND (:textSearch IS NULL
                         OR ai_model.name ILIKE '%' || :textSearch || '%'
-                        OR (ai_model.configuration -> 'providerConfig' ->> 'provider') ILIKE '%' || :textSearch || '%'
+                        OR (ai_model.configuration ->> 'provider') ILIKE '%' || :textSearch || '%'
                         OR (ai_model.configuration -> 'modelConfig' ->> 'modelId') ILIKE '%' || :textSearch || '%')
                     """,
             countQuery = """
@@ -51,7 +51,7 @@ interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity,
                     WHERE ai_model.tenant_id = :tenantId
                       AND (:textSearch IS NULL
                         OR ai_model.name ILIKE '%' || :textSearch || '%'
-                        OR (ai_model.configuration -> 'providerConfig' ->> 'provider') ILIKE '%' || :textSearch || '%'
+                        OR (ai_model.configuration ->> 'provider') ILIKE '%' || :textSearch || '%'
                         OR (ai_model.configuration -> 'modelConfig'  ->> 'modelId') ILIKE '%' || :textSearch || '%')
                     """,
             nativeQuery = true
