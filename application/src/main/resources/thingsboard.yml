@@ -1479,7 +1479,12 @@ edges:
   state:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
-
+  kafka:
+    downlink-lag-report-to-ts:
+      # Enable or disable Kafka lag reporter (reports downlink lag per Edge to timeseries)
+      enabled: "${TB_EDGES_KAFKA_DOWNLINK_LAG_REPORT_ENABLED:true}"
+      # Interval for reporting downlink lag per Edge.
+      send-ts-interval-ms: "${TB_EDGES_KAFKA_DOWNLINK_LAG_REPORT_INTERVAL_MS:60000}"
 # Spring doc common parameters
 springdoc:
   # If false swagger API docs will be unavailable
