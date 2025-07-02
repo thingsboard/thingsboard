@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.ai.model.chat;
 
 import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 
-public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extends AiModelConfig<C>
+public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extends AiModelConfig
         permits
         OpenAiChatModel.Config, AzureOpenAiChatModel.Config, GoogleAiGeminiChatModel.Config,
         GoogleVertexAiGeminiChatModel.Config, MistralAiChatModel.Config, AnthropicChatModel.Config,

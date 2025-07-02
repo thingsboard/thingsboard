@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data.ai.model;
 
-public interface AiModelConfig<C extends AiModelConfig<C>> {
+public interface AiModelConfig {
 
     String modelId();
 

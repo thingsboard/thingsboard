@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
         property = "@type"
 )
 @JsonTypeIdResolver(AiModelTypeIdResolver.class)
-public interface AiModel<C extends AiModelConfig<C>> {
+public interface AiModel<C extends AiModelConfig> {
 
     AiProviderConfig providerConfig();
 
