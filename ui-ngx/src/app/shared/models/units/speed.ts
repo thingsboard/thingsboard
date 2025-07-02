@@ -18,8 +18,8 @@ import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type SpeedUnits = SpeedMetricUnits | SpeedImperialUnits;
 
-export type SpeedMetricUnits = 'm/s' | 'km/h' | 'mm/min' | 'mm/s';
-export type SpeedImperialUnits = 'mph' | 'kt' | 'ft/s' | 'ft/min' | 'in/h';
+export type SpeedMetricUnits = 'm/s' | 'km/h' | 'mm/min' | 'm/min' | 'mm/s';
+export type SpeedImperialUnits = 'mph' | 'kt' | 'ft/s' | 'ft/min' | 'in/s' | 'in/h';
 
 const METRIC: TbMeasureUnits<SpeedMetricUnits> = {
   ratio: 1 / 1.609344,
@@ -37,6 +37,11 @@ const METRIC: TbMeasureUnits<SpeedMetricUnits> = {
     'mm/min': {
       name: 'unit.millimeters-per-minute',
       tags: ['feed rate', 'cutting feed rate'],
+      to_anchor: 0.00006,
+    },
+    'm/min': {
+      name: 'unit.meter-per-minute',
+      tags: ['velocity', 'pace'],
       to_anchor: 0.06,
     },
     'mm/s': {
@@ -69,6 +74,11 @@ const IMPERIAL: TbMeasureUnits<SpeedImperialUnits> = {
       name: 'unit.foot-per-minute',
       tags: ['velocity', 'pace'],
       to_anchor: 0.0113636,
+    },
+    'in/s': {
+      name: 'unit.inch-per-second',
+      tags: ['velocity', 'pace'],
+      to_anchor: 0.0568182,
     },
     'in/h': {
       name: 'unit.inch-per-hour',
