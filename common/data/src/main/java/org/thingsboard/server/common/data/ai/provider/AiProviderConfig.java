@@ -15,30 +15,8 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "provider"
-)
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = OpenAiProviderConfig.class, name = "OPENAI"),
-        @JsonSubTypes.Type(value = AzureOpenAiProviderConfig.class, name = "AZURE_OPENAI"),
-        @JsonSubTypes.Type(value = GoogleAiGeminiProviderConfig.class, name = "GOOGLE_AI_GEMINI"),
-        @JsonSubTypes.Type(value = GoogleVertexAiGeminiProviderConfig.class, name = "GOOGLE_VERTEX_AI_GEMINI"),
-        @JsonSubTypes.Type(value = MistralAiProviderConfig.class, name = "MISTRAL_AI"),
-        @JsonSubTypes.Type(value = AnthropicProviderConfig.class, name = "ANTHROPIC"),
-        @JsonSubTypes.Type(value = AmazonBedrockProviderConfig.class, name = "AMAZON_BEDROCK"),
-        @JsonSubTypes.Type(value = GithubModelsProviderConfig.class, name = "GITHUB_MODELS")
-})
 public sealed interface AiProviderConfig
         permits
         OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig,
         GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig, AnthropicProviderConfig,
-        AmazonBedrockProviderConfig, GithubModelsProviderConfig {
-
-    AiProvider provider();
-
-}
+        AmazonBedrockProviderConfig, GitHubModelsProviderConfig {}

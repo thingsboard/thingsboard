@@ -15,11 +15,4 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record OpenAiProviderConfig(String apiKey) implements AiProviderConfig {
-
-    @Override
-    public AiProvider provider() {
-        return AiProvider.OPENAI;
-    }
-
-}
+public record OpenAiProviderConfig(String apiKey) implements AiProviderConfig {}

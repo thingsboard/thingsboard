@@ -18,15 +18,21 @@ package org.thingsboard.server.common.data.ai.model.chat;
 import dev.langchain4j.model.chat.ChatModel;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
-import org.thingsboard.server.common.data.ai.provider.GithubModelsProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
+import org.thingsboard.server.common.data.ai.provider.GitHubModelsProviderConfig;
 
 import java.util.List;
 
 public record GitHubModelsChatModel(
         AiModelType modelType,
-        GithubModelsProviderConfig providerConfig,
+        GitHubModelsProviderConfig providerConfig,
         @With Config modelConfig
 ) implements AiChatModel<GitHubModelsChatModel.Config> {
+
+    @Override
+    public AiProvider provider() {
+        return AiProvider.GITHUB_MODELS;
+    }
 
     @With
     public record Config(

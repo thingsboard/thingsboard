@@ -15,11 +15,4 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record AnthropicProviderConfig(String apiKey) implements AiProviderConfig {
-
-    @Override
-    public AiProvider provider() {
-        return AiProvider.ANTHROPIC;
-    }
-
-}
+public record AnthropicProviderConfig(String apiKey) implements AiProviderConfig {}

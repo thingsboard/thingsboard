@@ -16,18 +16,62 @@
 package org.thingsboard.server.common.data.ai.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
+import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.GitHubModelsChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModel;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.GitHubModelsProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 
 @JsonTypeInfo(
-        use = JsonTypeInfo.Id.CUSTOM,
+        use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
-        property = "@type"
+        property = "provider",
+        visible = true
 )
-@JsonTypeIdResolver(AiModelTypeIdResolver.class)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = OpenAiChatModel.class, name = "OPENAI"),
+        @JsonSubTypes.Type(value = AzureOpenAiChatModel.class, name = "AZURE_OPENAI"),
+        @JsonSubTypes.Type(value = GoogleAiGeminiChatModel.class, name = "GOOGLE_AI_GEMINI"),
+        @JsonSubTypes.Type(value = GoogleVertexAiGeminiChatModel.class, name = "GOOGLE_VERTEX_AI_GEMINI"),
+        @JsonSubTypes.Type(value = MistralAiChatModel.class, name = "MISTRAL_AI"),
+        @JsonSubTypes.Type(value = AnthropicChatModel.class, name = "ANTHROPIC"),
+        @JsonSubTypes.Type(value = AmazonBedrockChatModel.class, name = "AMAZON_BEDROCK"),
+        @JsonSubTypes.Type(value = GitHubModelsChatModel.class, name = "GITHUB_MODELS")
+})
 public interface AiModel<C extends AiModelConfig> {
 
+    AiProvider provider();
+
+    @JsonTypeInfo(
+            use = JsonTypeInfo.Id.NAME,
+            include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
+            property = "provider"
+    )
+    @JsonSubTypes({
+            @JsonSubTypes.Type(value = OpenAiProviderConfig.class, name = "OPENAI"),
+            @JsonSubTypes.Type(value = AzureOpenAiProviderConfig.class, name = "AZURE_OPENAI"),
+            @JsonSubTypes.Type(value = GoogleAiGeminiProviderConfig.class, name = "GOOGLE_AI_GEMINI"),
+            @JsonSubTypes.Type(value = GoogleVertexAiGeminiProviderConfig.class, name = "GOOGLE_VERTEX_AI_GEMINI"),
+            @JsonSubTypes.Type(value = MistralAiProviderConfig.class, name = "MISTRAL_AI"),
+            @JsonSubTypes.Type(value = AnthropicProviderConfig.class, name = "ANTHROPIC"),
+            @JsonSubTypes.Type(value = AmazonBedrockProviderConfig.class, name = "AMAZON_BEDROCK"),
+            @JsonSubTypes.Type(value = GitHubModelsProviderConfig.class, name = "GITHUB_MODELS")
+    })
     AiProviderConfig providerConfig();
 
     @JsonProperty("modelType")

@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.ai.model.chat;
 import dev.langchain4j.model.chat.ChatModel;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
 
 import java.util.List;
@@ -27,6 +28,11 @@ public record AzureOpenAiChatModel(
         AzureOpenAiProviderConfig providerConfig,
         @With Config modelConfig
 ) implements AiChatModel<AzureOpenAiChatModel.Config> {
+
+    @Override
+    public AiProvider provider() {
+        return AiProvider.AZURE_OPENAI;
+    }
 
     @With
     public record Config(

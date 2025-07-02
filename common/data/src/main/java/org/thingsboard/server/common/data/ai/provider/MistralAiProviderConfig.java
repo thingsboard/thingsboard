@@ -15,11 +15,4 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record MistralAiProviderConfig(String apiKey) implements AiProviderConfig {
-
-    @Override
-    public AiProvider provider() {
-        return AiProvider.MISTRAL_AI;
-    }
-
-}
+public record MistralAiProviderConfig(String apiKey) implements AiProviderConfig {}

@@ -20,11 +20,4 @@ public record GoogleVertexAiGeminiProviderConfig(
         String projectId,
         String location,
         String serviceAccountKey
-) implements AiProviderConfig {
-
-    @Override
-    public AiProvider provider() {
-        return AiProvider.GOOGLE_VERTEX_AI_GEMINI;
-    }
-
-}
+) implements AiProviderConfig {}

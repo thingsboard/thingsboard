@@ -15,11 +15,4 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record AmazonBedrockProviderConfig(String region, String accessKeyId, String secretAccessKey) implements AiProviderConfig {
-
-    @Override
-    public AiProvider provider() {
-        return AiProvider.AMAZON_BEDROCK;
-    }
-
-}
+public record AmazonBedrockProviderConfig(String region, String accessKeyId, String secretAccessKey) implements AiProviderConfig {}

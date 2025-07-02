@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.ai.model.chat;
 import dev.langchain4j.model.chat.ChatModel;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 
 import java.util.List;
@@ -27,6 +28,11 @@ public record GoogleVertexAiGeminiChatModel(
         GoogleVertexAiGeminiProviderConfig providerConfig,
         @With Config modelConfig
 ) implements AiChatModel<GoogleVertexAiGeminiChatModel.Config> {
+
+    @Override
+    public AiProvider provider() {
+        return AiProvider.GOOGLE_VERTEX_AI_GEMINI;
+    }
 
     @With
     public record Config(

@@ -15,11 +15,4 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record GithubModelsProviderConfig(String personalAccessToken) implements AiProviderConfig {
-
-    @Override
-    public AiProvider provider() {
-        return AiProvider.GITHUB_MODELS;
-    }
-
-}
+public record GitHubModelsProviderConfig(String personalAccessToken) implements AiProviderConfig {}

@@ -15,11 +15,4 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record GoogleAiGeminiProviderConfig(String apiKey) implements AiProviderConfig {
-
-    @Override
-    public AiProvider provider() {
-        return AiProvider.GOOGLE_AI_GEMINI;
-    }
-
-}
+public record GoogleAiGeminiProviderConfig(String apiKey) implements AiProviderConfig {}
