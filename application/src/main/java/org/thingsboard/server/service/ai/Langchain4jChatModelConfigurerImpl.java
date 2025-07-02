@@ -29,7 +29,6 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModel;
@@ -113,9 +112,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
         // construct service account credentials using service account key JSON
         ServiceAccountCredentials serviceAccountCredentials;
         try {
-            serviceAccountCredentials = ServiceAccountCredentials.fromStream(
-                    new ByteArrayInputStream(JacksonUtil.writeValueAsBytes(providerConfig.serviceAccountKey()))
-            );
+            serviceAccountCredentials = ServiceAccountCredentials.fromStream(new ByteArrayInputStream(providerConfig.serviceAccountKey().getBytes()));
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse service account key JSON", e);
         }

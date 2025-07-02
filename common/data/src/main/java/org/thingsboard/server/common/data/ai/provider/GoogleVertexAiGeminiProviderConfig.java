@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 public record GoogleVertexAiGeminiProviderConfig(
+        String fileName, // not used on BE, but needed for UI
         String projectId,
         String location,
-        ObjectNode serviceAccountKey
+        String serviceAccountKey
 ) implements AiProviderConfig {
 
     @Override
