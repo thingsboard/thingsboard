@@ -103,8 +103,7 @@ public class TbCalculatedFieldsNode implements TbNode {
     }
 
     private void processPostAttributesRequest(TbContext ctx, TbMsg msg) {
-        List<AttributeKvEntry> newAttributes = new ArrayList<>(JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData())));
-
+        List<AttributeKvEntry> newAttributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
         if (newAttributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;
