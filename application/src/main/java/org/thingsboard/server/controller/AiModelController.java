@@ -31,6 +31,8 @@ import org.thingsboard.server.common.data.ai.model.chat.AiChatModel;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.service.ai.AiModelService;
 
+import java.time.Duration;
+
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
@@ -57,7 +59,8 @@ class AiModelController extends BaseController {
                 .transform(chatResponse -> (TbChatResponse) new TbChatResponse.Success(chatResponse.aiMessage().text()), directExecutor())
                 .catching(Throwable.class, ex -> new TbChatResponse.Failure(ex.getMessage()), directExecutor());
 
-        return wrapFuture(future);
+        Integer requestTimeoutSeconds = chatModel.modelConfig().timeoutSeconds();
+        return requestTimeoutSeconds != null ? wrapFuture(future, Duration.ofSeconds(requestTimeoutSeconds).toMillis()) : wrapFuture(future);
     }
 
 }
