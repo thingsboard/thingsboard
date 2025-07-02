@@ -15,34 +15,15 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.GitHubModelsChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModel;
-
 public enum AiProvider {
 
-    OPENAI(OpenAiChatModel.class),
-    AZURE_OPENAI(AzureOpenAiChatModel.class),
-    GOOGLE_AI_GEMINI(GoogleAiGeminiChatModel.class),
-    GOOGLE_VERTEX_AI_GEMINI(GoogleVertexAiGeminiChatModel.class),
-    MISTRAL_AI(MistralAiChatModel.class),
-    ANTHROPIC(AnthropicChatModel.class),
-    AMAZON_BEDROCK(AmazonBedrockChatModel.class),
-    GITHUB_MODELS(GitHubModelsChatModel.class);
-
-    private final Class<?> defaultModelClass;
-
-    AiProvider(Class<?> defaultModelClass) {
-        this.defaultModelClass = defaultModelClass;
-    }
-
-    public Class<?> getDefaultModelClass() {
-        return defaultModelClass;
-    }
+    OPENAI,
+    AZURE_OPENAI,
+    GOOGLE_AI_GEMINI,
+    GOOGLE_VERTEX_AI_GEMINI,
+    MISTRAL_AI,
+    ANTHROPIC,
+    AMAZON_BEDROCK,
+    GITHUB_MODELS
 
 }
