@@ -36,7 +36,7 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @NotNull
     private AiModelSettingsId aiModelSettingsId;
 
-    @Pattern(regexp = ".*\\S.*", message = "must contain at least one non-whitespace character")
+    @Pattern(regexp = ".*\\S.*", message = "must not be blank")
     @Length(min = 1, max = 10000)
     private String systemPrompt;
 
