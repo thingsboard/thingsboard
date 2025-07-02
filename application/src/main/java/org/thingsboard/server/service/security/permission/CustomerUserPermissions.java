@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-@Component(value = "customerUserPermissions")
+@Component
 public class CustomerUserPermissions extends AbstractPermissions {
 
     public CustomerUserPermissions() {
