@@ -65,6 +65,18 @@
           [callbacks]="context.callbacks">
         </tb-filter-select>
       </div>
+      <mat-expansion-panel *ngIf="dataLayerFormGroup.get('dsType').value !== DatasourceType.function" class="tb-settings">
+        <mat-expansion-panel-header>
+          <mat-panel-description class="flex items-stretch justify-start" translate>
+            widgets.maps.data-layer.more-datasources
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-map-data-sources formControlName="additionalDataSources"
+                               [context]="context">
+          </tb-map-data-sources>
+        </ng-template>
+      </mat-expansion-panel>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'datakey.keys' | translate }}</div>
@@ -397,17 +409,42 @@
         </div>
       </ng-container>
       <ng-container *ngIf="['polygons', 'circles'].includes(dataLayerType)">
-        <div class="tb-form-row space-between">
-          <div translate>widgets.maps.data-layer.fill-color</div>
-          <tb-data-layer-color-settings
-            [context]="context"
-            [dsType]="dataLayerFormGroup.get('dsType').value"
-            [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
-            [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-            helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_fill_color_fn' : 'widget/lib/map/circle_fill_color_fn' }}" formControlName="fillColor"></tb-data-layer-color-settings>
+        <div class="tb-form-panel stroked">
+          <div class="flex flex-1 flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
+            <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.shape.fill' | translate }}</div>
+            <tb-toggle-select formControlName="fillType" (click)="$event.stopPropagation()">
+              <tb-toggle-option [value]="ShapeFillType.color">{{ 'widgets.maps.data-layer.shape.fill-type-color' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="ShapeFillType.stripe">{{ 'widgets.maps.data-layer.shape.fill-type-stripe' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="ShapeFillType.image">{{ 'widgets.maps.data-layer.shape.fill-type-image' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
+          </div>
+          <div *ngIf="dataLayerFormGroup.get('fillType').value === ShapeFillType.color" class="tb-form-row space-between">
+            <div translate>widgets.maps.data-layer.shape.color</div>
+            <tb-data-layer-color-settings
+              [context]="context"
+              [dsType]="dataLayerFormGroup.get('dsType').value"
+              [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+              [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+              helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_fill_color_fn' : 'widget/lib/map/circle_fill_color_fn' }}" formControlName="fillColor"></tb-data-layer-color-settings>
+          </div>
+          <div *ngIf="dataLayerFormGroup.get('fillType').value === ShapeFillType.stripe" class="tb-form-row space-between">
+            <div translate>widgets.maps.data-layer.shape.stripe-pattern</div>
+            <tb-shape-fill-stripe-settings
+              [context]="context"
+              [dsType]="dataLayerFormGroup.get('dsType').value"
+              [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+              [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+              [dataLayerType]="dataLayerType"
+              formControlName="fillStripe">
+            </tb-shape-fill-stripe-settings>
+          </div>
+          <div *ngIf="dataLayerFormGroup.get('fillType').value === ShapeFillType.image" class="tb-form-row space-between">
+            <div translate>widgets.maps.data-layer.shape.image</div>
+            <tb-shape-fill-image-settings formControlName="fillImage"></tb-shape-fill-image-settings>
+          </div>
         </div>
         <div class="tb-form-row space-between">
-          <div translate>widgets.maps.data-layer.stroke</div>
+          <div translate>widgets.maps.data-layer.shape.stroke</div>
           <div class="flex flex-row items-center gap-2">
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput type="number" min="0" formControlName="strokeWeight" placeholder="{{ 'widget-config.set' | translate }}">
@@ -430,7 +467,7 @@
       <ng-container *ngTemplateOutlet="behavior"></ng-container>
     }
     <div class="tb-form-panel">
-      <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.groups' | translate }}</div>
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'widgets.maps.data-layer.groups-hint' | translate }}">{{ 'widgets.maps.data-layer.groups' | translate }}</div>
       <tb-string-items-list class="tb-inline-chips"
                             editable
                             placeholder="{{'widgets.maps.data-layer.groups' | translate}}"
@@ -462,7 +499,9 @@
       </div>
       <div class="tb-form-row">
         <mat-slide-toggle class="mat-slide" formControlName="snappable">
-          {{ 'widgets.maps.data-layer.enable-snapping' | translate }}
+          <span tb-hint-tooltip-icon="{{ 'widgets.maps.data-layer.enable-snapping-hint' | translate }}">
+            {{ 'widgets.maps.data-layer.enable-snapping' | translate }}
+          </span>
         </mat-slide-toggle>
       </div>
     </div>

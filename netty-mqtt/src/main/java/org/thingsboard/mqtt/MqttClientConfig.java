@@ -47,6 +47,26 @@ public final class MqttClientConfig {
     private long reconnectDelay = 1L;
     private int maxBytesInMessage = 8092;
 
+    @Getter
+    @Setter
+    private RetransmissionConfig retransmissionConfig;
+
+    public record RetransmissionConfig(int maxAttempts, long initialDelayMillis, double jitterFactor) {
+
+        public RetransmissionConfig {
+            if (maxAttempts < 0) {
+                throw new IllegalArgumentException("Max retransmission attempts (maxAttempts) must be zero or greater, but was " + maxAttempts);
+            }
+            if (initialDelayMillis < 0) {
+                throw new IllegalArgumentException("Initial retransmission delay (initialDelayMillis) must be zero or greater, but was " + initialDelayMillis);
+            }
+            if (jitterFactor < 0) {
+                throw new IllegalArgumentException("Jitter factor (jitterFactor) must be zero or greater, but was " + jitterFactor);
+            }
+        }
+
+    }
+
     public MqttClientConfig() {
         this(null);
     }

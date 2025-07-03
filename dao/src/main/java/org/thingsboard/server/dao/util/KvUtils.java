@@ -33,9 +33,8 @@ public class KvUtils {
 
     static {
         validatedKeys = Caffeine.newBuilder()
-                .weakKeys()
                 .expireAfterAccess(24, TimeUnit.HOURS)
-                .maximumSize(100000).build();
+                .maximumSize(50000).build();
     }
 
     public static void validate(List<? extends KvEntry> tsKvEntries, boolean valueNoXssValidation) {
@@ -57,11 +56,13 @@ public class KvUtils {
             throw new DataValidationException("Validation error: key length must be equal or less than 255");
         }
 
-        if (validatedKeys.getIfPresent(key) == null) {
-            if (!NoXssValidator.isValid(key)) {
-                throw new DataValidationException("Validation error: key is malformed");
-            }
-            validatedKeys.put(key, Boolean.TRUE);
+        Boolean isValid = validatedKeys.asMap().get(key);
+        if (isValid == null) {
+            isValid = NoXssValidator.isValid(key);
+            validatedKeys.put(key, isValid);
+        }
+        if (!isValid) {
+            throw new DataValidationException("Validation error: key is malformed");
         }
 
         if (valueNoXssValidation) {

@@ -113,10 +113,11 @@ public class AppActor extends ContextAwareActor {
             case SESSION_TIMEOUT_MSG:
                 ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
                 break;
+            case CF_CACHE_INIT_MSG:
+            case CF_INIT_PROFILE_ENTITY_MSG:
             case CF_INIT_MSG:
             case CF_LINK_INIT_MSG:
             case CF_STATE_RESTORE_MSG:
-            case CF_ENTITY_LIFECYCLE_MSG:
                 //TODO: use priority from the message body. For example, messages about CF lifecycle are important and Device lifecycle are not.
                 //      same for the Linked telemetry.
                 onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, true);

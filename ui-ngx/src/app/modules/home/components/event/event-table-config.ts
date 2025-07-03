@@ -59,7 +59,6 @@ import { AppState } from '@core/core.state';
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   eventTypeValue: EventType | DebugEventType;
-  hideClearEventAction = false;
 
   private filterParams: FilterEventBody = {};
   private filterColumns: FilterEntityColumn[] = [];
@@ -95,7 +94,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private cd: ChangeDetectorRef,
               private store: Store<AppState>,
               public testButtonLabel?: string,
-              private debugEventSelected?: EventEmitter<EventBody>) {
+              private debugEventSelected?: EventEmitter<EventBody>,
+              public hideClearEventAction = false) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
@@ -462,7 +462,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case DebugEventType.DEBUG_CALCULATED_FIELD:
         this.cellActionDescriptors.push({
-          name: this.translate.instant('common.test-with-this-message', {test: this.translate.instant(this.testButtonLabel)}),
+          name: this.translate.instant('calculated-fields.test-with-this-message'),
           icon: 'bug_report',
           isEnabled: () => true,
           onAction: (_, entity) => this.debugEventSelected.next(entity.body)
@@ -571,7 +571,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig({
       panelClass: 'tb-panel-container',
       backdropClass: 'cdk-overlay-transparent-backdrop',

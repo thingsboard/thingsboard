@@ -55,6 +55,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { CustomMobilePagePanelComponent } from '@home/pages/mobile/bundes/layout/custom-mobile-page-panel.component';
 import { DefaultMobilePagePanelComponent } from '@home/pages/mobile/bundes/layout/default-mobile-page-panel.component';
 import { TranslateService } from '@ngx-translate/core';
+import { DisplayPopoverConfig } from '@shared/components/popover.models';
 
 @Component({
   selector: 'tb-mobile-menu-item-row',
@@ -222,27 +223,31 @@ export class MobilePageItemRowComponent implements ControlValueAccessor, OnInit,
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        disabled: this.disabled,
-        pageItem: deepClone(this.modelValue)
+      const config: DisplayPopoverConfig<any> = {
+        trigger,
+        renderer: this.renderer,
+        componentType: undefined,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['right', 'bottom', 'top'],
+        context: {
+          disabled: this.disabled,
+          pageItem: deepClone(this.modelValue)
+        },
+        showCloseButton: false,
+        popoverContentStyle: {padding: '16px 24px'},
+        isModal: true
       };
       if (this.isDefaultMenuItem) {
-        const defaultMobilePagePanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-          this.viewContainerRef, DefaultMobilePagePanelComponent, ['right', 'bottom', 'top'], true, null,
-          ctx,
-          {},
-          {}, {}, false, () => {}, {padding: '16px 24px'});
+        config.componentType = DefaultMobilePagePanelComponent;
+        const defaultMobilePagePanelPopover = this.popoverService.displayPopover(config);
         defaultMobilePagePanelPopover.tbComponentRef.instance.popover = defaultMobilePagePanelPopover;
         defaultMobilePagePanelPopover.tbComponentRef.instance.defaultMobilePageApplied.subscribe((menuItem) => {
           defaultMobilePagePanelPopover.hide();
           this.afterPageEdit(menuItem);
         });
       } else {
-        const customMobilePagePanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-          this.viewContainerRef, CustomMobilePagePanelComponent, ['right', 'bottom', 'top'], true, null,
-          ctx,
-          {},
-          {}, {}, false, () => {}, {padding: '16px 24px'});
+        config.componentType = CustomMobilePagePanelComponent;
+        const customMobilePagePanelPopover = this.popoverService.displayPopover(config);
         customMobilePagePanelPopover.tbComponentRef.instance.popover = customMobilePagePanelPopover;
         customMobilePagePanelPopover.tbComponentRef.instance.customMobilePageApplied.subscribe((page) => {
           customMobilePagePanelPopover.hide();

@@ -236,6 +236,7 @@ public class BaseRelationService implements RelationService {
         return Futures.transform(future, deletedEvent -> {
             if (deletedEvent != null) {
                 handleEvictEvent(EntityRelationEvent.from(deletedEvent));
+                eventPublisher.publishEvent(new RelationActionEvent(tenantId, deletedEvent, ActionType.RELATION_DELETED));
             }
             return deletedEvent != null;
         }, MoreExecutors.directExecutor());
@@ -267,6 +268,7 @@ public class BaseRelationService implements RelationService {
 
         for (EntityRelation relation : inboundRelations) {
             eventPublisher.publishEvent(EntityRelationEvent.from(relation));
+            eventPublisher.publishEvent(new RelationActionEvent(tenantId, relation, ActionType.RELATION_DELETED));
         }
 
         List<EntityRelation> outboundRelations;
@@ -278,6 +280,7 @@ public class BaseRelationService implements RelationService {
 
         for (EntityRelation relation : outboundRelations) {
             eventPublisher.publishEvent(EntityRelationEvent.from(relation));
+            eventPublisher.publishEvent(new RelationActionEvent(tenantId, relation, ActionType.RELATION_DELETED));
         }
     }
 

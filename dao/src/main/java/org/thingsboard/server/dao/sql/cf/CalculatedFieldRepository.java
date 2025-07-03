@@ -28,9 +28,13 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
 
     boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
+    CalculatedFieldEntity findByEntityIdAndName(UUID entityId, String name);
+
     List<CalculatedFieldId> findCalculatedFieldIdsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
     List<CalculatedFieldEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
+    Page<CalculatedFieldEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
 
     Page<CalculatedFieldEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId, Pageable pageable);
 

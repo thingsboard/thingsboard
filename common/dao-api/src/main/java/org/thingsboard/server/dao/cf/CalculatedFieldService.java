@@ -31,13 +31,19 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     CalculatedField save(CalculatedField calculatedField);
 
+    CalculatedField save(CalculatedField calculatedField, boolean doValidate);
+
     CalculatedField findById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+
+    CalculatedField findByEntityIdAndName(EntityId entityId, String name);
 
     List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId);
 
     List<CalculatedField> findCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId);
 
     PageData<CalculatedField> findAllCalculatedFields(PageLink pageLink);
+
+    PageData<CalculatedField> findCalculatedFieldsByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<CalculatedField> findAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
 
@@ -52,6 +58,8 @@ public interface CalculatedFieldService extends EntityDaoService {
     List<CalculatedFieldLink> findAllCalculatedFieldLinksById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     List<CalculatedFieldLink> findAllCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId);
+
+    PageData<CalculatedFieldLink> findAllCalculatedFieldLinksByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<CalculatedFieldLink> findAllCalculatedFieldLinks(PageLink pageLink);
 

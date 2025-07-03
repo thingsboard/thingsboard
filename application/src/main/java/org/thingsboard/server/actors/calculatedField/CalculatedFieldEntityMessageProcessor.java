@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DebugModeUtil;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
@@ -69,7 +68,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareMsgProcessor {
-    // (1 for result persistence + 1 for the state persistence )
+    // (1 for result persistence + 1 for the state persistence)
     public static final int CALLBACKS_PER_CF = 2;
 
     final TenantId tenantId;
@@ -92,6 +91,12 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         this.ctx = ctx;
     }
 
+    public void stop() {
+        log.info("[{}][{}] Stopping entity actor.", tenantId, entityId);
+        states.clear();
+        ctx.stop(ctx.getSelf());
+    }
+
     public void process(CalculatedFieldPartitionChangeMsg msg) {
         if (!systemContext.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId).isMyPartition()) {
             log.info("[{}] Stopping entity actor due to change partition event.", entityId);
@@ -101,7 +106,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     public void process(CalculatedFieldStateRestoreMsg msg) {
         CalculatedFieldId cfId = msg.getId().cfId();
-        log.info("[{}] [{}] Processing CF state restore msg.", msg.getId().entityId(), cfId);
+        log.debug("[{}] [{}] Processing CF state restore msg.", msg.getId().entityId(), cfId);
         if (msg.getState() != null) {
             states.put(cfId, msg.getState());
         } else {
@@ -110,10 +115,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(EntityInitCalculatedFieldMsg msg) throws CalculatedFieldException {
-        log.info("[{}] Processing entity init CF msg.", msg.getCtx().getCfId());
+        log.debug("[{}] Processing entity init CF msg.", msg.getCtx().getCfId());
         var ctx = msg.getCtx();
         if (msg.isForceReinit()) {
-            log.info("Force reinitialization of CF: [{}].", ctx.getCfId());
+            log.debug("Force reinitialization of CF: [{}].", ctx.getCfId());
             states.remove(ctx.getCfId());
         }
         try {
@@ -132,7 +137,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(CalculatedFieldEntityDeleteMsg msg) {
-        log.info("[{}] Processing CF entity delete msg.", msg.getEntityId());
+        log.debug("[{}] Processing CF entity delete msg.", msg.getEntityId());
         if (this.entityId.equals(msg.getEntityId())) {
             if (states.isEmpty()) {
                 msg.getCallback().onSuccess();
@@ -238,7 +243,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     private void processArgumentValuesUpdate(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback,
                                              Map<String, ArgumentEntry> newArgValues, UUID tbMsgId, TbMsgType tbMsgType) throws CalculatedFieldException {
         if (newArgValues.isEmpty()) {
-            log.info("[{}] No new argument values to process for CF.", ctx.getCfId());
+            log.debug("[{}] No new argument values to process for CF.", ctx.getCfId());
             callback.onSuccess(CALLBACKS_PER_CF);
         }
         CalculatedFieldState state = states.get(ctx.getCfId());
@@ -293,9 +298,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                         callback.onSuccess();
                     }
                     if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
+                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, calculationResult.getResult().toString(), null);
                     }
                 }
+            } else {
+                callback.onSuccess();
             }
         } catch (Exception e) {
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(tbMsgId).msgType(tbMsgType).arguments(state.getArguments()).cause(e).build();
@@ -414,7 +421,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private Map<String, ArgumentEntry> mapToArgumentsWithFetchedValue(CalculatedFieldCtx ctx, List<String> removedTelemetryKeys) {
         Map<String, Argument> deletedArguments = ctx.getArguments().entrySet().stream()
-                .filter(entry -> removedTelemetryKeys.contains(entry.getKey()))
+                .filter(entry -> removedTelemetryKeys.contains(entry.getValue().getRefEntityKey().getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, entityId, deletedArguments);

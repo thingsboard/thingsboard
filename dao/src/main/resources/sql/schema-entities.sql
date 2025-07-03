@@ -216,7 +216,9 @@ CREATE TABLE IF NOT EXISTS ota_package (
     data oid,
     data_size bigint,
     additional_info varchar,
-    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
+    external_id uuid,
+    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version),
+    CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS queue (
@@ -948,3 +950,16 @@ CREATE TABLE IF NOT EXISTS cf_debug_event (
     e_result varchar,
     e_error varchar
 ) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS job (
+    id uuid NOT NULL CONSTRAINT job_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    type varchar NOT NULL,
+    key varchar NOT NULL,
+    entity_id uuid NOT NULL,
+    entity_type varchar NOT NULL,
+    status varchar NOT NULL,
+    configuration varchar NOT NULL,
+    result varchar
+);

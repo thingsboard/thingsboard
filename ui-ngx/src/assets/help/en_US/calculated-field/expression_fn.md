@@ -1,8 +1,7 @@
 ## Calculated Field TBEL Script Function
 
-The **calculate()** function is a user-defined script that enables custom calculations using [TBEL](\${siteBaseUrl}/docs\${docPlatformPrefix}/user-guide/tbel/) on telemetry and attribute data.
-It receives arguments configured in the calculated field setup, along with an additional `ctx` object that provides access to all arguments.
-
+The **calculate()** function is a user-defined script that enables custom calculations using [TBEL](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/tbel/) on telemetry and attribute data.
+It receives arguments configured in the calculated field setup, along with an additional `ctx` object that stores `latestTs` and provides access to all arguments.
 
 ### Function Signature
 
@@ -17,8 +16,6 @@ There are three types of arguments supported in the calculated field configurati
 #### Attribute and Latest Telemetry Arguments
 
 These arguments are single values and may be of type: boolean, int64 (long), double, string, or JSON.
-
-Attribute and Latest telemetry are single value arguments that may be one of: boolean, int64 (long), double, string and JSON.
 
 **Example: Convert Temperature from Fahrenheit to Celsius**
 
@@ -47,7 +44,7 @@ Let's modify the function that converts Fahrenheit to Celsius to also return the
 var temperatureC = (temperatureF - 32) / 1.8;
 return {
   "ts": ctx.args.temperatureF.ts,
-  "values": { "temperatureC": toFixed(temperatureC, 2) }
+  "values": {"temperatureC": toFixed(temperatureC, 2)}
 };
 ```
 
@@ -91,29 +88,28 @@ foreach(t: temperature) {
 }
 // iterate through all values and calculate the sum using for loop:
 sum = 0.0;
-for(var i = 0; i < temperature.values.size; i++) {
+for (var i = 0; i < temperature.values.size; i++) {
   sum += temperature.values[i].value;
 }
 // use built-in function to calculate the sum
-sum = t.sum();
+sum = temperature.sum();
 ```
 
 ##### Built-in Methods for Rolling Arguments
 
 Time series rolling arguments support built-in functions for calculations. These functions accept an optional `ignoreNaN` boolean parameter.
 
-| Method     | Default Behavior (`ignoreNaN = true`)               | Alternative (`ignoreNaN = false`)           |
-|------------|-----------------------------------------------------|---------------------------------------------|
-| `max()`    | Returns the highest value, ignoring NaN values.     | Returns NaN if any NaN values exist.        |
-| `min()`    | Returns the lowest value, ignoring NaN values.      | Returns NaN if any NaN values exist.        |
-| `mean()`   | Computes the average value, ignoring NaN values.    | Returns NaN if any NaN values exist.        |
-| `std()`    | Calculates the standard deviation, ignoring NaN.    | Returns NaN if any NaN values exist.        |
-| `median()` | Returns the median value, ignoring NaN values.      | Returns NaN if any NaN values exist.        |
-| `count()`  | Counts values, ignoring NaN values.                 | Counts all values, including NaN.           |
-| `last()`   | Returns the most recent value, skipping NaN values. | Returns the last value, even if it is NaN.  |
-| `first()`  | Returns the oldest value, skipping NaN values.      | Returns the first value, even if it is NaN. |
-| `sum()`    | Computes the total sum, ignoring NaN values.        | Returns NaN if any NaN values exist.        |
-
+| Method          | Default Behavior (`ignoreNaN = true`)               | Alternative (`ignoreNaN = false`)           |
+|-----------------|-----------------------------------------------------|---------------------------------------------|
+| `max()`         | Returns the highest value, ignoring NaN values.     | Returns NaN if any NaN values exist.        |
+| `min()`         | Returns the lowest value, ignoring NaN values.      | Returns NaN if any NaN values exist.        |
+| `mean(), avg()` | Computes the average value, ignoring NaN values.    | Returns NaN if any NaN values exist.        |
+| `std()`         | Calculates the standard deviation, ignoring NaN.    | Returns NaN if any NaN values exist.        |
+| `median()`      | Returns the median value, ignoring NaN values.      | Returns NaN if any NaN values exist.        |
+| `count()`       | Counts values, ignoring NaN values.                 | Counts all values, including NaN.           |
+| `last()`        | Returns the most recent value, skipping NaN values. | Returns the last value, even if it is NaN.  |
+| `first()`       | Returns the oldest value, skipping NaN values.      | Returns the first value, even if it is NaN. |
+| `sum()`         | Computes the total sum, ignoring NaN values.        | Returns NaN if any NaN values exist.        |
 
 Usage example:
 
@@ -141,7 +137,7 @@ function calculate(ctx, altitude, temperature) {
   var airDensity = pressure / (287.05 * temperatureK);
 
   return {
-    "airDensity": airDensity
+    "airDensity": toFixed(airDensity, 2)
   };
 }
 ```
@@ -150,123 +146,17 @@ function calculate(ctx, altitude, temperature) {
 
 Time series rolling arguments can be **merged** to align timestamps across multiple datasets.
 
-| Method                       | Description                                                                                                               | Parameters                                                                                                                                                                                                                                                                                                                           | Returns                                          |
-|:-----------------------------|:--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------|
-| `merge(other, settings)`     | Merges with another rolling argument. Aligns timestamps and filling missing values with the previous available value.     | <ul><li>`other` (another rolling argument)</li><li>`settings` (optional) - configuration object, supports:<ul><br/><li>`ignoreNaN` (boolean, default true) - controls whether NaN values should be ignored.</li><li>`timeWindow` (object, default {}) - defines a custom time window for filtering merged values.</li></ul></li></ul>| Merged object with timeWindow and aligned values. |
-| `mergeAll(others, settings)` | Merges with multiple rolling arguments. Aligns timestamps and filling missing values with the previous available value.   | <ul><li>`others` (array of rolling arguments)</li><li>`settings` (optional) - configuration object, supports:<ul><br/><li>`ignoreNaN` (boolean, default true) - controls whether NaN values should be ignored.</li><li>`timeWindow` (object, default {}) - defines a custom time window for filtering merged values.</li></ul></li></ul>| Merged object with timeWindow and aligned values.|
+| Method                       | Description                                                                                                           | Returns                                             | Example                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+|:-----------------------------|:----------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `merge(other, settings)`     | Merges with another rolling argument. Aligns timestamps and filling missing values with the previous available value. | Merged object with `timeWindow` and aligned values. | <span tb-help-popup="calculated-field/examples/merge-functions/merge_input" tb-help-popup-placement="top" trigger-text="Input"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_usage" tb-help-popup-placement="top" trigger-text="Usage"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_output" tb-help-popup-placement="top" trigger-text="Output"></span>         |
+| `mergeAll(others, settings)` | Merges multiple rolling arguments. Aligns timestamps and filling missing values with the previous available value.    | Merged object with `timeWindow` and aligned values. | <span tb-help-popup="calculated-field/examples/merge-functions/merge_input" tb-help-popup-placement="top" trigger-text="Input"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_all_usage" tb-help-popup-placement="top" trigger-text="Usage"></span> <br> <span tb-help-popup="calculated-field/examples/merge-functions/merge_all_output" tb-help-popup-placement="top" trigger-text="Output"></span> |
 
-Assuming the following arguments and their values:
+##### Parameters
 
-```json
-{
-  "humidity": {
-    "timeWindow": {
-      "startTs": 1741356332086,
-      "endTs": 1741357232086
-    },
-    "values": [{
-      "ts": 1741356882759,
-      "value": 43
-    }, {
-      "ts": 1741356918779,
-      "value": 46
-    }]
-  },
-  "pressure": {
-    "timeWindow": {
-      "startTs": 1741356332086,
-      "endTs": 1741357232086
-    },
-    "values": [{
-      "ts": 1741357047945,
-      "value": 1023
-    }, {
-      "ts": 1741357056144,
-      "value": 1026
-    }, {
-      "ts": 1741357147391,
-      "value": 1025
-    }]
-  },
-  "temperature": {
-    "timeWindow": {
-      "startTs": 1741356332086,
-      "endTs": 1741357232086
-    },
-    "values": [{
-      "ts": 1741356874943,
-      "value": 76
-    }, {
-      "ts": 1741357063689,
-      "value": 77
-    }]
-  }
-}
-```
-
-**Usage:**
-
-```javascript
-var mergedData = temperature.merge(humidity, { ignoreNaN: false });
-```
-
-**Output:**
-
-```json
-{
-  "mergedData": {
-    "timeWindow": {
-      "startTs": 1741356332086,
-      "endTs": 1741357232086
-    },
-    "values": [{
-      "ts": 1741356874943,
-      "values": [76.0, "NaN"]
-    }, {
-      "ts": 1741356882759,
-      "values": [76.0, 43.0]
-    }, {
-      "ts": 1741356918779,
-      "values": [76.0, 46.0]
-    }, {
-      "ts": 1741357063689,
-      "values": [77.0, 46.0]
-    }]
-  }
-}
-```
-
-**Usage:**
-
-```javascript
-var mergedData = temperature.mergeAll([humidity, pressure], { ignoreNaN: true });
-```
-
-**Output:**
-
-```json
-{
-  "mergedData": {
-    "timeWindow": {
-      "startTs": 1741356332086,
-      "endTs": 1741357232086
-    },
-    "values": [{
-      "ts": 1741357047945,
-      "values": [76.0, 46.0, 1023.0]
-    }, {
-      "ts": 1741357056144,
-      "values": [76.0, 46.0, 1026.0]
-    }, {
-      "ts": 1741357063689,
-      "values": [77.0, 46.0, 1026.0]
-    }, {
-      "ts": 1741357147391,
-      "values": [77.0, 46.0, 1025.0]
-    }]
-  }
-}
-```
+| Parameter            | Description                                                                                                                                                              |
+|:---------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `other` or `others`  | Another rolling argument or array of rolling arguments to merge with.                                                                                                    |
+| `settings`(optional) | Configuration object that supports: <ul><li>`ignoreNaN` - controls whether NaN values should be ignored.</li> <li>`timeWindow` - defines a custom time window.</li></ul> |
 
 **Example: Freezer temperature analysis**
 
@@ -298,28 +188,50 @@ function calculate(ctx, temperature, defrost) {
 The result is a list of issues that may be used to configure alarm rules:
 
 ```json
-[{
+[
+  {
     "ts": 1741613833843,
     "values": {
-        "issue": {
-            "temperature": -3.12,
-            "defrostState": false
-        }
+      "issue": {
+        "temperature": -3.12,
+        "defrostState": false
+      }
     }
-}, {
+  },
+  {
     "ts": 1741613923848,
     "values": {
-        "issue": {
-            "temperature": -4.16,
-            "defrostState": false
-        }
+      "issue": {
+        "temperature": -4.16,
+        "defrostState": false
+      }
     }
-}]
+  }
+]
 ```
 
 ### Function return format
 
 The return format depends on the output type configured in the calculated field settings (default: **Time Series**).
+
+### Message timestamp
+
+The `ctx` object also includes property `latestTs`, which represents the latest timestamp of the arguments telemetry in milliseconds.
+
+You can use `ctx.latestTs` to set the timestamp of the resulting output explicitly when returning a time series object.
+
+```javascript
+var temperatureC = (temperatureF - 32) / 1.8;
+return {
+  ts: ctx.latestTs,
+  values: {
+    "temperatureC": toFixed(temperatureC, 2)
+  }
+}
+
+```
+
+This ensures that the calculated data point aligns with the timestamp of the triggering telemetry.
 
 ##### Time Series Output
 
@@ -357,7 +269,7 @@ With timestamp:
       "someArray": [1,2,3],
       "someNestedObject": {"key": "value"}
     }
-   }
+  }
 }
 ```
 
@@ -376,7 +288,7 @@ Array containing multiple timestamps and different values of the `airDensity` :
     "values": {
       "airDensity": 1.07
     }
-  }  
+  }
 ]
 ```
 

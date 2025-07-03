@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfileType;
+import org.thingsboard.server.common.data.validation.RateLimit;
 
 import java.io.Serial;
 
@@ -49,37 +50,53 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxResourceSize;
 
     @Schema(example = "1000:1,20000:60")
+    @RateLimit(fieldName = "Transport tenant messages")
     private String transportTenantMsgRateLimit;
     @Schema(example = "1000:1,20000:60")
+    @RateLimit(fieldName = "Transport tenant telemetry messages")
     private String transportTenantTelemetryMsgRateLimit;
     @Schema(example = "1000:1,20000:60")
+    @RateLimit(fieldName = "Transport tenant telemetry data points")
     private String transportTenantTelemetryDataPointsRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport device messages")
     private String transportDeviceMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport device telemetry messages")
     private String transportDeviceTelemetryMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport device telemetry data points")
     private String transportDeviceTelemetryDataPointsRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway messages")
     private String transportGatewayMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway telemetry messages")
     private String transportGatewayTelemetryMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway telemetry data points")
     private String transportGatewayTelemetryDataPointsRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway device messages")
     private String transportGatewayDeviceMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway device telemetry messages")
     private String transportGatewayDeviceTelemetryMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway device telemetry data points")
     private String transportGatewayDeviceTelemetryDataPointsRateLimit;
 
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Entity version creation")
     private String tenantEntityExportRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Entity version load")
     private String tenantEntityImportRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Notification requests")
     private String tenantNotificationRequestsRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Notification requests per notification rule")
     private String tenantNotificationRequestsPerRuleRateLimit;
 
     @Schema(example = "10000000")
@@ -107,7 +124,9 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Schema(example = "1000")
     private long maxCreatedAlarms;
 
+    @RateLimit(fieldName = "REST requests for tenant")
     private String tenantServerRestLimitsConfiguration;
+    @RateLimit(fieldName = "REST requests for customer")
     private String customerServerRestLimitsConfiguration;
 
     private int maxWsSessionsPerTenant;
@@ -119,13 +138,26 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxWsSubscriptionsPerCustomer;
     private long maxWsSubscriptionsPerRegularUser;
     private long maxWsSubscriptionsPerPublicUser;
+    @RateLimit(fieldName = "WS updates per session")
     private String wsUpdatesPerSessionRateLimit;
 
-    private String cassandraQueryTenantRateLimitsConfiguration;
+    @RateLimit(fieldName = "Rest API and WS telemetry Cassandra read queries")
+    private String cassandraReadQueryTenantCoreRateLimits;
+    @RateLimit(fieldName = "Rest API Cassandra write queries")
+    private String cassandraWriteQueryTenantCoreRateLimits;
 
+    @RateLimit(fieldName = "Rule Engine telemetry Cassandra read queries")
+    private String cassandraReadQueryTenantRuleEngineRateLimits;
+    @RateLimit(fieldName = "Rule Engine telemetry Cassandra write queries")
+    private String cassandraWriteQueryTenantRuleEngineRateLimits;
+
+    @RateLimit(fieldName = "Edge events")
     private String edgeEventRateLimits;
+    @RateLimit(fieldName = "Edge events per edge")
     private String edgeEventRateLimitsPerEdge;
+    @RateLimit(fieldName = "Edge uplink messages")
     private String edgeUplinkMessagesRateLimits;
+    @RateLimit(fieldName = "Edge uplink messages per edge")
     private String edgeUplinkMessagesRateLimitsPerEdge;
 
     private int defaultStorageTtlDays;

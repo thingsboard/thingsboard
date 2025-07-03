@@ -20,6 +20,8 @@ package transport;
 option java_package = "org.thingsboard.server.gen.transport";
 option java_outer_classname = "TransportProtos";
 
+import "tbmsg.proto";
+
 /**
  * Common data structures
  */
@@ -61,6 +63,21 @@ enum EntityTypeProto {
   MOBILE_APP_BUNDLE     = 38;
   CALCULATED_FIELD      = 39;
   CALCULATED_FIELD_LINK = 40;
+  JOB                   = 41;
+}
+
+enum ApiUsageRecordKeyProto {
+  TRANSPORT_MSG_COUNT  = 0;
+  TRANSPORT_DP_COUNT   = 1;
+  STORAGE_DP_COUNT     = 2;
+  RE_EXEC_COUNT        = 3;
+  JS_EXEC_COUNT        = 4;
+  TBEL_EXEC_COUNT      = 5;
+  EMAIL_EXEC_COUNT     = 6;
+  SMS_EXEC_COUNT       = 7;
+  CREATED_ALARMS_COUNT = 8;
+  ACTIVE_DEVICES       = 9;
+  INACTIVE_DEVICES     = 10;
 }
 
 /**
@@ -73,6 +90,8 @@ message ServiceInfo {
   SystemInfoProto systemInfo = 10;
   repeated string assignedTenantProfiles = 11;
   string label = 12;
+  bool ready = 13;
+  repeated string taskTypes = 14;
 }
 
 message SystemInfoProto {
@@ -111,7 +130,8 @@ message SessionInfoProto {
 message RestApiCallResponseMsgProto {
   int64 requestIdMSB = 1;
   int64 requestIdLSB = 2;
-  bytes response = 5;
+  bytes response = 5 [deprecated = true];
+  msgqueue.TbMsgProto responseProto = 6;
 }
 
 enum SessionEvent {
@@ -676,6 +696,8 @@ message ToDeviceRpcRequestMsg {
   int64 requestIdLSB = 6;
   bool oneway = 7;
   bool persisted = 8;
+  optional int32 retries = 9;
+  string additionalInfo = 10;
 }
 
 message ToDeviceRpcResponseMsg {
@@ -1245,6 +1267,7 @@ message ComponentLifecycleMsgProto {
   int64 oldProfileIdLSB = 10;
   int64 profileIdMSB = 11;
   int64 profileIdLSB = 12;
+  optional string info = 13;
 }
 
 message EdgeEventMsgProto {
@@ -1674,23 +1697,22 @@ message ToEdgeEventNotificationMsg {
 }
 
 message ToCalculatedFieldMsg {
-  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
-  CalculatedFieldTelemetryMsgProto telemetryMsg = 2;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 3;
+  CalculatedFieldTelemetryMsgProto telemetryMsg = 1;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
 }
 
 message ToCalculatedFieldNotificationMsg {
-  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 1;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
 message ToRuleEngineMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  bytes tbMsg = 3;
+  bytes tbMsg = 3 [deprecated = true]; // for removal in 4.2
   repeated string relationTypes = 4;
   string failureMessage = 5;
+  msgqueue.TbMsgProto tbMsgProto = 6;
 }
 
 message ToRuleEngineNotificationMsg {
@@ -1720,12 +1742,25 @@ message ToTransportMsg {
   repeated QueueDeleteMsg queueDeleteMsgs = 16;
 }
 
-message UsageStatsKVProto{
-  string key = 1;
+message UsageStatsKVProto {
+  string key = 1 [deprecated=true];
   int64 value = 2;
+  ApiUsageRecordKeyProto recordKey = 3;
 }
 
 message ToUsageStatsServiceMsg {
+  int64 tenantIdMSB = 1 [deprecated=true];
+  int64 tenantIdLSB = 2 [deprecated=true];
+  int64 entityIdMSB = 3 [deprecated=true];
+  int64 entityIdLSB = 4 [deprecated=true];
+  repeated UsageStatsKVProto values = 5 [deprecated=true];
+  int64 customerIdMSB = 6 [deprecated=true];
+  int64 customerIdLSB = 7 [deprecated=true];
+  string serviceId = 8;
+  repeated UsageStatsServiceMsg msgs = 9;
+}
+
+message UsageStatsServiceMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   int64 entityIdMSB = 3;
@@ -1733,7 +1768,6 @@ message ToUsageStatsServiceMsg {
   repeated UsageStatsKVProto values = 5;
   int64 customerIdMSB = 6;
   int64 customerIdLSB = 7;
-  string serviceId = 8;
 }
 
 message ToOtaPackageStateServiceMsg {
@@ -1808,7 +1842,6 @@ message FromEdqsMsg {
 }
 
 message EdqsEventMsg {
-  string key = 1;
   string objectType = 2;
   bytes data = 3;
   string eventType = 4;
@@ -1820,5 +1853,22 @@ message EdqsRequestMsg {
 }
 
 message EdqsResponseMsg {
+  string value = 1;
+}
+
+message TaskProto {
+  string value = 1;
+}
+
+message JobStatsMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 jobIdMSB = 3;
+  int64 jobIdLSB = 4;
+  optional TaskResultProto taskResult = 5;
+  optional int32 totalTasksCount = 6;
+}
+
+message TaskResultProto {
   string value = 1;
 }

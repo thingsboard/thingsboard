@@ -14,72 +14,24 @@
 -- limitations under the License.
 --
 
--- UPDATE SAVE TIME SERIES NODES START
+-- UPDATE OTA PACKAGE EXTERNAL ID START
 
-UPDATE rule_node
-SET configuration = (
-    (configuration::jsonb - 'skipLatestPersistence')
-        || jsonb_build_object(
-            'processingSettings', jsonb_build_object(
-                    'type',       'ADVANCED',
-                    'timeseries',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
-                    'latest',           jsonb_build_object('type', 'SKIP'),
-                    'webSockets',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
-                    'calculatedFields', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
-                                   )
-           )
-    )::text,
-    configuration_version = 1
-WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
-  AND configuration_version = 0
-  AND configuration::jsonb ->> 'skipLatestPersistence' = 'true';
+ALTER TABLE ota_package
+    ADD COLUMN IF NOT EXISTS external_id uuid;
+ALTER TABLE ota_package
+    ADD CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id);
 
-UPDATE rule_node
-SET configuration = (
-    (configuration::jsonb - 'skipLatestPersistence')
-        || jsonb_build_object(
-            'processingSettings', jsonb_build_object(
-                    'type', 'ON_EVERY_MESSAGE'
-                                   )
-           )
-    )::text,
-    configuration_version = 1
-WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
-  AND configuration_version = 0
-  AND (configuration::jsonb ->> 'skipLatestPersistence' != 'true' OR configuration::jsonb ->> 'skipLatestPersistence' IS NULL);
+-- UPDATE OTA PACKAGE EXTERNAL ID END
 
--- UPDATE SAVE TIME SERIES NODES END
+-- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT START
 
--- UPDATE SAVE ATTRIBUTES NODES START
+DROP INDEX IF EXISTS idx_device_external_id;
+DROP INDEX IF EXISTS idx_device_profile_external_id;
+DROP INDEX IF EXISTS idx_asset_external_id;
+DROP INDEX IF EXISTS idx_entity_view_external_id;
+DROP INDEX IF EXISTS idx_rule_chain_external_id;
+DROP INDEX IF EXISTS idx_dashboard_external_id;
+DROP INDEX IF EXISTS idx_customer_external_id;
+DROP INDEX IF EXISTS idx_widgets_bundle_external_id;
 
-UPDATE rule_node
-SET configuration = (
-    configuration::jsonb
-        || jsonb_build_object(
-            'processingSettings', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
-           )
-    )::text,
-    configuration_version = 3
-WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode'
-  AND configuration_version = 2;
-
--- UPDATE SAVE ATTRIBUTES NODES END
-
-ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS version BIGINT DEFAULT 1;
-
--- UPDATE TENANT PROFILE CALCULATED FIELD LIMITS START
-
-UPDATE tenant_profile
-SET profile_data = profile_data
-    || jsonb_build_object(
-        'configuration', profile_data->'configuration' || jsonb_build_object(
-        'maxCalculatedFieldsPerEntity', COALESCE(profile_data->'configuration'->>'maxCalculatedFieldsPerEntity', '5')::bigint,
-        'maxArgumentsPerCF', COALESCE(profile_data->'configuration'->>'maxArgumentsPerCF', '10')::bigint,
-        'maxDataPointsPerRollingArg', COALESCE(profile_data->'configuration'->>'maxDataPointsPerRollingArg', '1000')::bigint,
-        'maxStateSizeInKBytes', COALESCE(profile_data->'configuration'->>'maxStateSizeInKBytes', '32')::bigint,
-        'maxSingleValueArgumentSizeInKBytes', COALESCE(profile_data->'configuration'->>'maxSingleValueArgumentSizeInKBytes', '2')::bigint
-        )
-    )
-WHERE profile_data->'configuration'->>'maxCalculatedFieldsPerEntity' IS NULL;
-
--- UPDATE TENANT PROFILE CALCULATED FIELD LIMITS END
+-- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT END

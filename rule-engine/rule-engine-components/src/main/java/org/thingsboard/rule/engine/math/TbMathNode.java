@@ -53,6 +53,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.common.util.ExpressionFunctionsUtil.userDefinedFunctions;
 import static org.thingsboard.rule.engine.math.TbMathArgumentType.CONSTANT;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -310,6 +311,7 @@ public class TbMathNode implements TbNode {
                 var expr = customExpression.get();
                 if (expr == null) {
                     expr = new ExpressionBuilder(config.getCustomFunction())
+                            .functions(userDefinedFunctions)
                             .implicitMultiplication(true)
                             .variables(config.getArguments().stream().map(TbMathArgument::getName).collect(Collectors.toSet()))
                             .build();

@@ -44,9 +44,10 @@
                     required
                     withModules
                     [globalVariables]="functionScopeVariables"
-                    [functionArgs]="['data', 'dsData']"
+                    [functionArgs]="['data', 'dsData', 'ctx']"
                     functionTitle="{{ (patternType === 'label' ? 'widgets.maps.data-layer.label-function' : 'widgets.maps.data-layer.tooltip-function') | translate }}"
-                    [helpId]="helpId">
+                    [helpId]="helpId"
+                    [helpPopupStyle]="{width: '900px'}">
         </tb-js-func>
         <ng-container *ngIf="patternType === 'tooltip'">
           <div class="tb-form-row space-between column-xs">

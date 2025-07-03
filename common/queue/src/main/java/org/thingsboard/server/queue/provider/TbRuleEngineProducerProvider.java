@@ -50,6 +50,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> toEdgeNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> toEdgeEvents;
     private TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldMsg>> toCalculatedFields;
+    private TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> toCalculatedFieldNotifications;
 
     public TbRuleEngineProducerProvider(TbRuleEngineQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -68,6 +69,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
         this.toEdgeNotifications = tbQueueProvider.createEdgeNotificationsMsgProducer();
         this.toEdgeEvents = tbQueueProvider.createEdgeEventMsgProducer();
         this.toCalculatedFields = tbQueueProvider.createToCalculatedFieldMsgProducer();
+        this.toCalculatedFieldNotifications = tbQueueProvider.createToCalculatedFieldNotificationMsgProducer();
     }
 
     @Override
@@ -132,7 +134,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> getCalculatedFieldsNotificationsMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Rule Engine Service!");
+        return toCalculatedFieldNotifications;
     }
 
 }

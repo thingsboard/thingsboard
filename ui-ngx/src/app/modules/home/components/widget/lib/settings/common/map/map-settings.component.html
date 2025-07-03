@@ -36,15 +36,15 @@
   </div>
   <div class="tb-form-panel">
     <div class="flex flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
-      <div class="tb-form-panel-title">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'widgets.maps.overlays.overlays-hint' | translate }}">
         {{ 'widgets.maps.overlays.overlays' | translate }}
       </div>
       <tb-toggle-select [(ngModel)]="dataLayerMode"
                         [ngModelOptions]="{ standalone: true }">
-        <tb-toggle-option *ngIf="trip" value="trips">{{ 'widgets.maps.overlays.trips' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="markers">{{ 'widgets.maps.overlays.markers' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="polygons">{{ 'widgets.maps.overlays.polygons' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="circles">{{ 'widgets.maps.overlays.circles' | translate }}</tb-toggle-option>
+        <tb-toggle-option *ngIf="trip" value="trips" [error]="mapSettingsFormGroup.get('trips').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.trips' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="markers" [error]="mapSettingsFormGroup.get('markers').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.markers' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="polygons" [error]="mapSettingsFormGroup.get('polygons').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.polygons' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="circles" [error]="mapSettingsFormGroup.get('circles').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.circles' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
     <tb-map-data-layers *ngIf="trip"
@@ -70,12 +70,12 @@
                         [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
   </div>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title">
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'widgets.maps.data-layer.additional-datasources-hint' | translate }}">
       {{ 'widgets.maps.data-layer.additional-datasources' | translate }}
     </div>
-    <tb-map-data-sources formControlName="additionalDataSources"
+    <tb-additional-map-data-sources formControlName="additionalDataSources"
                          [context]="context">
-    </tb-map-data-sources>
+    </tb-additional-map-data-sources>
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title">

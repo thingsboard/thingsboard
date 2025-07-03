@@ -62,6 +62,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
@@ -362,6 +363,10 @@ public interface TbContext {
 
     RuleEngineCalculatedFieldQueueService getCalculatedFieldQueueService();
 
+    JobService getJobService();
+
+    JobManager getJobManager();
+
     boolean isExternalNodeForceAck();
 
     /**
@@ -416,4 +421,9 @@ public interface TbContext {
     EventService getEventService();
 
     AuditLogService getAuditLogService();
+
+    // Configuration parameters for the MQTT client that is used in the MQTT node and Azure IoT hub node
+
+    MqttClientSettings getMqttClientSettings();
+
 }

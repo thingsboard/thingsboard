@@ -128,15 +128,19 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testDeleteDeviceProfilesWhenEdgeIsOffline() throws Exception {
+        //2 message RuleChain and RuleChainMetadata
         RuleChainId thermostatsRuleChainId = createEdgeRuleChainAndAssignToEdge("Thermostats Rule Chain");
 
         // create device profile
         DeviceProfile deviceProfile = this.createDeviceProfile("ONE_MORE_DEVICE_PROFILE", null);
         deviceProfile.setDefaultEdgeRuleChainId(thermostatsRuleChainId);
         extendDeviceProfileData(deviceProfile);
+
+        //1 message DeviceProfile
         edgeImitator.expectMessageAmount(1);
         deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
+
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof DeviceProfileUpdateMsg);
         DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) latestMessage;
@@ -150,9 +154,11 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         doDelete("/api/deviceProfile/" + deviceProfile.getUuidId())
                 .andExpect(status().isOk());
         edgeImitator.connect();
-        // 27 sync message
-        // + 1 delete message
-        edgeImitator.expectMessageAmount(28);
+
+        // 25 sync message
+        // + 2 RuleChain and RuleChainMetadata
+        // + 1 delete DeviceProfile
+        edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT + 3);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         latestMessage = edgeImitator.getLatestMessage();
@@ -327,14 +333,14 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(deviceProfile);
         Assert.assertEquals("Device Profile On Edge", deviceProfile.getName());
 
-        // delete profile
-        edgeImitator.expectMessageAmount(1);
+        // delete profile and delete relation messages
+        edgeImitator.expectMessageAmount(2);
         doDelete("/api/deviceProfile/" + deviceProfile.getUuidId())
                 .andExpect(status().isOk());
         Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof DeviceProfileUpdateMsg);
-        DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) latestMessage;
+        Optional<DeviceProfileUpdateMsg> deviceDeleteMsgOpt = edgeImitator.findMessageByType(DeviceProfileUpdateMsg.class);
+        Assert.assertTrue(deviceDeleteMsgOpt.isPresent());
+        DeviceProfileUpdateMsg deviceProfileUpdateMsg = deviceDeleteMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
         Assert.assertEquals(deviceProfile.getUuidId().getMostSignificantBits(), deviceProfileUpdateMsg.getIdMSB());
         Assert.assertEquals(deviceProfile.getUuidId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());

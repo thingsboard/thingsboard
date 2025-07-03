@@ -33,16 +33,18 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.WIDGET_TYPE,
   EntityType.WIDGETS_BUNDLE,
   EntityType.TB_RESOURCE,
+  EntityType.OTA_PACKAGE,
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
   EntityType.NOTIFICATION_RULE
 ];
 
-export const entityTypesWithoutRelatedData: Set<EntityType | AliasEntityType> = new Set([
+export const entityTypesWithoutRelatedData = new Set<EntityType | AliasEntityType>([
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
   EntityType.NOTIFICATION_RULE,
-  EntityType.TB_RESOURCE
+  EntityType.TB_RESOURCE,
+  EntityType.OTA_PACKAGE,
 ]);
 
 export interface VersionCreateConfig {

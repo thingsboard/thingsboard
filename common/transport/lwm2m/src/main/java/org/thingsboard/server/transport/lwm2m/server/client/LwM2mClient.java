@@ -294,22 +294,6 @@ public class LwM2mClient {
     }
 
 
-    public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
-                                                               LwM2mValueConverter converter) {
-        LwM2mPath pathIds = getLwM2mPathFromString(pathRezIdVer);
-        Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
-        Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
-                .getObjectModel(pathIds.getObjectId()).resources;
-        resourceModels.forEach((resId, resourceModel) -> {
-            if (resId.equals(pathIds.getResourceId())) {
-                resources.add(LwM2mSingleResource.newResource(resId, converter.convertValue(params,
-                        equalsResourceTypeGetSimpleName(params), resourceModel.type, pathIds), resourceModel.type));
-
-            }
-        });
-        return resources;
-    }
-
     /**
      * The instance must have all the resources that have the property
      * <Mandatory>Mandatory</Mandatory>

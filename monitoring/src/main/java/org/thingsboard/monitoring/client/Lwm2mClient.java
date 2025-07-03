@@ -20,13 +20,16 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.californium.core.network.CoapEndpoint;
-import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.californium.core.observe.ObservationStore;
-import org.eclipse.californium.scandium.DTLSConnector;
-import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
-import org.eclipse.leshan.client.californium.LeshanClient;
-import org.eclipse.leshan.client.californium.LeshanClientBuilder;
+import org.eclipse.californium.core.config.CoapConfig;
+import org.eclipse.californium.elements.config.Configuration;
+import org.eclipse.californium.scandium.config.DtlsConfig;
+import org.eclipse.leshan.client.LeshanClient;
+import org.eclipse.leshan.client.LeshanClientBuilder;
+import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpointsProvider;
+import org.eclipse.leshan.client.californium.endpoint.ClientProtocolProvider;
+import org.eclipse.leshan.client.californium.endpoint.coap.CoapOscoreProtocolProvider;
+import org.eclipse.leshan.client.californium.endpoint.coaps.CoapsClientProtocolProvider;
+import org.eclipse.leshan.client.endpoint.LwM2mClientEndpointsProvider;
 import org.eclipse.leshan.client.engine.DefaultRegistrationEngineFactory;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.object.Server;
@@ -34,9 +37,8 @@ import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
-import org.eclipse.leshan.client.servers.ServerIdentity;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.ResponseCode;
-import org.eclipse.leshan.core.californium.EndpointFactory;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
@@ -53,9 +55,7 @@ import org.thingsboard.monitoring.util.ResourceUtils;
 
 import javax.security.auth.Destroyable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -72,7 +72,7 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
     @Setter
     private LeshanClient leshanClient;
 
-    private static final List<Integer> supportedResources = Collections.singletonList(0);
+    private static final List<Integer> supportedResources = List.of(0, 16);
 
     private String data = "";
 
@@ -95,9 +95,11 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         }
 
         Security security = noSec(serverUri, 123);
-        NetworkConfig coapConfig = new NetworkConfig().setString(NetworkConfig.Keys.COAP_PORT, StringUtils.substringAfterLast(serverUri, ":"));
-
-        LeshanClient leshanClient;
+        Configuration coapConfig = new Configuration();
+        String portStr = StringUtils.substringAfterLast(serverUri, ":");
+        if (StringUtils.isNotEmpty(portStr)) {
+            coapConfig.set(CoapConfig.COAP_PORT, Integer.parseInt(portStr));
+        }
 
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
@@ -105,118 +107,122 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         initializer.setInstancesForObject(SERVER, new Server(123, TimeUnit.MINUTES.toSeconds(5)));
         initializer.setInstancesForObject(DEVICE, this);
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedCipherSuitesOnly(true);
-        dtlsConfig.setClientOnly();
 
+        // Create client endpoints Provider
+        List<ClientProtocolProvider> protocolProvider = new ArrayList<>();
+        protocolProvider.add(new CoapOscoreProtocolProvider());
+        protocolProvider.add(new CoapsClientProtocolProvider());
+        CaliforniumClientEndpointsProvider.Builder endpointsBuilder = new CaliforniumClientEndpointsProvider.Builder(
+                protocolProvider.toArray(new ClientProtocolProvider[protocolProvider.size()]));
+
+        // Create Californium Configuration
+        Configuration clientCoapConfig = endpointsBuilder.createDefaultConfiguration();
+
+        // Set some DTLS stuff
+        clientCoapConfig.setTransient(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
+        clientCoapConfig.set(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, true);
+
+        // Set Californium Configuration
+        endpointsBuilder.setConfiguration(clientCoapConfig);
+
+        // creates EndpointsProvider
+        List<LwM2mClientEndpointsProvider> endpointsProvider = new ArrayList<>();
+        endpointsProvider.add(endpointsBuilder.build());
+
+        // Configure registration engine
         DefaultRegistrationEngineFactory engineFactory = new DefaultRegistrationEngineFactory();
         engineFactory.setReconnectOnUpdate(false);
         engineFactory.setResumeOnConnect(true);
 
-        EndpointFactory endpointFactory = new EndpointFactory() {
-
-            @Override
-            public CoapEndpoint createUnsecuredEndpoint(InetSocketAddress address, NetworkConfig coapConfig,
-                                                        ObservationStore store) {
-                CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
-                builder.setInetSocketAddress(address);
-                builder.setNetworkConfig(coapConfig);
-                return builder.build();
-            }
-
-            @Override
-            public CoapEndpoint createSecuredEndpoint(DtlsConnectorConfig dtlsConfig, NetworkConfig coapConfig,
-                                                      ObservationStore store) {
-                CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
-                DtlsConnectorConfig.Builder dtlsConfigBuilder = new DtlsConnectorConfig.Builder(dtlsConfig);
-                builder.setConnector(new DTLSConnector(dtlsConfigBuilder.build()));
-                builder.setNetworkConfig(coapConfig);
-                return builder.build();
-            }
-        };
-
+        // Build the client
         LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
         builder.setObjects(initializer.createAll());
-        builder.setCoapConfig(coapConfig);
-        builder.setDtlsConfig(dtlsConfig);
+        builder.setEndpointsProviders(endpointsProvider.toArray(new LwM2mClientEndpointsProvider[endpointsProvider.size()]));
         builder.setRegistrationEngineFactory(engineFactory);
-        builder.setEndpointFactory(endpointFactory);
         builder.setDecoder(new DefaultLwM2mDecoder(false));
         builder.setEncoder(new DefaultLwM2mEncoder(false));
         leshanClient = builder.build();
 
+        // Add observer
         LwM2mClientObserver observer = new LwM2mClientObserver() {
+            @Override
+            public void onBootstrapStarted(LwM2mServer bsserver, BootstrapRequest request) {
+                // No implementation needed
+            }
 
             @Override
-            public void onBootstrapStarted(ServerIdentity bsserver, BootstrapRequest request) {}
+            public void onBootstrapSuccess(LwM2mServer bsserver, BootstrapRequest request) {
+                // No implementation needed
+            }
 
             @Override
-            public void onBootstrapSuccess(ServerIdentity bsserver, BootstrapRequest request) {}
+            public void onBootstrapFailure(LwM2mServer bsserver, BootstrapRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
+                log.debug("onBootstrapFailure [{}] [{}] [{}]", request.getEndpointName(), responseCode, errorMessage);
+                // No implementation needed
+            }
 
             @Override
-            public void onBootstrapFailure(ServerIdentity bsserver, BootstrapRequest request,
-                                           ResponseCode responseCode, String errorMessage, Exception cause) {}
+            public void onBootstrapTimeout(LwM2mServer bsserver, BootstrapRequest request) {
+                // No implementation needed
+            }
 
             @Override
-            public void onBootstrapTimeout(ServerIdentity bsserver, BootstrapRequest request) {}
-
-            @Override
-            public void onRegistrationStarted(ServerIdentity server, RegisterRequest request) {
+            public void onRegistrationStarted(LwM2mServer server, RegisterRequest request) {
                 log.debug("onRegistrationStarted [{}]", request.getEndpointName());
             }
 
             @Override
-            public void onRegistrationSuccess(ServerIdentity server, RegisterRequest request, String registrationID) {
+            public void onRegistrationSuccess(LwM2mServer server, RegisterRequest request, String registrationID) {
                 log.debug("onRegistrationSuccess [{}] [{}]", request.getEndpointName(), registrationID);
             }
 
             @Override
-            public void onRegistrationFailure(ServerIdentity server, RegisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
+            public void onRegistrationFailure(LwM2mServer server, RegisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
                 log.debug("onRegistrationFailure [{}] [{}] [{}]", request.getEndpointName(), responseCode, errorMessage);
             }
 
             @Override
-            public void onRegistrationTimeout(ServerIdentity server, RegisterRequest request) {
+            public void onRegistrationTimeout(LwM2mServer server, RegisterRequest request) {
                 log.debug("onRegistrationTimeout [{}]", request.getEndpointName());
             }
 
             @Override
-            public void onUpdateStarted(ServerIdentity server, UpdateRequest request) {
+            public void onUpdateStarted(LwM2mServer server, UpdateRequest request) {
                 log.debug("onUpdateStarted [{}]", request.getRegistrationId());
             }
 
             @Override
-            public void onUpdateSuccess(ServerIdentity server, UpdateRequest request) {
+            public void onUpdateSuccess(LwM2mServer server, UpdateRequest request) {
                 log.debug("onUpdateSuccess [{}]", request.getRegistrationId());
             }
 
             @Override
-            public void onUpdateFailure(ServerIdentity server, UpdateRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
+            public void onUpdateFailure(LwM2mServer server, UpdateRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
                 log.debug("onUpdateFailure [{}]", request.getRegistrationId());
             }
 
             @Override
-            public void onUpdateTimeout(ServerIdentity server, UpdateRequest request) {
+            public void onUpdateTimeout(LwM2mServer server, UpdateRequest request) {
                 log.debug("onUpdateTimeout [{}]", request.getRegistrationId());
             }
 
             @Override
-            public void onDeregistrationStarted(ServerIdentity server, DeregisterRequest request) {
+            public void onDeregistrationStarted(LwM2mServer server, DeregisterRequest request) {
                 log.debug("onDeregistrationStarted [{}]", request.getRegistrationId());
             }
 
             @Override
-            public void onDeregistrationSuccess(ServerIdentity server, DeregisterRequest request) {
-                log.debug("onDeregistrationStarted [{}]", request.getRegistrationId());
+            public void onDeregistrationSuccess(LwM2mServer server, DeregisterRequest request) {
+                log.debug("onDeregistrationSuccess [{}]", request.getRegistrationId());
             }
 
             @Override
-            public void onDeregistrationFailure(ServerIdentity server, DeregisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
+            public void onDeregistrationFailure(LwM2mServer server, DeregisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
                 log.debug("onDeregistrationFailure [{}] [{}] [{}]", request.getRegistrationId(), responseCode, errorMessage);
             }
 
             @Override
-            public void onDeregistrationTimeout(ServerIdentity server, DeregisterRequest request) {
+            public void onDeregistrationTimeout(LwM2mServer server, DeregisterRequest request) {
                 log.debug("onDeregistrationTimeout [{}]", request.getRegistrationId());
             }
 
@@ -224,7 +230,6 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
             public void onUnexpectedError(Throwable unexpectedError) {
                 log.debug("onUnexpectedError [{}]", unexpectedError.toString());
             }
-
         };
         leshanClient.addObserver(observer);
 
@@ -239,17 +244,18 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
     }
 
     @Override
-    public ReadResponse read(ServerIdentity identity, int resourceId) {
-        if (supportedResources.contains(resourceId)) {
-            return ReadResponse.success(resourceId, data);
-        }
-        return super.read(identity, resourceId);
+    public ReadResponse read(LwM2mServer server, int resourceId) {
+        return switch (resourceId) {
+            case 0 -> ReadResponse.success(0, data);
+            case 16 -> ReadResponse.success(16, "U");
+            default -> super.read(server, resourceId);
+        };
     }
 
     @SneakyThrows
     public void send(String data, int resource) {
         this.data = data;
-        fireResourcesChange(resource);
+        fireResourceChange(resource);
     }
 
     @Override

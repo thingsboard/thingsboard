@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.Assert;
 import org.thingsboard.edge.rpc.EdgeGrpcClient;
 import org.thingsboard.edge.rpc.EdgeRpcClient;
 import org.thingsboard.server.controller.AbstractWebTest;
@@ -32,6 +33,7 @@ import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
@@ -351,6 +353,11 @@ public class EdgeImitator {
                 result.add(saveDownlinkMsg(notificationTargetUpdateMsg));
             }
         }
+        if (downlinkMsg.getCalculatedFieldUpdateMsgCount() > 0) {
+            for (CalculatedFieldUpdateMsg calculatedFieldUpdateMsg : downlinkMsg.getCalculatedFieldUpdateMsgList()) {
+                result.add(saveDownlinkMsg(calculatedFieldUpdateMsg));
+            }
+        }
         if (downlinkMsg.hasEdgeConfiguration()) {
             result.add(saveDownlinkMsg(downlinkMsg.getEdgeConfiguration()));
         }
@@ -386,7 +393,19 @@ public class EdgeImitator {
     }
 
     public boolean waitForMessages() throws InterruptedException {
-        return waitForMessages(AbstractWebTest.TIMEOUT);
+        boolean success = waitForMessages(AbstractWebTest.TIMEOUT);
+
+        if (!success) {
+            List<AbstractMessage> downlinkMsgs = getDownlinkMsgs();
+            for (AbstractMessage downlinkMsg : downlinkMsgs) {
+                log.error("{}\n{}", downlinkMsg.getClass(), downlinkMsg);
+            }
+
+            log.error("message count: {}", downlinkMsgs.size());
+            Assert.fail("Await for messages was not successful!");
+        }
+
+        return true;
     }
 
     public boolean waitForMessages(int timeoutInSeconds) throws InterruptedException {

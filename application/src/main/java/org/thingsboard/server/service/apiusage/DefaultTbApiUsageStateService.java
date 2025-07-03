@@ -54,10 +54,12 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -144,18 +146,40 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     }
 
     @Override
-    public void process(TbProtoQueueMsg<ToUsageStatsServiceMsg> msg, TbCallback callback) {
-        ToUsageStatsServiceMsg statsMsg = msg.getValue();
+    public void process(TbProtoQueueMsg<ToUsageStatsServiceMsg> msgPack, TbCallback callback) {
+        ToUsageStatsServiceMsg serviceMsg = msgPack.getValue();
+        String serviceId = serviceMsg.getServiceId();
 
-        TenantId tenantId = TenantId.fromUUID(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
-        EntityId ownerId;
-        if (statsMsg.getCustomerIdMSB() != 0 && statsMsg.getCustomerIdLSB() != 0) {
-            ownerId = new CustomerId(new UUID(statsMsg.getCustomerIdMSB(), statsMsg.getCustomerIdLSB()));
+        List<TransportProtos.UsageStatsServiceMsg> msgs;
+
+        //For backward compatibility, remove after release
+        if (serviceMsg.getMsgsList().isEmpty()) {
+            TransportProtos.UsageStatsServiceMsg oldMsg = TransportProtos.UsageStatsServiceMsg.newBuilder()
+                    .setTenantIdMSB(serviceMsg.getTenantIdMSB())
+                    .setTenantIdLSB(serviceMsg.getTenantIdLSB())
+                    .setCustomerIdMSB(serviceMsg.getCustomerIdMSB())
+                    .setCustomerIdLSB(serviceMsg.getCustomerIdLSB())
+                    .setEntityIdMSB(serviceMsg.getEntityIdMSB())
+                    .setEntityIdLSB(serviceMsg.getEntityIdLSB())
+                    .addAllValues(serviceMsg.getValuesList())
+                    .build();
+
+            msgs = List.of(oldMsg);
         } else {
-            ownerId = tenantId;
+            msgs = serviceMsg.getMsgsList();
         }
 
-        processEntityUsageStats(tenantId, ownerId, statsMsg.getValuesList(), statsMsg.getServiceId());
+        msgs.forEach(msg -> {
+            TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+            EntityId ownerId;
+            if (msg.getCustomerIdMSB() != 0 && msg.getCustomerIdLSB() != 0) {
+                ownerId = new CustomerId(new UUID(msg.getCustomerIdMSB(), msg.getCustomerIdLSB()));
+            } else {
+                ownerId = tenantId;
+            }
+
+            processEntityUsageStats(tenantId, ownerId, msg.getValuesList(), serviceId);
+        });
         callback.onSuccess();
     }
 
@@ -181,7 +205,14 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             updatedEntries = new ArrayList<>(ApiUsageRecordKey.values().length);
             Set<ApiFeature> apiFeatures = new HashSet<>();
             for (UsageStatsKVProto statsItem : values) {
-                ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(statsItem.getKey());
+                ApiUsageRecordKey recordKey;
+
+                //For backward compatibility, remove after release
+                if (StringUtils.isNotEmpty(statsItem.getKey())) {
+                    recordKey = ApiUsageRecordKey.valueOf(statsItem.getKey());
+                } else {
+                    recordKey = ProtoUtils.fromProto(statsItem.getRecordKey());
+                }
 
                 StatsCalculationResult calculationResult = usageState.calculate(recordKey, statsItem.getValue(), serviceId);
                 if (calculationResult.isValueChanged()) {

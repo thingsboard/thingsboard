@@ -54,6 +54,7 @@ export * from './rule-node.models';
 export * from './settings.models';
 export * from './tenant.model';
 export * from './user.model';
+export * from './unit.models';
 export * from './user-settings.models';
 export * from './widget-settings.models';
 export * from './widget.models';
@@ -62,3 +63,4 @@ export * from './window-message.model';
 export * from './usage.models';
 export * from './query/query.models';
 export * from './regex.constants';
+export * from './trendz-settings.models'

@@ -1129,6 +1129,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
 
   const scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
   const scadaSymbolAnimation = `<a href="${scadaSymbolAnimationLink}" target="_blank">ScadaSymbolAnimation</a>`;
+  const connectorScadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevConnectorAnimation;
+  const connectorScadaSymbolAnimation = `<a href="${connectorScadaSymbolAnimationLink}" target="_blank">ConnectorScadaSymbolAnimation</a>`;
 
   const properties: TbEditorCompletion = {
     meta: 'object',
@@ -1229,6 +1231,68 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               },
             ]
           },
+          connectorAnimate: {
+            meta: 'function',
+            description: 'Finishes any previous connector animation and starts a new connector animation for the SVG element along the specified path.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              },
+              {
+                name: 'path',
+                description: 'Path defining the animation trajectory',
+                type: 'string'
+              },
+              {
+                name: 'reversedPath',
+                description: 'Path for the reversed animation trajectory',
+                type: 'string'
+              }
+            ],
+            return: {
+              description: `Instance of ${connectorScadaSymbolAnimation} class with API to setup and control the connector animation.`,
+              type: connectorScadaSymbolAnimation
+            }
+          },
+          connectorAnimation: {
+            meta: 'function',
+            description: 'Gets the current connector animation applied to the SVG element.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
+            ],
+            return: {
+              description: `Instance of ${connectorScadaSymbolAnimation} class with API to setup and control the connector animation, or undefined if no animation is applied.`,
+              type: 'ConnectorScadaSymbolAnimation | undefined'
+            }
+          },
+          resetConnectorAnimation: {
+            meta: 'function',
+            description: 'Stops the connector animation if any and restores the SVG element to its initial state, removes the connector animation instance.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
+            ]
+          },
+          finishConnectorAnimation: {
+            meta: 'function',
+            description: 'Finishes the connector animation if any, updates the SVG element state according to the end animation values, removes the connector animation instance.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
+            ]
+          },
           generateElementId: {
             meta: 'function',
             description: 'Generates new unique element id.',
@@ -1240,7 +1304,7 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
           },
           formatValue: {
             meta: 'function',
-            description: 'Formats numeric value according to specified decimals and units',
+            description: 'Formats a numeric value according to specified settings or individual parameters for decimals and units, using a ValueFormatProcessor instance.',
             args: [
               {
                 name: 'value',
@@ -1248,27 +1312,27 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
                 type: 'any'
               },
               {
-                name: 'dec',
-                description: 'Number of decimal digits',
-                type: 'number',
+                name: 'settingsOrDec',
+                description: 'Either a ValueFormatSettings object containing formatting settings or the number of decimal digits. ValueFormatSettings includes: decimals (number of decimal digits, optional), units (unit specification as string or TbUnitMapping, optional), showZeroDecimals (whether to keep zero decimal digits, optional), ignoreUnitSymbol (whether to exclude unit symbol from output, optional).',
+                type: 'ValueFormatSettings | number',
                 optional: true
               },
               {
                 name: 'units',
-                description: 'Units to append to the formatted value',
+                description: 'Units to append to the formatted value, applied only if settingsOrDec is a number',
                 type: 'string',
                 optional: true
               },
               {
                 name: 'showZeroDecimals',
-                description: 'Whether to keep zero decimal digits',
+                description: 'Whether to keep zero decimal digits, applied only if settingsOrDec is a number',
                 type: 'boolean',
                 optional: true
               }
             ],
             return: {
-              type: 'string',
-              description: 'Formatted value'
+              description: 'The formatted value as a string. Returns undefined if the value cannot be formatted and settingsOrDec is not an object.',
+              type: 'string | undefined'
             }
           },
           text: {
@@ -1415,6 +1479,47 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
                 type: 'any'
               }
             ]
+          },
+          unitSymbol: {
+            meta: 'function',
+            description: 'Retrieves the target unit symbol based on the current unit system or the provided unit.',
+            args: [
+              {
+                name: 'unit',
+                description: 'Unit specification, either a string or a TbUnitMapping object defining unit mappings for different systems.',
+                type: 'TbUnit'
+              }
+            ],
+            return: {
+              description: 'The target unit symbol as a string, or the \'from\' unit if no mapping is found for the current unit system.',
+              type: 'string'
+            }
+          },
+          convertUnitValue: {
+            meta: 'function',
+            description: 'Converts a numeric value from one unit to another, either using a TbUnit mapping or explicit from/to units. Returns the original value on conversion failure.',
+            args: [
+              {
+                name: 'value',
+                description: 'Numeric value to be converted',
+                type: 'number'
+              },
+              {
+                name: 'unit',
+                description: 'Unit specification, either a string representing the source unit or a TbUnitMapping object for system-based conversion',
+                type: 'TbUnit'
+              },
+              {
+                name: 'to',
+                description: 'Optional target unit to convert to. If not provided, the target unit is derived from the TbUnitMapping and current unit system.',
+                type: 'string',
+                optional: true
+              }
+            ],
+            return: {
+              description: 'The converted numeric value. Returns the original value if conversion fails or no conversion is needed.',
+              type: 'number'
+            }
           }
         }
       },

@@ -35,7 +35,11 @@ public interface CalculatedFieldDao extends Dao<CalculatedField> {
 
     List<CalculatedField> findAll();
 
+    CalculatedField findByEntityIdAndName(EntityId entityId, String name);
+
     PageData<CalculatedField> findAll(PageLink pageLink);
+
+    PageData<CalculatedField> findAllByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<CalculatedField> findAllByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
 

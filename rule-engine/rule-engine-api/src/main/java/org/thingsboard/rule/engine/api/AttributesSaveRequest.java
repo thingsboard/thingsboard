@@ -57,6 +57,7 @@ public class AttributesSaveRequest implements CalculatedFieldSystemAwareRequest 
         public static final Strategy PROCESS_ALL = new Strategy(true, true, true);
         public static final Strategy WS_ONLY = new Strategy(false, true, false);
         public static final Strategy SKIP_ALL = new Strategy(false, false, false);
+        public static final Strategy CF_ONLY = new Strategy(false, false, true);
 
     }
 

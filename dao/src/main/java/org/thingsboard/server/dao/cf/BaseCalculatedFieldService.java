@@ -58,6 +58,22 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
         CalculatedField oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
+        return doSave(calculatedField, oldCalculatedField);
+    }
+
+    @Override
+    public CalculatedField save(CalculatedField calculatedField, boolean doValidate) {
+        CalculatedField oldCalculatedField = null;
+        if (doValidate) {
+            oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
+        } else if (calculatedField.getId() != null) {
+            oldCalculatedField = findById(calculatedField.getTenantId(), calculatedField.getId());
+        }
+        return doSave(calculatedField, oldCalculatedField);
+    }
+
+
+    private CalculatedField doSave(CalculatedField calculatedField, CalculatedField oldCalculatedField) {
         try {
             TenantId tenantId = calculatedField.getTenantId();
             log.trace("Executing save calculated field, [{}]", calculatedField);
@@ -84,6 +100,13 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public CalculatedField findByEntityIdAndName(EntityId entityId, String name) {
+        log.trace("Executing findByEntityIdAndName [{}], calculatedFieldName[{}]", entityId, name);
+        validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
+        return calculatedFieldDao.findByEntityIdAndName(entityId, name);
+    }
+
+    @Override
     public List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing findCalculatedFieldIdsByEntityId [{}]", entityId);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
@@ -102,6 +125,14 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         log.trace("Executing findAll, pageLink [{}]", pageLink);
         validatePageLink(pageLink);
         return calculatedFieldDao.findAll(pageLink);
+    }
+
+    @Override
+    public PageData<CalculatedField> findCalculatedFieldsByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findAllByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return calculatedFieldDao.findAllByTenantId(tenantId, pageLink);
     }
 
     @Override
@@ -172,6 +203,14 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     public List<CalculatedFieldLink> findAllCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing findAllCalculatedFieldLinksByEntityId, entityId [{}]", entityId);
         return calculatedFieldLinkDao.findCalculatedFieldLinksByEntityId(tenantId, entityId);
+    }
+
+    @Override
+    public PageData<CalculatedFieldLink> findAllCalculatedFieldLinksByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findAllCalculatedFieldLinksByTenantId, tenantId[{}] pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return calculatedFieldLinkDao.findAllByTenantId(tenantId, pageLink);
     }
 
     @Override

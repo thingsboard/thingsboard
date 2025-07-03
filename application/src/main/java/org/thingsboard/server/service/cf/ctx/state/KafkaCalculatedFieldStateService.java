@@ -35,7 +35,7 @@ import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
-import org.thingsboard.server.queue.common.consumer.QueueStateService;
+import org.thingsboard.server.queue.common.state.KafkaQueueStateService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
@@ -43,10 +43,12 @@ import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.service.cf.AbstractCalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.*;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToString;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToUuid;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.stringToBytes;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.uuidToBytes;
 
 @Service
 @RequiredArgsConstructor
@@ -60,22 +62,18 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
     @Value("${queue.calculated_fields.poll_interval:25}")
     private long pollInterval;
 
-    private PartitionedQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateProto>> stateConsumer;
     private TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>> stateProducer;
-    private QueueStateService<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>> queueStateService;
 
     private final AtomicInteger counter = new AtomicInteger();
 
     @Override
     public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
-        super.init(eventConsumer);
-
         var queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.CF_STATES_QUEUE_NAME);
-        this.stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>>create()
+        PartitionedQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateProto>> stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>>create()
                 .queueKey(queueKey)
                 .topic(partitionService.getTopic(queueKey))
                 .pollInterval(pollInterval)
-                .msgPackProcessor((msgs, consumer, config) -> {
+                .msgPackProcessor((msgs, consumer, consumerKey, config) -> {
                     for (TbProtoQueueMsg<CalculatedFieldStateProto> msg : msgs) {
                         try {
                             if (msg.getValue() != null) {
@@ -93,14 +91,17 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                         }
                     }
                 })
-                .consumerCreator((config, partitionId) -> queueFactory.createCalculatedFieldStateConsumer())
+                .consumerCreator((queueConfig, tpi) -> queueFactory.createCalculatedFieldStateConsumer())
+                .queueAdmin(queueFactory.getCalculatedFieldQueueAdmin())
                 .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .scheduler(eventConsumer.getScheduler())
                 .taskExecutor(eventConsumer.getTaskExecutor())
                 .build();
+        super.stateService = KafkaQueueStateService.<TbProtoQueueMsg<ToCalculatedFieldMsg>, TbProtoQueueMsg<CalculatedFieldStateProto>>builder()
+                .eventConsumer(eventConsumer)
+                .stateConsumer(stateConsumer)
+                .build();
         this.stateProducer = (TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>>) queueFactory.createCalculatedFieldStateProducer();
-        this.queueStateService = new QueueStateService<>();
-        this.queueStateService.init(stateConsumer, super.eventConsumer);
     }
 
     @Override
@@ -113,28 +114,19 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
         stateProducer.send(tpi, stateId.toKey(), msg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
-                if (callback != null) {
-                    callback.onSuccess();
-                }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                if (callback != null) {
-                    callback.onFailure(t);
-                }
+                log.error("Failed to send state message: {}", stateId, t);
             }
         });
+        callback.onSuccess();
     }
 
     @Override
     protected void doRemove(CalculatedFieldEntityCtxId stateId, TbCallback callback) {
         doPersist(stateId, null, callback);
-    }
-
-    @Override
-    public void restore(Set<TopicPartitionInfo> partitions) {
-        queueStateService.update(partitions);
     }
 
     private void putStateId(TbQueueMsgHeaders headers, CalculatedFieldEntityCtxId stateId) {
@@ -153,8 +145,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
 
     @Override
     public void stop() {
-        stateConsumer.stop();
-        stateConsumer.awaitStop();
+        super.stop();
         stateProducer.stop();
     }
 

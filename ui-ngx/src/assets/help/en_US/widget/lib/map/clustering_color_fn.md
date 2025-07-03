@@ -30,7 +30,8 @@ In case no data is returned, default colors will be used depending on number of 
 
 <ul>
 <li>
-Calculate color depending on temperature telemetry value:
+Calculate color depending on temperature telemetry value.<br/>
+Ensure that the <code>temperature</code> key is included in the <b>additional data keys</b> configuration.
 </li>
 
 
