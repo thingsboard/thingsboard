@@ -30,7 +30,7 @@ public class EntityNameQueryProcessor extends AbstractSimpleQueryProcessor<Entit
 
     public EntityNameQueryProcessor(TenantRepo repo, QueryContext ctx, EdqsQuery query) {
         super(repo, ctx, query, (EntityNameFilter) query.getEntityFilter(), ((EntityNameFilter) query.getEntityFilter()).getEntityType());
-        pattern = RepositoryUtils.toSqlLikePattern(filter.getEntityNameFilter());
+        pattern = RepositoryUtils.toEntityNameSqlLikePattern(filter.getEntityNameFilter());
     }
 
     @Override
