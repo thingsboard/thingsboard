@@ -43,9 +43,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -208,7 +206,7 @@ public class AdminController extends BaseController {
             notes = "Attempts to send test email to the System Administrator User using Mail Settings provided as a parameter. " +
                     "You may change the 'To' email in the user profile of the System Administrator. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/settings/testMail", method = RequestMethod.POST)
+    @PostMapping(value = "/settings/testMail")
     public void sendTestMail(
             @Parameter(description = "A JSON value representing the Mail Settings.")
             @RequestBody AdminSettings adminSettings) throws ThingsboardException {
@@ -383,7 +381,6 @@ public class AdminController extends BaseController {
                     + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping(value = "/updates")
-    @ResponseBody
     public UpdateMessage checkUpdates() {
         return updateService.checkUpdates();
     }
@@ -393,7 +390,6 @@ public class AdminController extends BaseController {
                     + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping(value = "/systemInfo")
-    @ResponseBody
     public SystemInfo getSystemInfo() {
         return systemInfoService.getSystemInfo();
     }
