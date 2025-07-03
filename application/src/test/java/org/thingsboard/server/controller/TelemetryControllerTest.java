@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -32,6 +33,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.query.EntityKeyType.TIME_SERIES;
 
@@ -193,6 +195,26 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         timeseries = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries?keys=data&startTs={startTs}&endTs={endTs}", ObjectNode.class, startTs, endTs);
 
         Assert.assertTrue(timeseries.isEmpty());
+    }
+
+    @Test
+    public void testDeleteTelemetryByKeysWithComma() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+
+        String tsKey = "key1,key2";
+        String testBody = JacksonUtil.newObjectNode()
+                .put(tsKey, "value")
+                .toString();
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", testBody, String.class, status().isOk());
+
+        ObjectNode tsData = readResponse(doGetAsyncWithParam("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", "keys", tsKey), ObjectNode.class);
+        assertThat(tsData.get("key1,key2").get(0).get("value").asText()).isEqualTo("value");
+
+        doDeleteAsyncWithParam("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/delete?deleteAllDataForKeys=true", "keys", tsKey);
+
+        ObjectNode tsDataAfterDeletion = readResponse(doGetAsyncWithParam("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", "keys", tsKey), ObjectNode.class);
+        Assert.assertTrue(tsDataAfterDeletion.get("key1,key2").get(0).get("value").isNull());
     }
 
     @Test
