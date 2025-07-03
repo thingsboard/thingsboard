@@ -15,4 +15,4 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record AzureOpenAiProviderConfig(String apiKey) implements AiProviderConfig {}
+public record AzureOpenAiProviderConfig(String endpoint, String serviceVersion, String apiKey) implements AiProviderConfig {}

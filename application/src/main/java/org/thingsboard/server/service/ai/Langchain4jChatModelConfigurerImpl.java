@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConf
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModel;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -71,9 +72,12 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
     @Override
     public ChatModel configureChatModel(AzureOpenAiChatModel chatModel) {
+        AzureOpenAiProviderConfig providerConfig = chatModel.providerConfig();
         AzureOpenAiChatModel.Config modelConfig = chatModel.modelConfig();
         return dev.langchain4j.model.azure.AzureOpenAiChatModel.builder()
-                .apiKey(chatModel.providerConfig().apiKey())
+                .endpoint(providerConfig.endpoint())
+                .serviceVersion(providerConfig.serviceVersion())
+                .apiKey(providerConfig.apiKey())
                 .deploymentName(modelConfig.modelId())
                 .temperature(modelConfig.temperature())
                 .topP(modelConfig.topP())
