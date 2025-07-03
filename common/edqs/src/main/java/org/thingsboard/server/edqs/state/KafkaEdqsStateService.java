@@ -91,7 +91,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
                 .queueKey(new QueueKey(ServiceType.EDQS, config.getStateTopic()))
                 .topic(topicService.buildTopicName(config.getStateTopic()))
                 .pollInterval(config.getPollInterval())
-                .msgPackProcessor((msgs, consumer, config) -> {
+                .msgPackProcessor((msgs, consumer, consumerKey, config) -> {
                     for (TbProtoQueueMsg<ToEdqsMsg> queueMsg : msgs) {
                         try {
                             ToEdqsMsg msg = queueMsg.getValue();
@@ -224,6 +224,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
         stateConsumer.awaitStop();
         eventsToBackupConsumer.stop();
         stateProducer.stop();
+        versionsStore.shutdown();
     }
 
 }

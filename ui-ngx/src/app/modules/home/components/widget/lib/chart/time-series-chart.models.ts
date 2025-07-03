@@ -98,6 +98,7 @@ import {
   TimeSeriesChartTooltipValueFormatFunction,
   TimeSeriesChartTooltipWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
+import { TbUnit, TbUnitConverter } from '@shared/models/unit.models';
 
 type TimeSeriesChartDataEntry = [number, any, number, number];
 
@@ -144,6 +145,7 @@ export interface TimeSeriesChartDataItem {
   yAxisIndex: number;
   option?: LineSeriesOption | CustomSeriesOption;
   barRenderContext?: BarRenderContext;
+  unitConvertor?: TbUnitConverter;
 }
 
 export const timeAxisBandWidthCalculator: TimeAxisBandWidthCalculator = (model) => {
@@ -375,7 +377,7 @@ export type TimeSeriesChartTicksFormatter =
 export interface TimeSeriesChartYAxisSettings extends TimeSeriesChartAxisSettings {
   id?: TimeSeriesChartYAxisId;
   order?: number;
-  units?: string;
+  units?: TbUnit;
   decimals?: number;
   interval?: number;
   splitNumber?: number;
@@ -857,6 +859,7 @@ export interface TimeSeriesChartThresholdItem {
   value: TimeSeriesChartThresholdValue;
   settings: TimeSeriesChartThreshold;
   option?: LineSeriesOption;
+  unitConvertor?: TbUnitConverter
 }
 
 export interface TimeSeriesChartAxis {
@@ -880,7 +883,8 @@ export const createTimeSeriesYAxis = (units: string,
                                       decimals: number,
                                       settings: TimeSeriesChartYAxisSettings,
                                       utils: UtilsService,
-                                      darkMode: boolean): TimeSeriesChartYAxis => {
+                                      darkMode: boolean,
+                                      unitConvertor: (x: number) => number): TimeSeriesChartYAxis => {
   const yAxisTickLabelStyle = createChartTextStyle(settings.tickLabelFont,
     settings.tickLabelColor, darkMode, 'axis.tickLabel');
   const yAxisNameStyle = createChartTextStyle(settings.labelFont,
@@ -934,8 +938,8 @@ export const createTimeSeriesYAxis = (units: string,
       offset: 0,
       alignTicks: true,
       scale: true,
-      min: settings.min,
-      max: settings.max,
+      min: isDefinedAndNotNull(settings.min) ? unitConvertor(Number(settings.min)) : settings.min,
+      max: isDefinedAndNotNull(settings.max) ? unitConvertor(Number(settings.max)) : settings.max,
       minInterval,
       splitNumber,
       interval,
@@ -1128,7 +1132,7 @@ export const calculateThresholdsOffset = (chart: ECharts,
   return result;
 };
 
-export const parseThresholdData = (value: any): TimeSeriesChartThresholdValue => {
+export const parseThresholdData = (value: any, valueConvertor?: TbUnitConverter): TimeSeriesChartThresholdValue => {
   let thresholdValue: TimeSeriesChartThresholdValue;
   if (Array.isArray(value)) {
     thresholdValue = value;
@@ -1140,7 +1144,7 @@ export const parseThresholdData = (value: any): TimeSeriesChartThresholdValue =>
       thresholdValue = [value];
     }
   }
-  return thresholdValue;
+  return valueConvertor ? thresholdValue.map(item => isNumeric(item) ? valueConvertor(Number(item)) : item) : thresholdValue;
 };
 
 const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[]): Array<LineSeriesOption> => {

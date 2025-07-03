@@ -525,6 +525,11 @@ export const getCalculatedFieldArgumentsEditorCompleter = (argumentsObj: Record<
           type: '{ [key: string]: object }',
           description: 'Calculated field context arguments.',
           children: {}
+        },
+        latestTs: {
+          meta: 'constant',
+          type: 'number',
+          description: 'Latest timestamp (ms) of the arguments telemetry.'
         }
       }
     }
@@ -575,6 +580,11 @@ const calculatedFieldArgumentsContextValueHighlightRules: AceHighlightRules = {
       token: 'tb.calculated-field-args',
       regex: /args/,
       next: 'calculatedFieldCtxArgs'
+    },
+    {
+      token: 'tb.calculated-field-latestTs',
+      regex: /latestTs/,
+      next: 'no_regex'
     },
     endGroupHighlightRule
   ]

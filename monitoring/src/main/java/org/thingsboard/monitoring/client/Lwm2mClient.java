@@ -56,7 +56,6 @@ import org.thingsboard.monitoring.util.ResourceUtils;
 import javax.security.auth.Destroyable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -73,7 +72,7 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
     @Setter
     private LeshanClient leshanClient;
 
-    private static final List<Integer> supportedResources = Collections.singletonList(0);
+    private static final List<Integer> supportedResources = List.of(0, 16);
 
     private String data = "";
 
@@ -158,6 +157,7 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
 
             @Override
             public void onBootstrapFailure(LwM2mServer bsserver, BootstrapRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
+                log.debug("onBootstrapFailure [{}] [{}] [{}]", request.getEndpointName(), responseCode, errorMessage);
                 // No implementation needed
             }
 
@@ -245,10 +245,11 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
 
     @Override
     public ReadResponse read(LwM2mServer server, int resourceId) {
-        if (supportedResources.contains(resourceId)) {
-            return ReadResponse.success(resourceId, data);
-        }
-        return super.read(server, resourceId);
+        return switch (resourceId) {
+            case 0 -> ReadResponse.success(0, data);
+            case 16 -> ReadResponse.success(16, "U");
+            default -> super.read(server, resourceId);
+        };
     }
 
     @SneakyThrows

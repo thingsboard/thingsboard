@@ -47,6 +47,10 @@
             <artifactId>data</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>discovery-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard.common.transport</groupId>
             <artifactId>transport-api</artifactId>
         </dependency>

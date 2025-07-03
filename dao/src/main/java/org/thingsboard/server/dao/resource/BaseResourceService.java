@@ -263,7 +263,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public TbResource toResource(TenantId tenantId, ResourceExportData exportData) {
         if (exportData.getType() == ResourceType.IMAGE || exportData.getSubType() == ResourceSubType.IMAGE
-                || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
+            || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
             throw new IllegalArgumentException("Image import not supported");
         }
 
@@ -311,7 +311,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         log.trace("Executing findResourceInfoById [{}] [{}]", tenantId, resourceId);
         Validator.validateId(resourceId, id -> INCORRECT_RESOURCE_ID + id);
 
-        return cache.getAndPutInTransaction(new ResourceInfoCacheKey(tenantId, resourceId),
+        return cache.getAndPutInTransaction(new ResourceInfoCacheKey(resourceId),
                 () -> resourceInfoDao.findById(tenantId, resourceId.getId()), true);
     }
 
@@ -712,7 +712,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public void handleEvictEvent(ResourceInfoEvictEvent event) {
         if (event.getResourceId() != null) {
-            cache.evict(new ResourceInfoCacheKey(event.getTenantId(), event.getResourceId()));
+            cache.evict(new ResourceInfoCacheKey(event.getResourceId()));
         }
     }
 

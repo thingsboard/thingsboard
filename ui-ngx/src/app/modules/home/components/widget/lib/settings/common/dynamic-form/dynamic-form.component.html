@@ -129,6 +129,7 @@
           <tb-unit-input *ngIf="property.type === FormPropertyType.units"
                          [class]="property.fieldClass"
                          [required]="property.required"
+                         [supportsUnitConversion]="property.supportsUnitConversion"
                          formControlName="{{ property.id }}"></tb-unit-input>
           <tb-material-icon-select *ngIf="property.type === FormPropertyType.icon"
                                    [required]="property.required"

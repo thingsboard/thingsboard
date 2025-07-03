@@ -43,7 +43,7 @@
     },
     {
       "tag": "maxValue",
-      "stateRenderFunction": "if (ctx.properties.minMaxValue) {\n    ctx.api.text(element, ctx.properties.maxValue);\n}",
+      "stateRenderFunction": "if (ctx.properties.minMaxValue) {\n    ctx.api.text(element, ctx.api.convertUnitValue(ctx.properties.maxValue, ctx.properties.units).toFixed(0));\n}",
       "actions": null
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "tag": "minValue",
-      "stateRenderFunction": "if (ctx.properties.minMaxValue) {\n    ctx.api.text(element, ctx.properties.minValue);\n}",
+      "stateRenderFunction": "if (ctx.properties.minMaxValue) {\n    ctx.api.text(element, ctx.api.convertUnitValue(ctx.properties.minValue, ctx.properties.units).toFixed(0));\n}",
       "actions": null
     },
     {
@@ -73,12 +73,12 @@
     },
     {
       "tag": "units",
-      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.properties.units);\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.api.unitSymbol(ctx.properties.units));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
       "tag": "value",
-      "stateRenderFunction": "if (ctx.properties.value) {\n    element.show();\n    ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.value, ctx.properties.valueDecimals, null, ctx.properties.valueDecimals));\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.properties.value) {\n    element.show();\n    ctx.api.font(element, ctx.properties.valueFont, ctx.properties.valueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.value, {units: ctx.properties.units, decimals: ctx.properties.valueDecimals, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -329,16 +329,8 @@
       "name": "{i18n:scada.symbol.min-max-value}",
       "type": "switch",
       "default": false,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minValue",
@@ -347,14 +339,9 @@
       "default": 0,
       "required": true,
       "subLabel": "{i18n:scada.symbol.min-value}",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": 1
+      "step": 1,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "maxValue",
@@ -363,30 +350,17 @@
       "default": 100,
       "required": true,
       "subLabel": "{i18n:scada.symbol.max-value}",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": 1
+      "step": 1,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "value",
       "name": "{i18n:scada.symbol.value}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueDecimals",
@@ -395,14 +369,12 @@
       "default": 0,
       "required": true,
       "subLabel": "Decimals",
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "value",
-      "rowClass": "",
-      "fieldClass": "",
       "min": 0,
       "max": 10,
-      "step": 1
+      "step": 1,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueFont",
@@ -415,64 +387,36 @@
         "weight": "400",
         "style": "normal"
       },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "value",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueColor",
       "name": "{i18n:scada.symbol.value}",
       "type": "color",
       "default": "#002878",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "value",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "label",
       "name": "{i18n:scada.symbol.label}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "labelText",
       "name": "{i18n:scada.symbol.label}",
       "type": "text",
       "default": "Outdoor",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "label",
-      "rowClass": "",
       "fieldClass": "flex",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "labelFont",
@@ -485,64 +429,35 @@
         "weight": "500",
         "style": "normal"
       },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "label",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "labelColor",
       "name": "{i18n:scada.symbol.label}",
       "type": "color",
       "default": "#000000DE",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "label",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "showUnits",
       "name": "{i18n:scada.symbol.units}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "units",
       "name": "{i18n:scada.symbol.units}",
       "type": "units",
       "default": "°C",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": "showUnits",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "supportsUnitConversion": true,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "unitsFont",
@@ -555,224 +470,119 @@
         "weight": "500",
         "style": "normal"
       },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "showUnits",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "unitsColor",
       "name": "{i18n:scada.symbol.units}",
       "type": "color",
       "default": "#000000DE",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "showUnits",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "arrowColor",
       "name": "{i18n:scada.symbol.arrow-color}",
       "type": "color",
       "default": "#666666",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "showTarget",
       "name": "{i18n:scada.symbol.target}",
       "type": "switch",
       "default": false,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "targetColor",
       "name": "{i18n:scada.symbol.target}",
       "type": "color",
       "default": "#DEDEDE",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
       "disableOnProperty": "showTarget",
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": true,
+      "visible": true
     },
     {
       "id": "showHighCriticalScale",
       "name": "{i18n:scada.symbol.show-high-critical-scale}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "showHighWarningScale",
       "name": "{i18n:scada.symbol.show-high-warning-scale}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "showLowWarningScale",
       "name": "{i18n:scada.symbol.show-low-warning-scale}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "showLowCriticalScale",
       "name": "{i18n:scada.symbol.show-low-critical-scale}",
       "type": "switch",
       "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "scaleColor",
       "name": "{i18n:scada.symbol.scale-color}",
       "type": "color",
       "default": "#C8DFF7",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "defaultWarningScaleColor",
       "name": "{i18n:scada.symbol.warning-scale-color}",
       "type": "color",
       "default": "#EBEBEB",
-      "required": null,
       "subLabel": "Default",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "activeWarningScaleColor",
       "name": "{i18n:scada.symbol.warning-scale-color}",
       "type": "color",
       "default": "#FAA405",
-      "required": null,
       "subLabel": "Active",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "defaultCriticalScaleColor",
       "name": "{i18n:scada.symbol.critical-scale-color}",
       "type": "color",
       "default": "#666666",
-      "required": null,
       "subLabel": "Default",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "activeCriticalScaleColor",
       "name": "{i18n:scada.symbol.critical-scale-color}",
       "type": "color",
       "default": "#D12730",
-      "required": null,
       "subLabel": "Active",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     }
   ]
 }]]></tb:metadata>

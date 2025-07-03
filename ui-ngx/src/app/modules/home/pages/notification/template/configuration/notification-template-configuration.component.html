@@ -44,6 +44,11 @@
           <mat-error *ngIf="templateConfigurationForm.get('WEB.subject').hasError('required')">
             {{ 'notification.subject-required' | translate }}
           </mat-error>
+          <mat-error *ngIf="templateConfigurationForm.get('WEB.subject').hasError('maxlength')">
+            {{'notification.subject-max-length' | translate :
+              {length: templateConfigurationForm.get('WEB.subject').getError('maxlength').requiredLength}
+            }}
+          </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block">
           <mat-label translate>notification.message</mat-label>
@@ -55,6 +60,11 @@
           </textarea>
           <mat-error *ngIf="templateConfigurationForm.get('WEB.body').hasError('required')">
             {{ 'notification.message-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="templateConfigurationForm.get('WEB.body').hasError('maxlength')">
+            {{ 'notification.message-max-length' | translate :
+              {length: templateConfigurationForm.get('WEB.body').getError('maxlength').requiredLength}
+            }}
           </mat-error>
         </mat-form-field>
         <section formGroupName="additionalConfig" class="tb-form-panel no-padding no-border">
@@ -193,6 +203,11 @@
           <input matInput formControlName="subject">
           <mat-error *ngIf="templateConfigurationForm.get('EMAIL.subject').hasError('required')">
             {{ 'notification.subject-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="templateConfigurationForm.get('EMAIL.subject').hasError('maxlength')">
+            {{'notification.subject-max-length' | translate :
+              {length: templateConfigurationForm.get('EMAIL.subject').getError('maxlength').requiredLength}
+            }}
           </mat-error>
         </mat-form-field>
         <mat-label class="tb-title tb-required"

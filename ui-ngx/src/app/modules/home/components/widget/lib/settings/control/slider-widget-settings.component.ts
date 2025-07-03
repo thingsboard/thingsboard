@@ -28,6 +28,7 @@ import {
   sliderWidgetDefaultSettings
 } from '@home/components/widget/lib/rpc/slider-widget.models';
 import { formatValue } from '@core/utils';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-slider-widget-settings',
@@ -180,7 +181,7 @@ export class SliderWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.sliderWidgetSettingsForm.get('valueUnits').value;
+    const units: string = getSourceTbUnitSymbol(this.sliderWidgetSettingsForm.get('valueUnits').value);
     const decimals: number = this.sliderWidgetSettingsForm.get('valueDecimals').value;
     return formatValue(48, decimals, units, false);
   }
