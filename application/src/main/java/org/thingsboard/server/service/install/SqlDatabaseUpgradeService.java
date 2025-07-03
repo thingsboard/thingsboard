@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
-import org.intellij.lang.annotations.Language;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.StatementCallback;
@@ -75,13 +74,13 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         });
     }
 
-    private void execute(@Language("sql") String... statements) {
+    private void execute(String... statements) {
         for (String statement : statements) {
             execute(statement, true);
         }
     }
 
-    private void execute(@Language("sql") String statement, boolean ignoreErrors) {
+    private void execute(String statement, boolean ignoreErrors) {
         try {
             jdbcTemplate.execute(statement);
         } catch (Exception e) {
