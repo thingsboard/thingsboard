@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 
-import java.util.List;
-
 public record AmazonBedrockChatModel(
         AiModelType modelType,
         @NotNull @Valid AmazonBedrockProviderConfig providerConfig,
@@ -46,7 +44,6 @@ public record AmazonBedrockChatModel(
             @PositiveOrZero Double temperature,
             @Positive @Max(1) Double topP,
             @Positive Integer maxOutputTokens,
-            List<String> stopSequences,
             @Positive Integer timeoutSeconds,
             @PositiveOrZero Integer maxRetries
     ) implements AiChatModelConfig<AmazonBedrockChatModel.Config> {}

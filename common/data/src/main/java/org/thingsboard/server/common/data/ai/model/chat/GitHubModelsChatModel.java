@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.GitHubModelsProviderConfig;
 
-import java.util.List;
-
 public record GitHubModelsChatModel(
         AiModelType modelType,
         @NotNull @Valid GitHubModelsProviderConfig providerConfig,
@@ -48,7 +46,6 @@ public record GitHubModelsChatModel(
             Double frequencyPenalty,
             Double presencePenalty,
             @Positive Integer maxOutputTokens,
-            List<String> stopSequences,
             @Positive Integer timeoutSeconds,
             @PositiveOrZero Integer maxRetries
     ) implements AiChatModelConfig<GitHubModelsChatModel.Config> {}

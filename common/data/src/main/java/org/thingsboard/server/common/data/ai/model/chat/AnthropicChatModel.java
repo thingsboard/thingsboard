@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 
-import java.util.List;
-
 public record AnthropicChatModel(
         AiModelType modelType,
         @NotNull @Valid AnthropicProviderConfig providerConfig,
@@ -47,7 +45,6 @@ public record AnthropicChatModel(
             @Positive @Max(1) Double topP,
             @Positive Integer topK,
             @Positive Integer maxOutputTokens,
-            List<String> stopSequences,
             @Positive Integer timeoutSeconds,
             @PositiveOrZero Integer maxRetries
     ) implements AiChatModelConfig<AnthropicChatModel.Config> {}

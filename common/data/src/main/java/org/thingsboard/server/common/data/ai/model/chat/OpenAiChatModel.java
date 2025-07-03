@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 
-import java.util.List;
-
 public record OpenAiChatModel(
         AiModelType modelType,
         @NotNull @Valid OpenAiProviderConfig providerConfig,
@@ -48,7 +46,6 @@ public record OpenAiChatModel(
             Double frequencyPenalty,
             Double presencePenalty,
             @Positive Integer maxOutputTokens,
-            List<String> stopSequences,
             @Positive Integer timeoutSeconds,
             @PositiveOrZero Integer maxRetries
     ) implements AiChatModelConfig<OpenAiChatModel.Config> {}

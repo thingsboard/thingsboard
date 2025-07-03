@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 
-import java.util.List;
-
 public record GoogleVertexAiGeminiChatModel(
         AiModelType modelType,
         @NotNull @Valid GoogleVertexAiGeminiProviderConfig providerConfig,
@@ -49,7 +47,6 @@ public record GoogleVertexAiGeminiChatModel(
             Double frequencyPenalty,
             Double presencePenalty,
             @Positive Integer maxOutputTokens,
-            List<String> stopSequences,
             @Positive Integer timeoutSeconds,
             @PositiveOrZero Integer maxRetries
     ) implements AiChatModelConfig<GoogleVertexAiGeminiChatModel.Config> {}
