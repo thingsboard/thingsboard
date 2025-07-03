@@ -16,6 +16,12 @@
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
@@ -25,8 +31,8 @@ import java.util.List;
 
 public record AzureOpenAiChatModel(
         AiModelType modelType,
-        AzureOpenAiProviderConfig providerConfig,
-        @With Config modelConfig
+        @NotNull @Valid AzureOpenAiProviderConfig providerConfig,
+        @With @NotNull @Valid Config modelConfig
 ) implements AiChatModel<AzureOpenAiChatModel.Config> {
 
     @Override
@@ -36,15 +42,15 @@ public record AzureOpenAiChatModel(
 
     @With
     public record Config(
-            String modelId,
-            Double temperature,
-            Double topP,
+            @NotBlank String modelId,
+            @PositiveOrZero Double temperature,
+            @Positive @Max(1) Double topP,
             Double frequencyPenalty,
             Double presencePenalty,
-            Integer maxOutputTokens,
+            @Positive Integer maxOutputTokens,
             List<String> stopSequences,
-            Integer timeoutSeconds,
-            Integer maxRetries
+            @Positive Integer timeoutSeconds,
+            @PositiveOrZero Integer maxRetries
     ) implements AiChatModelConfig<AzureOpenAiChatModel.Config> {}
 
     @Override

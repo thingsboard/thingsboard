@@ -64,17 +64,6 @@ class AiModelSettingsDataValidator extends DataValidator<AiModelSettings> {
         if (!tenantService.tenantExists(tenantId)) {
             throw new DataValidationException("AI model settings reference a non-existent tenant!");
         }
-
-        // name validation
-        validateString("AI model settings name", settings.getName());
-        if (settings.getName().length() > 255) {
-            throw new DataValidationException("AI model settings name should be between 1 and 255 symbols!");
-        }
-
-        // model config validation
-        if (settings.getConfiguration() == null) {
-            throw new DataValidationException("AI model settings configuration should be specified!");
-        }
     }
 
 }

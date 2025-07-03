@@ -13,10 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai.provider;
+package org.thingsboard.server.dao.service;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import org.thingsboard.server.common.data.validation.NoNullChar;
 
-public record MistralAiProviderConfig(
-        @NotBlank String apiKey
-) implements AiProviderConfig {}
+public final class NoNullCharValidator implements ConstraintValidator<NoNullChar, String> {
+
+    @Override
+    public boolean isValid(String value, ConstraintValidatorContext context) {
+        return value == null || !value.contains("\u0000");
+    }
+
+}

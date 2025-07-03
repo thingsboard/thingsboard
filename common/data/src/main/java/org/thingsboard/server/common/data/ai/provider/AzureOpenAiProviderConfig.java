@@ -15,4 +15,10 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record AzureOpenAiProviderConfig(String endpoint, String serviceVersion, String apiKey) implements AiProviderConfig {}
+import jakarta.validation.constraints.NotBlank;
+
+public record AzureOpenAiProviderConfig(
+        @NotBlank String endpoint,
+        String serviceVersion,
+        @NotBlank String apiKey
+) implements AiProviderConfig {}

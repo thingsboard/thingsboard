@@ -17,7 +17,9 @@ package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +47,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
+@Validated
 @RestController
 @RequestMapping("/api/ai/model/settings")
 class AiModelSettingsController extends BaseController {
@@ -59,7 +62,7 @@ class AiModelSettingsController extends BaseController {
     )
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping
-    public AiModelSettings saveAiModelSettings(@RequestBody AiModelSettings settings) throws ThingsboardException {
+    public AiModelSettings saveAiModelSettings(@RequestBody @Valid AiModelSettings settings) throws ThingsboardException {
         var user = getCurrentUser();
         settings.setTenantId(user.getTenantId());
         checkEntity(settings.getId(), settings, Resource.AI_MODEL_SETTINGS);

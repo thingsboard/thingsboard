@@ -15,4 +15,8 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record OpenAiProviderConfig(String apiKey) implements AiProviderConfig {}
+import jakarta.validation.constraints.NotBlank;
+
+public record OpenAiProviderConfig(
+        @NotBlank String apiKey
+) implements AiProviderConfig {}

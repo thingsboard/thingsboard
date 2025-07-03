@@ -15,4 +15,8 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record GitHubModelsProviderConfig(String personalAccessToken) implements AiProviderConfig {}
+import jakarta.validation.constraints.NotBlank;
+
+public record GitHubModelsProviderConfig(
+        @NotBlank String personalAccessToken
+) implements AiProviderConfig {}

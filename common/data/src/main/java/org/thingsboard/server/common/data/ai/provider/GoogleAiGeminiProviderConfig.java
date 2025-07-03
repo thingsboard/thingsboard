@@ -15,4 +15,8 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public record GoogleAiGeminiProviderConfig(String apiKey) implements AiProviderConfig {}
+import jakarta.validation.constraints.NotBlank;
+
+public record GoogleAiGeminiProviderConfig(
+        @NotBlank String apiKey
+) implements AiProviderConfig {}

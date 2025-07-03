@@ -16,6 +16,9 @@
 package org.thingsboard.server.common.data.ai;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +30,8 @@ import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.ai.model.AiModel;
 import org.thingsboard.server.common.data.id.AiModelSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoNullChar;
 
 import java.io.Serial;
 
@@ -56,6 +61,9 @@ public final class AiModelSettings extends BaseData<AiModelSettingsId> implement
     )
     private Long version;
 
+    @NotBlank
+    @NoNullChar
+    @Length(min = 1, max = 255)
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
@@ -64,6 +72,8 @@ public final class AiModelSettings extends BaseData<AiModelSettingsId> implement
     )
     private String name;
 
+    @NotNull
+    @Valid
     @Schema(
             requiredMode = Schema.RequiredMode.NOT_REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
