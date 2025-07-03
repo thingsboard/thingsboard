@@ -732,13 +732,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return mockMvc.perform(getRequest);
     }
 
-    protected ResultActions doGetAsyncWithParam(String urlTemplate, String paramKey, String paramValue) throws Exception {
-        MockHttpServletRequestBuilder getRequest = get(urlTemplate)
-                .param(paramKey, paramValue);
-        setJwtToken(getRequest);
-        return mockMvc.perform(asyncDispatch(mockMvc.perform(getRequest).andExpect(request().asyncStarted()).andReturn()));
-    }
-
     protected ResultActions doGet(String urlTemplate, HttpHeaders httpHeaders, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
         getRequest.headers(httpHeaders);
@@ -930,15 +923,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         setJwtToken(deleteRequest);
         populateParams(deleteRequest, params);
         return mockMvc.perform(deleteRequest);
-    }
-
-    protected ResultActions doDeleteAsyncWithParam(String urlTemplate, String paramName, String paramValue) throws Exception {
-        MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate);
-        deleteRequest.param(paramName, paramValue);
-        setJwtToken(deleteRequest);
-        MvcResult result = mockMvc.perform(deleteRequest).andReturn();
-        result.getAsyncResult(DEFAULT_TIMEOUT);
-        return mockMvc.perform(asyncDispatch(result));
     }
 
     protected ResultActions doDeleteAsync(String urlTemplate, Long timeout, String... params) throws Exception {

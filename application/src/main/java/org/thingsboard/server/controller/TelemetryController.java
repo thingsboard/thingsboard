@@ -320,7 +320,7 @@ public class TelemetryController extends BaseController {
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
             @Parameter(description = STRICT_DATA_TYPES_DESCRIPTION)
-            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
+            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes, HttpServletRequest request) throws ThingsboardException {
         List<String> keys = getKeysFromRequest(request);
         DeferredResult<ResponseEntity> response = new DeferredResult<>();
         Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), keys, startTs, endTs,
