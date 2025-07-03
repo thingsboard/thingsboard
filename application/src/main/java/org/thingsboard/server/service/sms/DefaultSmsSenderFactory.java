@@ -31,16 +31,12 @@ public class DefaultSmsSenderFactory implements SmsSenderFactory {
 
     @Override
     public SmsSender createSmsSender(SmsProviderConfiguration config) {
-        switch (config.getType()) {
-            case AWS_SNS:
-                return new AwsSmsSender((AwsSnsSmsProviderConfiguration)config);
-            case TWILIO:
-                return new TwilioSmsSender((TwilioSmsProviderConfiguration)config);
-            case SMPP:
-                return new SmppSmsSender((SmppSmsProviderConfiguration) config);
-            default:
-                throw new RuntimeException("Unknown SMS provider type " + config.getType());
-        }
+        return switch (config.getType()) {
+            case AWS_SNS -> new AwsSmsSender((AwsSnsSmsProviderConfiguration) config);
+            case TWILIO -> new TwilioSmsSender((TwilioSmsProviderConfiguration) config);
+            case SMPP -> new SmppSmsSender((SmppSmsProviderConfiguration) config);
+            default -> throw new RuntimeException("Unknown SMS provider type " + config.getType());
+        };
     }
 
 }

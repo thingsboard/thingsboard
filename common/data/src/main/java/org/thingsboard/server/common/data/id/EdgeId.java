@@ -23,10 +23,12 @@ import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.ConcurrentReferenceHashMap.ReferenceType;
 import org.thingsboard.server.common.data.EntityType;
 
+import java.io.Serial;
 import java.util.UUID;
 
 public class EdgeId extends UUIDBased implements EntityId {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @JsonIgnore
@@ -51,4 +53,5 @@ public class EdgeId extends UUIDBased implements EntityId {
     public static EdgeId fromUUID(@JsonProperty("id") UUID id) {
         return edges.computeIfAbsent(id, EdgeId::new);
     }
+
 }

@@ -25,6 +25,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.springframework.mail.MailException;
@@ -50,8 +51,10 @@ public class TbMailSender extends JavaMailSenderImpl {
     private final TbMailContextComponent ctx;
     private final Lock lock;
 
+    @Getter
     private final Boolean oauth2Enabled;
     private volatile String accessToken;
+    @Getter
     private volatile long tokenExpires;
 
     public TbMailSender(TbMailContextComponent ctx, JsonNode jsonConfig) {
@@ -68,14 +71,6 @@ public class TbMailSender extends JavaMailSenderImpl {
             setPassword(jsonConfig.get("password").asText());
         }
         setJavaMailProperties(createJavaMailProperties(jsonConfig));
-    }
-
-    public Boolean getOauth2Enabled() {
-        return oauth2Enabled;
-    }
-
-    public long getTokenExpires() {
-        return tokenExpires;
     }
 
     @Override
@@ -98,8 +93,8 @@ public class TbMailSender extends JavaMailSenderImpl {
         super.testConnection();
     }
 
-    public void updateOauth2PasswordIfExpired()  {
-        if (getOauth2Enabled() && (System.currentTimeMillis() > getTokenExpires())){
+    public void updateOauth2PasswordIfExpired() {
+        if (getOauth2Enabled() && (System.currentTimeMillis() > getTokenExpires())) {
             refreshAccessToken();
             setPassword(accessToken);
         }
@@ -168,8 +163,8 @@ public class TbMailSender extends JavaMailSenderImpl {
                         .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
                         .execute();
                 if (MailOauth2Provider.OFFICE_365.name().equals(providerId)) {
-                    ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
-                    ((ObjectNode)jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
+                    ((ObjectNode) jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
+                    ((ObjectNode) jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
                     ctx.getAdminSettingsService().saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
                 }
                 accessToken = tokenResponse.getAccessToken();
@@ -190,4 +185,5 @@ public class TbMailSender extends JavaMailSenderImpl {
             throw new IncorrectParameterException(String.format("Invalid smtp port value: %s", strPort));
         }
     }
+
 }
