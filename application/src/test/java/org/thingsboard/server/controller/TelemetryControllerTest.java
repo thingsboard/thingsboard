@@ -19,6 +19,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -29,9 +33,16 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.query.EntityKeyType.TIME_SERIES;
 
@@ -193,6 +204,61 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         timeseries = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries?keys=data&startTs={startTs}&endTs={endTs}", ObjectNode.class, startTs, endTs);
 
         Assert.assertTrue(timeseries.isEmpty());
+    }
+
+    @Test
+    public void testDeleteTelemetryByKeysWithComma() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+
+        String tsKey = "key1,key2";
+        String testBody = JacksonUtil.newObjectNode()
+                .put(tsKey, "value")
+                .toString();
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", testBody, String.class, status().isOk());
+
+        ObjectNode tsData = readResponse(doGetWithEncodedQueryString("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", "keys", tsKey), ObjectNode.class);
+        assertThat(tsData.get("key1,key2").get(0).get("value").asText()).isEqualTo("value");
+
+        doDeleteWithEncodedQueryString("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/delete", "keys", tsKey, "deleteAllDataForKeys", "true");
+
+        ObjectNode tsDataAfterDeletion = readResponse(doGetWithEncodedQueryString("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", "keys", tsKey), ObjectNode.class);
+        Assert.assertTrue(tsDataAfterDeletion.get("key1,key2").get(0).get("value").isNull());
+    }
+
+    private ResultActions doGetWithEncodedQueryString(String urlTemplate, String paramKey, String paramValue) throws Exception {
+        String encodedQueryString = paramKey + "=" + URLEncoder.encode(paramValue, StandardCharsets.UTF_8);
+        MockHttpServletRequestBuilder getRequest = get(urlTemplate);
+        setJwtToken(getRequest);
+        return mockMvc.perform(asyncDispatch(mockMvc.perform(
+                getRequest.servletPath(urlTemplate)
+                        .with(request -> {
+                            request.setQueryString(encodedQueryString);
+                            return request;
+                        })
+        ).andExpect(request().asyncStarted()).andReturn()));
+    }
+
+    protected ResultActions doDeleteWithEncodedQueryString(String urlTemplate, String paramKey, String paramValue, String paramKey2, String paramValue2) throws Exception {
+        String encodedQueryString = paramKey + "=" + URLEncoder.encode(paramValue, StandardCharsets.UTF_8) +
+                "&" + paramKey2 + "=" + URLEncoder.encode(paramValue2, StandardCharsets.UTF_8);
+        MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate)
+                .servletPath(urlTemplate)
+                .param(paramKey, paramValue)
+                .param(paramKey2, paramValue2)
+                .with(request -> {
+                    request.setQueryString(encodedQueryString);
+                    return request;
+                });
+
+        setJwtToken(deleteRequest);
+
+        MvcResult result = mockMvc.perform(deleteRequest)
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        return mockMvc.perform(asyncDispatch(result));
+
     }
 
     @Test
