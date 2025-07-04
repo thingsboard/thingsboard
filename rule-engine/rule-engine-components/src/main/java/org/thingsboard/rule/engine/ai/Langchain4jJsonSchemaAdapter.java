@@ -46,7 +46,7 @@ final class Langchain4jJsonSchemaAdapter {
      * @param rootSchemaNode a valid JSON Schema as a Jackson {@link ObjectNode}
      * @return the corresponding Langchain4j {@link JsonSchema}
      */
-    public static JsonSchema fromJsonNode(ObjectNode rootSchemaNode) {
+    public static JsonSchema fromObjectNode(ObjectNode rootSchemaNode) {
         return JsonSchema.builder()
                 .name(rootSchemaNode.get("title").textValue())
                 .rootElement(parse(rootSchemaNode))

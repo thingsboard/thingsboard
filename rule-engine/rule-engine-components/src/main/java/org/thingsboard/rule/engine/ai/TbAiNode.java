@@ -84,7 +84,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         if (config.getResponseFormatType() == ResponseFormatType.JSON) {
             responseFormat = ResponseFormat.builder()
                     .type(config.getResponseFormatType())
-                    .jsonSchema(config.getJsonSchema() != null ? Langchain4jJsonSchemaAdapter.fromJsonNode(config.getJsonSchema()) : null)
+                    .jsonSchema(config.getJsonSchema() != null ? Langchain4jJsonSchemaAdapter.fromObjectNode(config.getJsonSchema()) : null)
                     .build();
         }
 
