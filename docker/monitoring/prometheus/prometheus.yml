@@ -16,14 +16,14 @@
 
 # my global config
 global:
-  scrape_interval:     15s # By default, scrape targets every 15 seconds.
+  scrape_interval: 15s # By default, scrape targets every 15 seconds.
   evaluation_interval: 15s # By default, scrape targets every 15 seconds.
   # scrape_timeout is set to the global default (10s).
 
   # Attach these labels to any time series or alerts when communicating with
   # external systems (federation, remote storage, Alertmanager).
   external_labels:
-      monitor: 'thingsboard'
+    monitor: 'thingsboard'
 
 
 # A scrape configuration containing exactly one endpoint to scrape:
@@ -34,7 +34,11 @@ scrape_configs:
   - job_name: 'prometheus'
     scrape_interval: 5s
     static_configs:
-     - targets: ['localhost:9090']
+      - targets: [ 'localhost:9090' ]
+
+  - job_name: 'kafka-exporter'
+    static_configs:
+      - targets: [ 'kafka-exporter:9308' ]
 
   - job_name: 'tb-core1'
     metrics_path: /actuator/prometheus

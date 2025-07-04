@@ -24,6 +24,15 @@ services:
       - "9092:9092"
     env_file:
       - kafka.env
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    restart: always
+    ports:
+      - "9308:9308"
+    environment:
+      KAFKA_SERVER: kafka:9092
+    depends_on:
+      - kafka
   tb-js-executor:
     env_file:
       - queue-kafka.env
