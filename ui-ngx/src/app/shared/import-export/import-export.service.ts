@@ -1188,7 +1188,7 @@ export class ImportExportService {
     this.exportJson(data, filename);
   }
 
-  private exportJson(data: any, filename: string) {
+  public exportJson(data: any, filename: string) {
     if (isObject(data)) {
       data = JSON.stringify(data, null,  2);
     }
