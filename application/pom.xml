@@ -412,6 +412,12 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-github-models</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-core-test</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 

@@ -93,6 +93,8 @@
         <netty.version>4.1.119.Final</netty.version>
         <netty-tcnative.version>2.0.65.Final</netty-tcnative.version>
         <reactor-netty.version>1.1.18</reactor-netty.version>
+        <reactive-streams.version>1.0.4</reactive-streams.version>
+        <reactor-core.version>3.6.12</reactor-core.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <rabbitmq.version>5.21.0</rabbitmq.version>
         <surefire.version>3.2.5</surefire.version>
@@ -119,7 +121,14 @@
         <snakeyaml.version>2.2</snakeyaml.version>
         <aws.sdk.version>1.12.701</aws.sdk.version>
         <pubsub.client.version>1.128.1</pubsub.client.version>
-        <google.common.protos.version>2.37.1</google.common.protos.version>
+
+        <google-auth-library.version>1.34.0</google-auth-library.version>
+        <google-http-client.version>1.46.3</google-http-client.version>
+        <google-api-common.version>2.48.0</google-api-common.version>
+        <google-api-gax.version>2.65.0</google-api-gax.version>
+        <google-proto-common.version>2.37.1</google-proto-common.version>
+        <google-proto-iam-v1.version>1.51.0</google-proto-iam-v1.version>
+
         <passay.version>1.6.4</passay.version>
         <ua-parser.version>1.6.1</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
@@ -136,6 +145,12 @@
         <snmp4j.version>3.8.0</snmp4j.version>
         <json-path.version>2.9.0</json-path.version>
         <langchain4j.version>1.1.0</langchain4j.version>
+        <error_prone_annotations.version>2.38.0</error_prone_annotations.version>
+        <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
+        <auto-value-annotations.version>1.11.0</auto-value-annotations.version>
+        <checker-qual.version>3.49.3</checker-qual.version>
+        <perfmark-api.version>0.27.0</perfmark-api.version>
+        <threetenbp.version>1.7.0</threetenbp.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.2.1</awaitility.version>
         <dbunit.version>2.7.3</dbunit.version>
@@ -1262,6 +1277,16 @@
                 <version>${reactor-netty.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.reactivestreams</groupId>
+                <artifactId>reactive-streams</artifactId>
+                <version>${reactive-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-core</artifactId>
+                <version>${reactor-core.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
                 <version>${kafka.version}</version>
@@ -2081,9 +2106,54 @@
                 <version>${pubsub.client.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.google.auth</groupId>
+                <artifactId>google-auth-library-credentials</artifactId>
+                <version>${google-auth-library.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auth</groupId>
+                <artifactId>google-auth-library-oauth2-http</artifactId>
+                <version>${google-auth-library.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.http-client</groupId>
+                <artifactId>google-http-client</artifactId>
+                <version>${google-http-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.http-client</groupId>
+                <artifactId>google-http-client-gson</artifactId>
+                <version>${google-http-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api</groupId>
+                <artifactId>api-common</artifactId>
+                <version>${google-api-common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api</groupId>
+                <artifactId>gax</artifactId>
+                <version>${google-api-gax.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api</groupId>
+                <artifactId>gax-grpc</artifactId>
+                <version>${google-api-gax.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api</groupId>
+                <artifactId>gax-httpjson</artifactId>
+                <version>${google-api-gax.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.google.api.grpc</groupId>
                 <artifactId>proto-google-common-protos</artifactId>
-                <version>${google.common.protos.version}</version>
+                <version>${google-proto-common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api.grpc</groupId>
+                <artifactId>proto-google-iam-v1</artifactId>
+                <version>${google-proto-iam-v1.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>
@@ -2336,6 +2406,36 @@
                 <groupId>org.rocksdb</groupId>
                 <artifactId>rocksdbjni</artifactId>
                 <version>${rocksdbjni.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>${error_prone_annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>animal-sniffer-annotations</artifactId>
+                <version>${animal-sniffer-annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auto.value</groupId>
+                <artifactId>auto-value-annotations</artifactId>
+                <version>${auto-value-annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker-qual</artifactId>
+                <version>${checker-qual.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.perfmark</groupId>
+                <artifactId>perfmark-api</artifactId>
+                <version>${perfmark-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.threeten</groupId>
+                <artifactId>threetenbp</artifactId>
+                <version>${threetenbp.version}</version>
             </dependency>
             <dependency>
                 <groupId>dev.langchain4j</groupId>
