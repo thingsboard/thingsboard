@@ -696,6 +696,8 @@ message ToDeviceRpcRequestMsg {
   int64 requestIdLSB = 6;
   bool oneway = 7;
   bool persisted = 8;
+  optional int32 retries = 9;
+  string additionalInfo = 10;
 }
 
 message ToDeviceRpcResponseMsg {

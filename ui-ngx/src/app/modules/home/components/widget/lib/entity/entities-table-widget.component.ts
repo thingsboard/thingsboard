@@ -275,6 +275,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public onDataUpdated() {
     this.entityDatasource.dataUpdated();
     this.clearCache();
+    this.ctx.detectChanges();
   }
 
   public onEditModeChanged() {

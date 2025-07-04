@@ -44,7 +44,7 @@
                     required
                     withModules
                     [globalVariables]="functionScopeVariables"
-                    [functionArgs]="['data', 'dsData']"
+                    [functionArgs]="['data', 'dsData', 'ctx']"
                     functionTitle="{{ (patternType === 'label' ? 'widgets.maps.data-layer.label-function' : 'widgets.maps.data-layer.tooltip-function') | translate }}"
                     [helpId]="helpId"
                     [helpPopupStyle]="{width: '900px'}">

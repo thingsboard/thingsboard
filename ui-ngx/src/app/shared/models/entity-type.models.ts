@@ -346,6 +346,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.OTA_PACKAGE,
       {
         type: 'entity.type-ota-package',
+        typePlural: 'entity.type-ota-packages',
+        list: 'entity.list-of-ota-packages',
         details: 'ota-update.ota-update-details',
         add: 'ota-update.add',
         noEntities: 'ota-update.no-packages-text',

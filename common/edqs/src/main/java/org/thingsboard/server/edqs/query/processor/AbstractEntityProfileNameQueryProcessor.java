@@ -36,7 +36,7 @@ public abstract class AbstractEntityProfileNameQueryProcessor<T extends EntityFi
     public AbstractEntityProfileNameQueryProcessor(TenantRepo repo, QueryContext ctx, EdqsQuery query, T filter, EntityType entityType) {
         super(repo, ctx, query, filter, entityType);
         entityProfileNames = new HashSet<>(getProfileNames(this.filter));
-        pattern = RepositoryUtils.toSqlLikePattern(getEntityNameFilter(filter));
+        pattern = RepositoryUtils.toEntityNameSqlLikePattern(getEntityNameFilter(filter));
     }
 
     protected abstract String getEntityNameFilter(T filter);

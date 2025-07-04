@@ -73,22 +73,6 @@ CREATE INDEX IF NOT EXISTS idx_edge_event_id ON edge_event(id);
 
 CREATE INDEX IF NOT EXISTS idx_rpc_tenant_id_device_id ON rpc(tenant_id, device_id);
 
-CREATE INDEX IF NOT EXISTS idx_device_external_id ON device(tenant_id, external_id);
-
-CREATE INDEX IF NOT EXISTS idx_device_profile_external_id ON device_profile(tenant_id, external_id);
-
-CREATE INDEX IF NOT EXISTS idx_asset_external_id ON asset(tenant_id, external_id);
-
-CREATE INDEX IF NOT EXISTS idx_entity_view_external_id ON entity_view(tenant_id, external_id);
-
-CREATE INDEX IF NOT EXISTS idx_rule_chain_external_id ON rule_chain(tenant_id, external_id);
-
-CREATE INDEX IF NOT EXISTS idx_dashboard_external_id ON dashboard(tenant_id, external_id);
-
-CREATE INDEX IF NOT EXISTS idx_customer_external_id ON customer(tenant_id, external_id);
-
-CREATE INDEX IF NOT EXISTS idx_widgets_bundle_external_id ON widgets_bundle(tenant_id, external_id);
-
 CREATE INDEX IF NOT EXISTS idx_rule_node_external_id ON rule_node(rule_chain_id, external_id);
 
 CREATE INDEX IF NOT EXISTS idx_rule_node_type_id_configuration_version ON rule_node(type, id, configuration_version);

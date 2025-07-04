@@ -323,7 +323,7 @@ cassandra:
     poll_ms: "${CASSANDRA_QUERY_POLL_MS:50}"
     # Interval in milliseconds for printing Cassandra query queue statistic
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
-    # set all data type values except target to null for the same ts on save
+    # When saving a value, set other data types to null (to avoid having multiple telemetry values with the same timestamp).
     set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:true}"
     # log one of cassandra queries with specified frequency (0 - logging is disabled)
     print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
@@ -346,6 +346,7 @@ sql:
     stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}" # Interval in milliseconds for printing timeseries insert statistic
     batch_threads: "${SQL_TS_BATCH_THREADS:3}" # batch thread count has to be a prime number like 3 or 5 to gain perfect hash distribution
     value_no_xss_validation: "${SQL_TS_VALUE_NO_XSS_VALIDATION:false}" # If true telemetry values will be checked for XSS vulnerability
+    callback_thread_pool_size: "${SQL_TS_CALLBACK_THREAD_POOL_SIZE:12}" # Thread pool size for telemetry callback executor
   ts_latest:
     batch_size: "${SQL_TS_LATEST_BATCH_SIZE:1000}" # Batch size for persisting latest telemetry updates
     batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:50}" # Maximum timeout for latest telemetry entries queue polling. The value set in milliseconds
@@ -898,6 +899,8 @@ state:
   # Used only when state.persistToTelemetry is set to 'true' and Cassandra is used for timeseries data.
   # 0 means time-to-live mechanism is disabled.
   telemetryTtl: "${STATE_TELEMETRY_TTL:0}"
+  # Number of device records to fetch per batch when initializing device activity states
+  initFetchPackSize: "${TB_DEVICE_STATE_INIT_FETCH_PACK_SIZE:50000}"
   # Configuration properties for rule nodes related to device activity state
   rule:
     node:
@@ -1658,7 +1661,7 @@ queue:
       # Kafka properties for Notifications topics
       notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for JS Executor topics
-      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:86400000;segment.bytes:52428800;retention.bytes:104857600;partitions:30;min.insync.replicas:1}"
       # Kafka properties for OTA updates topic
       ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Version Control topic
