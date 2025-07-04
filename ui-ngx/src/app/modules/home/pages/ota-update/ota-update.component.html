@@ -63,7 +63,7 @@
 </div>
 <div class="mat-padding flex flex-col gap-2">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit" class="flex flex-col">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" class="flex flex-col min-w-full">
       <div class="flex flex-row xs:flex-col gt-xs:gap-2">
         <mat-form-field class="mat-block flex-full gt-xs:max-w-45%">
           <mat-label translate>ota-update.title</mat-label>
