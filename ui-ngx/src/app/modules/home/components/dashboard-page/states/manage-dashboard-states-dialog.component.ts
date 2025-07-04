@@ -261,11 +261,16 @@ export class ManageDashboardStatesDialogComponent
     const originalState = state;
     const newStateName = this.getNextDuplicatedName(state.name);
     if (newStateName) {
+      const newStateId = newStateName.toLowerCase().replace(/\W/g, '_');
+      if (this.states[newStateId]) {
+        this.stateNames.add(newStateName);
+        this.duplicateState(null, state);
+      }
       const duplicatedStates = deepClone(originalState);
       const duplicatedWidgets = deepClone(this.widgets);
       const mainWidgets = {};
       const rightWidgets = {};
-      duplicatedStates.id = newStateName.toLowerCase().replace(/\W/g, '_');
+      duplicatedStates.id = newStateId;
       duplicatedStates.name = newStateName;
       duplicatedStates.root = false;
       this.stateNames.add(duplicatedStates.name);
