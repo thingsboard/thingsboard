@@ -20,7 +20,7 @@ import com.github.os72.protobuf.dynamic.DynamicSchema;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.squareup.wire.schema.internal.parser.ProtoFileElement;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
@@ -28,7 +28,6 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.DynamicProtoUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
@@ -173,10 +172,10 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         }, DEVICE_RESPONSE, MediaTypeRegistry.APPLICATION_JSON);
     }
 
-    protected void processOnLoadProtoResponse(CoapResponse response, CoapTestClient client) {
+    protected void processOnLoadProtoResponse(CoapResponse response, CoapTestClient client) throws Exception {
         ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = getProtoTransportPayloadConfiguration();
-        ProtoFileElement rpcRequestProtoFileElement = DynamicProtoUtils.getProtoFileElement(protoTransportPayloadConfiguration.getDeviceRpcRequestProtoSchema());
-        DynamicSchema rpcRequestProtoSchema = DynamicProtoUtils.getDynamicSchema(rpcRequestProtoFileElement, ProtoTransportPayloadConfiguration.RPC_REQUEST_PROTO_SCHEMA);
+        String schema = protoTransportPayloadConfiguration.getDeviceRpcRequestProtoSchema();
+        DynamicSchema rpcRequestProtoSchema = DynamicSchema.parseFromProtoString(schema, ProtoTransportPayloadConfiguration.RPC_REQUEST_PROTO_SCHEMA);
 
         byte[] requestPayload = response.getPayload();
         DynamicMessage.Builder rpcRequestMsg = rpcRequestProtoSchema.newMessageBuilder("RpcRequestMsg");
@@ -185,8 +184,8 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
             DynamicMessage dynamicMessage = DynamicMessage.parseFrom(rpcRequestMsgDescriptor, requestPayload);
             Descriptors.FieldDescriptor requestIdDescriptor = rpcRequestMsgDescriptor.findFieldByName("requestId");
             int requestId = (int) dynamicMessage.getField(requestIdDescriptor);
-            ProtoFileElement rpcResponseProtoSchemaFile = DynamicProtoUtils.getProtoFileElement(protoTransportPayloadConfiguration.getDeviceRpcResponseProtoSchema());
-            DynamicSchema rpcResponseProtoSchema = DynamicProtoUtils.getDynamicSchema(rpcResponseProtoSchemaFile, ProtoTransportPayloadConfiguration.RPC_RESPONSE_PROTO_SCHEMA);
+            schema = protoTransportPayloadConfiguration.getDeviceRpcResponseProtoSchema();
+            DynamicSchema rpcResponseProtoSchema = DynamicSchema.parseFromProtoString(schema, ProtoTransportPayloadConfiguration.RPC_RESPONSE_PROTO_SCHEMA);
             DynamicMessage.Builder rpcResponseBuilder = rpcResponseProtoSchema.newMessageBuilder("RpcResponseMsg");
             Descriptors.Descriptor rpcResponseMsgDescriptor = rpcResponseBuilder.getDescriptorForType();
             DynamicMessage rpcResponseMsg = rpcResponseBuilder
@@ -248,6 +247,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         }
 
         @Override
+        @SneakyThrows
         public void onLoad(CoapResponse response) {
             payloadBytes = response.getPayload();
             responseCode = response.getCode();

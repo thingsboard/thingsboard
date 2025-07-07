@@ -125,8 +125,7 @@
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-collections.version>4.4</commons-collections.version>
         <micrometer.version>1.12.12</micrometer.version>
-        <protobuf-dynamic.version>1.0.4TB</protobuf-dynamic.version>
-        <wire-schema.version>3.7.1</wire-schema.version>
+        <protobuf-dynamic.version>1.0.5TB</protobuf-dynamic.version>
         <twilio.version>10.1.3</twilio.version>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <hypersistence-utils.version>3.7.4</hypersistence-utils.version> <!-- artifact name should be updated with hibernate-core version -->
@@ -2129,11 +2128,6 @@
                 <groupId>org.thingsboard</groupId>
                 <artifactId>protobuf-dynamic</artifactId>
                 <version>${protobuf-dynamic.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.wire</groupId>
-                <artifactId>wire-schema</artifactId>
-                <version>${wire-schema.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.twilio.sdk</groupId>
