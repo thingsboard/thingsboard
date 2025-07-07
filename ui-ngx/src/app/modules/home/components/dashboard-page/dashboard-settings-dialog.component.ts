@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, OnDestroy, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -33,7 +33,7 @@ import {
   viewFormatTypes,
   viewFormatTypeTranslationMap
 } from '@app/shared/models/dashboard.models';
-import { isDefined, isUndefined } from '@core/utils';
+import { deepClean, deepTrim, isDefined, isUndefined } from '@core/utils';
 import { StatesControllerService } from './states/states-controller.service';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { merge, Subject } from 'rxjs';
@@ -295,10 +295,10 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
     let settings: DashboardSettings = null;
     let gridSettings: GridSettings = null;
     if (this.settings) {
-      settings = {...this.settings, ...this.settingsFormGroup.getRawValue()};
+      settings = deepClean(deepTrim({...this.settings, ...this.settingsFormGroup.getRawValue()}));
     }
     if (this.gridSettings) {
-      gridSettings = {...this.gridSettings, ...this.gridSettingsFormGroup.getRawValue()};
+      gridSettings = deepClean(deepTrim({...this.gridSettings, ...this.gridSettingsFormGroup.getRawValue()}));
     }
     this.dialogRef.close({settings, gridSettings});
   }
