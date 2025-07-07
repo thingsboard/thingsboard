@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoNullChar;
 import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.common.data.validation.RateLimit;
+import org.thingsboard.server.common.data.validation.ValidJsonSchema;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.Collection;
@@ -107,6 +108,7 @@ public class ConstraintValidator {
         constraintMapping.constraintDefinition(Length.class).validatedBy(StringLengthValidator.class);
         constraintMapping.constraintDefinition(RateLimit.class).validatedBy(RateLimitValidator.class);
         constraintMapping.constraintDefinition(NoNullChar.class).validatedBy(NoNullCharValidator.class);
+        constraintMapping.constraintDefinition(ValidJsonSchema.class).validatedBy(JsonSchemaValidator.class);
         return constraintMapping;
     }
 

@@ -23,7 +23,6 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
-import dev.langchain4j.model.chat.request.ResponseFormatType;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.common.util.JacksonUtil;
@@ -81,11 +80,8 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         }
 
         // LC4j AnthropicChatModel rejects requests with non-null ResponseFormat even if ResponseFormatType is TEXT
-        if (config.getResponseFormatType() == ResponseFormatType.JSON) {
-            responseFormat = ResponseFormat.builder()
-                    .type(config.getResponseFormatType())
-                    .jsonSchema(config.getJsonSchema() != null ? Langchain4jJsonSchemaAdapter.fromObjectNode(config.getJsonSchema()) : null)
-                    .build();
+        if (config.getResponseFormat().type() == TbResponseFormat.TbResponseFormatType.JSON) {
+            responseFormat = config.getResponseFormat().toLangChainResponseFormat();
         }
 
         systemPrompt = config.getSystemPrompt();

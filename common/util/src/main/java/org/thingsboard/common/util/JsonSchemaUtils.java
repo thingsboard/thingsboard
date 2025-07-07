@@ -15,7 +15,7 @@
  */
 package org.thingsboard.common.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SchemaId;
 import com.networknt.schema.SchemaLocation;
@@ -26,17 +26,15 @@ import java.util.Set;
 
 public final class JsonSchemaUtils {
 
-    private JsonSchemaUtils() {
-        throw new AssertionError("Can't instantiate utility class");
-    }
+    private JsonSchemaUtils() {}
 
     /**
-     * Validates that the provided JsonNode is a valid JSON Schema (Draft 2020-12).
+     * Validates that the provided ObjectNode is a valid JSON Schema (Draft 2020-12).
      *
-     * @param schemaNode the JSON Schema document as a JsonNode
+     * @param schemaNode the JSON Schema document as an ObjectNode
      * @return true if the schema is well-formed, false otherwise
      */
-    public static boolean isValidJsonSchema(JsonNode schemaNode) {
+    public static boolean isValidJsonSchema(ObjectNode schemaNode) {
         Set<ValidationMessage> errors = JsonSchemaFactory
                 .getInstance(SpecVersion.VersionFlag.V202012)
                 .getSchema(SchemaLocation.of(SchemaId.V202012))
