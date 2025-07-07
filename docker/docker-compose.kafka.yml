@@ -25,7 +25,7 @@ services:
     env_file:
       - kafka.env
   kafka-exporter:
-    image: danielqsj/kafka-exporter:latest
+    image: danielqsj/kafka-exporter:v1.9.0
     restart: always
     ports:
       - "9308:9308"
