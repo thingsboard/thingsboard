@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.script.api.ScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-
 
 @Slf4j
 public abstract class RuleNodeScriptEngine<T extends ScriptInvokeService, R> implements ScriptEngine {
@@ -51,7 +51,10 @@ public abstract class RuleNodeScriptEngine<T extends ScriptInvokeService, R> imp
             if (e instanceof ExecutionException) {
                 t = e.getCause();
             }
-            throw new IllegalArgumentException("Can't compile script: " + t.getMessage(), t);
+            if (t instanceof TbScriptException scriptException) {
+                throw scriptException;
+            }
+            throw new RuntimeException("Unexpected error when creating script engine: " + t.getMessage(), t);
         }
     }
 
@@ -80,7 +83,6 @@ public abstract class RuleNodeScriptEngine<T extends ScriptInvokeService, R> imp
     public ListenableFuture<String> executeToStringAsync(TbMsg msg) {
         return Futures.transformAsync(executeScriptAsync(msg), this::executeToStringTransform, MoreExecutors.directExecutor());
     }
-
 
     @Override
     public ListenableFuture<Boolean> executeFilterAsync(TbMsg msg) {
