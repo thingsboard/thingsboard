@@ -19,7 +19,7 @@
 ALTER TABLE ota_package
     ADD COLUMN IF NOT EXISTS external_id uuid;
 ALTER TABLE ota_package
-    ADD CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id);
+    ADD CONSTRAINT IF NOT EXISTS ota_package_external_id_unq_key UNIQUE (tenant_id, external_id);
 
 -- UPDATE OTA PACKAGE EXTERNAL ID END
 
