@@ -18,8 +18,16 @@
 
 ALTER TABLE ota_package
     ADD COLUMN IF NOT EXISTS external_id uuid;
-ALTER TABLE ota_package
-    ADD CONSTRAINT IF NOT EXISTS ota_package_external_id_unq_key UNIQUE (tenant_id, external_id);
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'ota_package_external_id_unq_key') THEN
+            ALTER TABLE ota_package
+                ADD CONSTRAINT ota_package_external_id_unq_key (tenant_id, external_id);
+        END IF;
+    END;
+$$;
 
 -- UPDATE OTA PACKAGE EXTERNAL ID END
 
