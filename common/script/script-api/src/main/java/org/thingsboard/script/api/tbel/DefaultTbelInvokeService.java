@@ -27,6 +27,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.mvel2.CompileException;
 import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
@@ -52,11 +53,11 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -66,9 +67,9 @@ import java.util.concurrent.locks.ReentrantLock;
 @Service
 public class DefaultTbelInvokeService extends AbstractScriptInvokeService implements TbelInvokeService {
 
-    protected final Map<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
-    protected final Map<String, TbelScript> scriptMap = new ConcurrentHashMap<>();
-    protected Cache<String, Serializable> compiledScriptsCache;
+    private final ConcurrentMap<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TbelScript> scriptMap = new ConcurrentHashMap<>();
+    private Cache<String, Serializable> compiledScriptsCache;
 
     private SandboxedParserConfiguration parserConfig;
     private final Optional<TbApiUsageStateClient> apiUsageStateClient;
@@ -204,8 +205,10 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
                     lock.unlock();
                 }
                 return scriptId;
-            } catch (Exception e) {
+            } catch (CompileException e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
+            } catch (Exception e) {
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, scriptBody, e);
             }
         });
     }
@@ -246,7 +249,7 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         }
     }
 
-    private Serializable compileScript(String scriptBody) {
+    private static Serializable compileScript(String scriptBody) throws CompileException {
         return MVEL.compileExpression(scriptBody, new ParserContext());
     }
 
@@ -269,4 +272,5 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     protected StatsType getStatsType() {
         return StatsType.TBEL_INVOKE;
     }
+
 }

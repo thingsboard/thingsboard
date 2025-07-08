@@ -20,10 +20,12 @@ import com.github.benmanes.caffeine.cache.Cache;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
+import org.mvel2.CompileException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.script.api.tbel.TbelScript;
 
 import java.io.Serializable;
@@ -37,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 @TestPropertySource(properties = {
         "tbel.max_script_body_size=100",
@@ -49,6 +52,25 @@ class TbelInvokeServiceTest extends AbstractTbelInvokeTest {
 
     @Value("${tbel.max_errors}")
     private int maxJsErrors;
+
+    @Test
+    void givenUncompilableScript_whenEvaluating_thenThrowsErrorWithCompilationErrorCode() {
+        // GIVEN
+        var uncompilableScript = "return msg.property !== undefined;";
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> evalScript(uncompilableScript))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getScriptId()).isNotNull();
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.COMPILATION);
+                    assertThat(ex.getBody()).isEqualTo(uncompilableScript);
+                    assertThat(ex.getCause()).isInstanceOf(CompileException.class);
+                });
+    }
 
     @Test
     void givenSimpleScriptTestPerformance() throws ExecutionException, InterruptedException {

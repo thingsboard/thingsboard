@@ -25,11 +25,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.script.api.ScriptType;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.script.api.js.NashornJsInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +41,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
@@ -58,6 +61,25 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
 
     @Value("${js.local.max_errors}")
     private int maxJsErrors;
+
+    @Test
+    void givenUncompilableScript_whenEvaluating_thenThrowsErrorWithCompilationErrorCode() {
+        // GIVEN
+        var uncompilableScript = "return msg.temperature?.value;";
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> evalScript(uncompilableScript))
+                .isInstanceOf(ExecutionException.class)
+                .cause()
+                .isInstanceOf(TbScriptException.class)
+                .asInstanceOf(type(TbScriptException.class))
+                .satisfies(ex -> {
+                    assertThat(ex.getScriptId()).isNotNull();
+                    assertThat(ex.getErrorCode()).isEqualTo(TbScriptException.ErrorCode.COMPILATION);
+                    assertThat(ex.getBody()).contains(uncompilableScript);
+                    assertThat(ex.getCause()).isInstanceOf(ScriptException.class);
+                });
+    }
 
     @Test
     void givenSimpleScriptTestPerformance() throws ExecutionException, InterruptedException {
