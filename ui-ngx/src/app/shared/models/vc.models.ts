@@ -35,14 +35,16 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.TB_RESOURCE,
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
-  EntityType.NOTIFICATION_RULE
+  EntityType.NOTIFICATION_RULE,
+  EntityType.AI_MODEL_SETTINGS
 ];
 
 export const entityTypesWithoutRelatedData: Set<EntityType | AliasEntityType> = new Set([
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
   EntityType.NOTIFICATION_RULE,
-  EntityType.TB_RESOURCE
+  EntityType.TB_RESOURCE,
+  EntityType.AI_MODEL_SETTINGS
 ]);
 
 export interface VersionCreateConfig {

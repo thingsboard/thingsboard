@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { HasTenantId } from '@shared/models/entity.models';
 import { AiModelId } from '@shared/models/id/ai-model-id';
 
-export interface AiModel extends Omit<BaseData<AiModelId>, 'label'>, HasTenantId {
+export interface AiModel extends Omit<BaseData<AiModelId>, 'label'>, HasTenantId, ExportableEntity<AiModelId> {
   modelType: string;
   configuration: {
     provider: AiProvider
