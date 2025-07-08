@@ -19,8 +19,10 @@
   padding: 8px;
   background-color: #fff;
 
-  .tb-custom-action-editor-container {
-    border: none;
+  .css-panel, .html-panel{
+    border-color: #c0c0c0;
+    border-width: 0 1px 1px 1px;
+    border-style: solid;
   }
 
   .tb-js-func-toolbar{
@@ -35,8 +37,7 @@
     }
 
     .tb-js-func-panel {
-      border: none;
-      border-top: 1px solid #c0c0c0;
+      border: 1px solid #c0c0c0;
     }
   }
 
@@ -72,7 +73,7 @@
       padding: 8px 0 25px;
     }
 
-    .tb-custom-action-editor-container {
+    .css-panel, .html-panel{
       border: none;
       border-bottom: 1px solid #c0c0c0;
     }
