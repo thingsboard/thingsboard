@@ -819,4 +819,34 @@
       }
     }
   }
+
+  .tb-form-panel.outlined {
+    --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
+    --mdc-outlined-text-field-container-shape: 6px;
+
+    box-shadow: none;
+    gap: 0;
+    padding-bottom: 0;
+
+    &:not(.stroked) {
+      border-radius: 0;
+    }
+
+    &:not(.mat-padding,.padding) {
+      padding: 0;
+    }
+
+    .tb-form-panel-title {
+      margin-bottom: 16px;
+    }
+
+    .tb-form-row {
+      height: 56px;
+      margin-bottom: 22px;
+      &.disabled {
+        border-color: var(--mdc-outlined-text-field-disabled-outline-color);
+        color: var(--mdc-outlined-text-field-disabled-input-text-color);
+      }
+    }
+  }
 }

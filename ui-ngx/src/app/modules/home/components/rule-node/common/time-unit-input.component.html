@@ -16,29 +16,72 @@
 
 -->
 <section [formGroup]="timeInputForm" class="flex gap-4">
-  <mat-form-field class="max-w-66% flex-full" subscriptSizing="dynamic">
-    <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
-    <input type="number" min="0" step="1" matInput formControlName="time">
-    <div matSuffix>
-      <ng-content select="[matSuffix]"></ng-content>
+  @if (outlined) {
+    <div class="tb-form-row space-between flex-1 columns-xs">
+      <div translate tb-hint-tooltip-icon="{{labelIconHintTooltipText}}">{{ labelText }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="time" type="number" min="0" step="1"
+                 placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="requiredText"
+                    *ngIf="timeInputForm.get('time').hasError('required') && requiredText"
+                    class="tb-error">
+            warning
+          </mat-icon>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="minErrorText"
+                    *ngIf="timeInputForm.get('time').hasError('min') && minErrorText"
+                    class="tb-error">
+            warning
+          </mat-icon>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="maxErrorText"
+                    *ngIf="timeInputForm.get('time').hasError('max') && maxErrorText"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="timeUnit">
+              @for (timeUnit of timeUnits; track timeUnit) {
+                <mat-option [value]="timeUnit">{{ timeUnitTranslations.get(timeUnit) | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+      </div>
     </div>
-    <mat-hint *ngIf="subscriptSizing === 'fixed'"></mat-hint>
-    <mat-error *ngIf="timeInputForm.get('time').hasError('required') && requiredText">
-      {{ requiredText }}
-    </mat-error>
-    <mat-error *ngIf="timeInputForm.get('time').hasError('min') && minErrorText">
-      {{ minErrorText }}
-    </mat-error>
-    <mat-error *ngIf="timeInputForm.get('time').hasError('max') && maxErrorText">
-      {{ maxErrorText }}
-    </mat-error>
-  </mat-form-field>
-  <mat-form-field class="h-fit max-w-33% flex-full" [subscriptSizing]="subscriptSizing">
-    <mat-label translate>rule-node-config.units</mat-label>
-    <mat-select formControlName="timeUnit">
-      @for (timeUnit of timeUnits; track timeUnit) {
-        <mat-option [value]="timeUnit">{{ timeUnitTranslations.get(timeUnit) | translate }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
+  } @else {
+    <mat-form-field class="max-w-66% flex-full" subscriptSizing="dynamic">
+      <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
+      <input type="number" min="0" step="1" matInput formControlName="time">
+      <div matSuffix>
+        <ng-content select="[matSuffix]"></ng-content>
+      </div>
+      <mat-hint *ngIf="subscriptSizing === 'fixed'"></mat-hint>
+      <mat-error *ngIf="timeInputForm.get('time').hasError('required') && requiredText">
+        {{ requiredText }}
+      </mat-error>
+      <mat-error *ngIf="timeInputForm.get('time').hasError('min') && minErrorText">
+        {{ minErrorText }}
+      </mat-error>
+      <mat-error *ngIf="timeInputForm.get('time').hasError('max') && maxErrorText">
+        {{ maxErrorText }}
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field class="h-fit max-w-33% flex-full" [subscriptSizing]="subscriptSizing">
+      <mat-label translate>rule-node-config.units</mat-label>
+      <mat-select formControlName="timeUnit">
+        @for (timeUnit of timeUnits; track timeUnit) {
+          <mat-option [value]="timeUnit">{{ timeUnitTranslations.get(timeUnit) | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
 </section>

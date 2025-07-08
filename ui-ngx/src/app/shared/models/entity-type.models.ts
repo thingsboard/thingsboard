@@ -496,8 +496,13 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
     [
       EntityType.AI_MODEL_SETTINGS,
       {
-        type: 'entity.type-ai-model-settings',
-        typePlural: 'entity.type-ai-model-settings'
+        type: 'entity.type-ai-model',
+        typePlural: 'entity.type-ai-models',
+        list: 'ai-models.list',
+        add: 'ai-models.add',
+        noEntities: 'ai-models.no-found',
+        search: 'action.search',
+        selectedEntities: 'ai-models.selected-fields'
       }
     ]
   ]
@@ -630,6 +635,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.MOBILE_APP_BUNDLE,
       {
         helpLinkId: 'mobileBundle'
+      }
+    ],
+    [
+      EntityType.AI_MODEL_SETTINGS,
+      {
+        helpLinkId: 'aiModels'
       }
     ]
   ]

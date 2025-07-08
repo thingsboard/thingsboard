@@ -56,6 +56,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   labelText: string;
 
   @Input()
+  labelIconHintTooltipText: string;
+
+  @Input()
   @coerceBoolean()
   required: boolean;
 
@@ -78,6 +81,14 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  @coerceBoolean()
+  filterTimeUnitsByMaxTime = false;
+
+  @Input()
+  @coerceBoolean()
+  outlined = false;
 
   timeUnits = Object.values(TimeUnit).filter(item => item !== TimeUnit.MILLISECONDS) as TimeUnit[];
 
@@ -104,6 +115,15 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   }
 
   ngOnInit() {
+    if (this.filterTimeUnitsByMaxTime && this.maxTime) {
+      if (this.maxTime < 60) {
+        this.timeUnits = this.timeUnits.filter(item => item !== TimeUnit.MINUTES && item !== TimeUnit.HOURS && item !== TimeUnit.DAYS);
+      } else if (this.maxTime < 3600) {
+        this.timeUnits = this.timeUnits.filter(item => item !== TimeUnit.HOURS && item !== TimeUnit.DAYS);
+      } else if (this.maxTime < 86400) {
+        this.timeUnits = this.timeUnits.filter(item => item !== TimeUnit.DAYS);
+      }
+    }
     if(this.required || this.maxTime) {
       const timeControl = this.timeInputForm.get('time');
       const validators = [Validators.pattern(/^\d*$/)];

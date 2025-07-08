@@ -336,6 +336,9 @@ import * as DatapointsLimitComponent from '@shared/components/time/datapoints-li
 import * as AggregationTypeSelectComponent from '@shared/components/time/aggregation/aggregation-type-select.component';
 import * as AggregationOptionsConfigComponent from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
 import * as IntervalOptionsConfigPanelComponent from '@shared/components/time/interval-options-config-panel.component';
+import * as AIModelDialogComponent from '@shared/components/ai-model/ai-model-dialog.component';
+import * as CheckConnectivityDialogComponent from '@shared/components/ai-model/check-connectivity-dialog.component';
+import * as ModelsListAutocompleteComponent from '@shared/components/ai-model/models-list-autocomplete.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { Observable, of } from 'rxjs';
@@ -532,6 +535,9 @@ class ModulesMap implements IModulesMap {
     '@shared/components/image/gallery-image-input.component': GalleryImageInputComponent,
     '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
     '@shared/components/popover.service': TbPopoverService,
+    '@shared/components/ai-model/ai-model-dialog.component': AIModelDialogComponent,
+    '@shared/components/ai-model/check-connectivity-dialog.component': CheckConnectivityDialogComponent,
+    '@shared/components/ai-model/models-list-autocomplete.component': ModelsListAutocompleteComponent,
 
 
     '@home/components/alarm/alarm-filter-config.component': AlarmFilterConfigComponent,
