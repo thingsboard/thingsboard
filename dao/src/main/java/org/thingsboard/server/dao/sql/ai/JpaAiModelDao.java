@@ -89,7 +89,7 @@ class JpaAiModelDao extends JpaAbstractDao<AiModelEntity, AiModel> implements Ai
             sort = JpaSort.unsafe(
                     Sort.Direction.fromString(sortOrder.getDirection().name()),
                     AiModelEntity.COLUMN_MAP.getOrDefault(sortOrder.getProperty(), sortOrder.getProperty())
-            );
+            ).and(Sort.by(Sort.Direction.ASC, "id"));
         }
         return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), sort);
     }
