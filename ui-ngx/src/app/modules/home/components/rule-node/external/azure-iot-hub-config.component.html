@@ -38,7 +38,9 @@
       {{ 'rule-node-config.device-id-required' | translate }}
     </mat-error>
   </mat-form-field>
-  <tb-mqtt-version-select formControlName="protocolVersion" subscriptSizing="fixed"></tb-mqtt-version-select>
+  <tb-mqtt-version-select formControlName="protocolVersion" subscriptSizing="fixed"
+                          [excludeVersions]="[MqttVersion.MQTT_3_1, MqttVersion.MQTT_5]">
+  </tb-mqtt-version-select>
   <mat-accordion>
     <mat-expansion-panel class="tb-mqtt-credentials-panel-group">
       <mat-expansion-panel-header>

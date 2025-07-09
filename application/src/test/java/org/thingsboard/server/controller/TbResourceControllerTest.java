@@ -203,6 +203,60 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindSystemResourceInfoById() throws Exception {
+        loginSysAdmin();
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setTitle("My system resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
+        resource.setEncodedData(TEST_DATA);
+        TbResourceInfo savedResourceInfo = save(resource);
+        assertThat(savedResourceInfo.getFileName()).isEqualTo(DEFAULT_FILE_NAME);
+
+        TbResourceInfo resourceInfo = findResourceInfo(savedResourceInfo.getId());
+        assertThat(resourceInfo).isEqualTo(savedResourceInfo);
+        loginTenantAdmin();
+        resourceInfo = findResourceInfo(savedResourceInfo.getId());
+        assertThat(resourceInfo).isEqualTo(savedResourceInfo);
+
+        loginSysAdmin();
+        resource = new TbResource(savedResourceInfo);
+        resource.setFileName(DEFAULT_FILE_NAME_2);
+        resource.setEncodedData(TEST_DATA);
+        savedResourceInfo = save(resource);
+        assertThat(savedResourceInfo.getFileName()).isEqualTo(DEFAULT_FILE_NAME_2);
+
+        resourceInfo = findResourceInfo(savedResourceInfo.getId());
+        assertThat(resourceInfo).isEqualTo(savedResourceInfo);
+        loginTenantAdmin();
+        resourceInfo = findResourceInfo(savedResourceInfo.getId());
+        assertThat(resourceInfo).isEqualTo(savedResourceInfo);
+    }
+
+    @Test
+    public void testFindTenantResourceInfoById() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setTitle("My tenant resource");
+        resource.setFileName(DEFAULT_FILE_NAME);
+        resource.setEncodedData(TEST_DATA);
+        TbResourceInfo savedResourceInfo = save(resource);
+        assertThat(savedResourceInfo.getFileName()).isEqualTo(DEFAULT_FILE_NAME);
+
+        TbResourceInfo resourceInfo = findResourceInfo(savedResourceInfo.getId());
+        assertThat(resourceInfo).isEqualTo(savedResourceInfo);
+
+        resource = new TbResource(savedResourceInfo);
+        resource.setFileName(DEFAULT_FILE_NAME_2);
+        resource.setEncodedData(TEST_DATA);
+        savedResourceInfo = save(resource);
+        assertThat(savedResourceInfo.getFileName()).isEqualTo(DEFAULT_FILE_NAME_2);
+
+        resourceInfo = findResourceInfo(savedResourceInfo.getId());
+        assertThat(resourceInfo).isEqualTo(savedResourceInfo);
+    }
+
+    @Test
     public void testDeleteTbResource() throws Exception {
         TbResource resource = new TbResource();
         resource.setResourceType(ResourceType.JKS);
@@ -876,6 +930,10 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     private TbResourceInfo save(TbResource tbResource) throws Exception {
         return doPostWithTypedResponse("/api/resource", tbResource, new TypeReference<>() {
         });
+    }
+
+    private TbResourceInfo findResourceInfo(TbResourceId id) throws Exception {
+        return doGet("/api/resource/info/" + id, TbResourceInfo.class);
     }
 
     private byte[] download(TbResourceId resourceId) throws Exception {

@@ -34,6 +34,8 @@ public class DeviceProfileExportService extends BaseEntityExportService<DevicePr
         deviceProfile.setDefaultDashboardId(getExternalIdOrElseInternal(ctx, deviceProfile.getDefaultDashboardId()));
         deviceProfile.setDefaultRuleChainId(getExternalIdOrElseInternal(ctx, deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultEdgeRuleChainId(getExternalIdOrElseInternal(ctx, deviceProfile.getDefaultEdgeRuleChainId()));
+        deviceProfile.setFirmwareId(getExternalIdOrElseInternal(ctx, deviceProfile.getFirmwareId()));
+        deviceProfile.setSoftwareId(getExternalIdOrElseInternal(ctx, deviceProfile.getSoftwareId()));
     }
 
     @Override
