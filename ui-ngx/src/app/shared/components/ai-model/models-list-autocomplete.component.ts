@@ -99,7 +99,7 @@ export class ModelsListAutocompleteComponent implements ControlValueAccessor, On
       tap(value => this.updateView(value)),
       map(value => {
         const search = value ? value.toLowerCase() : '';
-        const options = this.provider ? AiModelMap.get(this.provider) || [] : [];
+        const options = this.provider ? AiModelMap.get(this.provider).modelList || [] : [];
         return search ? options.filter(option => option.toLowerCase().includes(search)) : options;
       })
     );
@@ -150,7 +150,7 @@ export class ModelsListAutocompleteComponent implements ControlValueAccessor, On
   }
 
   clear() {
-    this.selectionFormControl.patchValue(null, {emitEvent: false});
+    this.selectionFormControl.patchValue(null, {emitEvent: true});
     this.propagateChange(null);
     this.modelValue = null;
     setTimeout(() => {

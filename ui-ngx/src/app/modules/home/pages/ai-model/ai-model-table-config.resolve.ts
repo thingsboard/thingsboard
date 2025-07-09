@@ -79,6 +79,11 @@ export class AiModelsTableConfigResolver {
     this.config.entitiesFetchFunction = pageLink => this.aiModelService.getAiModels(pageLink);
 
     this.config.cellActionDescriptors = this.configureCellActions();
+
+    this.config.handleRowClick = ($event, model) => {
+      this.editModel(model);
+      return true;
+    };
   }
 
   resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<AiModel> {
@@ -97,11 +102,7 @@ export class AiModelsTableConfigResolver {
   }
 
   private editModel(AIModel: AiModel): void {
-    this.addModel(AIModel, false).subscribe((res) => {
-      if (res) {
-        this.config.updateData();
-      }
-    });
+    this.addModel(AIModel, false).subscribe();
   }
 
   private addModel(AIModel: AiModel, isAdd = false): Observable<AiModel> {

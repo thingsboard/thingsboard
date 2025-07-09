@@ -25,9 +25,16 @@ import { StepperOrientation } from '@angular/cdk/stepper';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AiModel, AiProvider, AiProviderTranslations, AiProviderWithApiKey } from '@shared/models/ai-model.models';
+import {
+  AiModel,
+  AiModelMap,
+  AiProvider,
+  AiProviderTranslations,
+  ModelType,
+  ProviderFieldsAllList
+} from '@shared/models/ai-model.models';
 import { AiModelService } from '@core/http/ai-model.service';
-import { CheckConnectivityDialogComponent } from '@shared/components/ai-model/check-connectivity-dialog.component';
+import { CheckConnectivityDialogComponent } from '@home/components/ai-model/check-connectivity-dialog.component';
 
 export interface AIModelDialogData {
   AIModel?: AiModel;
@@ -53,7 +60,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
   providerMap: AiProvider[] = Object.keys(AiProvider) as AiProvider[];
   providerTranslationMap = AiProviderTranslations;
 
-  aiProviderWithApiKey: AiProvider[] = AiProviderWithApiKey;
+  AiModelMap = AiModelMap;
 
   provider: AiProvider = AiProvider.OPENAI;
 
@@ -78,7 +85,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
 
     this.aiModelForms = this.fb.group({
       name: [this.data.AIModel ? this.data.AIModel.name : '', [Validators.required, Validators.maxLength(255)]],
-      modelType: ['CHAT'],
+      modelType: [ModelType.CHAT],
       configuration: this.fb.group({
         provider: [this.provider, [Validators.required]],
         providerConfig: this.fb.group({
@@ -89,11 +96,11 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
           projectId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.projectId : '', [Validators.required]],
           location: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.location : '', [Validators.required]],
           serviceAccountKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.serviceAccountKey : '', [Validators.required]],
-          serviceAccountKeyFileName: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.serviceAccountKeyFileName : '', [Validators.required]],
+          fileName: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.fileName : '', [Validators.required]],
         }),
         modelId: [this.data.AIModel ? this.data.AIModel.configuration?.modelId : '', [Validators.required]],
         temperature: [this.data.AIModel ? this.data.AIModel.configuration?.temperature : null, [Validators.min(0)]],
-        topP: this.data.AIModel ? this.data.AIModel.configuration?.topP : [null, [Validators.min(0.1), Validators.max(1)]],
+        topP: [this.data.AIModel ? this.data.AIModel.configuration?.topP : null, [Validators.min(0.1), Validators.max(1)]],
         topK: [this.data.AIModel ? this.data.AIModel.configuration?.topK : null, [Validators.min(0)]],
         frequencyPenalty: [this.data.AIModel ? this.data.AIModel.configuration?.frequencyPenalty : null],
         presencePenalty: [this.data.AIModel ? this.data.AIModel.configuration?.presencePenalty : null],
@@ -105,7 +112,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       takeUntilDestroyed()
     ).subscribe((provider: AiProvider) => {
       this.provider = provider;
-      // this.aiModelForms.get('configuration').reset({});
+      this.aiModelForms.get('configuration.modelId').reset({});
       this.aiModelForms.get('configuration.providerConfig').reset({});
       this.updateValidation(provider);
     })
@@ -114,35 +121,10 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
   }
 
   private updateValidation(provider: AiProvider) {
-    const providerConfig = this.aiModelForms.get('configuration.providerConfig');
-    if (this.aiProviderWithApiKey.includes(provider)) {
-      providerConfig.get('apiKey').enable();
-    } else {
-      providerConfig.get('apiKey').disable();
-    }
-    if (provider === AiProvider.GITHUB_MODELS) {
-      providerConfig.get('personalAccessToken').enable();
-    } else {
-      providerConfig.get('personalAccessToken').disable();
-    }
-    if (provider === AiProvider.GOOGLE_VERTEX_AI_GEMINI) {
-      providerConfig.get('projectId').enable();
-      providerConfig.get('location').enable();
-      providerConfig.get('serviceAccountKey').enable();
-      providerConfig.get('serviceAccountKeyFileName').enable();
-    } else {
-      providerConfig.get('projectId').disable();
-      providerConfig.get('location').disable();
-      providerConfig.get('serviceAccountKey').disable();
-      providerConfig.get('serviceAccountKeyFileName').disable();
-    }
-    if (provider === AiProvider.AZURE_OPENAI) {
-      providerConfig.get('endpoint').enable();
-      providerConfig.get('serviceVersion').enable();
-    } else {
-      providerConfig.get('endpoint').disable();
-      providerConfig.get('serviceVersion').disable();
-    }
+    ProviderFieldsAllList.forEach(key =>
+      this.aiModelForms.get('configuration.providerConfig')
+        .get(key)[AiModelMap.get(provider).providerFieldsList.includes(key) ? 'enable' : 'disable']()
+    )
   }
 
   cancel(): void {

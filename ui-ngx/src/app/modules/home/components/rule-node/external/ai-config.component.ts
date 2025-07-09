@@ -20,14 +20,8 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/m
 import { EntityType } from '@shared/models/entity-type.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AIModelDialogComponent, AIModelDialogData } from '@shared/components/ai-model/ai-model-dialog.component';
-import { AiModel, AiProvider } from '@shared/models/ai-model.models';
+import { AiModel, AiRuleNodeResponseFormatTypeOnlyText, ResponseFormat } from '@shared/models/ai-model.models';
 import { deepTrim } from '@core/utils';
-
-enum ResponseFormat {
-  TEXT = 'TEXT',
-  JSON = 'JSON',
-  JSON_SCHEMA = 'JSON_SCHEMA'
-}
 
 @Component({
   selector: 'tb-external-node-ai-config',
@@ -53,14 +47,14 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
 
   protected onConfigurationSet(configuration: RuleNodeConfiguration) {
     this.aiConfigForm = this.fb.group({
-      modelSettingsId: [configuration ? configuration.modelSettingsId : null, [Validators.required]],
-      systemPrompt: [configuration ? configuration.systemPrompt : '', [Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
-      userPrompt: [configuration ? configuration.userPrompt : '', [Validators.required, Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
+      modelSettingsId: [configuration?.modelSettingsId ?? null, [Validators.required]],
+      systemPrompt: [configuration?.systemPrompt ?? '', [Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
+      userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
       responseFormat: this.fb.group({
-        type: [configuration ? configuration.responseFormat.type : ResponseFormat.JSON, []],
-        schema: [configuration ? configuration.responseFormat.schema : null, []],
+        type: [configuration?.responseFormat?.type ?? ResponseFormat.JSON, []],
+        schema: [configuration?.responseFormat?.schema ?? null, [Validators.required]],
       }),
-      timeoutSeconds: [configuration ? configuration.timeoutSeconds : 60, []]
+      timeoutSeconds: [configuration?.timeoutSeconds ?? 60, []]
     });
   }
 
@@ -69,15 +63,11 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
   }
 
   protected updateValidators(emitEvent: boolean) {
-    const responseFormatType = this.aiConfigForm.get('responseFormat.type').value;
-    if (responseFormatType === ResponseFormat.JSON_SCHEMA) {
-      this.aiConfigForm.get('responseFormat.schema').setValidators([Validators.required]);
-      this.aiConfigForm.get('responseFormat.schema').enable();
+    if (this.aiConfigForm.get('responseFormat.type').value === ResponseFormat.JSON_SCHEMA) {
+      this.aiConfigForm.get('responseFormat.schema').enable({emitEvent: false});
     } else {
-      this.aiConfigForm.get('responseFormat.schema').setValidators([]);
-      this.aiConfigForm.get('responseFormat.schema').disable();
+      this.aiConfigForm.get('responseFormat.schema').disable({emitEvent: false});
     }
-    this.aiConfigForm.get('responseFormat.schema').updateValueAndValidity({emitEvent});
   }
 
   protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
@@ -86,9 +76,7 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
 
   onEntityChange($event: AiModel) {
     if ($event) {
-      if ($event.configuration.provider === AiProvider.AMAZON_BEDROCK ||
-        $event.configuration.provider === AiProvider.ANTHROPIC ||
-        $event.configuration.provider === AiProvider.GITHUB_MODELS) {
+      if (AiRuleNodeResponseFormatTypeOnlyText.includes($event.configuration.provider)) {
         this.aiConfigForm.get('responseFormat.type').patchValue(ResponseFormat.TEXT, {emitEvent: false});
         this.aiConfigForm.get('responseFormat.type').disable({emitEvent: false});
       }
@@ -97,7 +85,7 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     }
   }
 
-  createModelAi(formControl: string,) {
+  createModelAi(formControl: string) {
     this.dialog.open<AIModelDialogComponent, AIModelDialogData, AiModel>(AIModelDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],

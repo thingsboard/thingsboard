@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { AiModel, AiModelWithUserMsg } from '@shared/models/ai-model.models';
+import { AiModel, AiModelWithUserMsg, ModelType } from '@shared/models/ai-model.models';
 import { AiModelService } from '@core/http/ai-model.service';
 
 export interface AIModelDialogData {
@@ -55,7 +55,7 @@ export class CheckConnectivityDialogComponent extends DialogComponent<CheckConne
           ]
         },
         chatModelConfig: {
-          modelType: "CHAT",
+          modelType: ModelType.CHAT,
           provider: this.data.AIModel.configuration.provider,
           providerConfig: {...this.data.AIModel.configuration.providerConfig},
           modelId: this.data.AIModel.configuration.modelId,

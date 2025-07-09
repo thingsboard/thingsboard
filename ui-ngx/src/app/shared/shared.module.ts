@@ -230,7 +230,6 @@ import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
 import { AIModelDialogComponent } from '@shared/components/ai-model/ai-model-dialog.component';
 import { ModelsListAutocompleteComponent } from '@shared/components/ai-model/models-list-autocomplete.component';
-import { CheckConnectivityDialogComponent } from '@shared/components/ai-model/check-connectivity-dialog.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -448,7 +447,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MqttVersionSelectComponent,
     AIModelDialogComponent,
     ModelsListAutocompleteComponent,
-    CheckConnectivityDialogComponent,
   ],
   imports: [
     CommonModule,
@@ -715,7 +713,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MqttVersionSelectComponent,
     AIModelDialogComponent,
     ModelsListAutocompleteComponent,
-    CheckConnectivityDialogComponent,
   ]
 })
 export class SharedModule { }

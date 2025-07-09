@@ -96,19 +96,21 @@
         <mat-panel-title translate>rule-node-config.ai.advanced-settings</mat-panel-title>
       </mat-expansion-panel-header>
       <div class="tb-form-panel no-border" style="margin-top: 0">
-        <tb-time-unit-input
-          required
-          outlined
-          filterTimeUnitsByMaxTime
-          labelText="{{ 'rule-node-config.ai.timeout' | translate }}"
-          labelIconHintTooltipText="{{ 'rule-node-config.ai.timeout-hint' | translate }}"
-          requiredText="{{ 'rule-node-config.ai.timeout-required' | translate }}"
-          minErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
-          maxErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
-          [maxTime]="600"
-          [minTime]="1"
-          formControlName="timeoutSeconds">
-        </tb-time-unit-input>
+        <div class="tb-form-row space-between flex-1 columns-xs">
+          <div translate tb-hint-tooltip-icon="{{'rule-node-config.ai.timeout-hint' | translate}}">{{ 'rule-node-config.ai.timeout' | translate }}</div>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <tb-time-unit-input
+              required
+              inlineField
+              requiredText="{{ 'rule-node-config.ai.timeout-required' | translate }}"
+              minErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
+              maxErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
+              [maxTime]="600"
+              [minTime]="1"
+              formControlName="timeoutSeconds">
+            </tb-time-unit-input>
+          </div>
+        </div>
       </div>
     </mat-expansion-panel>
   </div>
