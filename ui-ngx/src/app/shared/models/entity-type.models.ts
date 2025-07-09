@@ -51,7 +51,7 @@ export enum EntityType {
   MOBILE_APP_BUNDLE = 'MOBILE_APP_BUNDLE',
   MOBILE_APP = 'MOBILE_APP',
   CALCULATED_FIELD = 'CALCULATED_FIELD',
-  AI_MODEL_SETTINGS = 'AI_MODEL_SETTINGS',
+  AI_MODEL = 'AI_MODEL',
 }
 
 export enum AliasEntityType {
@@ -496,7 +496,7 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
-      EntityType.AI_MODEL_SETTINGS,
+      EntityType.AI_MODEL,
       {
         type: 'entity.type-ai-model',
         typePlural: 'entity.type-ai-models',
@@ -640,7 +640,7 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       }
     ],
     [
-      EntityType.AI_MODEL_SETTINGS,
+      EntityType.AI_MODEL,
       {
         helpLinkId: 'aiModels'
       }

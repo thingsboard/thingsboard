@@ -117,7 +117,7 @@
           </div>
         </section>
       </section>
-      <section class="tb-form-panel stroked" formGroupName="modelConfig">
+      <section class="tb-form-panel stroked">
         <div class="tb-form-panel-title" translate>ai-models.configuration</div>
         <section class="tb-form-panel no-border no-padding">
           <section class="tb-form-panel outlined no-border no-padding">
@@ -139,7 +139,7 @@
                         matTooltipPosition="above"
                         matTooltipClass="tb-error-tooltip"
                         [matTooltip]="'ai-models.temperature-min' | translate"
-                        *ngIf="aiModelForms.get('configuration').get('modelConfig').get('temperature').hasError('min')"
+                        *ngIf="aiModelForms.get('configuration').get('temperature').hasError('min')"
                         class="tb-error">
                 warning
               </mat-icon>
@@ -156,8 +156,8 @@
                         matTooltipPosition="above"
                         matTooltipClass="tb-error-tooltip"
                         [matTooltip]="'ai-models.top-p-min-max' | translate"
-                        *ngIf="aiModelForms.get('configuration').get('modelConfig').get('topP').hasError('min') ||
-                          aiModelForms.get('configuration').get('modelConfig').get('topP').hasError('max')"
+                        *ngIf="aiModelForms.get('configuration').get('topP').hasError('min') ||
+                          aiModelForms.get('configuration').get('topP').hasError('max')"
                         class="tb-error">
                 warning
               </mat-icon>
@@ -176,7 +176,7 @@
                           matTooltipPosition="above"
                           matTooltipClass="tb-error-tooltip"
                           [matTooltip]="'ai-models.top-k-min' | translate"
-                          *ngIf="aiModelForms.get('configuration').get('modelConfig').get('topK').hasError('min')"
+                          *ngIf="aiModelForms.get('configuration').get('topK').hasError('min')"
                           class="tb-error">
                   warning
                 </mat-icon>
@@ -216,7 +216,7 @@
                         matTooltipPosition="above"
                         matTooltipClass="tb-error-tooltip"
                         [matTooltip]="'ai-models.max-output-token-min' | translate"
-                        *ngIf="aiModelForms.get('configuration').get('modelConfig').get('maxOutputTokens').hasError('min')"
+                        *ngIf="aiModelForms.get('configuration').get('maxOutputTokens').hasError('min')"
                         class="tb-error">
                 warning
               </mat-icon>

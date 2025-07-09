@@ -46,11 +46,11 @@ export class AiModelsTableConfigResolver {
     private dialog: MatDialog
   ) {
     this.config.selectionEnabled = true;
-    this.config.entityType = EntityType.AI_MODEL_SETTINGS;
+    this.config.entityType = EntityType.AI_MODEL;
     this.config.addAsTextButton = true;
     this.config.detailsPanelEnabled = false;
-    this.config.entityTranslations = entityTypeTranslations.get(EntityType.AI_MODEL_SETTINGS);
-    this.config.entityResources = entityTypeResources.get(EntityType.AI_MODEL_SETTINGS);
+    this.config.entityTranslations = entityTypeTranslations.get(EntityType.AI_MODEL);
+    this.config.entityResources = entityTypeResources.get(EntityType.AI_MODEL);
 
     this.config.headerComponent = AiModelTableHeaderComponent;
     this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
@@ -65,7 +65,7 @@ export class AiModelsTableConfigResolver {
           entity => this.translate.instant(AiProviderTranslations.get(entity.configuration.provider))
       ),
       new EntityTableColumn<AiModel>('aiModel', 'ai-models.ai-model', '33%',
-          entity => entity.configuration.modelConfig.modelId, () => ({}), false
+          entity => entity.configuration.modelId, () => ({}), false
       )
     )
 

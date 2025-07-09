@@ -18,7 +18,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
 
 export class AiModelId implements EntityId {
-  entityType = EntityType.AI_MODEL_SETTINGS;
+  entityType = EntityType.AI_MODEL;
   id: string;
 
   constructor(id: string) {

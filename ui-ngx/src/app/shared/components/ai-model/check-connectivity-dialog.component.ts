@@ -54,15 +54,13 @@ export class CheckConnectivityDialogComponent extends DialogComponent<CheckConne
             }
           ]
         },
-        chatModel: {
+        chatModelConfig: {
           modelType: "CHAT",
           provider: this.data.AIModel.configuration.provider,
           providerConfig: {...this.data.AIModel.configuration.providerConfig},
-          modelConfig: {
-            modelId: this.data.AIModel.configuration.modelConfig.modelId,
-            maxRetries: 0,
-            timeoutSeconds: 20
-          }
+          modelId: this.data.AIModel.configuration.modelId,
+          maxRetries: 0,
+          timeoutSeconds: 20
         }
       }
       this.aiModelService.checkConnectivity(aiModelWithMsg, {

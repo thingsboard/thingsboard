@@ -91,15 +91,13 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
           serviceAccountKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.serviceAccountKey : '', [Validators.required]],
           serviceAccountKeyFileName: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.serviceAccountKeyFileName : '', [Validators.required]],
         }),
-        modelConfig: this.fb.group({
-          modelId: [this.data.AIModel ? this.data.AIModel.configuration.modelConfig?.modelId : '', [Validators.required]],
-          temperature: [this.data.AIModel ? this.data.AIModel.configuration.modelConfig?.temperature : null, [Validators.min(0)]],
-          topP: this.data.AIModel ? this.data.AIModel.configuration.modelConfig?.topP : [null, [Validators.min(0.1), Validators.max(1)]],
-          topK: [this.data.AIModel ? this.data.AIModel.configuration.modelConfig?.topK : null, [Validators.min(0)]],
-          frequencyPenalty: [this.data.AIModel ? this.data.AIModel.configuration.modelConfig?.frequencyPenalty : null],
-          presencePenalty: [this.data.AIModel ? this.data.AIModel.configuration.modelConfig?.presencePenalty : null],
-          maxOutputTokens: [this.data.AIModel ? this.data.AIModel.configuration.modelConfig?.maxOutputTokens : null, [Validators.min(1)]]
-        })
+        modelId: [this.data.AIModel ? this.data.AIModel.configuration?.modelId : '', [Validators.required]],
+        temperature: [this.data.AIModel ? this.data.AIModel.configuration?.temperature : null, [Validators.min(0)]],
+        topP: this.data.AIModel ? this.data.AIModel.configuration?.topP : [null, [Validators.min(0.1), Validators.max(1)]],
+        topK: [this.data.AIModel ? this.data.AIModel.configuration?.topK : null, [Validators.min(0)]],
+        frequencyPenalty: [this.data.AIModel ? this.data.AIModel.configuration?.frequencyPenalty : null],
+        presencePenalty: [this.data.AIModel ? this.data.AIModel.configuration?.presencePenalty : null],
+        maxOutputTokens: [this.data.AIModel ? this.data.AIModel.configuration?.maxOutputTokens : null, [Validators.min(1)]]
       })
     });
 
@@ -107,7 +105,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       takeUntilDestroyed()
     ).subscribe((provider: AiProvider) => {
       this.provider = provider;
-      this.aiModelForms.get('configuration.modelConfig').reset({});
+      // this.aiModelForms.get('configuration').reset({});
       this.aiModelForms.get('configuration.providerConfig').reset({});
       this.updateValidation(provider);
     })

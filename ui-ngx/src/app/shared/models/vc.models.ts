@@ -37,7 +37,7 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
   EntityType.NOTIFICATION_RULE,
-  EntityType.AI_MODEL_SETTINGS,
+  EntityType.AI_MODEL,
 ];
 
 export const entityTypesWithoutRelatedData = new Set<EntityType | AliasEntityType>([
@@ -46,7 +46,7 @@ export const entityTypesWithoutRelatedData = new Set<EntityType | AliasEntityTyp
   EntityType.NOTIFICATION_RULE,
   EntityType.TB_RESOURCE,
   EntityType.OTA_PACKAGE,
-  EntityType.AI_MODEL_SETTINGS,
+  EntityType.AI_MODEL,
 ]);
 
 export interface VersionCreateConfig {

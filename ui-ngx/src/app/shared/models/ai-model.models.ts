@@ -32,15 +32,13 @@ export interface AiModel extends Omit<BaseData<AiModelId>, 'label'>, HasTenantId
       serviceAccountKey?: string;
       serviceAccountKeyFileName?: string
     };
-    modelConfig: {
-      modelId: string;
-      temperature?: number | null;
-      topP?: number;
-      topK?: number;
-      frequencyPenalty?: number;
-      presencePenalty?: number;
-      maxOutputTokens?: number;
-    }
+    modelId: string;
+    temperature?: number | null;
+    topP?: number;
+    topK?: number;
+    frequencyPenalty?: number;
+    presencePenalty?: number;
+    maxOutputTokens?: number;
   }
 }
 
@@ -131,7 +129,7 @@ export interface AiModelWithUserMsg {
   userMessage: {
     contents: Array<{contentType: string; text: string}>;
   }
-  chatModel: {
+  chatModelConfig: {
     modelType: string;
     provider: AiProvider
     providerConfig: {
@@ -144,11 +142,11 @@ export interface AiModelWithUserMsg {
       serviceAccountKey?: string;
       serviceAccountKeyFileName?: string
     };
-    modelConfig: {
+    // chatModelConfig: {
       modelId: string;
       maxRetries: number;
       timeoutSeconds: number;
-    }
+    // }
   }
 }
 

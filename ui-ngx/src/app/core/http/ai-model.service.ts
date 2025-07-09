@@ -32,19 +32,19 @@ export class AiModelService {
   ) {}
 
   public saveAiModel(aiModel: AiModel, config?: RequestConfig): Observable<AiModel> {
-    return this.http.post<AiModel>('/api/ai/model/settings', aiModel, defaultHttpOptionsFromConfig(config));
+    return this.http.post<AiModel>('/api/ai/model', aiModel, defaultHttpOptionsFromConfig(config));
   }
 
   public getAiModels(pageLink: PageLink, config?: RequestConfig): Observable<PageData<AiModel>> {
-    return this.http.get<PageData<AiModel>>(`/api/ai/model/settings${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<PageData<AiModel>>(`/api/ai/model${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
   public getAiModelById(aiModelId: string, config?: RequestConfig): Observable<AiModel> {
-    return this.http.get<AiModel>(`/api/ai/model/settings/${aiModelId}`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<AiModel>(`/api/ai/model/${aiModelId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteAiModel(aiModelId: string, config?: RequestConfig) {
-    return this.http.delete(`/api/ai/model/settings/${aiModelId}`, defaultHttpOptionsFromConfig(config));
+    return this.http.delete(`/api/ai/model/${aiModelId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public checkConnectivity(aiModelWithUserMsg: AiModelWithUserMsg, config?: RequestConfig): Observable<CheckConnectivityResult> {

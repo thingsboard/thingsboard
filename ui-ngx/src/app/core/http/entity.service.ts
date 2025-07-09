@@ -185,7 +185,7 @@ export class EntityService {
       case EntityType.MOBILE_APP_BUNDLE:
         observable = this.mobileAppService.getMobileAppBundleInfoById(entityId, config);
         break;
-      case EntityType.AI_MODEL_SETTINGS:
+      case EntityType.AI_MODEL:
         observable = this.aiModelService.getAiModelById(entityId, config);
         break;
     }
@@ -490,7 +490,7 @@ export class EntityService {
         pageLink.sortOrder.property = 'title';
         entitiesObservable = this.mobileAppService.getTenantMobileAppBundleInfos(pageLink, config);
         break;
-      case EntityType.AI_MODEL_SETTINGS:
+      case EntityType.AI_MODEL:
         pageLink.sortOrder.property = 'name';
         entitiesObservable = this.aiModelService.getAiModels(pageLink, config);
         break;
