@@ -43,7 +43,7 @@
     </div>
     <ng-template #fullscreenEditor>
       <div class="tb-fullscreen-panel tb-layout-fill flex flex-row">
-        <div #leftPanel class="tb-split tb-content">
+        <div #leftPanel class="tb-split tb-content left-panel">
           <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="false"
                                                   [helpId]="helpId"
                                                   [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
