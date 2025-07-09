@@ -33,11 +33,10 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
-import org.thingsboard.server.common.data.ai.AiModelSettings;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
-import org.thingsboard.server.common.data.ai.model.chat.AiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
-import org.thingsboard.server.common.data.id.AiModelSettingsId;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -66,7 +65,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     private String userPrompt;
     private ResponseFormat responseFormat;
     private int timeoutSeconds;
-    private AiModelSettingsId modelSettingsId;
+    private AiModelId modelId;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -80,7 +79,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             throw new TbNodeException(e, true);
         }
 
-        // LC4j AnthropicChatModel rejects requests with non-null ResponseFormat even if ResponseFormatType is TEXT
+        // LangChain4j AnthropicChatModel rejects requests with non-null ResponseFormat even if ResponseFormatType is TEXT
         if (config.getResponseFormat().type() == TbResponseFormat.TbResponseFormatType.JSON) {
             responseFormat = config.getResponseFormat().toLangChainResponseFormat();
         }
@@ -88,15 +87,15 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         systemPrompt = config.getSystemPrompt();
         userPrompt = config.getUserPrompt();
         timeoutSeconds = config.getTimeoutSeconds();
-        modelSettingsId = config.getAiModelSettingsId();
+        modelId = config.getAiModelId();
 
-        Optional<AiModelSettings> modelSettings = ctx.getAiModelSettingsService().findAiModelSettingsByTenantIdAndId(ctx.getTenantId(), modelSettingsId);
-        if (modelSettings.isEmpty()) {
-            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] were not found", true);
+        Optional<AiModel> model = ctx.getAiModelService().findAiModelByTenantIdAndId(ctx.getTenantId(), modelId);
+        if (model.isEmpty()) {
+            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] was not found", true);
         }
-        AiModelType modelType = modelSettings.get().getConfiguration().modelType();
+        AiModelType modelType = model.get().getConfiguration().modelType();
         if (modelType != AiModelType.CHAT) {
-            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] must be of type CHAT, but was " + modelType, true);
+            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] must be of type CHAT, but was " + modelType, true);
         }
     }
 
@@ -135,24 +134,24 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     }
 
     private <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(TbContext ctx, ChatRequest chatRequest) {
-        return ctx.getAiModelSettingsService().findAiModelSettingsByTenantIdAndIdAsync(ctx.getTenantId(), modelSettingsId).transformAsync(settingsOpt -> {
-            if (settingsOpt.isEmpty()) {
-                throw new NoSuchElementException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] were not found");
+        return ctx.getAiModelService().findAiModelByTenantIdAndIdAsync(ctx.getTenantId(), modelId).transformAsync(modelOpt -> {
+            if (modelOpt.isEmpty()) {
+                throw new NoSuchElementException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] was not found");
             }
-            AiModelSettings settings = settingsOpt.get();
-            AiModelType modelType = settings.getConfiguration().modelType();
+            AiModel model = modelOpt.get();
+            AiModelType modelType = model.getConfiguration().modelType();
             if (modelType != AiModelType.CHAT) {
-                throw new IllegalStateException("[" + ctx.getTenantId() + "] AI model settings with ID: [" + modelSettingsId + "] must be of type CHAT, but was " + modelType);
+                throw new IllegalStateException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] must be of type CHAT, but was " + modelType);
             }
 
             @SuppressWarnings("unchecked")
-            AiChatModel<C> chatModel = (AiChatModel<C>) settingsOpt.get().getConfiguration();
+            AiChatModelConfig<C> chatModelConfig = (AiChatModelConfig<C>) model.getConfiguration();
 
-            chatModel = chatModel.withModelConfig(chatModel.modelConfig()
+            chatModelConfig = chatModelConfig
                     .withTimeoutSeconds(timeoutSeconds)
-                    .withMaxRetries(0)); // disable retries to respect timeout set in rule node config
+                    .withMaxRetries(0); // disable retries to respect timeout set in rule node config
 
-            return ctx.getAiModelService().sendChatRequestAsync(chatModel, chatRequest);
+            return ctx.getAiChatModelService().sendChatRequestAsync(chatModelConfig, chatRequest);
         }, ctx.getDbCallbackExecutor());
     }
 
@@ -175,7 +174,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         systemPrompt = null;
         userPrompt = null;
         responseFormat = null;
-        modelSettingsId = null;
+        modelId = null;
     }
 
 }

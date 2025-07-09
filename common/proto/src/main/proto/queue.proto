@@ -64,7 +64,7 @@ enum EntityTypeProto {
   CALCULATED_FIELD      = 39;
   CALCULATED_FIELD_LINK = 40;
   JOB                   = 41;
-  AI_MODEL_SETTINGS     = 42;
+  AI_MODEL              = 42;
 }
 
 enum ApiUsageRecordKeyProto {
@@ -697,6 +697,8 @@ message ToDeviceRpcRequestMsg {
   int64 requestIdLSB = 6;
   bool oneway = 7;
   bool persisted = 8;
+  optional int32 retries = 9;
+  string additionalInfo = 10;
 }
 
 message ToDeviceRpcResponseMsg {

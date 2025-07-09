@@ -24,20 +24,26 @@ import com.google.cloud.vertexai.api.GenerationConfig;
 import com.google.cloud.vertexai.api.PredictionServiceClient;
 import com.google.cloud.vertexai.api.PredictionServiceSettings;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
+import dev.langchain4j.model.anthropic.AnthropicChatModel;
+import dev.langchain4j.model.azure.AzureOpenAiChatModel;
 import dev.langchain4j.model.bedrock.BedrockChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
+import dev.langchain4j.model.github.GitHubModelsChatModel;
+import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.model.mistralai.MistralAiChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.GitHubModelsChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.GitHubModelsChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
-import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModel;
-import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
@@ -54,61 +60,57 @@ import java.time.Duration;
 class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigurer {
 
     @Override
-    public ChatModel configureChatModel(OpenAiChatModel chatModel) {
-        OpenAiChatModel.Config modelConfig = chatModel.modelConfig();
-        return dev.langchain4j.model.openai.OpenAiChatModel.builder()
-                .apiKey(chatModel.providerConfig().apiKey())
-                .modelName(modelConfig.modelId())
-                .temperature(modelConfig.temperature())
-                .topP(modelConfig.topP())
-                .frequencyPenalty(modelConfig.frequencyPenalty())
-                .presencePenalty(modelConfig.presencePenalty())
-                .maxTokens(modelConfig.maxOutputTokens())
-                .timeout(toDuration(modelConfig.timeoutSeconds()))
-                .maxRetries(modelConfig.maxRetries())
+    public ChatModel configureChatModel(OpenAiChatModelConfig chatModelConfig) {
+        return OpenAiChatModel.builder()
+                .apiKey(chatModelConfig.providerConfig().apiKey())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
                 .build();
     }
 
     @Override
-    public ChatModel configureChatModel(AzureOpenAiChatModel chatModel) {
-        AzureOpenAiProviderConfig providerConfig = chatModel.providerConfig();
-        AzureOpenAiChatModel.Config modelConfig = chatModel.modelConfig();
-        return dev.langchain4j.model.azure.AzureOpenAiChatModel.builder()
+    public ChatModel configureChatModel(AzureOpenAiChatModelConfig chatModelConfig) {
+        AzureOpenAiProviderConfig providerConfig = chatModelConfig.providerConfig();
+        return AzureOpenAiChatModel.builder()
                 .endpoint(providerConfig.endpoint())
                 .serviceVersion(providerConfig.serviceVersion())
                 .apiKey(providerConfig.apiKey())
-                .deploymentName(modelConfig.modelId())
-                .temperature(modelConfig.temperature())
-                .topP(modelConfig.topP())
-                .frequencyPenalty(modelConfig.frequencyPenalty())
-                .presencePenalty(modelConfig.presencePenalty())
-                .maxTokens(modelConfig.maxOutputTokens())
-                .timeout(toDuration(modelConfig.timeoutSeconds()))
-                .maxRetries(modelConfig.maxRetries())
+                .deploymentName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
                 .build();
     }
 
     @Override
-    public ChatModel configureChatModel(GoogleAiGeminiChatModel chatModel) {
-        GoogleAiGeminiChatModel.Config modelConfig = chatModel.modelConfig();
-        return dev.langchain4j.model.googleai.GoogleAiGeminiChatModel.builder()
-                .apiKey(chatModel.providerConfig().apiKey())
-                .modelName(modelConfig.modelId())
-                .temperature(modelConfig.temperature())
-                .topP(modelConfig.topP())
-                .topK(modelConfig.topK())
-                .frequencyPenalty(modelConfig.frequencyPenalty())
-                .presencePenalty(modelConfig.presencePenalty())
-                .maxOutputTokens(modelConfig.maxOutputTokens())
-                .timeout(toDuration(modelConfig.timeoutSeconds()))
-                .maxRetries(modelConfig.maxRetries())
+    public ChatModel configureChatModel(GoogleAiGeminiChatModelConfig chatModelConfig) {
+        return GoogleAiGeminiChatModel.builder()
+                .apiKey(chatModelConfig.providerConfig().apiKey())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .topK(chatModelConfig.topK())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxOutputTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
                 .build();
     }
 
     @Override
-    public ChatModel configureChatModel(GoogleVertexAiGeminiChatModel chatModel) {
-        GoogleVertexAiGeminiProviderConfig providerConfig = chatModel.providerConfig();
-        GoogleVertexAiGeminiChatModel.Config modelConfig = chatModel.modelConfig();
+    public ChatModel configureChatModel(GoogleVertexAiGeminiChatModelConfig chatModelConfig) {
+        GoogleVertexAiGeminiProviderConfig providerConfig = chatModelConfig.providerConfig();
 
         // construct service account credentials using service account key JSON
         ServiceAccountCredentials serviceAccountCredentials;
@@ -131,8 +133,8 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                     .toBuilder();
 
             // set request timeout from model config
-            if (modelConfig.timeoutSeconds() != null) {
-                retrySettings.setTotalTimeout(org.threeten.bp.Duration.ofSeconds(modelConfig.timeoutSeconds()));
+            if (chatModelConfig.timeoutSeconds() != null) {
+                retrySettings.setTotalTimeout(org.threeten.bp.Duration.ofSeconds(chatModelConfig.timeoutSeconds()));
             }
 
             // set updated retry settings
@@ -154,30 +156,30 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
         // map model config to generation config
         var generationConfigBuilder = GenerationConfig.newBuilder();
-        if (modelConfig.temperature() != null) {
-            generationConfigBuilder.setTemperature(modelConfig.temperature().floatValue());
+        if (chatModelConfig.temperature() != null) {
+            generationConfigBuilder.setTemperature(chatModelConfig.temperature().floatValue());
         }
-        if (modelConfig.topP() != null) {
-            generationConfigBuilder.setTopP(modelConfig.topP().floatValue());
+        if (chatModelConfig.topP() != null) {
+            generationConfigBuilder.setTopP(chatModelConfig.topP().floatValue());
         }
-        if (modelConfig.topK() != null) {
-            generationConfigBuilder.setTopK(modelConfig.topK());
+        if (chatModelConfig.topK() != null) {
+            generationConfigBuilder.setTopK(chatModelConfig.topK());
         }
-        if (modelConfig.frequencyPenalty() != null) {
-            generationConfigBuilder.setFrequencyPenalty(modelConfig.frequencyPenalty().floatValue());
+        if (chatModelConfig.frequencyPenalty() != null) {
+            generationConfigBuilder.setFrequencyPenalty(chatModelConfig.frequencyPenalty().floatValue());
         }
-        if (modelConfig.frequencyPenalty() != null) {
-            generationConfigBuilder.setPresencePenalty(modelConfig.frequencyPenalty().floatValue());
+        if (chatModelConfig.frequencyPenalty() != null) {
+            generationConfigBuilder.setPresencePenalty(chatModelConfig.frequencyPenalty().floatValue());
         }
-        if (modelConfig.maxOutputTokens() != null) {
-            generationConfigBuilder.setMaxOutputTokens(modelConfig.maxOutputTokens());
+        if (chatModelConfig.maxOutputTokens() != null) {
+            generationConfigBuilder.setMaxOutputTokens(chatModelConfig.maxOutputTokens());
         }
         var generationConfig = generationConfigBuilder.build();
 
         // construct generative model instance
-        var generativeModel = new GenerativeModel(modelConfig.modelId(), vertexAI).withGenerationConfig(generationConfig);
+        var generativeModel = new GenerativeModel(chatModelConfig.modelId(), vertexAI).withGenerationConfig(generationConfig);
 
-        return new VertexAiGeminiChatModel(generativeModel, generationConfig, modelConfig.maxRetries());
+        return new VertexAiGeminiChatModel(generativeModel, generationConfig, chatModelConfig.maxRetries());
     }
 
     private static PredictionServiceClient createPredictionServiceClient(PredictionServiceSettings settings) {
@@ -189,40 +191,37 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     }
 
     @Override
-    public ChatModel configureChatModel(MistralAiChatModel chatModel) {
-        MistralAiChatModel.Config modelConfig = chatModel.modelConfig();
-        return dev.langchain4j.model.mistralai.MistralAiChatModel.builder()
-                .apiKey(chatModel.providerConfig().apiKey())
-                .modelName(modelConfig.modelId())
-                .temperature(modelConfig.temperature())
-                .topP(modelConfig.topP())
-                .frequencyPenalty(modelConfig.frequencyPenalty())
-                .presencePenalty(modelConfig.presencePenalty())
-                .maxTokens(modelConfig.maxOutputTokens())
-                .timeout(toDuration(modelConfig.timeoutSeconds()))
-                .maxRetries(modelConfig.maxRetries())
+    public ChatModel configureChatModel(MistralAiChatModelConfig chatModelConfig) {
+        return MistralAiChatModel.builder()
+                .apiKey(chatModelConfig.providerConfig().apiKey())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
                 .build();
     }
 
     @Override
-    public ChatModel configureChatModel(AnthropicChatModel chatModel) {
-        AnthropicChatModel.Config modelConfig = chatModel.modelConfig();
-        return dev.langchain4j.model.anthropic.AnthropicChatModel.builder()
-                .apiKey(chatModel.providerConfig().apiKey())
-                .modelName(modelConfig.modelId())
-                .temperature(modelConfig.temperature())
-                .topP(modelConfig.topP())
-                .topK(modelConfig.topK())
-                .maxTokens(modelConfig.maxOutputTokens())
-                .timeout(toDuration(modelConfig.timeoutSeconds()))
-                .maxRetries(modelConfig.maxRetries())
+    public ChatModel configureChatModel(AnthropicChatModelConfig chatModelConfig) {
+        return AnthropicChatModel.builder()
+                .apiKey(chatModelConfig.providerConfig().apiKey())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .topK(chatModelConfig.topK())
+                .maxTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
                 .build();
     }
 
     @Override
-    public ChatModel configureChatModel(AmazonBedrockChatModel chatModel) {
-        AmazonBedrockProviderConfig providerConfig = chatModel.providerConfig();
-        AmazonBedrockChatModel.Config modelConfig = chatModel.modelConfig();
+    public ChatModel configureChatModel(AmazonBedrockChatModelConfig chatModelConfig) {
+        AmazonBedrockProviderConfig providerConfig = chatModelConfig.providerConfig();
 
         var credentialsProvider = StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(providerConfig.accessKeyId(), providerConfig.secretAccessKey())
@@ -234,33 +233,32 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .build();
 
         var defaultChatRequestParams = ChatRequestParameters.builder()
-                .temperature(modelConfig.temperature())
-                .topP(modelConfig.topP())
-                .maxOutputTokens(modelConfig.maxOutputTokens())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .maxOutputTokens(chatModelConfig.maxOutputTokens())
                 .build();
 
         return BedrockChatModel.builder()
                 .client(bedrockClient)
-                .modelId(modelConfig.modelId())
+                .modelId(chatModelConfig.modelId())
                 .defaultRequestParameters(defaultChatRequestParams)
-                .timeout(toDuration(modelConfig.timeoutSeconds()))
-                .maxRetries(modelConfig.maxRetries())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
                 .build();
     }
 
     @Override
-    public ChatModel configureChatModel(GitHubModelsChatModel chatModel) {
-        GitHubModelsChatModel.Config modelConfig = chatModel.modelConfig();
-        return dev.langchain4j.model.github.GitHubModelsChatModel.builder()
-                .gitHubToken(chatModel.providerConfig().personalAccessToken())
-                .modelName(modelConfig.modelId())
-                .temperature(modelConfig.temperature())
-                .topP(modelConfig.topP())
-                .frequencyPenalty(modelConfig.frequencyPenalty())
-                .presencePenalty(modelConfig.presencePenalty())
-                .maxTokens(modelConfig.maxOutputTokens())
-                .timeout(toDuration(modelConfig.timeoutSeconds()))
-                .maxRetries(modelConfig.maxRetries())
+    public ChatModel configureChatModel(GitHubModelsChatModelConfig chatModelConfig) {
+        return GitHubModelsChatModel.builder()
+                .gitHubToken(chatModelConfig.providerConfig().personalAccessToken())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
                 .build();
     }
 

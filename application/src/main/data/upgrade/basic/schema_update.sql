@@ -14,48 +14,24 @@
 -- limitations under the License.
 --
 
--- UPDATE TENANT PROFILE CASSANDRA RATE LIMITS START
+-- UPDATE OTA PACKAGE EXTERNAL ID START
 
-UPDATE tenant_profile
-SET profile_data = jsonb_set(
-        profile_data,
-        '{configuration}',
-        (
-            (profile_data -> 'configuration') - 'cassandraQueryTenantRateLimitsConfiguration'
-                ||
-            COALESCE(
-                    CASE
-                        WHEN profile_data -> 'configuration' ->
-                             'cassandraQueryTenantRateLimitsConfiguration' IS NOT NULL THEN
-                            jsonb_build_object(
-                                    'cassandraReadQueryTenantCoreRateLimits',
-                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration',
-                                    'cassandraWriteQueryTenantCoreRateLimits',
-                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration',
-                                    'cassandraReadQueryTenantRuleEngineRateLimits',
-                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration',
-                                    'cassandraWriteQueryTenantRuleEngineRateLimits',
-                                    profile_data -> 'configuration' -> 'cassandraQueryTenantRateLimitsConfiguration'
-                            )
-                        END,
-                    '{}'::jsonb
-            )
-            )
-                   )
-WHERE profile_data -> 'configuration' ? 'cassandraQueryTenantRateLimitsConfiguration';
+ALTER TABLE ota_package
+    ADD COLUMN IF NOT EXISTS external_id uuid;
+ALTER TABLE ota_package
+    ADD CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id);
 
--- UPDATE TENANT PROFILE CASSANDRA RATE LIMITS END
+-- UPDATE OTA PACKAGE EXTERNAL ID END
 
--- UPDATE NOTIFICATION RULE CASSANDRA RATE LIMITS START
+-- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT START
 
-UPDATE notification_rule
-SET trigger_config = REGEXP_REPLACE(
-        trigger_config,
-        '"CASSANDRA_QUERIES"',
-        '"CASSANDRA_WRITE_QUERIES_CORE","CASSANDRA_READ_QUERIES_CORE","CASSANDRA_WRITE_QUERIES_RULE_ENGINE","CASSANDRA_READ_QUERIES_RULE_ENGINE","CASSANDRA_WRITE_QUERIES_MONOLITH","CASSANDRA_READ_QUERIES_MONOLITH"',
-        'g'
-                     )
-WHERE trigger_type = 'RATE_LIMITS'
-  AND trigger_config LIKE '%"CASSANDRA_QUERIES"%';
+DROP INDEX IF EXISTS idx_device_external_id;
+DROP INDEX IF EXISTS idx_device_profile_external_id;
+DROP INDEX IF EXISTS idx_asset_external_id;
+DROP INDEX IF EXISTS idx_entity_view_external_id;
+DROP INDEX IF EXISTS idx_rule_chain_external_id;
+DROP INDEX IF EXISTS idx_dashboard_external_id;
+DROP INDEX IF EXISTS idx_customer_external_id;
+DROP INDEX IF EXISTS idx_widgets_bundle_external_id;
 
--- UPDATE NOTIFICATION RULE CASSANDRA RATE LIMITS END
+-- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT END

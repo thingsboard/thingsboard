@@ -40,7 +40,7 @@ import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.ai.AiModelSettings;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -70,7 +70,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.ai.AiModelSettingsService;
+import org.thingsboard.server.dao.ai.AiModelService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -168,7 +168,7 @@ public class TenantIdLoaderTest {
     @Mock
     private JobService jobService;
     @Mock
-    private AiModelSettingsService aiModelSettingsService;
+    private AiModelService aiModelService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -434,11 +434,11 @@ public class TenantIdLoaderTest {
                 when(ctx.getJobService()).thenReturn(jobService);
                 doReturn(job).when(jobService).findJobById(eq(tenantId), any());
                 break;
-            case AI_MODEL_SETTINGS:
-                AiModelSettings aiModelSettings = new AiModelSettings();
-                aiModelSettings.setTenantId(tenantId);
-                when(ctx.getAiModelSettingsService()).thenReturn(aiModelSettingsService);
-                doReturn(Optional.of(aiModelSettings)).when(aiModelSettingsService).findAiModelSettingsById(eq(tenantId), any());
+            case AI_MODEL:
+                AiModel aiModel = new AiModel();
+                aiModel.setTenantId(tenantId);
+                when(ctx.getAiModelService()).thenReturn(aiModelService);
+                doReturn(Optional.of(aiModel)).when(aiModelService).findAiModelById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

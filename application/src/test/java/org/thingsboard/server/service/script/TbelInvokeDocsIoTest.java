@@ -2451,7 +2451,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     public void isInsidePolygon_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
         decoderStr = """
-                    String perimeter = "[[[37.7810,-122.4210],[37.7890,-122.3900],[37.7700,-122.3800],[37.7600,-122.4000],[37.7700,-122.4250],[37.7810,-122.4210]],[[37.7730,-122.4050],[37.7700,-122.3950],[37.7670,-122.3980],[37.7690,-122.4100],[37.7730,-122.4050]]]";
+                    var perimeter = "[[[37.7810,-122.4210],[37.7890,-122.3900],[37.7700,-122.3800],[37.7600,-122.4000],[37.7700,-122.4250],[37.7810,-122.4210]],[[37.7730,-122.4050],[37.7700,-122.3950],[37.7670,-122.3980],[37.7690,-122.4100],[37.7730,-122.4050]]]";
                     return{
                        outsidePolygon: isInsidePolygon(37.8000, -122.4300, perimeter),
                        insidePolygon: isInsidePolygon(37.7725, -122.4010, perimeter),
@@ -2470,7 +2470,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     public void isInsideCircle_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
         decoderStr = """
-                    String perimeter = "{\\"latitude\\":37.7749,\\"longitude\\":-122.4194,\\"radius\\":3000,\\"radiusUnit\\":\\"METER\\"}";
+                    var perimeter = "{\\"latitude\\":37.7749,\\"longitude\\":-122.4194,\\"radius\\":3000,\\"radiusUnit\\":\\"METER\\"}";
                     return{
                        outsideCircle: isInsideCircle(37.8044, -122.2712, perimeter),
                        insideCircle: isInsideCircle(37.7599, -122.4148, perimeter)

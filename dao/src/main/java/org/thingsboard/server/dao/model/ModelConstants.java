@@ -752,12 +752,12 @@ public class ModelConstants {
     public static final String JOB_RESULT_PROPERTY = "result";
 
     /**
-     * AI model settings constants.
+     * AI model constants.
      */
-    public static final String AI_MODEL_SETTINGS_TABLE_NAME = "ai_model_settings";
-    public static final String AI_MODEL_SETTINGS_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
-    public static final String AI_MODEL_SETTINGS_NAME_COLUMN_NAME = NAME_PROPERTY;
-    public static final String AI_MODEL_SETTINGS_CONFIGURATION_COLUMN_NAME = "configuration";
+    public static final String AI_MODEL_TABLE_NAME = "ai_model";
+    public static final String AI_MODEL_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
+    public static final String AI_MODEL_NAME_COLUMN_NAME = NAME_PROPERTY;
+    public static final String AI_MODEL_CONFIGURATION_COLUMN_NAME = "configuration";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

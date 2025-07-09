@@ -25,8 +25,9 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.ai.AiModelSettings;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
@@ -60,7 +61,8 @@ import java.lang.annotation.Target;
         @Type(name = "NOTIFICATION_TARGET", value = NotificationTarget.class),
         @Type(name = "NOTIFICATION_RULE", value = NotificationRule.class),
         @Type(name = "TB_RESOURCE", value = TbResource.class),
-        @Type(name = "AI_MODEL_SETTINGS", value = AiModelSettings.class)
+        @Type(name = "OTA_PACKAGE", value = OtaPackage.class),
+        @Type(name = "AI_MODEL", value = AiModel.class)
 })
 @JsonIgnoreProperties(value = {"tenantId", "createdTime", "version"}, ignoreUnknown = true)
 public @interface JsonTbEntity {}

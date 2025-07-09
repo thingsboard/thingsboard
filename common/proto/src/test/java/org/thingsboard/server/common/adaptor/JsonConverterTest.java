@@ -23,8 +23,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 
-import java.util.ArrayList;
-
 @Isolated("JsonConverter static settings being modified")
 public class JsonConverterTest {
 
@@ -53,7 +51,7 @@ public class JsonConverterTest {
 
     @Test
     public void testParseAttributesBigDecimalAsLong() {
-        var result = new ArrayList<>(JsonConverter.convertToAttributes(JsonParser.parseString("{\"meterReadingDelta\": 1E1}")));
+        var result = JsonConverter.convertToAttributes(JsonParser.parseString("{\"meterReadingDelta\": 1E1}"));
         Assertions.assertEquals(10L, result.get(0).getLongValue().get().longValue());
     }
 
@@ -108,4 +106,5 @@ public class JsonConverterTest {
             JsonConverter.convertToTelemetry(JsonParser.parseString("{\"meterReadingDelta\": 9.9701010061400066E19}"), 0L);
         });
     }
+
 }

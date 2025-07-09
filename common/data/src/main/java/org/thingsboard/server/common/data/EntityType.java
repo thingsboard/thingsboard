@@ -66,10 +66,10 @@ public enum EntityType {
     CALCULATED_FIELD(39),
     CALCULATED_FIELD_LINK(40),
     JOB(41),
-    AI_MODEL_SETTINGS(42, "ai_model_settings") {
+    AI_MODEL(42, "ai_model") {
         @Override
         public String getNormalName() {
-            return "AI model settings";
+            return "AI model";
         }
     };
 

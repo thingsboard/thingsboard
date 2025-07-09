@@ -19,20 +19,20 @@ import dev.langchain4j.model.chat.ChatModel;
 
 public interface Langchain4jChatModelConfigurer {
 
-    ChatModel configureChatModel(OpenAiChatModel chatModel);
+    ChatModel configureChatModel(OpenAiChatModelConfig chatModelConfig);
 
-    ChatModel configureChatModel(AzureOpenAiChatModel chatModel);
+    ChatModel configureChatModel(AzureOpenAiChatModelConfig chatModelConfig);
 
-    ChatModel configureChatModel(GoogleAiGeminiChatModel chatModel);
+    ChatModel configureChatModel(GoogleAiGeminiChatModelConfig chatModelConfig);
 
-    ChatModel configureChatModel(GoogleVertexAiGeminiChatModel chatModel);
+    ChatModel configureChatModel(GoogleVertexAiGeminiChatModelConfig chatModelConfig);
 
-    ChatModel configureChatModel(MistralAiChatModel chatModel);
+    ChatModel configureChatModel(MistralAiChatModelConfig chatModelConfig);
 
-    ChatModel configureChatModel(AnthropicChatModel chatModel);
+    ChatModel configureChatModel(AnthropicChatModelConfig chatModelConfig);
 
-    ChatModel configureChatModel(AmazonBedrockChatModel chatModel);
+    ChatModel configureChatModel(AmazonBedrockChatModelConfig chatModelConfig);
 
-    ChatModel configureChatModel(GitHubModelsChatModel chatModel);
+    ChatModel configureChatModel(GitHubModelsChatModelConfig chatModelConfig);
 
 }
