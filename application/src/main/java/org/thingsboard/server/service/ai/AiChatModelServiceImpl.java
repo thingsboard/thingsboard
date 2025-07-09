@@ -21,21 +21,20 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.ai.model.chat.AiChatModel;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
 
 @Service
 @RequiredArgsConstructor
-class AiModelServiceImpl implements AiModelService {
+class AiChatModelServiceImpl implements AiChatModelService {
 
     private final Langchain4jChatModelConfigurer chatModelConfigurer;
     private final AiRequestsExecutor aiRequestsExecutor;
 
     @Override
-    public <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModel<C> chatModel, ChatRequest chatRequest) {
-        ChatModel lc4jChatModel = chatModel.configure(chatModelConfigurer);
-        return aiRequestsExecutor.sendChatRequestAsync(lc4jChatModel, chatRequest);
+    public <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModelConfig<C> chatModelConfig, ChatRequest chatRequest) {
+        ChatModel langChainChatModel = chatModelConfig.configure(chatModelConfigurer);
+        return aiRequestsExecutor.sendChatRequestAsync(langChainChatModel, chatRequest);
     }
 
 }

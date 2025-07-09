@@ -27,8 +27,8 @@ import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
-import org.thingsboard.server.common.data.ai.model.AiModel;
-import org.thingsboard.server.common.data.id.AiModelSettingsId;
+import org.thingsboard.server.common.data.ai.model.AiModelConfig;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoNullChar;
@@ -39,7 +39,7 @@ import java.io.Serial;
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public final class AiModelSettings extends BaseData<AiModelSettingsId> implements HasTenantId, HasVersion, ExportableEntity<AiModelSettingsId> {
+public final class AiModel extends BaseData<AiModelId> implements HasTenantId, HasVersion, ExportableEntity<AiModelId> {
 
     @Serial
     private static final long serialVersionUID = 9017108678716011604L;
@@ -47,7 +47,7 @@ public final class AiModelSettings extends BaseData<AiModelSettingsId> implement
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_ONLY,
-            description = "JSON object representing the ID of the tenant associated with these AI model settings",
+            description = "JSON object representing the ID of the tenant associated with this AI model",
             example = "e3c4b7d2-5678-4a9b-0c1d-2e3f4a5b6c7d"
     )
     private TenantId tenantId;
@@ -55,7 +55,7 @@ public final class AiModelSettings extends BaseData<AiModelSettingsId> implement
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_ONLY,
-            description = "Version of the AI model settings; increments automatically whenever the settings are changed",
+            description = "Version of the AI model record; increments automatically whenever the record is changed",
             example = "7",
             defaultValue = "1"
     )
@@ -67,8 +67,8 @@ public final class AiModelSettings extends BaseData<AiModelSettingsId> implement
     @Schema(
             requiredMode = Schema.RequiredMode.REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Human-readable name of the AI model settings; must be unique within the scope of the tenant",
-            example = "Rule node assistant"
+            description = "Display name for this AI model configuration; not the technical model identifier",
+            example = "Fast and cost-efficient model"
     )
     private String name;
 
@@ -79,24 +79,24 @@ public final class AiModelSettings extends BaseData<AiModelSettingsId> implement
             accessMode = Schema.AccessMode.READ_WRITE,
             description = "Configuration of the AI model"
     )
-    private AiModel<?> configuration;
+    private AiModelConfig configuration;
 
-    private AiModelSettingsId externalId;
+    private AiModelId externalId;
 
-    public AiModelSettings() {}
+    public AiModel() {}
 
-    public AiModelSettings(AiModelSettingsId id) {
+    public AiModel(AiModelId id) {
         super(id);
     }
 
-    public AiModelSettings(AiModelSettings settings) {
-        super(settings.getId());
-        createdTime = settings.getCreatedTime();
-        tenantId = settings.getTenantId();
-        version = settings.getVersion();
-        name = settings.getName();
-        configuration = settings.getConfiguration();
-        externalId = settings.getExternalId() == null ? null : new AiModelSettingsId(settings.getExternalId().getId());
+    public AiModel(AiModel model) {
+        super(model.getId());
+        createdTime = model.getCreatedTime();
+        tenantId = model.getTenantId();
+        version = model.getVersion();
+        name = model.getName();
+        configuration = model.getConfiguration();
+        externalId = model.getExternalId() == null ? null : new AiModelId(model.getExternalId().getId());
     }
 
 }

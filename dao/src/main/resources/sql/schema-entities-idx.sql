@@ -132,4 +132,4 @@ CREATE INDEX IF NOT EXISTS mobile_app_bundle_tenant_id ON mobile_app_bundle(tena
 
 CREATE INDEX IF NOT EXISTS idx_job_tenant_id ON job(tenant_id);
 
-CREATE INDEX IF NOT EXISTS idx_ai_model_settings_tenant_id ON ai_model_settings(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_ai_model_tenant_id ON ai_model(tenant_id);

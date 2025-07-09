@@ -15,26 +15,26 @@
  */
 package org.thingsboard.server.dao.ai;
 
-import org.thingsboard.server.common.data.ai.AiModelSettings;
+import org.thingsboard.server.common.data.ai.AiModel;
 
 import static java.util.Objects.requireNonNull;
-import static org.thingsboard.server.dao.ai.AiModelSettingsCacheEvictEvent.Deleted;
-import static org.thingsboard.server.dao.ai.AiModelSettingsCacheEvictEvent.Saved;
+import static org.thingsboard.server.dao.ai.AiModelCacheEvictEvent.Deleted;
+import static org.thingsboard.server.dao.ai.AiModelCacheEvictEvent.Saved;
 
-sealed interface AiModelSettingsCacheEvictEvent permits Saved, Deleted {
+sealed interface AiModelCacheEvictEvent permits Saved, Deleted {
 
-    AiModelSettingsCacheKey cacheKey();
+    AiModelCacheKey cacheKey();
 
-    record Saved(AiModelSettingsCacheKey cacheKey, AiModelSettings savedSettings) implements AiModelSettingsCacheEvictEvent {
+    record Saved(AiModelCacheKey cacheKey, AiModel savedModel) implements AiModelCacheEvictEvent {
 
         public Saved {
             requireNonNull(cacheKey);
-            requireNonNull(savedSettings);
+            requireNonNull(savedModel);
         }
 
     }
 
-    record Deleted(AiModelSettingsCacheKey cacheKey) implements AiModelSettingsCacheEvictEvent {
+    record Deleted(AiModelCacheKey cacheKey) implements AiModelCacheEvictEvent {
 
         public Deleted {
             requireNonNull(cacheKey);

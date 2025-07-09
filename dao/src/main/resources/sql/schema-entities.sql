@@ -962,7 +962,7 @@ CREATE TABLE IF NOT EXISTS job (
     result varchar
 );
 
-CREATE TABLE IF NOT EXISTS ai_model_settings (
+CREATE TABLE IF NOT EXISTS ai_model (
     id              UUID          NOT NULL PRIMARY KEY,
     external_id     UUID,
     created_time    BIGINT        NOT NULL,
@@ -970,6 +970,6 @@ CREATE TABLE IF NOT EXISTS ai_model_settings (
     version         BIGINT        NOT NULL DEFAULT 1,
     name            VARCHAR(255)  NOT NULL,
     configuration   JSONB         NOT NULL,
-    CONSTRAINT ai_model_settings_name_unq_key        UNIQUE (tenant_id, name),
-    CONSTRAINT ai_model_settings_external_id_unq_key UNIQUE (tenant_id, external_id)
+    CONSTRAINT ai_model_name_unq_key        UNIQUE (tenant_id, name),
+    CONSTRAINT ai_model_external_id_unq_key UNIQUE (tenant_id, external_id)
 );

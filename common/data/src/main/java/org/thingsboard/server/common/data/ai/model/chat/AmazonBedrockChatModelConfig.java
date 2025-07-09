@@ -25,30 +25,23 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 
-public record OpenAiChatModel(
+public record AmazonBedrockChatModelConfig(
         AiModelType modelType,
-        @NotNull @Valid OpenAiProviderConfig providerConfig,
-        @With @NotNull @Valid Config modelConfig
-) implements AiChatModel<OpenAiChatModel.Config> {
+        @NotNull @Valid AmazonBedrockProviderConfig providerConfig,
+        @NotBlank String modelId,
+        @PositiveOrZero Double temperature,
+        @Positive @Max(1) Double topP,
+        @Positive Integer maxOutputTokens,
+        @With @Positive Integer timeoutSeconds,
+        @With @PositiveOrZero Integer maxRetries
+) implements AiChatModelConfig<AmazonBedrockChatModelConfig> {
 
     @Override
     public AiProvider provider() {
-        return AiProvider.OPENAI;
+        return AiProvider.AMAZON_BEDROCK;
     }
-
-    @With
-    public record Config(
-            @NotBlank String modelId,
-            @PositiveOrZero Double temperature,
-            @Positive @Max(1) Double topP,
-            Double frequencyPenalty,
-            Double presencePenalty,
-            @Positive Integer maxOutputTokens,
-            @Positive Integer timeoutSeconds,
-            @PositiveOrZero Integer maxRetries
-    ) implements AiChatModelConfig<OpenAiChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {

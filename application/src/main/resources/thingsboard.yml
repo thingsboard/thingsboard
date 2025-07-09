@@ -656,9 +656,9 @@ cache:
     trendzSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_TRENDZ_SETTINGS_TTL:1440}" # Trendz settings cache TTL
       maxSize: "${CACHE_SPECS_TRENDZ_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
-    aiModelSettings:
-      timeToLiveInMinutes: "${CACHE_SPECS_AI_MODEL_SETTINGS_TTL:1440}" # AI model settings cache TTL
-      maxSize: "${CACHE_SPECS_AI_MODEL_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    aiModel:
+      timeToLiveInMinutes: "${CACHE_SPECS_AI_MODEL_TTL:1440}" # AI model cache TTL
+      maxSize: "${CACHE_SPECS_AI_MODEL_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -874,7 +874,7 @@ audit-log:
       "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels.
       "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels.
       "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels.
-      "ai_model_settings": "${AUDIT_LOG_MASK_AI_MODEL_SETTINGS:W}" # AI model settings logging levels.
+      "ai_model": "${AUDIT_LOG_MASK_AI_MODEL:W}" # AI model logging levels.
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"

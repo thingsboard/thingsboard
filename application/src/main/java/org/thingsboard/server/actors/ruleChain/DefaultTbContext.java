@@ -28,7 +28,7 @@ import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.NotificationCenter;
-import org.thingsboard.rule.engine.api.RuleEngineAiModelService;
+import org.thingsboard.rule.engine.api.RuleEngineAiChatModelService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
@@ -77,7 +77,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.TbMsgProcessingStackItem;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.dao.ai.AiModelSettingsService;
+import org.thingsboard.server.dao.ai.AiModelService;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -1027,13 +1027,13 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public RuleEngineAiModelService getAiModelService() {
-        return mainCtx.getAiModelService();
+    public RuleEngineAiChatModelService getAiChatModelService() {
+        return mainCtx.getAiChatModelService();
     }
 
     @Override
-    public AiModelSettingsService getAiModelSettingsService() {
-        return mainCtx.getAiModelSettingsService();
+    public AiModelService getAiModelService() {
+        return mainCtx.getAiModelService();
     }
 
     @Override

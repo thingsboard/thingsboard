@@ -23,14 +23,14 @@ import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.cache.TbJsonRedisSerializer;
 import org.thingsboard.server.cache.VersionedRedisTbCache;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.ai.AiModelSettings;
+import org.thingsboard.server.common.data.ai.AiModel;
 
-@Component("AiSettingsCache")
+@Component("AiModelCache")
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
-class AiModelSettingsRedisCache extends VersionedRedisTbCache<AiModelSettingsCacheKey, AiModelSettings> {
+class AiModelRedisCache extends VersionedRedisTbCache<AiModelCacheKey, AiModel> {
 
-    AiModelSettingsRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.AI_MODEL_SETTINGS_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJsonRedisSerializer<>(AiModelSettings.class));
+    AiModelRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
+        super(CacheConstants.AI_MODEL_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJsonRedisSerializer<>(AiModel.class));
     }
 
 }

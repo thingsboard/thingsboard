@@ -25,30 +25,25 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.GitHubModelsProviderConfig;
 
-public record AzureOpenAiChatModel(
+public record GitHubModelsChatModelConfig(
         AiModelType modelType,
-        @NotNull @Valid AzureOpenAiProviderConfig providerConfig,
-        @With @NotNull @Valid Config modelConfig
-) implements AiChatModel<AzureOpenAiChatModel.Config> {
+        @NotNull @Valid GitHubModelsProviderConfig providerConfig,
+        @NotBlank String modelId,
+        @PositiveOrZero Double temperature,
+        @Positive @Max(1) Double topP,
+        Double frequencyPenalty,
+        Double presencePenalty,
+        @Positive Integer maxOutputTokens,
+        @With @Positive Integer timeoutSeconds,
+        @With @PositiveOrZero Integer maxRetries
+) implements AiChatModelConfig<GitHubModelsChatModelConfig> {
 
     @Override
     public AiProvider provider() {
-        return AiProvider.AZURE_OPENAI;
+        return AiProvider.GITHUB_MODELS;
     }
-
-    @With
-    public record Config(
-            @NotBlank String modelId,
-            @PositiveOrZero Double temperature,
-            @Positive @Max(1) Double topP,
-            Double frequencyPenalty,
-            Double presencePenalty,
-            @Positive Integer maxOutputTokens,
-            @Positive Integer timeoutSeconds,
-            @PositiveOrZero Integer maxRetries
-    ) implements AiChatModelConfig<AzureOpenAiChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {

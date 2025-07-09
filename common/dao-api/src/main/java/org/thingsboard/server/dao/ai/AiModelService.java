@@ -16,8 +16,8 @@
 package org.thingsboard.server.dao.ai;
 
 import com.google.common.util.concurrent.FluentFuture;
-import org.thingsboard.server.common.data.ai.AiModelSettings;
-import org.thingsboard.server.common.data.id.AiModelSettingsId;
+import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -25,18 +25,18 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Optional;
 
-public interface AiModelSettingsService extends EntityDaoService {
+public interface AiModelService extends EntityDaoService {
 
-    AiModelSettings save(AiModelSettings settings);
+    AiModel save(AiModel model);
 
-    Optional<AiModelSettings> findAiModelSettingsById(TenantId tenantId, AiModelSettingsId settingsId);
+    Optional<AiModel> findAiModelById(TenantId tenantId, AiModelId modelId);
 
-    PageData<AiModelSettings> findAiModelSettingsByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, PageLink pageLink);
 
-    Optional<AiModelSettings> findAiModelSettingsByTenantIdAndId(TenantId tenantId, AiModelSettingsId settingsId);
+    Optional<AiModel> findAiModelByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 
-    FluentFuture<Optional<AiModelSettings>> findAiModelSettingsByTenantIdAndIdAsync(TenantId tenantId, AiModelSettingsId settingsId);
+    FluentFuture<Optional<AiModel>> findAiModelByTenantIdAndIdAsync(TenantId tenantId, AiModelId modelId);
 
-    boolean deleteByTenantIdAndId(TenantId tenantId, AiModelSettingsId settingsId);
+    boolean deleteByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 
 }

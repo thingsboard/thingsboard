@@ -15,6 +15,6 @@
  */
 package org.thingsboard.server.service.ai;
 
-import org.thingsboard.rule.engine.api.RuleEngineAiModelService;
+import org.thingsboard.rule.engine.api.RuleEngineAiChatModelService;
 
-public interface AiModelService extends RuleEngineAiModelService {}
+public interface AiChatModelService extends RuleEngineAiChatModelService {}

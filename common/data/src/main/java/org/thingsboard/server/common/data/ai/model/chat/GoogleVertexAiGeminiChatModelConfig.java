@@ -25,29 +25,26 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 
-public record AnthropicChatModel(
+public record GoogleVertexAiGeminiChatModelConfig(
         AiModelType modelType,
-        @NotNull @Valid AnthropicProviderConfig providerConfig,
-        @With @NotNull @Valid Config modelConfig
-) implements AiChatModel<AnthropicChatModel.Config> {
+        @NotNull @Valid GoogleVertexAiGeminiProviderConfig providerConfig,
+        @NotBlank String modelId,
+        @PositiveOrZero Double temperature,
+        @Positive @Max(1) Double topP,
+        @Positive Integer topK,
+        Double frequencyPenalty,
+        Double presencePenalty,
+        @Positive Integer maxOutputTokens,
+        @With @Positive Integer timeoutSeconds,
+        @With @PositiveOrZero Integer maxRetries
+) implements AiChatModelConfig<GoogleVertexAiGeminiChatModelConfig> {
 
     @Override
     public AiProvider provider() {
-        return AiProvider.ANTHROPIC;
+        return AiProvider.GOOGLE_VERTEX_AI_GEMINI;
     }
-
-    @With
-    public record Config(
-            @NotBlank String modelId,
-            @PositiveOrZero Double temperature,
-            @Positive @Max(1) Double topP,
-            @Positive Integer topK,
-            @Positive Integer maxOutputTokens,
-            @Positive Integer timeoutSeconds,
-            @PositiveOrZero Integer maxRetries
-    ) implements AiChatModelConfig<AnthropicChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {

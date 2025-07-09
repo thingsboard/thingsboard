@@ -25,28 +25,26 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
 
-public record AmazonBedrockChatModel(
+public record GoogleAiGeminiChatModelConfig(
         AiModelType modelType,
-        @NotNull @Valid AmazonBedrockProviderConfig providerConfig,
-        @With @NotNull @Valid Config modelConfig
-) implements AiChatModel<AmazonBedrockChatModel.Config> {
+        @NotNull @Valid GoogleAiGeminiProviderConfig providerConfig,
+        @NotBlank String modelId,
+        @PositiveOrZero Double temperature,
+        @Positive @Max(1) Double topP,
+        @Positive Integer topK,
+        Double frequencyPenalty,
+        Double presencePenalty,
+        @Positive Integer maxOutputTokens,
+        @With @Positive Integer timeoutSeconds,
+        @With @PositiveOrZero Integer maxRetries
+) implements AiChatModelConfig<GoogleAiGeminiChatModelConfig> {
 
     @Override
     public AiProvider provider() {
-        return AiProvider.AMAZON_BEDROCK;
+        return AiProvider.GOOGLE_AI_GEMINI;
     }
-
-    @With
-    public record Config(
-            @NotBlank String modelId,
-            @PositiveOrZero Double temperature,
-            @Positive @Max(1) Double topP,
-            @Positive Integer maxOutputTokens,
-            @Positive Integer timeoutSeconds,
-            @PositiveOrZero Integer maxRetries
-    ) implements AiChatModelConfig<AmazonBedrockChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {

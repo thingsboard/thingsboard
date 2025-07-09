@@ -25,31 +25,25 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
 
-public record GoogleVertexAiGeminiChatModel(
+public record AzureOpenAiChatModelConfig(
         AiModelType modelType,
-        @NotNull @Valid GoogleVertexAiGeminiProviderConfig providerConfig,
-        @With @NotNull @Valid Config modelConfig
-) implements AiChatModel<GoogleVertexAiGeminiChatModel.Config> {
+        @NotNull @Valid AzureOpenAiProviderConfig providerConfig,
+        @NotBlank String modelId,
+        @PositiveOrZero Double temperature,
+        @Positive @Max(1) Double topP,
+        Double frequencyPenalty,
+        Double presencePenalty,
+        @Positive Integer maxOutputTokens,
+        @With @Positive Integer timeoutSeconds,
+        @With @PositiveOrZero Integer maxRetries
+) implements AiChatModelConfig<AzureOpenAiChatModelConfig> {
 
     @Override
     public AiProvider provider() {
-        return AiProvider.GOOGLE_VERTEX_AI_GEMINI;
+        return AiProvider.AZURE_OPENAI;
     }
-
-    @With
-    public record Config(
-            @NotBlank String modelId,
-            @PositiveOrZero Double temperature,
-            @Positive @Max(1) Double topP,
-            @Positive Integer topK,
-            Double frequencyPenalty,
-            Double presencePenalty,
-            @Positive Integer maxOutputTokens,
-            @Positive Integer timeoutSeconds,
-            @PositiveOrZero Integer maxRetries
-    ) implements AiChatModelConfig<GoogleVertexAiGeminiChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {

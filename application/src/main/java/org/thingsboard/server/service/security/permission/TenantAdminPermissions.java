@@ -18,8 +18,8 @@ package org.thingsboard.server.service.security.permission;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.ai.AiModelSettings;
-import org.thingsboard.server.common.data.id.AiModelSettingsId;
+import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
@@ -58,7 +58,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.MOBILE_APP, tenantEntityPermissionChecker);
         put(Resource.MOBILE_APP_BUNDLE, tenantEntityPermissionChecker);
         put(Resource.JOB, tenantEntityPermissionChecker);
-        put(Resource.AI_MODEL_SETTINGS, aiModelSettingsPermissionChecker);
+        put(Resource.AI_MODEL, aiModelPermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
@@ -149,7 +149,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
     };
 
-    private static final PermissionChecker<AiModelSettingsId, AiModelSettings> aiModelSettingsPermissionChecker = new PermissionChecker<>() {
+    private static final PermissionChecker<AiModelId, AiModel> aiModelPermissionChecker = new PermissionChecker<>() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation) {
@@ -157,7 +157,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         }
 
         @Override
-        public boolean hasPermission(SecurityUser user, Operation operation, AiModelSettingsId entityId, AiModelSettings entity) {
+        public boolean hasPermission(SecurityUser user, Operation operation, AiModelId entityId, AiModel entity) {
             return user.getTenantId().equals(entity.getTenantId());
         }
 

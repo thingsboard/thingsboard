@@ -23,58 +23,58 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.ExportableEntityRepository;
-import org.thingsboard.server.dao.model.sql.AiModelSettingsEntity;
+import org.thingsboard.server.dao.model.sql.AiModelEntity;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity, UUID>, ExportableEntityRepository<AiModelSettingsEntity> {
+interface AiModelRepository extends JpaRepository<AiModelEntity, UUID>, ExportableEntityRepository<AiModelEntity> {
 
-    Optional<AiModelSettingsEntity> findByTenantIdAndId(UUID tenantId, UUID id);
+    Optional<AiModelEntity> findByTenantIdAndId(UUID tenantId, UUID id);
 
-    Optional<AiModelSettingsEntity> findByTenantIdAndName(UUID tenantId, String name);
+    Optional<AiModelEntity> findByTenantIdAndName(UUID tenantId, String name);
 
     @Query(
             value = """
                     SELECT *
-                    FROM ai_model_settings ai_model
-                    WHERE ai_model.tenant_id = :tenantId
+                    FROM ai_model model
+                    WHERE model.tenant_id = :tenantId
                       AND (:textSearch IS NULL
-                        OR ai_model.name ILIKE '%' || :textSearch || '%'
-                        OR (ai_model.configuration ->> 'provider') ILIKE '%' || :textSearch || '%'
-                        OR (ai_model.configuration -> 'modelConfig' ->> 'modelId') ILIKE '%' || :textSearch || '%')
+                        OR model.name ILIKE '%' || :textSearch || '%'
+                        OR (model.configuration ->> 'provider') ILIKE '%' || :textSearch || '%'
+                        OR (model.configuration ->> 'modelId') ILIKE '%' || :textSearch || '%')
                     """,
             countQuery = """
                     SELECT COUNT(*)
-                    FROM ai_model_settings ai_model
-                    WHERE ai_model.tenant_id = :tenantId
+                    FROM ai_model model
+                    WHERE model.tenant_id = :tenantId
                       AND (:textSearch IS NULL
-                        OR ai_model.name ILIKE '%' || :textSearch || '%'
-                        OR (ai_model.configuration ->> 'provider') ILIKE '%' || :textSearch || '%'
-                        OR (ai_model.configuration -> 'modelConfig'  ->> 'modelId') ILIKE '%' || :textSearch || '%')
+                        OR model.name ILIKE '%' || :textSearch || '%'
+                        OR (model.configuration ->> 'provider') ILIKE '%' || :textSearch || '%'
+                        OR (model.configuration ->> 'modelId') ILIKE '%' || :textSearch || '%')
                     """,
             nativeQuery = true
     )
-    Page<AiModelSettingsEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
+    Page<AiModelEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
 
-    @Query("SELECT ai_model.id FROM AiModelSettingsEntity ai_model WHERE ai_model.tenantId = :tenantId")
+    @Query("SELECT ai_model.id FROM AiModelEntity ai_model WHERE ai_model.tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
-    @Query("SELECT externalId FROM AiModelSettingsEntity WHERE id = :id")
+    @Query("SELECT externalId FROM AiModelEntity WHERE id = :id")
     Optional<UUID> getExternalIdById(@Param("id") UUID id);
 
     long countByTenantId(UUID tenantId);
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM AiModelSettingsEntity ai_model WHERE ai_model.id IN (:ids)")
+    @Query("DELETE FROM AiModelEntity ai_model WHERE ai_model.id IN (:ids)")
     int deleteByIdIn(@Param("ids") Set<UUID> ids);
 
     @Transactional
     @Modifying
     @Query(value = """
-                DELETE FROM ai_model_settings
+                DELETE FROM ai_model
                 WHERE tenant_id = :tenantId
                 RETURNING id
             """, nativeQuery = true
@@ -83,7 +83,7 @@ interface AiModelSettingsRepository extends JpaRepository<AiModelSettingsEntity,
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM AiModelSettingsEntity ai_model WHERE ai_model.tenantId = :tenantId AND ai_model.id IN (:ids)")
+    @Query("DELETE FROM AiModelEntity ai_model WHERE ai_model.tenantId = :tenantId AND ai_model.id IN (:ids)")
     int deleteByTenantIdAndIdIn(@Param("tenantId") UUID tenantId, @Param("ids") Set<UUID> ids);
 
 }

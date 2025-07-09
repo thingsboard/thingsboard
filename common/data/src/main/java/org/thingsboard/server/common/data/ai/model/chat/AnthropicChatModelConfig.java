@@ -25,30 +25,24 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 
-public record MistralAiChatModel(
+public record AnthropicChatModelConfig(
         AiModelType modelType,
-        @NotNull @Valid MistralAiProviderConfig providerConfig,
-        @With @NotNull @Valid Config modelConfig
-) implements AiChatModel<MistralAiChatModel.Config> {
+        @NotNull @Valid AnthropicProviderConfig providerConfig,
+        @NotBlank String modelId,
+        @PositiveOrZero Double temperature,
+        @Positive @Max(1) Double topP,
+        @Positive Integer topK,
+        @Positive Integer maxOutputTokens,
+        @With @Positive Integer timeoutSeconds,
+        @With @PositiveOrZero Integer maxRetries
+) implements AiChatModelConfig<AnthropicChatModelConfig> {
 
     @Override
     public AiProvider provider() {
-        return AiProvider.MISTRAL_AI;
+        return AiProvider.ANTHROPIC;
     }
-
-    @With
-    public record Config(
-            @NotBlank String modelId,
-            @PositiveOrZero Double temperature,
-            @Positive @Max(1) Double topP,
-            Double frequencyPenalty,
-            Double presencePenalty,
-            @Positive Integer maxOutputTokens,
-            @Positive Integer timeoutSeconds,
-            @PositiveOrZero Integer maxRetries
-    ) implements AiChatModelConfig<MistralAiChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {

@@ -25,31 +25,25 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
 
-public record GoogleAiGeminiChatModel(
+public record MistralAiChatModelConfig(
         AiModelType modelType,
-        @NotNull @Valid GoogleAiGeminiProviderConfig providerConfig,
-        @With @NotNull @Valid Config modelConfig
-) implements AiChatModel<GoogleAiGeminiChatModel.Config> {
+        @NotNull @Valid MistralAiProviderConfig providerConfig,
+        @NotBlank String modelId,
+        @PositiveOrZero Double temperature,
+        @Positive @Max(1) Double topP,
+        Double frequencyPenalty,
+        Double presencePenalty,
+        @Positive Integer maxOutputTokens,
+        @With @Positive Integer timeoutSeconds,
+        @With @PositiveOrZero Integer maxRetries
+) implements AiChatModelConfig<MistralAiChatModelConfig> {
 
     @Override
     public AiProvider provider() {
-        return AiProvider.GOOGLE_AI_GEMINI;
+        return AiProvider.MISTRAL_AI;
     }
-
-    @With
-    public record Config(
-            @NotBlank String modelId,
-            @PositiveOrZero Double temperature,
-            @Positive @Max(1) Double topP,
-            @Positive Integer topK,
-            Double frequencyPenalty,
-            Double presencePenalty,
-            @Positive Integer maxOutputTokens,
-            @Positive Integer timeoutSeconds,
-            @PositiveOrZero Integer maxRetries
-    ) implements AiChatModelConfig<GoogleAiGeminiChatModel.Config> {}
 
     @Override
     public ChatModel configure(Langchain4jChatModelConfigurer configurer) {

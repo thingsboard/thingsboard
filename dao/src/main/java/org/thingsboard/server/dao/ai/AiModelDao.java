@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.dao.ai;
 
-import org.thingsboard.server.common.data.ai.AiModelSettings;
-import org.thingsboard.server.common.data.id.AiModelSettingsId;
+import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
@@ -24,14 +24,14 @@ import org.thingsboard.server.dao.TenantEntityDao;
 import java.util.Optional;
 import java.util.Set;
 
-public interface AiModelSettingsDao extends TenantEntityDao<AiModelSettings>, ExportableEntityDao<AiModelSettingsId, AiModelSettings> {
+public interface AiModelDao extends TenantEntityDao<AiModel>, ExportableEntityDao<AiModelId, AiModel> {
 
-    Optional<AiModelSettings> findByTenantIdAndId(TenantId tenantId, AiModelSettingsId settingsId);
+    Optional<AiModel> findByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 
-    boolean deleteById(TenantId tenantId, AiModelSettingsId settingsId);
+    boolean deleteById(TenantId tenantId, AiModelId modelId);
 
-    Set<AiModelSettingsId> deleteByTenantId(TenantId tenantId);
+    Set<AiModelId> deleteByTenantId(TenantId tenantId);
 
-    boolean deleteByTenantIdAndId(TenantId tenantId, AiModelSettingsId settingsId);
+    boolean deleteByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 
 }

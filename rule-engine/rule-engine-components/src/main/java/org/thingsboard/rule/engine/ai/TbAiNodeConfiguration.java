@@ -23,7 +23,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.data.id.AiModelSettingsId;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.validation.Length;
 
 import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonResponseFormat;
@@ -32,7 +32,7 @@ import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonResponseForm
 public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfiguration> {
 
     @NotNull
-    private AiModelSettingsId aiModelSettingsId;
+    private AiModelId aiModelId;
 
     @Pattern(regexp = ".*\\S.*", message = "must not be blank")
     @Length(min = 1, max = 10000)

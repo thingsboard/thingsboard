@@ -20,14 +20,14 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.VersionedCaffeineTbCache;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.ai.AiModelSettings;
+import org.thingsboard.server.common.data.ai.AiModel;
 
-@Component("AiModelSettingsCache")
+@Component("AiModelCache")
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-class AiModelSettingsCaffeineCache extends VersionedCaffeineTbCache<AiModelSettingsCacheKey, AiModelSettings> {
+class AiModelCaffeineCache extends VersionedCaffeineTbCache<AiModelCacheKey, AiModel> {
 
-    AiModelSettingsCaffeineCache(CacheManager cacheManager) {
-        super(cacheManager, CacheConstants.AI_MODEL_SETTINGS_CACHE);
+    AiModelCaffeineCache(CacheManager cacheManager) {
+        super(cacheManager, CacheConstants.AI_MODEL_CACHE);
     }
 
 }

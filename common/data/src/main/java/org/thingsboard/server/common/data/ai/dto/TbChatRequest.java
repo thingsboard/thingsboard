@@ -23,7 +23,7 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import org.thingsboard.server.common.data.ai.model.chat.AiChatModel;
+import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +51,7 @@ public record TbChatRequest(
                 description = "Configuration of the AI chat model that should execute the request"
         )
         @NotNull @Valid
-        AiChatModel<?> chatModel
+        AiChatModelConfig<?> chatModelConfig
 ) {
 
     public ChatRequest toLangChainChatRequest() {
