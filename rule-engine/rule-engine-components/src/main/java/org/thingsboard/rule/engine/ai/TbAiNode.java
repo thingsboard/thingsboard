@@ -97,7 +97,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         systemPrompt = config.getSystemPrompt();
         userPrompt = config.getUserPrompt();
         timeoutSeconds = config.getTimeoutSeconds();
-        modelId = config.getAiModelId();
+        modelId = config.getModelId();
 
         Optional<AiModel> model = ctx.getAiModelService().findAiModelByTenantIdAndId(ctx.getTenantId(), modelId);
         if (model.isEmpty()) {
