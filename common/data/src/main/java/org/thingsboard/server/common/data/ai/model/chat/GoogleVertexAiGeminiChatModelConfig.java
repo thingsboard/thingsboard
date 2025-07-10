@@ -22,10 +22,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.Builder;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 
+@Builder
 public record GoogleVertexAiGeminiChatModelConfig(
         @NotNull @Valid GoogleVertexAiGeminiProviderConfig providerConfig,
         @NotBlank String modelId,

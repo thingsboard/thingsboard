@@ -16,16 +16,24 @@
 package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.Test;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
@@ -59,7 +67,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         // GIVEN
         loginSysAdmin();
 
-        AiModel model = constructValidModel();
+        AiModel model = constructValidOpenAiModel("Test model");
 
         // WHEN
         ResultActions result = doPost("/api/ai/model", model);
@@ -73,7 +81,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         // GIVEN
         loginCustomerUser();
 
-        AiModel model = constructValidModel();
+        AiModel model = constructValidOpenAiModel("Test model");
 
         // WHEN
         ResultActions result = doPost("/api/ai/model", model);
@@ -87,7 +95,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         // GIVEN
         loginTenantAdmin();
 
-        AiModel model = constructValidModel();
+        AiModel model = constructValidOpenAiModel("Test model");
 
         // WHEN
         var savedModel = doPost("/api/ai/model", model, AiModel.class);
@@ -128,7 +136,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         // GIVEN
         loginTenantAdmin();
 
-        var model = doPost("/api/ai/model", constructValidModel(), AiModel.class);
+        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
 
         var newModelConfig = OpenAiChatModelConfig.builder()
                 .providerConfig(new OpenAiProviderConfig("test-api-key-updated"))
@@ -205,7 +213,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         // GIVEN
         loginTenantAdmin();
 
-        var saved = doPost("/api/ai/model", constructValidModel(), AiModel.class);
+        var saved = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
 
         // WHEN
         AiModel actual = doGet("/api/ai/model/" + saved.getId(), AiModel.class);
@@ -227,6 +235,325 @@ public class AiModelControllerTest extends AbstractControllerTest {
         // THEN
         result.andExpect(status().isNotFound())
                 .andExpect(statusReason(is("AI model with id [" + nonexistentModelId + "] is not found")));
+    }
+
+    /* --- Get paged API tests --- */
+
+    @Test
+    public void getAiModels_whenUserIsSysAdmin_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginSysAdmin();
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model?pageSize=10&page=0");
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void getAiModels_whenUserIsCustomerUser_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginCustomerUser();
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model?pageSize=10&page=0");
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void getAiModels_testPagination() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var model1 = doPost("/api/ai/model", constructValidOpenAiModel("Test model 1"), AiModel.class);
+        var model2 = doPost("/api/ai/model", constructValidOpenAiModel("Test model 2"), AiModel.class);
+        var model3 = doPost("/api/ai/model", constructValidOpenAiModel("Test model 3"), AiModel.class);
+        var model4 = doPost("/api/ai/model", constructValidOpenAiModel("Test model 4"), AiModel.class);
+        var model5 = doPost("/api/ai/model", constructValidOpenAiModel("Test model 5"), AiModel.class);
+
+        // WHEN
+        PageData<AiModel> result = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, new PageLink(2, 1));
+
+        // THEN
+        assertThat(result.getData()).containsExactly(model3, model4);
+        assertThat(result.getTotalPages()).isEqualTo(3);
+        assertThat(result.getTotalElements()).isEqualTo(5);
+        assertThat(result.hasNext()).isTrue();
+    }
+
+    @Test
+    public void getAiModels_testTextSearch() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var model1 = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 1")
+                .configuration(OpenAiChatModelConfig.builder()
+                        .providerConfig(new OpenAiProviderConfig("test-api-key"))
+                        .modelId("o3-pro")
+                        .build())
+                .build(), AiModel.class);
+        var model2 = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 2")
+                .configuration(GoogleAiGeminiChatModelConfig.builder()
+                        .providerConfig(new GoogleAiGeminiProviderConfig("test-api-key"))
+                        .modelId("gemini-2.5-flash")
+                        .build())
+                .build(), AiModel.class);
+        var model3 = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 3")
+                .configuration(GoogleAiGeminiChatModelConfig.builder()
+                        .providerConfig(new GoogleAiGeminiProviderConfig("test-api-key"))
+                        .modelId("gemini-2.5-pro")
+                        .build())
+                .build(), AiModel.class);
+
+        // WHEN
+        int pageSize = 10;
+        int page = 0;
+        SortOrder sortOrder = null;
+
+        PageData<AiModel> result1 = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, new PageLink(pageSize, page, "google ai", sortOrder));
+
+        PageData<AiModel> result2 = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, new PageLink(pageSize, page, "pro", sortOrder));
+
+        PageData<AiModel> result3 = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, new PageLink(pageSize, page, "test", sortOrder));
+
+        PageData<AiModel> result4 = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, new PageLink(pageSize, page, "anthropic", sortOrder));
+
+        // THEN
+
+        // should find google models
+        assertThat(result1.getData()).containsExactly(model2, model3);
+        assertThat(result1.getTotalPages()).isEqualTo(1);
+        assertThat(result1.getTotalElements()).isEqualTo(2);
+        assertThat(result1.hasNext()).isFalse();
+
+        // should find "o3-pro" and "gemini-2.5-pro" models
+        assertThat(result2.getData()).containsExactly(model1, model3);
+        assertThat(result2.getTotalPages()).isEqualTo(1);
+        assertThat(result2.getTotalElements()).isEqualTo(2);
+        assertThat(result2.hasNext()).isFalse();
+
+        // should find all models (all contain "Test" in their names)
+        assertThat(result3.getData()).containsExactly(model1, model2, model3);
+        assertThat(result3.getTotalPages()).isEqualTo(1);
+        assertThat(result3.getTotalElements()).isEqualTo(3);
+        assertThat(result3.hasNext()).isFalse();
+
+        // should find no models (nothing matches "anthropic")
+        assertThat(result4.getData()).isEmpty();
+        assertThat(result4.getTotalPages()).isEqualTo(0);
+        assertThat(result4.getTotalElements()).isEqualTo(0);
+        assertThat(result4.hasNext()).isFalse();
+    }
+
+    @Test
+    public void getAiModels_testSortingByCreatedTime() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var model1 = doPost("/api/ai/model", constructValidOpenAiModel("Test model 1"), AiModel.class);
+        var model2 = doPost("/api/ai/model", constructValidOpenAiModel("Test model 2"), AiModel.class);
+
+        // WHEN
+        int pageSize = 2;
+        int page = 0;
+        String textSearch = null;
+
+        PageData<AiModel> resultAsc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("createdTime", SortOrder.Direction.ASC))
+        );
+        PageData<AiModel> resultDesc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("createdTime", SortOrder.Direction.DESC))
+        );
+
+        // THEN
+        assertThat(resultAsc.getData()).containsExactly(model1, model2);
+        assertThat(resultAsc.getTotalPages()).isEqualTo(1);
+        assertThat(resultAsc.getTotalElements()).isEqualTo(2);
+        assertThat(resultAsc.hasNext()).isFalse();
+
+        assertThat(resultDesc.getData()).containsExactly(model2, model1);
+        assertThat(resultDesc.getTotalPages()).isEqualTo(1);
+        assertThat(resultDesc.getTotalElements()).isEqualTo(2);
+        assertThat(resultDesc.hasNext()).isFalse();
+    }
+
+    @Test
+    public void getAiModels_testSortingByName() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var modelA = doPost("/api/ai/model", constructValidOpenAiModel("Test model A"), AiModel.class);
+        var modelB = doPost("/api/ai/model", constructValidOpenAiModel("Test model B"), AiModel.class);
+
+        // WHEN
+        int pageSize = 2;
+        int page = 0;
+        String textSearch = null;
+
+        PageData<AiModel> resultAsc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("name", SortOrder.Direction.ASC))
+        );
+        PageData<AiModel> resultDesc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("name", SortOrder.Direction.DESC))
+        );
+
+        // THEN
+        assertThat(resultAsc.getData()).containsExactly(modelA, modelB);
+        assertThat(resultAsc.getTotalPages()).isEqualTo(1);
+        assertThat(resultAsc.getTotalElements()).isEqualTo(2);
+        assertThat(resultAsc.hasNext()).isFalse();
+
+        assertThat(resultDesc.getData()).containsExactly(modelB, modelA);
+        assertThat(resultDesc.getTotalPages()).isEqualTo(1);
+        assertThat(resultDesc.getTotalElements()).isEqualTo(2);
+        assertThat(resultDesc.hasNext()).isFalse();
+    }
+
+    @Test
+    public void getAiModels_testSortingByProvider() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var anthropicModel = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 1")
+                .configuration(AnthropicChatModelConfig.builder()
+                        .providerConfig(new AnthropicProviderConfig("test-api-key"))
+                        .modelId("claude-sonnet-4-0")
+                        .build())
+                .build(), AiModel.class);
+        var geminiModel = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 2")
+                .configuration(GoogleAiGeminiChatModelConfig.builder()
+                        .providerConfig(new GoogleAiGeminiProviderConfig("test-api-key"))
+                        .modelId("gemini-2.5-pro")
+                        .build())
+                .build(), AiModel.class);
+
+        // WHEN
+        int pageSize = 2;
+        int page = 0;
+        String textSearch = null;
+
+        PageData<AiModel> resultAsc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("provider", SortOrder.Direction.ASC))
+        );
+        PageData<AiModel> resultDesc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("provider", SortOrder.Direction.DESC))
+        );
+
+        // THEN
+        assertThat(resultAsc.getData()).containsExactly(anthropicModel, geminiModel);
+        assertThat(resultAsc.getTotalPages()).isEqualTo(1);
+        assertThat(resultAsc.getTotalElements()).isEqualTo(2);
+        assertThat(resultAsc.hasNext()).isFalse();
+
+        assertThat(resultDesc.getData()).containsExactly(geminiModel, anthropicModel);
+        assertThat(resultDesc.getTotalPages()).isEqualTo(1);
+        assertThat(resultDesc.getTotalElements()).isEqualTo(2);
+        assertThat(resultDesc.hasNext()).isFalse();
+    }
+
+    @Test
+    public void getAiModels_testSortingByModelId() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var modelA = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 1")
+                .configuration(AnthropicChatModelConfig.builder()
+                        .providerConfig(new AnthropicProviderConfig("test-api-key"))
+                        .modelId("model-a")
+                        .build())
+                .build(), AiModel.class);
+
+        var modelB = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 2")
+                .configuration(GoogleAiGeminiChatModelConfig.builder()
+                        .providerConfig(new GoogleAiGeminiProviderConfig("test-api-key"))
+                        .modelId("model-b")
+                        .build())
+                .build(), AiModel.class);
+
+        // WHEN
+        int pageSize = 2;
+        int page = 0;
+        String textSearch = null;
+
+        PageData<AiModel> resultAsc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("modelId", SortOrder.Direction.ASC))
+        );
+        PageData<AiModel> resultDesc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("modelId", SortOrder.Direction.DESC))
+        );
+
+        // THEN
+        assertThat(resultAsc.getData()).containsExactly(modelA, modelB);
+        assertThat(resultAsc.getTotalPages()).isEqualTo(1);
+        assertThat(resultAsc.getTotalElements()).isEqualTo(2);
+        assertThat(resultAsc.hasNext()).isFalse();
+
+        assertThat(resultDesc.getData()).containsExactly(modelB, modelA);
+        assertThat(resultDesc.getTotalPages()).isEqualTo(1);
+        assertThat(resultDesc.getTotalElements()).isEqualTo(2);
+        assertThat(resultDesc.hasNext()).isFalse();
+    }
+
+    @Test
+    public void getAiModels_testSortingByIdTieBreaker() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        // Both models are from OpenAI and sorting will be done on provider
+        var modelA = doPost("/api/ai/model", constructValidOpenAiModel("Test model A"), AiModel.class);
+        var modelB = doPost("/api/ai/model", constructValidOpenAiModel("Test model B"), AiModel.class);
+
+        // WHEN
+        int pageSize = 2;
+        int page = 0;
+        String textSearch = null;
+
+        PageData<AiModel> resultAsc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("provider", SortOrder.Direction.ASC))
+        );
+        PageData<AiModel> resultDesc = doGetTypedWithPageLink(
+                "/api/ai/model?", new TypeReference<>() {},
+                new PageLink(pageSize, page, textSearch, SortOrder.of("provider", SortOrder.Direction.DESC))
+        );
+
+        // THEN
+
+        // in both cases result should be the same since in case of ties (both models have OpenAI as provider, sorting by ID ascending is used)
+        assertThat(resultAsc.getData()).containsExactly(modelA, modelB);
+        assertThat(resultAsc.getTotalPages()).isEqualTo(1);
+        assertThat(resultAsc.getTotalElements()).isEqualTo(2);
+        assertThat(resultAsc.hasNext()).isFalse();
+
+        assertThat(resultDesc.getData()).containsExactly(modelA, modelB);
+        assertThat(resultDesc.getTotalPages()).isEqualTo(1);
+        assertThat(resultDesc.getTotalElements()).isEqualTo(2);
+        assertThat(resultDesc.hasNext()).isFalse();
     }
 
     /* --- Delete API tests --- */
@@ -260,7 +587,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         // GIVEN
         loginTenantAdmin();
 
-        var model = doPost("/api/ai/model", constructValidModel(), AiModel.class);
+        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
 
         // WHEN
         boolean deleted = doDelete("/api/ai/model/" + model.getId(), Boolean.class);
@@ -308,7 +635,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         );
     }
 
-    private AiModel constructValidModel() {
+    private AiModel constructValidOpenAiModel(String name) {
         var modelConfig = OpenAiChatModelConfig.builder()
                 .providerConfig(new OpenAiProviderConfig("test-api-key"))
                 .modelId("gpt-4o")
@@ -323,7 +650,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         return AiModel.builder()
                 .tenantId(tenantId)
-                .name("Test model")
+                .name(name)
                 .configuration(modelConfig)
                 .build();
     }
