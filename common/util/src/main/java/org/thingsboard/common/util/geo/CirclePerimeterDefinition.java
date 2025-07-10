@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.common.util.geo;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import org.springframework.lang.Nullable;
-import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Argument {
+public class CirclePerimeterDefinition implements PerimeterDefinition {
 
-    @Nullable
-    private EntityId refEntityId;
-    private CFArgumentDynamicSourceType refDynamicSource;
-    private CfArgumentDynamicSourceConfiguration refDynamicSourceConfiguration;
-    private ReferencedEntityKey refEntityKey;
-    private String defaultValue;
+    private Double centerLatitude;
+    private Double centerLongitude;
+    private Double range;
+    private RangeUnit rangeUnit;
 
-    private Integer limit;
-    private Long timeWindow;
+    @Override
+    public PerimeterType getType() {
+        return PerimeterType.CIRCLE;
+    }
+
+    @Override
+    public boolean checkMatches(Coordinates entityCoordinates) {
+        Coordinates perimeterCoordinates = new Coordinates(centerLatitude, centerLongitude);
+        return range > GeoUtil.distance(entityCoordinates, perimeterCoordinates, rangeUnit);
+    }
+
 
 }

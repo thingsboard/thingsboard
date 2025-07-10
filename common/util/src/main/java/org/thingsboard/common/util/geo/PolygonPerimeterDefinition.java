@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.common.util.geo;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import org.springframework.lang.Nullable;
-import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Argument {
+public class PolygonPerimeterDefinition implements PerimeterDefinition {
 
-    @Nullable
-    private EntityId refEntityId;
-    private CFArgumentDynamicSourceType refDynamicSource;
-    private CfArgumentDynamicSourceConfiguration refDynamicSourceConfiguration;
-    private ReferencedEntityKey refEntityKey;
-    private String defaultValue;
+    private String polygonsDefinition;
 
-    private Integer limit;
-    private Long timeWindow;
+    @Override
+    public PerimeterType getType() {
+        return PerimeterType.POLYGON;
+    }
+
+    @Override
+    public boolean checkMatches(Coordinates entityCoordinates) {
+        return GeoUtil.contains(polygonsDefinition, entityCoordinates);
+    }
 
 }

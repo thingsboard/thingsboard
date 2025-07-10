@@ -34,6 +34,7 @@ import java.util.Map;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
         @JsonSubTypes.Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
+        @JsonSubTypes.Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
 })
 public interface CalculatedFieldState {
 
@@ -48,7 +49,7 @@ public interface CalculatedFieldState {
 
     boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues);
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
+    ListenableFuture<List<CalculatedFieldResult>> performCalculation(CalculatedFieldCtx ctx);
 
     @JsonIgnore
     boolean isReady();

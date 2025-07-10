@@ -32,6 +32,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsRollingArgumentPro
 import org.thingsboard.server.gen.transport.TransportProtos.TsValueProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
@@ -118,7 +119,10 @@ public class CalculatedFieldUtils {
         CalculatedFieldState state = switch (type) {
             case SIMPLE -> new SimpleCalculatedFieldState();
             case SCRIPT -> new ScriptCalculatedFieldState();
+            case GEOFENCING -> new GeofencingCalculatedFieldState();
         };
+
+        // TODO: add logic to restore geofencing state from proto
 
         proto.getSingleValueArgumentsList().forEach(argProto ->
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));

@@ -53,7 +53,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
+    public ListenableFuture<List<CalculatedFieldResult>> performCalculation(CalculatedFieldCtx ctx) {
         Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
         List<Object> args = new ArrayList<>(ctx.getArgNames().size() + 1);
         args.add(new Object()); // first element is a ctx, but we will set it later;
@@ -70,7 +70,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
         ListenableFuture<JsonNode> resultFuture = ctx.getCalculatedFieldScriptEngine().executeJsonAsync(args.toArray());
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,
-                result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),
+                result -> List.of(new CalculatedFieldResult(output.getType(), output.getScope(), result)),
                 MoreExecutors.directExecutor()
         );
     }

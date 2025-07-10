@@ -35,7 +35,8 @@ import java.util.Map;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleCalculatedFieldConfiguration.class, name = "SIMPLE"),
-        @JsonSubTypes.Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT")
+        @JsonSubTypes.Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT"),
+        @JsonSubTypes.Type(value = GeofencingCalculatedFieldConfiguration.class, name = "GEOFENCING")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CalculatedFieldConfiguration {

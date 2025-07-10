@@ -15,23 +15,17 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import org.springframework.lang.Nullable;
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Argument {
+@EqualsAndHashCode(callSuper = true)
+public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
 
-    @Nullable
-    private EntityId refEntityId;
-    private CFArgumentDynamicSourceType refDynamicSource;
-    private CfArgumentDynamicSourceConfiguration refDynamicSourceConfiguration;
-    private ReferencedEntityKey refEntityKey;
-    private String defaultValue;
-
-    private Integer limit;
-    private Long timeWindow;
+    @Override
+    public CalculatedFieldType getType() {
+        return CalculatedFieldType.GEOFENCING;
+    }
 
 }
