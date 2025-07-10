@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Test;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.web.servlet.ResultActions;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
@@ -32,9 +34,12 @@ import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -119,7 +124,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void saveAiModel_whenUpdatingExistingModelAsTenantAdmin_shouldSucceedAndLogAction() throws Exception {
+    public void saveAiModel_whenUpdatingExistingModelAsTenantAdmin_shouldSucceed() throws Exception {
         // GIVEN
         loginTenantAdmin();
 
@@ -166,6 +171,85 @@ public class AiModelControllerTest extends AbstractControllerTest {
         then(logEntityActionService).should().logEntityAction(
                 eq(tenantId), eq(updatedModel.getId()), eq(updatedModel), eq(ActionType.UPDATED),
                 argThat(actualUser -> Objects.equals(actualUser.getId(), tenantAdminUser.getId()))
+        );
+    }
+
+    /* --- Delete API tests --- */
+
+    @Test
+    public void deleteAiModelById_whenUserIsSysAdmin_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginSysAdmin();
+
+        // WHEN
+        ResultActions result = doDelete("/api/ai/model/" + Uuids.timeBased());
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void deleteAiModelById_whenUserIsCustomerUser_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginCustomerUser();
+
+        // WHEN
+        ResultActions result = doDelete("/api/ai/model/" + Uuids.timeBased());
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void deleteAiModelById_whenDeletingExistingModelAsTenantAdmin_shouldSucceedAndReturnTrue() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var model = doPost("/api/ai/model", constructValidModel(), AiModel.class);
+
+        // WHEN
+        boolean deleted = doDelete("/api/ai/model/" + model.getId(), Boolean.class);
+
+        // THEN
+        assertThat(deleted).isTrue();
+
+        // verify a rule engine message was sent, and an audit log was created
+        then(logEntityActionService).should().logEntityAction(
+                eq(tenantId),
+                eq(model.getId()),
+                eq(model),
+                eq(ActionType.DELETED),
+                argThat(actualUser -> Objects.equals(actualUser.getId(), tenantAdminUser.getId())),
+                eq(model.getId().toString())
+        );
+
+        // verify model cannot be found anymore
+        doGet("/api/ai/model/" + model.getId())
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is("AI model with id [" + model.getId() + "] is not found")));
+    }
+
+    @Test
+    public void deleteAiModelById_whenDeletingNonexistentModelAsTenantAdmin_shouldSucceedAndReturnFalse() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var nonexistentModelId = new AiModelId(Uuids.timeBased());
+
+        // WHEN
+        boolean deleted = doDelete("/api/ai/model/" + nonexistentModelId, Boolean.class);
+
+        // THEN
+        assertThat(deleted).isFalse();
+
+        // verify a rule engine message was not sent, and an audit log was not created
+        then(logEntityActionService).should(never()).logEntityAction(
+                eq(tenantId),
+                eq(nonexistentModelId),
+                any(AiModel.class),
+                eq(ActionType.DELETED),
+                argThat(actualUser -> Objects.equals(actualUser.getId(), tenantAdminUser.getId())),
+                eq(nonexistentModelId.toString())
         );
     }
 
