@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.msg;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -64,6 +65,7 @@ public final class TbMsgMetaData implements Serializable {
         return new TbMsgMetaData(data);
     }
 
+    @JsonIgnore
     public boolean isEmpty() {
         return data == null || data.isEmpty();
     }
