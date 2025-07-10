@@ -54,7 +54,8 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
         type: [configuration?.responseFormat?.type ?? ResponseFormat.JSON, []],
         schema: [configuration?.responseFormat?.schema ?? null, [Validators.required]],
       }),
-      timeoutSeconds: [configuration?.timeoutSeconds ?? 60, []]
+      timeoutSeconds: [configuration?.timeoutSeconds ?? 60, []],
+      forceAck: [configuration?.forceAck ?? true, []]
     });
   }
 

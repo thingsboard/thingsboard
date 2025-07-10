@@ -38,35 +38,39 @@
   <div class="tb-form-panel stroked no-padding no-gap">
     <mat-expansion-panel class="tb-settings" expanded>
       <mat-expansion-panel-header style="padding: 16px">
-        <mat-panel-title tb-hint-tooltip-icon="{{ 'rule-node-config.ai.prompt-settings-hint' | translate }}">
+        <mat-panel-title>
           {{'rule-node-config.ai.prompt-settings' | translate}}
         </mat-panel-title>
       </mat-expansion-panel-header>
-    <div class="tb-form-panel no-border no-padding-bottom no-gap" style="margin-top: 0">
-      <mat-form-field class="flex" appearance="outline">
-        <mat-label translate>rule-node-config.ai.system-prompt</mat-label>
-        <textarea matInput rows="2" formControlName="systemPrompt"></textarea>
-        <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('maxlength')">
-          {{ 'rule-node-config.ai.system-prompt-max-length' | translate }}
-        </mat-error>
-        <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('pattern')">
-          {{ 'rule-node-config.ai.system-prompt-blank' | translate }}
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field class="flex" appearance="outline">
-        <mat-label translate>rule-node-config.ai.user-prompt</mat-label>
-        <textarea required matInput rows="2" formControlName="userPrompt"></textarea>
-        <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('required')">
-          {{ 'rule-node-config.ai.user-prompt-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('maxlength')">
-          {{ 'rule-node-config.ai.user-prompt-max-length' | translate }}
-        </mat-error>
-        <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('pattern')">
-          {{ 'rule-node-config.ai.user-prompt-blank' | translate }}
-        </mat-error>
-      </mat-form-field>
-    </div>
+      <div class="tb-form-panel no-border no-padding-top" style="margin-top: 0">
+        <tb-example-hint
+          [hintText]="'rule-node-config.ai.prompt-settings-hint'"
+          [popupHelpLink]="'rulenode/ai_node_prompt_settings'">
+        </tb-example-hint>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>rule-node-config.ai.system-prompt</mat-label>
+          <textarea matInput rows="4" formControlName="systemPrompt"></textarea>
+          <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('maxlength')">
+            {{ 'rule-node-config.ai.system-prompt-max-length' | translate }}
+          </mat-error>
+          <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('pattern')">
+            {{ 'rule-node-config.ai.system-prompt-blank' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>rule-node-config.ai.user-prompt</mat-label>
+          <textarea required matInput rows="4" formControlName="userPrompt"></textarea>
+          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('required')">
+            {{ 'rule-node-config.ai.user-prompt-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('maxlength')">
+            {{ 'rule-node-config.ai.user-prompt-max-length' | translate }}
+          </mat-error>
+          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('pattern')">
+            {{ 'rule-node-config.ai.user-prompt-blank' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
     </mat-expansion-panel>
   </div>
 
@@ -96,7 +100,7 @@
       <mat-expansion-panel-header style="padding: 16px">
         <mat-panel-title translate>rule-node-config.ai.advanced-settings</mat-panel-title>
       </mat-expansion-panel-header>
-      <div class="tb-form-panel no-border" style="margin-top: 0">
+      <div class="tb-form-panel no-border no-padding-top" style="margin-top: 0">
         <div class="tb-form-row space-between flex-1 columns-xs">
           <div translate tb-hint-tooltip-icon="{{'rule-node-config.ai.timeout-hint' | translate}}">{{ 'rule-node-config.ai.timeout' | translate }}</div>
           <div class="flex flex-row items-center justify-start gap-2">
@@ -111,6 +115,12 @@
               formControlName="timeoutSeconds">
             </tb-time-unit-input>
           </div>
+        </div>
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.ai.force-acknowledgement-hint' | translate }}"
+             class="tb-form-row same-padding">
+          <mat-slide-toggle class="mat-slide margin" formControlName="forceAck">
+            {{ 'rule-node-config.ai.force-acknowledgement' | translate }}
+          </mat-slide-toggle>
         </div>
       </div>
     </mat-expansion-panel>

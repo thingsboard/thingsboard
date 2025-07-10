@@ -5453,7 +5453,9 @@
             "timeout": "Timeout",
             "timeout-hint": "Maximum time to wait for a response \nfrom the AI model before the request is terminated.",
             "timeout-required": "Timeout is required",
-            "timeout-validation": "Must be from 1 second to 10 minutes."
+            "timeout-validation": "Must be from 1 second to 10 minutes.",
+            "force-acknowledgement": "Force acknowledgement",
+            "force-acknowledgement-hint": "Force acknowledgement"
         }
     },
     "timezone": {
