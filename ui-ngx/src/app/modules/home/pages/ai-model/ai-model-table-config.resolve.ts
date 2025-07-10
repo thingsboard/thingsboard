@@ -48,6 +48,7 @@ export class AiModelsTableConfigResolver {
     this.config.selectionEnabled = true;
     this.config.entityType = EntityType.AI_MODEL;
     this.config.addAsTextButton = true;
+    this.config.rowPointer = true;
     this.config.detailsPanelEnabled = false;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.AI_MODEL);
     this.config.entityResources = entityTypeResources.get(EntityType.AI_MODEL);
