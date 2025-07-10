@@ -174,6 +174,61 @@ public class AiModelControllerTest extends AbstractControllerTest {
         );
     }
 
+    /* --- Get by ID API tests --- */
+
+    @Test
+    public void getAiModelById_whenUserIsSysAdmin_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginSysAdmin();
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model/" + Uuids.timeBased());
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void getAiModelById_whenUserIsCustomerUser_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginCustomerUser();
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model/" + Uuids.timeBased());
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void getAiModelById_whenGettingExistingModelAsTenantAdmin_shouldReturnModel() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var saved = doPost("/api/ai/model", constructValidModel(), AiModel.class);
+
+        // WHEN
+        AiModel actual = doGet("/api/ai/model/" + saved.getId(), AiModel.class);
+
+        // THEN
+        assertThat(actual).isEqualTo(saved);
+    }
+
+    @Test
+    public void getAiModelById_whenGettingNonexistentModelAsTenantAdmin_shouldReturnNotFound() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var nonexistentModelId = new AiModelId(Uuids.timeBased());
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model/" + nonexistentModelId);
+
+        // THEN
+        result.andExpect(status().isNotFound())
+                .andExpect(statusReason(is("AI model with id [" + nonexistentModelId + "] is not found")));
+    }
+
     /* --- Delete API tests --- */
 
     @Test
