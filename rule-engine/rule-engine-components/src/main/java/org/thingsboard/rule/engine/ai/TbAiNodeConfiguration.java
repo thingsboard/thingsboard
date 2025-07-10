@@ -50,6 +50,8 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @Max(value = 600, message = "cannot exceed 600 seconds (10 minutes)")
     private int timeoutSeconds;
 
+    private boolean forceAck;
+
     @Override
     public TbAiNodeConfiguration defaultConfiguration() {
         var configuration = new TbAiNodeConfiguration();
