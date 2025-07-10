@@ -5447,6 +5447,7 @@
             "response-text": "Text",
             "response-json": "JSON",
             "response-json-schema": "JSON Schema",
+            "response-json-schema-hint": "While any valid JSON Schema can be entered, this rule node only supports a limited subset of its features. See node documentation for details.",
             "response-json-schema-required": "JSON Schema is required",
             "advanced-settings": "Advanced settings",
             "timeout": "Timeout",

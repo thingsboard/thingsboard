@@ -31,7 +31,7 @@ import { Observable } from 'rxjs';
 import { AiModel, AiProviderTranslations } from '@shared/models/ai-model.models';
 import { AiModelService } from '@core/http/ai-model.service';
 import { AiModelTableHeaderComponent } from '@home/pages/ai-model/ai-model-table-header.component';
-import { AIModelDialogComponent, AIModelDialogData } from '@shared/components/ai-model/ai-model-dialog.component';
+import { AIModelDialogComponent, AIModelDialogData } from '@home/components/ai-model/ai-model-dialog.component';
 import { map } from 'rxjs/operators';
 
 @Injectable()
@@ -81,7 +81,7 @@ export class AiModelsTableConfigResolver {
     this.config.cellActionDescriptors = this.configureCellActions();
 
     this.config.handleRowClick = ($event, model) => {
-      this.editModel(model);
+      this.editModel($event, model);
       return true;
     };
   }
@@ -96,12 +96,13 @@ export class AiModelsTableConfigResolver {
         name: this.translate.instant('action.edit'),
         icon: 'edit',
         isEnabled: () => true,
-        onAction: ($event, entity) => this.editModel(entity)
+        onAction: ($event, entity) => this.editModel($event, entity)
       }
     ];
   }
 
-  private editModel(AIModel: AiModel): void {
+  private editModel($event, AIModel: AiModel): void {
+    $event?.stopPropagation();
     this.addModel(AIModel, false).subscribe();
   }
 

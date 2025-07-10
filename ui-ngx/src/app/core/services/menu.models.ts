@@ -794,6 +794,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
       {id: MenuId.home},
       {id: MenuId.alarms},
       {id: MenuId.dashboards},
+      {id: MenuId.ai_models},
       {
         id: MenuId.entities,
         pages: [
@@ -852,7 +853,6 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.notification_rules}
         ]
       },
-      {id: MenuId.ai_models},
       {
         id: MenuId.mobile_center,
         pages: [

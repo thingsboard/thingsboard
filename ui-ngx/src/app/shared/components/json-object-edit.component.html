@@ -32,6 +32,13 @@
             mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="minifyJSON()">
       {{'js-func.mini' | translate }}
     </button>
+    @if (iconHint) {
+      <button mat-icon-button class="tb-mat-32"
+              matTooltip="{{ iconHint }}"
+              matTooltipPosition="above">
+        <mat-icon class="material-icons">info</mat-icon>
+      </button>
+    }
     <button mat-icon-button class="tb-mat-32" (click)="fullscreen = !fullscreen"
             matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
             matTooltipPosition="above">

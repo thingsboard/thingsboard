@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { StepperOrientation } from '@angular/cdk/stepper';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -35,6 +35,7 @@ import {
 } from '@shared/models/ai-model.models';
 import { AiModelService } from '@core/http/ai-model.service';
 import { CheckConnectivityDialogComponent } from '@home/components/ai-model/check-connectivity-dialog.component';
+import { map } from 'rxjs/operators';
 
 export interface AIModelDialogData {
   AIModel?: AiModel;
@@ -112,7 +113,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       takeUntilDestroyed()
     ).subscribe((provider: AiProvider) => {
       this.provider = provider;
-      this.aiModelForms.get('configuration.modelId').reset({});
+      this.aiModelForms.get('configuration.modelId').reset('');
       this.aiModelForms.get('configuration.providerConfig').reset({});
       this.updateValidation(provider);
     })
@@ -120,11 +121,28 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
     this.updateValidation(this.provider);
   }
 
+  fetchOptions(searchText: string): Observable<Array<string>> {
+      const search = searchText ? searchText?.toLowerCase() : '';
+      return of(this.provider ? AiModelMap.get(this.provider).modelList || [] : []).pipe(
+        map(name => name?.filter(option => option.toLowerCase().includes(search))),
+      );
+  }
+
   private updateValidation(provider: AiProvider) {
-    ProviderFieldsAllList.forEach(key =>
-      this.aiModelForms.get('configuration.providerConfig')
-        .get(key)[AiModelMap.get(provider).providerFieldsList.includes(key) ? 'enable' : 'disable']()
-    )
+    ProviderFieldsAllList.forEach(key => {
+      if (AiModelMap.get(provider).providerFieldsList.includes(key)) {
+        this.aiModelForms.get('configuration.providerConfig').get(key).enable();
+      } else {
+        this.aiModelForms.get('configuration.providerConfig').get(key).disable();
+      }
+    })
+  }
+
+  get providerFieldsList(): string[] {
+    return AiModelMap.get(this.provider).providerFieldsList;
+  }
+  get modelFieldsList(): string[] {
+    return AiModelMap.get(this.provider).modelFieldsList;
   }
 
   cancel(): void {

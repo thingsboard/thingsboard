@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<div class="flex h-6 flex-row">
-  <h2 class="connectivity-title" translate>ai-models.check-connectivity</h2>
+<mat-toolbar class="transparent">
+  <h2 translate>ai-models.check-connectivity</h2>
   <span class="flex-1"></span>
   <button mat-icon-button
           (click)="cancel()"
           type="button">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-</div>
+</mat-toolbar>
 <div mat-dialog-content>
   <div class="flex h-full flex-1 flex-col items-center justify-center">
     <mat-progress-spinner color="warn" mode="indeterminate"
@@ -47,8 +47,7 @@
     </div>
   </div>
 </div>
-<div mat-dialog-actions>
-  <span class="flex-1"></span>
+<div mat-dialog-actions class="justify-end">
   <button mat-button color="primary"
           type="button"
           [disabled]="(isLoading$ | async)"

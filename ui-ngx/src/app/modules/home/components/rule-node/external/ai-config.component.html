@@ -29,8 +29,8 @@
         labelText="ai-models.ai-model"
         (entityChanged)="onEntityChange($event)"
         [entityType]="entityType.AI_MODEL"
-        (createNew)="createModelAi('modelSettingsId')"
-        formControlName="modelSettingsId">
+        (createNew)="createModelAi('modelId')"
+        formControlName="modelId">
       </tb-entity-autocomplete>
     </section>
   </section>
@@ -84,6 +84,7 @@
     @if (aiConfigForm.get('responseFormat.type').value === responseFormat.JSON_SCHEMA) {
       <tb-json-object-edit
         jsonRequired
+        iconHint="{{ 'rule-node-config.ai.response-json-schema-hint' | translate }}"
         label="{{ 'rule-node-config.ai.response-json-schema' | translate }}"
         formControlName="schema">
       </tb-json-object-edit>

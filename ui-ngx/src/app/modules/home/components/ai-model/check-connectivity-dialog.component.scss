@@ -21,11 +21,8 @@
   max-height: 100vh;
   display: grid;
 
-  .connectivity-title {
-    font-size: 18px;
-    font-weight: 500;
-    margin: 0;
-    padding-left: 16px;
+  .transparent {
+    background-color: transparent;
   }
 
   .connection-status {

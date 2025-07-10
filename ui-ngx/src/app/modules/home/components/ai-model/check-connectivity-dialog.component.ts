@@ -71,7 +71,11 @@ export class CheckConnectivityDialogComponent extends DialogComponent<CheckConne
           if (result.status === 'SUCCESS') {
             this.showCheckSuccess = true;
           } else {
-            this.checkErrMsg = JSON.parse(result.errorDetails);
+            try {
+              this.checkErrMsg = JSON.parse(result.errorDetails);
+            } catch (e) {
+              this.checkErrMsg = result.errorDetails;
+            }
           }
         },
         error: err => this.checkErrMsg = err.error.message
