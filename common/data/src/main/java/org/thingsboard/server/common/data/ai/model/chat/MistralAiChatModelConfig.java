@@ -23,12 +23,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
-import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
 
 public record MistralAiChatModelConfig(
-        AiModelType modelType,
         @NotNull @Valid MistralAiProviderConfig providerConfig,
         @NotBlank String modelId,
         @PositiveOrZero Double temperature,

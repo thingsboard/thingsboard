@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.ai.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
@@ -74,7 +73,6 @@ public interface AiModelConfig {
     })
     AiProviderConfig providerConfig();
 
-    @JsonProperty("modelType")
     AiModelType modelType();
 
 }

@@ -23,12 +23,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.With;
-import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
 
 public record GoogleAiGeminiChatModelConfig(
-        AiModelType modelType,
         @NotNull @Valid GoogleAiGeminiProviderConfig providerConfig,
         @NotBlank String modelId,
         @PositiveOrZero Double temperature,
