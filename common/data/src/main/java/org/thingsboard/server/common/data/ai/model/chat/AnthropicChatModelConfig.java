@@ -33,7 +33,7 @@ public record AnthropicChatModelConfig(
         @NotBlank String modelId,
         @PositiveOrZero Double temperature,
         @Positive @Max(1) Double topP,
-        @Positive Integer topK,
+        @PositiveOrZero Integer topK,
         @Positive Integer maxOutputTokens,
         @With @Positive Integer timeoutSeconds,
         @With @PositiveOrZero Integer maxRetries
