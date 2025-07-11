@@ -32,7 +32,7 @@ import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonResponseForm
 public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfiguration> {
 
     @NotNull
-    private AiModelId aiModelId;
+    private AiModelId modelId;
 
     @Pattern(regexp = ".*\\S.*", message = "must not be blank")
     @Length(min = 1, max = 10000)
@@ -49,6 +49,8 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @Min(value = 1, message = "must be at least 1 second")
     @Max(value = 600, message = "cannot exceed 600 seconds (10 minutes)")
     private int timeoutSeconds;
+
+    private boolean forceAck;
 
     @Override
     public TbAiNodeConfiguration defaultConfiguration() {

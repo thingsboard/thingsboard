@@ -52,9 +52,20 @@ import static org.thingsboard.server.dao.service.ConstraintValidator.validateFie
 
 @RuleNode(
         type = ComponentType.EXTERNAL,
-        name = "AI",
-        nodeDescription = "Interact with AI",
-        nodeDetails = "This node makes requests to AI based on a prompt and a input message and returns a response in a form of output message",
+        name = "AI request",
+        nodeDescription = "Sends a request to an AI model using system and user prompts. Supports JSON mode.",
+        nodeDetails = """
+                Interact with large language models (LLMs) by sending dynamic requests from your rule chain.
+                You can select a specific <strong>AI model</strong> and define its behavior using a <strong>system prompt</strong> (optional context or role) and a <strong>user prompt</strong> (the main task).
+                Both prompts can be populated with data and metadata from the incoming message using patterns.
+                For example, the <code>$[*]</code> and <code>${*}</code> patterns allow you to access the all message body and all metadata, respectively.
+                <br><br>
+                After sending the request, the node waits for a response within a configured <strong>timeout</strong>.
+                You can specify the desired <strong>response format</strong> as <strong>Text</strong>, <strong>JSON</strong>, or provide a specific <strong>JSON Schema</strong> to structure the output.
+                The AI-generated content is forwarded as the body of the outgoing message; the originator, message type, and metadata from the incoming message remain unchanged.
+                <br><br>
+                Output connections: <code>Success</code>, <code>Failure</code>.
+                """,
         configClazz = TbAiNodeConfiguration.class,
         configDirective = "tbExternalNodeAiConfig",
         ruleChainTypes = RuleChainType.CORE
@@ -87,7 +98,8 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         systemPrompt = config.getSystemPrompt();
         userPrompt = config.getUserPrompt();
         timeoutSeconds = config.getTimeoutSeconds();
-        modelId = config.getAiModelId();
+        modelId = config.getModelId();
+        super.forceAck = config.isForceAck() || super.forceAck; // force ack if node config says so, or if env variable (super.forceAck) says so
 
         Optional<AiModel> model = ctx.getAiModelService().findAiModelByTenantIdAndId(ctx.getTenantId(), modelId);
         if (model.isEmpty()) {
