@@ -16,10 +16,11 @@
 package org.thingsboard.server.common.data.ai.provider;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record GoogleVertexAiGeminiProviderConfig(
         @NotBlank String fileName, // not used on BE, but needed for UI
-        @NotBlank String projectId,
-        @NotBlank String location,
-        @NotBlank String serviceAccountKey
+        @NotNull String projectId,
+        @NotNull String location,
+        @NotNull String serviceAccountKey
 ) implements AiProviderConfig {}

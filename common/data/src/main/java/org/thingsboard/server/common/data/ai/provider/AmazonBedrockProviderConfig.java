@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-public record  AmazonBedrockProviderConfig(
-        @NotBlank String region,
-        @NotBlank String accessKeyId,
-        @NotBlank String secretAccessKey
+public record AmazonBedrockProviderConfig(
+        @NotNull String region,
+        @NotNull String accessKeyId,
+        @NotNull String secretAccessKey
 ) implements AiProviderConfig {}
