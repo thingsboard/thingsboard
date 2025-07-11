@@ -59,6 +59,7 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
         configuration.setUserPrompt("Tell me a joke.");
         configuration.setResponseFormat(new TbJsonResponseFormat());
         configuration.setTimeoutSeconds(60);
+        configuration.setForceAck(true);
         return configuration;
     }
 
