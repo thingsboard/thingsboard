@@ -1223,7 +1223,7 @@ public class TbUtilsTest {
         actual.addAll(list);
         assertEquals(4, actual.size());
         assertTrue(actual.containsAll(expected));
-        actual = TbUtils.createSetTb(list, ctx);
+        actual = TbUtils.createSetTb(ctx, list);
         expected = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xDA});
         actual.add((byte) 0xDA);
         actual.remove((byte) 0xBB);
@@ -1232,10 +1232,10 @@ public class TbUtilsTest {
         assertEquals(actual.size(), 3);
         actual.clear();
         assertTrue(actual.isEmpty());
-        actual = TbUtils.createSetTb(list, ctx);
-        Set actualClone = TbUtils.createSetTb(list, ctx);
-        Set actualClone_asc = TbUtils.createSetTb(list, ctx);
-        Set actualClone_desc = TbUtils.createSetTb(list, ctx);
+        actual = TbUtils.createSetTb(ctx, list);
+        Set actualClone = TbUtils.createSetTb(ctx, list);
+        Set actualClone_asc = TbUtils.createSetTb(ctx, list);
+        Set actualClone_desc = TbUtils.createSetTb(ctx, list);
         ((ExecutionLinkedHashSet<?>)actualClone).sort();
         ((ExecutionLinkedHashSet<?>)actualClone_asc).sort(true);
         ((ExecutionLinkedHashSet<?>)actualClone_desc).sort(false);
