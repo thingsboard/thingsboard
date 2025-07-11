@@ -2657,9 +2657,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 list.add(0x35);
                 return isList(list);
                 """);
-
     }
-
 
     @Test
     public void isSet_Test() throws ExecutionException, InterruptedException {
