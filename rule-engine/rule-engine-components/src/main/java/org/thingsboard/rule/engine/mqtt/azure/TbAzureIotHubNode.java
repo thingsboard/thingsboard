@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.mqtt.azure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.AzureIotHubUtil;
@@ -36,6 +37,8 @@ import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 
+import java.time.Clock;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
@@ -48,6 +51,8 @@ import org.thingsboard.server.common.data.util.TbPair;
         configDirective = "tbExternalNodeAzureIotHubConfig"
 )
 public class TbAzureIotHubNode extends TbMqttNode {
+
+    private Clock clock = Clock.systemUTC();
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -73,12 +78,17 @@ public class TbAzureIotHubNode extends TbMqttNode {
         config.setUsername(AzureIotHubUtil.buildUsername(mqttNodeConfiguration.getHost(), config.getClientId()));
         ClientCredentials credentials = mqttNodeConfiguration.getCredentials();
         if (CredentialsType.SAS == credentials.getType()) {
-            config.setPassword(AzureIotHubUtil.buildSasToken(mqttNodeConfiguration.getHost(), ((AzureIotHubSasCredentials) credentials).getSasKey()));
+            config.setPassword(AzureIotHubUtil.buildSasToken(mqttNodeConfiguration.getHost(), ((AzureIotHubSasCredentials) credentials).getSasKey(), clock));
         }
     }
 
     MqttClient initAzureClient(TbContext ctx) throws Exception {
         return initClient(ctx);
+    }
+
+    @VisibleForTesting
+    void setClock(Clock clock) {
+        this.clock = clock;
     }
 
     @Override

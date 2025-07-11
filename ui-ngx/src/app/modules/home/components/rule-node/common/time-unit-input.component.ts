@@ -30,7 +30,7 @@ import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { coerceBoolean, coerceNumber } from '@shared/decorators/coercion';
 import { DAY, HOUR, MINUTE, SECOND } from '@shared/models/time/time.models';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 interface TimeUnitInputModel {
   time: number;
@@ -79,6 +79,13 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
+
   timeUnits = Object.values(TimeUnit).filter(item => item !== TimeUnit.MILLISECONDS) as TimeUnit[];
 
   timeUnitTranslations = timeUnitTranslations;
@@ -104,6 +111,16 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   }
 
   ngOnInit() {
+    if (this.maxTime) {
+      const maxTimeMs = this.maxTime * SECOND;
+      if (maxTimeMs < MINUTE) {
+        this.timeUnits = this.timeUnits.filter(item => item !== TimeUnit.MINUTES && item !== TimeUnit.HOURS && item !== TimeUnit.DAYS);
+      } else if (maxTimeMs < HOUR) {
+        this.timeUnits = this.timeUnits.filter(item => item !== TimeUnit.HOURS && item !== TimeUnit.DAYS);
+      } else if (maxTimeMs < DAY) {
+        this.timeUnits = this.timeUnits.filter(item => item !== TimeUnit.DAYS);
+      }
+    }
     if(this.required || this.maxTime) {
       const timeControl = this.timeInputForm.get('time');
       const validators = [Validators.pattern(/^\d*$/)];
@@ -135,6 +152,16 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     ).subscribe(value => {
       this.updatedModel(value);
     });
+  }
+
+  get hasError(): string {
+    if (this.timeInputForm.get('time').hasError('required') && this.requiredText) {
+      return this.requiredText;
+    } else if (this.timeInputForm.get('time').hasError('min') && this.minErrorText) {
+      return this.minErrorText;
+    } else if (this.timeInputForm.get('time').hasError('max') && this.maxErrorText) {
+      return this.maxErrorText;
+    }
   }
 
   registerOnChange(fn: any) {

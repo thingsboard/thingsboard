@@ -112,6 +112,10 @@
             <artifactId>leshan-core</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-core</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

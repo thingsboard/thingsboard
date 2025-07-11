@@ -22,7 +22,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 public abstract class TbAbstractExternalNode implements TbNode {
 
-    private boolean forceAck;
+    protected boolean forceAck;
 
     public void init(TbContext ctx) {
         this.forceAck = ctx.isExternalNodeForceAck();

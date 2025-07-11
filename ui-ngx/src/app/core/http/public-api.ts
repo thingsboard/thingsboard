@@ -48,3 +48,4 @@ export * from './user-settings.service';
 export * from './widget.service';
 export * from './usage-info.service';
 export * from './trendz-settings.service'
+export * from './ai-model.service'

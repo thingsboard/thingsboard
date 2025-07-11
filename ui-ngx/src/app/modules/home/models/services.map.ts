@@ -54,6 +54,7 @@ import { EventService } from '@core/http/event.service';
 import { UnitService } from '@core/services/unit.service';
 import { AuditLogService } from '@core/http/audit-log.service';
 import { TrendzSettingsService } from '@core/http/trendz-settings.service';
+import { AiModelService } from '@core/http/ai-model.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
@@ -95,6 +96,7 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['eventService', EventService],
    ['unitService', UnitService],
    ['auditLogService', AuditLogService],
-   ['trendzSettingsService', TrendzSettingsService]
+   ['trendzSettingsService', TrendzSettingsService],
+   ['aiModelService', AiModelService]
   ]
 );

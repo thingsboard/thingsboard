@@ -47,6 +47,7 @@ import { MenuId } from '@core/services/menu.models';
 import { catchError } from 'rxjs/operators';
 import { JsLibraryTableConfigResolver } from '@home/pages/admin/resource/js-library-table-config.resolver';
 import { TrendzSettingsComponent } from '@home/pages/admin/trendz-settings.component';
+import { aiModelRoutes } from '@home/pages/ai-model/ai-model-routing.module';
 
 export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
   (route: ActivatedRouteSnapshot,
@@ -362,6 +363,7 @@ const routes: Routes = [
           }
         }
       },
+      ...aiModelRoutes,
       {
         path: 'security-settings',
         redirectTo: '/security-settings/general'
