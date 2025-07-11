@@ -67,6 +67,7 @@ import static org.thingsboard.server.dao.service.ConstraintValidator.validateFie
                 Output connections: <code>Success</code>, <code>Failure</code>.
                 """,
         configClazz = TbAiNodeConfiguration.class,
+        configDirective = "tbExternalNodeAiConfig",
         ruleChainTypes = RuleChainType.CORE
 )
 public final class TbAiNode extends TbAbstractExternalNode implements TbNode {

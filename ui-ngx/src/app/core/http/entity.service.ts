@@ -99,6 +99,7 @@ import { ResourceService } from '@core/http/resource.service';
 import { OAuth2Service } from '@core/http/oauth2.service';
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { PlatformType } from '@shared/models/oauth2.models';
+import { AiModelService } from '@core/http/ai-model.service';
 
 @Injectable({
   providedIn: 'root'
@@ -131,6 +132,7 @@ export class EntityService {
     private resourceService: ResourceService,
     private oauth2Service: OAuth2Service,
     private mobileAppService: MobileAppService,
+    private aiModelService: AiModelService,
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -182,6 +184,9 @@ export class EntityService {
         break;
       case EntityType.MOBILE_APP_BUNDLE:
         observable = this.mobileAppService.getMobileAppBundleInfoById(entityId, config);
+        break;
+      case EntityType.AI_MODEL:
+        observable = this.aiModelService.getAiModelById(entityId, config);
         break;
     }
     return observable;
@@ -484,6 +489,10 @@ export class EntityService {
       case EntityType.MOBILE_APP_BUNDLE:
         pageLink.sortOrder.property = 'title';
         entitiesObservable = this.mobileAppService.getTenantMobileAppBundleInfos(pageLink, config);
+        break;
+      case EntityType.AI_MODEL:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.aiModelService.getAiModels(pageLink, config);
         break;
     }
     return entitiesObservable;
