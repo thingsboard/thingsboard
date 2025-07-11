@@ -21,6 +21,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
+import org.thingsboard.server.common.data.notification.targets.platform.SystemLevelUsersFilter;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderConfig;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
@@ -46,6 +47,8 @@ public class PlatformTwoFaSettings {
     @Min(value = 60)
     private Integer totalAllowedTimeForVerification;
 
+    private boolean enforceTwoFa;
+    private SystemLevelUsersFilter enforcedUsersFilter;
 
     public Optional<TwoFaProviderConfig> getProviderConfig(TwoFaProviderType providerType) {
         return Optional.ofNullable(providers)
