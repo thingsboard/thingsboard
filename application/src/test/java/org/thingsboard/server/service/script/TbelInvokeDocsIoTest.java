@@ -986,6 +986,29 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     }
 
     @Test
+    public void setsContains_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
+                """;
+        decoderStr = """
+                var set1 = createSetTb(msg.list);               // create new from method createSetTb(List list) no sort, size = 6  ("A" and "C" is duplicated)
+                var result1 = set1.contains("A");               // return true
+                var result2 = set1.contains("H");               // return false
+                return {
+                   "set1": set1,
+                   "result1": result1,
+                   "result2": result2
+                }
+                """;
+        List<Object> listOrigin = new ArrayList<>(List.of("C", "B", "A", 34567, "B", "C", "hello", 34));
+        Set<Object> expectedSet = new LinkedHashSet<>(listOrigin);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expectedSet.toString(), ((LinkedHashMap<?, ?>)actual).get("set1").toString());
+        assertEquals(true, ((LinkedHashMap<?, ?>)actual).get("result1"));
+        assertEquals(false, ((LinkedHashMap<?, ?>)actual).get("result2"));
+    }
+
+    @Test
     public void setsToList_Test() throws ExecutionException, InterruptedException {
         msgStr = """
                 {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
