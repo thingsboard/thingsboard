@@ -88,9 +88,14 @@
     @if (aiConfigForm.get('responseFormat.type').value === responseFormat.JSON_SCHEMA) {
       <tb-json-object-edit
         jsonRequired
-        iconHint="{{ 'rule-node-config.ai.response-json-schema-hint' | translate }}"
         label="{{ 'rule-node-config.ai.response-json-schema' | translate }}"
         formControlName="schema">
+        <button mat-icon-button class="tb-mat-32"
+                toolbarSuffixButton
+                matTooltip="{{ 'rule-node-config.ai.response-json-schema-hint' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon style="color: #7b7b7b">info</mat-icon>
+        </button>
       </tb-json-object-edit>
     }
   </div>

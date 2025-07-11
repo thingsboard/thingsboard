@@ -74,8 +74,6 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   @Input() label: string;
 
-  @Input() iconHint: string;
-
   @Input() disabled: boolean;
 
   @Input() fillHeight: boolean;
