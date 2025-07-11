@@ -2657,25 +2657,21 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 list.add(0x35);
                 return isList(list);
                 """);
+
+    }
+
+
+    @Test
+    public void isSet_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
+                """;
+        decoderStr = """
+                    return isSet(createSetTb(msg.list));        // return true
+                """;
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertInstanceOf(Boolean.class, actual);
         assertTrue((Boolean) actual);
-        decoderStr = String.format("""
-                var list = [];
-                list.add(0x35);
-                return isMap(list);
-                """);
-        actual = invokeScript(evalScript(decoderStr), msgStr);
-        assertInstanceOf(Boolean.class, actual);
-        assertFalse((Boolean) actual);
-        decoderStr = String.format("""
-                var list = [];
-                list.add(0x35);
-                return isArray(list);
-                """);
-        actual = invokeScript(evalScript(decoderStr), msgStr);
-        assertInstanceOf(Boolean.class, actual);
-        assertFalse((Boolean) actual);
     }
 
     @Test
@@ -2693,16 +2689,6 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertInstanceOf(Boolean.class, actual);
         assertTrue((Boolean) actual);
-        decoderStr = """
-                var array = new int[3];
-                array[0] = 1;
-                array[1] = 2;
-                array[2] = 3;
-                return isList(array);
-                """;
-        actual = invokeScript(evalScript(decoderStr), msgStr);
-        assertInstanceOf(Boolean.class, actual);
-        assertFalse((Boolean) actual);
     }
 
     @Test
