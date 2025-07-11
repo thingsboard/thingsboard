@@ -850,7 +850,6 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 {"list": ["B", "C", "A", "B", "C", "hello", 34567]}
                 """;
         decoderStr = """
-                var msgRez = {};
                 // add
                 var setAdd = createSetTb(["thigsboard", 4, 67]);      // create new, size = 3
                 var setAdd1_value = setAdd.clone();                   // clone setAdd, size = 3
@@ -949,29 +948,28 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
                 """;
         decoderStr = """
-                var msgRez = {};
-                var set1 = msgRez.entrySet();                   // create Set from map, size = 0
-                set1.addAll(msg.list);                          // addAll to set1 from list no sort (length = 8), but set`s size = 6 ("A" and "C" is duplicated)
-                var set2 = createSetTb(msg.list);               // create new from method createSetTb(List list) no sort, size = 6  ("A" and "C" is duplicated)
+                var set1 = createSetTb(msg.list);               // create new from method createSetTb(List list) no sort, size = 6 ("A" and "C" is duplicated)
+                var set2 = createSetTb(msg.list);               // create new from method createSetTb(List list) no sort, size = 6 ("A" and "C" is duplicated)
                 var set1_asc = set1.clone();                    // clone set1, size = 6
                 var set1_desc = set1.clone();                   // clone set1, size = 6
-                var set2_asc = set2.clone();                    // clone set2, size = 6
-                var set2_desc = set2.clone();                   // clone set2, size = 6
                 set1.sort();                                    // sort set1 -> asc
                 set1_asc.sort(true);                            // sort set1_asc -> asc
                 set1_desc.sort(false);                          // sort set1_desc -> desc
-                set2.sort();                                    // sort set2 -> asc
-                set2_asc.sort(true);                            // sort set2_asc -> asc
-                set2_desc.sort(false);                          // sort set2_desc -> desc
+                var set3 = set2.toSorted();                     // toSorted set3 -> asc
+                var set3_asc = set2.toSorted(true);             // toSorted set3 -> asc
+                var set3_desc = set2.toSorted(false);           // toSorted set3 -> desc
                 return {
                    "set1": set1,
                    "set1_asc": set1_asc,
                    "set1_desc": set1_desc,
                    "set2": set2,
-                   "set2_asc": set2_asc,
-                   "set2_desc": set2_desc,
+                   "set3": set3,
+                   "set3_asc": set3_asc,
+                   "set3_desc": set3_desc,
                 }
                 """;
+        ArrayList<Object> list = new ArrayList<>(List.of("C", "B", "A", 34567, "hello", 34));
+        Set<Object> expected = new LinkedHashSet<>(list);
         ArrayList<Object> listSortAsc = new ArrayList<>(List.of(34, 34567, "A", "B", "C", "hello"));
         Set<Object> expectedAsc = new LinkedHashSet<>(listSortAsc);
         ArrayList<Object> listSortDesc = new ArrayList<>(List.of("hello", "C", "B", "A", 34567, 34));
@@ -979,10 +977,11 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set1").toString());
         assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set1_asc").toString());
-        assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set2").toString());
-        assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set2_asc").toString());
         assertEquals(expectedDesc.toString(), ((LinkedHashMap<?, ?>)actual).get("set1_desc").toString());
-        assertEquals(expectedDesc.toString(), ((LinkedHashMap<?, ?>)actual).get("set2_desc").toString());
+        assertEquals(expected.toString(), ((LinkedHashMap<?, ?>)actual).get("set2").toString());
+        assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set3").toString());
+        assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set3_asc").toString());
+        assertEquals(expectedDesc.toString(), ((LinkedHashMap<?, ?>)actual).get("set3_desc").toString());
     }
 
     @Test
