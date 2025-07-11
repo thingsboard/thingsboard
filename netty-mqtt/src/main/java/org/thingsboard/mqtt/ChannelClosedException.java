@@ -15,11 +15,11 @@
  */
 package org.thingsboard.mqtt;
 
-/**
- * Created by Valerii Sosliuk on 12/26/2017.
- */
+import java.io.Serial;
+
 public class ChannelClosedException extends RuntimeException {
 
+    @Serial
     private static final long serialVersionUID = 6266638352424706909L;
 
     public ChannelClosedException() {
@@ -40,4 +40,5 @@ public class ChannelClosedException extends RuntimeException {
     public ChannelClosedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
+
 }
