@@ -20,6 +20,7 @@
     height: auto;
     display: block;
     padding: 0;
+    overflow: visible;
   }
   &.tb-draggable {
     &.cdk-drag-preview {
