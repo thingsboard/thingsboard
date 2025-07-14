@@ -5460,7 +5460,7 @@
             "response-json-schema-hint": "While any valid JSON Schema can be entered, this rule node only supports a limited subset of its features. See node documentation for details.",
             "response-json-schema-required": "JSON Schema is required",
             "advanced-settings": "Advanced settings",
-            "timeout": "Timeout *",
+            "timeout": "Timeout",
             "timeout-hint": "Maximum time to wait for a response \nfrom the AI model before the request is terminated.",
             "timeout-required": "Timeout is required",
             "timeout-validation": "Must be from 1 second to 10 minutes.",
