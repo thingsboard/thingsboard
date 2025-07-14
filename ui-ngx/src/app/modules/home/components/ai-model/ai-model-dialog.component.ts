@@ -83,10 +83,10 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
     this.provider = this.data.AIModel ? this.data.AIModel.configuration.provider : AiProvider.OPENAI;
 
     this.aiModelForms = this.fb.group({
-      name: [this.data.AIModel ? this.data.AIModel.name : '', [Validators.required, Validators.maxLength(255)]],
+      name: [this.data.AIModel ? this.data.AIModel.name : '', [Validators.required, Validators.maxLength(255), Validators.pattern(/.*\S.*/)]],
       modelType: [ModelType.CHAT],
       configuration: this.fb.group({
-        provider: [this.provider, [Validators.required]],
+        provider: [this.provider, []],
         providerConfig: this.fb.group({
           apiKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.apiKey : '', [Validators.required]],
           personalAccessToken: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.personalAccessToken : '', [Validators.required]],
@@ -96,6 +96,9 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
           location: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.location : '', [Validators.required]],
           serviceAccountKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.serviceAccountKey : '', [Validators.required]],
           fileName: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.fileName : '', [Validators.required]],
+          region: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.region : '', [Validators.required]],
+          accessKeyId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.accessKeyId : '', [Validators.required]],
+          secretAccessKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.secretAccessKey : '', [Validators.required]],
         }),
         modelId: [this.data.AIModel ? this.data.AIModel.configuration?.modelId : '', [Validators.required]],
         temperature: [this.data.AIModel ? this.data.AIModel.configuration?.temperature : null, [Validators.min(0)]],

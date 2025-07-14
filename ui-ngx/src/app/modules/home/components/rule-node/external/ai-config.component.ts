@@ -22,6 +22,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { AIModelDialogComponent, AIModelDialogData } from '@home/components/ai-model/ai-model-dialog.component';
 import { AiModel, AiRuleNodeResponseFormatTypeOnlyText, ResponseFormat } from '@shared/models/ai-model.models';
 import { deepTrim } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-external-node-ai-config',
@@ -36,7 +37,10 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
 
   responseFormat = ResponseFormat;
 
+  disabledResponseFormatType: boolean;
+
   constructor(private fb: UntypedFormBuilder,
+              private translate: TranslateService,
               private dialog: MatDialog) {
     super();
   }
@@ -72,18 +76,27 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
   }
 
   protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
+    if (!this.aiConfigForm.get('systemPrompt').value) {
+      delete configuration.systemPrompt;
+    }
     return deepTrim(configuration);
   }
 
   onEntityChange($event: AiModel) {
     if ($event) {
       if (AiRuleNodeResponseFormatTypeOnlyText.includes($event.configuration.provider)) {
-        this.aiConfigForm.get('responseFormat.type').patchValue(ResponseFormat.TEXT, {emitEvent: false});
-        this.aiConfigForm.get('responseFormat.type').disable({emitEvent: false});
+        if (this.aiConfigForm.get('responseFormat.type').value !== ResponseFormat.TEXT) {
+          this.aiConfigForm.get('responseFormat.type').patchValue(ResponseFormat.TEXT, {emitEvent: true});
+        }
+        this.disabledResponseFormatType = true;
       }
     } else {
-      this.aiConfigForm.get('responseFormat.type').enable({emitEvent: false});
+      this.disabledResponseFormatType = false;
     }
+  }
+
+  get getResponseFormatHint() {
+    return this.translate.instant(`rule-node-config.ai.response-format-hint-${this.aiConfigForm.get('responseFormat.type').value}`);
   }
 
   createModelAi(formControl: string) {

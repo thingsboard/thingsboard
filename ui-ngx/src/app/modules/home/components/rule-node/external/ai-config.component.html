@@ -26,7 +26,7 @@
         useFullEntityId
         required
         appearance="outline"
-        labelText="ai-models.ai-model"
+        labelText="rule-node-config.ai.model"
         (entityChanged)="onEntityChange($event)"
         [entityType]="entityType.AI_MODEL"
         (createNew)="createModelAi('modelId')"
@@ -76,10 +76,10 @@
 
   <div class="tb-form-panel stroked" formGroupName="responseFormat">
     <div class="flex flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
-      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'rule-node-config.ai.response-format-hint' | translate }}">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ getResponseFormatHint }}">
         {{ 'rule-node-config.ai.response-format' | translate }}
       </div>
-      <tb-toggle-select formControlName="type">
+      <tb-toggle-select formControlName="type" [disabled]="disabledResponseFormatType">
         <tb-toggle-option [value]="responseFormat.TEXT">{{ 'rule-node-config.ai.response-text' | translate }}</tb-toggle-option>
         <tb-toggle-option [value]="responseFormat.JSON">{{ 'rule-node-config.ai.response-json' | translate }}</tb-toggle-option>
         <tb-toggle-option [value]="responseFormat.JSON_SCHEMA">{{ 'rule-node-config.ai.response-json-schema' | translate }}</tb-toggle-option>
@@ -107,7 +107,7 @@
       </mat-expansion-panel-header>
       <div class="tb-form-panel no-border no-padding-top" style="margin-top: 0">
         <div class="tb-form-row space-between flex-1 columns-xs">
-          <div translate tb-hint-tooltip-icon="{{'rule-node-config.ai.timeout-hint' | translate}}">{{ 'rule-node-config.ai.timeout' | translate }}</div>
+          <div tb-hint-tooltip-icon="{{'rule-node-config.ai.timeout-hint' | translate}}">{{ 'rule-node-config.ai.timeout' | translate }}</div>
           <div class="flex flex-row items-center justify-start gap-2">
             <tb-time-unit-input
               required

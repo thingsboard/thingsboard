@@ -30,7 +30,10 @@ export interface AiModel extends Omit<BaseData<AiModelId>, 'label'>, HasTenantId
       projectId?: string;
       location?: string;
       serviceAccountKey?: string;
-      fileName?: string
+      fileName?: string;
+      region?: string;
+      accessKeyId?: string;
+      secretAccessKey?: string;
     };
     modelId: string;
     temperature?: number;
@@ -78,7 +81,10 @@ export const ProviderFieldsAllList = [
   'serviceAccountKey',
   'fileName',
   'endpoint',
-  'serviceVersion'
+  'serviceVersion',
+  'region',
+  'accessKeyId',
+  'secretAccessKey'
 ];
 
 export const ModelFieldsAllList = ['temperature', 'topP', 'topK', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'];
@@ -173,7 +179,7 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.AMAZON_BEDROCK,
     {
       modelList: [],
-      providerFieldsList: ['apiKey'],
+      providerFieldsList: ['region', 'accessKeyId', 'secretAccessKey'],
       modelFieldsList: ['temperature', 'topP', 'maxOutputTokens'],
     },
   ],
