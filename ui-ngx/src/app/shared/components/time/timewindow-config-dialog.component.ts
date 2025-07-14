@@ -506,6 +506,38 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       delete this.timewindow.history.disableCustomGroupInterval;
     }
 
+    if (!this.timewindow.hideAggregation) {
+      delete this.timewindow.hideAggregation;
+    }
+    if (!this.timewindow.hideAggInterval) {
+      delete this.timewindow.hideAggInterval;
+    }
+    if (!this.timewindow.hideTimezone) {
+      delete this.timewindow.hideTimezone;
+    }
+
+    if (!this.timewindow.realtime.hideInterval) {
+      delete this.timewindow.realtime.hideInterval;
+    }
+    if (!this.timewindow.realtime.hideLastInterval) {
+      delete this.timewindow.realtime.hideLastInterval;
+    }
+    if (!this.timewindow.realtime.hideQuickInterval) {
+      delete this.timewindow.realtime.hideQuickInterval;
+    }
+    if (!this.timewindow.history.hideInterval) {
+      delete this.timewindow.history.hideInterval;
+    }
+    if (!this.timewindow.history.hideLastInterval) {
+      delete this.timewindow.history.hideLastInterval;
+    }
+    if (!this.timewindow.history.hideFixedInterval) {
+      delete this.timewindow.history.hideFixedInterval;
+    }
+    if (!this.timewindow.history.hideQuickInterval) {
+      delete this.timewindow.history.hideQuickInterval;
+    }
+
     if (!this.aggregation) {
       delete this.timewindow.aggregation;
     }

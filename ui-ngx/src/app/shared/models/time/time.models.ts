@@ -281,19 +281,12 @@ export const historyInterval = (timewindowMs: number): Timewindow => ({
 export const defaultTimewindow = (timeService: TimeService): Timewindow => {
   const currentTime = moment().valueOf();
   return {
-    displayValue: '',
-    hideAggregation: false,
-    hideAggInterval: false,
-    hideTimezone: false,
     selectedTab: TimewindowType.REALTIME,
     realtime: {
       realtimeType: RealtimeWindowType.LAST_INTERVAL,
       interval: SECOND,
       timewindowMs: MINUTE,
       quickInterval: QuickTimeInterval.CURRENT_DAY,
-      hideInterval: false,
-      hideLastInterval: false,
-      hideQuickInterval: false
     },
     history: {
       historyType: HistoryWindowType.LAST_INTERVAL,
@@ -304,10 +297,6 @@ export const defaultTimewindow = (timeService: TimeService): Timewindow => {
         endTimeMs: currentTime
       },
       quickInterval: QuickTimeInterval.CURRENT_DAY,
-      hideInterval: false,
-      hideLastInterval: false,
-      hideFixedInterval: false,
-      hideQuickInterval: false
     },
     aggregation: {
       type: AggregationType.AVG,
@@ -331,34 +320,41 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
     if (value.allowedAggTypes?.length) {
       model.allowedAggTypes = value.allowedAggTypes;
     }
-    model.hideAggregation = value.hideAggregation;
-    model.hideAggInterval = value.hideAggInterval;
-    model.hideTimezone = value.hideTimezone;
+    if (value.hideAggregation) {
+      model.hideAggregation = value.hideAggregation;
+    }
+    if (value.hideAggInterval) {
+      model.hideAggInterval = value.hideAggInterval;
+    }
+    if (value.hideTimezone) {
+      model.hideTimezone = value.hideTimezone;
+    }
+
     model.selectedTab = getTimewindowType(value);
 
     // for backward compatibility
-    if (isDefinedAndNotNull((value as any).hideInterval)) {
+    if ((value as any).hideInterval) {
       model.realtime.hideInterval = (value as any).hideInterval;
       model.history.hideInterval = (value as any).hideInterval;
       delete (value as any).hideInterval;
     }
-    if (isDefinedAndNotNull((value as any).hideLastInterval)) {
+    if ((value as any).hideLastInterval) {
       model.realtime.hideLastInterval = (value as any).hideLastInterval;
       delete (value as any).hideLastInterval;
     }
-    if (isDefinedAndNotNull((value as any).hideQuickInterval)) {
+    if ((value as any).hideQuickInterval) {
       model.realtime.hideQuickInterval = (value as any).hideQuickInterval;
       delete (value as any).hideQuickInterval;
     }
 
     if (isDefined(value.realtime)) {
-      if (isDefinedAndNotNull(value.realtime.hideInterval)) {
+      if (value.realtime.hideInterval) {
         model.realtime.hideInterval = value.realtime.hideInterval;
       }
-      if (isDefinedAndNotNull(value.realtime.hideLastInterval)) {
+      if (value.realtime.hideLastInterval) {
         model.realtime.hideLastInterval = value.realtime.hideLastInterval;
       }
-      if (isDefinedAndNotNull(value.realtime.hideQuickInterval)) {
+      if (value.realtime.hideQuickInterval) {
         model.realtime.hideQuickInterval = value.realtime.hideQuickInterval;
       }
       if (value.realtime.disableCustomInterval) {
@@ -392,16 +388,16 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
       }
     }
     if (isDefined(value.history)) {
-      if (isDefinedAndNotNull(value.history.hideInterval)) {
+      if (value.history.hideInterval) {
         model.history.hideInterval = value.history.hideInterval;
       }
-      if (isDefinedAndNotNull(value.history.hideLastInterval)) {
+      if (value.history.hideLastInterval) {
         model.history.hideLastInterval = value.history.hideLastInterval;
       }
-      if (isDefinedAndNotNull(value.history.hideFixedInterval)) {
+      if (value.history.hideFixedInterval) {
         model.history.hideFixedInterval = value.history.hideFixedInterval;
       }
-      if (isDefinedAndNotNull(value.history.hideQuickInterval)) {
+      if (value.history.hideQuickInterval) {
         model.history.hideQuickInterval = value.history.hideQuickInterval;
       }
       if (value.history.disableCustomInterval) {
@@ -1098,9 +1094,15 @@ export const cloneSelectedTimewindow = (timewindow: Timewindow): Timewindow => {
   if (timewindow.allowedAggTypes?.length) {
     cloned.allowedAggTypes = timewindow.allowedAggTypes;
   }
-  cloned.hideAggregation = timewindow.hideAggregation || false;
-  cloned.hideAggInterval = timewindow.hideAggInterval || false;
-  cloned.hideTimezone = timewindow.hideTimezone || false;
+  if (timewindow.hideAggregation) {
+    cloned.hideAggregation = timewindow.hideAggregation;
+  }
+  if (timewindow.hideAggInterval) {
+    cloned.hideAggInterval = timewindow.hideAggInterval;
+  }
+  if (timewindow.hideTimezone) {
+    cloned.hideTimezone = timewindow.hideTimezone;
+  }
   if (isDefined(timewindow.selectedTab)) {
     cloned.selectedTab = timewindow.selectedTab;
   }
