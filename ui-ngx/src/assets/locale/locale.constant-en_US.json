@@ -1157,13 +1157,13 @@
         "max-output-tokens-min": "Must be greater than 0.",
         "max-output-tokens-hint": "Sets the maximum number of tokens that the \nmodel can generate in a single response.",
         "endpoint": "Endpoint",
-        "endpoint-required": "Endpoint id required.",
+        "endpoint-required": "Endpoint is required.",
         "service-version": "Service version",
         "check-connectivity": "Check connectivity",
         "check-connectivity-success": "Test request was successful",
         "check-connectivity-failed": "Test request failed",
         "no-model-matching": "No model matching '{{entity}}' were found.",
-        "model-required": "AI Model is required.",
+        "model-required": "Model is required.",
         "no-model-text": "No model found"
     },
     "confirm-on-exit": {
@@ -5442,7 +5442,7 @@
             "model": "Model",
             "ai-model-hint": "Select the pre-configured AI model to process requests sent by this rule node, or use \"Create new\" to configure a new one.",
             "prompt-settings": "Prompt settings",
-            "prompt-settings-hint": "Configure the instructions for the AI. The optional system prompt sets the AI's general role and constraints, while the user prompt defines the specific task to perform. Both fields also support rule node templates to include dynamic data (e.g., use $[*] to access the entire message body or ${*} to access all metadata).",
+            "prompt-settings-hint": "The optional system prompt sets the AI's general role and constraints, while the user prompt defines the specific task to perform. Both fields also support templatization.",
             "system-prompt": "System prompt",
             "system-prompt-max-length": "System prompt must be 10000 characters or less.",
             "system-prompt-blank": "System prompt must not be blank.",
@@ -5465,7 +5465,7 @@
             "timeout-required": "Timeout is required",
             "timeout-validation": "Must be from 1 second to 10 minutes.",
             "force-acknowledgement": "Force acknowledgement",
-            "force-acknowledgement-hint": "Force acknowledgement"
+            "force-acknowledgement-hint": "If enabled, the incoming message is acknowledged immediately. The model's response is then enqueued as a separate, new message."
         }
     },
     "timezone": {

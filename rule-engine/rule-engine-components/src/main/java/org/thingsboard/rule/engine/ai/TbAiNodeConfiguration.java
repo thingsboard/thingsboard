@@ -55,8 +55,10 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @Override
     public TbAiNodeConfiguration defaultConfiguration() {
         var configuration = new TbAiNodeConfiguration();
-        configuration.setSystemPrompt("You are helpful assistant. Your response must be in JSON format.");
-        configuration.setUserPrompt("Tell me a joke.");
+        configuration.setSystemPrompt(
+                "You are a helpful AI assistant. Your primary function is to process the user's request and respond with a valid JSON object. " +
+                        "Do not include any text, explanations, or markdown formatting before or after the JSON output."
+        );
         configuration.setResponseFormat(new TbJsonResponseFormat());
         configuration.setTimeoutSeconds(60);
         configuration.setForceAck(true);
