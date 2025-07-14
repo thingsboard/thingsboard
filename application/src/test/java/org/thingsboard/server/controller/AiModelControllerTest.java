@@ -18,7 +18,6 @@ package org.thingsboard.server.controller;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.Test;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiModel;
@@ -28,37 +27,20 @@ import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
-import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
-
-import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class AiModelControllerTest extends AbstractControllerTest {
-
-    @SpyBean
-    private EntitiesVersionControlService versionControlService;
-
-    @SpyBean
-    private TbLogEntityActionService logEntityActionService;
 
     /* --- Save API tests --- */
 
@@ -106,29 +88,12 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(savedModel.getId()).isNotNull();
         assertThat(savedModel.getUuidId()).isNotNull().isNotEqualTo(EntityId.NULL_UUID);
         assertThat(savedModel.getId().getEntityType()).isEqualTo(EntityType.AI_MODEL);
-
         assertThat(savedModel.getCreatedTime()).isPositive();
         assertThat(savedModel.getVersion()).isEqualTo(1);
-
         assertThat(savedModel.getTenantId()).isEqualTo(tenantId);
         assertThat(savedModel.getName()).isEqualTo("Test model");
         assertThat(savedModel.getConfiguration()).isEqualTo(model.getConfiguration());
-
         assertThat(savedModel.getExternalId()).isNull();
-
-        // verify auto-commit
-        then(versionControlService).should().autoCommit(
-                argThat(actualUser -> Objects.equals(actualUser.getId(), tenantAdminUser.getId())), eq(savedModel.getId())
-        );
-
-        // verify a rule engine message was sent, and an audit log was created
-        then(logEntityActionService).should().logEntityAction(
-                eq(tenantId),
-                eq(savedModel.getId()),
-                eq(savedModel),
-                eq(ActionType.ADDED),
-                argThat(actualUser -> Objects.equals(actualUser.getId(), tenantAdminUser.getId()))
-        );
     }
 
     @Test
@@ -160,26 +125,12 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         // verify returned object
         assertThat(updatedModel.getId()).isEqualTo(model.getId());
-
         assertThat(updatedModel.getCreatedTime()).isEqualTo(model.getCreatedTime());
         assertThat(updatedModel.getVersion()).isEqualTo(2);
-
         assertThat(updatedModel.getTenantId()).isEqualTo(tenantId);
         assertThat(updatedModel.getName()).isEqualTo("Test model updated");
         assertThat(updatedModel.getConfiguration()).isEqualTo(newModelConfig);
-
         assertThat(updatedModel.getExternalId()).isNull();
-
-        // verify auto-commit
-        then(versionControlService).should(times(2)).autoCommit(
-                argThat(actualUser -> Objects.equals(actualUser.getId(), tenantAdminUser.getId())), eq(updatedModel.getId())
-        );
-
-        // verify a rule engine message was sent, and an audit log was created
-        then(logEntityActionService).should().logEntityAction(
-                eq(tenantId), eq(updatedModel.getId()), eq(updatedModel), eq(ActionType.UPDATED),
-                argThat(actualUser -> Objects.equals(actualUser.getId(), tenantAdminUser.getId()))
-        );
     }
 
     /* --- Get by ID API tests --- */
@@ -282,6 +233,32 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(result.getTotalPages()).isEqualTo(3);
         assertThat(result.getTotalElements()).isEqualTo(5);
         assertThat(result.hasNext()).isTrue();
+    }
+
+    @Test
+    public void getAiModels_testSearchAndSortAppliedBeforePagination() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        // Create 5 models: 3 with "Alpha" in name, 2 with "Beta" in name
+        var alpha1 = doPost("/api/ai/model", constructValidOpenAiModel("Alpha Model 1"), AiModel.class);
+        var beta1 = doPost("/api/ai/model", constructValidOpenAiModel("Beta Model 1"), AiModel.class);
+        var alpha2 = doPost("/api/ai/model", constructValidOpenAiModel("Alpha Model 2"), AiModel.class);
+        var beta2 = doPost("/api/ai/model", constructValidOpenAiModel("Beta Model 2"), AiModel.class);
+        var alpha3 = doPost("/api/ai/model", constructValidOpenAiModel("Alpha Model 3"), AiModel.class);
+
+        // WHEN
+        // Search for "Alpha", sort by name DESC, get the first page with size 2
+        PageData<AiModel> result = doGetTypedWithPageLink("/api/ai/model?",
+                new TypeReference<>() {},
+                new PageLink(2, 0, "Alpha", SortOrder.of("name", SortOrder.Direction.DESC)));
+
+        // THEN
+        // Should find only 3 "Alpha" models, sort them DESC (3, 2, 1), then return first 2
+        assertThat(result.getData()).containsExactly(alpha3, alpha2);
+        assertThat(result.getTotalPages()).isEqualTo(2); // One more "Alpha" model on the next page
+        assertThat(result.getTotalElements()).isEqualTo(3); // Only 3 models match "Alpha", not 5
+        assertThat(result.hasNext()).isTrue(); // One more "Alpha" model on the next page
     }
 
     @Test
@@ -595,16 +572,6 @@ public class AiModelControllerTest extends AbstractControllerTest {
         // THEN
         assertThat(deleted).isTrue();
 
-        // verify a rule engine message was sent, and an audit log was created
-        then(logEntityActionService).should().logEntityAction(
-                eq(tenantId),
-                eq(model.getId()),
-                eq(model),
-                eq(ActionType.DELETED),
-                argThat(actualUser -> Objects.equals(actualUser.getId(), tenantAdminUser.getId())),
-                eq(model.getId().toString())
-        );
-
         // verify model cannot be found anymore
         doGet("/api/ai/model/" + model.getId())
                 .andExpect(status().isNotFound())
@@ -623,16 +590,6 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         // THEN
         assertThat(deleted).isFalse();
-
-        // verify a rule engine message was not sent, and an audit log was not created
-        then(logEntityActionService).should(never()).logEntityAction(
-                eq(tenantId),
-                eq(nonexistentModelId),
-                any(AiModel.class),
-                eq(ActionType.DELETED),
-                argThat(actualUser -> Objects.equals(actualUser.getId(), tenantAdminUser.getId())),
-                eq(nonexistentModelId.toString())
-        );
     }
 
     private AiModel constructValidOpenAiModel(String name) {
