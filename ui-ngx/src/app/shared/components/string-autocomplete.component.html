@@ -29,7 +29,7 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <mat-icon *ngIf="selectionFormControl.hasError('required') && !showInlineError"
+  <mat-icon *ngIf="selectionFormControl.hasError('required') && selectionFormControl.touched && !showInlineError"
             matIconSuffix
             [matTooltip]="errorText"
             matTooltipPosition="above"

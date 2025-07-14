@@ -35,7 +35,7 @@
         <mat-label translate>ai-models.name</mat-label>
         <input matInput required formControlName="name">
         <mat-hint></mat-hint>
-        <mat-error *ngIf="aiModelForms.get('name').hasError('required')">
+        <mat-error *ngIf="aiModelForms.get('name').hasError('required') || aiModelForms.get('name').hasError('pattern')">
           {{ 'ai-models.name-required' | translate }}
         </mat-error>
         <mat-error *ngIf="aiModelForms.get('name').hasError('maxlength')">
@@ -49,7 +49,7 @@
         <section class="tb-form-panel outlined no-border no-padding">
           <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label translate>ai-models.ai-provider</mat-label>
-            <mat-select required formControlName="provider">
+            <mat-select formControlName="provider">
               <mat-option *ngFor="let provider of providerMap" [value]="provider">
                 {{providerTranslationMap.get(provider) | translate}}
               </mat-option>
@@ -119,6 +119,34 @@
                 <tb-toggle-password matSuffix></tb-toggle-password>
                 <mat-error *ngIf="aiModelForms.get('configuration').get('providerConfig').get('apiKey').hasError('required')">
                   {{ 'ai-models.api-key-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            }
+            @if (providerFieldsList.includes('region')) {
+              <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+                <mat-label translate>ai-models.region</mat-label>
+                <input required matInput formControlName="region">
+                <mat-error *ngIf="aiModelForms.get('configuration').get('providerConfig').get('region').hasError('required')">
+                  {{ 'ai-models.region-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            }
+            @if (providerFieldsList.includes('accessKeyId')) {
+              <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+                <mat-label translate>ai-models.access-key-id</mat-label>
+                <input required matInput formControlName="accessKeyId">
+                <mat-error *ngIf="aiModelForms.get('configuration').get('providerConfig').get('accessKeyId').hasError('required')">
+                  {{ 'ai-models.access-key-id-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            }
+            @if (providerFieldsList.includes('secretAccessKey')) {
+              <mat-form-field class="mat-block flex-1" appearance="outline">
+                <mat-label translate>ai-models.secret-access-key</mat-label>
+                <input type="password" required matInput formControlName="secretAccessKey">
+                <tb-toggle-password matSuffix></tb-toggle-password>
+                <mat-error *ngIf="aiModelForms.get('configuration').get('providerConfig').get('secretAccessKey').hasError('required')">
+                  {{ 'ai-models.secret-access-key-required' | translate }}
                 </mat-error>
               </mat-form-field>
             }
@@ -222,8 +250,8 @@
           }
           @if (modelFieldsList.includes('maxOutputTokens')) {
             <div class="tb-form-row space-between">
-              <div tb-hint-tooltip-icon="{{ 'ai-models.max-output-token-hint' | translate }}">
-                {{ 'ai-models.max-output-token' | translate }}
+              <div tb-hint-tooltip-icon="{{ 'ai-models.max-output-tokens-hint' | translate }}">
+                {{ 'ai-models.max-output-tokens' | translate }}
               </div>
               <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
                 <input matInput formControlName="maxOutputTokens"
@@ -231,7 +259,7 @@
                 <mat-icon matSuffix
                           matTooltipPosition="above"
                           matTooltipClass="tb-error-tooltip"
-                          [matTooltip]="'ai-models.max-output-token-min' | translate"
+                          [matTooltip]="'ai-models.max-output-tokens-min' | translate"
                           *ngIf="aiModelForms.get('configuration').get('maxOutputTokens').hasError('min')"
                           class="tb-error">
                   warning
