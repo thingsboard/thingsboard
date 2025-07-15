@@ -49,4 +49,9 @@ public record AnthropicChatModelConfig(
         return configurer.configureChatModel(this);
     }
 
+    @Override
+    public boolean supportsJsonMode() {
+        return false;
+    }
+
 }

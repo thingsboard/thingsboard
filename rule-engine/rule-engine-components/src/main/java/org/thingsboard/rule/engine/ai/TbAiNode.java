@@ -48,6 +48,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbResponseFormatType;
 import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
 
 @RuleNode(
@@ -91,8 +92,21 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             throw new TbNodeException(e, true);
         }
 
-        // LangChain4j AnthropicChatModel rejects requests with non-null ResponseFormat even if ResponseFormatType is TEXT
-        if (config.getResponseFormat().type() == TbResponseFormat.TbResponseFormatType.JSON) {
+        Optional<AiModel> modelOpt = ctx.getAiModelService().findAiModelByTenantIdAndId(ctx.getTenantId(), modelId);
+        if (modelOpt.isEmpty()) {
+            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] was not found", true);
+        }
+        AiModel model = modelOpt.get();
+        AiModelType modelType = model.getConfiguration().modelType();
+        if (modelType != AiModelType.CHAT) {
+            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] must be of type CHAT, but was " + modelType, true);
+        }
+        AiChatModelConfig<?> chatModelConfig = (AiChatModelConfig<?>) model.getConfiguration();
+        if (isJsonModeConfigured(config)) {
+            if (!chatModelConfig.supportsJsonMode()) {
+                throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] does not support '" + config.getResponseFormat().type() + "' response format", true);
+            }
+            // LangChain4j AnthropicChatModel rejects requests with non-null ResponseFormat even if ResponseFormatType is TEXT
             responseFormat = config.getResponseFormat().toLangChainResponseFormat();
         }
 
@@ -101,15 +115,11 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         timeoutSeconds = config.getTimeoutSeconds();
         modelId = config.getModelId();
         super.forceAck = config.isForceAck() || super.forceAck; // force ack if node config says so, or if env variable (super.forceAck) says so
+    }
 
-        Optional<AiModel> model = ctx.getAiModelService().findAiModelByTenantIdAndId(ctx.getTenantId(), modelId);
-        if (model.isEmpty()) {
-            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] was not found", true);
-        }
-        AiModelType modelType = model.get().getConfiguration().modelType();
-        if (modelType != AiModelType.CHAT) {
-            throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] must be of type CHAT, but was " + modelType, true);
-        }
+    private static boolean isJsonModeConfigured(TbAiNodeConfiguration config) {
+        var responseFormatType = config.getResponseFormat().type();
+        return responseFormatType == TbResponseFormatType.JSON || responseFormatType == TbResponseFormatType.JSON_SCHEMA;
     }
 
     @Override

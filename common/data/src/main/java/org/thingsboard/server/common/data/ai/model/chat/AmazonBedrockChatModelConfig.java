@@ -48,4 +48,9 @@ public record AmazonBedrockChatModelConfig(
         return configurer.configureChatModel(this);
     }
 
+    @Override
+    public boolean supportsJsonMode() {
+        return false;
+    }
+
 }

@@ -50,4 +50,9 @@ public record GitHubModelsChatModelConfig(
         return configurer.configureChatModel(this);
     }
 
+    @Override
+    public boolean supportsJsonMode() {
+        return false;
+    }
+
 }
