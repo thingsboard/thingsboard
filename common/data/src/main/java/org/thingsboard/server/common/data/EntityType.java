@@ -65,7 +65,13 @@ public enum EntityType {
     MOBILE_APP_BUNDLE(38),
     CALCULATED_FIELD(39),
     CALCULATED_FIELD_LINK(40),
-    JOB(41);
+    JOB(41),
+    AI_MODEL(42, "ai_model") {
+        @Override
+        public String getNormalName() {
+            return "AI model";
+        }
+    };
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto
