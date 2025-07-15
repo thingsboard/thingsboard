@@ -599,365 +599,280 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidProtoFile() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message SchemaValidationTest {\n" +
-                "   required int32 parameter = 1;\n" +
-                "}", "[Transport Configuration] failed to parse attributes proto schema due to: Syntax error in :6:4: 'required' label forbidden in proto3 field declarations");
+        testSaveDeviceProfileWithInvalidProtoSchema("""
+                syntax = "proto3";
+                
+                package schemavalidation;
+                
+                message SchemaValidationTest {
+                   required int32 parameter = 1;
+                }""", "[Transport Configuration] failed to parse attributes proto schema due to: attributes proto schema:6:13: Required fields are not allowed in proto3.");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidProtoSyntax() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto2\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message SchemaValidationTest {\n" +
-                "   required int32 parameter = 1;\n" +
-                "}", "[Transport Configuration] invalid schema syntax: proto2 for attributes proto schema provided! Only proto3 allowed!");
-    }
-
-    @Test
-    public void testSaveProtoDeviceProfileOptionsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "option java_package = \"com.test.schemavalidation\";\n" +
-                "option java_multiple_files = true;\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message SchemaValidationTest {\n" +
-                "   optional int32 parameter = 1;\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! Schema options don't support!");
+        testSaveDeviceProfileWithInvalidProtoSchema("""
+                syntax = "proto2";
+                
+                package schemavalidation;
+                
+                message SchemaValidationTest {
+                   required int32 parameter = 1;
+                }""", "[Transport Configuration] invalid schema syntax provided for attributes proto schema! Only proto3 syntax allowed!");
     }
 
     @Test
     public void testSaveProtoDeviceProfilePublicImportsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "import public \"oldschema.proto\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message SchemaValidationTest {\n" +
-                "   optional int32 parameter = 1;\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! Schema public imports don't support!");
+        testSaveDeviceProfileWithInvalidProtoSchema("""
+                syntax = "proto3";
+                
+                import public "oldschema.proto";
+                
+                package schemavalidation;
+                
+                message SchemaValidationTest {
+                   optional int32 parameter = 1;
+                }""", "[Transport Configuration] failed to parse attributes proto schema due to: oldschema.proto: File not found.\n" +
+                      "attributes proto schema:3:1: Import \"oldschema.proto\" was not found or had errors.");
     }
 
     @Test
     public void testSaveProtoDeviceProfileImportsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "import \"oldschema.proto\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message SchemaValidationTest {\n" +
-                "   optional int32 parameter = 1;\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! Schema imports don't support!");
+        testSaveDeviceProfileWithInvalidProtoSchema("""
+                syntax = "proto3";
+                
+                import "oldschema.proto";
+                
+                package schemavalidation;
+                
+                message SchemaValidationTest {
+                   optional int32 parameter = 1;
+                }""", "[Transport Configuration] failed to parse attributes proto schema due to: oldschema.proto: File not found.\n" +
+                      "attributes proto schema:3:1: Import \"oldschema.proto\" was not found or had errors.");
     }
 
     @Test
     public void testSaveProtoDeviceProfileExtendDeclarationsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "extend google.protobuf.MethodOptions {\n" +
-                "  MyMessage my_method_option = 50007;\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! Schema extend declarations don't support!");
-    }
-
-    @Test
-    public void testSaveProtoDeviceProfileEnumOptionsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "enum testEnum {\n" +
-                "   option allow_alias = true;\n" +
-                "   DEFAULT = 0;\n" +
-                "   STARTED = 1;\n" +
-                "   RUNNING = 2;\n" +
-                "}\n" +
-                "\n" +
-                "message testMessage {\n" +
-                "   optional int32 parameter = 1;\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! Enum definitions options are not supported!");
+        testSaveDeviceProfileWithInvalidProtoSchema("""
+                syntax = "proto3";
+                
+                package schemavalidation;
+                
+                message Dummy {
+                  extensions 1000 to max;
+                }
+                
+                extend Dummy {
+                  string custom_field = 1234;
+                }""", "[Transport Configuration] failed to parse attributes proto schema due to: attributes proto schema:9:8: Extensions in proto3 are only allowed for defining options.\n" +
+                      "attributes proto schema:6:14: Extension ranges are not allowed in proto3.");
     }
 
     @Test
     public void testSaveProtoDeviceProfileNoOneMessageTypeExists() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "enum testEnum {\n" +
-                "   DEFAULT = 0;\n" +
-                "   STARTED = 1;\n" +
-                "   RUNNING = 2;\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! At least one Message definition should exists!");
-    }
-
-    @Test
-    public void testSaveProtoDeviceProfileMessageTypeOptionsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message testMessage {\n" +
-                "   option allow_alias = true;\n" +
-                "   optional int32 parameter = 1;\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! Message definition options don't support!");
-    }
-
-    @Test
-    public void testSaveProtoDeviceProfileMessageTypeExtensionsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message TestMessage {\n" +
-                "   extensions 100 to 199;\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! Message definition extensions don't support!");
-    }
-
-    @Test
-    public void testSaveProtoDeviceProfileMessageTypeReservedElementsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message Foo {\n" +
-                "  reserved 2, 15, 9 to 11;\n" +
-                "  reserved \"foo\", \"bar\";\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! Message definition reserved elements don't support!");
-    }
-
-    @Test
-    public void testSaveProtoDeviceProfileMessageTypeGroupsElementsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message TestMessage {\n" +
-                "  repeated group Result = 1 {\n" +
-                "    optional string url = 2;\n" +
-                "    optional string title = 3;\n" +
-                "    repeated string snippets = 4;\n" +
-                "  }\n" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! Message definition groups don't support!");
-    }
-
-    @Test
-    public void testSaveProtoDeviceProfileOneOfsGroupsElementsNotSupported() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax = \"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message SampleMessage {\n" +
-                "  oneof test_oneof {\n" +
-                "     string name = 1;\n" +
-                "     group Result = 2 {\n" +
-                "    \tstring url = 3;\n" +
-                "    \tstring title = 4;\n" +
-                "    \trepeated string snippets = 5;\n" +
-                "     }\n" +
-                "  }" +
-                "}", "[Transport Configuration] invalid attributes proto schema provided! OneOf definition groups don't support!");
+        testSaveDeviceProfileWithInvalidProtoSchema("""
+                syntax = "proto3";
+                
+                package schemavalidation;
+                
+                enum testEnum {
+                   DEFAULT = 0;
+                   STARTED = 1;
+                   RUNNING = 2;
+                }""", "[Transport Configuration] invalid attributes proto schema provided! At least one Message definition should exists!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidTelemetrySchemaTsField() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message PostTelemetry {\n" +
-                "  int64 ts = 1;\n" +
-                "  Values values = 2;\n" +
-                "  \n" +
-                "  message Values {\n" +
-                "    string key1 = 3;\n" +
-                "    bool key2 = 4;\n" +
-                "    double key3 = 5;\n" +
-                "    int32 key4 = 6;\n" +
-                "    JsonObject key5 = 7;\n" +
-                "  }\n" +
-                "  \n" +
-                "  message JsonObject {\n" +
-                "    optional int32 someNumber = 8;\n" +
-                "    repeated int32 someArray = 9;\n" +
-                "    NestedJsonObject someNestedObject = 10;\n" +
-                "    message NestedJsonObject {\n" +
-                "       optional string key = 11;\n" +
-                "    }\n" +
-                "  }\n" +
-                "}", "[Transport Configuration] invalid telemetry proto schema provided! Field 'ts' has invalid label. Field 'ts' should have optional keyword!");
+        testSaveDeviceProfileWithInvalidProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message PostTelemetry {
+                  int64 ts = 1;
+                  Values values = 2;
+                
+                  message Values {
+                    string key1 = 3;
+                    bool key2 = 4;
+                    double key3 = 5;
+                    int32 key4 = 6;
+                    JsonObject key5 = 7;
+                  }
+                
+                  message JsonObject {
+                    optional int32 someNumber = 8;
+                    repeated int32 someArray = 9;
+                    NestedJsonObject someNestedObject = 10;
+                    message NestedJsonObject {
+                       optional string key = 11;
+                    }
+                  }
+                }""", "[Transport Configuration] invalid telemetry proto schema provided! Field 'ts' has invalid label. Field 'ts' should have optional keyword!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidTelemetrySchemaTsDateType() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message PostTelemetry {\n" +
-                "  optional int32 ts = 1;\n" +
-                "  Values values = 2;\n" +
-                "  \n" +
-                "  message Values {\n" +
-                "    string key1 = 3;\n" +
-                "    bool key2 = 4;\n" +
-                "    double key3 = 5;\n" +
-                "    int32 key4 = 6;\n" +
-                "    JsonObject key5 = 7;\n" +
-                "  }\n" +
-                "  \n" +
-                "  message JsonObject {\n" +
-                "    optional int32 someNumber = 8;\n" +
-                "  }\n" +
-                "}", "[Transport Configuration] invalid telemetry proto schema provided! Field 'ts' has invalid data type. Only int64 type is supported!");
+        testSaveDeviceProfileWithInvalidProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message PostTelemetry {
+                  optional int32 ts = 1;
+                  Values values = 2;
+                
+                  message Values {
+                    string key1 = 3;
+                    bool key2 = 4;
+                    double key3 = 5;
+                    int32 key4 = 6;
+                    JsonObject key5 = 7;
+                  }
+                
+                  message JsonObject {
+                    optional int32 someNumber = 8;
+                  }
+                }""", "[Transport Configuration] invalid telemetry proto schema provided! Field 'ts' has invalid data type. Only int64 type is supported!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidTelemetrySchemaValuesDateType() throws Exception {
-        testSaveDeviceProfileWithInvalidProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message PostTelemetry {\n" +
-                "  optional int64 ts = 1;\n" +
-                "  string values = 2;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid telemetry proto schema provided! Field 'values' has invalid data type. Only message type is supported!");
+        testSaveDeviceProfileWithInvalidProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message PostTelemetry {
+                  optional int64 ts = 1;
+                  string values = 2;
+                }""", "[Transport Configuration] invalid telemetry proto schema provided! Field 'values' has invalid data type. Only message type is supported!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaMethodDateType() throws Exception {
-        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message RpcRequestMsg {\n" +
-                "  optional int32 method = 1;\n" +
-                "  optional int32 requestId = 2;\n" +
-                "  optional string params = 3;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'method' has invalid data type. Only string type is supported!");
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message RpcRequestMsg {
+                  optional int32 method = 1;
+                  optional int32 requestId = 2;
+                  optional string params = 3;
+                }""", "[Transport Configuration] invalid rpc request proto schema provided! Field 'method' has invalid data type. Only string type is supported!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaRequestIdDateType() throws Exception {
-        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message RpcRequestMsg {\n" +
-                "  optional string method = 1;\n" +
-                "  optional int64 requestId = 2;\n" +
-                "  optional string params = 3;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'requestId' has invalid data type. Only int32 type is supported!");
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message RpcRequestMsg {
+                  optional string method = 1;
+                  optional int64 requestId = 2;
+                  optional string params = 3;
+                }""", "[Transport Configuration] invalid rpc request proto schema provided! Field 'requestId' has invalid data type. Only int32 type is supported!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaMethodLabel() throws Exception {
-        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message RpcRequestMsg {\n" +
-                "  repeated string method = 1;\n" +
-                "  optional int32 requestId = 2;\n" +
-                "  optional string params = 3;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'method' has invalid label!");
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message RpcRequestMsg {
+                  repeated string method = 1;
+                  optional int32 requestId = 2;
+                  optional string params = 3;
+                }""", "[Transport Configuration] invalid rpc request proto schema provided! Field 'method' has invalid label!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaRequestIdLabel() throws Exception {
-        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message RpcRequestMsg {\n" +
-                "  optional string method = 1;\n" +
-                "  repeated int32 requestId = 2;\n" +
-                "  optional string params = 3;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'requestId' has invalid label!");
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message RpcRequestMsg {
+                  optional string method = 1;
+                  repeated int32 requestId = 2;
+                  optional string params = 3;
+                }""", "[Transport Configuration] invalid rpc request proto schema provided! Field 'requestId' has invalid label!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaParamsLabel() throws Exception {
-        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message RpcRequestMsg {\n" +
-                "  optional string method = 1;\n" +
-                "  optional int32 requestId = 2;\n" +
-                "  repeated string params = 3;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid rpc request proto schema provided! Field 'params' has invalid label!");
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message RpcRequestMsg {
+                  optional string method = 1;
+                  optional int32 requestId = 2;
+                  repeated string params = 3;
+                }""", "[Transport Configuration] invalid rpc request proto schema provided! Field 'params' has invalid label!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaFieldsCount() throws Exception {
-        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message RpcRequestMsg {\n" +
-                "  optional int32 requestId = 2;\n" +
-                "  optional string params = 3;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid rpc request proto schema provided! RpcRequestMsg message should always contains 3 fields: method, requestId and params!");
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message RpcRequestMsg {
+                  optional int32 requestId = 2;
+                  optional string params = 3;
+                }""", "[Transport Configuration] invalid rpc request proto schema provided! RpcRequestMsg message should always contains 3 fields: method, requestId and params!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaFieldMethodIsNoSet() throws Exception {
-        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message RpcRequestMsg {\n" +
-                "  optional string methodName = 1;\n" +
-                "  optional int32 requestId = 2;\n" +
-                "  optional string params = 3;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: method!");
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message RpcRequestMsg {
+                  optional string methodName = 1;
+                  optional int32 requestId = 2;
+                  optional string params = 3;
+                }""", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: method!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaFieldRequestIdIsNotSet() throws Exception {
-        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message RpcRequestMsg {\n" +
-                "  optional string method = 1;\n" +
-                "  optional int32 requestIdentifier = 2;\n" +
-                "  optional string params = 3;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: requestId!");
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message RpcRequestMsg {
+                  optional string method = 1;
+                  optional int32 requestIdentifier = 2;
+                  optional string params = 3;
+                }""", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: requestId!");
     }
 
     @Test
     public void testSaveProtoDeviceProfileWithInvalidRpcRequestSchemaFieldParamsIsNotSet() throws Exception {
-        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("syntax =\"proto3\";\n" +
-                "\n" +
-                "package schemavalidation;\n" +
-                "\n" +
-                "message RpcRequestMsg {\n" +
-                "  optional string method = 1;\n" +
-                "  optional int32 requestId = 2;\n" +
-                "  optional string parameters = 3;\n" +
-                "  \n" +
-                "}", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: params!");
+        testSaveDeviceProfileWithInvalidRpcRequestProtoSchema("""
+                syntax ="proto3";
+                
+                package schemavalidation;
+                
+                message RpcRequestMsg {
+                  optional string method = 1;
+                  optional int32 requestId = 2;
+                  optional string parameters = 3;
+                }""", "[Transport Configuration] invalid rpc request proto schema provided! Failed to get field descriptor for field: params!");
     }
 
     @Test

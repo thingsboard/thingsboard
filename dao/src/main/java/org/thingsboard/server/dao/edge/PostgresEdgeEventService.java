@@ -18,11 +18,11 @@ package org.thingsboard.server.dao.edge;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -72,7 +72,7 @@ public class PostgresEdgeEventService extends BaseEdgeEventService {
             }
 
             @Override
-            public void onFailure(@NotNull Throwable throwable) {}
+            public void onFailure(@Nonnull Throwable throwable) {}
         }, edgeEventExecutor);
 
         return saveFuture;
