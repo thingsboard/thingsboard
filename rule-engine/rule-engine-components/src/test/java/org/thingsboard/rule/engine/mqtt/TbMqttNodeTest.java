@@ -228,8 +228,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
             given(ctxMock.getServiceId()).willReturn(serviceId);
         }
 
-        String expectedMessage = "Client ID is too long '" + clientId + "'. " +
-                "The length of Client ID cannot be longer than " + maxLength + ", but current length is " + clientId.length() + ".";
+        String expectedMessage = "The length of Client ID cannot be longer than " + maxLength + ", but current length is " + clientId.length() + ".";
 
         assertThatThrownBy(() -> mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig))))
                 .isInstanceOf(TbNodeException.class)
