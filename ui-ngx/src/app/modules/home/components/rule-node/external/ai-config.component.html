@@ -94,7 +94,7 @@
                 toolbarSuffixButton
                 matTooltip="{{ 'rule-node-config.ai.response-json-schema-hint' | translate }}"
                 matTooltipPosition="above">
-          <mat-icon style="color: #7b7b7b">info</mat-icon>
+          <mat-icon class="material-icons">info_outline</mat-icon>
         </button>
       </tb-json-object-edit>
     }
@@ -105,29 +105,31 @@
       <mat-expansion-panel-header style="padding: 16px">
         <mat-panel-title translate>rule-node-config.ai.advanced-settings</mat-panel-title>
       </mat-expansion-panel-header>
-      <div class="tb-form-panel no-border no-padding-top" style="margin-top: 0">
-        <div class="tb-form-row space-between flex-1 columns-xs">
-          <div tb-hint-tooltip-icon="{{'rule-node-config.ai.timeout-hint' | translate}}">{{ 'rule-node-config.ai.timeout' | translate }}</div>
-          <div class="flex flex-row items-center justify-start gap-2">
-            <tb-time-unit-input
-              required
-              inlineField
-              requiredText="{{ 'rule-node-config.ai.timeout-required' | translate }}"
-              minErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
-              maxErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
-              [maxTime]="600"
-              [minTime]="1"
-              formControlName="timeoutSeconds">
-            </tb-time-unit-input>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-panel no-border no-padding-top" style="margin-top: 0">
+          <div class="tb-form-row space-between flex-1 columns-xs">
+            <div tb-hint-tooltip-icon="{{'rule-node-config.ai.timeout-hint' | translate}}">{{ 'rule-node-config.ai.timeout' | translate }}</div>
+            <div class="flex flex-row items-center justify-start gap-2">
+              <tb-time-unit-input
+                required
+                inlineField
+                requiredText="{{ 'rule-node-config.ai.timeout-required' | translate }}"
+                minErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
+                maxErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
+                [maxTime]="600"
+                [minTime]="1"
+                formControlName="timeoutSeconds">
+              </tb-time-unit-input>
+            </div>
+          </div>
+          <div tb-hint-tooltip-icon="{{ 'rule-node-config.ai.force-acknowledgement-hint' | translate }}"
+               class="tb-form-row same-padding">
+            <mat-slide-toggle class="mat-slide margin" formControlName="forceAck">
+              {{ 'rule-node-config.ai.force-acknowledgement' | translate }}
+            </mat-slide-toggle>
           </div>
         </div>
-        <div tb-hint-tooltip-icon="{{ 'rule-node-config.ai.force-acknowledgement-hint' | translate }}"
-             class="tb-form-row same-padding">
-          <mat-slide-toggle class="mat-slide margin" formControlName="forceAck">
-            {{ 'rule-node-config.ai.force-acknowledgement' | translate }}
-          </mat-slide-toggle>
-        </div>
-      </div>
+      </ng-template>
     </mat-expansion-panel>
   </div>
 </section>

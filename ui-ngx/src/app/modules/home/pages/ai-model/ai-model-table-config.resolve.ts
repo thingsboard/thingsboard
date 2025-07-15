@@ -65,9 +65,7 @@ export class AiModelsTableConfigResolver {
       new EntityTableColumn<AiModel>('provider', 'ai-models.provider', '33%',
           entity => this.translate.instant(AiProviderTranslations.get(entity.configuration.provider))
       ),
-      new EntityTableColumn<AiModel>('aiModel', 'ai-models.model', '33%',
-          entity => entity.configuration.modelId, () => ({}), false
-      )
+      new EntityTableColumn<AiModel>('modelId', 'ai-models.model', '33%', entity => entity.configuration.modelId)
     )
 
     this.config.deleteEntityTitle = model => this.translate.instant('ai-models.delete-model-title', {modelName: model.name});
