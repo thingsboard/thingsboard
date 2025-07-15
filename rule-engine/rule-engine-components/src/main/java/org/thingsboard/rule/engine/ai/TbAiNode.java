@@ -92,6 +92,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             throw new TbNodeException(e, true);
         }
 
+        modelId = config.getModelId();
         Optional<AiModel> modelOpt = ctx.getAiModelService().findAiModelByTenantIdAndId(ctx.getTenantId(), modelId);
         if (modelOpt.isEmpty()) {
             throw new TbNodeException("[" + ctx.getTenantId() + "] AI model with ID: [" + modelId + "] was not found", true);
@@ -113,7 +114,6 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         systemPrompt = config.getSystemPrompt();
         userPrompt = config.getUserPrompt();
         timeoutSeconds = config.getTimeoutSeconds();
-        modelId = config.getModelId();
         super.forceAck = config.isForceAck() || super.forceAck; // force ack if node config says so, or if env variable (super.forceAck) says so
     }
 
