@@ -43,7 +43,6 @@ import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.TenantDataValidator;
-import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.trendz.TrendzSettingsService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
@@ -75,8 +74,6 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Lazy
     @Autowired
     private ApiUsageStateService apiUsageStateService;
-    @Autowired
-    private AdminSettingsService adminSettingsService;
     @Autowired
     private NotificationSettingsService notificationSettingsService;
     @Autowired
@@ -168,7 +165,6 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         userService.deleteAllByTenantId(tenantId);
         notificationSettingsService.deleteNotificationSettings(tenantId);
         trendzSettingsService.deleteTrendzSettings(tenantId);
-        adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
         qrCodeSettingService.deleteByTenantId(tenantId);
 
         tenantDao.removeById(tenantId, tenantId.getId());
@@ -176,7 +172,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).entity(tenant).build());
 
         cleanUpService.removeTenantEntities(tenantId, // don't forget to implement deleteEntity from EntityDaoService when adding entity type to this list
-                EntityType.JOB, EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
+                EntityType.ADMIN_SETTINGS, EntityType.JOB, EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
                 EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE, EntityType.DEVICE_PROFILE,
                 EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE,
                 EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE, EntityType.RPC, EntityType.QUEUE,
@@ -230,7 +226,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         return existsTenantCache.getAndPutInTransaction(tenantId, () -> tenantDao.existsById(tenantId, tenantId.getId()), false);
     }
 
-    private PaginatedRemover<TenantId, Tenant> tenantsRemover = new PaginatedRemover<>() {
+    private final PaginatedRemover<TenantId, Tenant> tenantsRemover = new PaginatedRemover<>() {
 
         @Override
         protected PageData<Tenant> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {

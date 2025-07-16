@@ -22,9 +22,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-/**
- * @author Andrew Shvayka
- */
 public enum EntityType {
     TENANT(1),
     CUSTOMER(2),
@@ -65,7 +62,8 @@ public enum EntityType {
     MOBILE_APP_BUNDLE(38),
     CALCULATED_FIELD(39),
     CALCULATED_FIELD_LINK(40),
-    JOB(41);
+    JOB(41),
+    ADMIN_SETTINGS(42);
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto
