@@ -43,7 +43,7 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     @NotBlank
     @Length(fieldName = "pkgName")
     private String pkgName;
-    @Schema(description = "Application package title")
+    @Schema(description = "Application title")
     @Length(fieldName = "title")
     private String title;
     @Schema(description = "Application secret. The length must be at least 16 characters", requiredMode = Schema.RequiredMode.REQUIRED)
