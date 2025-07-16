@@ -40,9 +40,9 @@
   </mat-form-field>
   <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label translate>mobile.mobile-package-title</mat-label>
-    <input matInput formControlName="pkgTitle">
+    <input matInput formControlName="title">
     <mat-hint></mat-hint>
-    <mat-error *ngIf="entityForm.get('pkgName').hasError('maxlength')">
+    <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
       {{ 'mobile.mobile-package-title-max-length' | translate }}
     </mat-error>
   </mat-form-field>

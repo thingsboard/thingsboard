@@ -23,6 +23,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 import { MobileApp } from '@shared/models/mobile-app.models';
 import { ImportExportService } from '@shared/import-export/import-export.service';
+import { isNotEmptyStr } from '@core/utils';
 
 export interface MobileAppConfigurationDialogData {
   afterAdd: boolean;
@@ -75,13 +76,13 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
     };
     if (!!this.data.androidApp) {
       settings.androidApplicationId = this.data.androidApp.pkgName;
-      settings.androidApplicationName = this.data.androidApp.pkgTitle ?? this.data.bundleTitle;
+      settings.androidApplicationName = isNotEmptyStr(this.data.androidApp.title) ? this.data.androidApp.title : this.data.bundleTitle;
       settings.thingsboardOAuth2CallbackUrlScheme = this.data.androidApp.pkgName + '.auth';
       settings.thingsboardAndroidAppSecret = this.data.androidApp.appSecret;
     }
     if (!!this.data.iosApp) {
       settings.iosApplicationId = this.data.iosApp.pkgName;
-      settings.iosApplicationName = this.data.iosApp.pkgTitle ?? this.data.bundleTitle;
+      settings.iosApplicationName = isNotEmptyStr(this.data.iosApp.title) ? this.data.iosApp.title : this.data.bundleTitle;
       settings.thingsboardIOSAppSecret = this.data.iosApp.appSecret;
     }
     this.importExportService.exportJson(settings, this.fileName);

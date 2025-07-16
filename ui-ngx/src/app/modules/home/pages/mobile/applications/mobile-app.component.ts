@@ -65,7 +65,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     const form = this.fb.group({
       pkgName: [entity?.pkgName ?? '', [Validators.required, Validators.maxLength(255),
         Validators.pattern(/^[a-zA-Z][a-zA-Z\d_]*(?:\.[a-zA-Z][a-zA-Z\d_]*)+$/)]],
-      pkgTitle: [entity?.pkgTitle ?? '', [Validators.maxLength(255)]],
+      title: [entity?.title ?? '', [Validators.maxLength(255)]],
       platformType: [entity?.platformType ?? PlatformType.ANDROID],
       appSecret: [entity?.appSecret ? entity.appSecret : btoa(randomAlphanumeric(64)), [Validators.required, this.base64Format]],
       status: [entity?.status ? entity.status : MobileAppStatus.DRAFT],

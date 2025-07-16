@@ -36,4 +36,4 @@ DROP INDEX IF EXISTS idx_widgets_bundle_external_id;
 
 -- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT END
 
-ALTER TABLE mobile_app ADD COLUMN IF NOT EXISTS pkg_title varchar(255);
+ALTER TABLE mobile_app ADD COLUMN IF NOT EXISTS title varchar(255);

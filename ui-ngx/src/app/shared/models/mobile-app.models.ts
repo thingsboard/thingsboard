@@ -85,7 +85,7 @@ export interface StoreInfo {
 
 export interface MobileApp extends BaseData<MobileAppId>, HasTenantId {
   pkgName: string;
-  pkgTitle?: string;
+  title?: string;
   appSecret: string;
   platformType: PlatformType;
   status: MobileAppStatus;
