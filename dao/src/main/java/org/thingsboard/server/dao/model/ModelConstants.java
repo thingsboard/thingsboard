@@ -457,6 +457,7 @@ public class ModelConstants {
      */
     public static final String MOBILE_APP_TABLE_NAME = "mobile_app";
     public static final String MOBILE_APP_PKG_NAME_PROPERTY = "pkg_name";
+    public static final String MOBILE_APP_PKG_TITLE_PROPERTY = "pkg_title";
     public static final String MOBILE_APP_APP_SECRET_PROPERTY = "app_secret";
     public static final String MOBILE_APP_PLATFORM_TYPE_PROPERTY = "platform_type";
     public static final String MOBILE_APP_STATUS_PROPERTY = "status";

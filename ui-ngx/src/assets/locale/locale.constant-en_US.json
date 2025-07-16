@@ -3767,6 +3767,8 @@
         "mobile-package-max-length": "Application package should be less than 256",
         "mobile-package-required": "Application package is required.",
         "mobile-package-pattern": "Application package invalid format",
+        "mobile-package-title": "Application title",
+        "mobile-package-title-max-length": "Application title should be less than 256",
         "no-application": "No applications found",
         "no-bundles": "No bundles found",
         "platform-type": "Platform type",

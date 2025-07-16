@@ -28,6 +28,7 @@ export interface MobileAppConfigurationDialogData {
   afterAdd: boolean;
   androidApp: MobileApp;
   iosApp: MobileApp;
+  bundleTitle: string;
 }
 
 @Component({
@@ -37,13 +38,13 @@ export interface MobileAppConfigurationDialogData {
 })
 export class MobileAppConfigurationDialogComponent extends DialogComponent<MobileAppConfigurationDialogComponent> {
 
-  private fileName = 'configs.json';
+  private fileName = 'configs';
 
   notShowAgain = false;
   showDontShowAgain: boolean;
 
   gitRepositoryLink = 'git clone -b master https://github.com/thingsboard/flutter_thingsboard_app.git';
-  flutterRunCommand = `flutter run --dart-define-from-file ${this.fileName}`;
+  flutterRunCommand = `flutter run --dart-define-from-file ${this.fileName}.json`;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -74,11 +75,13 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
     };
     if (!!this.data.androidApp) {
       settings.androidApplicationId = this.data.androidApp.pkgName;
+      settings.androidApplicationName = this.data.androidApp.pkgTitle ?? this.data.bundleTitle;
       settings.thingsboardOAuth2CallbackUrlScheme = this.data.androidApp.pkgName + '.auth';
       settings.thingsboardAndroidAppSecret = this.data.androidApp.appSecret;
     }
     if (!!this.data.iosApp) {
       settings.iosApplicationId = this.data.iosApp.pkgName;
+      settings.iosApplicationName = this.data.iosApp.pkgTitle ?? this.data.bundleTitle;
       settings.thingsboardIOSAppSecret = this.data.iosApp.appSecret;
     }
     this.importExportService.exportJson(settings, this.fileName);
