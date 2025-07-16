@@ -56,7 +56,7 @@ When the alarm message from "Freezer-B7" is processed by the AI node, the templa
 - `${deviceName}` becomes "Freezer-B7"
 - `${deviceType}` becomes "CommercialFreezer"
 - `$[*]` is replaced by the entire message body JSON: `{"type":"High Temperature","details":{"currentTemp_C":-5,"threshold_C":-18}}`
-> **Note:** You can also use `$[*]`. In this case, it will be replaced with the entire message metadata JSON.
+> **Note:** You can also use `${*}`. In this case, it will be replaced with the entire message metadata JSON.
 
 The final instruction sent to the AI is a combination of the system and the substituted user prompt.
 
