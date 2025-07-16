@@ -388,9 +388,9 @@ public class TbUtils {
                 Object.class)));
         parserConfig.addImport("isArray", new MethodStub(TbUtils.class.getMethod("isArray",
                 Object.class)));
-        parserConfig.addImport("createSetTb", new MethodStub(TbUtils.class.getMethod("createSetTb",
+        parserConfig.addImport("newSet", new MethodStub(TbUtils.class.getMethod("newSet",
                 ExecutionContext.class)));
-        parserConfig.addImport("createSetTb", new MethodStub(TbUtils.class.getMethod("createSetTb",
+        parserConfig.addImport("toSet", new MethodStub(TbUtils.class.getMethod("toSet",
                 ExecutionContext.class, List.class)));
         parserConfig.addImport("isSet", new MethodStub(TbUtils.class.getMethod("isSet",
                 Object.class)));
@@ -1489,11 +1489,11 @@ public class TbUtils {
         return obj != null && obj.getClass().isArray();
     }
 
-    public static <E> Set<E> createSetTb(ExecutionContext ctx) {
+    public static <E> Set<E> newSet(ExecutionContext ctx) {
         return new ExecutionLinkedHashSet<>(ctx);
     }
 
-    public static <E> Set<E> createSetTb(ExecutionContext ctx, List<E> list) {
+    public static <E> Set<E> toSet(ExecutionContext ctx, List<E> list) {
         Set<E> newSet = new LinkedHashSet<>(list);
         return new ExecutionLinkedHashSet<>(newSet, ctx);
     }

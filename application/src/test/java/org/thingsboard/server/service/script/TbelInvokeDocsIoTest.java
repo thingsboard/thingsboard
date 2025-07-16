@@ -785,8 +785,8 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 {"list": ["B", "A", "C", "A"]}
                 """;
         decoderStr = """
-                var set1 = createSetTb(msg.list);       // create new Set from createSetTb() with list, no sort, size = 3 ("A" - duplicate)
-                var set2 = createSetTb();               // create new Set from createSetTb(), Empty
+                var set1 = toSet(msg.list);       // create new Set from toSet() with list, no sort, size = 3 ("A" - duplicate)
+                var set2 = newSet();               // create new Set from newSet(), Empty
                 return {set1: set1,
                         set2: set2
                        }
@@ -806,7 +806,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 {"list": ["A", "B", "C"]}
                 """;
         decoderStr = """
-                var set2 = createSetTb(msg.list);       // create new from list, size = 3
+                var set2 = toSet(msg.list);       // create new from list, size = 3
                 var set2_0 = set2.toArray()[0];         // return "A", value with index = 0 from Set 
                 var set2Size = set2.size();             // return size = 3
                 var smthForeach = "";
@@ -851,16 +851,16 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 """;
         decoderStr = """
                 // add
-                var setAdd = createSetTb(["thigsboard", 4, 67]);      // create new, size = 3
+                var setAdd = toSet(["thigsboard", 4, 67]);      // create new, size = 3
                 var setAdd1_value = setAdd.clone();                   // clone setAdd, size = 3
                 var setAdd2_result = setAdd.add(35);                  // add value = 35, result = true
                 var setAdd2_value = setAdd.clone();                   // clone setAdd (fixing the result add = 35), size = 4
-                var setAddList1 = createSetTb(msg.list);              // create new from list without duplicate value ("B" and "C" - only one), size = 5
+                var setAddList1 = toSet(msg.list);              // create new from list without duplicate value ("B" and "C" - only one), size = 5
                 var setAdd3_result = setAdd.addAll(setAddList1);      // add all without duplicate values, result = true
                 var setAdd3_value = setAdd.clone();                   // clone setAdd (with addAll), size = 9  
                 var setAdd4_result = setAdd.add(35);                  // add duplicate value = 35,  result = false  
                 var setAdd4_value = setAdd.clone();                   // clone setAdd (after add duplicate value = 35), size = 9  
-                var setAddList2 = createSetTb(msg.list);              // create new from list without duplicate value ("B" and "C" - only one), start: size = 5, finish: size = 7       
+                var setAddList2 = toSet(msg.list);              // create new from list without duplicate value ("B" and "C" - only one), start: size = 5, finish: size = 7       
                 var setAdd5_result1 = setAddList2.add(72);            // add is not duplicate value = 72,  result = true   
                 var setAdd5_result2 = setAddList2.add(72);            // add duplicate value = 72,  result = false   
                 var setAdd5_result3 = setAddList2.add("hello25");     // add  is not duplicate value = "hello25",  result = true    
@@ -948,8 +948,8 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
                 """;
         decoderStr = """
-                var set1 = createSetTb(msg.list);               // create new from method createSetTb(List list) no sort, size = 6 ("A" and "C" is duplicated)
-                var set2 = createSetTb(msg.list);               // create new from method createSetTb(List list) no sort, size = 6 ("A" and "C" is duplicated)
+                var set1 = toSet(msg.list);               // create new from method toSet(List list) no sort, size = 6 ("A" and "C" is duplicated)
+                var set2 = toSet(msg.list);               // create new from method toSet(List list) no sort, size = 6 ("A" and "C" is duplicated)
                 var set1_asc = set1.clone();                    // clone set1, size = 6
                 var set1_desc = set1.clone();                   // clone set1, size = 6
                 set1.sort();                                    // sort set1 -> asc
@@ -990,7 +990,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
                 """;
         decoderStr = """
-                var set1 = createSetTb(msg.list);               // create new from method createSetTb(List list) no sort, size = 6  ("A" and "C" is duplicated)
+                var set1 = toSet(msg.list);               // create new from method toSet(List list) no sort, size = 6  ("A" and "C" is duplicated)
                 var result1 = set1.contains("A");               // return true
                 var result2 = set1.contains("H");               // return false
                 return {
@@ -1013,7 +1013,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
                 """;
         decoderStr = """
-                var set1 = createSetTb(msg.list);               // create new from method createSetTb(List list) no sort, size = 6  ("A" and "C" is duplicated)
+                var set1 = toSet(msg.list);               // create new from method toSet(List list) no sort, size = 6  ("A" and "C" is duplicated)
                 var tolist = set1.toList();                     // create new List from Set, size = 6
                 return {
                    "list": msg.list,
@@ -2687,7 +2687,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
                 """;
         decoderStr = """
-                    return isSet(createSetTb(msg.list));        // return true
+                    return isSet(toSet(msg.list));        // return true
                 """;
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertInstanceOf(Boolean.class, actual);
