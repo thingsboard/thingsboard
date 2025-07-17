@@ -66,7 +66,7 @@ public class EntityIdFactory {
             case API_USAGE_STATE -> new ApiUsageStateId(uuid);
             case TB_RESOURCE -> new TbResourceId(uuid);
             case OTA_PACKAGE -> new OtaPackageId(uuid);
-            case EDGE -> EdgeId.fromUUID(uuid);
+            case EDGE -> new EdgeId(uuid);
             case RPC -> new RpcId(uuid);
             case QUEUE -> new QueueId(uuid);
             case NOTIFICATION_TARGET -> new NotificationTargetId(uuid);
@@ -83,7 +83,7 @@ public class EntityIdFactory {
             case CALCULATED_FIELD_LINK -> new CalculatedFieldLinkId(uuid);
             case JOB -> new JobId(uuid);
             case ADMIN_SETTINGS -> new AdminSettingsId(uuid);
-            default -> throw new IllegalArgumentException("EntityType " + type + " is not supported!");
+            case AI_MODEL -> new AiModelId(uuid);
         };
     }
 

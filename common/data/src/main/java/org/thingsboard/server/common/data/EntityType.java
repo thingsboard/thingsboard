@@ -63,7 +63,13 @@ public enum EntityType {
     CALCULATED_FIELD(39),
     CALCULATED_FIELD_LINK(40),
     JOB(41),
-    ADMIN_SETTINGS(42);
+    ADMIN_SETTINGS(42),
+    AI_MODEL(43, "ai_model") {
+        @Override
+        public String getNormalName() {
+            return "AI model";
+        }
+    };
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto

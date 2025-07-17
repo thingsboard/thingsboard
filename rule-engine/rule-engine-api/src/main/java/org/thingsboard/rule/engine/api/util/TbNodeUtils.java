@@ -16,11 +16,11 @@
 package org.thingsboard.rule.engine.api.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -29,14 +29,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-public class TbNodeUtils {
+public final class TbNodeUtils {
+
+    private TbNodeUtils() {
+        throw new IllegalStateException("Utility class");
+    }
 
     private static final Pattern DATA_PATTERN = Pattern.compile("(\\$\\[)(.*?)(])");
+
+    private static final String ALL_DATA_TEMPLATE = "$[*]";
+    private static final String ALL_METADATA_TEMPLATE = "${*}";
 
     public static <T> T convert(TbNodeConfiguration configuration, Class<T> clazz) throws TbNodeException {
         try {
@@ -47,16 +50,19 @@ public class TbNodeUtils {
     }
 
     public static List<String> processPatterns(List<String> patterns, TbMsg tbMsg) {
-        if (!CollectionUtils.isEmpty(patterns)) {
-            return patterns.stream().map(p -> processPattern(p, tbMsg)).collect(Collectors.toList());
+        if (CollectionsUtil.isEmpty(patterns)) {
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+        return patterns.stream().map(p -> processPattern(p, tbMsg)).toList();
     }
 
     public static String processPattern(String pattern, TbMsg tbMsg) {
         try {
             String result = processPattern(pattern, tbMsg.getMetaData());
             JsonNode json = JacksonUtil.toJsonNode(tbMsg.getData());
+
+            result = result.replace(ALL_DATA_TEMPLATE, JacksonUtil.toString(json));
+
             if (json.isObject()) {
                 Matcher matcher = DATA_PATTERN.matcher(result);
                 while (matcher.find()) {
@@ -64,7 +70,7 @@ public class TbNodeUtils {
                     String[] keys = group.split("\\.");
                     JsonNode jsonNode = json;
                     for (String key : keys) {
-                        if (!StringUtils.isEmpty(key) && jsonNode != null) {
+                        if (StringUtils.isNotEmpty(key) && jsonNode != null) {
                             jsonNode = jsonNode.get(key);
                         } else {
                             jsonNode = null;
@@ -83,15 +89,9 @@ public class TbNodeUtils {
         }
     }
 
-    @Deprecated(since = "3.6.1", forRemoval = true)
-    public static List<String> processPatterns(List<String> patterns, TbMsgMetaData metaData) {
-        if (!CollectionUtils.isEmpty(patterns)) {
-            return patterns.stream().map(p -> processPattern(p, metaData)).collect(Collectors.toList());
-        }
-        return Collections.emptyList();
-    }
-
-    public static String processPattern(String pattern, TbMsgMetaData metaData) {
+    private static String processPattern(String pattern, TbMsgMetaData metaData) {
+        String replacement = metaData.isEmpty() ? "{}" : JacksonUtil.toString(metaData.getData());
+        pattern = pattern.replace(ALL_METADATA_TEMPLATE, replacement);
         return processTemplate(pattern, metaData.values());
     }
 
@@ -108,10 +108,11 @@ public class TbNodeUtils {
     }
 
     static String formatDataVarTemplate(String key) {
-        return "$[" + key + ']';
+        return "$[" + key + "]";
     }
 
     static String formatMetadataVarTemplate(String key) {
-        return "${" + key + '}';
+        return "${" + key + "}";
     }
+
 }

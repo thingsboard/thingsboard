@@ -21,7 +21,6 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.metadata.ConstraintDescriptor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.validator.HibernateValidator;
 import org.hibernate.validator.HibernateValidatorConfiguration;
@@ -32,15 +31,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoNullChar;
 import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.common.data.validation.RateLimit;
+import org.thingsboard.server.common.data.validation.ValidJsonSchema;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Configuration
 public class ConstraintValidator {
 
@@ -88,7 +88,9 @@ public class ConstraintValidator {
         ConstraintMapping constraintMapping = getCustomConstraintMapping();
         validatorConfiguration.addMapping(constraintMapping);
 
-        fieldsValidator = validatorConfiguration.buildValidatorFactory().getValidator();
+        try (var validatorFactory = validatorConfiguration.buildValidatorFactory()) {
+            fieldsValidator = validatorFactory.getValidator();
+        }
     }
 
     @Bean
@@ -105,6 +107,8 @@ public class ConstraintValidator {
         constraintMapping.constraintDefinition(NoXss.class).validatedBy(NoXssValidator.class);
         constraintMapping.constraintDefinition(Length.class).validatedBy(StringLengthValidator.class);
         constraintMapping.constraintDefinition(RateLimit.class).validatedBy(RateLimitValidator.class);
+        constraintMapping.constraintDefinition(NoNullChar.class).validatedBy(NoNullCharValidator.class);
+        constraintMapping.constraintDefinition(ValidJsonSchema.class).validatedBy(JsonSchemaValidator.class);
         return constraintMapping;
     }
 
