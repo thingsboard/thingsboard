@@ -1163,9 +1163,9 @@
         "check-connectivity": "Check connectivity",
         "check-connectivity-success": "Test request was successful",
         "check-connectivity-failed": "Test request failed",
-        "no-model-matching": "No model matching '{{entity}}' were found.",
+        "no-model-matching": "No models matching '{{entity}}' were found.",
         "model-required": "Model is required.",
-        "no-model-text": "No model found"
+        "no-model-text": "No models found."
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
