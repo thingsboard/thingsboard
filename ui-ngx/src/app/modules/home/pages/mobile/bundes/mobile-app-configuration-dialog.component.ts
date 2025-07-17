@@ -21,12 +21,15 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
-import { MobileApp } from '@shared/models/mobile-app.models';
+import { MobileApp, MobileAppBundleInfo } from '@shared/models/mobile-app.models';
+import { ImportExportService } from '@shared/import-export/import-export.service';
+import { isNotEmptyStr } from '@core/utils';
 
 export interface MobileAppConfigurationDialogData {
   afterAdd: boolean;
   androidApp: MobileApp;
   iosApp: MobileApp;
+  bundle: MobileAppBundleInfo;
 }
 
 @Component({
@@ -36,53 +39,22 @@ export interface MobileAppConfigurationDialogData {
 })
 export class MobileAppConfigurationDialogComponent extends DialogComponent<MobileAppConfigurationDialogComponent> {
 
-  notShowAgain = false;
-  setApplication = false;
+  private fileName = 'configs';
 
+  notShowAgain = false;
   showDontShowAgain: boolean;
 
   gitRepositoryLink = 'git clone -b master https://github.com/thingsboard/flutter_thingsboard_app.git';
-  pathToConstants = 'lib/constants/app_constants.dart';
-  flutterRunCommand = 'flutter run';
-  flutterInstallRenameCommand = 'flutter pub global activate rename';
-
-  configureApi: string;
-
-  renameCommands: string[] = [];
+  flutterRunCommand = `flutter run --dart-define-from-file ${this.fileName}.json`;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) private data: MobileAppConfigurationDialogData,
               protected dialogRef: MatDialogRef<MobileAppConfigurationDialogComponent>,
+              private importExportService: ImportExportService,
               ) {
     super(store, router, dialogRef);
-
     this.showDontShowAgain = this.data.afterAdd;
-
-    this.setApplication = !!this.data.androidApp || !!this.data.iosApp;
-
-    this.configureApi = `static const thingsBoardApiEndpoint = '${window.location.origin}';`;
-    if (this.setApplication) {
-      this.configureApi += '\n';
-      if (!!this.data.androidApp) {
-        this.configureApi += `\nstatic const thingsboardAndroidAppSecret = '${this.data.androidApp.appSecret}';`;
-      }
-      if (!!this.data.iosApp) {
-        this.configureApi += `\nstatic const thingsboardIOSAppSecret = '${this.data.iosApp.appSecret}';`;
-      }
-    }
-    if (this.setApplication) {
-      if (this.data.androidApp?.pkgName === this.data.iosApp?.pkgName) {
-        this.renameCommands.push(`rename setBundleId --targets android, ios --value "${this.data.androidApp.pkgName}"`);
-      } else {
-        if (!!this.data.androidApp) {
-          this.renameCommands.push(`rename setBundleId --targets android --value "${this.data.androidApp.pkgName}"`);
-        }
-        if (!!this.data.iosApp) {
-          this.renameCommands.push(`rename setBundleId --targets ios --value "${this.data.iosApp.pkgName}"`);
-        }
-      }
-    }
   }
 
   close(): void {
@@ -94,14 +66,28 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
     }
   }
 
-  createMarkDownCommand(commands: string | string[]): string {
-    if (Array.isArray(commands)) {
-      const formatCommands: Array<string> = [];
-      commands.forEach(command => formatCommands.push(this.createMarkDownSingleCommand(command)));
-      return formatCommands.join(`\n<br />\n\n`);
-    } else {
-      return this.createMarkDownSingleCommand(commands);
+  createMarkDownCommand(commands: string): string {
+    return this.createMarkDownSingleCommand(commands);
+  }
+
+  downloadSettings(): void {
+    const settings: any = {
+      thingsboardApiEndpoint: window.location.origin,
+      appLinksUrlHost: window.location.host,
+      appLinksUrlScheme: window.location.protocol.slice(0, -1),
+    };
+    if (!!this.data.androidApp) {
+      settings.androidApplicationId = this.data.androidApp.pkgName;
+      settings.androidApplicationName = isNotEmptyStr(this.data.androidApp.title) ? this.data.androidApp.title : this.data.bundle.title;
+      settings.thingsboardOAuth2CallbackUrlScheme = this.data.androidApp.pkgName + '.auth';
+      settings.thingsboardAndroidAppSecret = this.data.androidApp.appSecret;
     }
+    if (!!this.data.iosApp) {
+      settings.iosApplicationId = this.data.iosApp.pkgName;
+      settings.iosApplicationName = isNotEmptyStr(this.data.iosApp.title) ? this.data.iosApp.title : this.data.bundle.title;
+      settings.thingsboardIosAppSecret = this.data.iosApp.appSecret;
+    }
+    this.importExportService.exportJson(settings, this.fileName);
   }
 
   private createMarkDownSingleCommand(command: string): string {

@@ -3847,6 +3847,8 @@
         "mobile-package-max-length": "Application package should be less than 256",
         "mobile-package-required": "Application package is required.",
         "mobile-package-pattern": "Application package invalid format",
+        "mobile-package-title": "Application title",
+        "mobile-package-title-max-length": "Application title should be less than 256",
         "no-application": "No applications found",
         "no-bundles": "No bundles found",
         "platform-type": "Platform type",
@@ -3930,17 +3932,13 @@
             "prepare-environment-text": "Flutter ThingsBoard Mobile Application requires Flutter SDK. Follow instructions to set up Flutter SDK.",
             "get-source-code-title": "Get app source code",
             "get-source-code-text": "You can get Flutter ThingsBoard Mobile Application source code by cloning it from the GitHub repository:",
-            "configure-api-title": "Configure ThingsBoard API endpoint",
-            "configure-api-text": "Open the flutter_thingsboard_app project in your editor/IDE. Edit:",
-            "configure-api-hint": "Set the value of the thingsBoardApiEndpoint constant to match the API endpoint of your ThingsBoard server instance. Do not use “localhost” or “127.0.0.1” hostnames.",
+            "configure-app-settings-title": "Configure app settings",
+            "configure-app-settings-text": "Download the configuration file and place it into the root directory of the project you cloned in the previous step.",
+            "download-file": "Download file",
             "run-app-title": "Run the app",
             "run-app-text": "Run the app as described in your IDE.\nIf using the terminal, run the app with the following command:",
             "more-information": "Detailed information may be found in our Getting Started documentation.",
-            "getting-started": "Getting Started",
-            "configure-package-title": "Configure application package",
-            "configure-package-text": "You can manually change the Application Package or use third party CLI tool.",
-            "configure-package-text-install": "To install the Rename CLI Tool, execute the following command:",
-            "configure-package-run-commands": "Run these commands in the root directory of your project:"
+            "getting-started": "Getting Started"
         }
     },
     "notification": {
