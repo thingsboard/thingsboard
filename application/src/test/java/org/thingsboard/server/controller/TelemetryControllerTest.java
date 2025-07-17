@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -115,7 +116,7 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         Device device = createDevice();
 
         SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(device.getId());
+        filter.setSingleEntity(AliasEntityId.fromEntityId(device.getId()));
 
         getWsClient().subscribeLatestUpdate(List.of(new EntityKey(TIME_SERIES, "data")), filter);
 
@@ -159,7 +160,7 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         Device device = createDevice();
 
         SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(device.getId());
+        filter.setSingleEntity(AliasEntityId.fromEntityId(device.getId()));
 
         getWsClient().subscribeLatestUpdate(List.of(new EntityKey(TIME_SERIES, "data")), filter);
 

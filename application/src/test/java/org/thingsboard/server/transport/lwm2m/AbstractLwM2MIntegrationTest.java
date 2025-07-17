@@ -63,6 +63,7 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.Abstrac
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.NoSecLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -349,7 +350,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
 
         SingleEntityFilter sef = new SingleEntityFilter();
-        sef.setSingleEntity(device.getId());
+        sef.setSingleEntity(AliasEntityId.fromEntityId(device.getId()));
         LatestValueCmd latestCmd = new LatestValueCmd();
         latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
         EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
@@ -416,7 +417,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
 
         SingleEntityFilter sef = new SingleEntityFilter();
-        sef.setSingleEntity(device.getId());
+        sef.setSingleEntity(AliasEntityId.fromEntityId(device.getId()));
         LatestValueCmd latestCmd = new LatestValueCmd();
         String key1 = "pkgname";
         String key2 = "pkgversion";
@@ -594,7 +595,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
 
         SingleEntityFilter sef = new SingleEntityFilter();
-        sef.setSingleEntity(device.getId());
+        sef.setSingleEntity(AliasEntityId.fromEntityId(device.getId()));
         LatestValueCmd latestCmd = new LatestValueCmd();
         latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
         EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
