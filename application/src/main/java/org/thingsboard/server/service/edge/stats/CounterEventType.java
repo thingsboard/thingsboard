@@ -20,4 +20,5 @@ public enum CounterEventType {
     DOWNLINK_MSG_PERMANENTLY_FAILED,
     DOWNLINK_MSG_TMP_FAILED,
     DOWNLINK_MSG_ADDED
+
 }

@@ -1479,6 +1479,7 @@ edges:
   state:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
+
 # Spring doc common parameters
 springdoc:
   # If false swagger API docs will be unavailable

@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Data
 public class MsgCounters {
+
     private final TenantId tenantId;
     private final AtomicLong msgsAdded = new AtomicLong();
     private final AtomicLong msgsPushed = new AtomicLong();
